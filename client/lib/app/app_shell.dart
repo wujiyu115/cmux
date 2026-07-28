@@ -1056,6 +1056,14 @@ Future<AppShell> buildAppShell({
   final notificationCubit = NotificationCubit();
   final notificationBootstrap = notificationCubit.load();
   NotificationRecorder.install(notificationCubit);
+  // Terminal OSC notifications name their workspace; resolved lazily because
+  // workspaces are still loading when the terminal registry is built.
+  workspaceTerminalRegistry.workspaceLabelResolver = (workspaceId) =>
+      chatCubit.state.workspaces
+          .where((w) => w.workspaceId == workspaceId)
+          .firstOrNull
+          ?.effectiveDisplay ??
+      '';
 
   boot('loading layout');
   await layoutCubit.load();

@@ -1,5 +1,7 @@
 import 'package:shared_ui/shared_ui.dart';
 
+import '../../models/app_notification.dart';
+
 /// Hook for [AppToast] to persist notifications without importing cubits.
 abstract interface class NotificationRecorder {
   void record({
@@ -7,6 +9,7 @@ abstract interface class NotificationRecorder {
     required TpToastVariant variant,
     String title = '',
     String payload = '',
+    AppNotificationSource source = AppNotificationSource.app,
   });
 
   static NotificationRecorder? _current;

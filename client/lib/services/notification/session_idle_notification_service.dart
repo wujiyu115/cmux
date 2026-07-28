@@ -1,3 +1,4 @@
+import '../../models/app_notification.dart';
 import '../../models/app_session.dart';
 import '../../pages/home_workspace/home_workspace_route.dart';
 import 'package:shared_ui/shared_ui.dart';
@@ -58,6 +59,7 @@ class SessionIdleNotificationService {
         message: notificationSubtitle,
         variant: TpToastVariant.success,
         payload: payload,
+        source: AppNotificationSource.cli,
       );
 
       if (!systemNotificationEnabled) continue;

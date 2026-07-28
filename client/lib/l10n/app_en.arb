@@ -2368,6 +2368,13 @@
   "notificationClearAll": "Clear",
   "notificationMarkRead": "Mark as read",
   "notificationDelete": "Delete",
+  "notificationSourceTerminal": "Terminal OSC {code}",
+  "@notificationSourceTerminal": {
+    "placeholders": {
+      "code": { "type": "String" }
+    }
+  },
+  "notificationSourceAgent": "Agent",
   "notificationTimeJustNow": "Just now",
   "notificationTimeMinutesAgo": "{minutes} min ago",
   "@notificationTimeMinutesAgo": {

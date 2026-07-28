@@ -5286,6 +5286,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notificationDelete => 'Delete';
 
   @override
+  String notificationSourceTerminal(String code) {
+    return 'Terminal OSC $code';
+  }
+
+  @override
+  String get notificationSourceAgent => 'Agent';
+
+  @override
   String get notificationTimeJustNow => 'Just now';
 
   @override

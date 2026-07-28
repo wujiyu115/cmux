@@ -2,6 +2,35 @@ import 'package:equatable/equatable.dart';
 
 import 'package:shared_ui/shared_ui.dart';
 
+/// Where a notification came from. Terminal escape sequences are kept apart
+/// from app-generated rows so the UI can label them and dedupe per source.
+enum AppNotificationSource {
+  /// In-app toast / lifecycle event.
+  app,
+
+  /// An agent CLI (hook, doorbell) rather than the terminal byte stream.
+  cli,
+
+  /// `ESC ] 9 ; body` — body only, no title.
+  osc9,
+
+  /// `ESC ] 99 ; params ; body` — kitty desktop notification.
+  osc99,
+
+  /// `ESC ] 777 ; notify ; title ; body` — rxvt/wezterm style.
+  osc777;
+
+  static AppNotificationSource fromName(String? raw) {
+    for (final source in AppNotificationSource.values) {
+      if (source.name == raw) return source;
+    }
+    return AppNotificationSource.app;
+  }
+
+  bool get isTerminal =>
+      this == osc9 || this == osc99 || this == osc777;
+}
+
 /// Persisted app-level notification (from [AppToast], excluding info).
 class AppNotification extends Equatable {
   const AppNotification({
@@ -12,10 +41,14 @@ class AppNotification extends Equatable {
     this.title = '',
     this.payload = '',
     this.isRead = false,
+    this.source = AppNotificationSource.app,
   });
 
   final String id;
   final TpToastVariant variant;
+
+  /// Emitter of this row; drives the source chip and dedupe key.
+  final AppNotificationSource source;
 
   /// Optional headline (e.g. session name). Empty for legacy toast-only rows.
   final String title;
@@ -29,6 +62,11 @@ class AppNotification extends Equatable {
   bool get hasTitle => title.trim().isNotEmpty;
   bool get hasPayload => payload.trim().isNotEmpty;
 
+  /// Identity for time-window dedupe: same source + same rendered content.
+  /// Deliberately excludes [createdAt] and [isRead].
+  String get contentKey =>
+      '${source.name}|${variant.name}|${title.trim()}|$message|${payload.trim()}';
+
   AppNotification copyWith({
     String? id,
     TpToastVariant? variant,
@@ -37,6 +75,7 @@ class AppNotification extends Equatable {
     String? payload,
     DateTime? createdAt,
     bool? isRead,
+    AppNotificationSource? source,
   }) {
     return AppNotification(
       id: id ?? this.id,
@@ -46,6 +85,7 @@ class AppNotification extends Equatable {
       payload: payload ?? this.payload,
       createdAt: createdAt ?? this.createdAt,
       isRead: isRead ?? this.isRead,
+      source: source ?? this.source,
     );
   }
 
@@ -57,6 +97,7 @@ class AppNotification extends Equatable {
     if (payload.trim().isNotEmpty) 'payload': payload.trim(),
     'createdAt': createdAt.toUtc().toIso8601String(),
     'isRead': isRead,
+    if (source != AppNotificationSource.app) 'source': source.name,
   };
 
   static AppNotification? fromJson(Map<String, Object?> json) {
@@ -82,6 +123,7 @@ class AppNotification extends Equatable {
       payload: json['payload']?.toString().trim() ?? '',
       createdAt: createdAt.toLocal(),
       isRead: json['isRead'] == true,
+      source: AppNotificationSource.fromName(json['source']?.toString()),
     );
   }
 
@@ -94,6 +136,7 @@ class AppNotification extends Equatable {
     payload,
     createdAt,
     isRead,
+    source,
   ];
 }
 

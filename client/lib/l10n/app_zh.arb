@@ -2021,6 +2021,13 @@
   "notificationClearAll": "清空",
   "notificationMarkRead": "标为已读",
   "notificationDelete": "删除",
+  "notificationSourceTerminal": "终端 OSC {code}",
+  "@notificationSourceTerminal": {
+    "placeholders": {
+      "code": { "type": "String" }
+    }
+  },
+  "notificationSourceAgent": "智能体",
   "notificationTimeJustNow": "刚刚",
   "notificationTimeMinutesAgo": "{minutes} 分钟",
   "@notificationTimeMinutesAgo": {

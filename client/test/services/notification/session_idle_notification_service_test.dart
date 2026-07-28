@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:teampilot/models/app_notification.dart';
 import 'package:teampilot/models/app_session.dart';
 import 'package:teampilot/services/notification/desktop_system_notifier.dart';
 import 'package:teampilot/services/notification/notification_recorder.dart';
@@ -17,6 +18,7 @@ class _RecordingNotifier implements NotificationRecorder {
     required TpToastVariant variant,
     String title = '',
     String payload = '',
+    AppNotificationSource source = AppNotificationSource.app,
   }) {
     titles.add(title);
     messages.add(message);

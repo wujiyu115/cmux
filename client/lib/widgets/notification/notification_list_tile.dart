@@ -36,6 +36,20 @@ IconData notificationVariantIcon(TpToastVariant variant) => switch (variant) {
   TpToastVariant.error => Icons.error_outline,
 };
 
+/// Provenance label next to the timestamp; null for plain in-app rows.
+String? notificationSourceLabel(
+  BuildContext context,
+  AppNotificationSource source,
+) => switch (source) {
+  AppNotificationSource.app => null,
+  AppNotificationSource.cli => context.l10n.notificationSourceAgent,
+  AppNotificationSource.osc9 => context.l10n.notificationSourceTerminal('9'),
+  AppNotificationSource.osc99 => context.l10n.notificationSourceTerminal('99'),
+  AppNotificationSource.osc777 => context.l10n.notificationSourceTerminal(
+    '777',
+  ),
+};
+
 Color notificationVariantAccent(ColorScheme scheme, TpToastVariant variant) =>
     TpToastTheme.fromColorScheme(scheme).accentFor(variant);
 
@@ -88,6 +102,7 @@ class _NotificationListTileState extends State<NotificationListTile> {
     final message = notification.message;
     final hasTitle = notification.hasTitle;
     final expandable = notificationMessageIsExpandable(message);
+    final sourceLabel = notificationSourceLabel(context, notification.source);
     final titleStyle = styles.mdSemiboldTightSnugColored(cs.onSurface);
     final messageStyle = styles.mdColored(
       hasTitle ? cs.onSurfaceVariant : cs.onSurface,
@@ -167,9 +182,37 @@ class _NotificationListTileState extends State<NotificationListTile> {
                         ],
                       ),
                       const SizedBox(height: 6),
-                      Text(
-                        formatNotificationTime(context, notification.createdAt),
-                        style: styles.mutedXs,
+                      Row(
+                        children: [
+                          Text(
+                            formatNotificationTime(
+                              context,
+                              notification.createdAt,
+                            ),
+                            style: styles.mutedXs,
+                          ),
+                          if (sourceLabel != null) ...[
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 1,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: cs.surfaceContainerHighest,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  sourceLabel,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: styles.mutedXs,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ],
                   ),

@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:teampilot/models/app_notification.dart';
 import 'package:teampilot/repositories/notification_repository.dart';
 import 'package:shared_ui/shared_ui.dart';
 
@@ -101,11 +102,7 @@ void main() {
   test('markRead markAllRead delete clearAll', () async {
     final fs = InMemoryFilesystem();
     final repo = _repo(fs);
-    await repo.append(
-      id: 'a',
-      message: 'one',
-      variant: TpToastVariant.success,
-    );
+    await repo.append(id: 'a', message: 'one', variant: TpToastVariant.success);
     await repo.append(id: 'b', message: 'two', variant: TpToastVariant.error);
 
     await repo.markRead('a');
@@ -122,6 +119,98 @@ void main() {
 
     await repo.clearAll();
     expect((await repo.load()).items, isEmpty);
+  });
+
+  group('dedupe window', () {
+    test(
+      'same content from same source collapses into the first row',
+      () async {
+        final fs = InMemoryFilesystem();
+        var now = DateTime(2026, 6, 13, 12);
+        final repo = _repo(fs, clock: () => now);
+        await repo.append(
+          id: 'first',
+          message: 'build finished',
+          variant: TpToastVariant.success,
+          source: AppNotificationSource.osc9,
+        );
+        now = now.add(const Duration(seconds: 5));
+        await repo.append(
+          id: 'second',
+          message: 'build finished',
+          variant: TpToastVariant.success,
+          source: AppNotificationSource.osc9,
+        );
+
+        final store = await repo.load();
+        expect(store.items.map((e) => e.id), ['first']);
+        // The surviving row keeps its original timestamp and read state.
+        expect(store.items.single.createdAt, DateTime(2026, 6, 13, 12));
+        expect(store.items.single.isRead, isFalse);
+      },
+    );
+
+    test('a repeat after the window lands as a new row', () async {
+      final fs = InMemoryFilesystem();
+      var now = DateTime(2026, 6, 13, 12);
+      final repo = _repo(fs, clock: () => now);
+      await repo.append(
+        id: 'first',
+        message: 'build finished',
+        variant: TpToastVariant.success,
+        source: AppNotificationSource.osc9,
+      );
+      now = now.add(notificationDedupeWindow + const Duration(seconds: 1));
+      await repo.append(
+        id: 'second',
+        message: 'build finished',
+        variant: TpToastVariant.success,
+        source: AppNotificationSource.osc9,
+      );
+
+      expect((await repo.load()).items.map((e) => e.id), ['second', 'first']);
+    });
+
+    test('different source or variant is not a duplicate', () async {
+      final fs = InMemoryFilesystem();
+      final now = DateTime(2026, 6, 13, 12);
+      final repo = _repo(fs, clock: () => now);
+      await repo.append(
+        id: 'a',
+        message: 'same text',
+        variant: TpToastVariant.success,
+        source: AppNotificationSource.osc9,
+      );
+      await repo.append(
+        id: 'b',
+        message: 'same text',
+        variant: TpToastVariant.success,
+        source: AppNotificationSource.osc777,
+      );
+      await repo.append(
+        id: 'c',
+        message: 'same text',
+        variant: TpToastVariant.error,
+        source: AppNotificationSource.osc9,
+      );
+
+      expect((await repo.load()).items, hasLength(3));
+    });
+
+    test('source round-trips through json', () async {
+      final fs = InMemoryFilesystem();
+      final repo = _repo(fs, clock: () => DateTime(2026, 6, 13, 12));
+      await repo.append(
+        id: 'a',
+        message: 'kitty says hi',
+        variant: TpToastVariant.success,
+        source: AppNotificationSource.osc99,
+      );
+
+      final store = await _repo(fs).load(forceReload: true);
+      expect(store.items.single.source, AppNotificationSource.osc99);
+      expect(store.items.single.source.isTerminal, isTrue);
+    });
   });
 
   test('markReadMatchingPayload marks matching unread items', () async {

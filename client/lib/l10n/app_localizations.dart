@@ -9516,6 +9516,18 @@ abstract class AppLocalizations {
   /// **'Delete'**
   String get notificationDelete;
 
+  /// No description provided for @notificationSourceTerminal.
+  ///
+  /// In en, this message translates to:
+  /// **'Terminal OSC {code}'**
+  String notificationSourceTerminal(String code);
+
+  /// No description provided for @notificationSourceAgent.
+  ///
+  /// In en, this message translates to:
+  /// **'Agent'**
+  String get notificationSourceAgent;
+
   /// No description provided for @notificationTimeJustNow.
   ///
   /// In en, this message translates to:

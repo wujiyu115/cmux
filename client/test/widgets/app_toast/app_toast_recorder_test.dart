@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_ui/shared_ui.dart';
+import 'package:teampilot/models/app_notification.dart';
 import 'package:teampilot/services/notification/notification_recorder.dart';
 import 'package:teampilot/theme/team_pilot_toast_config.dart';
 import 'package:teampilot/widgets/app_toast/app_toast.dart';
@@ -14,6 +15,7 @@ class _RecordingRecorder implements NotificationRecorder {
     required TpToastVariant variant,
     String title = '',
     String payload = '',
+    AppNotificationSource source = AppNotificationSource.app,
   }) {
     records.add((message: message, variant: variant));
   }

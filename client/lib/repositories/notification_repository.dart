@@ -8,6 +8,11 @@ import '../utils/logging/logger.dart';
 const notificationMaxItems = 50;
 const notificationMaxAge = Duration(days: 7);
 
+/// Repeats of the same content from the same source inside this window collapse
+/// into the existing row. Terminal notifications are the driver: a shell loop
+/// firing `ESC ] 9` per iteration must not bury everything else.
+const notificationDedupeWindow = Duration(seconds: 30);
+
 /// Persists app notifications at `{teampilotRoot}/notifications.json`.
 class NotificationRepository {
   NotificationRepository({
@@ -66,6 +71,7 @@ class NotificationRepository {
     required TpToastVariant variant,
     String title = '',
     String payload = '',
+    AppNotificationSource source = AppNotificationSource.app,
   }) async {
     if (variant == TpToastVariant.info) {
       return _cache;
@@ -78,9 +84,29 @@ class NotificationRepository {
       message: message,
       payload: payload.trim(),
       createdAt: now,
+      source: source,
     );
+    // Drop the repeat outright: the existing row keeps its id, timestamp and
+    // read state, so a chatty shell loop cannot resurrect rows the user already
+    // dismissed nor reshuffle the list under them.
+    if (_recentDuplicate(next, now: now) != null) return _cache;
     final pruned = _prune([next, ..._cache.items], now: now);
     return save(AppNotificationStore(items: pruned));
+  }
+
+  /// Existing row with the same [AppNotification.contentKey] inside
+  /// [notificationDedupeWindow], or null when this content is new.
+  AppNotification? _recentDuplicate(
+    AppNotification candidate, {
+    required DateTime now,
+  }) {
+    final cutoff = now.subtract(notificationDedupeWindow);
+    final key = candidate.contentKey;
+    for (final item in _cache.items) {
+      if (item.createdAt.isBefore(cutoff)) continue;
+      if (item.contentKey == key) return item;
+    }
+    return null;
   }
 
   Future<AppNotificationStore> save(AppNotificationStore store) async {

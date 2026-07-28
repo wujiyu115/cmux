@@ -5,10 +5,24 @@ import 'package:uuid/uuid.dart';
 import '../../models/terminal_split.dart';
 import '../../models/terminal_surface.dart';
 import '../../models/workspace_terminal_session_spec.dart';
+import 'terminal_osc_notification_bridge.dart';
 import 'terminal_session.dart';
 import 'workspace_shell_connector.dart';
 
 const _uuid = Uuid();
+
+/// Builds the OSC-notification bridge for one pane. Injected so tests can pass
+/// a recorder-free stub instead of touching the global notification recorder.
+typedef TerminalNotificationBridgeFactory =
+    TerminalOscNotificationBridge Function({
+      required String Function() attribution,
+      required String Function() payload,
+    });
+
+TerminalOscNotificationBridge _defaultNotificationBridge({
+  required String Function() attribution,
+  required String Function() payload,
+}) => TerminalOscNotificationBridge(attribution: attribution, payload: payload);
 
 /// A single workspace-terminal tab: spec, cwd, session, and view controller.
 class WorkspaceTerminalEntry {
@@ -35,10 +49,15 @@ class WorkspaceTerminalEntry {
   /// Cached display label from [WorkspaceShellConnector.labelForSpec].
   String titleLabel = '';
 
+  /// OSC 9/99/777 → notification center, bound for this pane's session.
+  TerminalOscNotificationBridge? notificationBridge;
+
   int bumpConnectGeneration() => ++connectGeneration;
 
   void dispose() {
     bumpConnectGeneration();
+    notificationBridge?.dispose();
+    notificationBridge = null;
     session.sshMemberSession?.close();
     session.disconnect();
     session.dispose();
@@ -53,6 +72,24 @@ class WorkspaceTerminalEntry {
 /// tab holding a split tree over pane ids. [activeId] is derived from the active
 /// surface's focused pane — there is no standalone active-id field.
 class WorkspaceTerminalGroup extends ChangeNotifier {
+  WorkspaceTerminalGroup({
+    this.workspaceId = '',
+    String Function()? workspaceLabel,
+    TerminalNotificationBridgeFactory? notificationBridgeFactory,
+  }) : _workspaceLabel = workspaceLabel ?? _noLabel,
+       _bridgeFactory = notificationBridgeFactory;
+
+  static String _noLabel() => '';
+
+  /// Owning workspace tab id; empty in tests that build a bare group.
+  final String workspaceId;
+
+  /// Workspace display name, resolved lazily (workspaces load asynchronously).
+  final String Function() _workspaceLabel;
+
+  /// Null disables terminal notifications for this group entirely.
+  final TerminalNotificationBridgeFactory? _bridgeFactory;
+
   final List<WorkspaceTerminalEntry> _entries = [];
   final List<TerminalSurface> _surfaces = [];
   String? _activeSurfaceId;
@@ -293,13 +330,37 @@ class WorkspaceTerminalGroup extends ChangeNotifier {
     required String titleLabel,
     required bool followWorkspace,
   }) {
-    return WorkspaceTerminalEntry(
+    final entry = WorkspaceTerminalEntry(
       id: _uuid.v4(),
       cwd: cwd,
       spec: spec,
       session: session,
       followWorkspace: followWorkspace,
     )..titleLabel = titleLabel;
+    final factory = _bridgeFactory;
+    if (factory != null) {
+      final bridge = factory(
+        attribution: () => paneAttribution(entry.id),
+        payload: () =>
+            workspaceId.isEmpty ? '' : '/home-v2/workspace/$workspaceId',
+      );
+      entry.notificationBridge = bridge;
+      session.bindOscNotifications(bridge);
+    }
+    return entry;
+  }
+
+  /// `workspace · pane` label for notifications raised by [paneId]. Falls back
+  /// to whichever half is known; empty when neither is.
+  @visibleForTesting
+  String paneAttribution(String paneId) {
+    final surface = surfaceForPane(paneId);
+    final paneName =
+        surface?.paneNames[paneId] ?? entryById(paneId)?.titleLabel ?? '';
+    return [
+      if (_workspaceLabel().trim().isNotEmpty) _workspaceLabel().trim(),
+      if (paneName.trim().isNotEmpty) paneName.trim(),
+    ].join(' · ');
   }
 
   /// Swaps a surface into the list by id (no notify). Returns whether it hit.
@@ -322,10 +383,27 @@ class WorkspaceTerminalGroup extends ChangeNotifier {
 
 /// Owns workspace-terminal groups keyed by workspace tab id.
 class WorkspaceTerminalRegistry {
-  final Map<String, WorkspaceTerminalGroup> _groups = {};
+  WorkspaceTerminalRegistry({
+    TerminalNotificationBridgeFactory? notificationBridgeFactory =
+        _defaultNotificationBridge,
+  }) : _bridgeFactory = notificationBridgeFactory;
 
-  WorkspaceTerminalGroup groupFor(String workspaceId) =>
-      _groups.putIfAbsent(workspaceId, WorkspaceTerminalGroup.new);
+  final Map<String, WorkspaceTerminalGroup> _groups = {};
+  final TerminalNotificationBridgeFactory? _bridgeFactory;
+
+  /// Resolves a workspace's display name for notification attribution. Set once
+  /// the workspace store exists; until then notifications carry the pane label
+  /// only.
+  String Function(String workspaceId)? workspaceLabelResolver;
+
+  WorkspaceTerminalGroup groupFor(String workspaceId) => _groups.putIfAbsent(
+    workspaceId,
+    () => WorkspaceTerminalGroup(
+      workspaceId: workspaceId,
+      workspaceLabel: () => workspaceLabelResolver?.call(workspaceId) ?? '',
+      notificationBridgeFactory: _bridgeFactory,
+    ),
+  );
 
   void disposeWorkspace(String workspaceId) {
     _groups.remove(workspaceId)?.dispose();

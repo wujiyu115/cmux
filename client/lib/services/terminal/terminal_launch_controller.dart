@@ -13,6 +13,7 @@ import '../agent_status/agent_status_event.dart';
 import '../agent_status/cursor_title_attention.dart';
 import '../cli/cli_executable_validator.dart';
 import '../team/terminal_activity_tracker.dart';
+import 'terminal_osc_notification_bridge.dart';
 import 'terminal_startup_failure_detector.dart';
 import 'terminal_theme_mapper.dart';
 import 'terminal_transport.dart';
@@ -80,6 +81,9 @@ final class TerminalLaunchController {
   OscTitleExtractor? _cursorOscTitles;
   var _cursorTitleWaiting = false;
 
+  /// OSC 9/99/777 → notification center (null until [bindOscNotifications]).
+  TerminalOscNotificationBridge? _oscNotifications;
+
   bool get isDisposed => _disposed;
 
   /// Local PTY pid from the active transport, if any.
@@ -99,6 +103,19 @@ final class TerminalLaunchController {
     _cursorSkipPermissions = skipPermissions;
     _cursorOscTitles = OscTitleExtractor();
     _cursorTitleWaiting = false;
+  }
+
+  /// Route this terminal's OSC notifications into [bridge]. The bridge is owned
+  /// by the caller (it outlives reconnects); this only wires the two feeds.
+  void bindOscNotifications(TerminalOscNotificationBridge bridge) {
+    _oscNotifications = bridge;
+    bridge.observeEngineNotify(engine.notify);
+  }
+
+  /// Stop routing OSC notifications; leaves the bridge itself alive.
+  void clearOscNotifications() {
+    _oscNotifications?.reset();
+    _oscNotifications = null;
   }
 
   /// Drop Cursor title observation (disconnect / non-Cursor reconnect).
@@ -205,11 +222,22 @@ final class TerminalLaunchController {
     if (isConnected) {
       activityTracker.notePtyBytes(data);
     }
-    _observeCursorOscTitles(data);
+    _observeOscConsumers(data);
     engine.feed(data);
   }
 
-  void _observeCursorOscTitles(Uint8List data) {
+  /// One utf8 decode shared by every OSC sidecar (Cursor titles, notifications);
+  /// skipped entirely when nothing is bound so the hot path stays free.
+  void _observeOscConsumers(Uint8List data) {
+    final bridge = _oscNotifications;
+    final cursorBound = _cursorOscTitles != null;
+    if (bridge == null && !cursorBound) return;
+    final text = utf8.decode(data, allowMalformed: true);
+    if (cursorBound) _observeCursorOscTitles(text);
+    bridge?.observePtyText(text);
+  }
+
+  void _observeCursorOscTitles(String text) {
     final extractor = _cursorOscTitles;
     final attention = _cursorAttention;
     final sessionId = _cursorSessionId;
@@ -223,7 +251,6 @@ final class TerminalLaunchController {
       return;
     }
 
-    final text = utf8.decode(data, allowMalformed: true);
     for (final title in extractor.push(text)) {
       _applyCursorTitle(title, attention, sessionId, memberId, skipPermissions);
     }
@@ -269,6 +296,7 @@ final class TerminalLaunchController {
     _startFailed = false;
     _spawnRequested = false;
     clearCursorTitleAttention();
+    clearOscNotifications();
     _teardownPtyState();
     onProcessFailed = null;
     onProcessExited = null;

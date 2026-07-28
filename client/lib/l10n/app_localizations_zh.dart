@@ -5074,6 +5074,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get notificationDelete => '删除';
 
   @override
+  String notificationSourceTerminal(String code) {
+    return '终端 OSC $code';
+  }
+
+  @override
+  String get notificationSourceAgent => '智能体';
+
+  @override
   String get notificationTimeJustNow => '刚刚';
 
   @override

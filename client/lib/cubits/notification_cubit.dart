@@ -45,6 +45,7 @@ class NotificationCubit extends Cubit<NotificationState>
     required TpToastVariant variant,
     String title = '',
     String payload = '',
+    AppNotificationSource source = AppNotificationSource.app,
   }) {
     if (variant == TpToastVariant.info) return;
     unawaited(
@@ -53,6 +54,7 @@ class NotificationCubit extends Cubit<NotificationState>
         variant: variant,
         title: title,
         payload: payload,
+        source: source,
       ),
     );
   }
@@ -62,6 +64,7 @@ class NotificationCubit extends Cubit<NotificationState>
     required TpToastVariant variant,
     String title = '',
     String payload = '',
+    AppNotificationSource source = AppNotificationSource.app,
   }) async {
     final store = await _repository.append(
       id: _uuid.v4(),
@@ -69,6 +72,7 @@ class NotificationCubit extends Cubit<NotificationState>
       variant: variant,
       title: title,
       payload: payload,
+      source: source,
     );
     _emitFromStore(store);
   }

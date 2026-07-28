@@ -20,6 +20,7 @@ import 'pending_user_message.dart';
 import 'pty_launch_environment.dart';
 import 'terminal_input_controller.dart';
 import 'terminal_launch_controller.dart';
+import 'terminal_osc_notification_bridge.dart';
 import 'terminal_screen_probe_controller.dart';
 import 'terminal_session_link_providers.dart';
 import 'terminal_transport_starter.dart';
@@ -446,6 +447,11 @@ class TerminalSession {
       attention: attention,
       skipPermissions: skipPermissions,
     );
+  }
+
+  /// Route this session's OSC 9/99/777 notifications into [bridge].
+  void bindOscNotifications(TerminalOscNotificationBridge bridge) {
+    _launch.bindOscNotifications(bridge);
   }
 
   void dispose() {
