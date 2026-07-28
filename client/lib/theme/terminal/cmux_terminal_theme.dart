@@ -95,3 +95,47 @@ class CmuxTerminalTheme {
 
   static int _pack(Color color) => color.toARGB32() & 0xFFFFFF;
 }
+
+/// Returns a copy of [base] with per-slot custom colours from [overrides] applied.
+///
+/// Keys are the canonical slot names (`kTerminalColorSlots`): the 8 semantic
+/// slots plus `ansi0..ansi15`. Values are ARGB ints; the alpha is ignored and
+/// forced opaque so a stray transparent value can't blank the terminal. Unknown
+/// keys are ignored and an empty map is the identity (returns [base] unchanged).
+///
+/// Pure — no I/O, safe to unit test. Wired into `terminal_theme_mapper.dart` so
+/// that when custom colours are enabled the effective theme carries the tweaks.
+CmuxTerminalTheme applyTerminalColorOverrides(
+  CmuxTerminalTheme base,
+  Map<String, int> overrides,
+) {
+  if (overrides.isEmpty) return base;
+
+  Color pick(String slot, Color current) {
+    final value = overrides[slot];
+    return value == null ? current : Color(0xFF000000 | (value & 0xFFFFFF));
+  }
+
+  final ansi = <Color>[
+    for (var i = 0; i < base.ansi.length; i++) pick('ansi$i', base.ansi[i]),
+  ];
+
+  final accent = overrides.containsKey('accent')
+      ? Color(0xFF000000 | (overrides['accent']! & 0xFFFFFF))
+      : base.accent;
+
+  return CmuxTerminalTheme(
+    name: base.name,
+    author: base.author,
+    isDark: base.isDark,
+    background: pick('background', base.background),
+    foreground: pick('foreground', base.foreground),
+    cursor: pick('cursor', base.cursor),
+    selection: pick('selection', base.selection),
+    searchHit: pick('searchHit', base.searchHit),
+    searchHitCurrent: pick('searchHitCurrent', base.searchHitCurrent),
+    searchHitFg: pick('searchHitFg', base.searchHitFg),
+    accent: accent,
+    ansi: ansi,
+  );
+}

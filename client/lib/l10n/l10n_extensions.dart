@@ -50,6 +50,32 @@ extension AppLocalizationsX on AppLocalizations {
       _ => value,
     };
   }
+
+  /// Display label for a terminal colour override slot key (`kTerminalColorSlots`).
+  String terminalColorSlotLabel(String slot) {
+    switch (slot) {
+      case 'background':
+        return terminalSlotBackground;
+      case 'foreground':
+        return terminalSlotForeground;
+      case 'cursor':
+        return terminalSlotCursor;
+      case 'selection':
+        return terminalSlotSelection;
+      case 'searchHit':
+        return terminalSlotSearchHit;
+      case 'searchHitCurrent':
+        return terminalSlotSearchHitCurrent;
+      case 'searchHitFg':
+        return terminalSlotSearchHitFg;
+      case 'accent':
+        return terminalSlotAccent;
+    }
+    if (slot.startsWith('ansi')) {
+      return terminalSlotAnsiLabel(slot.substring(4));
+    }
+    return slot;
+  }
 }
 
 extension BuildContextL10n on BuildContext {

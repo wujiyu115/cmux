@@ -6147,4 +6147,74 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get resourceManagerKillFailed => '无法结束会话。';
+
+  @override
+  String get terminalColorSchemeTitle => '终端配色方案';
+
+  @override
+  String get terminalColorSchemeDescription => '为内置终端选择内建配色，或单独调整某些颜色。';
+
+  @override
+  String get terminalColorSchemeGroupDark => '暗色';
+
+  @override
+  String get terminalColorSchemeGroupLight => '亮色';
+
+  @override
+  String get terminalColorSchemeGroupLegacy => '自适应与经典';
+
+  @override
+  String terminalColorSchemeByAuthor(String author) {
+    return '作者：$author';
+  }
+
+  @override
+  String get terminalColorPreviewTitle => '预览';
+
+  @override
+  String get terminalUseCustomColorsTitle => '使用自定义颜色';
+
+  @override
+  String get terminalUseCustomColorsDescription => '在所选配色之上覆盖单个调色板槽位。';
+
+  @override
+  String get terminalCustomColorsSectionTitle => '自定义颜色';
+
+  @override
+  String get terminalColorResetAll => '全部重置';
+
+  @override
+  String get terminalColorResetSlot => '恢复为配色方案颜色';
+
+  @override
+  String get terminalColorInvalidHex => '请输入 #RRGGBB 或 #AARRGGBB';
+
+  @override
+  String get terminalSlotBackground => '背景';
+
+  @override
+  String get terminalSlotForeground => '前景';
+
+  @override
+  String get terminalSlotCursor => '光标';
+
+  @override
+  String get terminalSlotSelection => '选区';
+
+  @override
+  String get terminalSlotSearchHit => '搜索匹配';
+
+  @override
+  String get terminalSlotSearchHitCurrent => '当前匹配';
+
+  @override
+  String get terminalSlotSearchHitFg => '匹配文字';
+
+  @override
+  String get terminalSlotAccent => '强调色';
+
+  @override
+  String terminalSlotAnsiLabel(String index) {
+    return 'ANSI $index';
+  }
 }

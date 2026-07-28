@@ -1,6 +1,8 @@
 import '../theme/app_theme.dart';
 import '../theme/app_typography_scale.dart';
 import '../theme/font_catalog.dart';
+import '../theme/terminal/terminal_color_slots.dart';
+import '../theme/terminal/terminal_theme_catalog.g.dart';
 
 enum LayoutPreset { workbench, chatFocus, inspector }
 
@@ -59,6 +61,8 @@ class LayoutPreferences {
     this.uiZoomScale = kDefaultTypographyScaleId,
     this.uiZoomCustomMultiplier = kDefaultTypographyCustomMultiplier,
     this.terminalThemeMode = 'adaptive',
+    this.useCustomTerminalColors = false,
+    this.terminalColorOverrides = const {},
     this.locale = '',
     this.uiFontId = FontCatalog.defaultUiId,
     this.monoFontId = FontCatalog.defaultMonoId,
@@ -122,6 +126,10 @@ class LayoutPreferences {
       ),
       terminalThemeMode: _terminalThemeModeValue(
         json['terminalThemeMode'] as String?,
+      ),
+      useCustomTerminalColors: json['useCustomTerminalColors'] as bool? ?? false,
+      terminalColorOverrides: _terminalColorOverridesFromJson(
+        json['terminalColorOverrides'],
       ),
       locale: json['locale'] as String? ?? '',
       uiFontId: normalizeUiFontId(json['uiFontId'] as String?),
@@ -190,6 +198,14 @@ class LayoutPreferences {
   final String uiZoomScale;
   final double uiZoomCustomMultiplier;
   final String terminalThemeMode;
+
+  /// When true, [terminalColorOverrides] are layered on top of the resolved
+  /// terminal theme (see `terminal_theme_mapper.dart`).
+  final bool useCustomTerminalColors;
+
+  /// Per-slot custom terminal colours. Keys are `kTerminalColorSlots`; values
+  /// are opaque ARGB ints (alpha forced `0xFF` on load). Unknown keys dropped.
+  final Map<String, int> terminalColorOverrides;
   final String locale;
   final String uiFontId;
   final String monoFontId;
@@ -223,6 +239,8 @@ class LayoutPreferences {
     String? uiZoomScale,
     double? uiZoomCustomMultiplier,
     String? terminalThemeMode,
+    bool? useCustomTerminalColors,
+    Map<String, int>? terminalColorOverrides,
     String? locale,
     String? uiFontId,
     String? monoFontId,
@@ -277,6 +295,11 @@ class LayoutPreferences {
       terminalThemeMode: terminalThemeMode == null
           ? this.terminalThemeMode
           : _terminalThemeModeValue(terminalThemeMode),
+      useCustomTerminalColors:
+          useCustomTerminalColors ?? this.useCustomTerminalColors,
+      terminalColorOverrides: terminalColorOverrides == null
+          ? this.terminalColorOverrides
+          : _sanitizeTerminalColorOverrides(terminalColorOverrides),
       locale: locale ?? this.locale,
       uiFontId: uiFontId == null ? this.uiFontId : normalizeUiFontId(uiFontId),
       monoFontId: monoFontId == null
@@ -322,6 +345,8 @@ class LayoutPreferences {
       uiZoomScale: uiZoomScale,
       uiZoomCustomMultiplier: uiZoomCustomMultiplier,
       terminalThemeMode: terminalThemeMode,
+      useCustomTerminalColors: useCustomTerminalColors,
+      terminalColorOverrides: terminalColorOverrides,
       locale: locale,
       uiFontId: uiFontId,
       monoFontId: monoFontId,
@@ -356,6 +381,8 @@ class LayoutPreferences {
       'uiZoomScale': uiZoomScale,
       'uiZoomCustomMultiplier': uiZoomCustomMultiplier,
       'terminalThemeMode': terminalThemeMode,
+      'useCustomTerminalColors': useCustomTerminalColors,
+      'terminalColorOverrides': Map<String, int>.from(terminalColorOverrides),
       'locale': locale,
       'uiFontId': uiFontId,
       'monoFontId': monoFontId,
@@ -387,11 +414,44 @@ double _doubleValue(Object? raw, {double fallback = 320.0}) {
   return fallback;
 }
 
-String _terminalThemeModeValue(String? raw) {
-  if (raw == 'adaptive' || raw == 'classicDark' || raw == 'highContrast') {
-    return raw!;
+/// Sanitizes a raw override map: drops unknown slot keys and non-int values,
+/// then forces each colour opaque (alpha `0xFF`). Returned map is unmodifiable.
+Map<String, int> _sanitizeTerminalColorOverrides(Map<String, int> raw) {
+  final out = <String, int>{};
+  for (final entry in raw.entries) {
+    if (!isTerminalColorSlot(entry.key)) continue;
+    out[entry.key] = normalizeTerminalColorValue(entry.value);
   }
-  return 'adaptive';
+  return Map<String, int>.unmodifiable(out);
+}
+
+/// [fromJson] variant tolerant of arbitrary JSON shapes (num values, non-string
+/// keys, non-map input) so a hand-edited prefs file can't poison rendering.
+Map<String, int> _terminalColorOverridesFromJson(Object? raw) {
+  if (raw is! Map) return const {};
+  final out = <String, int>{};
+  for (final entry in raw.entries) {
+    final key = entry.key;
+    if (key is! String || !isTerminalColorSlot(key)) continue;
+    final value = entry.value;
+    final intValue = value is int
+        ? value
+        : (value is num ? value.toInt() : null);
+    if (intValue == null) continue;
+    out[key] = normalizeTerminalColorValue(intValue);
+  }
+  return Map<String, int>.unmodifiable(out);
+}
+
+String _terminalThemeModeValue(String? raw) {
+  if (raw == null || raw.isEmpty) return 'adaptive';
+  if (raw == 'adaptive' || raw == 'classicDark' || raw == 'highContrast') {
+    return raw;
+  }
+  // Widened to built-in catalog ids (e.g. `dracula`); unknown ids resolve to
+  // adaptive at render time (`terminal_theme_mapper.dart`), so keep the raw
+  // value here rather than clobbering a valid catalog id.
+  return cmuxTerminalThemeById(raw) != null ? raw : 'adaptive';
 }
 
 WorkspaceEntryMode _workspaceEntryModeFromJson(String? raw) {

@@ -6393,4 +6393,76 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get resourceManagerKillFailed => 'Could not kill session.';
+
+  @override
+  String get terminalColorSchemeTitle => 'Terminal color scheme';
+
+  @override
+  String get terminalColorSchemeDescription =>
+      'Pick a built-in palette for embedded terminals, or tweak individual colors.';
+
+  @override
+  String get terminalColorSchemeGroupDark => 'Dark';
+
+  @override
+  String get terminalColorSchemeGroupLight => 'Light';
+
+  @override
+  String get terminalColorSchemeGroupLegacy => 'Adaptive & legacy';
+
+  @override
+  String terminalColorSchemeByAuthor(String author) {
+    return 'by $author';
+  }
+
+  @override
+  String get terminalColorPreviewTitle => 'Preview';
+
+  @override
+  String get terminalUseCustomColorsTitle => 'Use custom colors';
+
+  @override
+  String get terminalUseCustomColorsDescription =>
+      'Override individual palette slots on top of the selected scheme.';
+
+  @override
+  String get terminalCustomColorsSectionTitle => 'Custom colors';
+
+  @override
+  String get terminalColorResetAll => 'Reset all';
+
+  @override
+  String get terminalColorResetSlot => 'Reset to scheme color';
+
+  @override
+  String get terminalColorInvalidHex => 'Enter #RRGGBB or #AARRGGBB';
+
+  @override
+  String get terminalSlotBackground => 'Background';
+
+  @override
+  String get terminalSlotForeground => 'Foreground';
+
+  @override
+  String get terminalSlotCursor => 'Cursor';
+
+  @override
+  String get terminalSlotSelection => 'Selection';
+
+  @override
+  String get terminalSlotSearchHit => 'Search match';
+
+  @override
+  String get terminalSlotSearchHitCurrent => 'Current match';
+
+  @override
+  String get terminalSlotSearchHitFg => 'Match text';
+
+  @override
+  String get terminalSlotAccent => 'Accent';
+
+  @override
+  String terminalSlotAnsiLabel(String index) {
+    return 'ANSI $index';
+  }
 }

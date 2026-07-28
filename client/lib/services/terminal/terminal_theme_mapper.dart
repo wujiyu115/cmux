@@ -78,21 +78,83 @@ CmuxTerminalTheme? _catalogThemeForMode(String mode) {
   return null;
 }
 
+/// Applies per-slot custom colour overrides onto an already-packed
+/// [TerminalTheme] (used for the legacy adaptive/classicDark/highContrast
+/// branches, which have no [CmuxTerminalTheme]). The field mapping mirrors
+/// [CmuxTerminalTheme.toTerminalTheme] so the effect matches the catalog path.
+TerminalTheme _applyOverridesToTerminalTheme(
+  TerminalTheme theme,
+  Map<String, int> overrides,
+) {
+  int pick(String slot, int current) {
+    final value = overrides[slot];
+    return value == null ? current : (value & 0xFFFFFF);
+  }
+
+  final searchFg = pick('searchHitFg', theme.searchMatch.fg);
+  final cursorOverride = overrides['cursor'];
+  return TerminalTheme(
+    background: pick('background', theme.background),
+    foreground: pick('foreground', theme.foreground),
+    selection: pick('selection', theme.selection),
+    ansi: <int>[
+      for (var i = 0; i < theme.ansi.length; i++) pick('ansi$i', theme.ansi[i]),
+    ],
+    searchMatch: (bg: pick('searchHit', theme.searchMatch.bg), fg: searchFg),
+    searchFocused: (
+      bg: pick('searchHitCurrent', theme.searchFocused.bg),
+      fg: searchFg,
+    ),
+    hintStart: (bg: pick('accent', theme.hintStart.bg), fg: theme.hintStart.fg),
+    cursorText: theme.cursorText,
+    // Preserve the inverse-video sentinel (null) unless explicitly overridden.
+    cursorColor: cursorOverride != null
+        ? (cursorOverride & 0xFFFFFF)
+        : theme.cursorColor,
+    bellOverlay: theme.bellOverlay,
+  );
+}
+
 /// Maps TeamPilot layout theme modes to [TerminalTheme] (packed RGB).
 ///
 /// [chrome] selects which workspace card surface seeds the adaptive background
 /// (terminals always live on the workspace workbench card).
+///
+/// When [useCustomColors] is true, per-slot [colorOverrides] (keyed by
+/// `kTerminalColorSlots`, ARGB ints) are applied on top of the resolved theme.
+/// Catalog themes go through [applyTerminalColorOverrides]; legacy branches use
+/// [_applyOverridesToTerminalTheme]. Overrides change the packed colours, so the
+/// existing [terminalThemeFingerprint] naturally repaints live terminals — no
+/// separate fingerprint field is needed.
 TerminalTheme teampilotTerminalTheme(
   ColorScheme cs, {
   required bool isDark,
   required String mode,
   WorkspacePageChrome chrome = WorkspacePageChrome.workspace,
+  Map<String, int> colorOverrides = const {},
+  bool useCustomColors = false,
 }) {
+  final hasOverrides = useCustomColors && colorOverrides.isNotEmpty;
+
   final catalogTheme = _catalogThemeForMode(mode);
   if (catalogTheme != null) {
-    return catalogTheme.toTerminalTheme();
+    final effective = hasOverrides
+        ? applyTerminalColorOverrides(catalogTheme, colorOverrides)
+        : catalogTheme;
+    return effective.toTerminalTheme();
   }
 
+  final base = _legacyTerminalTheme(cs, isDark: isDark, mode: mode, chrome: chrome);
+  return hasOverrides ? _applyOverridesToTerminalTheme(base, colorOverrides) : base;
+}
+
+/// The legacy (non-catalog) adaptive / classicDark / highContrast theme bodies.
+TerminalTheme _legacyTerminalTheme(
+  ColorScheme cs, {
+  required bool isDark,
+  required String mode,
+  required WorkspacePageChrome chrome,
+}) {
   if (mode == 'classicDark') {
     return TerminalTheme(
       background: 0x0A0C10,

@@ -34,7 +34,6 @@ class LayoutAppearanceInLayoutSection extends StatelessWidget {
         String,
         double,
         String,
-        String,
       )
     >(
       selector: (state) {
@@ -53,7 +52,6 @@ class LayoutAppearanceInLayoutSection extends StatelessWidget {
           normalizeMonoFontId(state.preferences.monoFontId),
           normalizeTypographyScale(state.preferences.uiZoomScale),
           state.preferences.uiZoomCustomMultiplier,
-          state.preferences.terminalThemeMode,
           languagePreferenceUiValue(state.preferences.locale),
         );
       },
@@ -67,7 +65,6 @@ class LayoutAppearanceInLayoutSection extends StatelessWidget {
           monoFontId,
           uiZoomScale,
           uiZoomCustomMultiplier,
-          terminalThemeMode,
           langValue,
         ) = appearance;
         return BlocSelector<LayoutCubit, LayoutState, WorkspaceEntryMode>(
@@ -223,22 +220,6 @@ class LayoutAppearanceInLayoutSection extends StatelessWidget {
                       (c) => c.state.preferences.cotExpandToolsOnOpen,
                     ),
                     onChanged: controller.setCotExpandToolsOnOpen,
-                  ),
-                  showDividerBelow: true,
-                ),
-                TpPreferenceRow(
-                  title: '终端主题',
-                  subtitle: '跟随主题色或使用固定风格',
-                  trailing: TpCompactSelect<String>(
-                    value: terminalThemeMode,
-                    entries: const [
-                      ('adaptive', '跟随主题'),
-                      ('classicDark', '经典暗色'),
-                      ('highContrast', '高对比'),
-                    ],
-                    onChanged: (v) {
-                      if (v != null) controller.setTerminalThemeMode(v);
-                    },
                   ),
                   showDividerBelow: true,
                 ),

@@ -2432,5 +2432,33 @@
   "resourceManagerEmptyTree": "当前没有运行中的会话。",
   "resourceManagerAppProcess": "应用",
   "resourceManagerMetricsError": "无法刷新进程指标。",
-  "resourceManagerKillFailed": "无法结束会话。"
+  "resourceManagerKillFailed": "无法结束会话。",
+  "terminalColorSchemeTitle": "终端配色方案",
+  "terminalColorSchemeDescription": "为内置终端选择内建配色，或单独调整某些颜色。",
+  "terminalColorSchemeGroupDark": "暗色",
+  "terminalColorSchemeGroupLight": "亮色",
+  "terminalColorSchemeGroupLegacy": "自适应与经典",
+  "terminalColorSchemeByAuthor": "作者：{author}",
+  "@terminalColorSchemeByAuthor": {
+    "placeholders": { "author": { "type": "String" } }
+  },
+  "terminalColorPreviewTitle": "预览",
+  "terminalUseCustomColorsTitle": "使用自定义颜色",
+  "terminalUseCustomColorsDescription": "在所选配色之上覆盖单个调色板槽位。",
+  "terminalCustomColorsSectionTitle": "自定义颜色",
+  "terminalColorResetAll": "全部重置",
+  "terminalColorResetSlot": "恢复为配色方案颜色",
+  "terminalColorInvalidHex": "请输入 #RRGGBB 或 #AARRGGBB",
+  "terminalSlotBackground": "背景",
+  "terminalSlotForeground": "前景",
+  "terminalSlotCursor": "光标",
+  "terminalSlotSelection": "选区",
+  "terminalSlotSearchHit": "搜索匹配",
+  "terminalSlotSearchHitCurrent": "当前匹配",
+  "terminalSlotSearchHitFg": "匹配文字",
+  "terminalSlotAccent": "强调色",
+  "terminalSlotAnsiLabel": "ANSI {index}",
+  "@terminalSlotAnsiLabel": {
+    "placeholders": { "index": { "type": "String" } }
+  }
 }

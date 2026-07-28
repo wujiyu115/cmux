@@ -313,11 +313,19 @@ class _ChatWorkbenchBody extends StatelessWidget {
     final terminalThemeMode = context.select<LayoutCubit, String>(
       (cubit) => cubit.state.preferences.terminalThemeMode,
     );
+    final useCustomTerminalColors = context.select<LayoutCubit, bool>(
+      (cubit) => cubit.state.preferences.useCustomTerminalColors,
+    );
+    final terminalColorOverrides = context.select<LayoutCubit, Map<String, int>>(
+      (cubit) => cubit.state.preferences.terminalColorOverrides,
+    );
     final terminalTheme = teampilotTerminalTheme(
       cs,
       isDark: isDark,
       mode: terminalThemeMode,
       chrome: WorkspacePageChrome.workspace,
+      useCustomColors: useCustomTerminalColors,
+      colorOverrides: terminalColorOverrides,
     );
     final terminalBackground = Color(0xFF000000 | terminalTheme.background);
     final chatCubit = context.read<ChatCubit>();

@@ -5,6 +5,7 @@ import '../../l10n/l10n_extensions.dart';
 import '../../widgets/settings/workspace_hub_shell.dart';
 import 'layout_appearance_in_layout_section.dart';
 import 'layout_region_visibility_section.dart';
+import 'terminal_theme/terminal_theme_config_card.dart';
 
 class LayoutConfigWorkspace extends StatelessWidget {
   const LayoutConfigWorkspace({this.showHeading = true, super.key});
@@ -44,6 +45,8 @@ class _LayoutSettingsScroll extends StatelessWidget {
           TpCard.outlined(child: LayoutRegionVisibilitySection()),
           SizedBox(height: _cardGap),
           TpCard.outlined(child: LayoutAppearanceInLayoutSection()),
+          SizedBox(height: _cardGap),
+          TpCard.outlined(child: TerminalThemeConfigCard()),
         ],
       ),
     );

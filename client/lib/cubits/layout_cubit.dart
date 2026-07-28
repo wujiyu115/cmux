@@ -201,6 +201,31 @@ class LayoutCubit extends Cubit<LayoutState> {
   Future<void> setTerminalThemeMode(String mode) =>
       _save(state.preferences.copyWith(terminalThemeMode: mode));
 
+  Future<void> setUseCustomTerminalColors(bool value) =>
+      _save(state.preferences.copyWith(useCustomTerminalColors: value));
+
+  /// Sets (or replaces) one slot override; [slot] must be a `kTerminalColorSlots`
+  /// key and [argb] is coerced opaque by the model sanitizer.
+  Future<void> setTerminalColorOverride(String slot, int argb) {
+    final next = Map<String, int>.from(state.preferences.terminalColorOverrides)
+      ..[slot] = argb;
+    return _save(state.preferences.copyWith(terminalColorOverrides: next));
+  }
+
+  /// Clears a single slot override (falls back to the theme's value).
+  Future<void> clearTerminalColorOverride(String slot) {
+    if (!state.preferences.terminalColorOverrides.containsKey(slot)) {
+      return Future.value();
+    }
+    final next = Map<String, int>.from(state.preferences.terminalColorOverrides)
+      ..remove(slot);
+    return _save(state.preferences.copyWith(terminalColorOverrides: next));
+  }
+
+  /// Clears every slot override.
+  Future<void> clearTerminalColorOverrides() =>
+      _save(state.preferences.copyWith(terminalColorOverrides: const {}));
+
   Future<void> setLocale(String locale) =>
       _save(state.preferences.copyWith(locale: locale));
 

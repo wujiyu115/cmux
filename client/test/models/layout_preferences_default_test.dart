@@ -146,6 +146,87 @@ void main() {
     expect(parsed.toJson()['cotExpandToolsOnOpen'], isTrue);
   });
 
+  test('terminal custom colour fields default off/empty', () {
+    const prefs = LayoutPreferences();
+    expect(prefs.useCustomTerminalColors, isFalse);
+    expect(prefs.terminalColorOverrides, isEmpty);
+    final parsed = LayoutPreferences.fromJson(const {});
+    expect(parsed.useCustomTerminalColors, isFalse);
+    expect(parsed.terminalColorOverrides, isEmpty);
+  });
+
+  test('terminal custom colour fields round-trip through JSON', () {
+    final prefs = const LayoutPreferences().copyWith(
+      useCustomTerminalColors: true,
+      terminalColorOverrides: const {
+        'background': 0xFF102030,
+        'ansi5': 0xFFAABBCC,
+      },
+    );
+    final parsed = LayoutPreferences.fromJson(prefs.toJson());
+    expect(parsed.useCustomTerminalColors, isTrue);
+    expect(parsed.terminalColorOverrides['background'], 0xFF102030);
+    expect(parsed.terminalColorOverrides['ansi5'], 0xFFAABBCC);
+  });
+
+  test('terminalColorOverrides drops unknown keys and forces opaque alpha', () {
+    final parsed = LayoutPreferences.fromJson(const {
+      'terminalColorOverrides': {
+        'background': 0x00123456, // transparent → forced 0xFF
+        'ansi16': 0xFF000000, // out of range → dropped
+        'bogus': 0xFFFFFFFF, // unknown slot → dropped
+      },
+    });
+    expect(parsed.terminalColorOverrides.keys, ['background']);
+    expect(parsed.terminalColorOverrides['background'], 0xFF123456);
+  });
+
+  test('terminalColorOverrides tolerates non-map / num values', () {
+    expect(
+      LayoutPreferences.fromJson(const {
+        'terminalColorOverrides': 'not-a-map',
+      }).terminalColorOverrides,
+      isEmpty,
+    );
+    // A JSON num decoded as double is coerced to int, then forced opaque.
+    final parsed = LayoutPreferences.fromJson(const {
+      'terminalColorOverrides': {'cursor': 0xFF445566},
+    });
+    expect(parsed.terminalColorOverrides['cursor'], 0xFF445566);
+  });
+
+  test('copyWith sanitizes overrides (unknown dropped, alpha forced)', () {
+    final prefs = const LayoutPreferences().copyWith(
+      terminalColorOverrides: const {
+        'foreground': 0x11223344,
+        'nope': 0xFFFFFFFF,
+      },
+    );
+    expect(prefs.terminalColorOverrides.keys, ['foreground']);
+    expect(prefs.terminalColorOverrides['foreground'], 0xFF223344);
+  });
+
+  test('terminalThemeMode widened to accept catalog ids', () {
+    expect(
+      LayoutPreferences.fromJson(const {
+        'terminalThemeMode': 'dracula',
+      }).terminalThemeMode,
+      'dracula',
+    );
+    expect(
+      LayoutPreferences.fromJson(const {
+        'terminalThemeMode': 'totally-bogus',
+      }).terminalThemeMode,
+      'adaptive',
+    );
+    expect(
+      LayoutPreferences.fromJson(const {
+        'terminalThemeMode': 'classicDark',
+      }).terminalThemeMode,
+      'classicDark',
+    );
+  });
+
   test('markdownOpenMode defaults to preview and round-trips', () {
     expect(
       const LayoutPreferences().markdownOpenMode,

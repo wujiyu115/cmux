@@ -29,6 +29,8 @@ TerminalTheme resolveTerminalThemeFromLayout({
     isDark: isDark,
     mode: preferences.terminalThemeMode,
     chrome: WorkspacePageChrome.workspace,
+    useCustomColors: preferences.useCustomTerminalColors,
+    colorOverrides: preferences.terminalColorOverrides,
   );
 }
 

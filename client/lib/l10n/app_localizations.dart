@@ -11489,6 +11489,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not kill session.'**
   String get resourceManagerKillFailed;
+
+  /// No description provided for @terminalColorSchemeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Terminal color scheme'**
+  String get terminalColorSchemeTitle;
+
+  /// No description provided for @terminalColorSchemeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a built-in palette for embedded terminals, or tweak individual colors.'**
+  String get terminalColorSchemeDescription;
+
+  /// No description provided for @terminalColorSchemeGroupDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get terminalColorSchemeGroupDark;
+
+  /// No description provided for @terminalColorSchemeGroupLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get terminalColorSchemeGroupLight;
+
+  /// No description provided for @terminalColorSchemeGroupLegacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Adaptive & legacy'**
+  String get terminalColorSchemeGroupLegacy;
+
+  /// No description provided for @terminalColorSchemeByAuthor.
+  ///
+  /// In en, this message translates to:
+  /// **'by {author}'**
+  String terminalColorSchemeByAuthor(String author);
+
+  /// No description provided for @terminalColorPreviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview'**
+  String get terminalColorPreviewTitle;
+
+  /// No description provided for @terminalUseCustomColorsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Use custom colors'**
+  String get terminalUseCustomColorsTitle;
+
+  /// No description provided for @terminalUseCustomColorsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Override individual palette slots on top of the selected scheme.'**
+  String get terminalUseCustomColorsDescription;
+
+  /// No description provided for @terminalCustomColorsSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom colors'**
+  String get terminalCustomColorsSectionTitle;
+
+  /// No description provided for @terminalColorResetAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset all'**
+  String get terminalColorResetAll;
+
+  /// No description provided for @terminalColorResetSlot.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to scheme color'**
+  String get terminalColorResetSlot;
+
+  /// No description provided for @terminalColorInvalidHex.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter #RRGGBB or #AARRGGBB'**
+  String get terminalColorInvalidHex;
+
+  /// No description provided for @terminalSlotBackground.
+  ///
+  /// In en, this message translates to:
+  /// **'Background'**
+  String get terminalSlotBackground;
+
+  /// No description provided for @terminalSlotForeground.
+  ///
+  /// In en, this message translates to:
+  /// **'Foreground'**
+  String get terminalSlotForeground;
+
+  /// No description provided for @terminalSlotCursor.
+  ///
+  /// In en, this message translates to:
+  /// **'Cursor'**
+  String get terminalSlotCursor;
+
+  /// No description provided for @terminalSlotSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Selection'**
+  String get terminalSlotSelection;
+
+  /// No description provided for @terminalSlotSearchHit.
+  ///
+  /// In en, this message translates to:
+  /// **'Search match'**
+  String get terminalSlotSearchHit;
+
+  /// No description provided for @terminalSlotSearchHitCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Current match'**
+  String get terminalSlotSearchHitCurrent;
+
+  /// No description provided for @terminalSlotSearchHitFg.
+  ///
+  /// In en, this message translates to:
+  /// **'Match text'**
+  String get terminalSlotSearchHitFg;
+
+  /// No description provided for @terminalSlotAccent.
+  ///
+  /// In en, this message translates to:
+  /// **'Accent'**
+  String get terminalSlotAccent;
+
+  /// No description provided for @terminalSlotAnsiLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'ANSI {index}'**
+  String terminalSlotAnsiLabel(String index);
 }
 
 class _AppLocalizationsDelegate

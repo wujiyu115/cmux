@@ -2861,5 +2861,33 @@
   "resourceManagerEmptyTree": "Nothing running right now.",
   "resourceManagerAppProcess": "App",
   "resourceManagerMetricsError": "Could not refresh process metrics.",
-  "resourceManagerKillFailed": "Could not kill session."
+  "resourceManagerKillFailed": "Could not kill session.",
+  "terminalColorSchemeTitle": "Terminal color scheme",
+  "terminalColorSchemeDescription": "Pick a built-in palette for embedded terminals, or tweak individual colors.",
+  "terminalColorSchemeGroupDark": "Dark",
+  "terminalColorSchemeGroupLight": "Light",
+  "terminalColorSchemeGroupLegacy": "Adaptive & legacy",
+  "terminalColorSchemeByAuthor": "by {author}",
+  "@terminalColorSchemeByAuthor": {
+    "placeholders": { "author": { "type": "String" } }
+  },
+  "terminalColorPreviewTitle": "Preview",
+  "terminalUseCustomColorsTitle": "Use custom colors",
+  "terminalUseCustomColorsDescription": "Override individual palette slots on top of the selected scheme.",
+  "terminalCustomColorsSectionTitle": "Custom colors",
+  "terminalColorResetAll": "Reset all",
+  "terminalColorResetSlot": "Reset to scheme color",
+  "terminalColorInvalidHex": "Enter #RRGGBB or #AARRGGBB",
+  "terminalSlotBackground": "Background",
+  "terminalSlotForeground": "Foreground",
+  "terminalSlotCursor": "Cursor",
+  "terminalSlotSelection": "Selection",
+  "terminalSlotSearchHit": "Search match",
+  "terminalSlotSearchHitCurrent": "Current match",
+  "terminalSlotSearchHitFg": "Match text",
+  "terminalSlotAccent": "Accent",
+  "terminalSlotAnsiLabel": "ANSI {index}",
+  "@terminalSlotAnsiLabel": {
+    "placeholders": { "index": { "type": "String" } }
+  }
 }

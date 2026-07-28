@@ -347,11 +347,19 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
     final mode = context.select<LayoutCubit, String>(
       (cubit) => cubit.state.preferences.terminalThemeMode,
     );
+    final useCustomColors = context.select<LayoutCubit, bool>(
+      (cubit) => cubit.state.preferences.useCustomTerminalColors,
+    );
+    final colorOverrides = context.select<LayoutCubit, Map<String, int>>(
+      (cubit) => cubit.state.preferences.terminalColorOverrides,
+    );
     return teampilotTerminalTheme(
       cs,
       isDark: isDark,
       mode: mode,
       chrome: WorkspacePageChrome.workspace,
+      useCustomColors: useCustomColors,
+      colorOverrides: colorOverrides,
     );
   }
 

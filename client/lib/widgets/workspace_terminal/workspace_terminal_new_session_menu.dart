@@ -114,7 +114,13 @@ Future<void> showWorkspaceTerminalSettingsSheet(BuildContext context) async {
     builder: (ctx) {
       return BlocBuilder<LayoutCubit, LayoutState>(
         builder: (context, state) {
-          final mode = state.preferences.terminalThemeMode;
+          // This quick sheet only exposes the three legacy presets; a catalog
+          // id (chosen in the full settings section) shows as "adaptive" here.
+          final rawMode = state.preferences.terminalThemeMode;
+          final mode =
+              (rawMode == 'classicDark' || rawMode == 'highContrast')
+              ? rawMode
+              : 'adaptive';
           return SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
