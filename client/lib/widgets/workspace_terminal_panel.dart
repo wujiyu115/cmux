@@ -30,6 +30,8 @@ import '../services/terminal/workspace_terminal_session_ops.dart';
 import '../services/workspace/workspace_tools_scope.dart';
 import '../theme/workspace_surface_layers.dart';
 import '../utils/ui/app_keys.dart';
+import 'terminal/terminal_pane_keys.dart';
+import 'terminal/terminal_split_view.dart';
 import 'workspace_terminal/workspace_terminal_body_kind.dart';
 import 'workspace_terminal/workspace_terminal_empty_pane.dart';
 import 'workspace_terminal/workspace_terminal_view.dart';
@@ -116,13 +118,10 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel> {
   var _sshReconnectHooked = false;
   StreamSubscription<String>? _sshReconnectSub;
 
-  final _terminalViewKey = GlobalKey<TerminalViewState>(
-    debugLabel: kWorkspaceTerminalViewDebugLabel,
-  );
+  final _paneKeys = TerminalPaneKeys();
 
   TerminalLayoutCoordinator? _coordinator;
-  PtyResizeHoldTarget? _registeredHoldTarget;
-  TerminalViewState? _registeredViewState;
+  final Map<TerminalViewState, PtyResizeHoldTarget> _registeredHoldTargets = {};
   var _registrationScheduled = false;
   final Map<String, int> _lastTerminalThemeFingerprintByEntry = {};
   final _menuOpen = ValueNotifier(false);
@@ -181,9 +180,10 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel> {
   void dispose() {
     widget.holdHandle?._unbind(this);
     unawaited(_sshReconnectSub?.cancel());
-    if (_registeredHoldTarget != null) {
-      _coordinator?.unregister(_registeredHoldTarget!);
+    for (final target in _registeredHoldTargets.values) {
+      _coordinator?.unregister(target);
     }
+    _registeredHoldTargets.clear();
     _coordinator?.dispose();
     _menuOpen.dispose();
     super.dispose();
@@ -354,20 +354,24 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel> {
     );
   }
 
+  /// Diffs the registered hold targets against the currently-mounted pane
+  /// states so every pane (including offstage/zoomed-away ones) is held during
+  /// a divider drag.
   void _syncTerminalViewRegistration() {
-    final state = _terminalViewKey.currentState;
-    if (identical(state, _registeredViewState)) return;
-    if (_registeredHoldTarget != null) {
-      _coordinator?.unregister(_registeredHoldTarget!);
-      _registeredHoldTarget = null;
-      _registeredViewState = null;
+    final coordinator = _coordinator ??= TerminalLayoutCoordinator();
+    final live = _paneKeys.mountedStates.toSet();
+    final gone =
+        _registeredHoldTargets.keys.where((s) => !live.contains(s)).toList();
+    for (final state in gone) {
+      final target = _registeredHoldTargets.remove(state);
+      if (target != null) coordinator.unregister(target);
     }
-    if (state == null) return;
-    final target = ptyHoldTargetFor(state);
-    _coordinator ??= TerminalLayoutCoordinator();
-    _coordinator!.register(target);
-    _registeredHoldTarget = target;
-    _registeredViewState = state;
+    for (final state in live) {
+      if (_registeredHoldTargets.containsKey(state)) continue;
+      final target = ptyHoldTargetFor(state);
+      coordinator.register(target);
+      _registeredHoldTargets[state] = target;
+    }
   }
 
   void _scheduleTerminalViewRegistration() {
@@ -382,7 +386,9 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel> {
   void _refocusTerminal() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      _terminalViewKey.currentState?.requestTerminalFocus();
+      final id = _group.activeId;
+      if (id == null) return;
+      _paneKeys.stateFor(id)?.requestTerminalFocus();
     });
   }
 
@@ -562,18 +568,42 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel> {
           onNewTerminal: _onEmptyNewTerminal,
         );
       case WorkspaceTerminalBodyKind.activeSession:
-        final terminalView = WorkspaceTerminalView(
-          entry: active!,
-          theme: theme,
-          terminalViewKey: _terminalViewKey,
-          siblings: _group.entries,
-          workspaceId: widget.workspaceId,
-          onContextMenu: (position, cell) =>
-              _showContextMenu(context, active, position, cell),
+        _paneKeys.prune(_group.entries.map((e) => e.id).toSet());
+        final surface =
+            _group.surfaceForPane(active!.id) ?? _group.activeSurface;
+        if (surface == null) {
+          terminalBody = const SizedBox.shrink();
+          break;
+        }
+        final splitView = TerminalSplitView(
+          surface: surface,
+          paneKeys: _paneKeys,
+          coordinator: _coordinator ??= TerminalLayoutCoordinator(),
+          focusBorderColor: Theme.of(context).colorScheme.primary,
+          paneBuilder: (paneContext, paneId, key, isFocused) {
+            final entry = _group.entryById(paneId);
+            if (entry == null) return const SizedBox.shrink();
+            return WorkspaceTerminalView(
+              entry: entry,
+              theme: theme,
+              terminalViewKey: key,
+              siblings: _group.entries,
+              workspaceId: widget.workspaceId,
+              onContextMenu: (position, cell) =>
+                  _showContextMenu(context, entry, position, cell),
+            );
+          },
+          onSurfaceChanged: (s) => _group.updateSurface(s),
+          // Every pointer-down in a pane reports focus; skip the rebuild when
+          // that pane already has it.
+          onPaneFocused: (paneId) {
+            if (_group.activeId == paneId) return;
+            _selectEntry(paneId);
+          },
         );
         terminalBody = ValueListenableBuilder<bool>(
           valueListenable: _menuOpen,
-          child: terminalView,
+          child: splitView,
           builder: (context, menuOpen, child) {
             return SelectionAskAiFabHost(
               listenable: active.controller,

@@ -205,6 +205,67 @@ void main() {
     });
   });
 
+  group('branchAtPath', () {
+    test('empty path targets the root branch', () {
+      final b = branchAtPath(asymmetric(), const []);
+      expect(b, isNotNull);
+      expect(b!.ratio, 0.5);
+    });
+
+    test('resolves nested branch paths', () {
+      expect(branchAtPath(asymmetric(), const [0])!.ratio, 0.3);
+      expect(branchAtPath(asymmetric(), const [0, 1])!.ratio, 0.7);
+    });
+
+    test('path ending on a leaf returns null', () {
+      expect(branchAtPath(asymmetric(), const [1]), isNull); // d is a leaf
+      expect(branchAtPath(asymmetric(), const [0, 0]), isNull); // a is a leaf
+    });
+
+    test('path descending into a leaf returns null', () {
+      expect(branchAtPath(asymmetric(), const [0, 1, 0, 0]), isNull); // past b
+    });
+
+    test('out-of-range step index returns null', () {
+      expect(branchAtPath(asymmetric(), const [2]), isNull);
+      expect(branchAtPath(asymmetric(), const [-1]), isNull);
+    });
+  });
+
+  group('setRatioAtPath', () {
+    test('empty path resizes the root branch', () {
+      final tree = setRatioAtPath(asymmetric(), const [], 0.42) as SplitBranch;
+      expect(tree.ratio, 0.42);
+      // children untouched
+      expect((tree.first as SplitBranch).ratio, 0.3);
+      expect(tree.second, const SplitLeaf('d'));
+    });
+
+    test('resizes a deep nested branch, leaving others untouched', () {
+      final tree = setRatioAtPath(asymmetric(), const [0, 1], 0.25);
+      final inner = (branchAtPath(tree, const [0, 1]))!;
+      expect(inner.ratio, 0.25);
+      expect(branchAtPath(tree, const [])!.ratio, 0.5);
+      expect(branchAtPath(tree, const [0])!.ratio, 0.3);
+    });
+
+    test('clamps to 0.1..0.9', () {
+      expect(branchAtPath(setRatioAtPath(asymmetric(), const [0], 5.0), const [0])!.ratio, 0.9);
+      expect(branchAtPath(setRatioAtPath(asymmetric(), const [0], -5.0), const [0])!.ratio, 0.1);
+    });
+
+    test('path into a leaf returns the tree unchanged', () {
+      final root = asymmetric();
+      expect(setRatioAtPath(root, const [1], 0.3), root); // d is a leaf
+      expect(setRatioAtPath(root, const [0, 0], 0.3), root); // a is a leaf
+    });
+
+    test('out-of-range step returns the tree unchanged', () {
+      final root = asymmetric();
+      expect(setRatioAtPath(root, const [2], 0.3), root);
+    });
+  });
+
   group('swapPanes', () {
     test('swaps two leaves in place', () {
       final tree = swapPanes(asymmetric(), 'a', 'd');

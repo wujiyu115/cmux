@@ -221,6 +221,51 @@ SplitNode swapPanes(SplitNode root, String a, String b) {
   return walk(root);
 }
 
+/// The [SplitBranch] reached by following [path] (each step 0 = [SplitBranch.first],
+/// 1 = [SplitBranch.second]) from [root]. Empty path targets [root] itself.
+/// Returns `null` when the path leaves the tree, hits a leaf, or ends on a leaf.
+SplitBranch? branchAtPath(SplitNode root, List<int> path) {
+  SplitNode node = root;
+  for (final step in path) {
+    if (node is! SplitBranch) return null;
+    switch (step) {
+      case 0:
+        node = node.first;
+      case 1:
+        node = node.second;
+      default:
+        return null;
+    }
+  }
+  return node is SplitBranch ? node : null;
+}
+
+/// Returns a new tree with the branch at [path] (see [branchAtPath]) given
+/// [ratio], clamped to 0.1..0.9. An unresolvable path (out of range, into a
+/// leaf, or not ending on a branch) returns [root] unchanged.
+SplitNode setRatioAtPath(SplitNode root, List<int> path, double ratio) {
+  final clamped = ratio.clamp(0.1, 0.9).toDouble();
+  SplitNode? recur(SplitNode node, int depth) {
+    if (depth == path.length) {
+      if (node is! SplitBranch) return null;
+      return node.copyWith(ratio: clamped);
+    }
+    if (node is! SplitBranch) return null;
+    switch (path[depth]) {
+      case 0:
+        final nf = recur(node.first, depth + 1);
+        return nf == null ? null : node.copyWith(first: nf);
+      case 1:
+        final ns = recur(node.second, depth + 1);
+        return ns == null ? null : node.copyWith(second: ns);
+      default:
+        return null;
+    }
+  }
+
+  return recur(root, 0) ?? root;
+}
+
 SplitNode _spine(List<String> ids, SplitAxis axis, String label) {
   if (ids.isEmpty) {
     throw ArgumentError.value(ids, 'paneIds', '$label requires at least 1 id');
