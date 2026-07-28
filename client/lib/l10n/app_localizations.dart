@@ -4340,6 +4340,78 @@ abstract class AppLocalizations {
   /// **'Run in pane'**
   String get commandLogRunInPane;
 
+  /// No description provided for @commandHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Command history'**
+  String get commandHistoryTitle;
+
+  /// No description provided for @commandHistoryPaneTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Command history · Pane {pane}'**
+  String commandHistoryPaneTitle(String pane);
+
+  /// No description provided for @commandHistorySearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search commands'**
+  String get commandHistorySearchHint;
+
+  /// No description provided for @commandHistoryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter = run, Shift+Enter = insert'**
+  String get commandHistoryHint;
+
+  /// No description provided for @commandHistoryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No command history found yet for this pane.'**
+  String get commandHistoryEmpty;
+
+  /// No description provided for @commandHistoryNoMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'No commands match your search'**
+  String get commandHistoryNoMatches;
+
+  /// No description provided for @commandHistoryCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} commands'**
+  String commandHistoryCount(int count);
+
+  /// No description provided for @commandHistoryCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get commandHistoryCopy;
+
+  /// No description provided for @commandHistoryCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Command copied'**
+  String get commandHistoryCopied;
+
+  /// No description provided for @commandHistoryInsert.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert'**
+  String get commandHistoryInsert;
+
+  /// No description provided for @commandHistoryRun.
+  ///
+  /// In en, this message translates to:
+  /// **'Run'**
+  String get commandHistoryRun;
+
+  /// No description provided for @commandHistoryClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get commandHistoryClose;
+
   /// No description provided for @terminalScrollbackLinesTitle.
   ///
   /// In en, this message translates to:
@@ -11543,6 +11615,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Show command log'**
   String get shortcutsTerminalCommandLog;
+
+  /// No description provided for @shortcutsTerminalCommandHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Show command history'**
+  String get shortcutsTerminalCommandHistory;
 
   /// No description provided for @resourceManagerTitle.
   ///

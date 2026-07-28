@@ -2257,6 +2257,46 @@ class AppLocalizationsZh extends AppLocalizations {
   String get commandLogRunInPane => '在当前窗格执行';
 
   @override
+  String get commandHistoryTitle => '命令历史';
+
+  @override
+  String commandHistoryPaneTitle(String pane) {
+    return '命令历史 · 窗格 $pane';
+  }
+
+  @override
+  String get commandHistorySearchHint => '搜索命令';
+
+  @override
+  String get commandHistoryHint => 'Enter = 执行，Shift+Enter = 插入';
+
+  @override
+  String get commandHistoryEmpty => '该窗格暂无命令历史。';
+
+  @override
+  String get commandHistoryNoMatches => '没有匹配的命令';
+
+  @override
+  String commandHistoryCount(int count) {
+    return '$count 条命令';
+  }
+
+  @override
+  String get commandHistoryCopy => '复制';
+
+  @override
+  String get commandHistoryCopied => '已复制命令';
+
+  @override
+  String get commandHistoryInsert => '插入';
+
+  @override
+  String get commandHistoryRun => '执行';
+
+  @override
+  String get commandHistoryClose => '关闭';
+
+  @override
   String get terminalScrollbackLinesTitle => '终端滚动缓冲行数';
 
   @override
@@ -6174,6 +6214,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get shortcutsTerminalCommandLog => '显示命令日志';
+
+  @override
+  String get shortcutsTerminalCommandHistory => '显示命令历史';
 
   @override
   String get resourceManagerTitle => '资源管理器';

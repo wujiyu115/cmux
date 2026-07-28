@@ -922,6 +922,24 @@
   "commandLogCopied": "命令已复制",
   "commandLogInsertIntoPane": "插入到当前窗格",
   "commandLogRunInPane": "在当前窗格执行",
+  "commandHistoryTitle": "命令历史",
+  "commandHistoryPaneTitle": "命令历史 · 窗格 {pane}",
+  "@commandHistoryPaneTitle": {
+    "placeholders": { "pane": { "type": "String" } }
+  },
+  "commandHistorySearchHint": "搜索命令",
+  "commandHistoryHint": "Enter = 执行，Shift+Enter = 插入",
+  "commandHistoryEmpty": "该窗格暂无命令历史。",
+  "commandHistoryNoMatches": "没有匹配的命令",
+  "commandHistoryCount": "{count} 条命令",
+  "@commandHistoryCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "commandHistoryCopy": "复制",
+  "commandHistoryCopied": "已复制命令",
+  "commandHistoryInsert": "插入",
+  "commandHistoryRun": "执行",
+  "commandHistoryClose": "关闭",
   "terminalScrollbackLinesTitle": "终端滚动缓冲行数",
   "terminalScrollbackLinesDescription": "每个会话终端保留的最大行数",
   "terminalLinkClickOpensInAppTitle": "在应用内打开终端链接",
@@ -2436,6 +2454,7 @@
   "shortcutsTerminalLayoutGrid": "布局：网格",
   "shortcutsTerminalLayoutMainStack": "布局：主窗格 + 堆叠",
   "shortcutsTerminalCommandLog": "显示命令日志",
+  "shortcutsTerminalCommandHistory": "显示命令历史",
 
   "resourceManagerTitle": "资源管理器",
   "resourceManagerPanelTitle": "资源管理器 - 会话",

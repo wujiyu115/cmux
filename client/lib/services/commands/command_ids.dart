@@ -66,6 +66,7 @@ abstract final class CommandIds {
   static const String terminalLayoutGrid = 'terminal.layout.grid';
   static const String terminalLayoutMainStack = 'terminal.layout.mainStack';
   static const String terminalCommandLog = 'terminal.commandLog.show';
+  static const String terminalCommandHistory = 'terminal.commandHistory.show';
 
   // App
   static const String commandPalette = 'app.commandPalette';

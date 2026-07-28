@@ -113,6 +113,7 @@ void main() {
       CommandIds.terminalLayoutGrid,
       CommandIds.terminalLayoutMainStack,
       CommandIds.terminalCommandLog,
+      CommandIds.terminalCommandHistory,
     };
     for (final id in terminalIds) {
       final def = CommandCatalog.v1.singleWhere((c) => c.id == id);

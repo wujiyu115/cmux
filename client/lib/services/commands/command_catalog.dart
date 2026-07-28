@@ -458,5 +458,15 @@ abstract final class CommandCatalog {
       terminalPassthrough: true,
       titleL10nKey: 'shortcutsTerminalCommandLog',
     ),
+    CommandDefinition(
+      id: CommandIds.terminalCommandHistory,
+      category: CommandCategory.terminal,
+      defaultChords: [
+        KeyChord(key: 'h', mods: [KeyChordMod.mod, KeyChordMod.shift]),
+      ],
+      when: ShortcutWhen.hasWorkspace,
+      terminalPassthrough: true,
+      titleL10nKey: 'shortcutsTerminalCommandHistory',
+    ),
   ];
 }

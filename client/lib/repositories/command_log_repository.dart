@@ -114,6 +114,36 @@ class CommandLogRepository {
     );
   }
 
+  /// Distinct recent command lines, newest first, optionally scoped to one pane.
+  ///
+  /// Scans day files newest-first (so the picker lists this session's commands
+  /// ahead of last week's), across at most [maxDays] files, and returns at most
+  /// [limit] unique commands — the first occurrence of a repeat wins, keeping
+  /// its most-recent position. [paneId] empty or null means "every pane". Backs
+  /// the command history picker, which per cmux is pane-scoped.
+  Future<List<String>> recentCommands({
+    String? paneId,
+    int maxDays = 14,
+    int limit = 1000,
+  }) async {
+    final result = <String>[];
+    final seen = <String>{};
+    final wantPane = paneId != null && paneId.isNotEmpty;
+    var scanned = 0;
+    for (final date in await availableDates()) {
+      if (scanned >= maxDays || result.length >= limit) break;
+      scanned++;
+      final day = await load(date);
+      for (final entry in day.entries) {
+        if (wantPane && entry.paneId != paneId) continue;
+        if (!seen.add(entry.command)) continue;
+        result.add(entry.command);
+        if (result.length >= limit) break;
+      }
+    }
+    return result;
+  }
+
   /// Deletes day files older than [retentionDays] (0 or negative keeps
   /// everything). Returns the deleted dates.
   Future<List<DateTime>> applyRetention(int retentionDays) async {

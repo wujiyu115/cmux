@@ -995,6 +995,24 @@
   "commandLogCopied": "Command copied",
   "commandLogInsertIntoPane": "Insert into pane",
   "commandLogRunInPane": "Run in pane",
+  "commandHistoryTitle": "Command history",
+  "commandHistoryPaneTitle": "Command history · Pane {pane}",
+  "@commandHistoryPaneTitle": {
+    "placeholders": { "pane": { "type": "String" } }
+  },
+  "commandHistorySearchHint": "Search commands",
+  "commandHistoryHint": "Enter = run, Shift+Enter = insert",
+  "commandHistoryEmpty": "No command history found yet for this pane.",
+  "commandHistoryNoMatches": "No commands match your search",
+  "commandHistoryCount": "{count} commands",
+  "@commandHistoryCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "commandHistoryCopy": "Copy",
+  "commandHistoryCopied": "Command copied",
+  "commandHistoryInsert": "Insert",
+  "commandHistoryRun": "Run",
+  "commandHistoryClose": "Close",
   "terminalScrollbackLinesTitle": "Terminal scrollback lines",
   "terminalScrollbackLinesDescription": "Maximum lines kept in each session terminal buffer",
   "terminalLinkClickOpensInAppTitle": "Open terminal links in app",
@@ -2868,6 +2886,7 @@
   "shortcutsTerminalLayoutGrid": "Layout: Grid",
   "shortcutsTerminalLayoutMainStack": "Layout: Main + Stack",
   "shortcutsTerminalCommandLog": "Show command log",
+  "shortcutsTerminalCommandHistory": "Show command history",
 
   "resourceManagerTitle": "Resource Manager",
   "resourceManagerPanelTitle": "Resource Manager - Sessions",

@@ -2359,6 +2359,47 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commandLogRunInPane => 'Run in pane';
 
   @override
+  String get commandHistoryTitle => 'Command history';
+
+  @override
+  String commandHistoryPaneTitle(String pane) {
+    return 'Command history · Pane $pane';
+  }
+
+  @override
+  String get commandHistorySearchHint => 'Search commands';
+
+  @override
+  String get commandHistoryHint => 'Enter = run, Shift+Enter = insert';
+
+  @override
+  String get commandHistoryEmpty =>
+      'No command history found yet for this pane.';
+
+  @override
+  String get commandHistoryNoMatches => 'No commands match your search';
+
+  @override
+  String commandHistoryCount(int count) {
+    return '$count commands';
+  }
+
+  @override
+  String get commandHistoryCopy => 'Copy';
+
+  @override
+  String get commandHistoryCopied => 'Command copied';
+
+  @override
+  String get commandHistoryInsert => 'Insert';
+
+  @override
+  String get commandHistoryRun => 'Run';
+
+  @override
+  String get commandHistoryClose => 'Close';
+
+  @override
   String get terminalScrollbackLinesTitle => 'Terminal scrollback lines';
 
   @override
@@ -6417,6 +6458,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shortcutsTerminalCommandLog => 'Show command log';
+
+  @override
+  String get shortcutsTerminalCommandHistory => 'Show command history';
 
   @override
   String get resourceManagerTitle => 'Resource Manager';

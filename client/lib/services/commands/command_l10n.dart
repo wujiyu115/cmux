@@ -85,6 +85,7 @@ String? _titleForKey(AppLocalizations l10n, String titleL10nKey) {
     'shortcutsTerminalLayoutGrid' => l10n.shortcutsTerminalLayoutGrid,
     'shortcutsTerminalLayoutMainStack' => l10n.shortcutsTerminalLayoutMainStack,
     'shortcutsTerminalCommandLog' => l10n.shortcutsTerminalCommandLog,
+    'shortcutsTerminalCommandHistory' => l10n.shortcutsTerminalCommandHistory,
     _ => null,
   };
 }

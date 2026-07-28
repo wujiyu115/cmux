@@ -209,6 +209,71 @@ void main() {
     expect(await repo.availableDates(), hasLength(1));
   });
 
+  group('recentCommands', () {
+    test('dedups newest-first, spanning day files', () async {
+      // Older day: `ls` then `git status`.
+      await repo.append(
+        _entry(id: 'a', command: 'ls', startedAt: DateTime(2026, 7, 19, 8)),
+      );
+      await repo.append(
+        _entry(
+          id: 'b',
+          command: 'git status',
+          startedAt: DateTime(2026, 7, 19, 9),
+        ),
+      );
+      // Today: `ls` again (a repeat) then `git push`.
+      await repo.append(_entry(id: 'c', command: 'ls', startedAt: _at(10)));
+      await repo.append(
+        _entry(id: 'd', command: 'git push', startedAt: _at(11)),
+      );
+
+      // `ls` keeps its most-recent (today) position; the older copy is dropped.
+      expect(await repo.recentCommands(), [
+        'git push',
+        'ls',
+        'git status',
+      ]);
+    });
+
+    test('scopes to one pane when paneId is given', () async {
+      // Commands must survive the secret redactor: spaced argv, not opaque
+      // hyphenated tokens (those read as typed secrets and are dropped).
+      await repo.append(
+        _entry(id: 'a', command: 'git status', startedAt: _at(9)),
+      );
+      await repo.append(
+        CommandLogEntry(
+          id: 'b',
+          command: 'git push',
+          startedAt: _at(10),
+          paneId: 'pane-2',
+        ),
+      );
+
+      expect(await repo.recentCommands(paneId: 'pane-1'), ['git status']);
+      expect(await repo.recentCommands(paneId: 'pane-2'), ['git push']);
+      // Empty means every pane.
+      expect(
+        await repo.recentCommands(paneId: ''),
+        ['git push', 'git status'],
+      );
+    });
+
+    test('honours the limit and the day-scan cap', () async {
+      await repo.append(_entry(id: 'a', command: 'one', startedAt: _at(9)));
+      await repo.append(_entry(id: 'b', command: 'two', startedAt: _at(10)));
+      await repo.append(_entry(id: 'c', command: 'three', startedAt: _at(11)));
+      expect(await repo.recentCommands(limit: 2), ['three', 'two']);
+
+      // A day older than the scan window is never read.
+      await repo.append(
+        _entry(id: 'x', command: 'ancient', startedAt: DateTime(2026, 7, 1, 9)),
+      );
+      expect(await repo.recentCommands(maxDays: 1), ['three', 'two', 'one']);
+    });
+  });
+
   group('day stem helpers', () {
     test('formatLogDate pads month and day', () {
       expect(formatLogDate(DateTime(2026, 1, 2)), '2026-01-02');

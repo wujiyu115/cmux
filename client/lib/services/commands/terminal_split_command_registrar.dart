@@ -24,6 +24,9 @@ abstract class TerminalSplitCommandHost {
   /// Opens the command log window scoped to this panel's active pane (it
   /// supplies the insert / run targets).
   void showCommandLog();
+
+  /// Opens the command history picker for this panel's active pane.
+  void showCommandHistory();
 }
 
 /// Wires the terminal split/focus/layout commands onto [bus] against [host].
@@ -66,6 +69,7 @@ VoidCallback registerTerminalSplitCommands(
     CommandIds.terminalLayoutMainStack: () =>
         host.applyLayoutPreset(TerminalLayoutPreset.mainStack),
     CommandIds.terminalCommandLog: host.showCommandLog,
+    CommandIds.terminalCommandHistory: host.showCommandHistory,
   };
   handlers.forEach(bus.register);
   return () {

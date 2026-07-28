@@ -17,6 +17,7 @@ import '../models/terminal_split.dart';
 import '../models/terminal_surface.dart';
 import '../models/workspace_folder.dart';
 import '../models/workspace_terminal_session_spec.dart';
+import '../pages/command_history/command_history_dialog.dart';
 import '../pages/command_log/command_log_dialog.dart';
 import '../services/commands/command_bus.dart';
 import '../services/commands/terminal_split_command_registrar.dart';
@@ -752,6 +753,23 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
       showCommandLogDialog(
         context,
         cubit: context.read<CommandLogCubit>(),
+        onInsert: (command) => _writeToActivePane(command, submit: false),
+        onRun: (command) => _writeToActivePane(command, submit: true),
+      ),
+    );
+  }
+
+  /// Opens the command history picker for the focused pane. Same insert / run
+  /// path as the command log; the picker is scoped to this pane's history.
+  @override
+  void showCommandHistory() {
+    final entry = _activeEntry;
+    unawaited(
+      showCommandHistoryDialog(
+        context,
+        cubit: context.read<CommandLogCubit>(),
+        paneId: entry?.id,
+        paneLabel: entry?.titleLabel,
         onInsert: (command) => _writeToActivePane(command, submit: false),
         onRun: (command) => _writeToActivePane(command, submit: true),
       ),

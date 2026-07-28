@@ -178,6 +178,12 @@ class CommandLogCubit extends Cubit<CommandLogState>
 
   Future<void> selectDate(DateTime date) => load(date: date);
 
+  /// Distinct recent commands for the command history picker, newest first.
+  /// Reads straight from disk (not the in-memory day) so it spans every day and
+  /// stays correct regardless of which day the log window last loaded.
+  Future<List<String>> recentCommands({String? paneId}) =>
+      _repository.recentCommands(paneId: paneId);
+
   void setWorkspaceFilter(String workspaceId) =>
       emit(state.copyWith(workspaceFilter: workspaceId));
 

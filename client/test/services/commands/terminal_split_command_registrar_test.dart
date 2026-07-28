@@ -39,6 +39,8 @@ class _FakeHost implements TerminalSplitCommandHost {
 
   @override
   void showCommandLog() => calls.add('showCommandLog');
+  @override
+  void showCommandHistory() => calls.add('showCommandHistory');
 }
 
 void main() {
@@ -102,6 +104,11 @@ void main() {
   test('command log command reaches the host', () {
     bus.invoke(CommandIds.terminalCommandLog);
     expect(host.calls, ['showCommandLog']);
+  });
+
+  test('command history command reaches the host', () {
+    bus.invoke(CommandIds.terminalCommandHistory);
+    expect(host.calls, ['showCommandHistory']);
   });
 
   test('disposer unregisters exactly its handlers', () {
