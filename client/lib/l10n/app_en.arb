@@ -2806,6 +2806,8 @@
   "shortcutsCategoryRun": "Run",
 
   "shortcutsCommandPalette": "Command Palette",
+  "commandPaletteSearchHint": "Type a command…",
+  "commandPaletteEmpty": "No matching commands",
   "shortcutsTerminalSplitRight": "Split Terminal Right",
   "shortcutsTerminalSplitDown": "Split Terminal Down",
   "shortcutsTerminalFocusNextPane": "Focus Next Pane",

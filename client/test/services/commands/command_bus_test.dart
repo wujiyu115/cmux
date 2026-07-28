@@ -58,6 +58,22 @@ void main() {
       expect(secondCalled, isTrue);
     });
 
+    test('hasHandler is false before register and true after', () {
+      final bus = CommandBus();
+      expect(bus.hasHandler('test.command'), isFalse);
+
+      bus.register('test.command', () {});
+      expect(bus.hasHandler('test.command'), isTrue);
+    });
+
+    test('hasHandler is false again after unregister', () {
+      final bus = CommandBus();
+      bus.register('test.command', () {});
+      bus.unregister('test.command');
+
+      expect(bus.hasHandler('test.command'), isFalse);
+    });
+
     test('re-register replaces the previous handler', () {
       var firstCalled = false;
       var secondCalled = false;

@@ -841,6 +841,7 @@ Future<AppShell> buildAppShell({
   final workspaceSearchHost = WorkspaceSearchHost();
   final uiZoomBaseline = UiZoomBaseline();
   registerShortcutsUiCommands(commandBus);
+  registerCommandPaletteCommand(commandBus);
   registerRunCommands(commandBus, runCommandHost);
   registerWorkspaceSearchCommands(commandBus, workspaceSearchHost);
 

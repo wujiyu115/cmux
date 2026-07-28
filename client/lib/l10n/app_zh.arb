@@ -2377,6 +2377,8 @@
   "shortcutsCategoryRun": "运行",
 
   "shortcutsCommandPalette": "命令面板",
+  "commandPaletteSearchHint": "输入命令…",
+  "commandPaletteEmpty": "没有匹配的命令",
   "shortcutsTerminalSplitRight": "向右拆分终端",
   "shortcutsTerminalSplitDown": "向下拆分终端",
   "shortcutsTerminalFocusNextPane": "聚焦下一个窗格",

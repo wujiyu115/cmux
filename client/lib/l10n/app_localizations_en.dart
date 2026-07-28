@@ -6268,6 +6268,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shortcutsCommandPalette => 'Command Palette';
 
   @override
+  String get commandPaletteSearchHint => 'Type a command…';
+
+  @override
+  String get commandPaletteEmpty => 'No matching commands';
+
+  @override
   String get shortcutsTerminalSplitRight => 'Split Terminal Right';
 
   @override

@@ -6026,6 +6026,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get shortcutsCommandPalette => '命令面板';
 
   @override
+  String get commandPaletteSearchHint => '输入命令…';
+
+  @override
+  String get commandPaletteEmpty => '没有匹配的命令';
+
+  @override
   String get shortcutsTerminalSplitRight => '向右拆分终端';
 
   @override

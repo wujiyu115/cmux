@@ -41,6 +41,13 @@ class ShortcutDispatcher {
   /// a modal keyboard grab, such as a rebind-capture dialog, is active).
   bool enabled = true;
 
+  /// The current app focus/state snapshot used for shortcut matching.
+  ///
+  /// Exposed so app-level features (e.g. the command palette) can decide
+  /// which commands are available under the same `when` state as the keyboard
+  /// dispatcher, without threading the context builder through every caller.
+  ShortcutContext get currentContext => _context();
+
   /// Returns `true` if [event] matched a command and was forwarded to the
   /// bus, `false` if it should keep propagating normally.
   bool handle(KeyEvent event) {

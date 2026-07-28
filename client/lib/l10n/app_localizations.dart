@@ -11256,6 +11256,18 @@ abstract class AppLocalizations {
   /// **'Command Palette'**
   String get shortcutsCommandPalette;
 
+  /// No description provided for @commandPaletteSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Type a command…'**
+  String get commandPaletteSearchHint;
+
+  /// No description provided for @commandPaletteEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching commands'**
+  String get commandPaletteEmpty;
+
   /// No description provided for @shortcutsTerminalSplitRight.
   ///
   /// In en, this message translates to:

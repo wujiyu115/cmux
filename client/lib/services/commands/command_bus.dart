@@ -33,4 +33,10 @@ class CommandBus {
   void invoke(String id) {
     _handlers[id]?.call();
   }
+
+  /// Whether a handler is currently registered for [id].
+  ///
+  /// The command palette uses this to hide commands whose owning widget is not
+  /// mounted, so a listed entry always does something when invoked.
+  bool hasHandler(String id) => _handlers.containsKey(id);
 }
