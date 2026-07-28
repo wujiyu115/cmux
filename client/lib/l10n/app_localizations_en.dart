@@ -5891,6 +5891,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shortcutsCategoryMeta => 'General';
 
   @override
+  String get shortcutsCategoryTerminal => 'Terminal';
+
+  @override
   String get shortcutsSettingsTitle => 'Keyboard Shortcuts';
 
   @override
@@ -6260,6 +6263,57 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shortcutsCategoryRun => 'Run';
+
+  @override
+  String get shortcutsCommandPalette => 'Command Palette';
+
+  @override
+  String get shortcutsTerminalSplitRight => 'Split Terminal Right';
+
+  @override
+  String get shortcutsTerminalSplitDown => 'Split Terminal Down';
+
+  @override
+  String get shortcutsTerminalFocusNextPane => 'Focus Next Pane';
+
+  @override
+  String get shortcutsTerminalFocusPrevPane => 'Focus Previous Pane';
+
+  @override
+  String get shortcutsTerminalFocusPaneLeft => 'Focus Pane Left';
+
+  @override
+  String get shortcutsTerminalFocusPaneRight => 'Focus Pane Right';
+
+  @override
+  String get shortcutsTerminalFocusPaneUp => 'Focus Pane Up';
+
+  @override
+  String get shortcutsTerminalFocusPaneDown => 'Focus Pane Down';
+
+  @override
+  String get shortcutsTerminalZoomPane => 'Toggle Pane Zoom';
+
+  @override
+  String get shortcutsTerminalEqualizePanes => 'Equalize Panes';
+
+  @override
+  String get shortcutsTerminalClosePane => 'Close Pane';
+
+  @override
+  String get shortcutsTerminalLayoutSingle => 'Layout: Single';
+
+  @override
+  String get shortcutsTerminalLayoutColumns2 => 'Layout: Two Columns';
+
+  @override
+  String get shortcutsTerminalLayoutColumns3 => 'Layout: Three Columns';
+
+  @override
+  String get shortcutsTerminalLayoutGrid => 'Layout: Grid';
+
+  @override
+  String get shortcutsTerminalLayoutMainStack => 'Layout: Main + Stack';
 
   @override
   String get resourceManagerTitle => 'Resource Manager';

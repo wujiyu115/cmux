@@ -5667,6 +5667,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get shortcutsCategoryMeta => '通用';
 
   @override
+  String get shortcutsCategoryTerminal => '终端';
+
+  @override
   String get shortcutsSettingsTitle => '键盘快捷键';
 
   @override
@@ -6018,6 +6021,57 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get shortcutsCategoryRun => '运行';
+
+  @override
+  String get shortcutsCommandPalette => '命令面板';
+
+  @override
+  String get shortcutsTerminalSplitRight => '向右拆分终端';
+
+  @override
+  String get shortcutsTerminalSplitDown => '向下拆分终端';
+
+  @override
+  String get shortcutsTerminalFocusNextPane => '聚焦下一个窗格';
+
+  @override
+  String get shortcutsTerminalFocusPrevPane => '聚焦上一个窗格';
+
+  @override
+  String get shortcutsTerminalFocusPaneLeft => '聚焦左侧窗格';
+
+  @override
+  String get shortcutsTerminalFocusPaneRight => '聚焦右侧窗格';
+
+  @override
+  String get shortcutsTerminalFocusPaneUp => '聚焦上方窗格';
+
+  @override
+  String get shortcutsTerminalFocusPaneDown => '聚焦下方窗格';
+
+  @override
+  String get shortcutsTerminalZoomPane => '切换窗格最大化';
+
+  @override
+  String get shortcutsTerminalEqualizePanes => '均分窗格';
+
+  @override
+  String get shortcutsTerminalClosePane => '关闭窗格';
+
+  @override
+  String get shortcutsTerminalLayoutSingle => '布局：单窗格';
+
+  @override
+  String get shortcutsTerminalLayoutColumns2 => '布局：两列';
+
+  @override
+  String get shortcutsTerminalLayoutColumns3 => '布局：三列';
+
+  @override
+  String get shortcutsTerminalLayoutGrid => '布局：网格';
+
+  @override
+  String get shortcutsTerminalLayoutMainStack => '布局：主窗格 + 堆叠';
 
   @override
   String get resourceManagerTitle => '资源管理器';

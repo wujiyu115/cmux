@@ -268,5 +268,185 @@ abstract final class CommandCatalog {
       terminalPassthrough: true,
       titleL10nKey: 'shortcutsShowCheatsheet',
     ),
+    // Command palette (definition only — no handler is registered this task, so
+    // its chord is reserved and CommandBus.invoke is a documented silent no-op).
+    CommandDefinition(
+      id: CommandIds.commandPalette,
+      category: CommandCategory.meta,
+      defaultChords: [
+        KeyChord(key: 'p', mods: [KeyChordMod.mod, KeyChordMod.shift]),
+      ],
+      when: ShortcutWhen.always,
+      terminalPassthrough: true,
+      titleL10nKey: 'shortcutsCommandPalette',
+    ),
+
+    // Terminal panes
+    CommandDefinition(
+      id: CommandIds.terminalSplitRight,
+      category: CommandCategory.terminal,
+      defaultChords: [
+        KeyChord(key: 'backslash', mods: [KeyChordMod.mod, KeyChordMod.shift]),
+      ],
+      when: ShortcutWhen.hasWorkspace,
+      terminalPassthrough: true,
+      titleL10nKey: 'shortcutsTerminalSplitRight',
+    ),
+    CommandDefinition(
+      id: CommandIds.terminalSplitDown,
+      category: CommandCategory.terminal,
+      defaultChords: [
+        KeyChord(key: 'd', mods: [KeyChordMod.mod, KeyChordMod.shift]),
+      ],
+      when: ShortcutWhen.hasWorkspace,
+      terminalPassthrough: true,
+      titleL10nKey: 'shortcutsTerminalSplitDown',
+    ),
+    CommandDefinition(
+      id: CommandIds.terminalPaneFocusNext,
+      category: CommandCategory.terminal,
+      defaultChords: [
+        KeyChord(
+          key: 'bracketRight',
+          mods: [KeyChordMod.mod, KeyChordMod.alt],
+        ),
+      ],
+      when: ShortcutWhen.hasWorkspace,
+      terminalPassthrough: true,
+      titleL10nKey: 'shortcutsTerminalFocusNextPane',
+    ),
+    CommandDefinition(
+      id: CommandIds.terminalPaneFocusPrev,
+      category: CommandCategory.terminal,
+      defaultChords: [
+        KeyChord(
+          key: 'bracketLeft',
+          mods: [KeyChordMod.mod, KeyChordMod.alt],
+        ),
+      ],
+      when: ShortcutWhen.hasWorkspace,
+      terminalPassthrough: true,
+      titleL10nKey: 'shortcutsTerminalFocusPrevPane',
+    ),
+    CommandDefinition(
+      id: CommandIds.terminalPaneFocusLeft,
+      category: CommandCategory.terminal,
+      defaultChords: [
+        KeyChord(
+          key: 'arrowLeft',
+          mods: [KeyChordMod.alt, KeyChordMod.shift],
+        ),
+      ],
+      when: ShortcutWhen.hasWorkspace,
+      terminalPassthrough: true,
+      titleL10nKey: 'shortcutsTerminalFocusPaneLeft',
+    ),
+    CommandDefinition(
+      id: CommandIds.terminalPaneFocusRight,
+      category: CommandCategory.terminal,
+      defaultChords: [
+        KeyChord(
+          key: 'arrowRight',
+          mods: [KeyChordMod.alt, KeyChordMod.shift],
+        ),
+      ],
+      when: ShortcutWhen.hasWorkspace,
+      terminalPassthrough: true,
+      titleL10nKey: 'shortcutsTerminalFocusPaneRight',
+    ),
+    CommandDefinition(
+      id: CommandIds.terminalPaneFocusUp,
+      category: CommandCategory.terminal,
+      defaultChords: [
+        KeyChord(
+          key: 'arrowUp',
+          mods: [KeyChordMod.alt, KeyChordMod.shift],
+        ),
+      ],
+      when: ShortcutWhen.hasWorkspace,
+      terminalPassthrough: true,
+      titleL10nKey: 'shortcutsTerminalFocusPaneUp',
+    ),
+    CommandDefinition(
+      id: CommandIds.terminalPaneFocusDown,
+      category: CommandCategory.terminal,
+      defaultChords: [
+        KeyChord(
+          key: 'arrowDown',
+          mods: [KeyChordMod.alt, KeyChordMod.shift],
+        ),
+      ],
+      when: ShortcutWhen.hasWorkspace,
+      terminalPassthrough: true,
+      titleL10nKey: 'shortcutsTerminalFocusPaneDown',
+    ),
+    CommandDefinition(
+      id: CommandIds.terminalPaneZoom,
+      category: CommandCategory.terminal,
+      defaultChords: [
+        KeyChord(key: 'z', mods: [KeyChordMod.mod, KeyChordMod.shift]),
+      ],
+      when: ShortcutWhen.hasWorkspace,
+      terminalPassthrough: true,
+      titleL10nKey: 'shortcutsTerminalZoomPane',
+    ),
+    CommandDefinition(
+      id: CommandIds.terminalPaneEqualize,
+      category: CommandCategory.terminal,
+      defaultChords: [],
+      when: ShortcutWhen.hasWorkspace,
+      terminalPassthrough: true,
+      titleL10nKey: 'shortcutsTerminalEqualizePanes',
+    ),
+    CommandDefinition(
+      id: CommandIds.terminalPaneClose,
+      category: CommandCategory.terminal,
+      defaultChords: [
+        KeyChord(key: 'q', mods: [KeyChordMod.mod, KeyChordMod.shift]),
+      ],
+      when: ShortcutWhen.hasWorkspace,
+      terminalPassthrough: true,
+      titleL10nKey: 'shortcutsTerminalClosePane',
+    ),
+    CommandDefinition(
+      id: CommandIds.terminalLayoutSingle,
+      category: CommandCategory.terminal,
+      defaultChords: [],
+      when: ShortcutWhen.hasWorkspace,
+      terminalPassthrough: true,
+      titleL10nKey: 'shortcutsTerminalLayoutSingle',
+    ),
+    CommandDefinition(
+      id: CommandIds.terminalLayoutColumns2,
+      category: CommandCategory.terminal,
+      defaultChords: [],
+      when: ShortcutWhen.hasWorkspace,
+      terminalPassthrough: true,
+      titleL10nKey: 'shortcutsTerminalLayoutColumns2',
+    ),
+    CommandDefinition(
+      id: CommandIds.terminalLayoutColumns3,
+      category: CommandCategory.terminal,
+      defaultChords: [],
+      when: ShortcutWhen.hasWorkspace,
+      terminalPassthrough: true,
+      titleL10nKey: 'shortcutsTerminalLayoutColumns3',
+    ),
+    CommandDefinition(
+      id: CommandIds.terminalLayoutGrid,
+      category: CommandCategory.terminal,
+      defaultChords: [],
+      when: ShortcutWhen.hasWorkspace,
+      terminalPassthrough: true,
+      titleL10nKey: 'shortcutsTerminalLayoutGrid',
+    ),
+    CommandDefinition(
+      id: CommandIds.terminalLayoutMainStack,
+      category: CommandCategory.terminal,
+      defaultChords: [],
+      when: ShortcutWhen.hasWorkspace,
+      terminalPassthrough: true,
+      titleL10nKey: 'shortcutsTerminalLayoutMainStack',
+    ),
   ];
 }

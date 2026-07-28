@@ -40,6 +40,7 @@ String titleForCategory(AppLocalizations l10n, CommandCategory category) {
     CommandCategory.compose => l10n.shortcutsCategoryCompose,
     CommandCategory.run => l10n.shortcutsCategoryRun,
     CommandCategory.meta => l10n.shortcutsCategoryMeta,
+    CommandCategory.terminal => l10n.shortcutsCategoryTerminal,
   };
 }
 
@@ -66,6 +67,23 @@ String? _titleForKey(AppLocalizations l10n, String titleL10nKey) {
     'shortcutsRunSelected' => l10n.shortcutsRunSelected,
     'shortcutsRunStop' => l10n.shortcutsRunStop,
     'shortcutsRunRestart' => l10n.shortcutsRunRestart,
+    'shortcutsCommandPalette' => l10n.shortcutsCommandPalette,
+    'shortcutsTerminalSplitRight' => l10n.shortcutsTerminalSplitRight,
+    'shortcutsTerminalSplitDown' => l10n.shortcutsTerminalSplitDown,
+    'shortcutsTerminalFocusNextPane' => l10n.shortcutsTerminalFocusNextPane,
+    'shortcutsTerminalFocusPrevPane' => l10n.shortcutsTerminalFocusPrevPane,
+    'shortcutsTerminalFocusPaneLeft' => l10n.shortcutsTerminalFocusPaneLeft,
+    'shortcutsTerminalFocusPaneRight' => l10n.shortcutsTerminalFocusPaneRight,
+    'shortcutsTerminalFocusPaneUp' => l10n.shortcutsTerminalFocusPaneUp,
+    'shortcutsTerminalFocusPaneDown' => l10n.shortcutsTerminalFocusPaneDown,
+    'shortcutsTerminalZoomPane' => l10n.shortcutsTerminalZoomPane,
+    'shortcutsTerminalEqualizePanes' => l10n.shortcutsTerminalEqualizePanes,
+    'shortcutsTerminalClosePane' => l10n.shortcutsTerminalClosePane,
+    'shortcutsTerminalLayoutSingle' => l10n.shortcutsTerminalLayoutSingle,
+    'shortcutsTerminalLayoutColumns2' => l10n.shortcutsTerminalLayoutColumns2,
+    'shortcutsTerminalLayoutColumns3' => l10n.shortcutsTerminalLayoutColumns3,
+    'shortcutsTerminalLayoutGrid' => l10n.shortcutsTerminalLayoutGrid,
+    'shortcutsTerminalLayoutMainStack' => l10n.shortcutsTerminalLayoutMainStack,
     _ => null,
   };
 }

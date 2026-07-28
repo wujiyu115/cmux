@@ -6,6 +6,8 @@
 /// removal, and preset builders all rely on.
 library;
 
+import 'dart:ui' show Rect;
+
 /// A split orientation. [vertical] lays children out side-by-side (columns);
 /// [horizontal] stacks them top/bottom (rows).
 enum SplitAxis { vertical, horizontal }
@@ -170,6 +172,130 @@ String? prevLeaf(SplitNode root, String paneId) {
   final i = leaves.indexOf(paneId);
   if (i < 0) return null;
   return leaves[(i - 1 + leaves.length) % leaves.length];
+}
+
+/// A geometric direction for pane-to-pane focus movement.
+enum PaneDirection { left, right, up, down }
+
+/// The pane id geometrically adjacent to [paneId] on the [direction] side of
+/// [root], or `null` when [paneId] is unknown or has no neighbour there.
+///
+/// The tree is laid out into unit rects (root = `0,0..1,1`). A
+/// [SplitAxis.vertical] branch splits its rect into left/right columns at
+/// [SplitBranch.ratio] ([SplitBranch.first] = left); [SplitAxis.horizontal]
+/// splits into top/bottom rows ([SplitBranch.first] = top). Among panes
+/// strictly on the requested side, the winner is the one whose cross-axis span
+/// overlaps the source most, tie-broken by smallest distance along the
+/// direction, then by pre-order index for determinism.
+String? paneInDirection(
+  SplitNode root,
+  String paneId,
+  PaneDirection direction,
+) {
+  const epsilon = 1e-6;
+  final rects = <String, Rect>{};
+  final order = <String>[];
+
+  void layout(SplitNode node, Rect rect) {
+    if (node is SplitLeaf) {
+      rects[node.paneId] = rect;
+      order.add(node.paneId);
+      return;
+    }
+    final b = node as SplitBranch;
+    if (b.axis == SplitAxis.vertical) {
+      final w = rect.width * b.ratio;
+      layout(b.first, Rect.fromLTWH(rect.left, rect.top, w, rect.height));
+      layout(
+        b.second,
+        Rect.fromLTWH(rect.left + w, rect.top, rect.width - w, rect.height),
+      );
+    } else {
+      final h = rect.height * b.ratio;
+      layout(b.first, Rect.fromLTWH(rect.left, rect.top, rect.width, h));
+      layout(
+        b.second,
+        Rect.fromLTWH(rect.left, rect.top + h, rect.width, rect.height - h),
+      );
+    }
+  }
+
+  layout(root, const Rect.fromLTWH(0, 0, 1, 1));
+
+  final source = rects[paneId];
+  if (source == null) return null;
+
+  String? best;
+  var bestOverlap = -1.0;
+  var bestDistance = double.infinity;
+  var bestIndex = 1 << 31;
+  for (var i = 0; i < order.length; i++) {
+    final id = order[i];
+    if (id == paneId) continue;
+    final other = rects[id]!;
+    final double overlap;
+    final double distance;
+    switch (direction) {
+      case PaneDirection.left:
+        if (other.right > source.left + epsilon) continue;
+        overlap = _spanOverlap(
+          source.top,
+          source.bottom,
+          other.top,
+          other.bottom,
+        );
+        distance = source.left - other.right;
+      case PaneDirection.right:
+        if (other.left < source.right - epsilon) continue;
+        overlap = _spanOverlap(
+          source.top,
+          source.bottom,
+          other.top,
+          other.bottom,
+        );
+        distance = other.left - source.right;
+      case PaneDirection.up:
+        if (other.bottom > source.top + epsilon) continue;
+        overlap = _spanOverlap(
+          source.left,
+          source.right,
+          other.left,
+          other.right,
+        );
+        distance = source.top - other.bottom;
+      case PaneDirection.down:
+        if (other.top < source.bottom - epsilon) continue;
+        overlap = _spanOverlap(
+          source.left,
+          source.right,
+          other.left,
+          other.right,
+        );
+        distance = other.top - source.bottom;
+    }
+    if (overlap <= epsilon) continue;
+    final better =
+        overlap > bestOverlap + epsilon ||
+        (overlap > bestOverlap - epsilon &&
+            (distance < bestDistance - epsilon ||
+                (distance < bestDistance + epsilon && i < bestIndex)));
+    if (better) {
+      best = id;
+      bestOverlap = overlap;
+      bestDistance = distance;
+      bestIndex = i;
+    }
+  }
+  return best;
+}
+
+/// Length of the overlap between segments `[aStart, aEnd]` and `[bStart, bEnd]`,
+/// clamped to 0 when they do not overlap.
+double _spanOverlap(double aStart, double aEnd, double bStart, double bEnd) {
+  final lo = aStart > bStart ? aStart : bStart;
+  final hi = aEnd < bEnd ? aEnd : bEnd;
+  final overlap = hi - lo;
+  return overlap > 0 ? overlap : 0;
 }
 
 /// Sets every branch ratio to 0.5 recursively.

@@ -47,4 +47,25 @@ abstract final class CommandIds {
   static const String runRunSelected = 'run.runSelected';
   static const String runStop = 'run.stop';
   static const String runRestart = 'run.restart';
+
+  // Terminal panes
+  static const String terminalSplitRight = 'terminal.split.right';
+  static const String terminalSplitDown = 'terminal.split.down';
+  static const String terminalPaneFocusNext = 'terminal.pane.focusNext';
+  static const String terminalPaneFocusPrev = 'terminal.pane.focusPrev';
+  static const String terminalPaneFocusLeft = 'terminal.pane.focusLeft';
+  static const String terminalPaneFocusRight = 'terminal.pane.focusRight';
+  static const String terminalPaneFocusUp = 'terminal.pane.focusUp';
+  static const String terminalPaneFocusDown = 'terminal.pane.focusDown';
+  static const String terminalPaneZoom = 'terminal.pane.zoom';
+  static const String terminalPaneEqualize = 'terminal.pane.equalize';
+  static const String terminalPaneClose = 'terminal.pane.close';
+  static const String terminalLayoutSingle = 'terminal.layout.single';
+  static const String terminalLayoutColumns2 = 'terminal.layout.columns2';
+  static const String terminalLayoutColumns3 = 'terminal.layout.columns3';
+  static const String terminalLayoutGrid = 'terminal.layout.grid';
+  static const String terminalLayoutMainStack = 'terminal.layout.mainStack';
+
+  // App
+  static const String commandPalette = 'app.commandPalette';
 }

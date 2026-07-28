@@ -344,6 +344,86 @@ void main() {
     });
   });
 
+  group('paneInDirection', () {
+    test('2-column tree resolves left/right, none past the edge', () {
+      final root = buildColumns(['l', 'r']);
+      expect(paneInDirection(root, 'l', PaneDirection.right), 'r');
+      expect(paneInDirection(root, 'r', PaneDirection.left), 'l');
+      expect(paneInDirection(root, 'l', PaneDirection.left), isNull);
+      expect(paneInDirection(root, 'r', PaneDirection.right), isNull);
+      // No vertical neighbours in a pure column split.
+      expect(paneInDirection(root, 'l', PaneDirection.up), isNull);
+      expect(paneInDirection(root, 'r', PaneDirection.down), isNull);
+    });
+
+    test('2-row tree resolves up/down, none past the edge', () {
+      final root = buildRows(['t', 'b']);
+      expect(paneInDirection(root, 't', PaneDirection.down), 'b');
+      expect(paneInDirection(root, 'b', PaneDirection.up), 't');
+      expect(paneInDirection(root, 't', PaneDirection.up), isNull);
+      expect(paneInDirection(root, 'b', PaneDirection.down), isNull);
+      expect(paneInDirection(root, 't', PaneDirection.left), isNull);
+      expect(paneInDirection(root, 'b', PaneDirection.right), isNull);
+    });
+
+    test('2x2 grid resolves all four directions from every corner', () {
+      // Row-major buildGrid2x2: a=top-left, b=top-right, c=bottom-left,
+      // d=bottom-right.
+      final root = buildGrid2x2(['a', 'b', 'c', 'd']);
+
+      // top-left a
+      expect(paneInDirection(root, 'a', PaneDirection.right), 'b');
+      expect(paneInDirection(root, 'a', PaneDirection.down), 'c');
+      expect(paneInDirection(root, 'a', PaneDirection.left), isNull);
+      expect(paneInDirection(root, 'a', PaneDirection.up), isNull);
+
+      // top-right b
+      expect(paneInDirection(root, 'b', PaneDirection.left), 'a');
+      expect(paneInDirection(root, 'b', PaneDirection.down), 'd');
+      expect(paneInDirection(root, 'b', PaneDirection.right), isNull);
+      expect(paneInDirection(root, 'b', PaneDirection.up), isNull);
+
+      // bottom-left c
+      expect(paneInDirection(root, 'c', PaneDirection.up), 'a');
+      expect(paneInDirection(root, 'c', PaneDirection.right), 'd');
+      expect(paneInDirection(root, 'c', PaneDirection.left), isNull);
+      expect(paneInDirection(root, 'c', PaneDirection.down), isNull);
+
+      // bottom-right d
+      expect(paneInDirection(root, 'd', PaneDirection.up), 'b');
+      expect(paneInDirection(root, 'd', PaneDirection.left), 'c');
+      expect(paneInDirection(root, 'd', PaneDirection.right), isNull);
+      expect(paneInDirection(root, 'd', PaneDirection.down), isNull);
+    });
+
+    test('unknown pane id returns null', () {
+      final root = buildGrid2x2(['a', 'b', 'c', 'd']);
+      expect(paneInDirection(root, 'zzz', PaneDirection.right), isNull);
+    });
+
+    test('asymmetric ratios resolve by cross-axis overlap', () {
+      // A owns the whole left column; the right column is split 0.7/0.3 into B
+      // (top, larger) over C (bottom). From A, "right" prefers the pane with
+      // the larger vertical overlap.
+      const root = SplitBranch(
+        axis: SplitAxis.vertical,
+        ratio: 0.5,
+        first: SplitLeaf('A'),
+        second: SplitBranch(
+          axis: SplitAxis.horizontal,
+          ratio: 0.7,
+          first: SplitLeaf('B'),
+          second: SplitLeaf('C'),
+        ),
+      );
+      expect(paneInDirection(root, 'A', PaneDirection.right), 'B');
+      expect(paneInDirection(root, 'B', PaneDirection.left), 'A');
+      expect(paneInDirection(root, 'C', PaneDirection.left), 'A');
+      expect(paneInDirection(root, 'B', PaneDirection.down), 'C');
+      expect(paneInDirection(root, 'C', PaneDirection.up), 'B');
+    });
+  });
+
   group('preset builders', () {
     test('buildColumns shape and ratios (equal columns)', () {
       final tree = buildColumns(['a', 'b', 'c']);

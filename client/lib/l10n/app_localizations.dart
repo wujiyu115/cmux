@@ -10578,6 +10578,12 @@ abstract class AppLocalizations {
   /// **'General'**
   String get shortcutsCategoryMeta;
 
+  /// No description provided for @shortcutsCategoryTerminal.
+  ///
+  /// In en, this message translates to:
+  /// **'Terminal'**
+  String get shortcutsCategoryTerminal;
+
   /// No description provided for @shortcutsSettingsTitle.
   ///
   /// In en, this message translates to:
@@ -11243,6 +11249,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Run'**
   String get shortcutsCategoryRun;
+
+  /// No description provided for @shortcutsCommandPalette.
+  ///
+  /// In en, this message translates to:
+  /// **'Command Palette'**
+  String get shortcutsCommandPalette;
+
+  /// No description provided for @shortcutsTerminalSplitRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Split Terminal Right'**
+  String get shortcutsTerminalSplitRight;
+
+  /// No description provided for @shortcutsTerminalSplitDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Split Terminal Down'**
+  String get shortcutsTerminalSplitDown;
+
+  /// No description provided for @shortcutsTerminalFocusNextPane.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus Next Pane'**
+  String get shortcutsTerminalFocusNextPane;
+
+  /// No description provided for @shortcutsTerminalFocusPrevPane.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus Previous Pane'**
+  String get shortcutsTerminalFocusPrevPane;
+
+  /// No description provided for @shortcutsTerminalFocusPaneLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus Pane Left'**
+  String get shortcutsTerminalFocusPaneLeft;
+
+  /// No description provided for @shortcutsTerminalFocusPaneRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus Pane Right'**
+  String get shortcutsTerminalFocusPaneRight;
+
+  /// No description provided for @shortcutsTerminalFocusPaneUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus Pane Up'**
+  String get shortcutsTerminalFocusPaneUp;
+
+  /// No description provided for @shortcutsTerminalFocusPaneDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus Pane Down'**
+  String get shortcutsTerminalFocusPaneDown;
+
+  /// No description provided for @shortcutsTerminalZoomPane.
+  ///
+  /// In en, this message translates to:
+  /// **'Toggle Pane Zoom'**
+  String get shortcutsTerminalZoomPane;
+
+  /// No description provided for @shortcutsTerminalEqualizePanes.
+  ///
+  /// In en, this message translates to:
+  /// **'Equalize Panes'**
+  String get shortcutsTerminalEqualizePanes;
+
+  /// No description provided for @shortcutsTerminalClosePane.
+  ///
+  /// In en, this message translates to:
+  /// **'Close Pane'**
+  String get shortcutsTerminalClosePane;
+
+  /// No description provided for @shortcutsTerminalLayoutSingle.
+  ///
+  /// In en, this message translates to:
+  /// **'Layout: Single'**
+  String get shortcutsTerminalLayoutSingle;
+
+  /// No description provided for @shortcutsTerminalLayoutColumns2.
+  ///
+  /// In en, this message translates to:
+  /// **'Layout: Two Columns'**
+  String get shortcutsTerminalLayoutColumns2;
+
+  /// No description provided for @shortcutsTerminalLayoutColumns3.
+  ///
+  /// In en, this message translates to:
+  /// **'Layout: Three Columns'**
+  String get shortcutsTerminalLayoutColumns3;
+
+  /// No description provided for @shortcutsTerminalLayoutGrid.
+  ///
+  /// In en, this message translates to:
+  /// **'Layout: Grid'**
+  String get shortcutsTerminalLayoutGrid;
+
+  /// No description provided for @shortcutsTerminalLayoutMainStack.
+  ///
+  /// In en, this message translates to:
+  /// **'Layout: Main + Stack'**
+  String get shortcutsTerminalLayoutMainStack;
 
   /// No description provided for @resourceManagerTitle.
   ///

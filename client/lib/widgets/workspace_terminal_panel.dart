@@ -16,13 +16,17 @@ import '../models/terminal_split.dart';
 import '../models/terminal_surface.dart';
 import '../models/workspace_folder.dart';
 import '../models/workspace_terminal_session_spec.dart';
+import '../services/commands/command_bus.dart';
+import '../services/commands/terminal_split_command_registrar.dart';
 import '../services/selection_ai/selection_ai_context.dart';
 import '../services/selection_ai/selection_ai_menu_specs.dart';
 import '../services/selection_ai/selection_ask_ai.dart';
 import '../services/selection_ai/selection_ask_ai_fab_host.dart';
 import '../services/ssh/ssh_profile_connection_coordinator.dart';
 import '../services/terminal/terminal_layout_coordinator.dart';
-import '../services/terminal/terminal_layout_presets.dart';
+// Prefixed so the host's `applyLayoutPreset` method does not shadow the
+// top-level `applyLayoutPreset` function this file also calls.
+import '../services/terminal/terminal_layout_presets.dart' as layout_presets;
 import '../services/terminal/terminal_theme_mapper.dart';
 import '../services/terminal/terminal_uri_opener.dart';
 import '../services/host/host_interactive_shell.dart';
@@ -108,7 +112,8 @@ class WorkspaceTerminalPanel extends StatefulWidget {
   State<WorkspaceTerminalPanel> createState() => _WorkspaceTerminalPanelState();
 }
 
-class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel> {
+class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
+    implements TerminalSplitCommandHost {
   WorkspaceTerminalRegistry get _registry =>
       context.read<WorkspaceTerminalRegistry>();
   WorkspaceShellConnector get _connector =>
@@ -129,6 +134,12 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel> {
   var _registrationScheduled = false;
   final Map<String, int> _lastTerminalThemeFingerprintByEntry = {};
   final _menuOpen = ValueNotifier(false);
+
+  /// Split/focus/layout commands are claimed while this panel's subtree holds
+  /// focus (several panels are alive offstage; only the focused one wins the
+  /// single-handler-per-id [CommandBus]). Disposer unregisters our handlers.
+  CommandBus? _splitCommandBus;
+  VoidCallback? _splitCommandsDisposer;
 
   List<WorkspaceFolder> get _folders =>
       WorkspaceToolsScope.maybeOf(context)?.effectiveFolders ?? const [];
@@ -183,6 +194,8 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel> {
   @override
   void dispose() {
     widget.holdHandle?._unbind(this);
+    _splitCommandsDisposer?.call();
+    _splitCommandsDisposer = null;
     unawaited(_sshReconnectSub?.cancel());
     for (final target in _registeredHoldTargets.values) {
       _coordinator?.unregister(target);
@@ -601,10 +614,13 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel> {
   /// Rebuilds the active surface into [preset]'s shape, spawning any deficit
   /// panes first (sequentially, so ids are deterministic). Lossless: no live
   /// pane is destroyed.
-  Future<void> _applyLayoutPreset(TerminalLayoutPreset preset) async {
+  Future<void> _applyLayoutPreset(
+    layout_presets.TerminalLayoutPreset preset,
+  ) async {
     final initial = _group.activeSurface;
     if (initial == null) return;
-    final deficit = presetSlotCount(preset) - initial.paneIds.length;
+    final deficit =
+        layout_presets.presetSlotCount(preset) - initial.paneIds.length;
     for (var i = 0; i < deficit; i++) {
       await _splitActiveSurface(SplitAxis.vertical);
       if (!mounted) return;
@@ -615,7 +631,9 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel> {
     void apply() {
       final s = _group.surfaceById(surfaceId);
       if (s == null) return;
-      _group.updateSurface(applyLayoutPreset(s, preset, paneIds: s.paneIds));
+      _group.updateSurface(
+        layout_presets.applyLayoutPreset(s, preset, paneIds: s.paneIds),
+      );
     }
 
     final coordinator = _coordinator;
@@ -656,6 +674,64 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel> {
     _group.removeEntry(id);
     if (mounted) setState(() {});
   }
+
+  /// Claims the terminal split/focus/layout commands for this panel when its
+  /// subtree gains focus. Re-registering fresh handlers (disposing the previous
+  /// claim first) makes the focused panel win the single-handler-per-id bus,
+  /// even after another panel had claimed the ids.
+  void _claimSplitCommands() {
+    final bus = _splitCommandBus ??= context.read<CommandBus>();
+    _splitCommandsDisposer?.call();
+    _splitCommandsDisposer = registerTerminalSplitCommands(bus, this);
+  }
+
+  @override
+  void splitRight() => unawaited(_splitActiveSurface(SplitAxis.vertical));
+
+  @override
+  void splitDown() => unawaited(_splitActiveSurface(SplitAxis.horizontal));
+
+  @override
+  void focusNextPane() {
+    final surface = _group.activeSurface;
+    if (surface == null) return;
+    final target = nextLeaf(surface.root, surface.focusedPaneId);
+    if (target != null) _selectEntry(target);
+  }
+
+  @override
+  void focusPrevPane() {
+    final surface = _group.activeSurface;
+    if (surface == null) return;
+    final target = prevLeaf(surface.root, surface.focusedPaneId);
+    if (target != null) _selectEntry(target);
+  }
+
+  @override
+  void focusPaneInDirection(PaneDirection direction) {
+    final surface = _group.activeSurface;
+    final activeId = _group.activeId;
+    if (surface == null || activeId == null) return;
+    final target = paneInDirection(surface.root, activeId, direction);
+    if (target != null) _selectEntry(target);
+  }
+
+  @override
+  void toggleZoom() {
+    if (_group.activeSurface == null) return;
+    _group.toggleZoom();
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void equalizePanes() => _equalizeActiveSurface();
+
+  @override
+  void closeActivePane() => _closeActivePane();
+
+  @override
+  void applyLayoutPreset(layout_presets.TerminalLayoutPreset preset) =>
+      unawaited(_applyLayoutPreset(preset));
 
   @override
   Widget build(BuildContext context) {
@@ -752,10 +828,17 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel> {
       _scheduleTerminalViewRegistration();
     }
 
-    return ColoredBox(
-      key: AppKeys.workspaceTerminalPanel,
-      color: terminalBackground,
-      child: terminalBody,
+    return Focus(
+      canRequestFocus: false,
+      skipTraversal: true,
+      onFocusChange: (hasFocus) {
+        if (hasFocus) _claimSplitCommands();
+      },
+      child: ColoredBox(
+        key: AppKeys.workspaceTerminalPanel,
+        color: terminalBackground,
+        child: terminalBody,
+      ),
     );
   }
 }
