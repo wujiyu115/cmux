@@ -132,6 +132,10 @@
   "themePresetViolet": "Violet",
   "themePresetAmber": "Amber",
   "themePresetForest": "Forest",
+  "themePresetTerminal": "Terminal",
+  "@themePresetTerminal": {
+    "description": "Colour preset that derives the whole UI scheme from the active terminal theme."
+  },
   "languageDescription": "Language used for menus, buttons, and labels.",
   "cancel": "Cancel",
   "add": "Add",

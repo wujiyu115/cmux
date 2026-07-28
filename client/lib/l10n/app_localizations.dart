@@ -752,6 +752,12 @@ abstract class AppLocalizations {
   /// **'Forest'**
   String get themePresetForest;
 
+  /// Colour preset that derives the whole UI scheme from the active terminal theme.
+  ///
+  /// In en, this message translates to:
+  /// **'Terminal'**
+  String get themePresetTerminal;
+
   /// No description provided for @languageDescription.
   ///
   /// In en, this message translates to:

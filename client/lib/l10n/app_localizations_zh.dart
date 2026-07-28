@@ -349,6 +349,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get themePresetForest => '森林';
 
   @override
+  String get themePresetTerminal => '跟随终端';
+
+  @override
   String get languageDescription => '菜单、按钮与标签所使用的语言。';
 
   @override

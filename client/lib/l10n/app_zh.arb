@@ -123,6 +123,7 @@
   "themePresetViolet": "紫罗兰",
   "themePresetAmber": "琥珀",
   "themePresetForest": "森林",
+  "themePresetTerminal": "跟随终端",
   "languageDescription": "菜单、按钮与标签所使用的语言。",
   "cancel": "取消",
   "add": "添加",

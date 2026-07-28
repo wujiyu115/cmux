@@ -77,6 +77,7 @@ import 'theme/app_font_resolver.dart';
 import 'theme/installed_font_enumerator.dart';
 import 'theme/app_theme.dart';
 import 'theme/team_pilot_toast_config.dart';
+import 'theme/terminal_derived_scheme.dart';
 import 'theme/workspace_surface_layers.dart';
 import 'theme/app_typography_scale.dart';
 import 'pages/system/error_page.dart';
@@ -731,6 +732,10 @@ class TeamPilotApp extends StatelessWidget {
         double typographyCustomMultiplier,
         String uiFontId,
         String monoFontId,
+        String terminalThemeMode,
+        bool useCustomTerminalColors,
+        Map<String, int> terminalColorOverrides,
+        int terminalThemeKey,
       })
     >(
       selector: (state) {
@@ -741,13 +746,27 @@ class TeamPilotApp extends StatelessWidget {
             themeMode != 'system') {
           themeMode = 'system';
         }
+        final colorPreset = normalizeThemeColorPreset(prefs.themeColorPreset);
         return (
           themeMode: themeMode,
-          colorPreset: normalizeThemeColorPreset(prefs.themeColorPreset),
+          colorPreset: colorPreset,
           typographyScale: normalizeTypographyScale(prefs.typographyScale),
           typographyCustomMultiplier: prefs.typographyScaleCustomMultiplier,
           uiFontId: prefs.uiFontId,
           monoFontId: prefs.monoFontId,
+          terminalThemeMode: prefs.terminalThemeMode,
+          useCustomTerminalColors: prefs.useCustomTerminalColors,
+          terminalColorOverrides: prefs.terminalColorOverrides,
+          // Value key over the (unmodifiable, freshly built) override map so the
+          // record keeps `==` semantics and only the terminal preset rebuilds
+          // themes when a slot colour changes.
+          terminalThemeKey: colorPreset == kTerminalDerivedPresetId
+              ? uiTerminalThemeCacheKey(
+                  mode: prefs.terminalThemeMode,
+                  useCustomColors: prefs.useCustomTerminalColors,
+                  colorOverrides: prefs.terminalColorOverrides,
+                )
+              : 0,
         );
       },
       builder: (context, themeBundle) {
@@ -762,6 +781,10 @@ class TeamPilotApp extends StatelessWidget {
                   themeBundle.typographyCustomMultiplier,
               uiFontId: themeBundle.uiFontId,
               monoFontId: themeBundle.monoFontId,
+              terminalThemeMode: themeBundle.terminalThemeMode,
+              useCustomTerminalColors: themeBundle.useCustomTerminalColors,
+              terminalColorOverrides: themeBundle.terminalColorOverrides,
+              terminalThemeKey: themeBundle.terminalThemeKey,
               savedLocale: savedLocale,
             );
           },
@@ -779,6 +802,10 @@ class _TeamPilotMaterialApp extends StatefulWidget {
     required this.typographyCustomMultiplier,
     required this.uiFontId,
     required this.monoFontId,
+    required this.terminalThemeMode,
+    required this.useCustomTerminalColors,
+    required this.terminalColorOverrides,
+    required this.terminalThemeKey,
     required this.savedLocale,
   });
 
@@ -788,6 +815,15 @@ class _TeamPilotMaterialApp extends StatefulWidget {
   final double typographyCustomMultiplier;
   final String uiFontId;
   final String monoFontId;
+
+  /// Terminal colour-scheme prefs — only consumed when [colorPreset] is
+  /// [kTerminalDerivedPresetId], where the UI scheme is derived from them.
+  final String terminalThemeMode;
+  final bool useCustomTerminalColors;
+  final Map<String, int> terminalColorOverrides;
+
+  /// Value fingerprint of the three fields above; `0` for the fixed presets.
+  final int terminalThemeKey;
   final String savedLocale;
 
   @override
@@ -804,6 +840,7 @@ class _TeamPilotMaterialAppState extends State<_TeamPilotMaterialApp> {
   double? _cachedIconMultiplier;
   String? _cachedUiFontId;
   String? _cachedMonoFontId;
+  int? _cachedTerminalThemeKey;
 
   /// Session-pinned fonts. Pref changes save immediately but apply on next
   /// cold start — mid-session [ThemeData] font swaps force a multi-second
@@ -842,7 +879,8 @@ class _TeamPilotMaterialAppState extends State<_TeamPilotMaterialApp> {
             widget.typographyCustomMultiplier &&
         _cachedEffectiveTextMult == effectiveTextMult &&
         _cachedUiFontId == _sessionUiFontId &&
-        _cachedMonoFontId == _sessionMonoFontId) {
+        _cachedMonoFontId == _sessionMonoFontId &&
+        _cachedTerminalThemeKey == widget.terminalThemeKey) {
       return (light: _lightTheme!, dark: _darkTheme!);
     }
     final fonts = AppFontResolver.resolve(
@@ -857,17 +895,30 @@ class _TeamPilotMaterialAppState extends State<_TeamPilotMaterialApp> {
     _cachedEffectiveTextMult = effectiveTextMult;
     _cachedUiFontId = _sessionUiFontId;
     _cachedMonoFontId = _sessionMonoFontId;
+    _cachedTerminalThemeKey = widget.terminalThemeKey;
+    // Null for the fixed presets and for the legacy adaptive / classicDark /
+    // highContrast terminal modes (nothing to derive from) — both fall back to
+    // the palette path inside [buildLightTheme] / [buildDarkTheme].
+    final terminalTheme = widget.colorPreset == kTerminalDerivedPresetId
+        ? resolveUiTerminalTheme(
+            mode: widget.terminalThemeMode,
+            useCustomColors: widget.useCustomTerminalColors,
+            colorOverrides: widget.terminalColorOverrides,
+          )
+        : null;
     _lightTheme = buildLightTheme(
       widget.colorPreset,
       textScale,
       iconScale,
       fonts,
+      terminalTheme,
     );
     _darkTheme = buildDarkTheme(
       widget.colorPreset,
       textScale,
       iconScale,
       fonts,
+      terminalTheme,
     );
     return (light: _lightTheme!, dark: _darkTheme!);
   }

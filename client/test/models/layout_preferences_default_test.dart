@@ -213,12 +213,25 @@ void main() {
       }).terminalThemeMode,
       'dracula',
     );
+    // Unknown *slugs* survive: user-imported theme ids load after preferences
+    // at bootstrap, so rejecting them here would clobber a valid import.
+    // `terminal_theme_mapper.dart` falls back when the id resolves to nothing.
     expect(
       LayoutPreferences.fromJson(const {
         'terminalThemeMode': 'totally-bogus',
       }).terminalThemeMode,
-      'adaptive',
+      'totally-bogus',
     );
+    // Non-slug junk still falls back.
+    for (final junk in const ['Totally Bogus!', '-dash', '', 'a/b']) {
+      expect(
+        LayoutPreferences.fromJson({
+          'terminalThemeMode': junk,
+        }).terminalThemeMode,
+        'adaptive',
+        reason: junk,
+      );
+    }
     expect(
       LayoutPreferences.fromJson(const {
         'terminalThemeMode': 'classicDark',

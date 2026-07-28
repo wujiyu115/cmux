@@ -21,6 +21,8 @@ extension AppLocalizationsX on AppLocalizations {
         return themePresetAmber;
       case 'forest':
         return themePresetForest;
+      case 'terminal':
+        return themePresetTerminal;
       case 'graphite':
       default:
         return themePresetGraphite;

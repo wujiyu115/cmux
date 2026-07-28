@@ -72,7 +72,7 @@ class OnboardingAppearanceStep extends StatelessWidget {
                 TpPreferenceRow(
                   title: l10n.themeColorPresetTitle,
                   subtitle: l10n.themeColorPresetDescription,
-                  trailing: ThemeColorPresetPicker(
+                  trailing: ConnectedThemeColorPresetPicker(
                     selected: colorPreset,
                     onSelect: controller.setThemeColorPreset,
                   ),

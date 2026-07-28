@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_alacritty/flutter_alacritty.dart';
 import 'package:teampilot/theme/terminal/cmux_terminal_theme.dart';
-import 'package:teampilot/theme/terminal/terminal_theme_catalog.g.dart';
-import 'package:teampilot/theme/terminal/user_terminal_theme_registry.dart';
+import 'package:teampilot/theme/terminal_derived_scheme.dart';
 import 'package:teampilot/theme/workspace_surface_layers.dart';
 
 int _packColor(Color color) => color.toARGB32() & 0xFFFFFF;
@@ -65,27 +64,6 @@ int terminalThemeFingerprint(TerminalTheme theme) => Object.hash(
   theme.bellOverlay,
 );
 
-/// Resolves a [CmuxTerminalTheme] from a [teampilotTerminalTheme] `mode` string.
-///
-/// Order: built-in catalog by stable id, then a user-imported theme by id
-/// ([UserTerminalThemeRegistry]), then (for tolerance) a case-insensitive
-/// display-name match against the catalog. Built-ins win on id collision, which
-/// is why the user-theme repository suffixes clashing ids on save.
-///
-/// Returns `null` for the legacy adaptive/classicDark/highContrast modes — and
-/// for a user theme whose file was deleted — so they fall through unchanged.
-CmuxTerminalTheme? _catalogThemeForMode(String mode) {
-  final byId = cmuxTerminalThemeById(mode);
-  if (byId != null) return byId;
-  final userTheme = UserTerminalThemeRegistry.instance.byId(mode);
-  if (userTheme != null) return userTheme;
-  final lower = mode.toLowerCase();
-  for (final theme in kCmuxTerminalThemes) {
-    if (theme.name.toLowerCase() == lower) return theme;
-  }
-  return null;
-}
-
 /// Applies per-slot custom colour overrides onto an already-packed
 /// [TerminalTheme] (used for the legacy adaptive/classicDark/highContrast
 /// branches, which have no [CmuxTerminalTheme]). The field mapping mirrors
@@ -144,7 +122,7 @@ TerminalTheme teampilotTerminalTheme(
 }) {
   final hasOverrides = useCustomColors && colorOverrides.isNotEmpty;
 
-  final catalogTheme = _catalogThemeForMode(mode);
+  final catalogTheme = cmuxTerminalThemeForMode(mode);
   if (catalogTheme != null) {
     final effective = hasOverrides
         ? applyTerminalColorOverrides(catalogTheme, colorOverrides)

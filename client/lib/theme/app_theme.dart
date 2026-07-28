@@ -14,14 +14,21 @@ import 'app_markdown_style_sheet.dart';
 import 'app_outline_input_theme.dart';
 import 'app_typography_scale.dart';
 import 'font_catalog.dart';
+import 'terminal/cmux_terminal_theme.dart';
+import 'terminal_derived_scheme.dart';
 
 /// Persisted preset ids (order = settings UI order).
+///
+/// [kTerminalDerivedPresetId] is last: it has no fixed palette, deriving the
+/// whole scheme from the active terminal theme instead (see
+/// `terminal_derived_scheme.dart`).
 const List<String> kThemeColorPresetIds = [
   'graphite',
   'ocean',
   'violet',
   'amber',
   'forest',
+  kTerminalDerivedPresetId,
 ];
 
 const String kDefaultThemeColorPreset = 'amber';
@@ -76,14 +83,31 @@ const _palettes = <String, _Palette>{
   ),
 };
 
-_Palette _palette(String presetId) =>
-    _palettes[normalizeThemeColorPreset(presetId)]!;
+/// Palette for a preset. [terminalTheme] supplies the accents for
+/// [kTerminalDerivedPresetId]; without it that preset falls back to the default
+/// palette (legacy terminal modes have no theme to derive from).
+_Palette _palette(String presetId, [CmuxTerminalTheme? terminalTheme]) {
+  final id = normalizeThemeColorPreset(presetId);
+  if (id == kTerminalDerivedPresetId && terminalTheme != null) {
+    final derived = TerminalDerivedPalette.fromTheme(terminalTheme);
+    return (
+      primary: derived.accent,
+      secondary: derived.teal,
+      error: derived.error,
+      logoPrimary: null,
+    );
+  }
+  return _palettes[id] ?? _palettes[kDefaultThemeColorPreset]!;
+}
 
 /// Seeds the Material [ColorScheme]. Flex Color Scheme also blends
 /// [primary]/[secondary] into surfaces per [surfaceMode] and [blendLevel]
 /// (not only buttons).
-FlexSchemeColor _flexSchemeColors(String presetId) {
-  final p = _palette(presetId);
+FlexSchemeColor _flexSchemeColors(
+  String presetId, [
+  CmuxTerminalTheme? terminalTheme,
+]) {
+  final p = _palette(presetId, terminalTheme);
   return FlexSchemeColor(
     primary: p.primary,
     secondary: p.secondary,
@@ -94,18 +118,33 @@ FlexSchemeColor _flexSchemeColors(String presetId) {
 }
 
 /// Primary accent for branding (e.g. logo gradient) for the given preset.
-Color logoGradientStartFor(String presetId) {
-  final p = _palette(presetId);
+Color logoGradientStartFor(String presetId, [CmuxTerminalTheme? terminalTheme]) {
+  final p = _palette(presetId, terminalTheme);
   return p.logoPrimary ?? p.primary;
 }
 
 /// Secondary accent for branding for the given preset.
-Color logoGradientEndFor(String presetId) => _palette(presetId).secondary;
+Color logoGradientEndFor(String presetId, [CmuxTerminalTheme? terminalTheme]) =>
+    _palette(presetId, terminalTheme).secondary;
 
-Color themePresetSwatchPrimary(String presetId) => _palette(presetId).primary;
+Color themePresetSwatchPrimary(
+  String presetId, [
+  CmuxTerminalTheme? terminalTheme,
+]) => _palette(presetId, terminalTheme).primary;
 
-Color themePresetSwatchSecondary(String presetId) =>
-    _palette(presetId).secondary;
+/// Second swatch dot. For [kTerminalDerivedPresetId] this is the terminal
+/// background rather than a secondary accent, so the chip previews the surface
+/// the whole UI will take on.
+Color themePresetSwatchSecondary(
+  String presetId, [
+  CmuxTerminalTheme? terminalTheme,
+]) {
+  if (normalizeThemeColorPreset(presetId) == kTerminalDerivedPresetId &&
+      terminalTheme != null) {
+    return terminalTheme.background;
+  }
+  return _palette(presetId, terminalTheme).secondary;
+}
 
 const _subThemes = FlexSubThemesData(
   defaultRadius: 10,
@@ -138,49 +177,119 @@ bool _googleFontsNetworkAllowed() {
   }
 }
 
+/// Whether [terminalTheme] can drive the whole scheme for [brightness].
+///
+/// A light terminal theme forced into `darkTheme` (or vice versa) would produce
+/// an unreadable slot, so in that case only the accents are taken from the
+/// terminal theme and Flex Color Scheme blends brightness-correct surfaces.
+bool _canDeriveFromTerminal(
+  String presetId,
+  CmuxTerminalTheme? terminalTheme,
+  Brightness brightness,
+) =>
+    presetId == kTerminalDerivedPresetId &&
+    terminalTheme != null &&
+    terminalTheme.isLightByLuminance == (brightness == Brightness.light);
+
+/// Terminal-derived base theme: exact terminal surfaces + the shared Flex
+/// sub-theme shapes. `blendLevel: 0` keeps FCS from tinting surfaces, and the
+/// final [ThemeData.colorScheme] is forced back to the derived scheme so the
+/// chrome matches the terminal pixel for pixel.
+ThemeData _flexFromTerminalTheme(
+  CmuxTerminalTheme terminalTheme,
+  Brightness brightness,
+) {
+  final scheme = terminalDerivedColorScheme(terminalTheme);
+  final base = brightness == Brightness.dark
+      ? FlexThemeData.dark(
+          colorScheme: scheme,
+          blendLevel: 0,
+          subThemesData: _subThemes,
+          useMaterial3: true,
+        )
+      : FlexThemeData.light(
+          colorScheme: scheme,
+          blendLevel: 0,
+          subThemesData: _subThemes,
+          useMaterial3: true,
+        );
+  return base.copyWith(
+    colorScheme: scheme,
+    scaffoldBackgroundColor: scheme.surface,
+    canvasColor: scheme.surface,
+  );
+}
+
 ThemeData buildLightTheme([
   String? themeColorPreset,
   AppTypographyScale typographyScale = AppTypographyScale.standard,
   AppTypographyScale? iconScale,
   ResolvedFonts? fonts,
-]) => _applyTypography(
-  FlexThemeData.light(
-    colors: _flexSchemeColors(normalizeThemeColorPreset(themeColorPreset)),
-    surfaceMode: FlexSurfaceMode.levelSurfacesLowScaffold,
+  CmuxTerminalTheme? terminalTheme,
+]) {
+  final preset = normalizeThemeColorPreset(themeColorPreset);
+  if (_canDeriveFromTerminal(preset, terminalTheme, Brightness.light)) {
+    return _applyTypography(
+      _flexFromTerminalTheme(terminalTheme!, Brightness.light),
+      typographyScale: typographyScale,
+      iconScale: iconScale,
+      fonts: fonts,
+      // Terminal foreground is already the intended text colour.
+      softenForeground: false,
+    );
+  }
+  return _applyTypography(
+    FlexThemeData.light(
+      colors: _flexSchemeColors(preset, terminalTheme),
+      surfaceMode: FlexSurfaceMode.levelSurfacesLowScaffold,
 
-    /// Higher blend: scaffold / cards pick up more of the seed colors so
-    /// presets change the whole UI, not only primary-filled controls.
-    blendLevel: 30,
-    subThemesData: _subThemes,
-    useMaterial3: true,
-  ),
-  typographyScale: typographyScale,
-  iconScale: iconScale,
-  fonts: fonts,
-);
+      /// Higher blend: scaffold / cards pick up more of the seed colors so
+      /// presets change the whole UI, not only primary-filled controls.
+      blendLevel: 30,
+      subThemesData: _subThemes,
+      useMaterial3: true,
+    ),
+    typographyScale: typographyScale,
+    iconScale: iconScale,
+    fonts: fonts,
+  );
+}
 
 ThemeData buildDarkTheme([
   String? themeColorPreset,
   AppTypographyScale typographyScale = AppTypographyScale.standard,
   AppTypographyScale? iconScale,
   ResolvedFonts? fonts,
-]) => _applyTypography(
-  FlexThemeData.dark(
-    colors: _flexSchemeColors(normalizeThemeColorPreset(themeColorPreset)),
-    surfaceMode: FlexSurfaceMode.highScaffoldLevelSurface,
-    blendLevel: 30,
+  CmuxTerminalTheme? terminalTheme,
+]) {
+  final preset = normalizeThemeColorPreset(themeColorPreset);
+  if (_canDeriveFromTerminal(preset, terminalTheme, Brightness.dark)) {
+    return _applyTypography(
+      _flexFromTerminalTheme(terminalTheme!, Brightness.dark),
+      typographyScale: typographyScale,
+      iconScale: iconScale,
+      fonts: fonts,
+      softenForeground: false,
+    );
+  }
+  return _applyTypography(
+    FlexThemeData.dark(
+      colors: _flexSchemeColors(preset, terminalTheme),
+      surfaceMode: FlexSurfaceMode.highScaffoldLevelSurface,
+      blendLevel: 30,
 
-    /// When true, base layer stays near #000 so only upper surfaces show
-    /// strong tint. Set false for a fully tinted dark scaffold (tradeoff:
-    /// less OLED “true black”).
-    darkIsTrueBlack: true,
-    subThemesData: _subThemes,
-    useMaterial3: true,
-  ),
-  typographyScale: typographyScale,
-  iconScale: iconScale,
-  fonts: fonts,
-);
+      /// When true, base layer stays near #000 so only upper surfaces show
+      /// strong tint. Set false for a fully tinted dark scaffold (tradeoff:
+      /// less OLED “true black”).
+      darkIsTrueBlack: true,
+      subThemesData: _subThemes,
+      useMaterial3: true,
+    ),
+    typographyScale: typographyScale,
+    iconScale: iconScale,
+    fonts: fonts,
+  );
+}
 
 /// How far to pull [ColorScheme.onSurface] toward [surface] in dark mode.
 const _darkOnSurfaceSoften = 0.14;
@@ -246,8 +355,11 @@ ThemeData _applyTypography(
   AppTypographyScale typographyScale = AppTypographyScale.standard,
   AppTypographyScale? iconScale,
   ResolvedFonts? fonts,
+  bool softenForeground = true,
 }) {
-  flexTheme = _withSoftenedForeground(flexTheme);
+  if (softenForeground) {
+    flexTheme = _withSoftenedForeground(flexTheme);
+  }
   final resolvedFonts =
       fonts ??
       AppFontResolver.resolve(

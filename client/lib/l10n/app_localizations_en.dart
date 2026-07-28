@@ -367,6 +367,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themePresetForest => 'Forest';
 
   @override
+  String get themePresetTerminal => 'Terminal';
+
+  @override
   String get languageDescription =>
       'Language used for menus, buttons, and labels.';
 
