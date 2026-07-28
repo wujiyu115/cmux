@@ -96,4 +96,51 @@ void main() {
     );
     expect(home.background, isNot(workspace.background));
   });
+
+  test('teampilotTerminalTheme resolves a catalog id to that theme', () {
+    final dracula = teampilotTerminalTheme(
+      const ColorScheme.dark(),
+      isDark: true,
+      mode: 'dracula',
+    );
+    expect(dracula.background, 0x282A36);
+    expect(dracula.foreground, 0xF8F8F2);
+    expect(dracula.ansi[1], 0xFF5555);
+  });
+
+  test('teampilotTerminalTheme matches a catalog display name (case-insensitive)', () {
+    final byName = teampilotTerminalTheme(
+      const ColorScheme.dark(),
+      isDark: true,
+      mode: 'SOLARIZED DARK',
+    );
+    expect(byName.background, 0x002B36);
+  });
+
+  test('teampilotTerminalTheme unknown mode still falls back to adaptive', () {
+    const cs = ColorScheme.dark(primary: Color(0xFF336699));
+    final unknown = teampilotTerminalTheme(cs, isDark: true, mode: 'totally-bogus');
+    final adaptive = teampilotTerminalTheme(cs, isDark: true, mode: 'adaptive');
+    expect(unknown.background, adaptive.background);
+    expect(unknown.foreground, adaptive.foreground);
+    expect(unknown.hintStart.bg, 0x336699);
+  });
+
+  test('legacy classicDark / highContrast modes are unchanged by catalog hook', () {
+    final classic = teampilotTerminalTheme(
+      const ColorScheme.dark(),
+      isDark: true,
+      mode: 'classicDark',
+    );
+    expect(classic.background, 0x0A0C10);
+    expect(classic.ansi[1], 0xD04A62);
+
+    final highContrast = teampilotTerminalTheme(
+      const ColorScheme.dark(),
+      isDark: true,
+      mode: 'highContrast',
+    );
+    expect(highContrast.background, 0x000000);
+    expect(highContrast.foreground, 0xF5F7FA);
+  });
 }

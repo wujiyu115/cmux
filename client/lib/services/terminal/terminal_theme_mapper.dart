@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_alacritty/flutter_alacritty.dart';
+import 'package:teampilot/theme/terminal/cmux_terminal_theme.dart';
+import 'package:teampilot/theme/terminal/terminal_theme_catalog.g.dart';
 import 'package:teampilot/theme/workspace_surface_layers.dart';
 
 int _packColor(Color color) => color.toARGB32() & 0xFFFFFF;
@@ -62,6 +64,20 @@ int terminalThemeFingerprint(TerminalTheme theme) => Object.hash(
   theme.bellOverlay,
 );
 
+/// Resolves a built-in catalog theme from a [teampilotTerminalTheme] `mode`
+/// string: first by stable id, then (for tolerance) a case-insensitive
+/// display-name match. Returns `null` for the legacy adaptive/classicDark/
+/// highContrast modes so they fall through unchanged.
+CmuxTerminalTheme? _catalogThemeForMode(String mode) {
+  final byId = cmuxTerminalThemeById(mode);
+  if (byId != null) return byId;
+  final lower = mode.toLowerCase();
+  for (final theme in kCmuxTerminalThemes) {
+    if (theme.name.toLowerCase() == lower) return theme;
+  }
+  return null;
+}
+
 /// Maps TeamPilot layout theme modes to [TerminalTheme] (packed RGB).
 ///
 /// [chrome] selects which workspace card surface seeds the adaptive background
@@ -72,6 +88,11 @@ TerminalTheme teampilotTerminalTheme(
   required String mode,
   WorkspacePageChrome chrome = WorkspacePageChrome.workspace,
 }) {
+  final catalogTheme = _catalogThemeForMode(mode);
+  if (catalogTheme != null) {
+    return catalogTheme.toTerminalTheme();
+  }
+
   if (mode == 'classicDark') {
     return TerminalTheme(
       background: 0x0A0C10,
