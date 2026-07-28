@@ -18,6 +18,7 @@ class TerminalLayoutToolbar extends StatelessWidget {
     required this.onEqualize,
     required this.onToggleZoom,
     required this.onClosePane,
+    required this.onShowCommandLog,
     this.isZoomed = false,
     this.canClosePane = true,
     super.key,
@@ -29,6 +30,9 @@ class TerminalLayoutToolbar extends StatelessWidget {
   final VoidCallback onEqualize;
   final VoidCallback onToggleZoom;
   final VoidCallback onClosePane;
+
+  /// Opens the command log window (the cmux "list" toolbar button).
+  final VoidCallback onShowCommandLog;
 
   /// Whether the active surface currently has a zoomed pane (drives the icon).
   final bool isZoomed;
@@ -77,6 +81,14 @@ class TerminalLayoutToolbar extends StatelessWidget {
                 ? l10n.workspaceTerminalUnzoomPane
                 : l10n.workspaceTerminalZoomPane,
             onTap: onToggleZoom,
+          ),
+          _divider(),
+          TpIconButton(
+            icon: Icons.list_alt,
+            compact: true,
+            size: TpIconButton.kCompactSize,
+            tooltip: l10n.workspaceTerminalCommandLog,
+            onTap: onShowCommandLog,
           ),
           _divider(),
           TpIconButton(

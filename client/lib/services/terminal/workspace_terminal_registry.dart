@@ -5,6 +5,8 @@ import 'package:uuid/uuid.dart';
 import '../../models/terminal_split.dart';
 import '../../models/terminal_surface.dart';
 import '../../models/workspace_terminal_session_spec.dart';
+import 'command_log_sink.dart';
+import 'shell_command_tracker.dart';
 import 'terminal_osc_notification_bridge.dart';
 import 'terminal_session.dart';
 import 'workspace_shell_connector.dart';
@@ -23,6 +25,27 @@ TerminalOscNotificationBridge _defaultNotificationBridge({
   required String Function() attribution,
   required String Function() payload,
 }) => TerminalOscNotificationBridge(attribution: attribution, payload: payload);
+
+/// Builds the command-log tracker for one pane. Injected so tests can observe
+/// rows without installing a global [CommandLogSink].
+typedef ShellCommandTrackerFactory =
+    ShellCommandTracker Function({
+      required String paneId,
+      required String workspaceId,
+      required PaneLogContext Function() context,
+    });
+
+ShellCommandTracker _defaultCommandTracker({
+  required String paneId,
+  required String workspaceId,
+  required PaneLogContext Function() context,
+}) => ShellCommandTracker(
+  paneId: paneId,
+  workspaceId: workspaceId,
+  context: context,
+  // Resolved per row: the cubit installs itself once the app shell is up.
+  onCompleted: (entry) => CommandLogSink.maybeCurrent?.record(entry),
+);
 
 /// A single workspace-terminal tab: spec, cwd, session, and view controller.
 class WorkspaceTerminalEntry {
@@ -52,12 +75,17 @@ class WorkspaceTerminalEntry {
   /// OSC 9/99/777 → notification center, bound for this pane's session.
   TerminalOscNotificationBridge? notificationBridge;
 
+  /// OSC 133 → command log, bound for this pane's session.
+  ShellCommandTracker? commandTracker;
+
   int bumpConnectGeneration() => ++connectGeneration;
 
   void dispose() {
     bumpConnectGeneration();
     notificationBridge?.dispose();
     notificationBridge = null;
+    commandTracker?.dispose();
+    commandTracker = null;
     session.sshMemberSession?.close();
     session.disconnect();
     session.dispose();
@@ -76,8 +104,10 @@ class WorkspaceTerminalGroup extends ChangeNotifier {
     this.workspaceId = '',
     String Function()? workspaceLabel,
     TerminalNotificationBridgeFactory? notificationBridgeFactory,
+    ShellCommandTrackerFactory? commandTrackerFactory,
   }) : _workspaceLabel = workspaceLabel ?? _noLabel,
-       _bridgeFactory = notificationBridgeFactory;
+       _bridgeFactory = notificationBridgeFactory,
+       _trackerFactory = commandTrackerFactory;
 
   static String _noLabel() => '';
 
@@ -89,6 +119,9 @@ class WorkspaceTerminalGroup extends ChangeNotifier {
 
   /// Null disables terminal notifications for this group entirely.
   final TerminalNotificationBridgeFactory? _bridgeFactory;
+
+  /// Null disables command logging for this group entirely.
+  final ShellCommandTrackerFactory? _trackerFactory;
 
   final List<WorkspaceTerminalEntry> _entries = [];
   final List<TerminalSurface> _surfaces = [];
@@ -347,7 +380,31 @@ class WorkspaceTerminalGroup extends ChangeNotifier {
       entry.notificationBridge = bridge;
       session.bindOscNotifications(bridge);
     }
+    final trackerFactory = _trackerFactory;
+    if (trackerFactory != null) {
+      final tracker = trackerFactory(
+        paneId: entry.id,
+        workspaceId: workspaceId,
+        context: () => paneLogContext(entry.id),
+      );
+      entry.commandTracker = tracker;
+      session.bindCommandTracker(tracker);
+    }
     return entry;
+  }
+
+  /// Mutable pane facts a logged command should carry: surface, labels, cwd.
+  @visibleForTesting
+  PaneLogContext paneLogContext(String paneId) {
+    final surface = surfaceForPane(paneId);
+    final entry = entryById(paneId);
+    return PaneLogContext(
+      surfaceId: surface?.id ?? '',
+      surfaceName: surface?.name ?? '',
+      paneName: surface?.paneNames[paneId] ?? entry?.titleLabel ?? '',
+      workspaceName: _workspaceLabel().trim(),
+      workingDirectory: entry?.cwd ?? '',
+    );
   }
 
   /// `workspace · pane` label for notifications raised by [paneId]. Falls back
@@ -386,10 +443,13 @@ class WorkspaceTerminalRegistry {
   WorkspaceTerminalRegistry({
     TerminalNotificationBridgeFactory? notificationBridgeFactory =
         _defaultNotificationBridge,
-  }) : _bridgeFactory = notificationBridgeFactory;
+    ShellCommandTrackerFactory? commandTrackerFactory = _defaultCommandTracker,
+  }) : _bridgeFactory = notificationBridgeFactory,
+       _trackerFactory = commandTrackerFactory;
 
   final Map<String, WorkspaceTerminalGroup> _groups = {};
   final TerminalNotificationBridgeFactory? _bridgeFactory;
+  final ShellCommandTrackerFactory? _trackerFactory;
 
   /// Resolves a workspace's display name for notification attribution. Set once
   /// the workspace store exists; until then notifications carry the pane label
@@ -402,6 +462,7 @@ class WorkspaceTerminalRegistry {
       workspaceId: workspaceId,
       workspaceLabel: () => workspaceLabelResolver?.call(workspaceId) ?? '',
       notificationBridgeFactory: _bridgeFactory,
+      commandTrackerFactory: _trackerFactory,
     ),
   );
 

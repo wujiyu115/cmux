@@ -65,6 +65,7 @@ abstract final class CommandIds {
   static const String terminalLayoutColumns3 = 'terminal.layout.columns3';
   static const String terminalLayoutGrid = 'terminal.layout.grid';
   static const String terminalLayoutMainStack = 'terminal.layout.mainStack';
+  static const String terminalCommandLog = 'terminal.commandLog.show';
 
   // App
   static const String commandPalette = 'app.commandPalette';

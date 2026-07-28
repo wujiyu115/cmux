@@ -2175,6 +2175,88 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workspaceTerminalClosePane => '关闭窗格';
 
   @override
+  String get workspaceTerminalCommandLog => '命令日志';
+
+  @override
+  String get commandLogTitle => '命令日志';
+
+  @override
+  String get commandLogRefresh => '刷新';
+
+  @override
+  String get commandLogOpenFolder => '打开日志目录';
+
+  @override
+  String get commandLogClose => '关闭';
+
+  @override
+  String get commandLogAllWorkspaces => '全部工作区';
+
+  @override
+  String get commandLogAllSurfaces => '全部标签页';
+
+  @override
+  String get commandLogAllPanes => '全部窗格';
+
+  @override
+  String get commandLogSearchHint => '搜索命令或工作目录';
+
+  @override
+  String get commandLogClearFilters => '清除筛选';
+
+  @override
+  String get commandLogColumnTime => '时间';
+
+  @override
+  String get commandLogColumnWorkspace => '工作区';
+
+  @override
+  String get commandLogColumnSurface => '标签页';
+
+  @override
+  String get commandLogColumnPane => '窗格';
+
+  @override
+  String get commandLogColumnCommand => '命令';
+
+  @override
+  String get commandLogColumnDirectory => '工作目录';
+
+  @override
+  String get commandLogColumnExitCode => '退出码';
+
+  @override
+  String get commandLogColumnDuration => '时长';
+
+  @override
+  String get commandLogEmpty => '暂无命令记录。Shell 上报提示符标记（OSC 133）后会自动记录。';
+
+  @override
+  String get commandLogNoMatches => '没有命令匹配当前筛选';
+
+  @override
+  String commandLogEntryCount(int count) {
+    return '$count 条';
+  }
+
+  @override
+  String commandLogSkippedLines(int count) {
+    return '已跳过 $count 行无法解析的记录';
+  }
+
+  @override
+  String get commandLogCopyCommand => '复制命令';
+
+  @override
+  String get commandLogCopied => '命令已复制';
+
+  @override
+  String get commandLogInsertIntoPane => '插入到当前窗格';
+
+  @override
+  String get commandLogRunInPane => '在当前窗格执行';
+
+  @override
   String get terminalScrollbackLinesTitle => '终端滚动缓冲行数';
 
   @override
@@ -6089,6 +6171,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get shortcutsTerminalLayoutMainStack => '布局：主窗格 + 堆叠';
+
+  @override
+  String get shortcutsTerminalCommandLog => '显示命令日志';
 
   @override
   String get resourceManagerTitle => '资源管理器';

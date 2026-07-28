@@ -4184,6 +4184,162 @@ abstract class AppLocalizations {
   /// **'Close pane'**
   String get workspaceTerminalClosePane;
 
+  /// No description provided for @workspaceTerminalCommandLog.
+  ///
+  /// In en, this message translates to:
+  /// **'Command log'**
+  String get workspaceTerminalCommandLog;
+
+  /// No description provided for @commandLogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Command log'**
+  String get commandLogTitle;
+
+  /// No description provided for @commandLogRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get commandLogRefresh;
+
+  /// No description provided for @commandLogOpenFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Open log folder'**
+  String get commandLogOpenFolder;
+
+  /// No description provided for @commandLogClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get commandLogClose;
+
+  /// No description provided for @commandLogAllWorkspaces.
+  ///
+  /// In en, this message translates to:
+  /// **'All workspaces'**
+  String get commandLogAllWorkspaces;
+
+  /// No description provided for @commandLogAllSurfaces.
+  ///
+  /// In en, this message translates to:
+  /// **'All tabs'**
+  String get commandLogAllSurfaces;
+
+  /// No description provided for @commandLogAllPanes.
+  ///
+  /// In en, this message translates to:
+  /// **'All panes'**
+  String get commandLogAllPanes;
+
+  /// No description provided for @commandLogSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search command or directory'**
+  String get commandLogSearchHint;
+
+  /// No description provided for @commandLogClearFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear filters'**
+  String get commandLogClearFilters;
+
+  /// No description provided for @commandLogColumnTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get commandLogColumnTime;
+
+  /// No description provided for @commandLogColumnWorkspace.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace'**
+  String get commandLogColumnWorkspace;
+
+  /// No description provided for @commandLogColumnSurface.
+  ///
+  /// In en, this message translates to:
+  /// **'Tab'**
+  String get commandLogColumnSurface;
+
+  /// No description provided for @commandLogColumnPane.
+  ///
+  /// In en, this message translates to:
+  /// **'Pane'**
+  String get commandLogColumnPane;
+
+  /// No description provided for @commandLogColumnCommand.
+  ///
+  /// In en, this message translates to:
+  /// **'Command'**
+  String get commandLogColumnCommand;
+
+  /// No description provided for @commandLogColumnDirectory.
+  ///
+  /// In en, this message translates to:
+  /// **'Directory'**
+  String get commandLogColumnDirectory;
+
+  /// No description provided for @commandLogColumnExitCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit'**
+  String get commandLogColumnExitCode;
+
+  /// No description provided for @commandLogColumnDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration'**
+  String get commandLogColumnDuration;
+
+  /// No description provided for @commandLogEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No commands recorded yet. Commands are logged once the shell reports prompt markers (OSC 133).'**
+  String get commandLogEmpty;
+
+  /// No description provided for @commandLogNoMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'No commands match the current filters'**
+  String get commandLogNoMatches;
+
+  /// No description provided for @commandLogEntryCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} entries'**
+  String commandLogEntryCount(int count);
+
+  /// No description provided for @commandLogSkippedLines.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} unreadable lines skipped'**
+  String commandLogSkippedLines(int count);
+
+  /// No description provided for @commandLogCopyCommand.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy command'**
+  String get commandLogCopyCommand;
+
+  /// No description provided for @commandLogCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Command copied'**
+  String get commandLogCopied;
+
+  /// No description provided for @commandLogInsertIntoPane.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert into pane'**
+  String get commandLogInsertIntoPane;
+
+  /// No description provided for @commandLogRunInPane.
+  ///
+  /// In en, this message translates to:
+  /// **'Run in pane'**
+  String get commandLogRunInPane;
+
   /// No description provided for @terminalScrollbackLinesTitle.
   ///
   /// In en, this message translates to:
@@ -11381,6 +11537,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Layout: Main + Stack'**
   String get shortcutsTerminalLayoutMainStack;
+
+  /// No description provided for @shortcutsTerminalCommandLog.
+  ///
+  /// In en, this message translates to:
+  /// **'Show command log'**
+  String get shortcutsTerminalCommandLog;
 
   /// No description provided for @resourceManagerTitle.
   ///

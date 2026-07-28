@@ -25,6 +25,7 @@ import '../utils/session/workspace_tab_session_scope.dart';
 import '../cubits/mailbox_cubit.dart';
 import '../cubits/member_presence_cubit.dart';
 import '../cubits/notification_cubit.dart';
+import '../cubits/command_log_cubit.dart';
 import '../cubits/ai_history_cubit.dart';
 import '../cubits/shortcut_cubit.dart';
 import '../cubits/editor_cubit.dart';
@@ -126,6 +127,7 @@ import '../services/storage/home_target_store.dart';
 import '../services/storage/runtime_target_registry.dart';
 import '../services/storage/targets_repository.dart';
 import '../services/notification/notification_recorder.dart';
+import '../services/terminal/command_log_sink.dart';
 import '../services/session/session_lifecycle_service.dart';
 import '../services/skill/skill_acquisition_engine.dart';
 import '../services/skill/skill_fetch_service.dart';
@@ -173,6 +175,7 @@ class AppShell {
     required this.boardCubit,
     required this.aiHistoryCubit,
     required this.notificationCubit,
+    required this.commandLogCubit,
     required this.editorCubit,
     required this.workbenchCubit,
     required this.workbenchEditorOpener,
@@ -244,6 +247,7 @@ class AppShell {
   final BoardCubit boardCubit;
   final AiHistoryCubit aiHistoryCubit;
   final NotificationCubit notificationCubit;
+  final CommandLogCubit commandLogCubit;
   final EditorCubit editorCubit;
   final WorkbenchCubit workbenchCubit;
   final WorkbenchEditorOpener workbenchEditorOpener;
@@ -1056,6 +1060,13 @@ Future<AppShell> buildAppShell({
   final notificationCubit = NotificationCubit();
   final notificationBootstrap = notificationCubit.load();
   NotificationRecorder.install(notificationCubit);
+
+  final commandLogCubit = CommandLogCubit();
+  CommandLogSink.install(commandLogCubit);
+  // Retention sweep first, so the window never lists a day about to be deleted.
+  final commandLogBootstrap = commandLogCubit.applyRetention().then(
+    (_) => commandLogCubit.load(),
+  );
   // Terminal OSC notifications name their workspace; resolved lazily because
   // workspaces are still loading when the terminal registry is built.
   workspaceTerminalRegistry.workspaceLabelResolver = (workspaceId) =>
@@ -1069,6 +1080,7 @@ Future<AppShell> buildAppShell({
   await layoutCubit.load();
   await shortcutCubit.load();
   unawaited(notificationBootstrap);
+  unawaited(commandLogBootstrap);
   boot('layout ready (home index prefetched in background)');
   applyWorkspaceEntryMode(
     layoutCubit.state.preferences.workspaceEntryMode,
@@ -1231,6 +1243,7 @@ Future<AppShell> buildAppShell({
     boardCubit: boardCubit,
     aiHistoryCubit: aiHistoryCubit,
     notificationCubit: notificationCubit,
+    commandLogCubit: commandLogCubit,
     editorCubit: editorCubit,
     workbenchCubit: workbenchCubit,
     workbenchEditorOpener: workbenchEditorOpener,

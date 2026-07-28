@@ -2276,6 +2276,89 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workspaceTerminalClosePane => 'Close pane';
 
   @override
+  String get workspaceTerminalCommandLog => 'Command log';
+
+  @override
+  String get commandLogTitle => 'Command log';
+
+  @override
+  String get commandLogRefresh => 'Refresh';
+
+  @override
+  String get commandLogOpenFolder => 'Open log folder';
+
+  @override
+  String get commandLogClose => 'Close';
+
+  @override
+  String get commandLogAllWorkspaces => 'All workspaces';
+
+  @override
+  String get commandLogAllSurfaces => 'All tabs';
+
+  @override
+  String get commandLogAllPanes => 'All panes';
+
+  @override
+  String get commandLogSearchHint => 'Search command or directory';
+
+  @override
+  String get commandLogClearFilters => 'Clear filters';
+
+  @override
+  String get commandLogColumnTime => 'Time';
+
+  @override
+  String get commandLogColumnWorkspace => 'Workspace';
+
+  @override
+  String get commandLogColumnSurface => 'Tab';
+
+  @override
+  String get commandLogColumnPane => 'Pane';
+
+  @override
+  String get commandLogColumnCommand => 'Command';
+
+  @override
+  String get commandLogColumnDirectory => 'Directory';
+
+  @override
+  String get commandLogColumnExitCode => 'Exit';
+
+  @override
+  String get commandLogColumnDuration => 'Duration';
+
+  @override
+  String get commandLogEmpty =>
+      'No commands recorded yet. Commands are logged once the shell reports prompt markers (OSC 133).';
+
+  @override
+  String get commandLogNoMatches => 'No commands match the current filters';
+
+  @override
+  String commandLogEntryCount(int count) {
+    return '$count entries';
+  }
+
+  @override
+  String commandLogSkippedLines(int count) {
+    return '$count unreadable lines skipped';
+  }
+
+  @override
+  String get commandLogCopyCommand => 'Copy command';
+
+  @override
+  String get commandLogCopied => 'Command copied';
+
+  @override
+  String get commandLogInsertIntoPane => 'Insert into pane';
+
+  @override
+  String get commandLogRunInPane => 'Run in pane';
+
+  @override
   String get terminalScrollbackLinesTitle => 'Terminal scrollback lines';
 
   @override
@@ -6331,6 +6414,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shortcutsTerminalLayoutMainStack => 'Layout: Main + Stack';
+
+  @override
+  String get shortcutsTerminalCommandLog => 'Show command log';
 
   @override
   String get resourceManagerTitle => 'Resource Manager';

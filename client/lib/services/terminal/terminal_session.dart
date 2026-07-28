@@ -18,6 +18,7 @@ import '../ssh/ssh_member_session.dart';
 import '../../cubits/agent_attention_cubit.dart';
 import 'pending_user_message.dart';
 import 'pty_launch_environment.dart';
+import 'shell_command_tracker.dart';
 import 'terminal_input_controller.dart';
 import 'terminal_launch_controller.dart';
 import 'terminal_osc_notification_bridge.dart';
@@ -452,6 +453,11 @@ class TerminalSession {
   /// Route this session's OSC 9/99/777 notifications into [bridge].
   void bindOscNotifications(TerminalOscNotificationBridge bridge) {
     _launch.bindOscNotifications(bridge);
+  }
+
+  /// Route this session's OSC 133 command boundaries into [tracker].
+  void bindCommandTracker(ShellCommandTracker tracker) {
+    _launch.bindCommandTracker(tracker);
   }
 
   void dispose() {

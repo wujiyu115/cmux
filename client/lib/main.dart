@@ -23,6 +23,7 @@ import 'cubits/chat_cubit.dart';
 import 'cubits/layout_cubit.dart';
 import 'cubits/mailbox_cubit.dart';
 import 'cubits/notification_cubit.dart';
+import 'cubits/command_log_cubit.dart';
 import 'cubits/ai_history_cubit.dart';
 import 'cubits/shortcut_cubit.dart';
 import 'l10n/l10n_extensions.dart';
@@ -68,6 +69,7 @@ import 'services/terminal/workspace_terminal_registry.dart';
 import 'services/terminal/workspace_terminal_run_service.dart';
 import 'services/notification/desktop_system_notifier.dart';
 import 'services/notification/notification_recorder.dart';
+import 'services/terminal/command_log_sink.dart';
 import 'services/notification/session_idle_notification_tap.dart';
 import 'widgets/notification/session_idle_notification_listener.dart';
 import 'widgets/ssh/ssh_connection_binder.dart';
@@ -227,6 +229,7 @@ class _AppShutdownScope extends StatefulWidget {
     required this.boardCubit,
     required this.aiHistoryCubit,
     required this.notificationCubit,
+    required this.commandLogCubit,
     required this.sshConnectionCubit,
     required this.workspaceTerminalRegistry,
     required this.gitRepoStore,
@@ -244,6 +247,7 @@ class _AppShutdownScope extends StatefulWidget {
   final BoardCubit boardCubit;
   final AiHistoryCubit aiHistoryCubit;
   final NotificationCubit notificationCubit;
+  final CommandLogCubit commandLogCubit;
   final SshConnectionCubit sshConnectionCubit;
   final WorkspaceTerminalRegistry workspaceTerminalRegistry;
   final GitRepoStore gitRepoStore;
@@ -267,8 +271,10 @@ class _AppShutdownScopeState extends State<_AppShutdownScope> {
     unawaited(widget.boardCubit.close());
     unawaited(widget.aiHistoryCubit.close());
     unawaited(widget.notificationCubit.close());
+    unawaited(widget.commandLogCubit.close());
     unawaited(widget.sshConnectionCubit.close());
     NotificationRecorder.install(null);
+    CommandLogSink.install(null);
     widget.workspaceTerminalRegistry.disposeAll();
     widget.gitRepoStore.dispose();
     widget.workspaceFileTreeStore.dispose();
@@ -569,6 +575,7 @@ void main() async {
             boardCubit: shell.boardCubit,
             aiHistoryCubit: shell.aiHistoryCubit,
             notificationCubit: shell.notificationCubit,
+            commandLogCubit: shell.commandLogCubit,
             sshConnectionCubit: shell.sshConnectionCubit,
             workspaceTerminalRegistry: shell.workspaceTerminalRegistry,
             gitRepoStore: shell.gitRepoStore,
@@ -672,6 +679,7 @@ void main() async {
                   BlocProvider.value(value: shell.boardCubit),
                   BlocProvider.value(value: shell.aiHistoryCubit),
                   BlocProvider.value(value: shell.notificationCubit),
+                  BlocProvider.value(value: shell.commandLogCubit),
                   BlocProvider.value(value: shell.editorCubit),
                   BlocProvider.value(value: shell.workbenchCubit),
                   RepositoryProvider.value(value: shell.workbenchEditorOpener),

@@ -20,6 +20,10 @@ abstract class TerminalSplitCommandHost {
   void equalizePanes();
   void closeActivePane();
   void applyLayoutPreset(TerminalLayoutPreset preset);
+
+  /// Opens the command log window scoped to this panel's active pane (it
+  /// supplies the insert / run targets).
+  void showCommandLog();
 }
 
 /// Wires the terminal split/focus/layout commands onto [bus] against [host].
@@ -61,6 +65,7 @@ VoidCallback registerTerminalSplitCommands(
         host.applyLayoutPreset(TerminalLayoutPreset.grid2x2),
     CommandIds.terminalLayoutMainStack: () =>
         host.applyLayoutPreset(TerminalLayoutPreset.mainStack),
+    CommandIds.terminalCommandLog: host.showCommandLog,
   };
   handlers.forEach(bus.register);
   return () {

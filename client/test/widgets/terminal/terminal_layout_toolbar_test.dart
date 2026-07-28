@@ -13,6 +13,7 @@ void main() {
     VoidCallback? onEqualize,
     VoidCallback? onToggleZoom,
     VoidCallback? onClosePane,
+    VoidCallback? onShowCommandLog,
     bool isZoomed = false,
     bool canClosePane = true,
   }) async {
@@ -28,6 +29,7 @@ void main() {
             onEqualize: onEqualize ?? () {},
             onToggleZoom: onToggleZoom ?? () {},
             onClosePane: onClosePane ?? () {},
+            onShowCommandLog: onShowCommandLog ?? () {},
             isZoomed: isZoomed,
             canClosePane: canClosePane,
           ),
@@ -106,6 +108,17 @@ void main() {
 
     await tester.tap(find.byTooltip(l10n.workspaceTerminalClosePane));
     expect(close, 1);
+  });
+
+  testWidgets('command log button invokes its callback', (tester) async {
+    var opened = 0;
+    final l10n = await pumpToolbar(
+      tester,
+      onShowCommandLog: () => opened++,
+    );
+
+    await tester.tap(find.byTooltip(l10n.workspaceTerminalCommandLog));
+    expect(opened, 1);
   });
 
   testWidgets('preset menu emits the chosen preset enum', (tester) async {

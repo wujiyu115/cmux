@@ -9,6 +9,7 @@ import 'package:flutter_alacritty/input/term_mode.dart' show anyMouse;
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../cubits/chat_cubit.dart';
+import '../cubits/command_log_cubit.dart';
 import '../cubits/layout_cubit.dart';
 import '../l10n/l10n_extensions.dart';
 import '../models/runtime_target.dart';
@@ -16,6 +17,7 @@ import '../models/terminal_split.dart';
 import '../models/terminal_surface.dart';
 import '../models/workspace_folder.dart';
 import '../models/workspace_terminal_session_spec.dart';
+import '../pages/command_log/command_log_dialog.dart';
 import '../services/commands/command_bus.dart';
 import '../services/commands/terminal_split_command_registrar.dart';
 import '../services/selection_ai/selection_ai_context.dart';
@@ -577,6 +579,7 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
         if (mounted) setState(() {});
       },
       onClosePane: _closeActivePane,
+      onShowCommandLog: showCommandLog,
       isZoomed: surface.zoomedPaneId != null,
       canClosePane: _group.canCloseActivePane,
     );
@@ -740,6 +743,28 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
   @override
   void applyLayoutPreset(layout_presets.TerminalLayoutPreset preset) =>
       unawaited(_applyLayoutPreset(preset));
+
+  /// Opens the command log window. Insert / run target the focused pane's PTY
+  /// through the session's existing input controller — no new write path.
+  @override
+  void showCommandLog() {
+    unawaited(
+      showCommandLogDialog(
+        context,
+        cubit: context.read<CommandLogCubit>(),
+        onInsert: (command) => _writeToActivePane(command, submit: false),
+        onRun: (command) => _writeToActivePane(command, submit: true),
+      ),
+    );
+  }
+
+  /// Writes [command] to the focused pane, with a trailing `\r` when [submit].
+  void _writeToActivePane(String command, {required bool submit}) {
+    final entry = _activeEntry;
+    if (entry == null || !entry.session.transportReadyForIo) return;
+    entry.session.input.writeToPty(submit ? '$command\r' : command);
+    _refocusTerminal();
+  }
 
   @override
   Widget build(BuildContext context) {

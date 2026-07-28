@@ -7,12 +7,14 @@ import 'package:flutter_alacritty/flutter_alacritty.dart';
 
 import '../../cubits/agent_attention_cubit.dart';
 import '../../utils/logging/logger.dart';
+import '../../utils/terminal/every_user_line_capture.dart';
 import '../../utils/terminal/osc_title_extractor.dart';
 import '../agent_status/agent_attention_state.dart';
 import '../agent_status/agent_status_event.dart';
 import '../agent_status/cursor_title_attention.dart';
 import '../cli/cli_executable_validator.dart';
 import '../team/terminal_activity_tracker.dart';
+import 'shell_command_tracker.dart';
 import 'terminal_osc_notification_bridge.dart';
 import 'terminal_startup_failure_detector.dart';
 import 'terminal_theme_mapper.dart';
@@ -84,6 +86,12 @@ final class TerminalLaunchController {
   /// OSC 9/99/777 → notification center (null until [bindOscNotifications]).
   TerminalOscNotificationBridge? _oscNotifications;
 
+  /// OSC 133 command boundaries → command log (null until [bindCommandTracker]).
+  ShellCommandTracker? _commandTracker;
+
+  /// Submitted-line capture feeding [_commandTracker] on shells with no OSC 133.
+  EveryUserLineCapture? _commandInputLines;
+
   bool get isDisposed => _disposed;
 
   /// Local PTY pid from the active transport, if any.
@@ -116,6 +124,23 @@ final class TerminalLaunchController {
   void clearOscNotifications() {
     _oscNotifications?.reset();
     _oscNotifications = null;
+  }
+
+  /// Route this terminal's OSC 133 markers and submitted lines into [tracker].
+  /// Owned by the caller, like the notification bridge.
+  void bindCommandTracker(ShellCommandTracker tracker) {
+    _commandTracker = tracker;
+    // Hooked on the write path rather than the engine→PTY pipeline so injected
+    // lines ("run in this pane", bus replies) are logged exactly once too.
+    _commandInputLines = EveryUserLineCapture(tracker.observeUserInput);
+  }
+
+  /// Stop tracking commands; closes out whatever was running.
+  void clearCommandTracker() {
+    _commandTracker?.flush();
+    _commandTracker?.reset();
+    _commandTracker = null;
+    _commandInputLines = null;
   }
 
   /// Drop Cursor title observation (disconnect / non-Cursor reconnect).
@@ -213,6 +238,7 @@ final class TerminalLaunchController {
 
   void writeToPty(Uint8List data) {
     if (transportReadyForIo && _transport != null) {
+      _commandInputLines?.feed(utf8.decode(data, allowMalformed: true));
       _transport!.write(data);
     }
   }
@@ -230,11 +256,13 @@ final class TerminalLaunchController {
   /// skipped entirely when nothing is bound so the hot path stays free.
   void _observeOscConsumers(Uint8List data) {
     final bridge = _oscNotifications;
+    final tracker = _commandTracker;
     final cursorBound = _cursorOscTitles != null;
-    if (bridge == null && !cursorBound) return;
+    if (bridge == null && tracker == null && !cursorBound) return;
     final text = utf8.decode(data, allowMalformed: true);
     if (cursorBound) _observeCursorOscTitles(text);
     bridge?.observePtyText(text);
+    tracker?.observePtyText(text);
   }
 
   void _observeCursorOscTitles(String text) {

@@ -36,6 +36,9 @@ class _FakeHost implements TerminalSplitCommandHost {
     calls.add('applyLayoutPreset');
     presets.add(preset);
   }
+
+  @override
+  void showCommandLog() => calls.add('showCommandLog');
 }
 
 void main() {
@@ -94,6 +97,11 @@ void main() {
       TerminalLayoutPreset.grid2x2,
       TerminalLayoutPreset.mainStack,
     ]);
+  });
+
+  test('command log command reaches the host', () {
+    bus.invoke(CommandIds.terminalCommandLog);
+    expect(host.calls, ['showCommandLog']);
   });
 
   test('disposer unregisters exactly its handlers', () {
