@@ -76,6 +76,17 @@ extension AppLocalizationsX on AppLocalizations {
     }
     return slot;
   }
+
+  /// Message for a fatal [TerminalThemeImportResult.error] code. Unknown codes
+  /// fall back to the generic format message rather than leaking the raw code.
+  String terminalThemeImportErrorMessage(String code) {
+    return switch (code) {
+      'missing-background' => terminalThemeImportErrorBackground,
+      'missing-foreground' => terminalThemeImportErrorForeground,
+      'insufficient-ansi' => terminalThemeImportErrorAnsi,
+      _ => terminalThemeImportErrorFormat,
+    };
+  }
 }
 
 extension BuildContextL10n on BuildContext {

@@ -1,6 +1,8 @@
 import 'package:flutter/painting.dart' show Color;
 import 'package:flutter_alacritty/flutter_alacritty.dart';
 
+import 'terminal_color_slots.dart';
+
 /// A single built-in terminal theme ported from cmux's `TerminalThemes.cs`.
 ///
 /// Colours are Flutter [Color]s (fully opaque). The generated catalog
@@ -23,7 +25,14 @@ class CmuxTerminalTheme {
     required this.searchHitFg,
     this.accent,
     required this.ansi,
-  });
+    String? id,
+  }) : _idOverride = id;
+
+  /// Explicit persisted id, used by user-imported themes whose on-disk filename
+  /// (and hence id) may carry a collision-avoidance suffix (`dracula-2`) that no
+  /// longer matches the [name] slug. `null` for the built-in catalog, where [id]
+  /// is derived from [name].
+  final String? _idOverride;
 
   /// Display name, e.g. `'Dracula'`.
   final String name;
@@ -51,11 +60,16 @@ class CmuxTerminalTheme {
   /// Exactly 16 ANSI palette colours: 0..7 normal, 8..15 bright.
   final List<Color> ansi;
 
-  /// Stable kebab-case slug of [name] (`'Solarized Dark'` → `'solarized-dark'`).
+  /// Stable kebab-case slug of [name] (`'Solarized Dark'` → `'solarized-dark'`),
+  /// unless an explicit [_idOverride] was supplied (user-imported themes).
   ///
   /// This is the persisted identifier (`LayoutPreferences.terminalThemeMode`),
   /// so it must stay stable across regenerations.
-  String get id => name
+  String get id => _idOverride ?? slugForName(name);
+
+  /// Derives the stable kebab-case id from a display [name]. Exposed so
+  /// repositories can compute a base id before a theme instance exists.
+  static String slugForName(String name) => name
       .toLowerCase()
       .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
       .replaceAll(RegExp(r'^-+|-+$'), '');
@@ -94,6 +108,72 @@ class CmuxTerminalTheme {
   }
 
   static int _pack(Color color) => color.toARGB32() & 0xFFFFFF;
+
+  /// Serializes to a JSON map for the user-theme repository. Colours are stored
+  /// as `#RRGGBB` strings (see [formatTerminalHexColor]); [id] is persisted so a
+  /// collision-suffixed id survives a round-trip even though it no longer
+  /// matches the [name] slug.
+  Map<String, dynamic> toJson() => <String, dynamic>{
+    'id': id,
+    'name': name,
+    'author': author,
+    'isDark': isDark,
+    'background': formatTerminalHexColor(background.toARGB32()),
+    'foreground': formatTerminalHexColor(foreground.toARGB32()),
+    'cursor': formatTerminalHexColor(cursor.toARGB32()),
+    'selection': formatTerminalHexColor(selection.toARGB32()),
+    'searchHit': formatTerminalHexColor(searchHit.toARGB32()),
+    'searchHitCurrent': formatTerminalHexColor(searchHitCurrent.toARGB32()),
+    'searchHitFg': formatTerminalHexColor(searchHitFg.toARGB32()),
+    if (accent != null) 'accent': formatTerminalHexColor(accent!.toARGB32()),
+    'ansi': <String>[
+      for (final color in ansi) formatTerminalHexColor(color.toARGB32()),
+    ],
+  };
+
+  /// Reconstructs a theme from [toJson]. Throws [FormatException] when a
+  /// required colour is missing or malformed, or when [ansi] is not 16 entries,
+  /// so the [VersionedJsonStore] can quarantine the offending file rather than
+  /// surface a half-decoded theme.
+  factory CmuxTerminalTheme.fromJson(Map<String, dynamic> json) {
+    Color colour(String key) {
+      final parsed = parseTerminalHexColor(json[key] as String?);
+      if (parsed == null) {
+        throw FormatException('missing or malformed colour "$key"');
+      }
+      return Color(parsed);
+    }
+
+    final rawAnsi = json['ansi'];
+    if (rawAnsi is! List || rawAnsi.length != 16) {
+      throw const FormatException('ansi must be a 16-entry list');
+    }
+    final ansi = <Color>[
+      for (final entry in rawAnsi)
+        Color(
+          parseTerminalHexColor(entry is String ? entry : null) ??
+              (throw const FormatException('malformed ansi colour')),
+        ),
+    ];
+
+    final accentRaw = parseTerminalHexColor(json['accent'] as String?);
+    final idRaw = json['id'];
+    return CmuxTerminalTheme(
+      id: idRaw is String && idRaw.isNotEmpty ? idRaw : null,
+      name: (json['name'] as String?) ?? 'Imported theme',
+      author: (json['author'] as String?) ?? '',
+      isDark: json['isDark'] as bool? ?? false,
+      background: colour('background'),
+      foreground: colour('foreground'),
+      cursor: colour('cursor'),
+      selection: colour('selection'),
+      searchHit: colour('searchHit'),
+      searchHitCurrent: colour('searchHitCurrent'),
+      searchHitFg: colour('searchHitFg'),
+      accent: accentRaw == null ? null : Color(accentRaw),
+      ansi: ansi,
+    );
+  }
 }
 
 /// Returns a copy of [base] with per-slot custom colours from [overrides] applied.

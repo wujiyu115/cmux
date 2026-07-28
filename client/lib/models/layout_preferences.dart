@@ -2,7 +2,6 @@ import '../theme/app_theme.dart';
 import '../theme/app_typography_scale.dart';
 import '../theme/font_catalog.dart';
 import '../theme/terminal/terminal_color_slots.dart';
-import '../theme/terminal/terminal_theme_catalog.g.dart';
 
 enum LayoutPreset { workbench, chatFocus, inspector }
 
@@ -448,11 +447,17 @@ String _terminalThemeModeValue(String? raw) {
   if (raw == 'adaptive' || raw == 'classicDark' || raw == 'highContrast') {
     return raw;
   }
-  // Widened to built-in catalog ids (e.g. `dracula`); unknown ids resolve to
-  // adaptive at render time (`terminal_theme_mapper.dart`), so keep the raw
-  // value here rather than clobbering a valid catalog id.
-  return cmuxTerminalThemeById(raw) != null ? raw : 'adaptive';
+  // Built-in catalog ids (`dracula`) and user-imported theme ids are both
+  // slugs. User themes load *after* preferences at bootstrap, so checking the
+  // registry here would clobber a valid imported id; accept any slug and let
+  // `terminal_theme_mapper.dart` fall back to adaptive when it resolves to
+  // nothing.
+  return raw.length <= 64 && _themeSlugPattern.hasMatch(raw)
+      ? raw
+      : 'adaptive';
 }
+
+final RegExp _themeSlugPattern = RegExp(r'^[a-z0-9]+(?:[-_][a-z0-9]+)*$');
 
 WorkspaceEntryMode _workspaceEntryModeFromJson(String? raw) {
   if (raw == 'lastWorkspace') {

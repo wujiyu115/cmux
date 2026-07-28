@@ -2889,5 +2889,35 @@
   "terminalSlotAnsiLabel": "ANSI {index}",
   "@terminalSlotAnsiLabel": {
     "placeholders": { "index": { "type": "String" } }
-  }
+  },
+  "terminalThemeImportAction": "Import theme…",
+  "terminalThemeImportTitle": "Import terminal theme",
+  "terminalThemeImportDescription": "Paste an Alacritty TOML or Ghostty config below, or choose a file.",
+  "terminalThemeImportNameLabel": "Theme name",
+  "terminalThemeImportSourceLabel": "Theme file contents",
+  "terminalThemeImportChooseFile": "Choose file…",
+  "terminalThemeImportConfirm": "Import",
+  "terminalThemeImportFileReadFailed": "Could not read that file.",
+  "terminalThemeImportEmptySource": "Paste the theme contents first.",
+  "terminalThemeImportErrorFormat": "Unrecognized format — expected Alacritty TOML ([colors.primary]) or Ghostty key = value lines.",
+  "terminalThemeImportErrorBackground": "No usable background color in that file.",
+  "terminalThemeImportErrorForeground": "No usable foreground color in that file.",
+  "terminalThemeImportErrorAnsi": "Missing the normal ANSI colors (0-7).",
+  "terminalThemeImportSaveFailed": "Could not save the imported theme.",
+  "terminalThemeImportSuccess": "Imported “{name}”.",
+  "@terminalThemeImportSuccess": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "terminalThemeImportDerived": "Derived from the palette: {slots}",
+  "@terminalThemeImportDerived": {
+    "placeholders": { "slots": { "type": "String" } }
+  },
+  "terminalColorSchemeGroupImported": "Imported",
+  "terminalThemeDeleteTooltip": "Delete imported theme",
+  "terminalThemeDeleteConfirmTitle": "Delete imported theme?",
+  "terminalThemeDeleteConfirmMessage": "“{name}” will be removed. Terminals using it fall back to the adaptive scheme.",
+  "@terminalThemeDeleteConfirmMessage": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "terminalThemeDeleteFailed": "Could not delete that theme."
 }

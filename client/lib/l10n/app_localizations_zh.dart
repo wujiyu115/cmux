@@ -6217,4 +6217,75 @@ class AppLocalizationsZh extends AppLocalizations {
   String terminalSlotAnsiLabel(String index) {
     return 'ANSI $index';
   }
+
+  @override
+  String get terminalThemeImportAction => '导入主题…';
+
+  @override
+  String get terminalThemeImportTitle => '导入终端配色';
+
+  @override
+  String get terminalThemeImportDescription =>
+      '在下方粘贴 Alacritty TOML 或 Ghostty 配置，也可以直接选择文件。';
+
+  @override
+  String get terminalThemeImportNameLabel => '主题名称';
+
+  @override
+  String get terminalThemeImportSourceLabel => '配色文件内容';
+
+  @override
+  String get terminalThemeImportChooseFile => '选择文件…';
+
+  @override
+  String get terminalThemeImportConfirm => '导入';
+
+  @override
+  String get terminalThemeImportFileReadFailed => '无法读取该文件。';
+
+  @override
+  String get terminalThemeImportEmptySource => '请先粘贴配色内容。';
+
+  @override
+  String get terminalThemeImportErrorFormat =>
+      '无法识别的格式 — 需要 Alacritty TOML（[colors.primary]）或 Ghostty 的 key = value 行。';
+
+  @override
+  String get terminalThemeImportErrorBackground => '文件中没有可用的背景色。';
+
+  @override
+  String get terminalThemeImportErrorForeground => '文件中没有可用的前景色。';
+
+  @override
+  String get terminalThemeImportErrorAnsi => '缺少常规 ANSI 颜色（0-7）。';
+
+  @override
+  String get terminalThemeImportSaveFailed => '无法保存导入的主题。';
+
+  @override
+  String terminalThemeImportSuccess(String name) {
+    return '已导入“$name”。';
+  }
+
+  @override
+  String terminalThemeImportDerived(String slots) {
+    return '以下颜色由调色板推导得出：$slots';
+  }
+
+  @override
+  String get terminalColorSchemeGroupImported => '已导入';
+
+  @override
+  String get terminalThemeDeleteTooltip => '删除导入的主题';
+
+  @override
+  String get terminalThemeDeleteConfirmTitle => '删除导入的主题？';
+
+  @override
+  String terminalThemeDeleteConfirmMessage(String name) {
+    return '将移除“$name”。仍在使用它的终端会回退到自适应配色。';
+  }
+
+  @override
+  String get terminalThemeDeleteFailed => '无法删除该主题。';
 }

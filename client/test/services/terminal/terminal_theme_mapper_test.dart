@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_alacritty/flutter_alacritty.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:teampilot/services/terminal/terminal_theme_mapper.dart';
+import 'package:teampilot/theme/terminal/cmux_terminal_theme.dart';
+import 'package:teampilot/theme/terminal/user_terminal_theme_registry.dart';
 import 'package:teampilot/theme/workspace_surface_layers.dart';
 
 void main() {
@@ -142,5 +144,75 @@ void main() {
     );
     expect(highContrast.background, 0x000000);
     expect(highContrast.foreground, 0xF5F7FA);
+  });
+
+  group('user-imported themes', () {
+    tearDown(UserTerminalThemeRegistry.instance.clear);
+
+    CmuxTerminalTheme imported(String id) => CmuxTerminalTheme(
+      id: id,
+      name: 'Imported One',
+      author: '',
+      isDark: true,
+      background: const Color(0xFF102030),
+      foreground: const Color(0xFFAABBCC),
+      cursor: const Color(0xFFFFFFFF),
+      selection: const Color(0xFF203040),
+      searchHit: const Color(0xFFF0C674),
+      searchHitCurrent: const Color(0xFFB5BD68),
+      searchHitFg: const Color(0xFF102030),
+      ansi: <Color>[
+        for (var i = 0; i < 16; i++) Color(0xFF000000 | (i * 0x101010)),
+      ],
+    );
+
+    test('mode matching a registry id resolves the imported theme', () {
+      UserTerminalThemeRegistry.instance.replaceAll([imported('my-import')]);
+      final theme = teampilotTerminalTheme(
+        const ColorScheme.dark(),
+        isDark: true,
+        mode: 'my-import',
+      );
+      expect(theme.background, 0x102030);
+      expect(theme.foreground, 0xAABBCC);
+    });
+
+    test('a built-in id wins over a same-id imported theme', () {
+      UserTerminalThemeRegistry.instance.replaceAll([imported('dracula')]);
+      final theme = teampilotTerminalTheme(
+        const ColorScheme.dark(),
+        isDark: true,
+        mode: 'dracula',
+      );
+      expect(theme.background, isNot(0x102030));
+    });
+
+    test('a deleted imported id falls back to the legacy adaptive theme', () {
+      UserTerminalThemeRegistry.instance.clear();
+      final theme = teampilotTerminalTheme(
+        const ColorScheme.dark(),
+        isDark: true,
+        mode: 'my-import',
+      );
+      final adaptive = teampilotTerminalTheme(
+        const ColorScheme.dark(),
+        isDark: true,
+        mode: 'adaptive',
+      );
+      expect(theme.background, adaptive.background);
+    });
+
+    test('overrides still apply on top of an imported theme', () {
+      UserTerminalThemeRegistry.instance.replaceAll([imported('my-import')]);
+      final theme = teampilotTerminalTheme(
+        const ColorScheme.dark(),
+        isDark: true,
+        mode: 'my-import',
+        useCustomColors: true,
+        colorOverrides: const {'background': 0xFF010203},
+      );
+      expect(theme.background, 0x010203);
+      expect(theme.foreground, 0xAABBCC);
+    });
   });
 }

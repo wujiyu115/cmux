@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_alacritty/flutter_alacritty.dart';
 import 'package:teampilot/theme/terminal/cmux_terminal_theme.dart';
 import 'package:teampilot/theme/terminal/terminal_theme_catalog.g.dart';
+import 'package:teampilot/theme/terminal/user_terminal_theme_registry.dart';
 import 'package:teampilot/theme/workspace_surface_layers.dart';
 
 int _packColor(Color color) => color.toARGB32() & 0xFFFFFF;
@@ -64,13 +65,20 @@ int terminalThemeFingerprint(TerminalTheme theme) => Object.hash(
   theme.bellOverlay,
 );
 
-/// Resolves a built-in catalog theme from a [teampilotTerminalTheme] `mode`
-/// string: first by stable id, then (for tolerance) a case-insensitive
-/// display-name match. Returns `null` for the legacy adaptive/classicDark/
-/// highContrast modes so they fall through unchanged.
+/// Resolves a [CmuxTerminalTheme] from a [teampilotTerminalTheme] `mode` string.
+///
+/// Order: built-in catalog by stable id, then a user-imported theme by id
+/// ([UserTerminalThemeRegistry]), then (for tolerance) a case-insensitive
+/// display-name match against the catalog. Built-ins win on id collision, which
+/// is why the user-theme repository suffixes clashing ids on save.
+///
+/// Returns `null` for the legacy adaptive/classicDark/highContrast modes — and
+/// for a user theme whose file was deleted — so they fall through unchanged.
 CmuxTerminalTheme? _catalogThemeForMode(String mode) {
   final byId = cmuxTerminalThemeById(mode);
   if (byId != null) return byId;
+  final userTheme = UserTerminalThemeRegistry.instance.byId(mode);
+  if (userTheme != null) return userTheme;
   final lower = mode.toLowerCase();
   for (final theme in kCmuxTerminalThemes) {
     if (theme.name.toLowerCase() == lower) return theme;

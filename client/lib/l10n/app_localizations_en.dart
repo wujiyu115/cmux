@@ -6465,4 +6465,80 @@ class AppLocalizationsEn extends AppLocalizations {
   String terminalSlotAnsiLabel(String index) {
     return 'ANSI $index';
   }
+
+  @override
+  String get terminalThemeImportAction => 'Import theme…';
+
+  @override
+  String get terminalThemeImportTitle => 'Import terminal theme';
+
+  @override
+  String get terminalThemeImportDescription =>
+      'Paste an Alacritty TOML or Ghostty config below, or choose a file.';
+
+  @override
+  String get terminalThemeImportNameLabel => 'Theme name';
+
+  @override
+  String get terminalThemeImportSourceLabel => 'Theme file contents';
+
+  @override
+  String get terminalThemeImportChooseFile => 'Choose file…';
+
+  @override
+  String get terminalThemeImportConfirm => 'Import';
+
+  @override
+  String get terminalThemeImportFileReadFailed => 'Could not read that file.';
+
+  @override
+  String get terminalThemeImportEmptySource =>
+      'Paste the theme contents first.';
+
+  @override
+  String get terminalThemeImportErrorFormat =>
+      'Unrecognized format — expected Alacritty TOML ([colors.primary]) or Ghostty key = value lines.';
+
+  @override
+  String get terminalThemeImportErrorBackground =>
+      'No usable background color in that file.';
+
+  @override
+  String get terminalThemeImportErrorForeground =>
+      'No usable foreground color in that file.';
+
+  @override
+  String get terminalThemeImportErrorAnsi =>
+      'Missing the normal ANSI colors (0-7).';
+
+  @override
+  String get terminalThemeImportSaveFailed =>
+      'Could not save the imported theme.';
+
+  @override
+  String terminalThemeImportSuccess(String name) {
+    return 'Imported “$name”.';
+  }
+
+  @override
+  String terminalThemeImportDerived(String slots) {
+    return 'Derived from the palette: $slots';
+  }
+
+  @override
+  String get terminalColorSchemeGroupImported => 'Imported';
+
+  @override
+  String get terminalThemeDeleteTooltip => 'Delete imported theme';
+
+  @override
+  String get terminalThemeDeleteConfirmTitle => 'Delete imported theme?';
+
+  @override
+  String terminalThemeDeleteConfirmMessage(String name) {
+    return '“$name” will be removed. Terminals using it fall back to the adaptive scheme.';
+  }
+
+  @override
+  String get terminalThemeDeleteFailed => 'Could not delete that theme.';
 }

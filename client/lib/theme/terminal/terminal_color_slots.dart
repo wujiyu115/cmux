@@ -80,15 +80,20 @@ Map<String, int> terminalThemeSlotValues(TerminalTheme theme) {
 
 /// Parses a hex colour string, mirroring cmux `TerminalThemes.TryParseHexColor`
 /// (`TerminalThemes.cs:59`). Accepts `#RRGGBB` / `RRGGBB` and `#AARRGGBB` /
-/// `AARRGGBB` (a missing leading `#` is tolerated); the alpha component is
-/// ignored and the result is always opaque (alpha forced `0xFF`).
+/// `AARRGGBB` (a missing leading `#` is tolerated), plus a leading `0x` / `0X`
+/// prefix (as emitted by some Alacritty themes, e.g. `0xRRGGBB`); the alpha
+/// component is ignored and the result is always opaque (alpha forced `0xFF`).
 ///
 /// Returns `null` for empty / wrong-length / non-hex input.
 int? parseTerminalHexColor(String? value) {
   if (value == null) return null;
   var text = value.trim();
   if (text.isEmpty) return null;
-  if (text.startsWith('#')) text = text.substring(1);
+  if (text.startsWith('#')) {
+    text = text.substring(1);
+  } else if (text.startsWith('0x') || text.startsWith('0X')) {
+    text = text.substring(2);
+  }
   final String rgbHex;
   if (RegExp(r'^[0-9a-fA-F]{6}$').hasMatch(text)) {
     rgbHex = text;

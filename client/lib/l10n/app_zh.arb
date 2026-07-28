@@ -2460,5 +2460,35 @@
   "terminalSlotAnsiLabel": "ANSI {index}",
   "@terminalSlotAnsiLabel": {
     "placeholders": { "index": { "type": "String" } }
-  }
+  },
+  "terminalThemeImportAction": "导入主题…",
+  "terminalThemeImportTitle": "导入终端配色",
+  "terminalThemeImportDescription": "在下方粘贴 Alacritty TOML 或 Ghostty 配置，也可以直接选择文件。",
+  "terminalThemeImportNameLabel": "主题名称",
+  "terminalThemeImportSourceLabel": "配色文件内容",
+  "terminalThemeImportChooseFile": "选择文件…",
+  "terminalThemeImportConfirm": "导入",
+  "terminalThemeImportFileReadFailed": "无法读取该文件。",
+  "terminalThemeImportEmptySource": "请先粘贴配色内容。",
+  "terminalThemeImportErrorFormat": "无法识别的格式 — 需要 Alacritty TOML（[colors.primary]）或 Ghostty 的 key = value 行。",
+  "terminalThemeImportErrorBackground": "文件中没有可用的背景色。",
+  "terminalThemeImportErrorForeground": "文件中没有可用的前景色。",
+  "terminalThemeImportErrorAnsi": "缺少常规 ANSI 颜色（0-7）。",
+  "terminalThemeImportSaveFailed": "无法保存导入的主题。",
+  "terminalThemeImportSuccess": "已导入“{name}”。",
+  "@terminalThemeImportSuccess": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "terminalThemeImportDerived": "以下颜色由调色板推导得出：{slots}",
+  "@terminalThemeImportDerived": {
+    "placeholders": { "slots": { "type": "String" } }
+  },
+  "terminalColorSchemeGroupImported": "已导入",
+  "terminalThemeDeleteTooltip": "删除导入的主题",
+  "terminalThemeDeleteConfirmTitle": "删除导入的主题？",
+  "terminalThemeDeleteConfirmMessage": "将移除“{name}”。仍在使用它的终端会回退到自适应配色。",
+  "@terminalThemeDeleteConfirmMessage": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "terminalThemeDeleteFailed": "无法删除该主题。"
 }

@@ -76,6 +76,7 @@ import '../repositories/ssh_credential_store.dart';
 import '../repositories/ssh_known_host_repository.dart';
 import '../repositories/ssh_profile_repository.dart';
 import '../repositories/extension_repository.dart';
+import '../repositories/user_terminal_theme_repository.dart';
 import '../repositories/workspace_project_config_repository.dart';
 import '../router/app_router.dart';
 import '../services/extension/builtin_manifests.dart';
@@ -155,6 +156,7 @@ import '../services/terminal/workspace_shell_connector.dart';
 import '../services/terminal/workspace_terminal_registry.dart';
 import '../services/terminal/workspace_terminal_run_service.dart';
 import '../services/terminal/workspace_terminal_session_ops.dart';
+import '../theme/terminal/user_terminal_theme_registry.dart';
 import '../utils/logging/logger.dart';
 import 'ui_zoom_baseline.dart';
 
@@ -818,6 +820,10 @@ Future<AppShell> buildAppShell({
 
   final appUpdateCubit = AppUpdateCubit(settings: appSettings);
   final layoutCubit = LayoutCubit(repository: LayoutRepository(preferences));
+  // User-imported terminal themes must be in memory before the first terminal
+  // paints: `teampilotTerminalTheme` is synchronous and resolves imported ids
+  // through this registry.
+  await _loadUserTerminalThemes();
   final workspaceToolsCubit = WorkspaceToolsCubit();
   final workspaceTerminalRegistry = WorkspaceTerminalRegistry();
   final gitRepoStore = GitRepoStore();
@@ -1274,6 +1280,24 @@ Future<AppShell> buildAppShell({
     workspaceSearchHost: workspaceSearchHost,
     uiZoomBaseline: uiZoomBaseline,
   );
+}
+
+/// Loads user-imported terminal themes into [UserTerminalThemeRegistry].
+///
+/// A failure here must not block startup: with an empty registry an imported
+/// `terminalThemeMode` simply falls back to the adaptive scheme.
+Future<void> _loadUserTerminalThemes() async {
+  try {
+    final themes = await UserTerminalThemeRepository().loadAll();
+    UserTerminalThemeRegistry.instance.replaceAll(themes);
+  } on Object catch (error, stackTrace) {
+    appLogger.w(
+      '[bootstrap] failed to load user terminal themes',
+      error: error,
+      stackTrace: stackTrace,
+    );
+    UserTerminalThemeRegistry.instance.clear();
+  }
 }
 
 class TeamPilotBootstrap extends StatefulWidget {

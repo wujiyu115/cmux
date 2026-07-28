@@ -11621,6 +11621,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'ANSI {index}'**
   String terminalSlotAnsiLabel(String index);
+
+  /// No description provided for @terminalThemeImportAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Import theme…'**
+  String get terminalThemeImportAction;
+
+  /// No description provided for @terminalThemeImportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Import terminal theme'**
+  String get terminalThemeImportTitle;
+
+  /// No description provided for @terminalThemeImportDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste an Alacritty TOML or Ghostty config below, or choose a file.'**
+  String get terminalThemeImportDescription;
+
+  /// No description provided for @terminalThemeImportNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme name'**
+  String get terminalThemeImportNameLabel;
+
+  /// No description provided for @terminalThemeImportSourceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme file contents'**
+  String get terminalThemeImportSourceLabel;
+
+  /// No description provided for @terminalThemeImportChooseFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose file…'**
+  String get terminalThemeImportChooseFile;
+
+  /// No description provided for @terminalThemeImportConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Import'**
+  String get terminalThemeImportConfirm;
+
+  /// No description provided for @terminalThemeImportFileReadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not read that file.'**
+  String get terminalThemeImportFileReadFailed;
+
+  /// No description provided for @terminalThemeImportEmptySource.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste the theme contents first.'**
+  String get terminalThemeImportEmptySource;
+
+  /// No description provided for @terminalThemeImportErrorFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Unrecognized format — expected Alacritty TOML ([colors.primary]) or Ghostty key = value lines.'**
+  String get terminalThemeImportErrorFormat;
+
+  /// No description provided for @terminalThemeImportErrorBackground.
+  ///
+  /// In en, this message translates to:
+  /// **'No usable background color in that file.'**
+  String get terminalThemeImportErrorBackground;
+
+  /// No description provided for @terminalThemeImportErrorForeground.
+  ///
+  /// In en, this message translates to:
+  /// **'No usable foreground color in that file.'**
+  String get terminalThemeImportErrorForeground;
+
+  /// No description provided for @terminalThemeImportErrorAnsi.
+  ///
+  /// In en, this message translates to:
+  /// **'Missing the normal ANSI colors (0-7).'**
+  String get terminalThemeImportErrorAnsi;
+
+  /// No description provided for @terminalThemeImportSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save the imported theme.'**
+  String get terminalThemeImportSaveFailed;
+
+  /// No description provided for @terminalThemeImportSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported “{name}”.'**
+  String terminalThemeImportSuccess(String name);
+
+  /// No description provided for @terminalThemeImportDerived.
+  ///
+  /// In en, this message translates to:
+  /// **'Derived from the palette: {slots}'**
+  String terminalThemeImportDerived(String slots);
+
+  /// No description provided for @terminalColorSchemeGroupImported.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported'**
+  String get terminalColorSchemeGroupImported;
+
+  /// No description provided for @terminalThemeDeleteTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete imported theme'**
+  String get terminalThemeDeleteTooltip;
+
+  /// No description provided for @terminalThemeDeleteConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete imported theme?'**
+  String get terminalThemeDeleteConfirmTitle;
+
+  /// No description provided for @terminalThemeDeleteConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'“{name}” will be removed. Terminals using it fall back to the adaptive scheme.'**
+  String terminalThemeDeleteConfirmMessage(String name);
+
+  /// No description provided for @terminalThemeDeleteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not delete that theme.'**
+  String get terminalThemeDeleteFailed;
 }
 
 class _AppLocalizationsDelegate

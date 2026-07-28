@@ -22,18 +22,27 @@ class _SchemeOption {
   final List<Color> swatches;
 }
 
-/// Grouped picker for the 23 built-in terminal palettes plus the legacy
-/// adaptive/classicDark/highContrast modes. Selecting a row writes the id back
-/// via [onSelect] (`terminalThemeMode`).
+/// Grouped picker for the 23 built-in terminal palettes, any user-imported
+/// themes, and the legacy adaptive/classicDark/highContrast modes. Selecting a
+/// row writes the id back via [onSelect] (`terminalThemeMode`).
 class TerminalSchemePicker extends StatelessWidget {
   const TerminalSchemePicker({
     required this.selectedMode,
     required this.onSelect,
+    this.importedThemes = const [],
+    this.onDeleteImported,
     super.key,
   });
 
   final String selectedMode;
   final ValueChanged<String> onSelect;
+
+  /// User-imported themes, shown in their own group above the built-ins.
+  final List<CmuxTerminalTheme> importedThemes;
+
+  /// Delete handler for an imported row; when null the delete button is hidden
+  /// (so the control never appears without behaviour behind it).
+  final ValueChanged<CmuxTerminalTheme>? onDeleteImported;
 
   static List<Color> _catalogSwatches(CmuxTerminalTheme t) => <Color>[
     t.background,
@@ -104,6 +113,26 @@ class TerminalSchemePicker extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (importedThemes.isNotEmpty)
+          _group(
+            context,
+            l10n.terminalColorSchemeGroupImported,
+            [
+              for (final theme in importedThemes)
+                _SchemeOption(
+                  id: theme.id,
+                  name: theme.name,
+                  author: theme.author,
+                  swatches: _catalogSwatches(theme),
+                ),
+            ],
+            onDelete: onDeleteImported == null
+                ? null
+                : (id) {
+                    final theme = importedThemes.firstWhere((t) => t.id == id);
+                    onDeleteImported!(theme);
+                  },
+          ),
         _group(context, l10n.terminalColorSchemeGroupLegacy, legacy),
         _group(context, l10n.terminalColorSchemeGroupDark, dark),
         _group(context, l10n.terminalColorSchemeGroupLight, light),
@@ -114,8 +143,9 @@ class TerminalSchemePicker extends StatelessWidget {
   Widget _group(
     BuildContext context,
     String title,
-    List<_SchemeOption> options,
-  ) {
+    List<_SchemeOption> options, {
+    ValueChanged<String>? onDelete,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -125,6 +155,7 @@ class TerminalSchemePicker extends StatelessWidget {
             option: option,
             selected: option.id == selectedMode,
             onTap: () => onSelect(option.id),
+            onDelete: onDelete == null ? null : () => onDelete(option.id),
           ),
       ],
     );
@@ -136,11 +167,15 @@ class _SchemeRow extends StatelessWidget {
     required this.option,
     required this.selected,
     required this.onTap,
+    this.onDelete,
   });
 
   final _SchemeOption option;
   final bool selected;
   final VoidCallback onTap;
+
+  /// Non-null only for imported rows.
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -178,6 +213,16 @@ class _SchemeRow extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             _SwatchStrip(colors: option.swatches),
+            if (onDelete != null) ...[
+              const SizedBox(width: 4),
+              TpIconButton(
+                icon: Icons.delete_outline,
+                compact: true,
+                size: TpIconButton.kCompactSize,
+                tooltip: l10n.terminalThemeDeleteTooltip,
+                onTap: onDelete,
+              ),
+            ],
           ],
         ),
       ),
