@@ -12,6 +12,8 @@ import '../cubits/chat_cubit.dart';
 import '../cubits/layout_cubit.dart';
 import '../l10n/l10n_extensions.dart';
 import '../models/runtime_target.dart';
+import '../models/terminal_split.dart';
+import '../models/terminal_surface.dart';
 import '../models/workspace_folder.dart';
 import '../models/workspace_terminal_session_spec.dart';
 import '../services/selection_ai/selection_ai_context.dart';
@@ -20,6 +22,7 @@ import '../services/selection_ai/selection_ask_ai.dart';
 import '../services/selection_ai/selection_ask_ai_fab_host.dart';
 import '../services/ssh/ssh_profile_connection_coordinator.dart';
 import '../services/terminal/terminal_layout_coordinator.dart';
+import '../services/terminal/terminal_layout_presets.dart';
 import '../services/terminal/terminal_theme_mapper.dart';
 import '../services/terminal/terminal_uri_opener.dart';
 import '../services/host/host_interactive_shell.dart';
@@ -30,6 +33,7 @@ import '../services/terminal/workspace_terminal_session_ops.dart';
 import '../services/workspace/workspace_tools_scope.dart';
 import '../theme/workspace_surface_layers.dart';
 import '../utils/ui/app_keys.dart';
+import 'terminal/terminal_layout_toolbar.dart';
 import 'terminal/terminal_pane_keys.dart';
 import 'terminal/terminal_split_view.dart';
 import 'workspace_terminal/workspace_terminal_body_kind.dart';
@@ -537,6 +541,122 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel> {
     _startDefaultTerminal();
   }
 
+  /// Split-toolbar row above the active surface. Shown regardless of
+  /// [WorkspaceTerminalPanel.showChrome] (the real hosts pass `false`).
+  Widget _buildLayoutToolbar(TerminalSurface surface) {
+    return TerminalLayoutToolbar(
+      onSplitRight: () =>
+          unawaited(_splitActiveSurface(SplitAxis.vertical)),
+      onSplitDown: () =>
+          unawaited(_splitActiveSurface(SplitAxis.horizontal)),
+      onApplyPreset: (preset) => unawaited(_applyLayoutPreset(preset)),
+      onEqualize: _equalizeActiveSurface,
+      onToggleZoom: () {
+        _group.toggleZoom();
+        if (mounted) setState(() {});
+      },
+      onClosePane: _closeActivePane,
+      isZoomed: surface.zoomedPaneId != null,
+      canClosePane: _group.canCloseActivePane,
+    );
+  }
+
+  /// Resolves the cwd a new split pane inherits from the currently focused
+  /// pane, falling back to the workspace working directory. Mirrors how the
+  /// new-terminal path resolves cwd.
+  String _cwdForNewPane() {
+    final focused = _activeEntry?.cwd.trim();
+    if (focused != null && focused.isNotEmpty) return focused;
+    return widget.workingDirectory.trim();
+  }
+
+  /// Splits the active surface along [axis] (vertical = split right, horizontal
+  /// = split down), anchored on the focused pane. No-op without an active
+  /// surface or a resolvable cwd. Returns the new entry, or null.
+  Future<WorkspaceTerminalEntry?> _splitActiveSurface(SplitAxis axis) async {
+    final surface = _group.activeSurface;
+    if (surface == null) return null;
+    final cwd = _cwdForNewPane();
+    if (cwd.isEmpty) return null;
+    final entry = await _sessionOps.openPaneInSurface(
+      group: _group,
+      connector: _connector,
+      connectCoordinator: _connect,
+      surfaceId: surface.id,
+      axis: axis,
+      anchorPaneId: _group.activeId,
+      cwd: cwd,
+      spec: _defaultSpec(cwd),
+      theme: _terminalTheme(context),
+      sshConnectFailedMessage: context.l10n.workspaceTerminalSshConnectFailed,
+      onStateChanged: () {
+        if (mounted) setState(() {});
+      },
+      mounted: () => mounted,
+    );
+    if (mounted) setState(() {});
+    return entry;
+  }
+
+  /// Rebuilds the active surface into [preset]'s shape, spawning any deficit
+  /// panes first (sequentially, so ids are deterministic). Lossless: no live
+  /// pane is destroyed.
+  Future<void> _applyLayoutPreset(TerminalLayoutPreset preset) async {
+    final initial = _group.activeSurface;
+    if (initial == null) return;
+    final deficit = presetSlotCount(preset) - initial.paneIds.length;
+    for (var i = 0; i < deficit; i++) {
+      await _splitActiveSurface(SplitAxis.vertical);
+      if (!mounted) return;
+    }
+    final surface = _group.activeSurface;
+    if (surface == null) return;
+    final surfaceId = surface.id;
+    void apply() {
+      final s = _group.surfaceById(surfaceId);
+      if (s == null) return;
+      _group.updateSurface(applyLayoutPreset(s, preset, paneIds: s.paneIds));
+    }
+
+    final coordinator = _coordinator;
+    if (coordinator != null) {
+      await coordinator.runLayoutTransaction(() async => apply());
+    } else {
+      apply();
+    }
+    if (mounted) setState(() {});
+  }
+
+  /// Resets every split ratio on the active surface to 0.5.
+  void _equalizeActiveSurface() {
+    final surface = _group.activeSurface;
+    if (surface == null) return;
+    final surfaceId = surface.id;
+    void apply() {
+      final s = _group.surfaceById(surfaceId);
+      if (s == null) return;
+      _group.updateSurface(s.copyWith(root: equalize(s.root)));
+    }
+
+    final coordinator = _coordinator;
+    if (coordinator != null) {
+      coordinator.runLayoutTransactionSync(apply);
+    } else {
+      apply();
+    }
+    if (mounted) setState(() {});
+  }
+
+  /// Closes the focused pane via the group's single removal path. No-op when
+  /// the group holds its last pane.
+  void _closeActivePane() {
+    if (!_group.canCloseActivePane) return;
+    final id = _group.activeId;
+    if (id == null) return;
+    _group.removeEntry(id);
+    if (mounted) setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -601,7 +721,7 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel> {
             _selectEntry(paneId);
           },
         );
-        terminalBody = ValueListenableBuilder<bool>(
+        final fabWrappedSplitView = ValueListenableBuilder<bool>(
           valueListenable: _menuOpen,
           child: splitView,
           builder: (context, menuOpen, child) {
@@ -617,6 +737,13 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel> {
               child: child!,
             );
           },
+        );
+        terminalBody = Column(
+          children: [
+            _buildLayoutToolbar(surface),
+            const TpSeparator(),
+            Expanded(child: fabWrappedSplitView),
+          ],
         );
     }
 

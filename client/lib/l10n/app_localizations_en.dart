@@ -2237,6 +2237,42 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workspaceTerminalCloseSession => 'Close terminal';
 
   @override
+  String get workspaceTerminalSplitRight => 'Split right';
+
+  @override
+  String get workspaceTerminalSplitDown => 'Split down';
+
+  @override
+  String get workspaceTerminalLayout => 'Layout';
+
+  @override
+  String get workspaceTerminalLayoutSingle => 'Single pane';
+
+  @override
+  String get workspaceTerminalLayoutColumns2 => '2 columns';
+
+  @override
+  String get workspaceTerminalLayoutColumns3 => '3 columns';
+
+  @override
+  String get workspaceTerminalLayoutGrid => '2×2 grid';
+
+  @override
+  String get workspaceTerminalLayoutMainStack => 'Main + stack';
+
+  @override
+  String get workspaceTerminalEqualize => 'Equalize panes';
+
+  @override
+  String get workspaceTerminalZoomPane => 'Zoom pane';
+
+  @override
+  String get workspaceTerminalUnzoomPane => 'Unzoom pane';
+
+  @override
+  String get workspaceTerminalClosePane => 'Close pane';
+
+  @override
   String get terminalScrollbackLinesTitle => 'Terminal scrollback lines';
 
   @override

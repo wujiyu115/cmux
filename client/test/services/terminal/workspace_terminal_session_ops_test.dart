@@ -129,6 +129,76 @@ void main() {
     group.dispose();
   });
 
+  test('openPaneInSurface splits the surface and connects', () async {
+    final connector = _RecordingConnector();
+    final connect = _RecordingConnectCoordinator(connector);
+    final group = WorkspaceTerminalGroup();
+    // Seed a surface with one pane.
+    final first = group.addEntry(
+      cwd: '/ws',
+      spec: const WorkspaceTerminalLocalSpec('/bin/bash'),
+      session: connector.createSession(
+        const WorkspaceTerminalLocalSpec('/bin/bash'),
+      ),
+      select: true,
+    );
+    final surfaceId = group.activeSurfaceId!;
+    connector.createdSpecs.clear();
+    final ops = WorkspaceTerminalSessionOps();
+
+    const spec = WorkspaceTerminalLocalSpec('/bin/zsh');
+    final entry = await ops.openPaneInSurface(
+      group: group,
+      connector: connector,
+      connectCoordinator: connect,
+      surfaceId: surfaceId,
+      cwd: '/ws/sub',
+      spec: spec,
+      theme: _theme,
+      sshConnectFailedMessage: 'ssh failed',
+    );
+
+    expect(entry, isNotNull);
+    expect(connector.createdSpecs, [spec]);
+    // Both panes now live in the same surface tree, new one focused.
+    final surface = group.surfaceById(surfaceId)!;
+    expect(surface.paneIds, containsAll([first.id, entry!.id]));
+    expect(surface.focusedPaneId, entry.id);
+    expect(entry.cwd, '/ws/sub');
+    expect(entry.titleLabel, 'recorded-label');
+    expect(connect.connectCalls, 1);
+    expect(connect.lastEntry, same(entry));
+    expect(connect.lastSshMessage, 'ssh failed');
+
+    group.dispose();
+  });
+
+  test('openPaneInSurface returns null (and creates nothing) for unknown surface',
+      () async {
+    final connector = _RecordingConnector();
+    final connect = _RecordingConnectCoordinator(connector);
+    final group = WorkspaceTerminalGroup();
+    final ops = WorkspaceTerminalSessionOps();
+
+    final entry = await ops.openPaneInSurface(
+      group: group,
+      connector: connector,
+      connectCoordinator: connect,
+      surfaceId: 'does-not-exist',
+      cwd: '/ws',
+      spec: const WorkspaceTerminalLocalSpec('/bin/bash'),
+      theme: _theme,
+      sshConnectFailedMessage: 'ssh failed',
+    );
+
+    expect(entry, isNull);
+    expect(connector.createdSpecs, isEmpty);
+    expect(connect.connectCalls, 0);
+    expect(group.entries, isEmpty);
+
+    group.dispose();
+  });
+
   test('connectEntry delegates to connect coordinator', () async {
     final connector = _RecordingConnector();
     final connect = _RecordingConnectCoordinator(connector);

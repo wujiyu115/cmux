@@ -2136,6 +2136,42 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workspaceTerminalCloseSession => '关闭终端';
 
   @override
+  String get workspaceTerminalSplitRight => '向右拆分';
+
+  @override
+  String get workspaceTerminalSplitDown => '向下拆分';
+
+  @override
+  String get workspaceTerminalLayout => '布局';
+
+  @override
+  String get workspaceTerminalLayoutSingle => '单窗格';
+
+  @override
+  String get workspaceTerminalLayoutColumns2 => '2 列';
+
+  @override
+  String get workspaceTerminalLayoutColumns3 => '3 列';
+
+  @override
+  String get workspaceTerminalLayoutGrid => '2×2 网格';
+
+  @override
+  String get workspaceTerminalLayoutMainStack => '主窗格 + 堆叠';
+
+  @override
+  String get workspaceTerminalEqualize => '均分窗格';
+
+  @override
+  String get workspaceTerminalZoomPane => '缩放窗格';
+
+  @override
+  String get workspaceTerminalUnzoomPane => '取消缩放';
+
+  @override
+  String get workspaceTerminalClosePane => '关闭窗格';
+
+  @override
   String get terminalScrollbackLinesTitle => '终端滚动缓冲行数';
 
   @override

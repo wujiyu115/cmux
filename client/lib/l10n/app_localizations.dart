@@ -4106,6 +4106,78 @@ abstract class AppLocalizations {
   /// **'Close terminal'**
   String get workspaceTerminalCloseSession;
 
+  /// No description provided for @workspaceTerminalSplitRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Split right'**
+  String get workspaceTerminalSplitRight;
+
+  /// No description provided for @workspaceTerminalSplitDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Split down'**
+  String get workspaceTerminalSplitDown;
+
+  /// No description provided for @workspaceTerminalLayout.
+  ///
+  /// In en, this message translates to:
+  /// **'Layout'**
+  String get workspaceTerminalLayout;
+
+  /// No description provided for @workspaceTerminalLayoutSingle.
+  ///
+  /// In en, this message translates to:
+  /// **'Single pane'**
+  String get workspaceTerminalLayoutSingle;
+
+  /// No description provided for @workspaceTerminalLayoutColumns2.
+  ///
+  /// In en, this message translates to:
+  /// **'2 columns'**
+  String get workspaceTerminalLayoutColumns2;
+
+  /// No description provided for @workspaceTerminalLayoutColumns3.
+  ///
+  /// In en, this message translates to:
+  /// **'3 columns'**
+  String get workspaceTerminalLayoutColumns3;
+
+  /// No description provided for @workspaceTerminalLayoutGrid.
+  ///
+  /// In en, this message translates to:
+  /// **'2×2 grid'**
+  String get workspaceTerminalLayoutGrid;
+
+  /// No description provided for @workspaceTerminalLayoutMainStack.
+  ///
+  /// In en, this message translates to:
+  /// **'Main + stack'**
+  String get workspaceTerminalLayoutMainStack;
+
+  /// No description provided for @workspaceTerminalEqualize.
+  ///
+  /// In en, this message translates to:
+  /// **'Equalize panes'**
+  String get workspaceTerminalEqualize;
+
+  /// No description provided for @workspaceTerminalZoomPane.
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom pane'**
+  String get workspaceTerminalZoomPane;
+
+  /// No description provided for @workspaceTerminalUnzoomPane.
+  ///
+  /// In en, this message translates to:
+  /// **'Unzoom pane'**
+  String get workspaceTerminalUnzoomPane;
+
+  /// No description provided for @workspaceTerminalClosePane.
+  ///
+  /// In en, this message translates to:
+  /// **'Close pane'**
+  String get workspaceTerminalClosePane;
+
   /// No description provided for @terminalScrollbackLinesTitle.
   ///
   /// In en, this message translates to:
