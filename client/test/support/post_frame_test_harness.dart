@@ -15,23 +15,10 @@ import 'package:teampilot/services/git/git_command_runner.dart';
 import 'package:teampilot/services/git/git_service.dart';
 import 'package:teampilot/services/io/local_filesystem.dart';
 import 'package:teampilot/services/io/workspace_fs_watcher.dart';
-import 'package:teampilot/services/resource_manager/process_metrics_service.dart';
-import 'package:teampilot/services/resource_manager/resource_memory_models.dart';
 import 'package:teampilot/services/storage/app_storage.dart';
 import 'package:teampilot/services/storage/workspace_layout.dart';
 
 Directory? _testAppDataDir;
-
-/// Instant empty snapshot — avoids host `ps`/`powershell` and pending timers.
-class _TestProcessMetricsService extends ProcessMetricsService {
-  @override
-  Future<ResourceMemorySnapshot> collect({
-    required Map<String, int> registeredPids,
-    required Map<String, String> bindingKeyToGroupKey,
-  }) async {
-    return ResourceMemorySnapshot(collectedAt: DateTime.now());
-  }
-}
 
 /// Initializes app paths and [RuntimeStorageContext] for cubit tests.
 void setUpTestAppStorage() {
@@ -55,15 +42,11 @@ void setUpTestAppStorage() {
           ProcessResult(0, 1, '', ''),
     ),
   );
-  // Status-bar Resource Manager starts a host process sweep on mount; under
-  // fake_async that leaves a 5s `.timeout` timer pending after dispose.
-  ProcessMetricsService.debugOverrideFactory = _TestProcessMetricsService.new;
   WorkspaceFsWatcher.debugDisable = true;
 }
 
 void tearDownTestAppStorage() {
   GitService.debugOverrideFactory = null;
-  ProcessMetricsService.debugOverrideFactory = null;
   WorkspaceFsWatcher.debugDisable = false;
   AppStorage.resetForTesting();
   AppPathsBootstrapper.resetForTesting();
