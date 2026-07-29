@@ -9,18 +9,6 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appTitle => 'TeamPilot';
-
-  @override
-  String get appRailChat => 'Chat';
-
-  @override
-  String get appRailRuns => 'Runs';
-
-  @override
-  String get appRailConfig => 'Config';
-
-  @override
   String get copy => 'copy';
 
   @override
@@ -34,9 +22,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get layout => 'Layout';
 
   @override
-  String get layoutSubtitle => 'global workbench';
-
-  @override
   String get save => 'Save';
 
   @override
@@ -47,9 +32,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Structure controls are global and apply across teams.';
 
   @override
-  String get toolPlacement => 'Tool Placement';
-
-  @override
   String get right => 'Right';
 
   @override
@@ -57,9 +39,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rightTools => 'Right Tools';
-
-  @override
-  String get openRightTools => 'Tools';
 
   @override
   String get rightToolsPanelVisible => 'Show tools panel';
@@ -74,39 +53,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sidebarPanelHidden => 'Hide sidebar';
 
   @override
-  String get bottomDockPanelVisible => 'Show bottom panel';
-
-  @override
-  String get bottomDockPanelHidden => 'Hide bottom panel';
-
-  @override
-  String get bottomTray => 'Bottom Tray';
-
-  @override
   String get stacked => 'Stacked';
 
   @override
   String get tabs => 'Tabs';
 
   @override
-  String get stackedTools => 'Stacked Tools';
-
-  @override
-  String get tabbedTools => 'Tabbed Tools';
-
-  @override
   String get regionVisibility => 'Region Visibility';
-
-  @override
-  String get appRail => 'App rail';
-
-  @override
-  String get toolPlacementDescription =>
-      'Dock tool panels on the right or along the bottom edge.';
-
-  @override
-  String get visibilityTeamSessionsHint =>
-      'Show the team sessions list in the left sidebar.';
 
   @override
   String get visibilityMembersHint =>
@@ -138,16 +91,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Extensions will appear here once the catalog loads.';
 
   @override
-  String get extensionEnableLabel => 'Enabled';
-
-  @override
   String get extensionInstall => 'Install';
 
   @override
   String get extensionUninstall => 'Uninstall';
-
-  @override
-  String get extensionInstallGuide => 'Install guide';
 
   @override
   String get extensionStatusNotInstalled => 'Not installed';
@@ -186,51 +133,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get extensionStatusVersionTooOld => 'Installed version is too old';
 
   @override
-  String get extensionKindMcpServer => 'Code intelligence (MCP)';
-
-  @override
-  String get extensionKindSettingsHook => 'Token savings (hook)';
-
-  @override
-  String get rtkSettingsTitle => 'RTK token savings';
-
-  @override
-  String get rtkSettingsEnableTitle => 'Enable RTK';
-
-  @override
-  String get rtkSettingsDescription =>
-      'Compress Agent Bash command output before it reaches the model (requires rtk and jq on PATH).';
-
-  @override
-  String get rtkSettingsStatusTitle => 'Host status';
-
-  @override
-  String get rtkSettingsInstallLink => 'Install guide';
-
-  @override
-  String get rtkStatusNotFound => 'rtk not found on PATH';
-
-  @override
-  String get rtkStatusJqMissing => 'jq not found on PATH';
-
-  @override
-  String get rtkStatusInstalledGeneric => 'rtk ready';
-
-  @override
-  String rtkStatusInstalled(String version) {
-    return 'rtk $version ready';
-  }
-
-  @override
-  String rtkStatusVersionTooOld(String version) {
-    return 'rtk $version is too old (need >= 0.23.0)';
-  }
-
-  @override
-  String get rtkBashOnlyHint =>
-      'Only applies to Agent Bash tool calls. Built-in Read, Grep, and Glob are not rewritten.';
-
-  @override
   String get themeModeTitle => 'Theme mode';
 
   @override
@@ -264,9 +166,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get typographyScaleCustom => 'Custom';
 
   @override
-  String get typographyScaleCustomLabel => 'Scale';
-
-  @override
   String get typographyScaleCustomHint => '50–200';
 
   @override
@@ -298,9 +197,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fontOptionUbuntuSansMono => 'Ubuntu Sans Mono';
-
-  @override
-  String get fontInstalledSection => 'Installed';
 
   @override
   String get fontSearchHint => 'Search fonts';
@@ -423,22 +319,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get languageChinese => '中文';
 
   @override
-  String get chatTo => 'To:';
-
-  @override
-  String get copyPrompt => 'Copy prompt';
-
-  @override
-  String get sendPrompt => 'Send prompt';
-
-  @override
-  String get chatHintText => 'Write a prompt for team-lead...';
-
-  @override
-  String get emptyTimeline =>
-      'Local shell-mode conversation notes will appear here.';
-
-  @override
   String get fileTree => 'File Tree';
 
   @override
@@ -513,12 +393,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gitRefresh => 'Refresh';
 
   @override
-  String get gitChangesListView => 'List view';
-
-  @override
-  String get gitChangesTreeView => 'Tree view';
-
-  @override
   String get gitSwitchBranch => 'Switch branch';
 
   @override
@@ -538,80 +412,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get openTeam => 'Open Team';
-
-  @override
-  String get openMember => 'Open member';
-
-  @override
-  String get switchToMember => 'Switch to member';
-
-  @override
-  String get memberPresenceOffline => 'Offline';
-
-  @override
-  String get memberPresenceConnecting => 'Connecting…';
-
-  @override
-  String get memberPresenceBooting => 'Starting…';
-
-  @override
-  String get memberPresenceIdle => 'Idle';
-
-  @override
-  String get memberPresenceWorking => 'Working';
-
-  @override
   String get filterFiles => 'Filter files';
-
-  @override
-  String get selectTeam => 'Select team';
-
-  @override
-  String get addTeamTooltip => 'Add team';
-
-  @override
-  String get addTeamTitle => 'Add team';
-
-  @override
-  String get teamCliLabel => 'CLI backend';
-
-  @override
-  String get teamModeLabel => 'Team mode';
-
-  @override
-  String get teamModeNative => 'Native (single CLI)';
-
-  @override
-  String get teamModeMixed => 'Mixed (cross-CLI bus)';
-
-  @override
-  String get memberCliInheritHint => 'Inherit team default';
-
-  @override
-  String get memberLaunchConfigTitle => 'Model settings';
-
-  @override
-  String get memberLaunchConfigSubtitle =>
-      'CLI backend, provider, model, and effort for this member.';
-
-  @override
-  String get teamCliSubtitle =>
-      'Chosen when the team is created and cannot be changed later.';
-
-  @override
-  String get teamCliComingSoon => 'Coming soon';
-
-  @override
-  String get teamCliLockedSubtitle => 'Set when this team was created.';
-
-  @override
-  String get teamNameRequired => 'Team name is required.';
-
-  @override
-  String teamNameAlreadyExists(String name) {
-    return 'A team named \"$name\" already exists.';
-  }
 
   @override
   String get workspaces => 'Workspaces';
@@ -644,23 +445,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeWorkspaceRecentVisits => 'Recent';
 
   @override
-  String get homeWorkspacePersonal => 'Simple mode';
-
-  @override
   String get homeWorkspaceAllWorkspaces => 'All workspaces';
-
-  @override
-  String get homeWorkspaceDefaultPersonalWorkspaceName => 'Personal assistant';
-
-  @override
-  String get homeWorkspaceDefaultNativeTeamName => 'Default Native Team';
-
-  @override
-  String get homeWorkspaceDefaultMixedTeamName => 'Default Mixed Team';
-
-  @override
-  String get homeWorkspacePersonalSubtitle =>
-      'Skip the team setup — just launch a single CLI and start chatting.';
 
   @override
   String get homeWorkspaceNoData => 'No data yet';
@@ -671,21 +456,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get homeWorkspaceRecentlyClosedEmpty =>
       'No recently closed workspaces';
-
-  @override
-  String get homeWorkspaceNewTeam => 'New Team';
-
-  @override
-  String get homeWorkspaceProviders => 'Providers';
-
-  @override
-  String get homeWorkspaceTeamWorkspaces => 'Workspaces';
-
-  @override
-  String get homeWorkspaceOwner => 'Owner';
-
-  @override
-  String get homeWorkspaceImportWorkspace => 'Import';
 
   @override
   String get homeWorkspaceSessionsLabel => 'sessions';
@@ -714,49 +484,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeWorkspaceWorkspaceSortSessionCountDesc => 'Session count';
-
-  @override
-  String get homeWorkspaceComingSoon => 'Coming soon';
-
-  @override
-  String get homeWorkspaceNewTeamSubtitle =>
-      'Pick how the team collaborates, then name it.';
-
-  @override
-  String get homeWorkspaceNewTeamMethodCustom => 'Custom';
-
-  @override
-  String get homeWorkspaceNewTeamMethodAi => 'AI generate';
-
-  @override
-  String get homeWorkspaceNewTeamSubtitleAi =>
-      'Describe your team and generate a draft with AI.';
-
-  @override
-  String get homeWorkspaceNewTeamRecommended => 'Recommended';
-
-  @override
-  String get homeWorkspaceNewTeamModeBeta => 'Beta';
-
-  @override
-  String get homeWorkspaceNewTeamNameHint => 'Enter a team name';
-
-  @override
-  String get homeWorkspaceCreateTeam => 'Create team';
-
-  @override
-  String get teamModeNativeTitle => 'Native mode';
-
-  @override
-  String get teamModeMixedTitle => 'Mixed mode';
-
-  @override
-  String get teamModeNativeDescription =>
-      'All members share one CLI for native, low-config collaboration.';
-
-  @override
-  String get teamModeMixedDescription =>
-      'Members can run different CLIs and collaborate across tools over TeamBus.';
 
   @override
   String get homeWorkspaceNewWorkspaceSubtitle =>
@@ -800,93 +527,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeWorkspaceWorkspaceManagement => 'Workspace management';
 
   @override
-  String get homeWorkspaceWorkspaceList => 'Workspaces';
-
-  @override
-  String get homeWorkspaceConversations => 'Conversations';
-
-  @override
   String get homeWorkspaceConversationsSection => 'Conversations';
 
   @override
   String get workspaceRunningSessionsSection => 'Running';
-
-  @override
-  String get homeWorkspaceWorkspaceAgent => 'Agent';
-
-  @override
-  String get workspaceAgentBuiltInSubtitle =>
-      'Maps to flashskyai --agent when that CLI is active.';
-
-  @override
-  String get workspaceAgentExtraArgs => 'Extra CLI arguments';
-
-  @override
-  String get workspaceAgentExtraArgsSubtitle =>
-      'Extra flags appended when starting the agent in this workspace.';
-
-  @override
-  String get workspaceWorkbenchAdvancedSettingsSubtitle =>
-      'Agent preset and extra CLI flags for this workspace.';
-
-  @override
-  String get workspaceAgentPromptSubtitle =>
-      'System prompt defining the agent\'s role and boundaries in this workspace.';
-
-  @override
-  String get workspaceAgentPromptPresetGeneral => 'General';
-
-  @override
-  String get workspaceAgentPromptPresetGeneralText =>
-      'Help with development in this workspace end to end. Understand the request and codebase, propose a clear approach, then implement with minimal diffs; summarize changed files and suggested next steps.';
-
-  @override
-  String get workspaceAgentPromptPresetDeveloper => 'Developer';
-
-  @override
-  String get workspaceAgentPromptPresetDeveloperText =>
-      'Focus on implementation and fixes. Prefer minimal diffs, run relevant tests, and briefly explain changed files and rationale.';
-
-  @override
-  String get workspaceAgentPromptPresetReviewer => 'Reviewer';
-
-  @override
-  String get workspaceAgentPromptPresetReviewerText =>
-      'Review code only; do not modify files unless asked.\nEach finding must include file path, line, issue, and suggested fix.';
-
-  @override
-  String get workspaceAgentPromptPresetResearcher => 'Researcher';
-
-  @override
-  String get workspaceAgentPromptPresetResearcherText =>
-      'Investigate and report only; do not change production code unless asked.\nOutput findings with file paths, relevant symbols, and recommended next steps.';
-
-  @override
-  String get workspaceCliEffortInheritHint => 'Use provider default';
-
-  @override
-  String get workspaceCliDefaultSubtitle =>
-      'Default CLI for new conversations in this workspace.';
-
-  @override
-  String get workspaceCliDefaultsTitle => 'CLI defaults';
-
-  @override
-  String get workspaceCliDefaultsSubtitle =>
-      'Set the default provider and model for each CLI used in this workspace.';
-
-  @override
-  String get workspaceCliProviderModelTitle => 'Provider & model';
-
-  @override
-  String get workspaceCliEffortLevel => 'Reasoning effort';
-
-  @override
-  String get workspaceCliEffortLevelSubtitle =>
-      'Default effort for this CLI in the workspace (leave empty to use provider default).';
-
-  @override
-  String get workspaceCliConfigure => 'Configure';
 
   @override
   String get workspaceCliConfigured => 'Configured';
@@ -895,164 +539,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workspaceCliNotConfigured => 'Not configured';
 
   @override
-  String get workspaceCliNotConfiguredHint =>
-      'No default provider selected yet';
-
-  @override
-  String get workspaceCliNoProviderCatalog =>
-      'No provider setup required for this CLI';
-
-  @override
-  String workspaceCliConfigSummary(String provider, String model) {
-    return '$provider · $model';
-  }
-
-  @override
-  String get workspaceCliAddPresetTitle => 'Add Preset';
-
-  @override
-  String get workspaceCliEditPresetTitle => 'Edit Preset';
-
-  @override
-  String get workspaceCliPresetNameLabel => 'Preset Name';
-
-  @override
-  String get workspaceCliPresetsManageTitle => 'Manage Presets';
-
-  @override
-  String get workspaceCliPresetsEmptyHint =>
-      'No presets yet. Create one to get started.';
-
-  @override
-  String get workspaceCliDeletePresetTitle => 'Delete Preset';
-
-  @override
-  String workspaceCliDeletePresetConfirm(String name) {
-    return 'Delete preset \'$name\'? This cannot be undone.';
-  }
-
-  @override
-  String get workspaceCliPresetLabel => 'Active Preset';
-
-  @override
-  String get workspaceCliNoPresetHint => 'No preset selected';
-
-  @override
-  String get workspaceCliManagePresets => 'Manage';
-
-  @override
-  String get workspaceCliProviderConfig => 'Provider configuration';
-
-  @override
-  String get teamDefaultPresetLabel => 'Default Model Preset';
-
-  @override
-  String get teamDefaultPresetSubtitle =>
-      'Optional default preset applied to members that don\'t override it.';
-
-  @override
-  String get teamDefaultPresetNone => 'None';
-
-  @override
-  String get teamDefaultPresetChange => 'Change';
-
-  @override
-  String get teamDefaultPresetManage => 'Manage';
-
-  @override
-  String get teamDefaultCliMixedSubtitle =>
-      'When a member has no CLI override.';
-
-  @override
-  String get teamDefaultDialogEffortSubtitle => 'Team default effort.';
-
-  @override
-  String get presetPickerTitle => 'Select Preset';
-
-  @override
-  String get presetPickerNoneOption => 'None (no default)';
-
-  @override
-  String get memberPresetLabel => 'Preset';
-
-  @override
-  String get memberLaunchConfigTypeLabel => 'Configuration type';
-
-  @override
-  String get memberLaunchConfigTypePreset => 'Preset';
-
-  @override
-  String get memberLaunchConfigInheritHint =>
-      'Uses the team\'s default CLI, provider, model, and effort.';
-
-  @override
-  String get memberLaunchConfigInheritUnset =>
-      'Team default is not configured yet.';
-
-  @override
-  String get memberPresetInheritTeam => 'Inherit team default';
-
-  @override
-  String get memberPresetInheritTeamNone => 'No team default set';
-
-  @override
-  String get memberPresetSelectPreset => 'Select a preset';
-
-  @override
-  String get memberPresetCustom => 'Custom configuration';
-
-  @override
-  String memberPresetViaPreset(String presetName) {
-    return '$presetName (via preset)';
-  }
-
-  @override
-  String memberPresetViaTeamDefault(String presetName) {
-    return '$presetName (via team default)';
-  }
-
-  @override
-  String get homeWorkspaceWorkspaceSkills => 'Skills';
-
-  @override
-  String get homeWorkspaceWorkspacePlugins => 'Plugins';
-
-  @override
-  String get homeWorkspaceWorkspaceMcp => 'MCP';
-
-  @override
   String get homeWorkspaceWorkspaceExtensions => 'Extensions';
-
-  @override
-  String workspaceSkillsAssignedCount(int assigned, int total) {
-    return '$assigned of $total enabled for this workspace';
-  }
-
-  @override
-  String get workspaceSkillsManage => 'Manage skills';
-
-  @override
-  String workspaceMcpAssignedCount(int assigned, int total) {
-    return '$assigned of $total enabled for this workspace';
-  }
-
-  @override
-  String get workspaceMcpManage => 'Manage MCP';
-
-  @override
-  String workspacePluginsAssignedCount(int assigned, int total) {
-    return '$assigned of $total linked to this workspace';
-  }
-
-  @override
-  String get workspacePluginsManage => 'Manage plugins';
-
-  @override
-  String get workspacePluginsEmpty => 'No plugins installed';
-
-  @override
-  String get workspacePluginsEmptyHint =>
-      'Install plugins from Discovery to enable them for this workspace.';
 
   @override
   String get workspaceExtensionsTitle => 'Extensions for this workspace';
@@ -1068,16 +555,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workspaceExtensionEffectiveOff => 'Disabled for this workspace';
 
   @override
-  String get homeWorkspaceTeamConfig => 'Team config';
-
-  @override
   String get homeWorkspaceWorkspaceSettings => 'Workspace settings';
-
-  @override
-  String get homeWorkspaceWorkspaceMembers => 'Members';
-
-  @override
-  String get homeWorkspaceWorkspaceSettingsSectionBasic => 'Basic';
 
   @override
   String get homeWorkspaceWorkspaceSettingsBasicInfo => 'Basic information';
@@ -1086,33 +564,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeWorkspaceWorkspaceId => 'Workspace ID';
 
   @override
-  String homeWorkspaceWorkspaceAdditionalDirsCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count additional directories',
-      one: '1 additional directory',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String get homeWorkspaceWorkspaceSettingsPathsHint =>
-      'Use Manage on additional directories to add or remove folders in this workspace.';
-
-  @override
   String get deleteWorkspaceSubtitle =>
       'Deletes this workspace and all conversations in it. This cannot be undone.';
 
   @override
-  String get homeWorkspaceInviteMembers => 'Invite';
-
-  @override
   String get homeWorkspaceNewConversation => 'New Conversation';
-
-  @override
-  String get homeWorkspaceNewConversationChooseCli =>
-      'New conversation with CLI…';
 
   @override
   String get workbenchStripNewMenuTooltip => 'New';
@@ -1120,13 +576,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get homeWorkspaceNoConversations =>
       'No conversations in this workspace yet';
-
-  @override
-  String get homeWorkspaceSearchHint => 'Search';
-
-  @override
-  String get homeWorkspaceNoSearchResults =>
-      'No conversations match your search';
 
   @override
   String get workspaceSearchTitle => 'Search';
@@ -1148,17 +597,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'More files match — refine your search';
 
   @override
-  String get appDropdownSearchHint => 'Search…';
-
-  @override
-  String get appDropdownSearchNoResults => 'No results found.';
-
-  @override
   String get homeWorkspaceOpenWorkspaceInNewTab => 'Open in new tab';
-
-  @override
-  String get homeWorkspaceOpenInNewTabWithOtherIdentity =>
-      'Open in new tab with other identity…';
 
   @override
   String get homeWorkspaceFavoriteWorkspace => 'Favorite workspace';
@@ -1186,16 +625,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeWorkspaceCloneWorkspaceFailed => 'Could not clone workspace';
 
   @override
-  String get newWorkspaceTooltip => 'Create a workspace';
-
-  @override
-  String get switchWorkspaceTooltip => 'Switch workspace';
-
-  @override
   String get create => 'Create';
-
-  @override
-  String get pickPrimaryDirectory => 'Pick primary directory';
 
   @override
   String get workspacePrimaryPathRequired =>
@@ -1203,12 +633,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get workspacePrimaryPathNotSelected => 'No primary directory selected';
-
-  @override
-  String get workspaceDirectoryAdded => 'Directory added to workspace';
-
-  @override
-  String get newSessionTooltip => 'New session';
 
   @override
   String get defaultNewChatSessionTitle => 'New Chat';
@@ -1223,19 +647,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sessionStarting => 'Starting session…';
 
   @override
-  String get sessionHistoryLoading => 'Loading conversation history…';
-
-  @override
-  String get sessionHistoryEmpty => 'No prior messages for this member yet.';
-
-  @override
-  String get sessionHistoryError => 'Couldn\'t load conversation history.';
-
-  @override
-  String get sessionHistorySoftReloadError =>
-      'Couldn\'t refresh conversation history.';
-
-  @override
   String get agentPermissionAttentionBanner =>
       'This agent needs confirmation in the Terminal.';
 
@@ -1243,138 +654,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get agentPermissionOpenTerminal => 'Open Terminal';
 
   @override
-  String get sessionHistoryRetry => 'Retry';
-
-  @override
-  String get sessionHistoryToolTurn => 'Tool';
-
-  @override
-  String get sessionHistoryRoleUser => 'You';
-
-  @override
-  String get sessionHistoryRoleAssistant => 'Assistant';
-
-  @override
-  String get sessionHistoryRoleSystem => 'System';
-
-  @override
-  String get sessionHistoryComposeHint =>
-      'Continue this conversation… @ reference files, / invoke skills';
-
-  @override
-  String get sessionHistoryComposeStop => 'Stop generating';
-
-  @override
-  String get sessionHistoryContinueSaveFailed =>
-      'Couldn\'t save continue settings.';
-
-  @override
-  String get sessionHistoryLoadOlderHint => 'Scroll up for earlier messages';
-
-  @override
-  String get sessionHistoryNewMessages => 'New messages';
-
-  @override
-  String get sessionHistoryStarting => 'Starting…';
-
-  @override
-  String get sessionHistoryRunning => 'Running…';
-
-  @override
-  String sessionHistoryMailboxQueued(int count) {
-    return '$count Queued';
-  }
-
-  @override
-  String get sessionHistoryMailboxQueuedDismiss => 'Dismiss';
-
-  @override
-  String get aiMessageUsedTool => 'Used tool';
-
-  @override
-  String get aiMessageCancelledTool => 'Cancelled tool';
-
-  @override
-  String aiMessageToolsUsed(Object count) {
-    return 'Used $count tools';
-  }
-
-  @override
-  String get aiMessageReasoning => 'Reasoning';
-
-  @override
-  String get aiMessageToolResult => 'Result';
-
-  @override
-  String get aiMessageCopied => 'Copied';
-
-  @override
-  String get aiMessageExportMarkdown => 'Export Markdown';
-
-  @override
-  String get aiMessageIncomplete => 'Message incomplete';
-
-  @override
-  String get aiMessageCancelled => 'Message cancelled';
-
-  @override
-  String get aiMessageScrollToBottom => 'Scroll to bottom';
-
-  @override
-  String get aiMessageShowMore => 'Show more';
-
-  @override
-  String get aiMessageShowLess => 'Show less';
-
-  @override
-  String get aiMessageThinkingProcess => 'Thinking process';
-
-  @override
-  String aiMessageThinkingProcessSteps(int count) {
-    return 'Thinking process · $count steps';
-  }
-
-  @override
-  String aiToolFileNotFound(String path) {
-    return 'Could not find file: $path';
-  }
-
-  @override
-  String get subagentPreviewUnavailable =>
-      'Subagent preview is unavailable for this tool call.';
-
-  @override
-  String get subagentPreviewBack => 'Back';
-
-  @override
-  String get subagentPreviewEmpty => 'No subagent content yet';
-
-  @override
-  String subagentPreviewTitleAgent(String title) {
-    return '$title';
-  }
-
-  @override
   String get sessionWorkbenchShowChat => 'Show Chat';
 
   @override
   String get sessionWorkbenchShowTerminal => 'Show Terminal';
-
-  @override
-  String get sessionReadyTitle => 'Ready to chat';
-
-  @override
-  String sessionReadySubtitle(String memberName) {
-    return 'Start a conversation with $memberName in this workspace.';
-  }
-
-  @override
-  String get sessionReadySubtitleGeneric =>
-      'Start a conversation in this workspace.';
-
-  @override
-  String get sessionReadyHint =>
-      'Describe what you want in everyday language — no terminal commands needed.';
 
   @override
   String get workspaceChatLandingInputHint =>
@@ -1384,44 +667,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workspaceChatLandingBackToStart => 'Back to start';
 
   @override
-  String get workspaceChatLandingSelectWorkspace => 'Select workspace >';
-
-  @override
   String get workspaceChatLandingSelectProject => 'Select project >';
 
   @override
   String get workspaceChatLandingSelectWorktree => 'Select worktree >';
 
   @override
-  String get workspaceChatLandingSelectLaunchDirectory => 'Select directory >';
-
-  @override
-  String get workspaceChatLandingModeTeam => 'Team';
-
-  @override
-  String get workspaceChatLandingModeSimple => 'Simple chat';
-
-  @override
-  String get workspaceChatLandingUsePreset => 'Use preset';
-
-  @override
   String get workspaceChatLandingFullAccessPermissions =>
       'Full access permissions';
-
-  @override
-  String get workspaceChatLandingSkills => 'Skills';
-
-  @override
-  String get workspaceChatLandingConnectApps => 'Connect apps';
 
   @override
   String get workspaceChatLandingDefaultPermissions => 'Default permissions';
 
   @override
   String get workspaceChatLandingAttach => 'Attach files';
-
-  @override
-  String get workspaceChatLandingEnhance => 'Enhance prompt';
 
   @override
   String get workspaceChatLandingVoice => 'Voice input';
@@ -1433,17 +692,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workspaceChatLandingVoiceStop => 'Stop recording';
 
   @override
-  String get workspaceChatLandingEnhanceEmpty =>
-      'Type a message before enhancing';
-
-  @override
-  String get workspaceChatLandingEnhanceNotConfigured =>
-      'Configure a CLI preset or team provider first';
-
-  @override
-  String get workspaceChatLandingEnhanceFailed => 'Could not enhance prompt';
-
-  @override
   String get workspaceChatLandingVoiceUnavailable =>
       'Voice input is not available on this device';
 
@@ -1452,64 +700,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Microphone permission denied';
 
   @override
-  String get landingTeamSettingsNavTeam => 'Team defaults';
-
-  @override
-  String get landingTeamSettingsNavMachines => 'Machine assignment';
-
-  @override
-  String get landingTeamSettingsGlobalHint =>
-      'Changes apply to this team\'s global configuration.';
-
-  @override
-  String get workspaceChatLandingTeamLaunchBlocked =>
-      'Configure team and member model presets in Team Settings before sending.';
-
-  @override
-  String get landingLaunchRemoteCliMissing =>
-      'Install required CLIs on remote machines before starting.';
-
-  @override
-  String landingLaunchRemoteCliMissingDetail(String cli, String host) {
-    return '$cli on $host';
-  }
-
-  @override
-  String get remoteCliMachineReadinessTitle => 'Required CLIs on this machine';
-
-  @override
-  String get remoteCliMachineReadinessProbing => 'Checking…';
-
-  @override
-  String remoteCliMachineReadinessReady(String cli, String path) {
-    return '$cli ready at $path';
-  }
-
-  @override
-  String remoteCliMachineReadinessMissing(String cli) {
-    return '$cli not found — install or set a manual path';
-  }
-
-  @override
-  String remoteCliMachineReadinessFailed(String cli, String message) {
-    return '$cli: $message';
-  }
-
-  @override
-  String get remoteCliMachineReadinessInstallHint =>
-      'Use Install for each missing CLI, or set a manual path in target settings.';
-
-  @override
-  String get sessionStartButton => 'Start conversation';
-
-  @override
-  String get sessionFailedTitle => 'Couldn\'t start session';
-
-  @override
   String get sessionRetryButton => 'Try again';
-
-  @override
-  String get openFolder => 'Open Folder';
 
   @override
   String get copyFolderPath => 'Copy Folder Path';
@@ -1520,16 +711,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get workspaceDetails => 'Workspace details';
-
-  @override
   String get workspaceDetailsTitle => 'Workspace Details';
 
   @override
   String get addWorkspaceDirectory => 'Add directory';
-
-  @override
-  String get removeWorkspaceDirectory => 'Remove directory';
 
   @override
   String get workspaceDisplayName => 'Display name';
@@ -1547,19 +732,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workspaceIconUpload => 'Upload icon';
 
   @override
-  String get workspaceIconUploadFailed =>
-      'Could not save icon. Use PNG, JPG, WEBP, or SVG.';
-
-  @override
-  String get workspacePrimaryPath => 'Primary directory';
-
-  @override
-  String get workspaceAdditionalDirectories => 'Additional directories';
-
-  @override
-  String get workspaceNoAdditionalDirectories => 'No additional directories';
-
-  @override
   String get workspaceSessionCount => 'Sessions';
 
   @override
@@ -1569,15 +741,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workspaceUpdatedAt => 'Updated';
 
   @override
-  String get workspaceDirectoryAlreadyPrimary =>
-      'This path is already the primary directory.';
-
-  @override
   String get workspaceDirectoryAlreadyAdded =>
       'This directory is already in the workspace.';
-
-  @override
-  String get editWorkspacePrimaryPath => 'Edit primary directory';
 
   @override
   String get remoteDirectoryBrowserTitle => 'Browse remote directory';
@@ -1613,12 +778,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get noSessions => 'No sessions yet';
-
-  @override
-  String get unknownFolder => 'Unknown';
-
-  @override
   String get renameConversation => 'Rename conversation';
 
   @override
@@ -1631,9 +790,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get unpinConversation => 'Unpin conversation';
 
   @override
-  String get sessionSortManual => 'Manual order';
-
-  @override
   String get sessionSortRecentlyUpdated => 'Recently updated';
 
   @override
@@ -1644,11 +800,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get renameConversationTitle => 'Rename Conversation';
-
-  @override
-  String deleteConversationConfirm(String name) {
-    return 'Delete conversation \"$name\"? This cannot be undone.';
-  }
 
   @override
   String get conversationName => 'Conversation name';
@@ -1668,13 +819,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get sessionPageSubtitle =>
       'Configure shell session launch, terminal behavior, and storage backend.';
-
-  @override
-  String get cliConfig => 'CLI';
-
-  @override
-  String get cliConfigPageSubtitle =>
-      'Configure AI agent CLI executable paths and install missing tools.';
 
   @override
   String get sshProfilesSettingsTitle => 'SSH servers';
@@ -1767,9 +911,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sshProfileTestSuccess => 'Connection successful';
-
-  @override
-  String get sshProfileTestFailed => 'Connection test failed';
 
   @override
   String get sshProfileTestFailedHostKey => 'Host key was not trusted';
@@ -1899,9 +1040,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sshProfileFormFieldRequired => 'Required';
 
   @override
-  String get sshProfileSelectorTooltip => 'Switch SSH server';
-
-  @override
   String get sshProfileSelectorManage => 'Manage SSH servers…';
 
   @override
@@ -1912,30 +1050,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Remote working directory used when the SSH launch has no workspace path; leave empty to skip changing directory.';
 
   @override
-  String get cliExecutablePathLabel => 'flashskyai CLI path';
-
-  @override
-  String get cliExecutablePathDescription =>
-      'Absolute path to the flashskyai executable. Leave empty to use the one on PATH.';
-
-  @override
-  String get cliExecutablePathDescriptionSsh =>
-      'Absolute path to flashskyai on the remote SSH host. Leave empty to auto-discover over SSH.';
-
-  @override
   String get cliExecutablePathBrowse => 'Browse…';
-
-  @override
-  String get cliExecutablePathApply => 'Apply';
 
   @override
   String get cliExecutablePathReset => 'Reset';
 
   @override
   String get cliExecutablePathUsing => 'Using: ';
-
-  @override
-  String get cliExecutablePathUsingFallback => 'Using PATH lookup';
 
   @override
   String get cliInstallButton => 'Install';
@@ -1947,57 +1068,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cliInstallProgressCheckingNpm => 'Checking for npm…';
 
   @override
-  String get cliInstallProgressBootstrappingNode => 'Installing Node.js…';
-
-  @override
   String get cliInstallProgressInstallingCli => 'Installing CLI…';
 
   @override
   String get cliInstallProgressLocatingExecutable => 'Locating CLI executable…';
-
-  @override
-  String get cliInstallProgressSyncingRemoteWorkspace =>
-      'Syncing remote workspace…';
-
-  @override
-  String sessionRemoteProvisionTitle(String member, String host) {
-    return 'Preparing $member on $host';
-  }
-
-  @override
-  String get sessionRemoteProvisionFailed => 'Remote setup failed';
-
-  @override
-  String cliExecutablePathLabelFor(String cli) {
-    return '$cli CLI path';
-  }
-
-  @override
-  String cliExecutablePathDescriptionFor(String cli) {
-    return 'Absolute path to the $cli executable. Leave empty to use the one on PATH.';
-  }
-
-  @override
-  String cliExecutablePathDescriptionSshFor(String cli) {
-    return 'Absolute path to $cli on the remote SSH host. Leave empty to auto-discover over SSH.';
-  }
-
-  @override
-  String get claudeCliExecutablePathLabel => 'Claude Code CLI path';
-
-  @override
-  String get claudeCliExecutablePathDescription =>
-      'Absolute path to the Claude Code executable. Leave empty to use the one on PATH.';
-
-  @override
-  String get claudeCliExecutablePathDescriptionSsh =>
-      'Absolute path to Claude Code on the remote SSH host. Leave empty to resolve claude from the remote PATH.';
-
-  @override
-  String get shellChatWorkbench => 'Shell chat workbench';
-
-  @override
-  String get shellSession => 'Shell session';
 
   @override
   String get terminalFind => 'Find in terminal';
@@ -2008,9 +1082,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get terminalDropCrossMachineRejected =>
       'Can\'t drop a local file onto a remote terminal';
-
-  @override
-  String get editorTitle => 'Editor';
 
   @override
   String get editorSave => 'Save';
@@ -2043,15 +1114,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get editorRevertChanges => 'Revert changes';
 
   @override
-  String get editorClose => 'Close editor';
-
-  @override
   String get editorUnsavedChangesTitle => 'Unsaved changes';
-
-  @override
-  String editorUnsavedChangesDiscardFile(String fileName) {
-    return 'Discard unsaved changes to \"$fileName\"?';
-  }
 
   @override
   String editorUnsavedChangesDiscardMultiple(int count) {
@@ -2063,9 +1126,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get editorNotReady => 'Editor not ready';
-
-  @override
-  String get editorNoFileOpen => 'No file open';
 
   @override
   String get editorBinaryFileHint =>
@@ -2195,20 +1255,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get terminalCopySelectHint => 'Shift+drag to copy';
 
   @override
-  String get workspaceTerminal => 'Terminal';
-
-  @override
-  String get workspaceTerminalClose => 'Close terminal panel';
-
-  @override
   String get workspaceTerminalNoWorkingDirectory =>
       'Connect a session to open the shell terminal';
 
   @override
   String get workspaceTerminalNewSession => 'New terminal';
-
-  @override
-  String get workspaceTerminalNewSessionMenu => 'New terminal session menu';
 
   @override
   String get workspaceTerminalNewSshSession => 'New SSH Session…';
@@ -2235,9 +1286,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get workspaceToolsResolveFailedHint =>
       'Check that remote machines are reachable, then try again.';
-
-  @override
-  String get workspaceTerminalCloseSession => 'Close terminal';
 
   @override
   String get workspaceTerminalSplitRight => 'Split right';
@@ -2425,22 +1473,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mailbox => 'Mailbox';
 
   @override
-  String get mailboxEmpty => 'No messages yet';
-
-  @override
   String get board => 'Board';
-
-  @override
-  String get boardEmpty => 'No tasks yet';
-
-  @override
-  String get boardPending => 'Pending';
-
-  @override
-  String get boardClaimed => 'In progress';
-
-  @override
-  String get boardDone => 'Done';
 
   @override
   String get visibilityBoardHint => 'Show the task board for mixed-mode teams.';
@@ -2477,33 +1510,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'When enabled (default), new Simple-mode compose landing starts with full access permissions. Workspace chip choices still override and persist per workspace.';
 
   @override
-  String get scopeSessionsToSelectedTeamTitle =>
-      'Scope sessions to selected team';
-
-  @override
-  String get scopeSessionsToSelectedTeamDescription =>
-      'When enabled, the sidebar shows only sessions assigned to the current team. New sessions are always tagged with the selected team so they appear here if you turn this on later.';
-
-  @override
   String get notifyOnSessionIdleTitle => 'Agent idle system notification';
 
   @override
   String get notifyOnSessionIdleDescription =>
       'When a session finishes a turn and becomes idle, show an OS notification in addition to the in-app notification center.';
-
-  @override
-  String get memberTargetAssignmentTitle => 'Member machine';
-
-  @override
-  String memberTargetAssignmentSubtitle(Object member) {
-    return 'Which machine $member runs on (its assigned workspace folders).';
-  }
-
-  @override
-  String get memberTargetAssignmentInherit => 'Inherit workspace folders';
-
-  @override
-  String get memberAssignFoldersAction => 'Assign folders…';
 
   @override
   String get credentialPushOptInTitle => 'Push credentials to this machine';
@@ -2542,13 +1553,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get rootSandboxEnvConfirmAction => 'Enable';
 
   @override
-  String get workspaceTargetTitle => 'Workspace machine';
-
-  @override
-  String get workspaceTargetSubtitle =>
-      'The machine this workspace\'s folders live and run on. Sessions launch on this target; switching does not move files.';
-
-  @override
   String get workspaceFoldersSectionTitle => 'Directories & machines';
 
   @override
@@ -2564,9 +1568,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Personal identity cannot change folder machines. Switch to a team identity to configure machines and directories.';
 
   @override
-  String get workspaceFoldersPickMixedTarget => 'Add directory on machine';
-
-  @override
   String get workspaceTopologyLocal => 'Local workspace';
 
   @override
@@ -2577,61 +1578,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get workspaceTypeLabel => 'Type';
-
-  @override
-  String get mixedWorkspaceRequiresTeamLaunch =>
-      'Mixed workspaces can only be started with a team identity. Switch to a team and confirm machine assignment in Team Settings.';
-
-  @override
-  String get mixedWorkspacePersonalLaunchBlockedHint =>
-      'This is a mixed workspace. Switch to a team tab to start conversations and confirm machine assignment.';
-
-  @override
-  String get mixedWorkspaceMemberAssignmentTitle =>
-      'Assign members to machines';
-
-  @override
-  String get mixedWorkspaceMemberAssignmentSubtitle =>
-      'Select a machine on the left, then use + / − to place each member\'s instances on it.';
-
-  @override
-  String get mixedWorkspaceMemberAssignmentIncomplete =>
-      'Confirm machine assignment once before starting this team in a mixed workspace.';
-
-  @override
-  String get mixedWorkspaceLeadPlacementInvalid =>
-      'Team lead must be assigned to the local machine when this workspace has a local folder.';
-
-  @override
-  String get mixedWorkspaceMemberAssignmentConfirm => 'Start team';
-
-  @override
-  String get workspaceMemberTargetsSectionTitle => 'Member machine assignment';
-
-  @override
-  String get workspaceMemberTargetsSectionSubtitle =>
-      'Default for new conversations with this team. Existing conversations keep the assignment from when they were created.';
-
-  @override
-  String get workspaceMemberTargetsSave => 'Save assignment';
-
-  @override
-  String get workspaceMemberTargetsSaved => 'Member assignment saved.';
-
-  @override
-  String get workspaceMemberTargetsAssignAction => 'Assign';
-
-  @override
-  String get workspaceMemberTargetsAssigned => 'Assigned';
-
-  @override
-  String get workspaceMemberTargetsUnassigned => 'Not assigned';
-
-  @override
-  String get workspaceMemberTargetsNeedsConfirmation => 'Needs confirmation';
-
-  @override
-  String get workspaceMemberTargetsPartiallyAssigned => 'Partially assigned';
 
   @override
   String get mixedWorkspaceCreateSessionBlocked =>
@@ -2650,41 +1596,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Team member is not available. Select a team and try again.';
 
   @override
-  String mixedWorkspaceMemberPlacementProgress(int placed, int total) {
-    return '$placed / $total assigned';
-  }
-
-  @override
-  String mixedWorkspaceMemberPlacementOnMachine(int count) {
-    return '$count on this machine';
-  }
-
-  @override
   String get workspaceFolderTargetLabel => 'Machine';
 
   @override
-  String get workspaceFolderPathLabel => 'Directory';
-
-  @override
-  String get workspaceFoldersChangeTarget => 'Change';
-
-  @override
-  String get workspaceFoldersAddOnAnotherMachine => 'Add on another machine';
-
-  @override
   String get workspaceFoldersPickTarget => 'Choose machine';
-
-  @override
-  String get workspaceFoldersPickPath => 'Choose directory';
-
-  @override
-  String get workspaceFoldersApplyAllLocal => 'Set all to local';
-
-  @override
-  String get workspaceFoldersApplyAllRemote => 'Set all to remote…';
-
-  @override
-  String get workspaceFoldersPickRemoteTarget => 'Choose remote machine';
 
   @override
   String get workspaceDeadTargetBadge => 'Missing machine';
@@ -2726,22 +1641,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Where TeamPilot stores teams, workspaces, and config (the control plane). Switching uses a separate data tree; nothing is migrated automatically.';
 
   @override
-  String get homeTargetSingleOptionHint =>
-      'This is the only available home on this platform.';
-
-  @override
-  String get windowsStorageCliMismatchNativeCli =>
-      'CLI runs in WSL but data is stored in Windows AppData. Config may not match.';
-
-  @override
-  String get windowsStorageCliMismatchWslCli =>
-      'CLI runs on Windows but data is stored in WSL. Config may not match.';
-
-  @override
-  String get windowsStorageSwitchReloadHint =>
-      'Reconnect open sessions after switching storage.';
-
-  @override
   String bootstrapStartupFailed(String error) {
     return 'Startup failed: $error';
   }
@@ -2751,121 +1650,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Use Windows local storage instead';
 
   @override
-  String get bootstrapLoadingApp => 'Starting TeamPilot…';
-
-  @override
-  String get bootstrapLoadingWorkspaces => 'Loading workspaces…';
-
-  @override
-  String get bootstrapLoadingLibraries => 'Loading libraries…';
-
-  @override
-  String get runsPlaceholder => 'Run history will appear here.';
-
-  @override
-  String get llmConfig => 'Provider';
-
-  @override
-  String get llmConfigSubtitle => 'providers and models';
-
-  @override
-  String get llmConfigPathLabel => 'LLM config file';
-
-  @override
-  String get llmConfigPathHint => 'Leave empty to use the default path';
-
-  @override
-  String get llmConfigPathBrowse => 'Browse...';
-
-  @override
-  String get llmConfigPathSave => 'Apply';
-
-  @override
-  String get llmConfigPathReset => 'Use default';
-
-  @override
-  String get llmConfigPathBadgeDefault => 'default';
-
-  @override
-  String get llmConfigPathBadgeCustom => 'custom';
-
-  @override
-  String get llmConfigPathPickerTitle => 'Select llm_config.json';
-
-  @override
-  String get llmConfigPathSessionCardDescription =>
-      'Absolute path to the LLM config file (llm_config.json). Leave empty to use the default path next to the CLI install.';
-
-  @override
-  String get llmConfigPathSessionCardDescriptionSsh =>
-      'Absolute path to llm_config.json on the remote SSH host. Leave empty to use the default path next to the remote CLI install.';
-
-  @override
-  String get llmConfigCurrentEffectivePathPrefix => 'Active file:';
-
-  @override
-  String get llmConfigEffectivePathUnresolved =>
-      'Could not resolve a path yet (set the CLI location or enter a path).';
-
-  @override
-  String get llmConfigOpenSessionSettings => 'Session settings…';
-
-  @override
   String get providers => 'PROVIDERS';
-
-  @override
-  String get llmConfigPageSubtitle => 'Manage LLM providers and models.';
-
-  @override
-  String get providersTab => 'Providers';
-
-  @override
-  String get modelsTab => 'Models';
-
-  @override
-  String get rawJsonTab => 'Raw JSON';
-
-  @override
-  String get addProvider => 'Add Provider';
-
-  @override
-  String get providerName => 'Provider name';
-
-  @override
-  String get renameProviderName => 'Rename';
-
-  @override
-  String get renameProviderTitle => 'Rename provider';
-
-  @override
-  String get deleteProvider => 'Delete Provider';
-
-  @override
-  String deleteProviderConfirm(String name) {
-    return 'Delete provider $name?';
-  }
-
-  @override
-  String get providerList => 'Provider List';
-
-  @override
-  String get filterProviders => 'Filter providers...';
-
-  @override
-  String get appProviderImport => 'Import';
-
-  @override
-  String get appProviderImportNothing => 'No providers found to import.';
-
-  @override
-  String appProviderImportSuccess(int count, int mirrored, int skipped) {
-    return 'Imported $count providers. Mirrored $mirrored to FlashskyAI, skipped $skipped existing.';
-  }
-
-  @override
-  String modelsUsingProvider(int count) {
-    return 'Models using this provider: $count';
-  }
 
   @override
   String providerListModelCount(int count) {
@@ -2879,34 +1664,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get proxyOffShort => 'Proxy off';
 
   @override
-  String providerDetailSubtitle(int count, String type) {
-    return '$type provider · $count models';
-  }
-
-  @override
   String get type => 'Type';
 
   @override
-  String get providerType => 'Provider type';
-
-  @override
-  String get providerTypeHint => 'openai, claude, or custom';
-
-  @override
   String get proxy => 'Proxy';
-
-  @override
-  String get proxyUrl => 'Proxy URL';
-
-  @override
-  String get baseUrl => 'Base URL';
-
-  @override
-  String get apiKey => 'API Key';
-
-  @override
-  String get appProviderApiKeyEditHint =>
-      'Leave blank to keep the existing key';
 
   @override
   String get reveal => 'Reveal';
@@ -2915,266 +1676,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get hide => 'Hide';
 
   @override
-  String get replaceKey => 'Replace key';
-
-  @override
-  String get deleteProviderTooltip => 'Delete provider';
-
-  @override
-  String deleteProviderWithCredentialsConfirm(String name) {
-    return 'Delete provider $name? Saved Claude login credentials for this provider will also be removed.';
-  }
-
-  @override
-  String get claudeOfficialCredentialsTitle => 'Claude Official login';
-
-  @override
-  String get claudeOfficialCredentialsReady => 'Credentials ready';
-
-  @override
-  String get claudeOfficialCredentialsMissing =>
-      'No credentials saved for this provider';
-
-  @override
-  String get claudeOfficialCredentialsAuthenticated => 'Authenticated';
-
-  @override
-  String get claudeOfficialCredentialsUnauthenticated => 'Unauthenticated';
-
-  @override
-  String get claudeOfficialCredentialsLogin => 'Sign in with Claude';
-
-  @override
-  String get claudeOfficialCredentialsImportGlobal => 'Import from ~/.claude';
-
-  @override
-  String get claudeOfficialCredentialsImportFile => 'Import file…';
-
-  @override
-  String get claudeOfficialCredentialsRevoke => 'Sign out';
-
-  @override
-  String claudeOfficialCredentialsRevokeConfirm(String name) {
-    return 'Sign out and remove saved credentials for $name?';
-  }
-
-  @override
-  String get claudeOfficialCredentialsActionSuccess => 'Credentials updated';
-
-  @override
-  String get claudeOfficialCredentialsActionFailed =>
-      'Could not update credentials';
-
-  @override
-  String get cursorCredentialsAuthenticated => 'Authenticated';
-
-  @override
-  String get cursorCredentialsUnauthenticated => 'Unauthenticated';
-
-  @override
-  String get cursorCredentialsLogin => 'Sign in with Cursor';
-
-  @override
-  String get cursorCredentialsImportGlobal => 'Import from ~/.cursor';
-
-  @override
-  String get cursorCredentialsImportFile => 'Import directory…';
-
-  @override
-  String get cursorCredentialsRevoke => 'Sign out';
-
-  @override
-  String cursorCredentialsRevokeConfirm(String name) {
-    return 'Sign out and remove saved credentials for $name?';
-  }
-
-  @override
-  String get cursorCredentialsActionSuccess => 'Credentials updated';
-
-  @override
-  String get cursorCredentialsActionFailed => 'Could not update credentials';
-
-  @override
-  String get codexCredentialsLogin => 'Sign in with OpenAI';
-
-  @override
-  String get codexCredentialsImportGlobal => 'Import from ~/.codex';
-
-  @override
-  String get codexCredentialsImportFile => 'Import auth.json…';
-
-  @override
-  String get codexCredentialsRevoke => 'Sign out';
-
-  @override
-  String codexCredentialsRevokeConfirm(String name) {
-    return 'Sign out and remove saved credentials for $name?';
-  }
-
-  @override
-  String get codexCredentialsActionSuccess => 'Credentials updated';
-
-  @override
-  String get codexCredentialsActionFailed => 'Could not update credentials';
-
-  @override
-  String get opencodeCredentialsLogin => 'Sign in with provider';
-
-  @override
-  String get opencodeCredentialsImportGlobal => 'Import from opencode auth';
-
-  @override
-  String get opencodeCredentialsImportFile => 'Import auth.json…';
-
-  @override
-  String get opencodeCredentialsRevoke => 'Sign out';
-
-  @override
-  String opencodeCredentialsRevokeConfirm(String name) {
-    return 'Sign out and remove saved credentials for $name?';
-  }
-
-  @override
-  String get opencodeCredentialsActionSuccess => 'Credentials updated';
-
-  @override
-  String get opencodeCredentialsActionFailed => 'Could not update credentials';
-
-  @override
-  String get providerCredentialsFailureUnsupported =>
-      'This credential action is not supported';
-
-  @override
-  String get providerCredentialsFailureServiceUnavailable =>
-      'Credential service is not available';
-
-  @override
-  String get providerCredentialsFailureProviderNotFound => 'Provider not found';
-
-  @override
-  String get providerCredentialsFailurePathRequired =>
-      'Choose a file or directory first';
-
-  @override
-  String providerCredentialsFailureSourceMissing(String path) {
-    return 'Credential file not found: $path';
-  }
-
-  @override
-  String providerCredentialsFailureSourceUnreadable(String path) {
-    return 'Could not read credential file: $path';
-  }
-
-  @override
-  String providerCredentialsFailureProviderEntryMissing(
-    String providerId,
-    String path,
-  ) {
-    return 'No credential for \"$providerId\" in $path';
-  }
-
-  @override
-  String providerCredentialsFailureProviderEntryMissingWithKeys(
-    String providerId,
-    String path,
-    String keys,
-  ) {
-    return 'No credential for \"$providerId\" in $path. Available: $keys';
-  }
-
-  @override
-  String get providerCredentialsFailureInvalidCredential =>
-      'Credential format is invalid or incomplete';
-
-  @override
-  String get providerCredentialsFailureDestinationExists =>
-      'Credentials already exist. Sign out first or import again to replace.';
-
-  @override
-  String providerCredentialsFailureRequiredFileMissing(String path) {
-    return 'Required file missing: $path';
-  }
-
-  @override
-  String providerCredentialsFailureLoginFailed(int exitCode) {
-    return 'Login failed (exit code $exitCode)';
-  }
-
-  @override
-  String providerCredentialsFailureLoginProcessError(String detail) {
-    return 'Could not run login command: $detail';
-  }
-
-  @override
-  String get providerCredentialsFailureRevokeFailed =>
-      'Could not sign out or remove credentials';
-
-  @override
-  String get providerCredentialsFailureVerifyFailed =>
-      'Credentials were saved but verification failed';
-
-  @override
-  String get providerCredentialsFailureStatusRefreshFailed =>
-      'Credentials updated but status could not be refreshed';
-
-  @override
   String get claudeLaunchCredentialsMissingWarning =>
       'Claude Official credentials are missing for this team provider. Sign in from Providers settings.';
-
-  @override
-  String get teamConfigIncompleteTitle => 'Team configuration incomplete';
-
-  @override
-  String teamConfigIncompleteBody(String team) {
-    return 'Team \"$team\" is missing settings needed to launch. The session still starts, but agents may fail without them:';
-  }
-
-  @override
-  String get teamConfigIncompleteGoConfigure => 'Configure team';
-
-  @override
-  String get teamConfigIncompleteDismiss => 'Later';
-
-  @override
-  String get teamConfigGroupTeamDefault => 'Team default';
-
-  @override
-  String get teamConfigAspectDefaultProvider => 'Default provider';
-
-  @override
-  String get teamConfigAspectProvider => 'Provider';
-
-  @override
-  String get teamConfigAspectModel => 'Model';
-
-  @override
-  String get teamConfigAspectCli => 'CLI';
-
-  @override
-  String get teamConfigAspectSeparator => ', ';
-
-  @override
-  String teamConfigIssueSemanticLabel(String subject, String aspects) {
-    return '$subject is missing: $aspects';
-  }
-
-  @override
-  String get noModelsUsingProvider => 'No models are using this provider.';
-
-  @override
-  String get modelsUsingProviderTitle => 'Models using this provider';
-
-  @override
-  String get selectProvider => 'Select a provider from the list';
-
-  @override
-  String get accountCredentialPath => 'Account credential path';
-
-  @override
-  String get removePath => 'Remove path';
-
-  @override
-  String get addAccountPath => 'Add account path';
 
   @override
   String get api => 'api';
@@ -3186,61 +1689,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get models => 'Models';
 
   @override
-  String get addModel => 'Add Model';
-
-  @override
-  String get modelName => 'Model alias/name';
-
-  @override
-  String get modelId => 'Model ID';
-
-  @override
   String get enabled => 'Enabled';
 
   @override
   String get edit => 'Edit';
 
   @override
-  String editModelTitle(String name) {
-    return 'Edit $name';
-  }
-
-  @override
   String get name => 'Name';
-
-  @override
-  String get actualModel => 'Actual Model';
-
-  @override
-  String get noModelsConfigured => 'No models configured';
-
-  @override
-  String get providerModelBackgroundTier =>
-      'Use for background/fast tasks (Claude haiku tier)';
-
-  @override
-  String get missingProvider => 'Missing provider:';
 
   @override
   String get summary => 'Summary';
 
   @override
-  String get statProviders => 'providers';
-
-  @override
-  String get statModels => 'models';
-
-  @override
-  String get statMissingRefs => 'missing refs';
-
-  @override
-  String get statEmptyKeys => 'empty keys';
-
-  @override
   String get validation => 'Validation';
-
-  @override
-  String get allChecksPassed => 'All checks passed.';
 
   @override
   String get validate => 'Validate';
@@ -3249,387 +1710,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get back => 'Back';
 
   @override
-  String get jsonPreview => 'JSON Preview';
-
-  @override
-  String get skillsTitle => 'Skills';
-
-  @override
-  String get skillsSubtitle => 'Manage installable skills';
-
-  @override
-  String get skillsSidebarLabel => 'Skills';
-
-  @override
-  String get skillsNavInstalled => 'Installed';
-
-  @override
-  String get skillsNavDiscovery => 'Discovery';
-
-  @override
-  String get skillsNavRepos => 'Repos';
-
-  @override
-  String skillsInstalledCount(int count) {
-    return '$count installed';
-  }
-
-  @override
-  String get skillsCheckUpdates => 'Check updates';
-
-  @override
-  String get skillsCheckingUpdates => 'Checking…';
-
-  @override
-  String skillsUpdateAll(int count) {
-    return 'Update all ($count)';
-  }
-
-  @override
-  String get skillsImportFromDisk => 'Import from disk';
-
-  @override
-  String get skillsInstallFromZip => 'Install from ZIP';
-
-  @override
-  String get skillsNoInstalled => 'No skills installed yet';
-
-  @override
-  String get skillsNoInstalledHint =>
-      'Open Discovery to install your first skill.';
-
-  @override
-  String get skillsGoDiscovery => 'Go to Discovery';
-
-  @override
-  String get skillsSourceRepos => 'Repos';
-
-  @override
-  String get skillsSourceSkillsSh => 'skills.sh';
-
-  @override
-  String get skillsSearchPlaceholder => 'Search skills…';
-
-  @override
-  String get skillsSkillsShPlaceholder => 'Search skills.sh (≥ 2 chars)…';
-
-  @override
-  String get skillsFilterRepoAll => 'All repos';
-
-  @override
-  String get skillsFilterAll => 'All';
-
-  @override
-  String get skillsFilterInstalled => 'Installed';
-
-  @override
-  String get skillsFilterUninstalled => 'Not installed';
-
-  @override
-  String get skillsCardInstall => 'Install';
-
-  @override
-  String get skillsCardDetails => 'Details';
-
-  @override
-  String get skillsCardInstalled => 'Installed';
-
-  @override
-  String get skillsCardUpdate => 'Update';
-
-  @override
-  String get skillsCardUninstall => 'Uninstall';
-
-  @override
-  String get skillsUpdateAvailable => 'Update available';
-
-  @override
-  String get skillsLocal => 'local';
-
-  @override
-  String get skillsReposEmpty => 'No repos yet';
-
-  @override
-  String get skillsRepoAdd => 'Add repo';
-
-  @override
-  String get skillsDiscoverySyncing =>
-      'Checking repos for updates and syncing skills in the background…';
-
-  @override
-  String get skillsRepoSyncing => 'Updating';
-
-  @override
-  String get skillsRepoInvalidUrl =>
-      'Enter a valid GitHub repo URL, e.g. https://github.com/owner/repo';
-
-  @override
-  String get skillsRepoUrl => 'Repository URL';
-
-  @override
-  String get skillsRepoUrlHint => 'https://github.com/owner/repo';
-
-  @override
-  String get skillsRepoBranch => 'Branch';
-
-  @override
-  String get skillsRepoRemove => 'Remove';
-
-  @override
-  String skillsRepoRemoveConfirm(String name) {
-    return 'Remove repo $name?';
-  }
-
-  @override
-  String skillsUninstallConfirm(String name) {
-    return 'Uninstall $name?';
-  }
-
-  @override
-  String skillsOverwriteConfirm(String name) {
-    return '$name already installed. Overwrite?';
-  }
-
-  @override
-  String skillsInstallSuccess(String name) {
-    return 'Installed $name';
-  }
-
-  @override
-  String skillsUninstallSuccess(String name) {
-    return 'Uninstalled $name';
-  }
-
-  @override
-  String skillsUpdateSuccess(String name) {
-    return 'Updated $name';
-  }
-
-  @override
-  String get skillsNoUpdates => 'All skills are up to date';
-
-  @override
-  String get skillsImportTitle => 'Import unmanaged skills';
-
-  @override
-  String get skillsImportNothing => 'No unmanaged skills found.';
-
-  @override
-  String skillsImportSelected(int count) {
-    return 'Import $count selected';
-  }
-
-  @override
-  String get skillsZipNoSkills => 'No SKILL.md found in the archive.';
-
-  @override
-  String get skillsSkillsShLoadMore => 'Load more';
-
-  @override
-  String get skillsSkillsShPoweredBy => 'Powered by skills.sh';
-
-  @override
-  String get skillsSkillsShSearch => 'Search';
-
-  @override
-  String get skillsDiscoveryEmpty => 'No skills discovered';
-
-  @override
-  String get skillsDiscoveryEmptyHint =>
-      'Add a repo or try skills.sh to find skills.';
-
-  @override
-  String get skillsAdd => 'Add';
-
-  @override
-  String get skillsRemove => 'Remove';
-
-  @override
-  String get skillsEnabled => 'Enabled';
-
-  @override
-  String skillsInstalls(int count) {
-    return '$count installs';
-  }
-
-  @override
-  String get pluginsTitle => 'Plugins';
-
-  @override
-  String get pluginsSubtitle => 'Manage Claude Code-style plugin bundles';
-
-  @override
-  String get pluginsSidebarLabel => 'Plugins';
-
-  @override
-  String get pluginsNavInstalled => 'Installed';
-
-  @override
-  String get pluginsNavDiscovery => 'Discovery';
-
-  @override
-  String get pluginsNavMarketplaces => 'Marketplaces';
-
-  @override
-  String pluginsInstalledCount(int count) {
-    return '$count installed';
-  }
-
-  @override
-  String pluginsUpdateAll(int count) {
-    return 'Update all ($count)';
-  }
-
-  @override
-  String get pluginsImportFromDisk => 'Import from disk';
-
-  @override
-  String get pluginsImportTitle => 'Import unmanaged plugins';
-
-  @override
-  String get pluginsImportNothing => 'No unmanaged plugins found.';
-
-  @override
-  String get pluginsInstallFromZip => 'Install from ZIP';
-
-  @override
-  String get pluginsCheckUpdates => 'Check updates';
-
-  @override
-  String get pluginsCheckingUpdates => 'Checking…';
-
-  @override
-  String get pluginsNoInstalled => 'No plugins installed';
-
-  @override
-  String get pluginsNoInstalledHint =>
-      'Add a marketplace and install plugins from the Discovery tab.';
-
-  @override
-  String get pluginsGoDiscovery => 'Browse marketplace';
-
-  @override
-  String get pluginsCardInstall => 'Install';
-
-  @override
-  String get pluginsCardDetails => 'Details';
-
-  @override
-  String get pluginsCardInstalled => 'Installed';
-
-  @override
-  String get pluginsCardViewSource => 'View source';
-
-  @override
-  String get pluginsCardUpdate => 'Update';
-
-  @override
-  String get pluginsCardUninstall => 'Uninstall';
-
-  @override
-  String get pluginsMarketplaceAdd => 'Add marketplace';
-
-  @override
-  String get pluginsMarketplaceUrl => 'GitHub repository URL';
-
-  @override
-  String get pluginsMarketplaceUrlHint =>
-      'https://github.com/owner/marketplace';
-
-  @override
-  String get pluginsMarketplaceBranch => 'Branch';
-
-  @override
-  String get pluginsMarketplaceRemove => 'Remove marketplace';
-
-  @override
-  String pluginsMarketplaceRemoveConfirm(String url) {
-    return 'Remove marketplace $url? Installed plugins are kept.';
-  }
-
-  @override
-  String get pluginsMarketplaceInvalidUrl =>
-      'Please enter a valid GitHub repository URL.';
-
-  @override
-  String get pluginsMarketplacesEmpty => 'No marketplaces configured';
-
-  @override
-  String get pluginsSearchPlaceholder => 'Search plugins';
-
-  @override
-  String get pluginsFilterMarketplaceAll => 'All marketplaces';
-
-  @override
-  String get pluginsFilterAll => 'All';
-
-  @override
-  String get pluginsFilterInstalled => 'Installed';
-
-  @override
-  String get pluginsFilterUninstalled => 'Not installed';
-
-  @override
-  String get pluginsDiscoveryEmpty => 'No matching plugins';
-
-  @override
-  String get pluginsDiscoverySyncing =>
-      'Checking marketplaces for updates and syncing plugins in the background…';
-
-  @override
-  String pluginsUninstallConfirm(String name, int n) {
-    return 'Uninstall $name? This may affect $n team(s).';
-  }
-
-  @override
-  String get pluginsUninstallImpactList => 'Affected teams:';
-
-  @override
-  String pluginCliSupportFully(String cli) {
-    return '$cli: Fully supported';
-  }
-
-  @override
-  String pluginCliSupportPartial(String cli, String dropped) {
-    return '$cli: Partially supported ($dropped dropped)';
-  }
-
-  @override
-  String pluginCliSupportNotApplicable(String cli) {
-    return '$cli: Not applicable';
-  }
-
-  @override
-  String get pluginComponentSkills => 'skills';
-
-  @override
-  String get pluginComponentAgents => 'agents';
-
-  @override
-  String get pluginComponentCommands => 'commands';
-
-  @override
-  String get pluginComponentHooks => 'hooks';
-
-  @override
-  String get pluginComponentMcp => 'MCP';
-
-  @override
-  String get pluginComponentRules => 'rules';
-
-  @override
-  String get pluginComponentApps => 'apps';
-
-  @override
-  String pluginsUninstallSuccess(String name) {
-    return 'Uninstalled $name';
-  }
-
-  @override
   String get members => 'Members';
-
-  @override
-  String get teamSessions => 'Team Sessions';
 
   @override
   String get configure => 'Configure';
@@ -3641,34 +1722,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get teamSettings => 'Team Settings';
 
   @override
-  String get teamSettingsSubtitle => 'Team agents';
-
-  @override
-  String get membersSubtitle => 'team agents';
-
-  @override
   String get teamSkillsNav => 'Skills';
-
-  @override
-  String teamSkillsAssignedCount(int assigned, int total) {
-    return '$assigned of $total enabled';
-  }
-
-  @override
-  String get teamSkillsManage => 'All skills';
 
   @override
   String get teamPluginsNav => 'Plugins';
 
   @override
   String get teamExtensionsNav => 'Extensions';
-
-  @override
-  String get teamExtensionsTitle => 'Extensions for this team';
-
-  @override
-  String get teamExtensionsSubtitle =>
-      'Override which extensions run for this team. Default follows the global setting.';
 
   @override
   String get teamExtensionFollowGlobal => 'Follow global';
@@ -3687,79 +1747,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get teamMcpNav => 'MCP';
-
-  @override
-  String get myTeamsNav => 'My Teams';
-
-  @override
-  String get myTeamsTitle => 'My Teams';
-
-  @override
-  String get myTeamsSubtitle => 'Manage your local team configurations';
-
-  @override
-  String myTeamsMemberCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count members',
-      one: '1 member',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String myTeamsCreatedAt(Object date) {
-    return 'Created $date';
-  }
-
-  @override
-  String get myTeamsEmptyTitle => 'No teams yet';
-
-  @override
-  String get myTeamsEmptyHint =>
-      'Create a team to manage members, skills, and plugins.';
-
-  @override
-  String get myExpertsNav => 'My Experts';
-
-  @override
-  String get myExpertsTitle => 'My Experts';
-
-  @override
-  String get myExpertsSubtitle => 'Manage your local expert personas';
-
-  @override
-  String get myExpertsEmptyTitle => 'No experts yet';
-
-  @override
-  String get myExpertsEmptyHint =>
-      'Create a local expert persona to reuse across teams.';
-
-  @override
-  String get myExpertsCreate => 'New Expert';
-
-  @override
-  String get myExpertsEdit => 'Edit';
-
-  @override
-  String get myExpertsDelete => 'Delete';
-
-  @override
-  String myExpertsDeleteConfirm(Object name) {
-    return 'Delete expert \"$name\"? This cannot be undone.';
-  }
-
-  @override
-  String myExpertsDeleteReferenced(Object name) {
-    return 'Cannot delete \"$name\" — it is still referenced by one or more teams. Reassign those roster slots first.';
-  }
-
-  @override
-  String get myExpertsUpload => 'Upload';
-
-  @override
-  String get myTeamsUpload => 'Upload';
 
   @override
   String get githubSettingsTitle => 'GitHub';
@@ -3783,9 +1770,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get githubDisconnect => 'Disconnect';
 
   @override
-  String get githubSwitchAccount => 'Switch account';
-
-  @override
   String get githubWaitingCodeHint => 'Enter this code on GitHub if prompted';
 
   @override
@@ -3799,33 +1783,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'GitHub sign-in is unavailable in this build. Use a personal access token.';
 
   @override
-  String get githubAuthExpired => 'GitHub sign-in expired';
-
-  @override
-  String get githubAuthDenied => 'GitHub authorization cancelled';
-
-  @override
-  String get githubAuthExpiredRetry => 'Authorization expired. Try again.';
-
-  @override
   String get githubAdvancedPat => 'Use a personal access token';
 
   @override
   String get githubAdvancedPatSubtitle =>
       'When GitHub sign-in is unavailable, or you prefer a token with repo scope.';
-
-  @override
-  String get githubNetworkError => 'Could not reach GitHub. Try again.';
-
-  @override
-  String get hubPublishExpertTitle => 'Publish expert to Hub';
-
-  @override
-  String get hubPublishTeamTitle => 'Publish team to Hub';
-
-  @override
-  String get hubPublishAuthHint =>
-      'Sign in with GitHub to authorize a fork-based pull request into the Hub registry.';
 
   @override
   String get hubPublishTokenLabel => 'GitHub token';
@@ -3834,845 +1796,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get hubPublishTokenHint => 'ghp_…';
 
   @override
-  String get hubPublishTokenStored =>
-      'A token is already saved. You can replace it below.';
-
-  @override
-  String get hubPublishTokenRequired => 'GitHub token is required to publish';
-
-  @override
-  String get hubPublishTokenSaveFailed => 'Could not save the GitHub token';
-
-  @override
-  String get hubPublishNext => 'Next';
-
-  @override
-  String get hubPublishPublish => 'Publish';
-
-  @override
-  String get hubPublishDone => 'Done';
-
-  @override
-  String get hubPublishSlugLabel => 'Slug';
-
-  @override
-  String get hubPublishSlugHint => 'url-safe-id';
-
-  @override
-  String get hubPublishSlugRequired => 'Slug is required';
-
-  @override
-  String get hubPublishCategoryRequired => 'Category is required';
-
-  @override
-  String get hubPublishAuthorLabel => 'Author';
-
-  @override
-  String get hubPublishLocalExpertHint =>
-      'Local experts on the roster must be remapped to a published or builtin expert before upload.';
-
-  @override
-  String get hubPublishLocalExpertBlocked =>
-      'Remap every local expert before continuing';
-
-  @override
-  String get hubPublishRemapLabel => 'Publish as';
-
-  @override
-  String get hubPublishNonPortableHint =>
-      'These dependencies have no portable provenance. Remove them from the team bundle before publishing:';
-
-  @override
-  String get hubPublishNonPortableBlocked =>
-      'Remove non-portable dependencies before continuing';
-
-  @override
-  String get hubPublishGatesClear =>
-      'All dependencies look portable. Continue to confirm.';
-
-  @override
-  String get hubPublishConfirmHint =>
-      'Review the package metadata, then publish a fork-based pull request.';
-
-  @override
-  String get hubPublishKindLabel => 'Kind';
-
-  @override
-  String get hubPublishKindExpert => 'Expert';
-
-  @override
-  String get hubPublishKindTeam => 'Team';
-
-  @override
-  String get hubPublishSuccessHint =>
-      'Pull request opened. Share or open the link below.';
-
-  @override
-  String get hubPublishCopyLink => 'Copy link';
-
-  @override
-  String get hubPublishOpenPr => 'Open PR';
-
-  @override
-  String get hubPublishBadgePrOpen => 'PR open';
-
-  @override
-  String get hubPublishBadgePublished => 'Published';
-
-  @override
-  String get expertHubCreate => 'New';
-
-  @override
-  String get expertEditorCreateTitle => 'New expert';
-
-  @override
-  String get expertEditorEditTitle => 'Edit expert';
-
-  @override
-  String get expertEditorDescription => 'Description';
-
-  @override
-  String get expertEditorCategory => 'Category';
-
-  @override
-  String get expertEditorTags => 'Tags';
-
-  @override
-  String get expertEditorTagsHint => 'Comma-separated';
-
-  @override
-  String get expertEditorNameRequired => 'Name is required.';
-
-  @override
-  String get expertEditorPromptRequired => 'Responsibilities are required.';
-
-  @override
-  String get expertEditorPromptHint =>
-      'Describe this expert\'s role and what they are responsible for.';
-
-  @override
-  String get expertEditorPlaybookHint =>
-      'Optional step-by-step guidance this expert should follow.';
-
-  @override
-  String get expertEditorSkillsSection => 'Skills';
-
-  @override
-  String get expertEditorPluginsSection => 'Plugins';
-
-  @override
-  String get expertEditorMcpSection => 'MCP';
-
-  @override
-  String get expertEditorDepsHint =>
-      'Configure dependencies from your installed library. Items without a portable source are skipped on save.';
-
-  @override
-  String get expertEditorConfigureSkillsTitle => 'Configure skills';
-
-  @override
-  String get expertEditorConfigurePluginsTitle => 'Configure plugins';
-
-  @override
-  String get expertEditorConfigureMcpTitle => 'Configure MCP';
-
-  @override
-  String get expertEditorDepPickerDone => 'Done';
-
-  @override
-  String expertEditorNonPortableSkipped(int count) {
-    return 'Skipped $count local-only item(s) without portable provenance.';
-  }
-
-  @override
-  String get expertEditorOrphanDeps => 'Attached (not installed locally)';
-
-  @override
-  String get expertEditorOrphanRemove => 'Remove';
-
-  @override
-  String get teamHubNav => 'TeamHub';
-
-  @override
-  String get teamHubSubtitle => 'Discover more public teams';
-
-  @override
-  String get teamHubTitle => 'TeamHub';
-
-  @override
-  String get teamHubDiscovery => 'Discovery';
-
-  @override
-  String get teamHubFavorites => 'Favorites';
-
-  @override
-  String get teamHubSearchHint => 'Search public teams';
-
-  @override
-  String get teamHubSortName => 'Name';
-
-  @override
-  String get teamHubSortUpdated => 'Recently updated';
-
-  @override
-  String get teamHubCategoryAll => 'All';
-
-  @override
-  String get teamHubClone => 'Clone to my teams';
-
-  @override
-  String get teamHubCloning => 'Cloning…';
-
-  @override
-  String teamHubCloneSuccess(Object name) {
-    return 'Cloned \"$name\".';
-  }
-
-  @override
-  String teamHubCloneSuccessWithDeps(
-    Object name,
-    int skillCount,
-    int pluginCount,
-    int mcpCount,
-  ) {
-    return 'Cloned \"$name\". Installed $skillCount skills, $pluginCount plugins, and $mcpCount MCP servers.';
-  }
-
-  @override
-  String teamHubClonePartial(
-    Object name,
-    int skillCount,
-    int pluginCount,
-    int mcpCount,
-    int failedCount,
-    Object failedNames,
-  ) {
-    return 'Cloned \"$name\". Installed $skillCount skills, $pluginCount plugins, $mcpCount MCP. $failedCount could not be installed: $failedNames.';
-  }
-
-  @override
-  String get teamHubCloneFailed => 'Could not clone this team.';
-
-  @override
-  String get teamHubEmptyTitle => 'No public teams yet';
-
-  @override
-  String get teamHubEmptyHint => 'Refresh to fetch teams from the registry.';
-
-  @override
-  String get teamHubFavoritesEmptyTitle => 'No favorites yet';
-
-  @override
-  String get teamHubFavoritesEmptyHint =>
-      'Tap the star on a team to save it here.';
-
-  @override
-  String get teamHubRefresh => 'Refresh';
-
-  @override
-  String get teamHubLoadError => 'Could not load public teams.';
-
-  @override
-  String get teamHubDepInstalled => 'Installed';
-
-  @override
-  String get teamHubDepToInstall => 'Will be installed';
-
-  @override
-  String get teamHubMembersLabel => 'Members';
-
-  @override
-  String get teamHubSkillsLabel => 'Skills';
-
-  @override
-  String get teamHubPluginsLabel => 'Plugins';
-
-  @override
-  String get teamHubMcpLabel => 'MCP';
-
-  @override
-  String get expertHubNav => 'Expert Hub';
-
-  @override
-  String get expertHubTitle => 'Expert Hub';
-
-  @override
-  String get expertHubSubtitle => 'Discover member personas and templates';
-
-  @override
-  String get expertHubSearchHint => 'Search experts';
-
-  @override
-  String get expertHubFavorites => 'Favorites';
-
-  @override
-  String get expertHubMyTemplates => 'My templates';
-
-  @override
-  String get expertHubFromTeams => 'From teams';
-
-  @override
-  String get expertHubCategoryAll => 'All';
-
-  @override
-  String get expertHubSortName => 'Name';
-
-  @override
-  String get expertHubSortUpdated => 'Recently updated';
-
-  @override
-  String get expertHubAddToTeam => 'Add to team';
-
-  @override
-  String get expertHubLaunchInWorkspace => 'Launch in workspace';
-
-  @override
-  String get expertHubAdding => 'Adding…';
-
-  @override
-  String get expertHubAddFailed => 'Could not add this member.';
-
-  @override
-  String get expertHubEmptyTitle => 'No experts yet';
-
-  @override
-  String get expertHubEmptyHint =>
-      'Refresh to fetch experts from the registry.';
-
-  @override
-  String get expertHubFavoritesEmptyTitle => 'No favorites yet';
-
-  @override
-  String get expertHubFavoritesEmptyHint =>
-      'Tap the star on an expert to save it here.';
-
-  @override
-  String get expertHubRefresh => 'Refresh';
-
-  @override
-  String get expertHubLoadError => 'Could not load experts.';
-
-  @override
-  String get expertHubSourceBuiltin => 'Built-in';
-
-  @override
-  String get expertHubSourceRegistry => 'Registry';
-
-  @override
-  String get expertHubSourceLocal => 'My template';
-
-  @override
-  String get expertHubSourceTeamExtract => 'From team';
-
-  @override
-  String get expertHubPrompt => 'Responsibilities';
-
-  @override
-  String get expertHubPlaybook => 'Playbook';
-
-  @override
-  String get expertHubCapabilities => 'Capabilities';
-
-  @override
-  String expertHubAddSuccess(Object name) {
-    return 'Added \"$name\" to team.';
-  }
-
-  @override
-  String expertHubAddSuccessWithSkills(Object name, int skillCount) {
-    return 'Added \"$name\". Installed $skillCount skills.';
-  }
-
-  @override
-  String expertHubAddPartial(
-    Object name,
-    int skillCount,
-    int failedCount,
-    Object failedNames,
-  ) {
-    return 'Added \"$name\". Installed $skillCount skills. $failedCount could not be installed: $failedNames.';
-  }
-
-  @override
-  String get expertHubNoneSelected => 'No expert';
-
-  @override
-  String get expertHubBrowseAll => 'Browse all experts';
-
-  @override
-  String get expertHubConfirmSelection => 'Confirm';
-
-  @override
-  String get expertHubRecent => 'Recent';
-
-  @override
-  String get expertHubIgnoredInTeamMode =>
-      'Experts are only available in Simple mode. Switch to Simple to summon an expert.';
-
-  @override
-  String get expertHubNotFound => 'Expert not found.';
-
-  @override
-  String expertHubPreflightPartial(
-    Object name,
-    int failedCount,
-    Object failedNames,
-  ) {
-    return 'Selected \"$name\". $failedCount capabilities could not be installed: $failedNames.';
-  }
-
-  @override
-  String get expertHubAddFromHub => 'Add from Expert Hub';
-
-  @override
-  String get expertHubViewInHub => 'View in Expert Hub';
-
-  @override
-  String get expertHubViewOriginTeam => 'View origin team';
-
-  @override
-  String teamMcpAssignedCount(int assigned, int total) {
-    return '$assigned of $total enabled';
-  }
-
-  @override
-  String get teamMcpManage => 'All MCP servers';
-
-  @override
-  String get mcpNavTitle => 'MCP Servers';
-
-  @override
-  String get mcpSubtitle => 'Manage MCP servers for agent sessions.';
-
-  @override
-  String get mcpNavInstalled => 'Installed';
-
-  @override
-  String get mcpNavDiscovery => 'Discovery';
-
-  @override
-  String get mcpNavRegistries => 'Registry';
-
-  @override
-  String get mcpInstalledSectionTitle => 'Installed MCP servers';
-
-  @override
-  String mcpInstalledCount(int count) {
-    return '$count installed';
-  }
-
-  @override
-  String get mcpNoInstalled => 'No MCP servers installed yet';
-
-  @override
-  String get mcpNoInstalledHint =>
-      'Open Discovery to add servers from built-in templates or registries.';
-
-  @override
-  String get mcpDiscoverySectionTitle => 'Discover MCP servers';
-
-  @override
-  String get mcpDiscoverySectionHint =>
-      'Browse built-in templates and remote catalogs configured under Registries.';
-
-  @override
-  String get mcpDiscoverySourceAll => 'All';
-
-  @override
-  String get mcpDiscoverySourceBuiltin => 'Built-in';
-
-  @override
-  String get mcpSmitheryApiTokenLabel => 'API token';
-
-  @override
-  String get mcpSmitheryApiTokenHint => 'Smithery API key (Bearer)';
-
-  @override
-  String get mcpSmitheryApiTokenSet => 'token set';
-
-  @override
-  String get mcpRegistryEditTitle => 'Edit API URL';
-
-  @override
-  String get mcpRegistryResetTitle => 'Reset to default';
-
-  @override
-  String mcpRegistryResetConfirm(String name) {
-    return 'Reset \"$name\" to the default API URL?';
-  }
-
-  @override
-  String get mcpRepoApiUrlLabel => 'API base URL';
-
-  @override
-  String get mcpRepoTestConnection => 'Test connection';
-
-  @override
-  String get mcpRepoResetDefault => 'Reset default';
-
-  @override
-  String get mcpRepoConfigSaved => 'Registry API settings saved';
-
-  @override
-  String get mcpRepoTestOk => 'Connection successful';
-
-  @override
-  String mcpRepoTestFailed(String error) {
-    return 'Connection failed: $error';
-  }
-
-  @override
-  String get mcpRepoDisabledHint =>
-      'This catalog source is disabled. Enable it under Registries.';
-
-  @override
-  String get mcpRegistrySmithery => 'Smithery';
-
-  @override
-  String get mcpRegistryOfficial => 'Official registry';
-
-  @override
-  String get mcpRegistrySmitheryHint => 'Smithery — https://api.smithery.ai';
-
-  @override
-  String get mcpRegistryOfficialHint =>
-      'Official MCP Registry — https://registry.modelcontextprotocol.io';
-
-  @override
-  String get mcpRegistrySearchHint => 'Search servers (e.g. github)';
-
-  @override
-  String get mcpRegistryLoadMore => 'Load more';
-
-  @override
-  String get mcpCatalogAdd => 'Add';
-
-  @override
-  String get mcpCatalogInstalled => 'Installed';
-
-  @override
-  String get mcpCatalogAdded => 'MCP server added to catalog';
-
-  @override
-  String get mcpCatalogEmpty => 'No servers found';
-
-  @override
-  String get mcpCatalogVerified => 'Verified';
-
-  @override
-  String get mcpEmptyGoDiscovery => 'Browse built-in templates';
-
-  @override
-  String get mcpEmptyGoRegistries => 'Open registry settings';
-
-  @override
-  String get mcpAdd => 'Add MCP server';
-
-  @override
-  String get mcpEdit => 'Edit MCP server';
-
-  @override
-  String get mcpOpenHomepage => 'Open link';
-
-  @override
-  String get mcpFormDetailHint =>
-      'Select a server to edit, or add a new MCP server.';
-
-  @override
-  String get mcpServerNotFound => 'MCP server not found';
-
-  @override
-  String get mcpImport => 'Import from machine';
-
-  @override
-  String get mcpImportEmpty =>
-      'No MCP servers found in ~/.claude.json or ~/.flashskyai.json';
-
-  @override
-  String mcpImportSummary(int added, int conflicts) {
-    return '$added new, $conflicts conflicts';
-  }
-
-  @override
-  String get mcpImportOverwrite => 'Overwrite conflicts';
-
-  @override
-  String get mcpImportDone => 'MCP catalog updated';
-
-  @override
-  String get mcpEmpty => 'No MCP servers in catalog';
-
-  @override
-  String get mcpDeleteConfirm => 'Delete MCP server?';
-
-  @override
-  String get mcpFieldName => 'Name';
-
-  @override
-  String get mcpFieldCommand => 'Command';
-
-  @override
-  String get mcpFieldArgs => 'Arguments (space-separated)';
-
-  @override
-  String get mcpAddTitle => 'Add MCP';
-
-  @override
-  String get mcpAddButton => 'Add MCP';
-
-  @override
-  String get mcpImportExisting => 'Import existing';
-
-  @override
-  String mcpConfiguredCount(int count) {
-    return '$count MCP server(s) configured';
-  }
-
-  @override
-  String mcpOAuthConnectTitle(String name) {
-    return 'Connect $name';
-  }
-
-  @override
-  String get mcpOAuthConnectHint =>
-      'Sign in with the MCP provider in your browser. Tokens are stored in Claude Code format under app config (same as /mcp → Authenticate).';
-
-  @override
-  String get mcpOAuthDiscovering => 'Discovering authorization server…';
-
-  @override
-  String get mcpOAuthOpenBrowser => 'Open browser';
-
-  @override
-  String get mcpOAuthCallbackUrlLabel => 'Redirect URL';
-
-  @override
-  String get mcpOAuthCallbackUrlHint =>
-      'Paste the full URL after sign-in (contains ?code=)';
-
-  @override
-  String get mcpOAuthSubmitCallback => 'Submit URL';
-
-  @override
-  String get mcpOAuthStartConnect => 'Connect';
-
-  @override
-  String get mcpOAuthConnectAction => 'Connect';
-
-  @override
-  String get mcpOAuthConnectSuccess => 'MCP OAuth connected';
-
-  @override
-  String get mcpOAuthStatusConnected => 'OAuth connected';
-
-  @override
-  String get mcpOAuthStatusNeedsAuth => 'Needs OAuth';
-
-  @override
-  String get mcpPresetDescFetch =>
-      'Fetch web pages and convert HTML to markdown for LLMs.';
-
-  @override
-  String get mcpPresetDescTime =>
-      'Current time, timezone conversion, and date calculations.';
-
-  @override
-  String get mcpPresetDescMemory =>
-      'Persistent memory graph for knowledge across sessions.';
-
-  @override
-  String get mcpPresetDescSequentialThinking =>
-      'Structured step-by-step reasoning for complex problems.';
-
-  @override
-  String get mcpPresetDescContext7 =>
-      'Up-to-date library documentation via Context7.';
-
-  @override
-  String get mcpFormIdLabel => 'MCP ID (unique) *';
-
-  @override
-  String get mcpFormDisplayNameLabel => 'Display name';
-
-  @override
-  String get mcpFormDisplayNameHint => 'e.g. @modelcontextprotocol/server-time';
-
-  @override
-  String get mcpFormMetadata => 'Additional info';
-
-  @override
-  String get mcpFormDescriptionLabel => 'Description';
-
-  @override
-  String get mcpFormDescriptionHint => 'Optional description';
-
-  @override
-  String get mcpFormTagsLabel => 'Tags (comma-separated)';
-
-  @override
-  String get mcpFormTagsHint => 'stdio, time, utility';
-
-  @override
-  String get mcpFormHomepageLabel => 'Homepage';
-
-  @override
-  String get mcpFormDocsLabel => 'Documentation';
-
-  @override
-  String get mcpFormJsonLabel => 'Full JSON configuration';
-
-  @override
-  String get mcpFormFormatJson => 'Format';
-
-  @override
-  String get mcpFormRequiredFields => 'MCP ID and display name are required.';
-
-  @override
-  String get mcpFormSubmitAdd => 'Add';
-
-  @override
   String get confirm => 'Confirm';
-
-  @override
-  String teamPluginsAssignedCount(int assigned, int total) {
-    return '$assigned of $total installed';
-  }
-
-  @override
-  String get teamPluginsManage => 'All plugins';
-
-  @override
-  String get teamPluginsEmpty => 'No plugins installed';
-
-  @override
-  String get teamPluginsEmptyHint =>
-      'Install plugins from Discovery to enable them per team.';
-
-  @override
-  String get teamPluginsGoDiscovery => 'Browse marketplace';
-
-  @override
-  String teamPluginsMissing(int count) {
-    return '$count enabled plugin(s) missing on disk. Reinstall or remove below.';
-  }
-
-  @override
-  String get teamPluginsRemoveMissing => 'Remove';
-
-  @override
-  String get teamPluginsMissingLabel => 'Missing on disk';
-
-  @override
-  String teamPluginsNameConflict(String dir) {
-    return 'Linked as $dir due to name conflict';
-  }
-
-  @override
-  String get teamPluginsCliUnsupportedBanner =>
-      'This team\'s CLI does not support plugins yet. Selections are saved but ignored at launch.';
-
-  @override
-  String get memberQuickList => 'MEMBER QUICK LIST';
-
-  @override
-  String get teamName => 'Team name';
-
-  @override
-  String get teamDescription => 'Team description';
-
-  @override
-  String get teamDescriptionHint =>
-      'Optional note for Claude roster and team context';
-
-  @override
-  String get deleteTeam => 'Delete team';
-
-  @override
-  String get deleteTeamSubtitle =>
-      'Removes this team from the UI and the shared flashskyai data directory. This cannot be undone.';
-
-  @override
-  String deleteTeamConfirm(String name) {
-    return 'Delete team \"$name\"? This cannot be undone.';
-  }
 
   @override
   String get dangerZone => 'Danger zone';
 
   @override
-  String get teamExtraArgs => 'Team extra CLI arguments';
-
-  @override
-  String get teamExtraArgsHint => '--permission-mode acceptEdits';
-
-  @override
-  String get teamEffortLevel => 'Reasoning effort';
-
-  @override
-  String get teamEffortLevelSubtitle =>
-      'Default effort for this team (Claude effortLevel / Codex model_reasoning_effort).';
-
-  @override
-  String get memberEffortLevel => 'Member effort override';
-
-  @override
-  String get memberEffortLevelSubtitle => 'Overrides team default when set.';
-
-  @override
-  String get memberEffortInheritHint => 'Inherit team default';
-
-  @override
-  String get providerEffortLevel => 'Reasoning effort';
-
-  @override
-  String get teamLoop => 'Phase loop';
-
-  @override
-  String get teamLoopSubtitle =>
-      'Team mode: true auto-advances phases; false requires your confirmation.';
-
-  @override
-  String get teamLoopDefault => 'Default';
-
-  @override
-  String get teamLoopTrue => 'true — auto-advance';
-
-  @override
-  String get teamLoopFalse => 'false — confirm each phase';
-
-  @override
-  String get teamLeadBadge => 'Leader';
-
-  @override
-  String get teamLeadDelegateOnlyTitle => 'Team lead: plan and delegate only';
-
-  @override
-  String get teamLeadDelegateOnlySubtitle =>
-      'When enabled, the team lead is blocked from using some tools.';
-
-  @override
-  String get teamForceWaitBeforeStopTitle => 'Keep members in the wait loop';
-
-  @override
-  String get teamForceWaitBeforeStopSubtitle =>
-      'When enabled, a member finishing a turn is pushed back into wait_for_message instead of stopping, so it stays available for new messages and tasks. Disable to let members rest (stop normally).';
-
-  @override
-  String get memberLaunchOrder => 'Member launch order';
-
-  @override
-  String get saveMember => 'Save Member';
-
-  @override
-  String get editTeamSubtitle =>
-      'Edit team identity, working directory, and launch order.';
-
-  @override
   String get memberName => 'Member name';
-
-  @override
-  String get memberNameSubtitle =>
-      'Display only in TeamPilot (sidebar, member list). To define responsibilities and boundaries, edit Responsibilities below.';
 
   @override
   String get provider => 'Provider';
@@ -4684,168 +1814,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get agent => 'Agent preset';
 
   @override
-  String get selectAgent => 'Select preset';
-
-  @override
-  String get agentBuiltInNone => 'Default';
-
-  @override
-  String get agentBuiltInCustom => 'Custom…';
-
-  @override
-  String get agentBuiltInSubtitle =>
-      'Which agent role this member uses; shapes behavior and capabilities.';
-
-  @override
-  String get agentFlashskyaiPresetSubtitle =>
-      'Passed as flashskyai --agent; pick a built-in or custom sub-agent.';
-
-  @override
-  String get agentClaudeTypeSubtitle =>
-      'Written to the Claude team roster as agentType; leave empty to use the member id.';
-
-  @override
-  String get agentClaudeTypeHint => 'e.g. Explore, Plan, or a custom type';
-
-  @override
-  String get agentCustomIdHint => 'Custom agent id';
-
-  @override
-  String get memberExtraArgs => 'Member extra CLI arguments';
-
-  @override
-  String get memberExtraArgsSubtitle =>
-      'Extra flags applied only when this member starts.';
-
-  @override
-  String get workspaceAdvancedSettings => 'Advanced';
-
-  @override
-  String get workspaceAdvancedSettingsSubtitle =>
-      'Agent preset and extra CLI flags for this member.';
-
-  @override
-  String get memberDangerouslySkipPermissions => 'Skip all permission checks';
-
-  @override
-  String get memberDangerouslySkipPermissionsHint =>
-      'Only for isolated / no-network sandboxes. Extremely risky otherwise.';
-
-  @override
   String get prompt => 'Prompt';
-
-  @override
-  String get memberResponsibilities => 'Responsibilities';
-
-  @override
-  String get memberPromptSubtitle =>
-      'What this member owns and must not do. Written into the agent\'s role definition.';
-
-  @override
-  String get memberPromptPresetsLabel => 'Presets';
-
-  @override
-  String get memberPromptPresetTeamLead => 'Team lead';
-
-  @override
-  String get memberPromptPresetTeamLeadText =>
-      'Coordinate the team: break the user\'s request into a task list (each item with scope and acceptance criteria), then assign teammates to implement. Unless blocked, do not do large implementation yourself—you may read code and docs to understand the situation.\nTalk to the user in this session window. When assigning and following up, contact only other teammates (by member name); do not assign work to yourself. After teammates finish, reply to the user with conclusions, relevant files, and next steps.';
-
-  @override
-  String get memberPromptPresetDeveloper => 'Developer';
-
-  @override
-  String get memberPromptPresetDeveloperText =>
-      'Implement assigned tasks, staying within the agreed scope. Do not expand scope or refactor unrelated code without being asked.';
-
-  @override
-  String get memberPromptPresetReviewer => 'Reviewer';
-
-  @override
-  String get memberPromptPresetReviewerText =>
-      'Review code only. Do not modify files unless explicitly asked.';
-
-  @override
-  String get memberPromptPresetResearcher => 'Researcher';
-
-  @override
-  String get memberPromptPresetResearcherText =>
-      'Investigate and report only. Do not change production code unless asked.';
-
-  @override
-  String get memberPlaybook => 'Playbook';
-
-  @override
-  String get memberPlaybookSubtitle =>
-      'How to execute assigned work: steps, checkpoints, and report format. Sent to the agent as operating instructions.';
-
-  @override
-  String get memberPersonaEmptyNoExpert =>
-      'Select an expert to see persona text.';
-
-  @override
-  String get memberResponsibilitiesEmpty =>
-      'No responsibilities on this expert';
-
-  @override
-  String get memberPlaybookEmpty => 'No playbook on this expert';
-
-  @override
-  String get memberPlaybookPresetDeveloperText =>
-      'Work test-first: before implementing, write a failing test, then make it pass with the smallest diff. Run the relevant tests after each change and report which files changed and why. Do not bundle unrelated edits; stop at agreed checkpoints. If a test-driven-development skill is available, follow it.';
-
-  @override
-  String get memberPlaybookPresetReviewerText =>
-      'Review in order: (1) confirm tests cover the change; (2) correctness and edge cases; (3) maintainability and consistency with surrounding code. Every finding states file path, line, the problem, and a concrete fix—no vague praise and no nit without a fix. Flag missing tests explicitly.';
-
-  @override
-  String get memberPlaybookPresetResearcherText =>
-      'Clarify intent before digging: restate the question and your assumptions, then investigate breadth-first across the codebase before going deep. Report findings with file paths, relevant symbols, and recommended next steps—propose, do not change production code. If a brainstorming skill is available, use it to frame the problem first.';
-
-  @override
-  String get selectModel => 'Select a model';
-
-  @override
-  String get appProviderModelEnterCustom => 'Enter custom model ID';
-
-  @override
-  String get appProviderModelPickFromList => 'Choose from list';
-
-  @override
-  String get memberOfficialClaudeModelHint =>
-      'Uses your Claude account default model. Manage Official login in Providers settings.';
-
-  @override
-  String get editMemberSubtitle =>
-      'Edit provider, model, optional agent preset, and command arguments.';
-
-  @override
-  String get teamLeadNameRequired =>
-      'FlashskyAI team delegation expects this member to be named exactly team-lead.';
-
-  @override
-  String get teamLeadNotice =>
-      'FlashskyAI team delegation expects this member to be named exactly team-lead.';
-
-  @override
-  String get membersAndFileTree => 'Members and File Tree';
-
-  @override
-  String get membersAndFileTreeDescription =>
-      'Show members and file tree stacked or as tabs.';
-
-  @override
-  String get appProviderCatalogLabel => 'App provider catalog';
-
-  @override
-  String get appProviderCatalogHint =>
-      'TeamPilot stores unified providers here; team launches generate per-tool configs.';
-
-  @override
-  String get appProviderPresetLabel => 'Preset';
-
-  @override
-  String get appProviderPresetCustom => 'Custom';
 
   @override
   String get appProviderClaudeAuthTokenDefault =>
@@ -4853,18 +1822,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get appProviderClaudeAuthApiKey => 'ANTHROPIC_API_KEY';
-
-  @override
-  String get appProviderAdvancedJson => 'Advanced JSON editor';
-
-  @override
-  String get appProviderAdvancedOptions => 'Advanced options';
-
-  @override
-  String get appProviderWebsite => 'Website';
-
-  @override
-  String get appProviderEnabledTools => 'Enabled tools';
 
   @override
   String get appProviderToolFlashskyai => 'FlashskyAI';
@@ -4882,52 +1839,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appProviderToolCursor => 'Cursor';
 
   @override
-  String get appProviderTeamToolSection => 'Tool providers for this team';
-
-  @override
-  String get appProviderTeamToolSubtitle =>
-      'Select which unified provider each tool uses when this team starts.';
-
-  @override
-  String get appProviderTeamNone => 'None';
-
-  @override
-  String get appProviderClaudeAuthField => 'Authentication field';
-
-  @override
-  String get appProviderClaudeAuthFieldHint =>
-      'Select the authentication environment variable written to settings.';
-
-  @override
-  String get appProviderClaudeCredentialBinding => 'OAuth credential source';
-
-  @override
-  String get appProviderClaudeCredentialBindingLinked =>
-      'Follow global (~/.claude)';
-
-  @override
-  String get appProviderClaudeCredentialBindingIsolated =>
-      'Isolated copy (TeamPilot only)';
-
-  @override
-  String get appProviderClaudeCredentialBindingLinkedHint =>
-      'Shares the same OAuth session as Claude Code in your terminal. Refreshes stay in sync.';
-
-  @override
-  String get appProviderClaudeCredentialBindingIsolatedHint =>
-      'Keeps a separate credential copy under TeamPilot. Use when this provider must not share login with global Claude Code.';
-
-  @override
   String get notes => 'Notes';
-
-  @override
-  String get defaultModel => 'Default model';
-
-  @override
-  String get editProvider => 'Edit provider';
-
-  @override
-  String get invalidJson => 'Invalid JSON. Fix the syntax and try again.';
 
   @override
   String get aboutTitle => 'About';
@@ -5068,14 +1980,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get onboardingTitle => 'First-time setup';
-
-  @override
-  String onboardingProgress(int current, int total) {
-    return 'Step $current of $total';
-  }
-
-  @override
   String get onboardingSkip => 'Skip';
 
   @override
@@ -5086,21 +1990,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingGetStarted => 'Get started';
-
-  @override
-  String get onboardingStepAppearance => 'Language & theme';
-
-  @override
-  String get onboardingStepSsh => 'SSH';
-
-  @override
-  String get onboardingStepCli => 'CLI tools';
-
-  @override
-  String get onboardingStepProviderImport => 'Import providers';
-
-  @override
-  String get onboardingStepDefaultPreset => 'Default preset';
 
   @override
   String get onboardingAppearanceTitle => 'Choose language and appearance';
@@ -5117,66 +2006,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Android runs AI CLIs on a remote host over SSH.';
 
   @override
-  String get onboardingCliTitle => 'Detect CLI tools';
-
-  @override
-  String get onboardingCliSubtitle =>
-      'Locate executables used to launch sessions. Install missing ones, or set a path later in Settings.';
-
-  @override
-  String get onboardingCliFound => 'CLI found';
-
-  @override
-  String get onboardingCliNotFound => 'Not on PATH';
-
-  @override
-  String get onboardingCliScanning => 'Scanning PATH for CLI tools…';
-
-  @override
-  String get onboardingCliRedetect => 'Scan again';
-
-  @override
-  String get onboardingProviderImportTitle => 'Import CLI providers';
-
-  @override
-  String get onboardingProviderImportSubtitle =>
-      'Scan local CLI configs for existing provider settings.';
-
-  @override
-  String get onboardingProviderImportResults => 'Import results';
-
-  @override
-  String get onboardingProviderImportEmpty =>
-      'No providers detected. You can configure them later in Settings.';
-
-  @override
-  String get onboardingProviderImportFailed => 'Import failed';
-
-  @override
-  String get onboardingProviderImportRescan => 'Scan again';
-
-  @override
-  String get onboardingDefaultPresetTitle => 'Configure default launch preset';
-
-  @override
-  String get onboardingDefaultPresetSubtitle =>
-      'Personal workspaces and team default launch configs will use this CLI preset.';
-
-  @override
-  String get onboardingDefaultPresetEmpty =>
-      'No providers to choose from. Skip this step or add providers in Settings.';
-
-  @override
-  String get onboardingDefaultPresetSelectExisting => 'Use existing preset';
-
-  @override
-  String get onboardingDefaultPresetDefaultName => 'Default';
-
-  @override
-  String get onboardingDefaultPresetModelHint =>
-      'Primary model for this preset';
-
-  @override
   String get onboardingRerunSetup => 'Run setup wizard again';
 
   @override
@@ -5187,16 +2016,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Application and error logs under your TeamPilot app data folder.';
 
   @override
-  String get logViewerFileLabel => 'Log file';
-
-  @override
   String get logViewerSearchHint => 'Search logs…';
-
-  @override
-  String get logViewerFilterTitle => 'Filters';
-
-  @override
-  String get logViewerFilterLevel => 'Level';
 
   @override
   String get logViewerWrapLines => 'Wrap lines';
@@ -5328,70 +2148,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get aiFeatures => 'AI Features';
-
-  @override
-  String get aiFeaturesPageSubtitle =>
-      'Choose which CLI provider, model, and effort each AI feature uses.';
-
-  @override
-  String get aiFeatureCommitMessageTitle => 'Commit message generation';
-
-  @override
-  String get aiFeatureCommitMessageSubtitle =>
-      'Used by the ✨ button in the source control panel.';
-
-  @override
-  String get aiFeatureTeamGenerateTitle => 'Team configuration generation';
-
-  @override
-  String get aiFeatureTeamGenerateSubtitle =>
-      'Used when generating a team from a description.';
-
-  @override
-  String get aiFeatureCliLabel => 'CLI';
-
-  @override
-  String get aiFeatureModelLabel => 'Model';
-
-  @override
-  String get aiFeatureEffortLabel => 'Effort';
-
-  @override
-  String aiFeatureConfigSummary(String cli, String provider, String model) {
-    return '$cli · $provider · $model';
-  }
-
-  @override
-  String get gitGenerateCommitMessage => 'Generate commit message with AI';
-
-  @override
-  String get gitGenerateCommitMessageNoProvider =>
-      'Configure an AI provider in Settings → AI Features first.';
-
-  @override
-  String get teamGenTitle => 'Generate with AI';
-
-  @override
-  String get teamGenDescriptionHint =>
-      'Describe the team you want (e.g. Flutter frontend with code review and tests)';
-
-  @override
-  String get teamGenButton => 'Generate';
-
-  @override
-  String get teamGenNoProvider =>
-      'Configure an AI provider in Settings → AI Features first.';
-
-  @override
-  String get teamGenFailed =>
-      'Could not generate a team. Please edit manually.';
-
-  @override
-  String get teamGenApplied =>
-      'Draft applied. Review and adjust before creating.';
-
-  @override
   String get notificationCenterTitle => 'Notifications';
 
   @override
@@ -5436,109 +2192,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get memberDetailTitle => 'Member detail';
-
-  @override
-  String get memberDetailViewAction => 'View member detail';
-
-  @override
-  String get memberDetailOpenConfigDir => 'Open config directory';
-
-  @override
-  String get memberDetailOpenInFileManager => 'Open in file manager';
-
-  @override
-  String get memberDetailBrowseConfigDirTitle => 'Config directory';
-
-  @override
-  String get memberDetailNeedsSession => 'Open a session first';
-
-  @override
-  String get memberDetailTabOverview => 'Overview';
-
-  @override
-  String get memberDetailTabSkills => 'Skills';
-
-  @override
-  String get memberDetailTabMcp => 'MCP';
-
-  @override
-  String get memberDetailTabPlugins => 'Plugins';
-
-  @override
-  String get memberDetailTabSettings => 'Settings';
-
-  @override
-  String get memberDetailSourceRuntime => 'Live session config';
-
-  @override
-  String get memberDetailSourceTeam =>
-      'Team-level config (member not launched in this session)';
-
-  @override
-  String get memberDetailEmpty =>
-      'This member has no config yet in this session, and the team layer is empty.';
-
-  @override
-  String get memberDetailLoadError =>
-      'Failed to read this member\'s config directory.';
-
-  @override
-  String get memberDetailOpenConfigDirFailed =>
-      'Couldn\'t open the config directory in a file manager.';
-
-  @override
-  String memberDetailOpenConfigDirFailedOnHost(String host) {
-    return 'Couldn\'t open the config directory on $host. The remote host may have no desktop file manager.';
-  }
-
-  @override
-  String get memberDetailSectionEmpty => 'None';
-
-  @override
-  String get cliConfigAiCliGroup => 'AI CLI';
-
-  @override
-  String get cliConfigToolchainGroup => 'Toolchain';
-
-  @override
-  String get toolchainGitLabel => 'Git executable path';
-
-  @override
-  String get toolchainNodeLabel => 'Node.js / npm path';
-
-  @override
-  String toolchainPathDescription(String tool) {
-    return 'Absolute path to the $tool executable. Leave empty to use the one on PATH.';
-  }
-
-  @override
-  String toolchainPathDescriptionSsh(String tool) {
-    return 'Absolute path to $tool on the remote SSH host. Leave empty to auto-discover.';
-  }
-
-  @override
-  String get cliCursorExecutablePathLabel => 'Cursor CLI path';
-
-  @override
-  String toolchainInstallProgressChecking(String tool) {
-    return 'Checking for $tool...';
-  }
-
-  @override
   String get toolchainGit => 'Git';
 
   @override
   String get toolchainNode => 'Node.js';
-
-  @override
-  String get homeWorkspaceLaunchWorkspaceTitle => 'Open with…';
-
-  @override
-  String get homeWorkspaceSimpleMode => 'Simple mode';
-
-  @override
-  String get homeWorkspaceRememberLaunchChoice => 'Remember my choice';
 
   @override
   String get worktreeCreateTitle => 'New worktree';
@@ -5620,11 +2277,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get worktreeMenuRemove => 'Remove worktree';
 
   @override
-  String worktreeShowMore(Object count) {
-    return 'Show $count more';
-  }
-
-  @override
   String get worktreeMore => 'More';
 
   @override
@@ -5636,10 +2288,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get automationsTitle => 'Automations';
-
-  @override
-  String get automationsSubtitle =>
-      'Schedule messages and prompts across workspaces and sessions.';
 
   @override
   String get automationsNew => 'New automation';
@@ -5713,9 +2361,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get automationsEnabled => 'Enabled';
 
   @override
-  String get automationsCli => 'CLI';
-
-  @override
   String get automationsReuseSession => 'Reuse session';
 
   @override
@@ -5735,9 +2380,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String automationsReuseSessionListHint(String sessionId) {
     return 'Reuses conversation $sessionId';
   }
-
-  @override
-  String get automationsTargetMember => 'Target member';
 
   @override
   String get automationsCustomCron => 'Cron expression';
@@ -5771,11 +2413,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get automationsSidebarTitle => 'Automations';
-
-  @override
-  String automationsSidebarWithNextRun(String time) {
-    return 'Automations · $time';
-  }
 
   @override
   String get automationsFilterAll => 'All';
@@ -5909,32 +2546,14 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String automationsScopeModeTeam(String team) {
-    return 'Team · $team';
-  }
-
-  @override
   String automationsScopePersonal(String preset) {
     return 'Personal · $preset';
-  }
-
-  @override
-  String automationsScopeTeam(String team, String member) {
-    return 'Team · $team · $member';
-  }
-
-  @override
-  String automationsScopeTeamMember(String member) {
-    return 'Team · $member';
   }
 
   @override
   String automationsScopeScheduledMessage(String sessionId) {
     return 'Scheduled message · $sessionId';
   }
-
-  @override
-  String get automationsLaunchMode => 'Conversation mode';
 
   @override
   String get automationsLaunchProject => 'Project';
@@ -5944,9 +2563,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get automationsPermissions => 'Permissions';
-
-  @override
-  String get automationsLaunchProfile => 'Launch identity';
 
   @override
   String get shortcutsWorkspaceNextTab => 'Next Workspace Tab';
@@ -6134,16 +2750,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get runDebug => 'Debug';
 
   @override
-  String get runDebugUnavailable => 'Debug is not available yet';
-
-  @override
   String get runBuild => 'Build';
-
-  @override
-  String get runBuildUnavailable => 'Build is not available yet';
-
-  @override
-  String get runMoreActions => 'More run actions';
 
   @override
   String get runSelectConfiguration => 'Select configuration';
@@ -6159,17 +2766,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get runAcceptRecommendation =>
-      'Add suggested configuration to launch.json';
-
-  @override
-  String get runRefreshDiscover => 'Refresh discover recommendations';
-
-  @override
   String get runConfigurationTooltip => 'Run configuration';
-
-  @override
-  String get runOpenLaunchJson => 'Open launch.json';
 
   @override
   String get runAlreadyRunningTitle => 'Configuration already running';
@@ -6215,20 +2812,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String runTypeUnavailableRemote(String type) {
     return 'Launch type \"$type\" is not available on remote targets';
   }
-
-  @override
-  String get runErrorNoConfiguration => 'No configuration selected';
-
-  @override
-  String get runErrorNoFolder => 'No workspace folder';
-
-  @override
-  String get runErrorSshProfileMissing =>
-      'SSH profile not found for this run target';
-
-  @override
-  String get runErrorSshSpawnerMissing =>
-      'SSH process execution is not configured';
 
   @override
   String get runConfigureLaunchItems => 'Configure launch configurations';
@@ -6277,9 +2860,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get runTypeShellScript => 'Shell Script';
-
-  @override
-  String get runPickLaunchType => 'Select launch type';
 
   @override
   String get runFieldCommand => 'Command';
@@ -6333,22 +2913,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get runExecuteScriptText => 'Script text';
 
   @override
-  String get runValidationCommandRequired => 'Command is required';
-
-  @override
-  String get runValidationArgsMustBeStringList =>
-      'Arguments must be a list of strings';
-
-  @override
   String get runValidationEnvMustBeStringMap =>
       'Environment must be a map of strings';
 
   @override
   String get runValidationCwdMustBeString =>
       'Working directory must be a string';
-
-  @override
-  String get runValidationShellMustBeBoolean => 'Shell must be a boolean';
 
   @override
   String get runValidationConfigurationMustBeMap =>
@@ -6461,79 +3031,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shortcutsTerminalCommandHistory => 'Show command history';
-
-  @override
-  String get resourceManagerTitle => 'Resource Manager';
-
-  @override
-  String get resourceManagerPanelTitle => 'Resource Manager - Sessions';
-
-  @override
-  String resourceManagerTooltip(String memory, int count) {
-    return 'Resource Manager - $memory - $count running sessions';
-  }
-
-  @override
-  String get resourceManagerTooltipHint =>
-      'Running sessions across all workspaces.';
-
-  @override
-  String get resourceManagerColumnName => 'Name';
-
-  @override
-  String get resourceManagerColumnCpu => 'CPU';
-
-  @override
-  String get resourceManagerColumnMemory => 'Memory';
-
-  @override
-  String get resourceManagerRefresh => 'Refresh';
-
-  @override
-  String get resourceManagerKill => 'Kill';
-
-  @override
-  String get resourceManagerKillAll => 'Kill all';
-
-  @override
-  String get resourceManagerKillAllConfirmTitle => 'Kill all running sessions?';
-
-  @override
-  String get resourceManagerKillAllConfirmBody =>
-      'This disconnects every running session and shell in the list.';
-
-  @override
-  String get resourceManagerSpace => 'Space';
-
-  @override
-  String get resourceManagerSpaceBeta => 'Beta';
-
-  @override
-  String get resourceManagerSpaceNotScanned =>
-      'Does not scan workspace disk usage.';
-
-  @override
-  String resourceManagerSystemMemoryPercent(String percent) {
-    return '$percent% system memory';
-  }
-
-  @override
-  String resourceManagerTerminalsCount(int count) {
-    return '$count running sessions';
-  }
-
-  @override
-  String get resourceManagerEmptyTree => 'Nothing running right now.';
-
-  @override
-  String get resourceManagerAppProcess => 'App';
-
-  @override
-  String get resourceManagerMetricsError =>
-      'Could not refresh process metrics.';
-
-  @override
-  String get resourceManagerKillFailed => 'Could not kill session.';
 
   @override
   String get terminalColorSchemeTitle => 'Terminal color scheme';

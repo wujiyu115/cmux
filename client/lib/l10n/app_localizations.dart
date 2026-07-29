@@ -98,30 +98,6 @@ abstract class AppLocalizations {
     Locale('zh'),
   ];
 
-  /// No description provided for @appTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'TeamPilot'**
-  String get appTitle;
-
-  /// No description provided for @appRailChat.
-  ///
-  /// In en, this message translates to:
-  /// **'Chat'**
-  String get appRailChat;
-
-  /// No description provided for @appRailRuns.
-  ///
-  /// In en, this message translates to:
-  /// **'Runs'**
-  String get appRailRuns;
-
-  /// No description provided for @appRailConfig.
-  ///
-  /// In en, this message translates to:
-  /// **'Config'**
-  String get appRailConfig;
-
   /// No description provided for @copy.
   ///
   /// In en, this message translates to:
@@ -146,12 +122,6 @@ abstract class AppLocalizations {
   /// **'Layout'**
   String get layout;
 
-  /// No description provided for @layoutSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'global workbench'**
-  String get layoutSubtitle;
-
   /// No description provided for @save.
   ///
   /// In en, this message translates to:
@@ -170,12 +140,6 @@ abstract class AppLocalizations {
   /// **'Structure controls are global and apply across teams.'**
   String get layoutPageSubtitle;
 
-  /// No description provided for @toolPlacement.
-  ///
-  /// In en, this message translates to:
-  /// **'Tool Placement'**
-  String get toolPlacement;
-
   /// No description provided for @right.
   ///
   /// In en, this message translates to:
@@ -193,12 +157,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Right Tools'**
   String get rightTools;
-
-  /// No description provided for @openRightTools.
-  ///
-  /// In en, this message translates to:
-  /// **'Tools'**
-  String get openRightTools;
 
   /// No description provided for @rightToolsPanelVisible.
   ///
@@ -224,24 +182,6 @@ abstract class AppLocalizations {
   /// **'Hide sidebar'**
   String get sidebarPanelHidden;
 
-  /// No description provided for @bottomDockPanelVisible.
-  ///
-  /// In en, this message translates to:
-  /// **'Show bottom panel'**
-  String get bottomDockPanelVisible;
-
-  /// No description provided for @bottomDockPanelHidden.
-  ///
-  /// In en, this message translates to:
-  /// **'Hide bottom panel'**
-  String get bottomDockPanelHidden;
-
-  /// No description provided for @bottomTray.
-  ///
-  /// In en, this message translates to:
-  /// **'Bottom Tray'**
-  String get bottomTray;
-
   /// No description provided for @stacked.
   ///
   /// In en, this message translates to:
@@ -254,41 +194,11 @@ abstract class AppLocalizations {
   /// **'Tabs'**
   String get tabs;
 
-  /// No description provided for @stackedTools.
-  ///
-  /// In en, this message translates to:
-  /// **'Stacked Tools'**
-  String get stackedTools;
-
-  /// No description provided for @tabbedTools.
-  ///
-  /// In en, this message translates to:
-  /// **'Tabbed Tools'**
-  String get tabbedTools;
-
   /// No description provided for @regionVisibility.
   ///
   /// In en, this message translates to:
   /// **'Region Visibility'**
   String get regionVisibility;
-
-  /// No description provided for @appRail.
-  ///
-  /// In en, this message translates to:
-  /// **'App rail'**
-  String get appRail;
-
-  /// No description provided for @toolPlacementDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Dock tool panels on the right or along the bottom edge.'**
-  String get toolPlacementDescription;
-
-  /// No description provided for @visibilityTeamSessionsHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Show the team sessions list in the left sidebar.'**
-  String get visibilityTeamSessionsHint;
 
   /// No description provided for @visibilityMembersHint.
   ///
@@ -338,12 +248,6 @@ abstract class AppLocalizations {
   /// **'Extensions will appear here once the catalog loads.'**
   String get extensionsEmptyHint;
 
-  /// No description provided for @extensionEnableLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Enabled'**
-  String get extensionEnableLabel;
-
   /// No description provided for @extensionInstall.
   ///
   /// In en, this message translates to:
@@ -355,12 +259,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Uninstall'**
   String get extensionUninstall;
-
-  /// No description provided for @extensionInstallGuide.
-  ///
-  /// In en, this message translates to:
-  /// **'Install guide'**
-  String get extensionInstallGuide;
 
   /// No description provided for @extensionStatusNotInstalled.
   ///
@@ -422,84 +320,6 @@ abstract class AppLocalizations {
   /// **'Installed version is too old'**
   String get extensionStatusVersionTooOld;
 
-  /// No description provided for @extensionKindMcpServer.
-  ///
-  /// In en, this message translates to:
-  /// **'Code intelligence (MCP)'**
-  String get extensionKindMcpServer;
-
-  /// No description provided for @extensionKindSettingsHook.
-  ///
-  /// In en, this message translates to:
-  /// **'Token savings (hook)'**
-  String get extensionKindSettingsHook;
-
-  /// No description provided for @rtkSettingsTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'RTK token savings'**
-  String get rtkSettingsTitle;
-
-  /// No description provided for @rtkSettingsEnableTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Enable RTK'**
-  String get rtkSettingsEnableTitle;
-
-  /// No description provided for @rtkSettingsDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Compress Agent Bash command output before it reaches the model (requires rtk and jq on PATH).'**
-  String get rtkSettingsDescription;
-
-  /// No description provided for @rtkSettingsStatusTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Host status'**
-  String get rtkSettingsStatusTitle;
-
-  /// No description provided for @rtkSettingsInstallLink.
-  ///
-  /// In en, this message translates to:
-  /// **'Install guide'**
-  String get rtkSettingsInstallLink;
-
-  /// No description provided for @rtkStatusNotFound.
-  ///
-  /// In en, this message translates to:
-  /// **'rtk not found on PATH'**
-  String get rtkStatusNotFound;
-
-  /// No description provided for @rtkStatusJqMissing.
-  ///
-  /// In en, this message translates to:
-  /// **'jq not found on PATH'**
-  String get rtkStatusJqMissing;
-
-  /// No description provided for @rtkStatusInstalledGeneric.
-  ///
-  /// In en, this message translates to:
-  /// **'rtk ready'**
-  String get rtkStatusInstalledGeneric;
-
-  /// No description provided for @rtkStatusInstalled.
-  ///
-  /// In en, this message translates to:
-  /// **'rtk {version} ready'**
-  String rtkStatusInstalled(String version);
-
-  /// No description provided for @rtkStatusVersionTooOld.
-  ///
-  /// In en, this message translates to:
-  /// **'rtk {version} is too old (need >= 0.23.0)'**
-  String rtkStatusVersionTooOld(String version);
-
-  /// No description provided for @rtkBashOnlyHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Only applies to Agent Bash tool calls. Built-in Read, Grep, and Glob are not rewritten.'**
-  String get rtkBashOnlyHint;
-
   /// No description provided for @themeModeTitle.
   ///
   /// In en, this message translates to:
@@ -560,12 +380,6 @@ abstract class AppLocalizations {
   /// **'Custom'**
   String get typographyScaleCustom;
 
-  /// No description provided for @typographyScaleCustomLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Scale'**
-  String get typographyScaleCustomLabel;
-
   /// No description provided for @typographyScaleCustomHint.
   ///
   /// In en, this message translates to:
@@ -625,12 +439,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Ubuntu Sans Mono'**
   String get fontOptionUbuntuSansMono;
-
-  /// No description provided for @fontInstalledSection.
-  ///
-  /// In en, this message translates to:
-  /// **'Installed'**
-  String get fontInstalledSection;
 
   /// No description provided for @fontSearchHint.
   ///
@@ -860,36 +668,6 @@ abstract class AppLocalizations {
   /// **'中文'**
   String get languageChinese;
 
-  /// No description provided for @chatTo.
-  ///
-  /// In en, this message translates to:
-  /// **'To:'**
-  String get chatTo;
-
-  /// No description provided for @copyPrompt.
-  ///
-  /// In en, this message translates to:
-  /// **'Copy prompt'**
-  String get copyPrompt;
-
-  /// No description provided for @sendPrompt.
-  ///
-  /// In en, this message translates to:
-  /// **'Send prompt'**
-  String get sendPrompt;
-
-  /// No description provided for @chatHintText.
-  ///
-  /// In en, this message translates to:
-  /// **'Write a prompt for team-lead...'**
-  String get chatHintText;
-
-  /// No description provided for @emptyTimeline.
-  ///
-  /// In en, this message translates to:
-  /// **'Local shell-mode conversation notes will appear here.'**
-  String get emptyTimeline;
-
   /// No description provided for @fileTree.
   ///
   /// In en, this message translates to:
@@ -1028,18 +806,6 @@ abstract class AppLocalizations {
   /// **'Refresh'**
   String get gitRefresh;
 
-  /// No description provided for @gitChangesListView.
-  ///
-  /// In en, this message translates to:
-  /// **'List view'**
-  String get gitChangesListView;
-
-  /// No description provided for @gitChangesTreeView.
-  ///
-  /// In en, this message translates to:
-  /// **'Tree view'**
-  String get gitChangesTreeView;
-
   /// No description provided for @gitSwitchBranch.
   ///
   /// In en, this message translates to:
@@ -1070,149 +836,11 @@ abstract class AppLocalizations {
   /// **'↑{ahead} ↓{behind}'**
   String gitAheadBehind(int ahead, int behind);
 
-  /// No description provided for @openTeam.
-  ///
-  /// In en, this message translates to:
-  /// **'Open Team'**
-  String get openTeam;
-
-  /// No description provided for @openMember.
-  ///
-  /// In en, this message translates to:
-  /// **'Open member'**
-  String get openMember;
-
-  /// No description provided for @switchToMember.
-  ///
-  /// In en, this message translates to:
-  /// **'Switch to member'**
-  String get switchToMember;
-
-  /// No description provided for @memberPresenceOffline.
-  ///
-  /// In en, this message translates to:
-  /// **'Offline'**
-  String get memberPresenceOffline;
-
-  /// No description provided for @memberPresenceConnecting.
-  ///
-  /// In en, this message translates to:
-  /// **'Connecting…'**
-  String get memberPresenceConnecting;
-
-  /// No description provided for @memberPresenceBooting.
-  ///
-  /// In en, this message translates to:
-  /// **'Starting…'**
-  String get memberPresenceBooting;
-
-  /// No description provided for @memberPresenceIdle.
-  ///
-  /// In en, this message translates to:
-  /// **'Idle'**
-  String get memberPresenceIdle;
-
-  /// No description provided for @memberPresenceWorking.
-  ///
-  /// In en, this message translates to:
-  /// **'Working'**
-  String get memberPresenceWorking;
-
   /// No description provided for @filterFiles.
   ///
   /// In en, this message translates to:
   /// **'Filter files'**
   String get filterFiles;
-
-  /// No description provided for @selectTeam.
-  ///
-  /// In en, this message translates to:
-  /// **'Select team'**
-  String get selectTeam;
-
-  /// No description provided for @addTeamTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'Add team'**
-  String get addTeamTooltip;
-
-  /// No description provided for @addTeamTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Add team'**
-  String get addTeamTitle;
-
-  /// No description provided for @teamCliLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'CLI backend'**
-  String get teamCliLabel;
-
-  /// No description provided for @teamModeLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Team mode'**
-  String get teamModeLabel;
-
-  /// No description provided for @teamModeNative.
-  ///
-  /// In en, this message translates to:
-  /// **'Native (single CLI)'**
-  String get teamModeNative;
-
-  /// No description provided for @teamModeMixed.
-  ///
-  /// In en, this message translates to:
-  /// **'Mixed (cross-CLI bus)'**
-  String get teamModeMixed;
-
-  /// No description provided for @memberCliInheritHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Inherit team default'**
-  String get memberCliInheritHint;
-
-  /// No description provided for @memberLaunchConfigTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Model settings'**
-  String get memberLaunchConfigTitle;
-
-  /// No description provided for @memberLaunchConfigSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'CLI backend, provider, model, and effort for this member.'**
-  String get memberLaunchConfigSubtitle;
-
-  /// No description provided for @teamCliSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Chosen when the team is created and cannot be changed later.'**
-  String get teamCliSubtitle;
-
-  /// No description provided for @teamCliComingSoon.
-  ///
-  /// In en, this message translates to:
-  /// **'Coming soon'**
-  String get teamCliComingSoon;
-
-  /// No description provided for @teamCliLockedSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Set when this team was created.'**
-  String get teamCliLockedSubtitle;
-
-  /// No description provided for @teamNameRequired.
-  ///
-  /// In en, this message translates to:
-  /// **'Team name is required.'**
-  String get teamNameRequired;
-
-  /// No description provided for @teamNameAlreadyExists.
-  ///
-  /// In en, this message translates to:
-  /// **'A team named \"{name}\" already exists.'**
-  String teamNameAlreadyExists(String name);
 
   /// No description provided for @workspaces.
   ///
@@ -1274,41 +902,11 @@ abstract class AppLocalizations {
   /// **'Recent'**
   String get homeWorkspaceRecentVisits;
 
-  /// No description provided for @homeWorkspacePersonal.
-  ///
-  /// In en, this message translates to:
-  /// **'Simple mode'**
-  String get homeWorkspacePersonal;
-
   /// No description provided for @homeWorkspaceAllWorkspaces.
   ///
   /// In en, this message translates to:
   /// **'All workspaces'**
   String get homeWorkspaceAllWorkspaces;
-
-  /// Name shown for the built-in personal workspace in simple mode.
-  ///
-  /// In en, this message translates to:
-  /// **'Personal assistant'**
-  String get homeWorkspaceDefaultPersonalWorkspaceName;
-
-  /// Name shown for the built-in default native team created on first launch.
-  ///
-  /// In en, this message translates to:
-  /// **'Default Native Team'**
-  String get homeWorkspaceDefaultNativeTeamName;
-
-  /// Name shown for the built-in default mixed team created on first launch.
-  ///
-  /// In en, this message translates to:
-  /// **'Default Mixed Team'**
-  String get homeWorkspaceDefaultMixedTeamName;
-
-  /// No description provided for @homeWorkspacePersonalSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Skip the team setup — just launch a single CLI and start chatting.'**
-  String get homeWorkspacePersonalSubtitle;
 
   /// No description provided for @homeWorkspaceNoData.
   ///
@@ -1327,36 +925,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No recently closed workspaces'**
   String get homeWorkspaceRecentlyClosedEmpty;
-
-  /// No description provided for @homeWorkspaceNewTeam.
-  ///
-  /// In en, this message translates to:
-  /// **'New Team'**
-  String get homeWorkspaceNewTeam;
-
-  /// No description provided for @homeWorkspaceProviders.
-  ///
-  /// In en, this message translates to:
-  /// **'Providers'**
-  String get homeWorkspaceProviders;
-
-  /// No description provided for @homeWorkspaceTeamWorkspaces.
-  ///
-  /// In en, this message translates to:
-  /// **'Workspaces'**
-  String get homeWorkspaceTeamWorkspaces;
-
-  /// No description provided for @homeWorkspaceOwner.
-  ///
-  /// In en, this message translates to:
-  /// **'Owner'**
-  String get homeWorkspaceOwner;
-
-  /// No description provided for @homeWorkspaceImportWorkspace.
-  ///
-  /// In en, this message translates to:
-  /// **'Import'**
-  String get homeWorkspaceImportWorkspace;
 
   /// No description provided for @homeWorkspaceSessionsLabel.
   ///
@@ -1411,84 +979,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Session count'**
   String get homeWorkspaceWorkspaceSortSessionCountDesc;
-
-  /// No description provided for @homeWorkspaceComingSoon.
-  ///
-  /// In en, this message translates to:
-  /// **'Coming soon'**
-  String get homeWorkspaceComingSoon;
-
-  /// No description provided for @homeWorkspaceNewTeamSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Pick how the team collaborates, then name it.'**
-  String get homeWorkspaceNewTeamSubtitle;
-
-  /// No description provided for @homeWorkspaceNewTeamMethodCustom.
-  ///
-  /// In en, this message translates to:
-  /// **'Custom'**
-  String get homeWorkspaceNewTeamMethodCustom;
-
-  /// No description provided for @homeWorkspaceNewTeamMethodAi.
-  ///
-  /// In en, this message translates to:
-  /// **'AI generate'**
-  String get homeWorkspaceNewTeamMethodAi;
-
-  /// No description provided for @homeWorkspaceNewTeamSubtitleAi.
-  ///
-  /// In en, this message translates to:
-  /// **'Describe your team and generate a draft with AI.'**
-  String get homeWorkspaceNewTeamSubtitleAi;
-
-  /// No description provided for @homeWorkspaceNewTeamRecommended.
-  ///
-  /// In en, this message translates to:
-  /// **'Recommended'**
-  String get homeWorkspaceNewTeamRecommended;
-
-  /// No description provided for @homeWorkspaceNewTeamModeBeta.
-  ///
-  /// In en, this message translates to:
-  /// **'Beta'**
-  String get homeWorkspaceNewTeamModeBeta;
-
-  /// No description provided for @homeWorkspaceNewTeamNameHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter a team name'**
-  String get homeWorkspaceNewTeamNameHint;
-
-  /// No description provided for @homeWorkspaceCreateTeam.
-  ///
-  /// In en, this message translates to:
-  /// **'Create team'**
-  String get homeWorkspaceCreateTeam;
-
-  /// No description provided for @teamModeNativeTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Native mode'**
-  String get teamModeNativeTitle;
-
-  /// No description provided for @teamModeMixedTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Mixed mode'**
-  String get teamModeMixedTitle;
-
-  /// No description provided for @teamModeNativeDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'All members share one CLI for native, low-config collaboration.'**
-  String get teamModeNativeDescription;
-
-  /// No description provided for @teamModeMixedDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Members can run different CLIs and collaborate across tools over TeamBus.'**
-  String get teamModeMixedDescription;
 
   /// No description provided for @homeWorkspaceNewWorkspaceSubtitle.
   ///
@@ -1550,18 +1040,6 @@ abstract class AppLocalizations {
   /// **'Workspace management'**
   String get homeWorkspaceWorkspaceManagement;
 
-  /// No description provided for @homeWorkspaceWorkspaceList.
-  ///
-  /// In en, this message translates to:
-  /// **'Workspaces'**
-  String get homeWorkspaceWorkspaceList;
-
-  /// No description provided for @homeWorkspaceConversations.
-  ///
-  /// In en, this message translates to:
-  /// **'Conversations'**
-  String get homeWorkspaceConversations;
-
   /// No description provided for @homeWorkspaceConversationsSection.
   ///
   /// In en, this message translates to:
@@ -1573,138 +1051,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Running'**
   String get workspaceRunningSessionsSection;
-
-  /// No description provided for @homeWorkspaceWorkspaceAgent.
-  ///
-  /// In en, this message translates to:
-  /// **'Agent'**
-  String get homeWorkspaceWorkspaceAgent;
-
-  /// No description provided for @workspaceAgentBuiltInSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Maps to flashskyai --agent when that CLI is active.'**
-  String get workspaceAgentBuiltInSubtitle;
-
-  /// No description provided for @workspaceAgentExtraArgs.
-  ///
-  /// In en, this message translates to:
-  /// **'Extra CLI arguments'**
-  String get workspaceAgentExtraArgs;
-
-  /// No description provided for @workspaceAgentExtraArgsSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Extra flags appended when starting the agent in this workspace.'**
-  String get workspaceAgentExtraArgsSubtitle;
-
-  /// No description provided for @workspaceWorkbenchAdvancedSettingsSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Agent preset and extra CLI flags for this workspace.'**
-  String get workspaceWorkbenchAdvancedSettingsSubtitle;
-
-  /// No description provided for @workspaceAgentPromptSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'System prompt defining the agent\'s role and boundaries in this workspace.'**
-  String get workspaceAgentPromptSubtitle;
-
-  /// No description provided for @workspaceAgentPromptPresetGeneral.
-  ///
-  /// In en, this message translates to:
-  /// **'General'**
-  String get workspaceAgentPromptPresetGeneral;
-
-  /// No description provided for @workspaceAgentPromptPresetGeneralText.
-  ///
-  /// In en, this message translates to:
-  /// **'Help with development in this workspace end to end. Understand the request and codebase, propose a clear approach, then implement with minimal diffs; summarize changed files and suggested next steps.'**
-  String get workspaceAgentPromptPresetGeneralText;
-
-  /// No description provided for @workspaceAgentPromptPresetDeveloper.
-  ///
-  /// In en, this message translates to:
-  /// **'Developer'**
-  String get workspaceAgentPromptPresetDeveloper;
-
-  /// No description provided for @workspaceAgentPromptPresetDeveloperText.
-  ///
-  /// In en, this message translates to:
-  /// **'Focus on implementation and fixes. Prefer minimal diffs, run relevant tests, and briefly explain changed files and rationale.'**
-  String get workspaceAgentPromptPresetDeveloperText;
-
-  /// No description provided for @workspaceAgentPromptPresetReviewer.
-  ///
-  /// In en, this message translates to:
-  /// **'Reviewer'**
-  String get workspaceAgentPromptPresetReviewer;
-
-  /// No description provided for @workspaceAgentPromptPresetReviewerText.
-  ///
-  /// In en, this message translates to:
-  /// **'Review code only; do not modify files unless asked.\nEach finding must include file path, line, issue, and suggested fix.'**
-  String get workspaceAgentPromptPresetReviewerText;
-
-  /// No description provided for @workspaceAgentPromptPresetResearcher.
-  ///
-  /// In en, this message translates to:
-  /// **'Researcher'**
-  String get workspaceAgentPromptPresetResearcher;
-
-  /// No description provided for @workspaceAgentPromptPresetResearcherText.
-  ///
-  /// In en, this message translates to:
-  /// **'Investigate and report only; do not change production code unless asked.\nOutput findings with file paths, relevant symbols, and recommended next steps.'**
-  String get workspaceAgentPromptPresetResearcherText;
-
-  /// No description provided for @workspaceCliEffortInheritHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Use provider default'**
-  String get workspaceCliEffortInheritHint;
-
-  /// No description provided for @workspaceCliDefaultSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Default CLI for new conversations in this workspace.'**
-  String get workspaceCliDefaultSubtitle;
-
-  /// No description provided for @workspaceCliDefaultsTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'CLI defaults'**
-  String get workspaceCliDefaultsTitle;
-
-  /// No description provided for @workspaceCliDefaultsSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Set the default provider and model for each CLI used in this workspace.'**
-  String get workspaceCliDefaultsSubtitle;
-
-  /// No description provided for @workspaceCliProviderModelTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Provider & model'**
-  String get workspaceCliProviderModelTitle;
-
-  /// No description provided for @workspaceCliEffortLevel.
-  ///
-  /// In en, this message translates to:
-  /// **'Reasoning effort'**
-  String get workspaceCliEffortLevel;
-
-  /// No description provided for @workspaceCliEffortLevelSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Default effort for this CLI in the workspace (leave empty to use provider default).'**
-  String get workspaceCliEffortLevelSubtitle;
-
-  /// No description provided for @workspaceCliConfigure.
-  ///
-  /// In en, this message translates to:
-  /// **'Configure'**
-  String get workspaceCliConfigure;
 
   /// No description provided for @workspaceCliConfigured.
   ///
@@ -1718,281 +1064,11 @@ abstract class AppLocalizations {
   /// **'Not configured'**
   String get workspaceCliNotConfigured;
 
-  /// No description provided for @workspaceCliNotConfiguredHint.
-  ///
-  /// In en, this message translates to:
-  /// **'No default provider selected yet'**
-  String get workspaceCliNotConfiguredHint;
-
-  /// No description provided for @workspaceCliNoProviderCatalog.
-  ///
-  /// In en, this message translates to:
-  /// **'No provider setup required for this CLI'**
-  String get workspaceCliNoProviderCatalog;
-
-  /// No description provided for @workspaceCliConfigSummary.
-  ///
-  /// In en, this message translates to:
-  /// **'{provider} · {model}'**
-  String workspaceCliConfigSummary(String provider, String model);
-
-  /// No description provided for @workspaceCliAddPresetTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Add Preset'**
-  String get workspaceCliAddPresetTitle;
-
-  /// No description provided for @workspaceCliEditPresetTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit Preset'**
-  String get workspaceCliEditPresetTitle;
-
-  /// No description provided for @workspaceCliPresetNameLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Preset Name'**
-  String get workspaceCliPresetNameLabel;
-
-  /// No description provided for @workspaceCliPresetsManageTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Manage Presets'**
-  String get workspaceCliPresetsManageTitle;
-
-  /// No description provided for @workspaceCliPresetsEmptyHint.
-  ///
-  /// In en, this message translates to:
-  /// **'No presets yet. Create one to get started.'**
-  String get workspaceCliPresetsEmptyHint;
-
-  /// No description provided for @workspaceCliDeletePresetTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete Preset'**
-  String get workspaceCliDeletePresetTitle;
-
-  /// No description provided for @workspaceCliDeletePresetConfirm.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete preset \'{name}\'? This cannot be undone.'**
-  String workspaceCliDeletePresetConfirm(String name);
-
-  /// No description provided for @workspaceCliPresetLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Active Preset'**
-  String get workspaceCliPresetLabel;
-
-  /// No description provided for @workspaceCliNoPresetHint.
-  ///
-  /// In en, this message translates to:
-  /// **'No preset selected'**
-  String get workspaceCliNoPresetHint;
-
-  /// No description provided for @workspaceCliManagePresets.
-  ///
-  /// In en, this message translates to:
-  /// **'Manage'**
-  String get workspaceCliManagePresets;
-
-  /// No description provided for @workspaceCliProviderConfig.
-  ///
-  /// In en, this message translates to:
-  /// **'Provider configuration'**
-  String get workspaceCliProviderConfig;
-
-  /// No description provided for @teamDefaultPresetLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Default Model Preset'**
-  String get teamDefaultPresetLabel;
-
-  /// No description provided for @teamDefaultPresetSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Optional default preset applied to members that don\'t override it.'**
-  String get teamDefaultPresetSubtitle;
-
-  /// No description provided for @teamDefaultPresetNone.
-  ///
-  /// In en, this message translates to:
-  /// **'None'**
-  String get teamDefaultPresetNone;
-
-  /// No description provided for @teamDefaultPresetChange.
-  ///
-  /// In en, this message translates to:
-  /// **'Change'**
-  String get teamDefaultPresetChange;
-
-  /// No description provided for @teamDefaultPresetManage.
-  ///
-  /// In en, this message translates to:
-  /// **'Manage'**
-  String get teamDefaultPresetManage;
-
-  /// No description provided for @teamDefaultCliMixedSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'When a member has no CLI override.'**
-  String get teamDefaultCliMixedSubtitle;
-
-  /// No description provided for @teamDefaultDialogEffortSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Team default effort.'**
-  String get teamDefaultDialogEffortSubtitle;
-
-  /// No description provided for @presetPickerTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Select Preset'**
-  String get presetPickerTitle;
-
-  /// No description provided for @presetPickerNoneOption.
-  ///
-  /// In en, this message translates to:
-  /// **'None (no default)'**
-  String get presetPickerNoneOption;
-
-  /// No description provided for @memberPresetLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Preset'**
-  String get memberPresetLabel;
-
-  /// No description provided for @memberLaunchConfigTypeLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Configuration type'**
-  String get memberLaunchConfigTypeLabel;
-
-  /// No description provided for @memberLaunchConfigTypePreset.
-  ///
-  /// In en, this message translates to:
-  /// **'Preset'**
-  String get memberLaunchConfigTypePreset;
-
-  /// No description provided for @memberLaunchConfigInheritHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Uses the team\'s default CLI, provider, model, and effort.'**
-  String get memberLaunchConfigInheritHint;
-
-  /// No description provided for @memberLaunchConfigInheritUnset.
-  ///
-  /// In en, this message translates to:
-  /// **'Team default is not configured yet.'**
-  String get memberLaunchConfigInheritUnset;
-
-  /// No description provided for @memberPresetInheritTeam.
-  ///
-  /// In en, this message translates to:
-  /// **'Inherit team default'**
-  String get memberPresetInheritTeam;
-
-  /// No description provided for @memberPresetInheritTeamNone.
-  ///
-  /// In en, this message translates to:
-  /// **'No team default set'**
-  String get memberPresetInheritTeamNone;
-
-  /// No description provided for @memberPresetSelectPreset.
-  ///
-  /// In en, this message translates to:
-  /// **'Select a preset'**
-  String get memberPresetSelectPreset;
-
-  /// No description provided for @memberPresetCustom.
-  ///
-  /// In en, this message translates to:
-  /// **'Custom configuration'**
-  String get memberPresetCustom;
-
-  /// No description provided for @memberPresetViaPreset.
-  ///
-  /// In en, this message translates to:
-  /// **'{presetName} (via preset)'**
-  String memberPresetViaPreset(String presetName);
-
-  /// No description provided for @memberPresetViaTeamDefault.
-  ///
-  /// In en, this message translates to:
-  /// **'{presetName} (via team default)'**
-  String memberPresetViaTeamDefault(String presetName);
-
-  /// No description provided for @homeWorkspaceWorkspaceSkills.
-  ///
-  /// In en, this message translates to:
-  /// **'Skills'**
-  String get homeWorkspaceWorkspaceSkills;
-
-  /// No description provided for @homeWorkspaceWorkspacePlugins.
-  ///
-  /// In en, this message translates to:
-  /// **'Plugins'**
-  String get homeWorkspaceWorkspacePlugins;
-
-  /// No description provided for @homeWorkspaceWorkspaceMcp.
-  ///
-  /// In en, this message translates to:
-  /// **'MCP'**
-  String get homeWorkspaceWorkspaceMcp;
-
   /// No description provided for @homeWorkspaceWorkspaceExtensions.
   ///
   /// In en, this message translates to:
   /// **'Extensions'**
   String get homeWorkspaceWorkspaceExtensions;
-
-  /// No description provided for @workspaceSkillsAssignedCount.
-  ///
-  /// In en, this message translates to:
-  /// **'{assigned} of {total} enabled for this workspace'**
-  String workspaceSkillsAssignedCount(int assigned, int total);
-
-  /// No description provided for @workspaceSkillsManage.
-  ///
-  /// In en, this message translates to:
-  /// **'Manage skills'**
-  String get workspaceSkillsManage;
-
-  /// No description provided for @workspaceMcpAssignedCount.
-  ///
-  /// In en, this message translates to:
-  /// **'{assigned} of {total} enabled for this workspace'**
-  String workspaceMcpAssignedCount(int assigned, int total);
-
-  /// No description provided for @workspaceMcpManage.
-  ///
-  /// In en, this message translates to:
-  /// **'Manage MCP'**
-  String get workspaceMcpManage;
-
-  /// No description provided for @workspacePluginsAssignedCount.
-  ///
-  /// In en, this message translates to:
-  /// **'{assigned} of {total} linked to this workspace'**
-  String workspacePluginsAssignedCount(int assigned, int total);
-
-  /// No description provided for @workspacePluginsManage.
-  ///
-  /// In en, this message translates to:
-  /// **'Manage plugins'**
-  String get workspacePluginsManage;
-
-  /// No description provided for @workspacePluginsEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'No plugins installed'**
-  String get workspacePluginsEmpty;
-
-  /// No description provided for @workspacePluginsEmptyHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Install plugins from Discovery to enable them for this workspace.'**
-  String get workspacePluginsEmptyHint;
 
   /// No description provided for @workspaceExtensionsTitle.
   ///
@@ -2018,29 +1094,11 @@ abstract class AppLocalizations {
   /// **'Disabled for this workspace'**
   String get workspaceExtensionEffectiveOff;
 
-  /// No description provided for @homeWorkspaceTeamConfig.
-  ///
-  /// In en, this message translates to:
-  /// **'Team config'**
-  String get homeWorkspaceTeamConfig;
-
   /// No description provided for @homeWorkspaceWorkspaceSettings.
   ///
   /// In en, this message translates to:
   /// **'Workspace settings'**
   String get homeWorkspaceWorkspaceSettings;
-
-  /// No description provided for @homeWorkspaceWorkspaceMembers.
-  ///
-  /// In en, this message translates to:
-  /// **'Members'**
-  String get homeWorkspaceWorkspaceMembers;
-
-  /// No description provided for @homeWorkspaceWorkspaceSettingsSectionBasic.
-  ///
-  /// In en, this message translates to:
-  /// **'Basic'**
-  String get homeWorkspaceWorkspaceSettingsSectionBasic;
 
   /// No description provided for @homeWorkspaceWorkspaceSettingsBasicInfo.
   ///
@@ -2054,41 +1112,17 @@ abstract class AppLocalizations {
   /// **'Workspace ID'**
   String get homeWorkspaceWorkspaceId;
 
-  /// No description provided for @homeWorkspaceWorkspaceAdditionalDirsCount.
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =1{1 additional directory} other{{count} additional directories}}'**
-  String homeWorkspaceWorkspaceAdditionalDirsCount(int count);
-
-  /// No description provided for @homeWorkspaceWorkspaceSettingsPathsHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Use Manage on additional directories to add or remove folders in this workspace.'**
-  String get homeWorkspaceWorkspaceSettingsPathsHint;
-
   /// No description provided for @deleteWorkspaceSubtitle.
   ///
   /// In en, this message translates to:
   /// **'Deletes this workspace and all conversations in it. This cannot be undone.'**
   String get deleteWorkspaceSubtitle;
 
-  /// No description provided for @homeWorkspaceInviteMembers.
-  ///
-  /// In en, this message translates to:
-  /// **'Invite'**
-  String get homeWorkspaceInviteMembers;
-
   /// No description provided for @homeWorkspaceNewConversation.
   ///
   /// In en, this message translates to:
   /// **'New Conversation'**
   String get homeWorkspaceNewConversation;
-
-  /// No description provided for @homeWorkspaceNewConversationChooseCli.
-  ///
-  /// In en, this message translates to:
-  /// **'New conversation with CLI…'**
-  String get homeWorkspaceNewConversationChooseCli;
 
   /// No description provided for @workbenchStripNewMenuTooltip.
   ///
@@ -2101,18 +1135,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No conversations in this workspace yet'**
   String get homeWorkspaceNoConversations;
-
-  /// No description provided for @homeWorkspaceSearchHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Search'**
-  String get homeWorkspaceSearchHint;
-
-  /// No description provided for @homeWorkspaceNoSearchResults.
-  ///
-  /// In en, this message translates to:
-  /// **'No conversations match your search'**
-  String get homeWorkspaceNoSearchResults;
 
   /// No description provided for @workspaceSearchTitle.
   ///
@@ -2150,29 +1172,11 @@ abstract class AppLocalizations {
   /// **'More files match — refine your search'**
   String get workspaceSearchFilesTruncated;
 
-  /// No description provided for @appDropdownSearchHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Search…'**
-  String get appDropdownSearchHint;
-
-  /// No description provided for @appDropdownSearchNoResults.
-  ///
-  /// In en, this message translates to:
-  /// **'No results found.'**
-  String get appDropdownSearchNoResults;
-
   /// No description provided for @homeWorkspaceOpenWorkspaceInNewTab.
   ///
   /// In en, this message translates to:
   /// **'Open in new tab'**
   String get homeWorkspaceOpenWorkspaceInNewTab;
-
-  /// No description provided for @homeWorkspaceOpenInNewTabWithOtherIdentity.
-  ///
-  /// In en, this message translates to:
-  /// **'Open in new tab with other identity…'**
-  String get homeWorkspaceOpenInNewTabWithOtherIdentity;
 
   /// No description provided for @homeWorkspaceFavoriteWorkspace.
   ///
@@ -2216,29 +1220,11 @@ abstract class AppLocalizations {
   /// **'Could not clone workspace'**
   String get homeWorkspaceCloneWorkspaceFailed;
 
-  /// No description provided for @newWorkspaceTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'Create a workspace'**
-  String get newWorkspaceTooltip;
-
-  /// No description provided for @switchWorkspaceTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'Switch workspace'**
-  String get switchWorkspaceTooltip;
-
   /// No description provided for @create.
   ///
   /// In en, this message translates to:
   /// **'Create'**
   String get create;
-
-  /// No description provided for @pickPrimaryDirectory.
-  ///
-  /// In en, this message translates to:
-  /// **'Pick primary directory'**
-  String get pickPrimaryDirectory;
 
   /// No description provided for @workspacePrimaryPathRequired.
   ///
@@ -2251,18 +1237,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No primary directory selected'**
   String get workspacePrimaryPathNotSelected;
-
-  /// No description provided for @workspaceDirectoryAdded.
-  ///
-  /// In en, this message translates to:
-  /// **'Directory added to workspace'**
-  String get workspaceDirectoryAdded;
-
-  /// No description provided for @newSessionTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'New session'**
-  String get newSessionTooltip;
 
   /// No description provided for @defaultNewChatSessionTitle.
   ///
@@ -2288,30 +1262,6 @@ abstract class AppLocalizations {
   /// **'Starting session…'**
   String get sessionStarting;
 
-  /// No description provided for @sessionHistoryLoading.
-  ///
-  /// In en, this message translates to:
-  /// **'Loading conversation history…'**
-  String get sessionHistoryLoading;
-
-  /// No description provided for @sessionHistoryEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'No prior messages for this member yet.'**
-  String get sessionHistoryEmpty;
-
-  /// No description provided for @sessionHistoryError.
-  ///
-  /// In en, this message translates to:
-  /// **'Couldn\'t load conversation history.'**
-  String get sessionHistoryError;
-
-  /// No description provided for @sessionHistorySoftReloadError.
-  ///
-  /// In en, this message translates to:
-  /// **'Couldn\'t refresh conversation history.'**
-  String get sessionHistorySoftReloadError;
-
   /// No description provided for @agentPermissionAttentionBanner.
   ///
   /// In en, this message translates to:
@@ -2323,204 +1273,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open Terminal'**
   String get agentPermissionOpenTerminal;
-
-  /// No description provided for @sessionHistoryRetry.
-  ///
-  /// In en, this message translates to:
-  /// **'Retry'**
-  String get sessionHistoryRetry;
-
-  /// No description provided for @sessionHistoryToolTurn.
-  ///
-  /// In en, this message translates to:
-  /// **'Tool'**
-  String get sessionHistoryToolTurn;
-
-  /// No description provided for @sessionHistoryRoleUser.
-  ///
-  /// In en, this message translates to:
-  /// **'You'**
-  String get sessionHistoryRoleUser;
-
-  /// No description provided for @sessionHistoryRoleAssistant.
-  ///
-  /// In en, this message translates to:
-  /// **'Assistant'**
-  String get sessionHistoryRoleAssistant;
-
-  /// No description provided for @sessionHistoryRoleSystem.
-  ///
-  /// In en, this message translates to:
-  /// **'System'**
-  String get sessionHistoryRoleSystem;
-
-  /// No description provided for @sessionHistoryComposeHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Continue this conversation… @ reference files, / invoke skills'**
-  String get sessionHistoryComposeHint;
-
-  /// No description provided for @sessionHistoryComposeStop.
-  ///
-  /// In en, this message translates to:
-  /// **'Stop generating'**
-  String get sessionHistoryComposeStop;
-
-  /// No description provided for @sessionHistoryContinueSaveFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Couldn\'t save continue settings.'**
-  String get sessionHistoryContinueSaveFailed;
-
-  /// No description provided for @sessionHistoryLoadOlderHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Scroll up for earlier messages'**
-  String get sessionHistoryLoadOlderHint;
-
-  /// No description provided for @sessionHistoryNewMessages.
-  ///
-  /// In en, this message translates to:
-  /// **'New messages'**
-  String get sessionHistoryNewMessages;
-
-  /// No description provided for @sessionHistoryStarting.
-  ///
-  /// In en, this message translates to:
-  /// **'Starting…'**
-  String get sessionHistoryStarting;
-
-  /// No description provided for @sessionHistoryRunning.
-  ///
-  /// In en, this message translates to:
-  /// **'Running…'**
-  String get sessionHistoryRunning;
-
-  /// No description provided for @sessionHistoryMailboxQueued.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} Queued'**
-  String sessionHistoryMailboxQueued(int count);
-
-  /// No description provided for @sessionHistoryMailboxQueuedDismiss.
-  ///
-  /// In en, this message translates to:
-  /// **'Dismiss'**
-  String get sessionHistoryMailboxQueuedDismiss;
-
-  /// No description provided for @aiMessageUsedTool.
-  ///
-  /// In en, this message translates to:
-  /// **'Used tool'**
-  String get aiMessageUsedTool;
-
-  /// No description provided for @aiMessageCancelledTool.
-  ///
-  /// In en, this message translates to:
-  /// **'Cancelled tool'**
-  String get aiMessageCancelledTool;
-
-  /// No description provided for @aiMessageToolsUsed.
-  ///
-  /// In en, this message translates to:
-  /// **'Used {count} tools'**
-  String aiMessageToolsUsed(Object count);
-
-  /// No description provided for @aiMessageReasoning.
-  ///
-  /// In en, this message translates to:
-  /// **'Reasoning'**
-  String get aiMessageReasoning;
-
-  /// No description provided for @aiMessageToolResult.
-  ///
-  /// In en, this message translates to:
-  /// **'Result'**
-  String get aiMessageToolResult;
-
-  /// No description provided for @aiMessageCopied.
-  ///
-  /// In en, this message translates to:
-  /// **'Copied'**
-  String get aiMessageCopied;
-
-  /// No description provided for @aiMessageExportMarkdown.
-  ///
-  /// In en, this message translates to:
-  /// **'Export Markdown'**
-  String get aiMessageExportMarkdown;
-
-  /// No description provided for @aiMessageIncomplete.
-  ///
-  /// In en, this message translates to:
-  /// **'Message incomplete'**
-  String get aiMessageIncomplete;
-
-  /// No description provided for @aiMessageCancelled.
-  ///
-  /// In en, this message translates to:
-  /// **'Message cancelled'**
-  String get aiMessageCancelled;
-
-  /// No description provided for @aiMessageScrollToBottom.
-  ///
-  /// In en, this message translates to:
-  /// **'Scroll to bottom'**
-  String get aiMessageScrollToBottom;
-
-  /// No description provided for @aiMessageShowMore.
-  ///
-  /// In en, this message translates to:
-  /// **'Show more'**
-  String get aiMessageShowMore;
-
-  /// No description provided for @aiMessageShowLess.
-  ///
-  /// In en, this message translates to:
-  /// **'Show less'**
-  String get aiMessageShowLess;
-
-  /// No description provided for @aiMessageThinkingProcess.
-  ///
-  /// In en, this message translates to:
-  /// **'Thinking process'**
-  String get aiMessageThinkingProcess;
-
-  /// No description provided for @aiMessageThinkingProcessSteps.
-  ///
-  /// In en, this message translates to:
-  /// **'Thinking process · {count} steps'**
-  String aiMessageThinkingProcessSteps(int count);
-
-  /// No description provided for @aiToolFileNotFound.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not find file: {path}'**
-  String aiToolFileNotFound(String path);
-
-  /// No description provided for @subagentPreviewUnavailable.
-  ///
-  /// In en, this message translates to:
-  /// **'Subagent preview is unavailable for this tool call.'**
-  String get subagentPreviewUnavailable;
-
-  /// No description provided for @subagentPreviewBack.
-  ///
-  /// In en, this message translates to:
-  /// **'Back'**
-  String get subagentPreviewBack;
-
-  /// No description provided for @subagentPreviewEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'No subagent content yet'**
-  String get subagentPreviewEmpty;
-
-  /// No description provided for @subagentPreviewTitleAgent.
-  ///
-  /// In en, this message translates to:
-  /// **'{title}'**
-  String subagentPreviewTitleAgent(String title);
 
   /// No description provided for @sessionWorkbenchShowChat.
   ///
@@ -2534,30 +1286,6 @@ abstract class AppLocalizations {
   /// **'Show Terminal'**
   String get sessionWorkbenchShowTerminal;
 
-  /// No description provided for @sessionReadyTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Ready to chat'**
-  String get sessionReadyTitle;
-
-  /// No description provided for @sessionReadySubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Start a conversation with {memberName} in this workspace.'**
-  String sessionReadySubtitle(String memberName);
-
-  /// No description provided for @sessionReadySubtitleGeneric.
-  ///
-  /// In en, this message translates to:
-  /// **'Start a conversation in this workspace.'**
-  String get sessionReadySubtitleGeneric;
-
-  /// No description provided for @sessionReadyHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Describe what you want in everyday language — no terminal commands needed.'**
-  String get sessionReadyHint;
-
   /// No description provided for @workspaceChatLandingInputHint.
   ///
   /// In en, this message translates to:
@@ -2569,12 +1297,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Back to start'**
   String get workspaceChatLandingBackToStart;
-
-  /// No description provided for @workspaceChatLandingSelectWorkspace.
-  ///
-  /// In en, this message translates to:
-  /// **'Select workspace >'**
-  String get workspaceChatLandingSelectWorkspace;
 
   /// No description provided for @workspaceChatLandingSelectProject.
   ///
@@ -2588,47 +1310,11 @@ abstract class AppLocalizations {
   /// **'Select worktree >'**
   String get workspaceChatLandingSelectWorktree;
 
-  /// No description provided for @workspaceChatLandingSelectLaunchDirectory.
-  ///
-  /// In en, this message translates to:
-  /// **'Select directory >'**
-  String get workspaceChatLandingSelectLaunchDirectory;
-
-  /// No description provided for @workspaceChatLandingModeTeam.
-  ///
-  /// In en, this message translates to:
-  /// **'Team'**
-  String get workspaceChatLandingModeTeam;
-
-  /// No description provided for @workspaceChatLandingModeSimple.
-  ///
-  /// In en, this message translates to:
-  /// **'Simple chat'**
-  String get workspaceChatLandingModeSimple;
-
-  /// No description provided for @workspaceChatLandingUsePreset.
-  ///
-  /// In en, this message translates to:
-  /// **'Use preset'**
-  String get workspaceChatLandingUsePreset;
-
   /// No description provided for @workspaceChatLandingFullAccessPermissions.
   ///
   /// In en, this message translates to:
   /// **'Full access permissions'**
   String get workspaceChatLandingFullAccessPermissions;
-
-  /// No description provided for @workspaceChatLandingSkills.
-  ///
-  /// In en, this message translates to:
-  /// **'Skills'**
-  String get workspaceChatLandingSkills;
-
-  /// No description provided for @workspaceChatLandingConnectApps.
-  ///
-  /// In en, this message translates to:
-  /// **'Connect apps'**
-  String get workspaceChatLandingConnectApps;
 
   /// No description provided for @workspaceChatLandingDefaultPermissions.
   ///
@@ -2641,12 +1327,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Attach files'**
   String get workspaceChatLandingAttach;
-
-  /// No description provided for @workspaceChatLandingEnhance.
-  ///
-  /// In en, this message translates to:
-  /// **'Enhance prompt'**
-  String get workspaceChatLandingEnhance;
 
   /// No description provided for @workspaceChatLandingVoice.
   ///
@@ -2666,24 +1346,6 @@ abstract class AppLocalizations {
   /// **'Stop recording'**
   String get workspaceChatLandingVoiceStop;
 
-  /// No description provided for @workspaceChatLandingEnhanceEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'Type a message before enhancing'**
-  String get workspaceChatLandingEnhanceEmpty;
-
-  /// No description provided for @workspaceChatLandingEnhanceNotConfigured.
-  ///
-  /// In en, this message translates to:
-  /// **'Configure a CLI preset or team provider first'**
-  String get workspaceChatLandingEnhanceNotConfigured;
-
-  /// No description provided for @workspaceChatLandingEnhanceFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not enhance prompt'**
-  String get workspaceChatLandingEnhanceFailed;
-
   /// No description provided for @workspaceChatLandingVoiceUnavailable.
   ///
   /// In en, this message translates to:
@@ -2696,101 +1358,11 @@ abstract class AppLocalizations {
   /// **'Microphone permission denied'**
   String get workspaceChatLandingVoicePermissionDenied;
 
-  /// No description provided for @landingTeamSettingsNavTeam.
-  ///
-  /// In en, this message translates to:
-  /// **'Team defaults'**
-  String get landingTeamSettingsNavTeam;
-
-  /// No description provided for @landingTeamSettingsNavMachines.
-  ///
-  /// In en, this message translates to:
-  /// **'Machine assignment'**
-  String get landingTeamSettingsNavMachines;
-
-  /// No description provided for @landingTeamSettingsGlobalHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Changes apply to this team\'s global configuration.'**
-  String get landingTeamSettingsGlobalHint;
-
-  /// No description provided for @workspaceChatLandingTeamLaunchBlocked.
-  ///
-  /// In en, this message translates to:
-  /// **'Configure team and member model presets in Team Settings before sending.'**
-  String get workspaceChatLandingTeamLaunchBlocked;
-
-  /// No description provided for @landingLaunchRemoteCliMissing.
-  ///
-  /// In en, this message translates to:
-  /// **'Install required CLIs on remote machines before starting.'**
-  String get landingLaunchRemoteCliMissing;
-
-  /// No description provided for @landingLaunchRemoteCliMissingDetail.
-  ///
-  /// In en, this message translates to:
-  /// **'{cli} on {host}'**
-  String landingLaunchRemoteCliMissingDetail(String cli, String host);
-
-  /// No description provided for @remoteCliMachineReadinessTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Required CLIs on this machine'**
-  String get remoteCliMachineReadinessTitle;
-
-  /// No description provided for @remoteCliMachineReadinessProbing.
-  ///
-  /// In en, this message translates to:
-  /// **'Checking…'**
-  String get remoteCliMachineReadinessProbing;
-
-  /// No description provided for @remoteCliMachineReadinessReady.
-  ///
-  /// In en, this message translates to:
-  /// **'{cli} ready at {path}'**
-  String remoteCliMachineReadinessReady(String cli, String path);
-
-  /// No description provided for @remoteCliMachineReadinessMissing.
-  ///
-  /// In en, this message translates to:
-  /// **'{cli} not found — install or set a manual path'**
-  String remoteCliMachineReadinessMissing(String cli);
-
-  /// No description provided for @remoteCliMachineReadinessFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'{cli}: {message}'**
-  String remoteCliMachineReadinessFailed(String cli, String message);
-
-  /// No description provided for @remoteCliMachineReadinessInstallHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Use Install for each missing CLI, or set a manual path in target settings.'**
-  String get remoteCliMachineReadinessInstallHint;
-
-  /// No description provided for @sessionStartButton.
-  ///
-  /// In en, this message translates to:
-  /// **'Start conversation'**
-  String get sessionStartButton;
-
-  /// No description provided for @sessionFailedTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Couldn\'t start session'**
-  String get sessionFailedTitle;
-
   /// No description provided for @sessionRetryButton.
   ///
   /// In en, this message translates to:
   /// **'Try again'**
   String get sessionRetryButton;
-
-  /// No description provided for @openFolder.
-  ///
-  /// In en, this message translates to:
-  /// **'Open Folder'**
-  String get openFolder;
 
   /// No description provided for @copyFolderPath.
   ///
@@ -2804,12 +1376,6 @@ abstract class AppLocalizations {
   /// **'Path copied: {path}'**
   String pathCopied(String path);
 
-  /// No description provided for @workspaceDetails.
-  ///
-  /// In en, this message translates to:
-  /// **'Workspace details'**
-  String get workspaceDetails;
-
   /// No description provided for @workspaceDetailsTitle.
   ///
   /// In en, this message translates to:
@@ -2821,12 +1387,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add directory'**
   String get addWorkspaceDirectory;
-
-  /// No description provided for @removeWorkspaceDirectory.
-  ///
-  /// In en, this message translates to:
-  /// **'Remove directory'**
-  String get removeWorkspaceDirectory;
 
   /// No description provided for @workspaceDisplayName.
   ///
@@ -2858,30 +1418,6 @@ abstract class AppLocalizations {
   /// **'Upload icon'**
   String get workspaceIconUpload;
 
-  /// No description provided for @workspaceIconUploadFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not save icon. Use PNG, JPG, WEBP, or SVG.'**
-  String get workspaceIconUploadFailed;
-
-  /// No description provided for @workspacePrimaryPath.
-  ///
-  /// In en, this message translates to:
-  /// **'Primary directory'**
-  String get workspacePrimaryPath;
-
-  /// No description provided for @workspaceAdditionalDirectories.
-  ///
-  /// In en, this message translates to:
-  /// **'Additional directories'**
-  String get workspaceAdditionalDirectories;
-
-  /// No description provided for @workspaceNoAdditionalDirectories.
-  ///
-  /// In en, this message translates to:
-  /// **'No additional directories'**
-  String get workspaceNoAdditionalDirectories;
-
   /// No description provided for @workspaceSessionCount.
   ///
   /// In en, this message translates to:
@@ -2900,23 +1436,11 @@ abstract class AppLocalizations {
   /// **'Updated'**
   String get workspaceUpdatedAt;
 
-  /// No description provided for @workspaceDirectoryAlreadyPrimary.
-  ///
-  /// In en, this message translates to:
-  /// **'This path is already the primary directory.'**
-  String get workspaceDirectoryAlreadyPrimary;
-
   /// No description provided for @workspaceDirectoryAlreadyAdded.
   ///
   /// In en, this message translates to:
   /// **'This directory is already in the workspace.'**
   String get workspaceDirectoryAlreadyAdded;
-
-  /// No description provided for @editWorkspacePrimaryPath.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit primary directory'**
-  String get editWorkspacePrimaryPath;
 
   /// No description provided for @remoteDirectoryBrowserTitle.
   ///
@@ -2978,18 +1502,6 @@ abstract class AppLocalizations {
   /// **'Delete workspace \"{name}\" and all its sessions? This cannot be undone.'**
   String deleteWorkspaceConfirm(String name);
 
-  /// No description provided for @noSessions.
-  ///
-  /// In en, this message translates to:
-  /// **'No sessions yet'**
-  String get noSessions;
-
-  /// No description provided for @unknownFolder.
-  ///
-  /// In en, this message translates to:
-  /// **'Unknown'**
-  String get unknownFolder;
-
   /// No description provided for @renameConversation.
   ///
   /// In en, this message translates to:
@@ -3014,12 +1526,6 @@ abstract class AppLocalizations {
   /// **'Unpin conversation'**
   String get unpinConversation;
 
-  /// No description provided for @sessionSortManual.
-  ///
-  /// In en, this message translates to:
-  /// **'Manual order'**
-  String get sessionSortManual;
-
   /// No description provided for @sessionSortRecentlyUpdated.
   ///
   /// In en, this message translates to:
@@ -3043,12 +1549,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Rename Conversation'**
   String get renameConversationTitle;
-
-  /// No description provided for @deleteConversationConfirm.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete conversation \"{name}\"? This cannot be undone.'**
-  String deleteConversationConfirm(String name);
 
   /// No description provided for @conversationName.
   ///
@@ -3085,18 +1585,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Configure shell session launch, terminal behavior, and storage backend.'**
   String get sessionPageSubtitle;
-
-  /// No description provided for @cliConfig.
-  ///
-  /// In en, this message translates to:
-  /// **'CLI'**
-  String get cliConfig;
-
-  /// No description provided for @cliConfigPageSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Configure AI agent CLI executable paths and install missing tools.'**
-  String get cliConfigPageSubtitle;
 
   /// No description provided for @sshProfilesSettingsTitle.
   ///
@@ -3259,12 +1747,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Connection successful'**
   String get sshProfileTestSuccess;
-
-  /// No description provided for @sshProfileTestFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Connection test failed'**
-  String get sshProfileTestFailed;
 
   /// No description provided for @sshProfileTestFailedHostKey.
   ///
@@ -3488,12 +1970,6 @@ abstract class AppLocalizations {
   /// **'Required'**
   String get sshProfileFormFieldRequired;
 
-  /// No description provided for @sshProfileSelectorTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'Switch SSH server'**
-  String get sshProfileSelectorTooltip;
-
   /// No description provided for @sshProfileSelectorManage.
   ///
   /// In en, this message translates to:
@@ -3512,35 +1988,11 @@ abstract class AppLocalizations {
   /// **'Remote working directory used when the SSH launch has no workspace path; leave empty to skip changing directory.'**
   String get sshDefaultWorkingDirectorySubtitle;
 
-  /// No description provided for @cliExecutablePathLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'flashskyai CLI path'**
-  String get cliExecutablePathLabel;
-
-  /// No description provided for @cliExecutablePathDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Absolute path to the flashskyai executable. Leave empty to use the one on PATH.'**
-  String get cliExecutablePathDescription;
-
-  /// No description provided for @cliExecutablePathDescriptionSsh.
-  ///
-  /// In en, this message translates to:
-  /// **'Absolute path to flashskyai on the remote SSH host. Leave empty to auto-discover over SSH.'**
-  String get cliExecutablePathDescriptionSsh;
-
   /// No description provided for @cliExecutablePathBrowse.
   ///
   /// In en, this message translates to:
   /// **'Browse…'**
   String get cliExecutablePathBrowse;
-
-  /// No description provided for @cliExecutablePathApply.
-  ///
-  /// In en, this message translates to:
-  /// **'Apply'**
-  String get cliExecutablePathApply;
 
   /// No description provided for @cliExecutablePathReset.
   ///
@@ -3553,12 +2005,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Using: '**
   String get cliExecutablePathUsing;
-
-  /// No description provided for @cliExecutablePathUsingFallback.
-  ///
-  /// In en, this message translates to:
-  /// **'Using PATH lookup'**
-  String get cliExecutablePathUsingFallback;
 
   /// No description provided for @cliInstallButton.
   ///
@@ -3578,12 +2024,6 @@ abstract class AppLocalizations {
   /// **'Checking for npm…'**
   String get cliInstallProgressCheckingNpm;
 
-  /// No description provided for @cliInstallProgressBootstrappingNode.
-  ///
-  /// In en, this message translates to:
-  /// **'Installing Node.js…'**
-  String get cliInstallProgressBootstrappingNode;
-
   /// No description provided for @cliInstallProgressInstallingCli.
   ///
   /// In en, this message translates to:
@@ -3595,72 +2035,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Locating CLI executable…'**
   String get cliInstallProgressLocatingExecutable;
-
-  /// No description provided for @cliInstallProgressSyncingRemoteWorkspace.
-  ///
-  /// In en, this message translates to:
-  /// **'Syncing remote workspace…'**
-  String get cliInstallProgressSyncingRemoteWorkspace;
-
-  /// No description provided for @sessionRemoteProvisionTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Preparing {member} on {host}'**
-  String sessionRemoteProvisionTitle(String member, String host);
-
-  /// No description provided for @sessionRemoteProvisionFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Remote setup failed'**
-  String get sessionRemoteProvisionFailed;
-
-  /// No description provided for @cliExecutablePathLabelFor.
-  ///
-  /// In en, this message translates to:
-  /// **'{cli} CLI path'**
-  String cliExecutablePathLabelFor(String cli);
-
-  /// No description provided for @cliExecutablePathDescriptionFor.
-  ///
-  /// In en, this message translates to:
-  /// **'Absolute path to the {cli} executable. Leave empty to use the one on PATH.'**
-  String cliExecutablePathDescriptionFor(String cli);
-
-  /// No description provided for @cliExecutablePathDescriptionSshFor.
-  ///
-  /// In en, this message translates to:
-  /// **'Absolute path to {cli} on the remote SSH host. Leave empty to auto-discover over SSH.'**
-  String cliExecutablePathDescriptionSshFor(String cli);
-
-  /// No description provided for @claudeCliExecutablePathLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Claude Code CLI path'**
-  String get claudeCliExecutablePathLabel;
-
-  /// No description provided for @claudeCliExecutablePathDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Absolute path to the Claude Code executable. Leave empty to use the one on PATH.'**
-  String get claudeCliExecutablePathDescription;
-
-  /// No description provided for @claudeCliExecutablePathDescriptionSsh.
-  ///
-  /// In en, this message translates to:
-  /// **'Absolute path to Claude Code on the remote SSH host. Leave empty to resolve claude from the remote PATH.'**
-  String get claudeCliExecutablePathDescriptionSsh;
-
-  /// No description provided for @shellChatWorkbench.
-  ///
-  /// In en, this message translates to:
-  /// **'Shell chat workbench'**
-  String get shellChatWorkbench;
-
-  /// No description provided for @shellSession.
-  ///
-  /// In en, this message translates to:
-  /// **'Shell session'**
-  String get shellSession;
 
   /// No description provided for @terminalFind.
   ///
@@ -3679,12 +2053,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Can\'t drop a local file onto a remote terminal'**
   String get terminalDropCrossMachineRejected;
-
-  /// No description provided for @editorTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Editor'**
-  String get editorTitle;
 
   /// No description provided for @editorSave.
   ///
@@ -3746,23 +2114,11 @@ abstract class AppLocalizations {
   /// **'Revert changes'**
   String get editorRevertChanges;
 
-  /// No description provided for @editorClose.
-  ///
-  /// In en, this message translates to:
-  /// **'Close editor'**
-  String get editorClose;
-
   /// No description provided for @editorUnsavedChangesTitle.
   ///
   /// In en, this message translates to:
   /// **'Unsaved changes'**
   String get editorUnsavedChangesTitle;
-
-  /// No description provided for @editorUnsavedChangesDiscardFile.
-  ///
-  /// In en, this message translates to:
-  /// **'Discard unsaved changes to \"{fileName}\"?'**
-  String editorUnsavedChangesDiscardFile(String fileName);
 
   /// No description provided for @editorUnsavedChangesDiscardMultiple.
   ///
@@ -3781,12 +2137,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Editor not ready'**
   String get editorNotReady;
-
-  /// No description provided for @editorNoFileOpen.
-  ///
-  /// In en, this message translates to:
-  /// **'No file open'**
-  String get editorNoFileOpen;
 
   /// No description provided for @editorBinaryFileHint.
   ///
@@ -4028,18 +2378,6 @@ abstract class AppLocalizations {
   /// **'Shift+drag to copy'**
   String get terminalCopySelectHint;
 
-  /// No description provided for @workspaceTerminal.
-  ///
-  /// In en, this message translates to:
-  /// **'Terminal'**
-  String get workspaceTerminal;
-
-  /// No description provided for @workspaceTerminalClose.
-  ///
-  /// In en, this message translates to:
-  /// **'Close terminal panel'**
-  String get workspaceTerminalClose;
-
   /// No description provided for @workspaceTerminalNoWorkingDirectory.
   ///
   /// In en, this message translates to:
@@ -4051,12 +2389,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'New terminal'**
   String get workspaceTerminalNewSession;
-
-  /// No description provided for @workspaceTerminalNewSessionMenu.
-  ///
-  /// In en, this message translates to:
-  /// **'New terminal session menu'**
-  String get workspaceTerminalNewSessionMenu;
 
   /// No description provided for @workspaceTerminalNewSshSession.
   ///
@@ -4105,12 +2437,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Check that remote machines are reachable, then try again.'**
   String get workspaceToolsResolveFailedHint;
-
-  /// No description provided for @workspaceTerminalCloseSession.
-  ///
-  /// In en, this message translates to:
-  /// **'Close terminal'**
-  String get workspaceTerminalCloseSession;
 
   /// No description provided for @workspaceTerminalSplitRight.
   ///
@@ -4454,41 +2780,11 @@ abstract class AppLocalizations {
   /// **'Mailbox'**
   String get mailbox;
 
-  /// No description provided for @mailboxEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'No messages yet'**
-  String get mailboxEmpty;
-
   /// No description provided for @board.
   ///
   /// In en, this message translates to:
   /// **'Board'**
   String get board;
-
-  /// No description provided for @boardEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'No tasks yet'**
-  String get boardEmpty;
-
-  /// No description provided for @boardPending.
-  ///
-  /// In en, this message translates to:
-  /// **'Pending'**
-  String get boardPending;
-
-  /// No description provided for @boardClaimed.
-  ///
-  /// In en, this message translates to:
-  /// **'In progress'**
-  String get boardClaimed;
-
-  /// No description provided for @boardDone.
-  ///
-  /// In en, this message translates to:
-  /// **'Done'**
-  String get boardDone;
 
   /// No description provided for @visibilityBoardHint.
   ///
@@ -4544,18 +2840,6 @@ abstract class AppLocalizations {
   /// **'When enabled (default), new Simple-mode compose landing starts with full access permissions. Workspace chip choices still override and persist per workspace.'**
   String get simpleModeDefaultFullAccessDescription;
 
-  /// No description provided for @scopeSessionsToSelectedTeamTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Scope sessions to selected team'**
-  String get scopeSessionsToSelectedTeamTitle;
-
-  /// No description provided for @scopeSessionsToSelectedTeamDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'When enabled, the sidebar shows only sessions assigned to the current team. New sessions are always tagged with the selected team so they appear here if you turn this on later.'**
-  String get scopeSessionsToSelectedTeamDescription;
-
   /// No description provided for @notifyOnSessionIdleTitle.
   ///
   /// In en, this message translates to:
@@ -4567,30 +2851,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'When a session finishes a turn and becomes idle, show an OS notification in addition to the in-app notification center.'**
   String get notifyOnSessionIdleDescription;
-
-  /// No description provided for @memberTargetAssignmentTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Member machine'**
-  String get memberTargetAssignmentTitle;
-
-  /// No description provided for @memberTargetAssignmentSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Which machine {member} runs on (its assigned workspace folders).'**
-  String memberTargetAssignmentSubtitle(Object member);
-
-  /// No description provided for @memberTargetAssignmentInherit.
-  ///
-  /// In en, this message translates to:
-  /// **'Inherit workspace folders'**
-  String get memberTargetAssignmentInherit;
-
-  /// No description provided for @memberAssignFoldersAction.
-  ///
-  /// In en, this message translates to:
-  /// **'Assign folders…'**
-  String get memberAssignFoldersAction;
 
   /// No description provided for @credentialPushOptInTitle.
   ///
@@ -4652,18 +2912,6 @@ abstract class AppLocalizations {
   /// **'Enable'**
   String get rootSandboxEnvConfirmAction;
 
-  /// No description provided for @workspaceTargetTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Workspace machine'**
-  String get workspaceTargetTitle;
-
-  /// No description provided for @workspaceTargetSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'The machine this workspace\'s folders live and run on. Sessions launch on this target; switching does not move files.'**
-  String get workspaceTargetSubtitle;
-
   /// No description provided for @workspaceFoldersSectionTitle.
   ///
   /// In en, this message translates to:
@@ -4687,12 +2935,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Personal identity cannot change folder machines. Switch to a team identity to configure machines and directories.'**
   String get workspaceFoldersPersonalTargetsLockedHint;
-
-  /// No description provided for @workspaceFoldersPickMixedTarget.
-  ///
-  /// In en, this message translates to:
-  /// **'Add directory on machine'**
-  String get workspaceFoldersPickMixedTarget;
 
   /// No description provided for @workspaceTopologyLocal.
   ///
@@ -4718,102 +2960,6 @@ abstract class AppLocalizations {
   /// **'Type'**
   String get workspaceTypeLabel;
 
-  /// No description provided for @mixedWorkspaceRequiresTeamLaunch.
-  ///
-  /// In en, this message translates to:
-  /// **'Mixed workspaces can only be started with a team identity. Switch to a team and confirm machine assignment in Team Settings.'**
-  String get mixedWorkspaceRequiresTeamLaunch;
-
-  /// No description provided for @mixedWorkspacePersonalLaunchBlockedHint.
-  ///
-  /// In en, this message translates to:
-  /// **'This is a mixed workspace. Switch to a team tab to start conversations and confirm machine assignment.'**
-  String get mixedWorkspacePersonalLaunchBlockedHint;
-
-  /// No description provided for @mixedWorkspaceMemberAssignmentTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Assign members to machines'**
-  String get mixedWorkspaceMemberAssignmentTitle;
-
-  /// No description provided for @mixedWorkspaceMemberAssignmentSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Select a machine on the left, then use + / − to place each member\'s instances on it.'**
-  String get mixedWorkspaceMemberAssignmentSubtitle;
-
-  /// No description provided for @mixedWorkspaceMemberAssignmentIncomplete.
-  ///
-  /// In en, this message translates to:
-  /// **'Confirm machine assignment once before starting this team in a mixed workspace.'**
-  String get mixedWorkspaceMemberAssignmentIncomplete;
-
-  /// No description provided for @mixedWorkspaceLeadPlacementInvalid.
-  ///
-  /// In en, this message translates to:
-  /// **'Team lead must be assigned to the local machine when this workspace has a local folder.'**
-  String get mixedWorkspaceLeadPlacementInvalid;
-
-  /// No description provided for @mixedWorkspaceMemberAssignmentConfirm.
-  ///
-  /// In en, this message translates to:
-  /// **'Start team'**
-  String get mixedWorkspaceMemberAssignmentConfirm;
-
-  /// No description provided for @workspaceMemberTargetsSectionTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Member machine assignment'**
-  String get workspaceMemberTargetsSectionTitle;
-
-  /// No description provided for @workspaceMemberTargetsSectionSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Default for new conversations with this team. Existing conversations keep the assignment from when they were created.'**
-  String get workspaceMemberTargetsSectionSubtitle;
-
-  /// No description provided for @workspaceMemberTargetsSave.
-  ///
-  /// In en, this message translates to:
-  /// **'Save assignment'**
-  String get workspaceMemberTargetsSave;
-
-  /// No description provided for @workspaceMemberTargetsSaved.
-  ///
-  /// In en, this message translates to:
-  /// **'Member assignment saved.'**
-  String get workspaceMemberTargetsSaved;
-
-  /// No description provided for @workspaceMemberTargetsAssignAction.
-  ///
-  /// In en, this message translates to:
-  /// **'Assign'**
-  String get workspaceMemberTargetsAssignAction;
-
-  /// No description provided for @workspaceMemberTargetsAssigned.
-  ///
-  /// In en, this message translates to:
-  /// **'Assigned'**
-  String get workspaceMemberTargetsAssigned;
-
-  /// No description provided for @workspaceMemberTargetsUnassigned.
-  ///
-  /// In en, this message translates to:
-  /// **'Not assigned'**
-  String get workspaceMemberTargetsUnassigned;
-
-  /// No description provided for @workspaceMemberTargetsNeedsConfirmation.
-  ///
-  /// In en, this message translates to:
-  /// **'Needs confirmation'**
-  String get workspaceMemberTargetsNeedsConfirmation;
-
-  /// No description provided for @workspaceMemberTargetsPartiallyAssigned.
-  ///
-  /// In en, this message translates to:
-  /// **'Partially assigned'**
-  String get workspaceMemberTargetsPartiallyAssigned;
-
   /// No description provided for @mixedWorkspaceCreateSessionBlocked.
   ///
   /// In en, this message translates to:
@@ -4838,71 +2984,17 @@ abstract class AppLocalizations {
   /// **'Team member is not available. Select a team and try again.'**
   String get sessionLaunchMissingTeamMember;
 
-  /// No description provided for @mixedWorkspaceMemberPlacementProgress.
-  ///
-  /// In en, this message translates to:
-  /// **'{placed} / {total} assigned'**
-  String mixedWorkspaceMemberPlacementProgress(int placed, int total);
-
-  /// No description provided for @mixedWorkspaceMemberPlacementOnMachine.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} on this machine'**
-  String mixedWorkspaceMemberPlacementOnMachine(int count);
-
   /// No description provided for @workspaceFolderTargetLabel.
   ///
   /// In en, this message translates to:
   /// **'Machine'**
   String get workspaceFolderTargetLabel;
 
-  /// No description provided for @workspaceFolderPathLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Directory'**
-  String get workspaceFolderPathLabel;
-
-  /// No description provided for @workspaceFoldersChangeTarget.
-  ///
-  /// In en, this message translates to:
-  /// **'Change'**
-  String get workspaceFoldersChangeTarget;
-
-  /// No description provided for @workspaceFoldersAddOnAnotherMachine.
-  ///
-  /// In en, this message translates to:
-  /// **'Add on another machine'**
-  String get workspaceFoldersAddOnAnotherMachine;
-
   /// No description provided for @workspaceFoldersPickTarget.
   ///
   /// In en, this message translates to:
   /// **'Choose machine'**
   String get workspaceFoldersPickTarget;
-
-  /// No description provided for @workspaceFoldersPickPath.
-  ///
-  /// In en, this message translates to:
-  /// **'Choose directory'**
-  String get workspaceFoldersPickPath;
-
-  /// No description provided for @workspaceFoldersApplyAllLocal.
-  ///
-  /// In en, this message translates to:
-  /// **'Set all to local'**
-  String get workspaceFoldersApplyAllLocal;
-
-  /// No description provided for @workspaceFoldersApplyAllRemote.
-  ///
-  /// In en, this message translates to:
-  /// **'Set all to remote…'**
-  String get workspaceFoldersApplyAllRemote;
-
-  /// No description provided for @workspaceFoldersPickRemoteTarget.
-  ///
-  /// In en, this message translates to:
-  /// **'Choose remote machine'**
-  String get workspaceFoldersPickRemoteTarget;
 
   /// No description provided for @workspaceDeadTargetBadge.
   ///
@@ -4976,30 +3068,6 @@ abstract class AppLocalizations {
   /// **'Where TeamPilot stores teams, workspaces, and config (the control plane). Switching uses a separate data tree; nothing is migrated automatically.'**
   String get homeTargetSubtitle;
 
-  /// No description provided for @homeTargetSingleOptionHint.
-  ///
-  /// In en, this message translates to:
-  /// **'This is the only available home on this platform.'**
-  String get homeTargetSingleOptionHint;
-
-  /// No description provided for @windowsStorageCliMismatchNativeCli.
-  ///
-  /// In en, this message translates to:
-  /// **'CLI runs in WSL but data is stored in Windows AppData. Config may not match.'**
-  String get windowsStorageCliMismatchNativeCli;
-
-  /// No description provided for @windowsStorageCliMismatchWslCli.
-  ///
-  /// In en, this message translates to:
-  /// **'CLI runs on Windows but data is stored in WSL. Config may not match.'**
-  String get windowsStorageCliMismatchWslCli;
-
-  /// No description provided for @windowsStorageSwitchReloadHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Reconnect open sessions after switching storage.'**
-  String get windowsStorageSwitchReloadHint;
-
   /// No description provided for @bootstrapStartupFailed.
   ///
   /// In en, this message translates to:
@@ -5012,221 +3080,11 @@ abstract class AppLocalizations {
   /// **'Use Windows local storage instead'**
   String get bootstrapUseNativeStorageInstead;
 
-  /// No description provided for @bootstrapLoadingApp.
-  ///
-  /// In en, this message translates to:
-  /// **'Starting TeamPilot…'**
-  String get bootstrapLoadingApp;
-
-  /// No description provided for @bootstrapLoadingWorkspaces.
-  ///
-  /// In en, this message translates to:
-  /// **'Loading workspaces…'**
-  String get bootstrapLoadingWorkspaces;
-
-  /// No description provided for @bootstrapLoadingLibraries.
-  ///
-  /// In en, this message translates to:
-  /// **'Loading libraries…'**
-  String get bootstrapLoadingLibraries;
-
-  /// No description provided for @runsPlaceholder.
-  ///
-  /// In en, this message translates to:
-  /// **'Run history will appear here.'**
-  String get runsPlaceholder;
-
-  /// No description provided for @llmConfig.
-  ///
-  /// In en, this message translates to:
-  /// **'Provider'**
-  String get llmConfig;
-
-  /// No description provided for @llmConfigSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'providers and models'**
-  String get llmConfigSubtitle;
-
-  /// No description provided for @llmConfigPathLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'LLM config file'**
-  String get llmConfigPathLabel;
-
-  /// No description provided for @llmConfigPathHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Leave empty to use the default path'**
-  String get llmConfigPathHint;
-
-  /// No description provided for @llmConfigPathBrowse.
-  ///
-  /// In en, this message translates to:
-  /// **'Browse...'**
-  String get llmConfigPathBrowse;
-
-  /// No description provided for @llmConfigPathSave.
-  ///
-  /// In en, this message translates to:
-  /// **'Apply'**
-  String get llmConfigPathSave;
-
-  /// No description provided for @llmConfigPathReset.
-  ///
-  /// In en, this message translates to:
-  /// **'Use default'**
-  String get llmConfigPathReset;
-
-  /// No description provided for @llmConfigPathBadgeDefault.
-  ///
-  /// In en, this message translates to:
-  /// **'default'**
-  String get llmConfigPathBadgeDefault;
-
-  /// No description provided for @llmConfigPathBadgeCustom.
-  ///
-  /// In en, this message translates to:
-  /// **'custom'**
-  String get llmConfigPathBadgeCustom;
-
-  /// No description provided for @llmConfigPathPickerTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Select llm_config.json'**
-  String get llmConfigPathPickerTitle;
-
-  /// No description provided for @llmConfigPathSessionCardDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Absolute path to the LLM config file (llm_config.json). Leave empty to use the default path next to the CLI install.'**
-  String get llmConfigPathSessionCardDescription;
-
-  /// No description provided for @llmConfigPathSessionCardDescriptionSsh.
-  ///
-  /// In en, this message translates to:
-  /// **'Absolute path to llm_config.json on the remote SSH host. Leave empty to use the default path next to the remote CLI install.'**
-  String get llmConfigPathSessionCardDescriptionSsh;
-
-  /// No description provided for @llmConfigCurrentEffectivePathPrefix.
-  ///
-  /// In en, this message translates to:
-  /// **'Active file:'**
-  String get llmConfigCurrentEffectivePathPrefix;
-
-  /// No description provided for @llmConfigEffectivePathUnresolved.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not resolve a path yet (set the CLI location or enter a path).'**
-  String get llmConfigEffectivePathUnresolved;
-
-  /// No description provided for @llmConfigOpenSessionSettings.
-  ///
-  /// In en, this message translates to:
-  /// **'Session settings…'**
-  String get llmConfigOpenSessionSettings;
-
   /// No description provided for @providers.
   ///
   /// In en, this message translates to:
   /// **'PROVIDERS'**
   String get providers;
-
-  /// No description provided for @llmConfigPageSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Manage LLM providers and models.'**
-  String get llmConfigPageSubtitle;
-
-  /// No description provided for @providersTab.
-  ///
-  /// In en, this message translates to:
-  /// **'Providers'**
-  String get providersTab;
-
-  /// No description provided for @modelsTab.
-  ///
-  /// In en, this message translates to:
-  /// **'Models'**
-  String get modelsTab;
-
-  /// No description provided for @rawJsonTab.
-  ///
-  /// In en, this message translates to:
-  /// **'Raw JSON'**
-  String get rawJsonTab;
-
-  /// No description provided for @addProvider.
-  ///
-  /// In en, this message translates to:
-  /// **'Add Provider'**
-  String get addProvider;
-
-  /// No description provided for @providerName.
-  ///
-  /// In en, this message translates to:
-  /// **'Provider name'**
-  String get providerName;
-
-  /// No description provided for @renameProviderName.
-  ///
-  /// In en, this message translates to:
-  /// **'Rename'**
-  String get renameProviderName;
-
-  /// No description provided for @renameProviderTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Rename provider'**
-  String get renameProviderTitle;
-
-  /// No description provided for @deleteProvider.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete Provider'**
-  String get deleteProvider;
-
-  /// No description provided for @deleteProviderConfirm.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete provider {name}?'**
-  String deleteProviderConfirm(String name);
-
-  /// No description provided for @providerList.
-  ///
-  /// In en, this message translates to:
-  /// **'Provider List'**
-  String get providerList;
-
-  /// No description provided for @filterProviders.
-  ///
-  /// In en, this message translates to:
-  /// **'Filter providers...'**
-  String get filterProviders;
-
-  /// No description provided for @appProviderImport.
-  ///
-  /// In en, this message translates to:
-  /// **'Import'**
-  String get appProviderImport;
-
-  /// No description provided for @appProviderImportNothing.
-  ///
-  /// In en, this message translates to:
-  /// **'No providers found to import.'**
-  String get appProviderImportNothing;
-
-  /// No description provided for @appProviderImportSuccess.
-  ///
-  /// In en, this message translates to:
-  /// **'Imported {count} providers. Mirrored {mirrored} to FlashskyAI, skipped {skipped} existing.'**
-  String appProviderImportSuccess(int count, int mirrored, int skipped);
-
-  /// No description provided for @modelsUsingProvider.
-  ///
-  /// In en, this message translates to:
-  /// **'Models using this provider: {count}'**
-  String modelsUsingProvider(int count);
 
   /// No description provided for @providerListModelCount.
   ///
@@ -5246,59 +3104,17 @@ abstract class AppLocalizations {
   /// **'Proxy off'**
   String get proxyOffShort;
 
-  /// No description provided for @providerDetailSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'{type} provider · {count} models'**
-  String providerDetailSubtitle(int count, String type);
-
   /// No description provided for @type.
   ///
   /// In en, this message translates to:
   /// **'Type'**
   String get type;
 
-  /// No description provided for @providerType.
-  ///
-  /// In en, this message translates to:
-  /// **'Provider type'**
-  String get providerType;
-
-  /// No description provided for @providerTypeHint.
-  ///
-  /// In en, this message translates to:
-  /// **'openai, claude, or custom'**
-  String get providerTypeHint;
-
   /// No description provided for @proxy.
   ///
   /// In en, this message translates to:
   /// **'Proxy'**
   String get proxy;
-
-  /// No description provided for @proxyUrl.
-  ///
-  /// In en, this message translates to:
-  /// **'Proxy URL'**
-  String get proxyUrl;
-
-  /// No description provided for @baseUrl.
-  ///
-  /// In en, this message translates to:
-  /// **'Base URL'**
-  String get baseUrl;
-
-  /// No description provided for @apiKey.
-  ///
-  /// In en, this message translates to:
-  /// **'API Key'**
-  String get apiKey;
-
-  /// No description provided for @appProviderApiKeyEditHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Leave blank to keep the existing key'**
-  String get appProviderApiKeyEditHint;
 
   /// No description provided for @reveal.
   ///
@@ -5312,444 +3128,11 @@ abstract class AppLocalizations {
   /// **'Hide'**
   String get hide;
 
-  /// No description provided for @replaceKey.
-  ///
-  /// In en, this message translates to:
-  /// **'Replace key'**
-  String get replaceKey;
-
-  /// No description provided for @deleteProviderTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete provider'**
-  String get deleteProviderTooltip;
-
-  /// No description provided for @deleteProviderWithCredentialsConfirm.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete provider {name}? Saved Claude login credentials for this provider will also be removed.'**
-  String deleteProviderWithCredentialsConfirm(String name);
-
-  /// No description provided for @claudeOfficialCredentialsTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Claude Official login'**
-  String get claudeOfficialCredentialsTitle;
-
-  /// No description provided for @claudeOfficialCredentialsReady.
-  ///
-  /// In en, this message translates to:
-  /// **'Credentials ready'**
-  String get claudeOfficialCredentialsReady;
-
-  /// No description provided for @claudeOfficialCredentialsMissing.
-  ///
-  /// In en, this message translates to:
-  /// **'No credentials saved for this provider'**
-  String get claudeOfficialCredentialsMissing;
-
-  /// No description provided for @claudeOfficialCredentialsAuthenticated.
-  ///
-  /// In en, this message translates to:
-  /// **'Authenticated'**
-  String get claudeOfficialCredentialsAuthenticated;
-
-  /// No description provided for @claudeOfficialCredentialsUnauthenticated.
-  ///
-  /// In en, this message translates to:
-  /// **'Unauthenticated'**
-  String get claudeOfficialCredentialsUnauthenticated;
-
-  /// No description provided for @claudeOfficialCredentialsLogin.
-  ///
-  /// In en, this message translates to:
-  /// **'Sign in with Claude'**
-  String get claudeOfficialCredentialsLogin;
-
-  /// No description provided for @claudeOfficialCredentialsImportGlobal.
-  ///
-  /// In en, this message translates to:
-  /// **'Import from ~/.claude'**
-  String get claudeOfficialCredentialsImportGlobal;
-
-  /// No description provided for @claudeOfficialCredentialsImportFile.
-  ///
-  /// In en, this message translates to:
-  /// **'Import file…'**
-  String get claudeOfficialCredentialsImportFile;
-
-  /// No description provided for @claudeOfficialCredentialsRevoke.
-  ///
-  /// In en, this message translates to:
-  /// **'Sign out'**
-  String get claudeOfficialCredentialsRevoke;
-
-  /// No description provided for @claudeOfficialCredentialsRevokeConfirm.
-  ///
-  /// In en, this message translates to:
-  /// **'Sign out and remove saved credentials for {name}?'**
-  String claudeOfficialCredentialsRevokeConfirm(String name);
-
-  /// No description provided for @claudeOfficialCredentialsActionSuccess.
-  ///
-  /// In en, this message translates to:
-  /// **'Credentials updated'**
-  String get claudeOfficialCredentialsActionSuccess;
-
-  /// No description provided for @claudeOfficialCredentialsActionFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not update credentials'**
-  String get claudeOfficialCredentialsActionFailed;
-
-  /// No description provided for @cursorCredentialsAuthenticated.
-  ///
-  /// In en, this message translates to:
-  /// **'Authenticated'**
-  String get cursorCredentialsAuthenticated;
-
-  /// No description provided for @cursorCredentialsUnauthenticated.
-  ///
-  /// In en, this message translates to:
-  /// **'Unauthenticated'**
-  String get cursorCredentialsUnauthenticated;
-
-  /// No description provided for @cursorCredentialsLogin.
-  ///
-  /// In en, this message translates to:
-  /// **'Sign in with Cursor'**
-  String get cursorCredentialsLogin;
-
-  /// No description provided for @cursorCredentialsImportGlobal.
-  ///
-  /// In en, this message translates to:
-  /// **'Import from ~/.cursor'**
-  String get cursorCredentialsImportGlobal;
-
-  /// No description provided for @cursorCredentialsImportFile.
-  ///
-  /// In en, this message translates to:
-  /// **'Import directory…'**
-  String get cursorCredentialsImportFile;
-
-  /// No description provided for @cursorCredentialsRevoke.
-  ///
-  /// In en, this message translates to:
-  /// **'Sign out'**
-  String get cursorCredentialsRevoke;
-
-  /// No description provided for @cursorCredentialsRevokeConfirm.
-  ///
-  /// In en, this message translates to:
-  /// **'Sign out and remove saved credentials for {name}?'**
-  String cursorCredentialsRevokeConfirm(String name);
-
-  /// No description provided for @cursorCredentialsActionSuccess.
-  ///
-  /// In en, this message translates to:
-  /// **'Credentials updated'**
-  String get cursorCredentialsActionSuccess;
-
-  /// No description provided for @cursorCredentialsActionFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not update credentials'**
-  String get cursorCredentialsActionFailed;
-
-  /// No description provided for @codexCredentialsLogin.
-  ///
-  /// In en, this message translates to:
-  /// **'Sign in with OpenAI'**
-  String get codexCredentialsLogin;
-
-  /// No description provided for @codexCredentialsImportGlobal.
-  ///
-  /// In en, this message translates to:
-  /// **'Import from ~/.codex'**
-  String get codexCredentialsImportGlobal;
-
-  /// No description provided for @codexCredentialsImportFile.
-  ///
-  /// In en, this message translates to:
-  /// **'Import auth.json…'**
-  String get codexCredentialsImportFile;
-
-  /// No description provided for @codexCredentialsRevoke.
-  ///
-  /// In en, this message translates to:
-  /// **'Sign out'**
-  String get codexCredentialsRevoke;
-
-  /// No description provided for @codexCredentialsRevokeConfirm.
-  ///
-  /// In en, this message translates to:
-  /// **'Sign out and remove saved credentials for {name}?'**
-  String codexCredentialsRevokeConfirm(String name);
-
-  /// No description provided for @codexCredentialsActionSuccess.
-  ///
-  /// In en, this message translates to:
-  /// **'Credentials updated'**
-  String get codexCredentialsActionSuccess;
-
-  /// No description provided for @codexCredentialsActionFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not update credentials'**
-  String get codexCredentialsActionFailed;
-
-  /// No description provided for @opencodeCredentialsLogin.
-  ///
-  /// In en, this message translates to:
-  /// **'Sign in with provider'**
-  String get opencodeCredentialsLogin;
-
-  /// No description provided for @opencodeCredentialsImportGlobal.
-  ///
-  /// In en, this message translates to:
-  /// **'Import from opencode auth'**
-  String get opencodeCredentialsImportGlobal;
-
-  /// No description provided for @opencodeCredentialsImportFile.
-  ///
-  /// In en, this message translates to:
-  /// **'Import auth.json…'**
-  String get opencodeCredentialsImportFile;
-
-  /// No description provided for @opencodeCredentialsRevoke.
-  ///
-  /// In en, this message translates to:
-  /// **'Sign out'**
-  String get opencodeCredentialsRevoke;
-
-  /// No description provided for @opencodeCredentialsRevokeConfirm.
-  ///
-  /// In en, this message translates to:
-  /// **'Sign out and remove saved credentials for {name}?'**
-  String opencodeCredentialsRevokeConfirm(String name);
-
-  /// No description provided for @opencodeCredentialsActionSuccess.
-  ///
-  /// In en, this message translates to:
-  /// **'Credentials updated'**
-  String get opencodeCredentialsActionSuccess;
-
-  /// No description provided for @opencodeCredentialsActionFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not update credentials'**
-  String get opencodeCredentialsActionFailed;
-
-  /// No description provided for @providerCredentialsFailureUnsupported.
-  ///
-  /// In en, this message translates to:
-  /// **'This credential action is not supported'**
-  String get providerCredentialsFailureUnsupported;
-
-  /// No description provided for @providerCredentialsFailureServiceUnavailable.
-  ///
-  /// In en, this message translates to:
-  /// **'Credential service is not available'**
-  String get providerCredentialsFailureServiceUnavailable;
-
-  /// No description provided for @providerCredentialsFailureProviderNotFound.
-  ///
-  /// In en, this message translates to:
-  /// **'Provider not found'**
-  String get providerCredentialsFailureProviderNotFound;
-
-  /// No description provided for @providerCredentialsFailurePathRequired.
-  ///
-  /// In en, this message translates to:
-  /// **'Choose a file or directory first'**
-  String get providerCredentialsFailurePathRequired;
-
-  /// No description provided for @providerCredentialsFailureSourceMissing.
-  ///
-  /// In en, this message translates to:
-  /// **'Credential file not found: {path}'**
-  String providerCredentialsFailureSourceMissing(String path);
-
-  /// No description provided for @providerCredentialsFailureSourceUnreadable.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not read credential file: {path}'**
-  String providerCredentialsFailureSourceUnreadable(String path);
-
-  /// No description provided for @providerCredentialsFailureProviderEntryMissing.
-  ///
-  /// In en, this message translates to:
-  /// **'No credential for \"{providerId}\" in {path}'**
-  String providerCredentialsFailureProviderEntryMissing(
-    String providerId,
-    String path,
-  );
-
-  /// No description provided for @providerCredentialsFailureProviderEntryMissingWithKeys.
-  ///
-  /// In en, this message translates to:
-  /// **'No credential for \"{providerId}\" in {path}. Available: {keys}'**
-  String providerCredentialsFailureProviderEntryMissingWithKeys(
-    String providerId,
-    String path,
-    String keys,
-  );
-
-  /// No description provided for @providerCredentialsFailureInvalidCredential.
-  ///
-  /// In en, this message translates to:
-  /// **'Credential format is invalid or incomplete'**
-  String get providerCredentialsFailureInvalidCredential;
-
-  /// No description provided for @providerCredentialsFailureDestinationExists.
-  ///
-  /// In en, this message translates to:
-  /// **'Credentials already exist. Sign out first or import again to replace.'**
-  String get providerCredentialsFailureDestinationExists;
-
-  /// No description provided for @providerCredentialsFailureRequiredFileMissing.
-  ///
-  /// In en, this message translates to:
-  /// **'Required file missing: {path}'**
-  String providerCredentialsFailureRequiredFileMissing(String path);
-
-  /// No description provided for @providerCredentialsFailureLoginFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Login failed (exit code {exitCode})'**
-  String providerCredentialsFailureLoginFailed(int exitCode);
-
-  /// No description provided for @providerCredentialsFailureLoginProcessError.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not run login command: {detail}'**
-  String providerCredentialsFailureLoginProcessError(String detail);
-
-  /// No description provided for @providerCredentialsFailureRevokeFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not sign out or remove credentials'**
-  String get providerCredentialsFailureRevokeFailed;
-
-  /// No description provided for @providerCredentialsFailureVerifyFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Credentials were saved but verification failed'**
-  String get providerCredentialsFailureVerifyFailed;
-
-  /// No description provided for @providerCredentialsFailureStatusRefreshFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Credentials updated but status could not be refreshed'**
-  String get providerCredentialsFailureStatusRefreshFailed;
-
   /// No description provided for @claudeLaunchCredentialsMissingWarning.
   ///
   /// In en, this message translates to:
   /// **'Claude Official credentials are missing for this team provider. Sign in from Providers settings.'**
   String get claudeLaunchCredentialsMissingWarning;
-
-  /// No description provided for @teamConfigIncompleteTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Team configuration incomplete'**
-  String get teamConfigIncompleteTitle;
-
-  /// No description provided for @teamConfigIncompleteBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Team \"{team}\" is missing settings needed to launch. The session still starts, but agents may fail without them:'**
-  String teamConfigIncompleteBody(String team);
-
-  /// No description provided for @teamConfigIncompleteGoConfigure.
-  ///
-  /// In en, this message translates to:
-  /// **'Configure team'**
-  String get teamConfigIncompleteGoConfigure;
-
-  /// No description provided for @teamConfigIncompleteDismiss.
-  ///
-  /// In en, this message translates to:
-  /// **'Later'**
-  String get teamConfigIncompleteDismiss;
-
-  /// No description provided for @teamConfigGroupTeamDefault.
-  ///
-  /// In en, this message translates to:
-  /// **'Team default'**
-  String get teamConfigGroupTeamDefault;
-
-  /// No description provided for @teamConfigAspectDefaultProvider.
-  ///
-  /// In en, this message translates to:
-  /// **'Default provider'**
-  String get teamConfigAspectDefaultProvider;
-
-  /// No description provided for @teamConfigAspectProvider.
-  ///
-  /// In en, this message translates to:
-  /// **'Provider'**
-  String get teamConfigAspectProvider;
-
-  /// No description provided for @teamConfigAspectModel.
-  ///
-  /// In en, this message translates to:
-  /// **'Model'**
-  String get teamConfigAspectModel;
-
-  /// No description provided for @teamConfigAspectCli.
-  ///
-  /// In en, this message translates to:
-  /// **'CLI'**
-  String get teamConfigAspectCli;
-
-  /// No description provided for @teamConfigAspectSeparator.
-  ///
-  /// In en, this message translates to:
-  /// **', '**
-  String get teamConfigAspectSeparator;
-
-  /// No description provided for @teamConfigIssueSemanticLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'{subject} is missing: {aspects}'**
-  String teamConfigIssueSemanticLabel(String subject, String aspects);
-
-  /// No description provided for @noModelsUsingProvider.
-  ///
-  /// In en, this message translates to:
-  /// **'No models are using this provider.'**
-  String get noModelsUsingProvider;
-
-  /// No description provided for @modelsUsingProviderTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Models using this provider'**
-  String get modelsUsingProviderTitle;
-
-  /// No description provided for @selectProvider.
-  ///
-  /// In en, this message translates to:
-  /// **'Select a provider from the list'**
-  String get selectProvider;
-
-  /// No description provided for @accountCredentialPath.
-  ///
-  /// In en, this message translates to:
-  /// **'Account credential path'**
-  String get accountCredentialPath;
-
-  /// No description provided for @removePath.
-  ///
-  /// In en, this message translates to:
-  /// **'Remove path'**
-  String get removePath;
-
-  /// No description provided for @addAccountPath.
-  ///
-  /// In en, this message translates to:
-  /// **'Add account path'**
-  String get addAccountPath;
 
   /// No description provided for @api.
   ///
@@ -5769,24 +3152,6 @@ abstract class AppLocalizations {
   /// **'Models'**
   String get models;
 
-  /// No description provided for @addModel.
-  ///
-  /// In en, this message translates to:
-  /// **'Add Model'**
-  String get addModel;
-
-  /// No description provided for @modelName.
-  ///
-  /// In en, this message translates to:
-  /// **'Model alias/name'**
-  String get modelName;
-
-  /// No description provided for @modelId.
-  ///
-  /// In en, this message translates to:
-  /// **'Model ID'**
-  String get modelId;
-
   /// No description provided for @enabled.
   ///
   /// In en, this message translates to:
@@ -5799,41 +3164,11 @@ abstract class AppLocalizations {
   /// **'Edit'**
   String get edit;
 
-  /// No description provided for @editModelTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit {name}'**
-  String editModelTitle(String name);
-
   /// No description provided for @name.
   ///
   /// In en, this message translates to:
   /// **'Name'**
   String get name;
-
-  /// No description provided for @actualModel.
-  ///
-  /// In en, this message translates to:
-  /// **'Actual Model'**
-  String get actualModel;
-
-  /// No description provided for @noModelsConfigured.
-  ///
-  /// In en, this message translates to:
-  /// **'No models configured'**
-  String get noModelsConfigured;
-
-  /// No description provided for @providerModelBackgroundTier.
-  ///
-  /// In en, this message translates to:
-  /// **'Use for background/fast tasks (Claude haiku tier)'**
-  String get providerModelBackgroundTier;
-
-  /// No description provided for @missingProvider.
-  ///
-  /// In en, this message translates to:
-  /// **'Missing provider:'**
-  String get missingProvider;
 
   /// No description provided for @summary.
   ///
@@ -5841,41 +3176,11 @@ abstract class AppLocalizations {
   /// **'Summary'**
   String get summary;
 
-  /// No description provided for @statProviders.
-  ///
-  /// In en, this message translates to:
-  /// **'providers'**
-  String get statProviders;
-
-  /// No description provided for @statModels.
-  ///
-  /// In en, this message translates to:
-  /// **'models'**
-  String get statModels;
-
-  /// No description provided for @statMissingRefs.
-  ///
-  /// In en, this message translates to:
-  /// **'missing refs'**
-  String get statMissingRefs;
-
-  /// No description provided for @statEmptyKeys.
-  ///
-  /// In en, this message translates to:
-  /// **'empty keys'**
-  String get statEmptyKeys;
-
   /// No description provided for @validation.
   ///
   /// In en, this message translates to:
   /// **'Validation'**
   String get validation;
-
-  /// No description provided for @allChecksPassed.
-  ///
-  /// In en, this message translates to:
-  /// **'All checks passed.'**
-  String get allChecksPassed;
 
   /// No description provided for @validate.
   ///
@@ -5889,683 +3194,11 @@ abstract class AppLocalizations {
   /// **'Back'**
   String get back;
 
-  /// No description provided for @jsonPreview.
-  ///
-  /// In en, this message translates to:
-  /// **'JSON Preview'**
-  String get jsonPreview;
-
-  /// No description provided for @skillsTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Skills'**
-  String get skillsTitle;
-
-  /// No description provided for @skillsSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Manage installable skills'**
-  String get skillsSubtitle;
-
-  /// No description provided for @skillsSidebarLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Skills'**
-  String get skillsSidebarLabel;
-
-  /// No description provided for @skillsNavInstalled.
-  ///
-  /// In en, this message translates to:
-  /// **'Installed'**
-  String get skillsNavInstalled;
-
-  /// No description provided for @skillsNavDiscovery.
-  ///
-  /// In en, this message translates to:
-  /// **'Discovery'**
-  String get skillsNavDiscovery;
-
-  /// No description provided for @skillsNavRepos.
-  ///
-  /// In en, this message translates to:
-  /// **'Repos'**
-  String get skillsNavRepos;
-
-  /// No description provided for @skillsInstalledCount.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} installed'**
-  String skillsInstalledCount(int count);
-
-  /// No description provided for @skillsCheckUpdates.
-  ///
-  /// In en, this message translates to:
-  /// **'Check updates'**
-  String get skillsCheckUpdates;
-
-  /// No description provided for @skillsCheckingUpdates.
-  ///
-  /// In en, this message translates to:
-  /// **'Checking…'**
-  String get skillsCheckingUpdates;
-
-  /// No description provided for @skillsUpdateAll.
-  ///
-  /// In en, this message translates to:
-  /// **'Update all ({count})'**
-  String skillsUpdateAll(int count);
-
-  /// No description provided for @skillsImportFromDisk.
-  ///
-  /// In en, this message translates to:
-  /// **'Import from disk'**
-  String get skillsImportFromDisk;
-
-  /// No description provided for @skillsInstallFromZip.
-  ///
-  /// In en, this message translates to:
-  /// **'Install from ZIP'**
-  String get skillsInstallFromZip;
-
-  /// No description provided for @skillsNoInstalled.
-  ///
-  /// In en, this message translates to:
-  /// **'No skills installed yet'**
-  String get skillsNoInstalled;
-
-  /// No description provided for @skillsNoInstalledHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Open Discovery to install your first skill.'**
-  String get skillsNoInstalledHint;
-
-  /// No description provided for @skillsGoDiscovery.
-  ///
-  /// In en, this message translates to:
-  /// **'Go to Discovery'**
-  String get skillsGoDiscovery;
-
-  /// No description provided for @skillsSourceRepos.
-  ///
-  /// In en, this message translates to:
-  /// **'Repos'**
-  String get skillsSourceRepos;
-
-  /// No description provided for @skillsSourceSkillsSh.
-  ///
-  /// In en, this message translates to:
-  /// **'skills.sh'**
-  String get skillsSourceSkillsSh;
-
-  /// No description provided for @skillsSearchPlaceholder.
-  ///
-  /// In en, this message translates to:
-  /// **'Search skills…'**
-  String get skillsSearchPlaceholder;
-
-  /// No description provided for @skillsSkillsShPlaceholder.
-  ///
-  /// In en, this message translates to:
-  /// **'Search skills.sh (≥ 2 chars)…'**
-  String get skillsSkillsShPlaceholder;
-
-  /// No description provided for @skillsFilterRepoAll.
-  ///
-  /// In en, this message translates to:
-  /// **'All repos'**
-  String get skillsFilterRepoAll;
-
-  /// No description provided for @skillsFilterAll.
-  ///
-  /// In en, this message translates to:
-  /// **'All'**
-  String get skillsFilterAll;
-
-  /// No description provided for @skillsFilterInstalled.
-  ///
-  /// In en, this message translates to:
-  /// **'Installed'**
-  String get skillsFilterInstalled;
-
-  /// No description provided for @skillsFilterUninstalled.
-  ///
-  /// In en, this message translates to:
-  /// **'Not installed'**
-  String get skillsFilterUninstalled;
-
-  /// No description provided for @skillsCardInstall.
-  ///
-  /// In en, this message translates to:
-  /// **'Install'**
-  String get skillsCardInstall;
-
-  /// No description provided for @skillsCardDetails.
-  ///
-  /// In en, this message translates to:
-  /// **'Details'**
-  String get skillsCardDetails;
-
-  /// No description provided for @skillsCardInstalled.
-  ///
-  /// In en, this message translates to:
-  /// **'Installed'**
-  String get skillsCardInstalled;
-
-  /// No description provided for @skillsCardUpdate.
-  ///
-  /// In en, this message translates to:
-  /// **'Update'**
-  String get skillsCardUpdate;
-
-  /// No description provided for @skillsCardUninstall.
-  ///
-  /// In en, this message translates to:
-  /// **'Uninstall'**
-  String get skillsCardUninstall;
-
-  /// No description provided for @skillsUpdateAvailable.
-  ///
-  /// In en, this message translates to:
-  /// **'Update available'**
-  String get skillsUpdateAvailable;
-
-  /// No description provided for @skillsLocal.
-  ///
-  /// In en, this message translates to:
-  /// **'local'**
-  String get skillsLocal;
-
-  /// No description provided for @skillsReposEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'No repos yet'**
-  String get skillsReposEmpty;
-
-  /// No description provided for @skillsRepoAdd.
-  ///
-  /// In en, this message translates to:
-  /// **'Add repo'**
-  String get skillsRepoAdd;
-
-  /// No description provided for @skillsDiscoverySyncing.
-  ///
-  /// In en, this message translates to:
-  /// **'Checking repos for updates and syncing skills in the background…'**
-  String get skillsDiscoverySyncing;
-
-  /// No description provided for @skillsRepoSyncing.
-  ///
-  /// In en, this message translates to:
-  /// **'Updating'**
-  String get skillsRepoSyncing;
-
-  /// No description provided for @skillsRepoInvalidUrl.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter a valid GitHub repo URL, e.g. https://github.com/owner/repo'**
-  String get skillsRepoInvalidUrl;
-
-  /// No description provided for @skillsRepoUrl.
-  ///
-  /// In en, this message translates to:
-  /// **'Repository URL'**
-  String get skillsRepoUrl;
-
-  /// No description provided for @skillsRepoUrlHint.
-  ///
-  /// In en, this message translates to:
-  /// **'https://github.com/owner/repo'**
-  String get skillsRepoUrlHint;
-
-  /// No description provided for @skillsRepoBranch.
-  ///
-  /// In en, this message translates to:
-  /// **'Branch'**
-  String get skillsRepoBranch;
-
-  /// No description provided for @skillsRepoRemove.
-  ///
-  /// In en, this message translates to:
-  /// **'Remove'**
-  String get skillsRepoRemove;
-
-  /// No description provided for @skillsRepoRemoveConfirm.
-  ///
-  /// In en, this message translates to:
-  /// **'Remove repo {name}?'**
-  String skillsRepoRemoveConfirm(String name);
-
-  /// No description provided for @skillsUninstallConfirm.
-  ///
-  /// In en, this message translates to:
-  /// **'Uninstall {name}?'**
-  String skillsUninstallConfirm(String name);
-
-  /// No description provided for @skillsOverwriteConfirm.
-  ///
-  /// In en, this message translates to:
-  /// **'{name} already installed. Overwrite?'**
-  String skillsOverwriteConfirm(String name);
-
-  /// No description provided for @skillsInstallSuccess.
-  ///
-  /// In en, this message translates to:
-  /// **'Installed {name}'**
-  String skillsInstallSuccess(String name);
-
-  /// No description provided for @skillsUninstallSuccess.
-  ///
-  /// In en, this message translates to:
-  /// **'Uninstalled {name}'**
-  String skillsUninstallSuccess(String name);
-
-  /// No description provided for @skillsUpdateSuccess.
-  ///
-  /// In en, this message translates to:
-  /// **'Updated {name}'**
-  String skillsUpdateSuccess(String name);
-
-  /// No description provided for @skillsNoUpdates.
-  ///
-  /// In en, this message translates to:
-  /// **'All skills are up to date'**
-  String get skillsNoUpdates;
-
-  /// No description provided for @skillsImportTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Import unmanaged skills'**
-  String get skillsImportTitle;
-
-  /// No description provided for @skillsImportNothing.
-  ///
-  /// In en, this message translates to:
-  /// **'No unmanaged skills found.'**
-  String get skillsImportNothing;
-
-  /// No description provided for @skillsImportSelected.
-  ///
-  /// In en, this message translates to:
-  /// **'Import {count} selected'**
-  String skillsImportSelected(int count);
-
-  /// No description provided for @skillsZipNoSkills.
-  ///
-  /// In en, this message translates to:
-  /// **'No SKILL.md found in the archive.'**
-  String get skillsZipNoSkills;
-
-  /// No description provided for @skillsSkillsShLoadMore.
-  ///
-  /// In en, this message translates to:
-  /// **'Load more'**
-  String get skillsSkillsShLoadMore;
-
-  /// No description provided for @skillsSkillsShPoweredBy.
-  ///
-  /// In en, this message translates to:
-  /// **'Powered by skills.sh'**
-  String get skillsSkillsShPoweredBy;
-
-  /// No description provided for @skillsSkillsShSearch.
-  ///
-  /// In en, this message translates to:
-  /// **'Search'**
-  String get skillsSkillsShSearch;
-
-  /// No description provided for @skillsDiscoveryEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'No skills discovered'**
-  String get skillsDiscoveryEmpty;
-
-  /// No description provided for @skillsDiscoveryEmptyHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Add a repo or try skills.sh to find skills.'**
-  String get skillsDiscoveryEmptyHint;
-
-  /// No description provided for @skillsAdd.
-  ///
-  /// In en, this message translates to:
-  /// **'Add'**
-  String get skillsAdd;
-
-  /// No description provided for @skillsRemove.
-  ///
-  /// In en, this message translates to:
-  /// **'Remove'**
-  String get skillsRemove;
-
-  /// No description provided for @skillsEnabled.
-  ///
-  /// In en, this message translates to:
-  /// **'Enabled'**
-  String get skillsEnabled;
-
-  /// No description provided for @skillsInstalls.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} installs'**
-  String skillsInstalls(int count);
-
-  /// No description provided for @pluginsTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Plugins'**
-  String get pluginsTitle;
-
-  /// No description provided for @pluginsSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Manage Claude Code-style plugin bundles'**
-  String get pluginsSubtitle;
-
-  /// No description provided for @pluginsSidebarLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Plugins'**
-  String get pluginsSidebarLabel;
-
-  /// No description provided for @pluginsNavInstalled.
-  ///
-  /// In en, this message translates to:
-  /// **'Installed'**
-  String get pluginsNavInstalled;
-
-  /// No description provided for @pluginsNavDiscovery.
-  ///
-  /// In en, this message translates to:
-  /// **'Discovery'**
-  String get pluginsNavDiscovery;
-
-  /// No description provided for @pluginsNavMarketplaces.
-  ///
-  /// In en, this message translates to:
-  /// **'Marketplaces'**
-  String get pluginsNavMarketplaces;
-
-  /// No description provided for @pluginsInstalledCount.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} installed'**
-  String pluginsInstalledCount(int count);
-
-  /// No description provided for @pluginsUpdateAll.
-  ///
-  /// In en, this message translates to:
-  /// **'Update all ({count})'**
-  String pluginsUpdateAll(int count);
-
-  /// No description provided for @pluginsImportFromDisk.
-  ///
-  /// In en, this message translates to:
-  /// **'Import from disk'**
-  String get pluginsImportFromDisk;
-
-  /// No description provided for @pluginsImportTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Import unmanaged plugins'**
-  String get pluginsImportTitle;
-
-  /// No description provided for @pluginsImportNothing.
-  ///
-  /// In en, this message translates to:
-  /// **'No unmanaged plugins found.'**
-  String get pluginsImportNothing;
-
-  /// No description provided for @pluginsInstallFromZip.
-  ///
-  /// In en, this message translates to:
-  /// **'Install from ZIP'**
-  String get pluginsInstallFromZip;
-
-  /// No description provided for @pluginsCheckUpdates.
-  ///
-  /// In en, this message translates to:
-  /// **'Check updates'**
-  String get pluginsCheckUpdates;
-
-  /// No description provided for @pluginsCheckingUpdates.
-  ///
-  /// In en, this message translates to:
-  /// **'Checking…'**
-  String get pluginsCheckingUpdates;
-
-  /// No description provided for @pluginsNoInstalled.
-  ///
-  /// In en, this message translates to:
-  /// **'No plugins installed'**
-  String get pluginsNoInstalled;
-
-  /// No description provided for @pluginsNoInstalledHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Add a marketplace and install plugins from the Discovery tab.'**
-  String get pluginsNoInstalledHint;
-
-  /// No description provided for @pluginsGoDiscovery.
-  ///
-  /// In en, this message translates to:
-  /// **'Browse marketplace'**
-  String get pluginsGoDiscovery;
-
-  /// No description provided for @pluginsCardInstall.
-  ///
-  /// In en, this message translates to:
-  /// **'Install'**
-  String get pluginsCardInstall;
-
-  /// No description provided for @pluginsCardDetails.
-  ///
-  /// In en, this message translates to:
-  /// **'Details'**
-  String get pluginsCardDetails;
-
-  /// No description provided for @pluginsCardInstalled.
-  ///
-  /// In en, this message translates to:
-  /// **'Installed'**
-  String get pluginsCardInstalled;
-
-  /// No description provided for @pluginsCardViewSource.
-  ///
-  /// In en, this message translates to:
-  /// **'View source'**
-  String get pluginsCardViewSource;
-
-  /// No description provided for @pluginsCardUpdate.
-  ///
-  /// In en, this message translates to:
-  /// **'Update'**
-  String get pluginsCardUpdate;
-
-  /// No description provided for @pluginsCardUninstall.
-  ///
-  /// In en, this message translates to:
-  /// **'Uninstall'**
-  String get pluginsCardUninstall;
-
-  /// No description provided for @pluginsMarketplaceAdd.
-  ///
-  /// In en, this message translates to:
-  /// **'Add marketplace'**
-  String get pluginsMarketplaceAdd;
-
-  /// No description provided for @pluginsMarketplaceUrl.
-  ///
-  /// In en, this message translates to:
-  /// **'GitHub repository URL'**
-  String get pluginsMarketplaceUrl;
-
-  /// No description provided for @pluginsMarketplaceUrlHint.
-  ///
-  /// In en, this message translates to:
-  /// **'https://github.com/owner/marketplace'**
-  String get pluginsMarketplaceUrlHint;
-
-  /// No description provided for @pluginsMarketplaceBranch.
-  ///
-  /// In en, this message translates to:
-  /// **'Branch'**
-  String get pluginsMarketplaceBranch;
-
-  /// No description provided for @pluginsMarketplaceRemove.
-  ///
-  /// In en, this message translates to:
-  /// **'Remove marketplace'**
-  String get pluginsMarketplaceRemove;
-
-  /// No description provided for @pluginsMarketplaceRemoveConfirm.
-  ///
-  /// In en, this message translates to:
-  /// **'Remove marketplace {url}? Installed plugins are kept.'**
-  String pluginsMarketplaceRemoveConfirm(String url);
-
-  /// No description provided for @pluginsMarketplaceInvalidUrl.
-  ///
-  /// In en, this message translates to:
-  /// **'Please enter a valid GitHub repository URL.'**
-  String get pluginsMarketplaceInvalidUrl;
-
-  /// No description provided for @pluginsMarketplacesEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'No marketplaces configured'**
-  String get pluginsMarketplacesEmpty;
-
-  /// No description provided for @pluginsSearchPlaceholder.
-  ///
-  /// In en, this message translates to:
-  /// **'Search plugins'**
-  String get pluginsSearchPlaceholder;
-
-  /// No description provided for @pluginsFilterMarketplaceAll.
-  ///
-  /// In en, this message translates to:
-  /// **'All marketplaces'**
-  String get pluginsFilterMarketplaceAll;
-
-  /// No description provided for @pluginsFilterAll.
-  ///
-  /// In en, this message translates to:
-  /// **'All'**
-  String get pluginsFilterAll;
-
-  /// No description provided for @pluginsFilterInstalled.
-  ///
-  /// In en, this message translates to:
-  /// **'Installed'**
-  String get pluginsFilterInstalled;
-
-  /// No description provided for @pluginsFilterUninstalled.
-  ///
-  /// In en, this message translates to:
-  /// **'Not installed'**
-  String get pluginsFilterUninstalled;
-
-  /// No description provided for @pluginsDiscoveryEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'No matching plugins'**
-  String get pluginsDiscoveryEmpty;
-
-  /// No description provided for @pluginsDiscoverySyncing.
-  ///
-  /// In en, this message translates to:
-  /// **'Checking marketplaces for updates and syncing plugins in the background…'**
-  String get pluginsDiscoverySyncing;
-
-  /// No description provided for @pluginsUninstallConfirm.
-  ///
-  /// In en, this message translates to:
-  /// **'Uninstall {name}? This may affect {n} team(s).'**
-  String pluginsUninstallConfirm(String name, int n);
-
-  /// No description provided for @pluginsUninstallImpactList.
-  ///
-  /// In en, this message translates to:
-  /// **'Affected teams:'**
-  String get pluginsUninstallImpactList;
-
-  /// No description provided for @pluginCliSupportFully.
-  ///
-  /// In en, this message translates to:
-  /// **'{cli}: Fully supported'**
-  String pluginCliSupportFully(String cli);
-
-  /// No description provided for @pluginCliSupportPartial.
-  ///
-  /// In en, this message translates to:
-  /// **'{cli}: Partially supported ({dropped} dropped)'**
-  String pluginCliSupportPartial(String cli, String dropped);
-
-  /// No description provided for @pluginCliSupportNotApplicable.
-  ///
-  /// In en, this message translates to:
-  /// **'{cli}: Not applicable'**
-  String pluginCliSupportNotApplicable(String cli);
-
-  /// No description provided for @pluginComponentSkills.
-  ///
-  /// In en, this message translates to:
-  /// **'skills'**
-  String get pluginComponentSkills;
-
-  /// No description provided for @pluginComponentAgents.
-  ///
-  /// In en, this message translates to:
-  /// **'agents'**
-  String get pluginComponentAgents;
-
-  /// No description provided for @pluginComponentCommands.
-  ///
-  /// In en, this message translates to:
-  /// **'commands'**
-  String get pluginComponentCommands;
-
-  /// No description provided for @pluginComponentHooks.
-  ///
-  /// In en, this message translates to:
-  /// **'hooks'**
-  String get pluginComponentHooks;
-
-  /// No description provided for @pluginComponentMcp.
-  ///
-  /// In en, this message translates to:
-  /// **'MCP'**
-  String get pluginComponentMcp;
-
-  /// No description provided for @pluginComponentRules.
-  ///
-  /// In en, this message translates to:
-  /// **'rules'**
-  String get pluginComponentRules;
-
-  /// No description provided for @pluginComponentApps.
-  ///
-  /// In en, this message translates to:
-  /// **'apps'**
-  String get pluginComponentApps;
-
-  /// No description provided for @pluginsUninstallSuccess.
-  ///
-  /// In en, this message translates to:
-  /// **'Uninstalled {name}'**
-  String pluginsUninstallSuccess(String name);
-
   /// No description provided for @members.
   ///
   /// In en, this message translates to:
   /// **'Members'**
   String get members;
-
-  /// No description provided for @teamSessions.
-  ///
-  /// In en, this message translates to:
-  /// **'Team Sessions'**
-  String get teamSessions;
 
   /// No description provided for @configure.
   ///
@@ -6585,35 +3218,11 @@ abstract class AppLocalizations {
   /// **'Team Settings'**
   String get teamSettings;
 
-  /// No description provided for @teamSettingsSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Team agents'**
-  String get teamSettingsSubtitle;
-
-  /// No description provided for @membersSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'team agents'**
-  String get membersSubtitle;
-
   /// No description provided for @teamSkillsNav.
   ///
   /// In en, this message translates to:
   /// **'Skills'**
   String get teamSkillsNav;
-
-  /// No description provided for @teamSkillsAssignedCount.
-  ///
-  /// In en, this message translates to:
-  /// **'{assigned} of {total} enabled'**
-  String teamSkillsAssignedCount(int assigned, int total);
-
-  /// No description provided for @teamSkillsManage.
-  ///
-  /// In en, this message translates to:
-  /// **'All skills'**
-  String get teamSkillsManage;
 
   /// No description provided for @teamPluginsNav.
   ///
@@ -6626,18 +3235,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Extensions'**
   String get teamExtensionsNav;
-
-  /// No description provided for @teamExtensionsTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Extensions for this team'**
-  String get teamExtensionsTitle;
-
-  /// No description provided for @teamExtensionsSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Override which extensions run for this team. Default follows the global setting.'**
-  String get teamExtensionsSubtitle;
 
   /// No description provided for @teamExtensionFollowGlobal.
   ///
@@ -6675,120 +3272,6 @@ abstract class AppLocalizations {
   /// **'MCP'**
   String get teamMcpNav;
 
-  /// No description provided for @myTeamsNav.
-  ///
-  /// In en, this message translates to:
-  /// **'My Teams'**
-  String get myTeamsNav;
-
-  /// No description provided for @myTeamsTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'My Teams'**
-  String get myTeamsTitle;
-
-  /// No description provided for @myTeamsSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Manage your local team configurations'**
-  String get myTeamsSubtitle;
-
-  /// No description provided for @myTeamsMemberCount.
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =1{1 member} other{{count} members}}'**
-  String myTeamsMemberCount(int count);
-
-  /// No description provided for @myTeamsCreatedAt.
-  ///
-  /// In en, this message translates to:
-  /// **'Created {date}'**
-  String myTeamsCreatedAt(Object date);
-
-  /// No description provided for @myTeamsEmptyTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'No teams yet'**
-  String get myTeamsEmptyTitle;
-
-  /// No description provided for @myTeamsEmptyHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Create a team to manage members, skills, and plugins.'**
-  String get myTeamsEmptyHint;
-
-  /// No description provided for @myExpertsNav.
-  ///
-  /// In en, this message translates to:
-  /// **'My Experts'**
-  String get myExpertsNav;
-
-  /// No description provided for @myExpertsTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'My Experts'**
-  String get myExpertsTitle;
-
-  /// No description provided for @myExpertsSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Manage your local expert personas'**
-  String get myExpertsSubtitle;
-
-  /// No description provided for @myExpertsEmptyTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'No experts yet'**
-  String get myExpertsEmptyTitle;
-
-  /// No description provided for @myExpertsEmptyHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Create a local expert persona to reuse across teams.'**
-  String get myExpertsEmptyHint;
-
-  /// No description provided for @myExpertsCreate.
-  ///
-  /// In en, this message translates to:
-  /// **'New Expert'**
-  String get myExpertsCreate;
-
-  /// No description provided for @myExpertsEdit.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit'**
-  String get myExpertsEdit;
-
-  /// No description provided for @myExpertsDelete.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete'**
-  String get myExpertsDelete;
-
-  /// No description provided for @myExpertsDeleteConfirm.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete expert \"{name}\"? This cannot be undone.'**
-  String myExpertsDeleteConfirm(Object name);
-
-  /// No description provided for @myExpertsDeleteReferenced.
-  ///
-  /// In en, this message translates to:
-  /// **'Cannot delete \"{name}\" — it is still referenced by one or more teams. Reassign those roster slots first.'**
-  String myExpertsDeleteReferenced(Object name);
-
-  /// No description provided for @myExpertsUpload.
-  ///
-  /// In en, this message translates to:
-  /// **'Upload'**
-  String get myExpertsUpload;
-
-  /// No description provided for @myTeamsUpload.
-  ///
-  /// In en, this message translates to:
-  /// **'Upload'**
-  String get myTeamsUpload;
-
   /// No description provided for @githubSettingsTitle.
   ///
   /// In en, this message translates to:
@@ -6825,12 +3308,6 @@ abstract class AppLocalizations {
   /// **'Disconnect'**
   String get githubDisconnect;
 
-  /// No description provided for @githubSwitchAccount.
-  ///
-  /// In en, this message translates to:
-  /// **'Switch account'**
-  String get githubSwitchAccount;
-
   /// No description provided for @githubWaitingCodeHint.
   ///
   /// In en, this message translates to:
@@ -6855,24 +3332,6 @@ abstract class AppLocalizations {
   /// **'GitHub sign-in is unavailable in this build. Use a personal access token.'**
   String get githubDeviceFlowUnavailable;
 
-  /// No description provided for @githubAuthExpired.
-  ///
-  /// In en, this message translates to:
-  /// **'GitHub sign-in expired'**
-  String get githubAuthExpired;
-
-  /// No description provided for @githubAuthDenied.
-  ///
-  /// In en, this message translates to:
-  /// **'GitHub authorization cancelled'**
-  String get githubAuthDenied;
-
-  /// No description provided for @githubAuthExpiredRetry.
-  ///
-  /// In en, this message translates to:
-  /// **'Authorization expired. Try again.'**
-  String get githubAuthExpiredRetry;
-
   /// No description provided for @githubAdvancedPat.
   ///
   /// In en, this message translates to:
@@ -6884,30 +3343,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'When GitHub sign-in is unavailable, or you prefer a token with repo scope.'**
   String get githubAdvancedPatSubtitle;
-
-  /// No description provided for @githubNetworkError.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not reach GitHub. Try again.'**
-  String get githubNetworkError;
-
-  /// No description provided for @hubPublishExpertTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Publish expert to Hub'**
-  String get hubPublishExpertTitle;
-
-  /// No description provided for @hubPublishTeamTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Publish team to Hub'**
-  String get hubPublishTeamTitle;
-
-  /// No description provided for @hubPublishAuthHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Sign in with GitHub to authorize a fork-based pull request into the Hub registry.'**
-  String get hubPublishAuthHint;
 
   /// No description provided for @hubPublishTokenLabel.
   ///
@@ -6921,1370 +3356,11 @@ abstract class AppLocalizations {
   /// **'ghp_…'**
   String get hubPublishTokenHint;
 
-  /// No description provided for @hubPublishTokenStored.
-  ///
-  /// In en, this message translates to:
-  /// **'A token is already saved. You can replace it below.'**
-  String get hubPublishTokenStored;
-
-  /// No description provided for @hubPublishTokenRequired.
-  ///
-  /// In en, this message translates to:
-  /// **'GitHub token is required to publish'**
-  String get hubPublishTokenRequired;
-
-  /// No description provided for @hubPublishTokenSaveFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not save the GitHub token'**
-  String get hubPublishTokenSaveFailed;
-
-  /// No description provided for @hubPublishNext.
-  ///
-  /// In en, this message translates to:
-  /// **'Next'**
-  String get hubPublishNext;
-
-  /// No description provided for @hubPublishPublish.
-  ///
-  /// In en, this message translates to:
-  /// **'Publish'**
-  String get hubPublishPublish;
-
-  /// No description provided for @hubPublishDone.
-  ///
-  /// In en, this message translates to:
-  /// **'Done'**
-  String get hubPublishDone;
-
-  /// No description provided for @hubPublishSlugLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Slug'**
-  String get hubPublishSlugLabel;
-
-  /// No description provided for @hubPublishSlugHint.
-  ///
-  /// In en, this message translates to:
-  /// **'url-safe-id'**
-  String get hubPublishSlugHint;
-
-  /// No description provided for @hubPublishSlugRequired.
-  ///
-  /// In en, this message translates to:
-  /// **'Slug is required'**
-  String get hubPublishSlugRequired;
-
-  /// No description provided for @hubPublishCategoryRequired.
-  ///
-  /// In en, this message translates to:
-  /// **'Category is required'**
-  String get hubPublishCategoryRequired;
-
-  /// No description provided for @hubPublishAuthorLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Author'**
-  String get hubPublishAuthorLabel;
-
-  /// No description provided for @hubPublishLocalExpertHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Local experts on the roster must be remapped to a published or builtin expert before upload.'**
-  String get hubPublishLocalExpertHint;
-
-  /// No description provided for @hubPublishLocalExpertBlocked.
-  ///
-  /// In en, this message translates to:
-  /// **'Remap every local expert before continuing'**
-  String get hubPublishLocalExpertBlocked;
-
-  /// No description provided for @hubPublishRemapLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Publish as'**
-  String get hubPublishRemapLabel;
-
-  /// No description provided for @hubPublishNonPortableHint.
-  ///
-  /// In en, this message translates to:
-  /// **'These dependencies have no portable provenance. Remove them from the team bundle before publishing:'**
-  String get hubPublishNonPortableHint;
-
-  /// No description provided for @hubPublishNonPortableBlocked.
-  ///
-  /// In en, this message translates to:
-  /// **'Remove non-portable dependencies before continuing'**
-  String get hubPublishNonPortableBlocked;
-
-  /// No description provided for @hubPublishGatesClear.
-  ///
-  /// In en, this message translates to:
-  /// **'All dependencies look portable. Continue to confirm.'**
-  String get hubPublishGatesClear;
-
-  /// No description provided for @hubPublishConfirmHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Review the package metadata, then publish a fork-based pull request.'**
-  String get hubPublishConfirmHint;
-
-  /// No description provided for @hubPublishKindLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Kind'**
-  String get hubPublishKindLabel;
-
-  /// No description provided for @hubPublishKindExpert.
-  ///
-  /// In en, this message translates to:
-  /// **'Expert'**
-  String get hubPublishKindExpert;
-
-  /// No description provided for @hubPublishKindTeam.
-  ///
-  /// In en, this message translates to:
-  /// **'Team'**
-  String get hubPublishKindTeam;
-
-  /// No description provided for @hubPublishSuccessHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Pull request opened. Share or open the link below.'**
-  String get hubPublishSuccessHint;
-
-  /// No description provided for @hubPublishCopyLink.
-  ///
-  /// In en, this message translates to:
-  /// **'Copy link'**
-  String get hubPublishCopyLink;
-
-  /// No description provided for @hubPublishOpenPr.
-  ///
-  /// In en, this message translates to:
-  /// **'Open PR'**
-  String get hubPublishOpenPr;
-
-  /// No description provided for @hubPublishBadgePrOpen.
-  ///
-  /// In en, this message translates to:
-  /// **'PR open'**
-  String get hubPublishBadgePrOpen;
-
-  /// No description provided for @hubPublishBadgePublished.
-  ///
-  /// In en, this message translates to:
-  /// **'Published'**
-  String get hubPublishBadgePublished;
-
-  /// No description provided for @expertHubCreate.
-  ///
-  /// In en, this message translates to:
-  /// **'New'**
-  String get expertHubCreate;
-
-  /// No description provided for @expertEditorCreateTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'New expert'**
-  String get expertEditorCreateTitle;
-
-  /// No description provided for @expertEditorEditTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit expert'**
-  String get expertEditorEditTitle;
-
-  /// No description provided for @expertEditorDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Description'**
-  String get expertEditorDescription;
-
-  /// No description provided for @expertEditorCategory.
-  ///
-  /// In en, this message translates to:
-  /// **'Category'**
-  String get expertEditorCategory;
-
-  /// No description provided for @expertEditorTags.
-  ///
-  /// In en, this message translates to:
-  /// **'Tags'**
-  String get expertEditorTags;
-
-  /// No description provided for @expertEditorTagsHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Comma-separated'**
-  String get expertEditorTagsHint;
-
-  /// No description provided for @expertEditorNameRequired.
-  ///
-  /// In en, this message translates to:
-  /// **'Name is required.'**
-  String get expertEditorNameRequired;
-
-  /// No description provided for @expertEditorPromptRequired.
-  ///
-  /// In en, this message translates to:
-  /// **'Responsibilities are required.'**
-  String get expertEditorPromptRequired;
-
-  /// No description provided for @expertEditorPromptHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Describe this expert\'s role and what they are responsible for.'**
-  String get expertEditorPromptHint;
-
-  /// No description provided for @expertEditorPlaybookHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Optional step-by-step guidance this expert should follow.'**
-  String get expertEditorPlaybookHint;
-
-  /// No description provided for @expertEditorSkillsSection.
-  ///
-  /// In en, this message translates to:
-  /// **'Skills'**
-  String get expertEditorSkillsSection;
-
-  /// No description provided for @expertEditorPluginsSection.
-  ///
-  /// In en, this message translates to:
-  /// **'Plugins'**
-  String get expertEditorPluginsSection;
-
-  /// No description provided for @expertEditorMcpSection.
-  ///
-  /// In en, this message translates to:
-  /// **'MCP'**
-  String get expertEditorMcpSection;
-
-  /// No description provided for @expertEditorDepsHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Configure dependencies from your installed library. Items without a portable source are skipped on save.'**
-  String get expertEditorDepsHint;
-
-  /// No description provided for @expertEditorConfigureSkillsTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Configure skills'**
-  String get expertEditorConfigureSkillsTitle;
-
-  /// No description provided for @expertEditorConfigurePluginsTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Configure plugins'**
-  String get expertEditorConfigurePluginsTitle;
-
-  /// No description provided for @expertEditorConfigureMcpTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Configure MCP'**
-  String get expertEditorConfigureMcpTitle;
-
-  /// No description provided for @expertEditorDepPickerDone.
-  ///
-  /// In en, this message translates to:
-  /// **'Done'**
-  String get expertEditorDepPickerDone;
-
-  /// No description provided for @expertEditorNonPortableSkipped.
-  ///
-  /// In en, this message translates to:
-  /// **'Skipped {count} local-only item(s) without portable provenance.'**
-  String expertEditorNonPortableSkipped(int count);
-
-  /// No description provided for @expertEditorOrphanDeps.
-  ///
-  /// In en, this message translates to:
-  /// **'Attached (not installed locally)'**
-  String get expertEditorOrphanDeps;
-
-  /// No description provided for @expertEditorOrphanRemove.
-  ///
-  /// In en, this message translates to:
-  /// **'Remove'**
-  String get expertEditorOrphanRemove;
-
-  /// No description provided for @teamHubNav.
-  ///
-  /// In en, this message translates to:
-  /// **'TeamHub'**
-  String get teamHubNav;
-
-  /// No description provided for @teamHubSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Discover more public teams'**
-  String get teamHubSubtitle;
-
-  /// No description provided for @teamHubTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'TeamHub'**
-  String get teamHubTitle;
-
-  /// No description provided for @teamHubDiscovery.
-  ///
-  /// In en, this message translates to:
-  /// **'Discovery'**
-  String get teamHubDiscovery;
-
-  /// No description provided for @teamHubFavorites.
-  ///
-  /// In en, this message translates to:
-  /// **'Favorites'**
-  String get teamHubFavorites;
-
-  /// No description provided for @teamHubSearchHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Search public teams'**
-  String get teamHubSearchHint;
-
-  /// No description provided for @teamHubSortName.
-  ///
-  /// In en, this message translates to:
-  /// **'Name'**
-  String get teamHubSortName;
-
-  /// No description provided for @teamHubSortUpdated.
-  ///
-  /// In en, this message translates to:
-  /// **'Recently updated'**
-  String get teamHubSortUpdated;
-
-  /// No description provided for @teamHubCategoryAll.
-  ///
-  /// In en, this message translates to:
-  /// **'All'**
-  String get teamHubCategoryAll;
-
-  /// No description provided for @teamHubClone.
-  ///
-  /// In en, this message translates to:
-  /// **'Clone to my teams'**
-  String get teamHubClone;
-
-  /// No description provided for @teamHubCloning.
-  ///
-  /// In en, this message translates to:
-  /// **'Cloning…'**
-  String get teamHubCloning;
-
-  /// No description provided for @teamHubCloneSuccess.
-  ///
-  /// In en, this message translates to:
-  /// **'Cloned \"{name}\".'**
-  String teamHubCloneSuccess(Object name);
-
-  /// No description provided for @teamHubCloneSuccessWithDeps.
-  ///
-  /// In en, this message translates to:
-  /// **'Cloned \"{name}\". Installed {skillCount} skills, {pluginCount} plugins, and {mcpCount} MCP servers.'**
-  String teamHubCloneSuccessWithDeps(
-    Object name,
-    int skillCount,
-    int pluginCount,
-    int mcpCount,
-  );
-
-  /// No description provided for @teamHubClonePartial.
-  ///
-  /// In en, this message translates to:
-  /// **'Cloned \"{name}\". Installed {skillCount} skills, {pluginCount} plugins, {mcpCount} MCP. {failedCount} could not be installed: {failedNames}.'**
-  String teamHubClonePartial(
-    Object name,
-    int skillCount,
-    int pluginCount,
-    int mcpCount,
-    int failedCount,
-    Object failedNames,
-  );
-
-  /// No description provided for @teamHubCloneFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not clone this team.'**
-  String get teamHubCloneFailed;
-
-  /// No description provided for @teamHubEmptyTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'No public teams yet'**
-  String get teamHubEmptyTitle;
-
-  /// No description provided for @teamHubEmptyHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Refresh to fetch teams from the registry.'**
-  String get teamHubEmptyHint;
-
-  /// No description provided for @teamHubFavoritesEmptyTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'No favorites yet'**
-  String get teamHubFavoritesEmptyTitle;
-
-  /// No description provided for @teamHubFavoritesEmptyHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Tap the star on a team to save it here.'**
-  String get teamHubFavoritesEmptyHint;
-
-  /// No description provided for @teamHubRefresh.
-  ///
-  /// In en, this message translates to:
-  /// **'Refresh'**
-  String get teamHubRefresh;
-
-  /// No description provided for @teamHubLoadError.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not load public teams.'**
-  String get teamHubLoadError;
-
-  /// No description provided for @teamHubDepInstalled.
-  ///
-  /// In en, this message translates to:
-  /// **'Installed'**
-  String get teamHubDepInstalled;
-
-  /// No description provided for @teamHubDepToInstall.
-  ///
-  /// In en, this message translates to:
-  /// **'Will be installed'**
-  String get teamHubDepToInstall;
-
-  /// No description provided for @teamHubMembersLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Members'**
-  String get teamHubMembersLabel;
-
-  /// No description provided for @teamHubSkillsLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Skills'**
-  String get teamHubSkillsLabel;
-
-  /// No description provided for @teamHubPluginsLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Plugins'**
-  String get teamHubPluginsLabel;
-
-  /// No description provided for @teamHubMcpLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'MCP'**
-  String get teamHubMcpLabel;
-
-  /// No description provided for @expertHubNav.
-  ///
-  /// In en, this message translates to:
-  /// **'Expert Hub'**
-  String get expertHubNav;
-
-  /// No description provided for @expertHubTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Expert Hub'**
-  String get expertHubTitle;
-
-  /// No description provided for @expertHubSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Discover member personas and templates'**
-  String get expertHubSubtitle;
-
-  /// No description provided for @expertHubSearchHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Search experts'**
-  String get expertHubSearchHint;
-
-  /// No description provided for @expertHubFavorites.
-  ///
-  /// In en, this message translates to:
-  /// **'Favorites'**
-  String get expertHubFavorites;
-
-  /// No description provided for @expertHubMyTemplates.
-  ///
-  /// In en, this message translates to:
-  /// **'My templates'**
-  String get expertHubMyTemplates;
-
-  /// No description provided for @expertHubFromTeams.
-  ///
-  /// In en, this message translates to:
-  /// **'From teams'**
-  String get expertHubFromTeams;
-
-  /// No description provided for @expertHubCategoryAll.
-  ///
-  /// In en, this message translates to:
-  /// **'All'**
-  String get expertHubCategoryAll;
-
-  /// No description provided for @expertHubSortName.
-  ///
-  /// In en, this message translates to:
-  /// **'Name'**
-  String get expertHubSortName;
-
-  /// No description provided for @expertHubSortUpdated.
-  ///
-  /// In en, this message translates to:
-  /// **'Recently updated'**
-  String get expertHubSortUpdated;
-
-  /// No description provided for @expertHubAddToTeam.
-  ///
-  /// In en, this message translates to:
-  /// **'Add to team'**
-  String get expertHubAddToTeam;
-
-  /// No description provided for @expertHubLaunchInWorkspace.
-  ///
-  /// In en, this message translates to:
-  /// **'Launch in workspace'**
-  String get expertHubLaunchInWorkspace;
-
-  /// No description provided for @expertHubAdding.
-  ///
-  /// In en, this message translates to:
-  /// **'Adding…'**
-  String get expertHubAdding;
-
-  /// No description provided for @expertHubAddFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not add this member.'**
-  String get expertHubAddFailed;
-
-  /// No description provided for @expertHubEmptyTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'No experts yet'**
-  String get expertHubEmptyTitle;
-
-  /// No description provided for @expertHubEmptyHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Refresh to fetch experts from the registry.'**
-  String get expertHubEmptyHint;
-
-  /// No description provided for @expertHubFavoritesEmptyTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'No favorites yet'**
-  String get expertHubFavoritesEmptyTitle;
-
-  /// No description provided for @expertHubFavoritesEmptyHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Tap the star on an expert to save it here.'**
-  String get expertHubFavoritesEmptyHint;
-
-  /// No description provided for @expertHubRefresh.
-  ///
-  /// In en, this message translates to:
-  /// **'Refresh'**
-  String get expertHubRefresh;
-
-  /// No description provided for @expertHubLoadError.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not load experts.'**
-  String get expertHubLoadError;
-
-  /// No description provided for @expertHubSourceBuiltin.
-  ///
-  /// In en, this message translates to:
-  /// **'Built-in'**
-  String get expertHubSourceBuiltin;
-
-  /// No description provided for @expertHubSourceRegistry.
-  ///
-  /// In en, this message translates to:
-  /// **'Registry'**
-  String get expertHubSourceRegistry;
-
-  /// No description provided for @expertHubSourceLocal.
-  ///
-  /// In en, this message translates to:
-  /// **'My template'**
-  String get expertHubSourceLocal;
-
-  /// No description provided for @expertHubSourceTeamExtract.
-  ///
-  /// In en, this message translates to:
-  /// **'From team'**
-  String get expertHubSourceTeamExtract;
-
-  /// No description provided for @expertHubPrompt.
-  ///
-  /// In en, this message translates to:
-  /// **'Responsibilities'**
-  String get expertHubPrompt;
-
-  /// No description provided for @expertHubPlaybook.
-  ///
-  /// In en, this message translates to:
-  /// **'Playbook'**
-  String get expertHubPlaybook;
-
-  /// No description provided for @expertHubCapabilities.
-  ///
-  /// In en, this message translates to:
-  /// **'Capabilities'**
-  String get expertHubCapabilities;
-
-  /// No description provided for @expertHubAddSuccess.
-  ///
-  /// In en, this message translates to:
-  /// **'Added \"{name}\" to team.'**
-  String expertHubAddSuccess(Object name);
-
-  /// No description provided for @expertHubAddSuccessWithSkills.
-  ///
-  /// In en, this message translates to:
-  /// **'Added \"{name}\". Installed {skillCount} skills.'**
-  String expertHubAddSuccessWithSkills(Object name, int skillCount);
-
-  /// No description provided for @expertHubAddPartial.
-  ///
-  /// In en, this message translates to:
-  /// **'Added \"{name}\". Installed {skillCount} skills. {failedCount} could not be installed: {failedNames}.'**
-  String expertHubAddPartial(
-    Object name,
-    int skillCount,
-    int failedCount,
-    Object failedNames,
-  );
-
-  /// No description provided for @expertHubNoneSelected.
-  ///
-  /// In en, this message translates to:
-  /// **'No expert'**
-  String get expertHubNoneSelected;
-
-  /// No description provided for @expertHubBrowseAll.
-  ///
-  /// In en, this message translates to:
-  /// **'Browse all experts'**
-  String get expertHubBrowseAll;
-
-  /// No description provided for @expertHubConfirmSelection.
-  ///
-  /// In en, this message translates to:
-  /// **'Confirm'**
-  String get expertHubConfirmSelection;
-
-  /// No description provided for @expertHubRecent.
-  ///
-  /// In en, this message translates to:
-  /// **'Recent'**
-  String get expertHubRecent;
-
-  /// No description provided for @expertHubIgnoredInTeamMode.
-  ///
-  /// In en, this message translates to:
-  /// **'Experts are only available in Simple mode. Switch to Simple to summon an expert.'**
-  String get expertHubIgnoredInTeamMode;
-
-  /// No description provided for @expertHubNotFound.
-  ///
-  /// In en, this message translates to:
-  /// **'Expert not found.'**
-  String get expertHubNotFound;
-
-  /// No description provided for @expertHubPreflightPartial.
-  ///
-  /// In en, this message translates to:
-  /// **'Selected \"{name}\". {failedCount} capabilities could not be installed: {failedNames}.'**
-  String expertHubPreflightPartial(
-    Object name,
-    int failedCount,
-    Object failedNames,
-  );
-
-  /// No description provided for @expertHubAddFromHub.
-  ///
-  /// In en, this message translates to:
-  /// **'Add from Expert Hub'**
-  String get expertHubAddFromHub;
-
-  /// No description provided for @expertHubViewInHub.
-  ///
-  /// In en, this message translates to:
-  /// **'View in Expert Hub'**
-  String get expertHubViewInHub;
-
-  /// No description provided for @expertHubViewOriginTeam.
-  ///
-  /// In en, this message translates to:
-  /// **'View origin team'**
-  String get expertHubViewOriginTeam;
-
-  /// No description provided for @teamMcpAssignedCount.
-  ///
-  /// In en, this message translates to:
-  /// **'{assigned} of {total} enabled'**
-  String teamMcpAssignedCount(int assigned, int total);
-
-  /// No description provided for @teamMcpManage.
-  ///
-  /// In en, this message translates to:
-  /// **'All MCP servers'**
-  String get teamMcpManage;
-
-  /// No description provided for @mcpNavTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'MCP Servers'**
-  String get mcpNavTitle;
-
-  /// No description provided for @mcpSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Manage MCP servers for agent sessions.'**
-  String get mcpSubtitle;
-
-  /// No description provided for @mcpNavInstalled.
-  ///
-  /// In en, this message translates to:
-  /// **'Installed'**
-  String get mcpNavInstalled;
-
-  /// No description provided for @mcpNavDiscovery.
-  ///
-  /// In en, this message translates to:
-  /// **'Discovery'**
-  String get mcpNavDiscovery;
-
-  /// No description provided for @mcpNavRegistries.
-  ///
-  /// In en, this message translates to:
-  /// **'Registry'**
-  String get mcpNavRegistries;
-
-  /// No description provided for @mcpInstalledSectionTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Installed MCP servers'**
-  String get mcpInstalledSectionTitle;
-
-  /// No description provided for @mcpInstalledCount.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} installed'**
-  String mcpInstalledCount(int count);
-
-  /// No description provided for @mcpNoInstalled.
-  ///
-  /// In en, this message translates to:
-  /// **'No MCP servers installed yet'**
-  String get mcpNoInstalled;
-
-  /// No description provided for @mcpNoInstalledHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Open Discovery to add servers from built-in templates or registries.'**
-  String get mcpNoInstalledHint;
-
-  /// No description provided for @mcpDiscoverySectionTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Discover MCP servers'**
-  String get mcpDiscoverySectionTitle;
-
-  /// No description provided for @mcpDiscoverySectionHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Browse built-in templates and remote catalogs configured under Registries.'**
-  String get mcpDiscoverySectionHint;
-
-  /// No description provided for @mcpDiscoverySourceAll.
-  ///
-  /// In en, this message translates to:
-  /// **'All'**
-  String get mcpDiscoverySourceAll;
-
-  /// No description provided for @mcpDiscoverySourceBuiltin.
-  ///
-  /// In en, this message translates to:
-  /// **'Built-in'**
-  String get mcpDiscoverySourceBuiltin;
-
-  /// No description provided for @mcpSmitheryApiTokenLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'API token'**
-  String get mcpSmitheryApiTokenLabel;
-
-  /// No description provided for @mcpSmitheryApiTokenHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Smithery API key (Bearer)'**
-  String get mcpSmitheryApiTokenHint;
-
-  /// No description provided for @mcpSmitheryApiTokenSet.
-  ///
-  /// In en, this message translates to:
-  /// **'token set'**
-  String get mcpSmitheryApiTokenSet;
-
-  /// No description provided for @mcpRegistryEditTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit API URL'**
-  String get mcpRegistryEditTitle;
-
-  /// No description provided for @mcpRegistryResetTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Reset to default'**
-  String get mcpRegistryResetTitle;
-
-  /// No description provided for @mcpRegistryResetConfirm.
-  ///
-  /// In en, this message translates to:
-  /// **'Reset \"{name}\" to the default API URL?'**
-  String mcpRegistryResetConfirm(String name);
-
-  /// No description provided for @mcpRepoApiUrlLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'API base URL'**
-  String get mcpRepoApiUrlLabel;
-
-  /// No description provided for @mcpRepoTestConnection.
-  ///
-  /// In en, this message translates to:
-  /// **'Test connection'**
-  String get mcpRepoTestConnection;
-
-  /// No description provided for @mcpRepoResetDefault.
-  ///
-  /// In en, this message translates to:
-  /// **'Reset default'**
-  String get mcpRepoResetDefault;
-
-  /// No description provided for @mcpRepoConfigSaved.
-  ///
-  /// In en, this message translates to:
-  /// **'Registry API settings saved'**
-  String get mcpRepoConfigSaved;
-
-  /// No description provided for @mcpRepoTestOk.
-  ///
-  /// In en, this message translates to:
-  /// **'Connection successful'**
-  String get mcpRepoTestOk;
-
-  /// No description provided for @mcpRepoTestFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Connection failed: {error}'**
-  String mcpRepoTestFailed(String error);
-
-  /// No description provided for @mcpRepoDisabledHint.
-  ///
-  /// In en, this message translates to:
-  /// **'This catalog source is disabled. Enable it under Registries.'**
-  String get mcpRepoDisabledHint;
-
-  /// No description provided for @mcpRegistrySmithery.
-  ///
-  /// In en, this message translates to:
-  /// **'Smithery'**
-  String get mcpRegistrySmithery;
-
-  /// No description provided for @mcpRegistryOfficial.
-  ///
-  /// In en, this message translates to:
-  /// **'Official registry'**
-  String get mcpRegistryOfficial;
-
-  /// No description provided for @mcpRegistrySmitheryHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Smithery — https://api.smithery.ai'**
-  String get mcpRegistrySmitheryHint;
-
-  /// No description provided for @mcpRegistryOfficialHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Official MCP Registry — https://registry.modelcontextprotocol.io'**
-  String get mcpRegistryOfficialHint;
-
-  /// No description provided for @mcpRegistrySearchHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Search servers (e.g. github)'**
-  String get mcpRegistrySearchHint;
-
-  /// No description provided for @mcpRegistryLoadMore.
-  ///
-  /// In en, this message translates to:
-  /// **'Load more'**
-  String get mcpRegistryLoadMore;
-
-  /// No description provided for @mcpCatalogAdd.
-  ///
-  /// In en, this message translates to:
-  /// **'Add'**
-  String get mcpCatalogAdd;
-
-  /// No description provided for @mcpCatalogInstalled.
-  ///
-  /// In en, this message translates to:
-  /// **'Installed'**
-  String get mcpCatalogInstalled;
-
-  /// No description provided for @mcpCatalogAdded.
-  ///
-  /// In en, this message translates to:
-  /// **'MCP server added to catalog'**
-  String get mcpCatalogAdded;
-
-  /// No description provided for @mcpCatalogEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'No servers found'**
-  String get mcpCatalogEmpty;
-
-  /// No description provided for @mcpCatalogVerified.
-  ///
-  /// In en, this message translates to:
-  /// **'Verified'**
-  String get mcpCatalogVerified;
-
-  /// No description provided for @mcpEmptyGoDiscovery.
-  ///
-  /// In en, this message translates to:
-  /// **'Browse built-in templates'**
-  String get mcpEmptyGoDiscovery;
-
-  /// No description provided for @mcpEmptyGoRegistries.
-  ///
-  /// In en, this message translates to:
-  /// **'Open registry settings'**
-  String get mcpEmptyGoRegistries;
-
-  /// No description provided for @mcpAdd.
-  ///
-  /// In en, this message translates to:
-  /// **'Add MCP server'**
-  String get mcpAdd;
-
-  /// No description provided for @mcpEdit.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit MCP server'**
-  String get mcpEdit;
-
-  /// No description provided for @mcpOpenHomepage.
-  ///
-  /// In en, this message translates to:
-  /// **'Open link'**
-  String get mcpOpenHomepage;
-
-  /// No description provided for @mcpFormDetailHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Select a server to edit, or add a new MCP server.'**
-  String get mcpFormDetailHint;
-
-  /// No description provided for @mcpServerNotFound.
-  ///
-  /// In en, this message translates to:
-  /// **'MCP server not found'**
-  String get mcpServerNotFound;
-
-  /// No description provided for @mcpImport.
-  ///
-  /// In en, this message translates to:
-  /// **'Import from machine'**
-  String get mcpImport;
-
-  /// No description provided for @mcpImportEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'No MCP servers found in ~/.claude.json or ~/.flashskyai.json'**
-  String get mcpImportEmpty;
-
-  /// No description provided for @mcpImportSummary.
-  ///
-  /// In en, this message translates to:
-  /// **'{added} new, {conflicts} conflicts'**
-  String mcpImportSummary(int added, int conflicts);
-
-  /// No description provided for @mcpImportOverwrite.
-  ///
-  /// In en, this message translates to:
-  /// **'Overwrite conflicts'**
-  String get mcpImportOverwrite;
-
-  /// No description provided for @mcpImportDone.
-  ///
-  /// In en, this message translates to:
-  /// **'MCP catalog updated'**
-  String get mcpImportDone;
-
-  /// No description provided for @mcpEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'No MCP servers in catalog'**
-  String get mcpEmpty;
-
-  /// No description provided for @mcpDeleteConfirm.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete MCP server?'**
-  String get mcpDeleteConfirm;
-
-  /// No description provided for @mcpFieldName.
-  ///
-  /// In en, this message translates to:
-  /// **'Name'**
-  String get mcpFieldName;
-
-  /// No description provided for @mcpFieldCommand.
-  ///
-  /// In en, this message translates to:
-  /// **'Command'**
-  String get mcpFieldCommand;
-
-  /// No description provided for @mcpFieldArgs.
-  ///
-  /// In en, this message translates to:
-  /// **'Arguments (space-separated)'**
-  String get mcpFieldArgs;
-
-  /// No description provided for @mcpAddTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Add MCP'**
-  String get mcpAddTitle;
-
-  /// No description provided for @mcpAddButton.
-  ///
-  /// In en, this message translates to:
-  /// **'Add MCP'**
-  String get mcpAddButton;
-
-  /// No description provided for @mcpImportExisting.
-  ///
-  /// In en, this message translates to:
-  /// **'Import existing'**
-  String get mcpImportExisting;
-
-  /// No description provided for @mcpConfiguredCount.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} MCP server(s) configured'**
-  String mcpConfiguredCount(int count);
-
-  /// No description provided for @mcpOAuthConnectTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Connect {name}'**
-  String mcpOAuthConnectTitle(String name);
-
-  /// No description provided for @mcpOAuthConnectHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Sign in with the MCP provider in your browser. Tokens are stored in Claude Code format under app config (same as /mcp → Authenticate).'**
-  String get mcpOAuthConnectHint;
-
-  /// No description provided for @mcpOAuthDiscovering.
-  ///
-  /// In en, this message translates to:
-  /// **'Discovering authorization server…'**
-  String get mcpOAuthDiscovering;
-
-  /// No description provided for @mcpOAuthOpenBrowser.
-  ///
-  /// In en, this message translates to:
-  /// **'Open browser'**
-  String get mcpOAuthOpenBrowser;
-
-  /// No description provided for @mcpOAuthCallbackUrlLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Redirect URL'**
-  String get mcpOAuthCallbackUrlLabel;
-
-  /// No description provided for @mcpOAuthCallbackUrlHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Paste the full URL after sign-in (contains ?code=)'**
-  String get mcpOAuthCallbackUrlHint;
-
-  /// No description provided for @mcpOAuthSubmitCallback.
-  ///
-  /// In en, this message translates to:
-  /// **'Submit URL'**
-  String get mcpOAuthSubmitCallback;
-
-  /// No description provided for @mcpOAuthStartConnect.
-  ///
-  /// In en, this message translates to:
-  /// **'Connect'**
-  String get mcpOAuthStartConnect;
-
-  /// No description provided for @mcpOAuthConnectAction.
-  ///
-  /// In en, this message translates to:
-  /// **'Connect'**
-  String get mcpOAuthConnectAction;
-
-  /// No description provided for @mcpOAuthConnectSuccess.
-  ///
-  /// In en, this message translates to:
-  /// **'MCP OAuth connected'**
-  String get mcpOAuthConnectSuccess;
-
-  /// No description provided for @mcpOAuthStatusConnected.
-  ///
-  /// In en, this message translates to:
-  /// **'OAuth connected'**
-  String get mcpOAuthStatusConnected;
-
-  /// No description provided for @mcpOAuthStatusNeedsAuth.
-  ///
-  /// In en, this message translates to:
-  /// **'Needs OAuth'**
-  String get mcpOAuthStatusNeedsAuth;
-
-  /// No description provided for @mcpPresetDescFetch.
-  ///
-  /// In en, this message translates to:
-  /// **'Fetch web pages and convert HTML to markdown for LLMs.'**
-  String get mcpPresetDescFetch;
-
-  /// No description provided for @mcpPresetDescTime.
-  ///
-  /// In en, this message translates to:
-  /// **'Current time, timezone conversion, and date calculations.'**
-  String get mcpPresetDescTime;
-
-  /// No description provided for @mcpPresetDescMemory.
-  ///
-  /// In en, this message translates to:
-  /// **'Persistent memory graph for knowledge across sessions.'**
-  String get mcpPresetDescMemory;
-
-  /// No description provided for @mcpPresetDescSequentialThinking.
-  ///
-  /// In en, this message translates to:
-  /// **'Structured step-by-step reasoning for complex problems.'**
-  String get mcpPresetDescSequentialThinking;
-
-  /// No description provided for @mcpPresetDescContext7.
-  ///
-  /// In en, this message translates to:
-  /// **'Up-to-date library documentation via Context7.'**
-  String get mcpPresetDescContext7;
-
-  /// No description provided for @mcpFormIdLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'MCP ID (unique) *'**
-  String get mcpFormIdLabel;
-
-  /// No description provided for @mcpFormDisplayNameLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Display name'**
-  String get mcpFormDisplayNameLabel;
-
-  /// No description provided for @mcpFormDisplayNameHint.
-  ///
-  /// In en, this message translates to:
-  /// **'e.g. @modelcontextprotocol/server-time'**
-  String get mcpFormDisplayNameHint;
-
-  /// No description provided for @mcpFormMetadata.
-  ///
-  /// In en, this message translates to:
-  /// **'Additional info'**
-  String get mcpFormMetadata;
-
-  /// No description provided for @mcpFormDescriptionLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Description'**
-  String get mcpFormDescriptionLabel;
-
-  /// No description provided for @mcpFormDescriptionHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Optional description'**
-  String get mcpFormDescriptionHint;
-
-  /// No description provided for @mcpFormTagsLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Tags (comma-separated)'**
-  String get mcpFormTagsLabel;
-
-  /// No description provided for @mcpFormTagsHint.
-  ///
-  /// In en, this message translates to:
-  /// **'stdio, time, utility'**
-  String get mcpFormTagsHint;
-
-  /// No description provided for @mcpFormHomepageLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Homepage'**
-  String get mcpFormHomepageLabel;
-
-  /// No description provided for @mcpFormDocsLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Documentation'**
-  String get mcpFormDocsLabel;
-
-  /// No description provided for @mcpFormJsonLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Full JSON configuration'**
-  String get mcpFormJsonLabel;
-
-  /// No description provided for @mcpFormFormatJson.
-  ///
-  /// In en, this message translates to:
-  /// **'Format'**
-  String get mcpFormFormatJson;
-
-  /// No description provided for @mcpFormRequiredFields.
-  ///
-  /// In en, this message translates to:
-  /// **'MCP ID and display name are required.'**
-  String get mcpFormRequiredFields;
-
-  /// No description provided for @mcpFormSubmitAdd.
-  ///
-  /// In en, this message translates to:
-  /// **'Add'**
-  String get mcpFormSubmitAdd;
-
   /// No description provided for @confirm.
   ///
   /// In en, this message translates to:
   /// **'Confirm'**
   String get confirm;
-
-  /// No description provided for @teamPluginsAssignedCount.
-  ///
-  /// In en, this message translates to:
-  /// **'{assigned} of {total} installed'**
-  String teamPluginsAssignedCount(int assigned, int total);
-
-  /// No description provided for @teamPluginsManage.
-  ///
-  /// In en, this message translates to:
-  /// **'All plugins'**
-  String get teamPluginsManage;
-
-  /// No description provided for @teamPluginsEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'No plugins installed'**
-  String get teamPluginsEmpty;
-
-  /// No description provided for @teamPluginsEmptyHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Install plugins from Discovery to enable them per team.'**
-  String get teamPluginsEmptyHint;
-
-  /// No description provided for @teamPluginsGoDiscovery.
-  ///
-  /// In en, this message translates to:
-  /// **'Browse marketplace'**
-  String get teamPluginsGoDiscovery;
-
-  /// No description provided for @teamPluginsMissing.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} enabled plugin(s) missing on disk. Reinstall or remove below.'**
-  String teamPluginsMissing(int count);
-
-  /// No description provided for @teamPluginsRemoveMissing.
-  ///
-  /// In en, this message translates to:
-  /// **'Remove'**
-  String get teamPluginsRemoveMissing;
-
-  /// No description provided for @teamPluginsMissingLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Missing on disk'**
-  String get teamPluginsMissingLabel;
-
-  /// No description provided for @teamPluginsNameConflict.
-  ///
-  /// In en, this message translates to:
-  /// **'Linked as {dir} due to name conflict'**
-  String teamPluginsNameConflict(String dir);
-
-  /// No description provided for @teamPluginsCliUnsupportedBanner.
-  ///
-  /// In en, this message translates to:
-  /// **'This team\'s CLI does not support plugins yet. Selections are saved but ignored at launch.'**
-  String get teamPluginsCliUnsupportedBanner;
-
-  /// No description provided for @memberQuickList.
-  ///
-  /// In en, this message translates to:
-  /// **'MEMBER QUICK LIST'**
-  String get memberQuickList;
-
-  /// No description provided for @teamName.
-  ///
-  /// In en, this message translates to:
-  /// **'Team name'**
-  String get teamName;
-
-  /// No description provided for @teamDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Team description'**
-  String get teamDescription;
-
-  /// No description provided for @teamDescriptionHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Optional note for Claude roster and team context'**
-  String get teamDescriptionHint;
-
-  /// No description provided for @deleteTeam.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete team'**
-  String get deleteTeam;
-
-  /// No description provided for @deleteTeamSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Removes this team from the UI and the shared flashskyai data directory. This cannot be undone.'**
-  String get deleteTeamSubtitle;
-
-  /// No description provided for @deleteTeamConfirm.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete team \"{name}\"? This cannot be undone.'**
-  String deleteTeamConfirm(String name);
 
   /// No description provided for @dangerZone.
   ///
@@ -8292,143 +3368,11 @@ abstract class AppLocalizations {
   /// **'Danger zone'**
   String get dangerZone;
 
-  /// No description provided for @teamExtraArgs.
-  ///
-  /// In en, this message translates to:
-  /// **'Team extra CLI arguments'**
-  String get teamExtraArgs;
-
-  /// No description provided for @teamExtraArgsHint.
-  ///
-  /// In en, this message translates to:
-  /// **'--permission-mode acceptEdits'**
-  String get teamExtraArgsHint;
-
-  /// No description provided for @teamEffortLevel.
-  ///
-  /// In en, this message translates to:
-  /// **'Reasoning effort'**
-  String get teamEffortLevel;
-
-  /// No description provided for @teamEffortLevelSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Default effort for this team (Claude effortLevel / Codex model_reasoning_effort).'**
-  String get teamEffortLevelSubtitle;
-
-  /// No description provided for @memberEffortLevel.
-  ///
-  /// In en, this message translates to:
-  /// **'Member effort override'**
-  String get memberEffortLevel;
-
-  /// No description provided for @memberEffortLevelSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Overrides team default when set.'**
-  String get memberEffortLevelSubtitle;
-
-  /// No description provided for @memberEffortInheritHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Inherit team default'**
-  String get memberEffortInheritHint;
-
-  /// No description provided for @providerEffortLevel.
-  ///
-  /// In en, this message translates to:
-  /// **'Reasoning effort'**
-  String get providerEffortLevel;
-
-  /// No description provided for @teamLoop.
-  ///
-  /// In en, this message translates to:
-  /// **'Phase loop'**
-  String get teamLoop;
-
-  /// No description provided for @teamLoopSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Team mode: true auto-advances phases; false requires your confirmation.'**
-  String get teamLoopSubtitle;
-
-  /// No description provided for @teamLoopDefault.
-  ///
-  /// In en, this message translates to:
-  /// **'Default'**
-  String get teamLoopDefault;
-
-  /// No description provided for @teamLoopTrue.
-  ///
-  /// In en, this message translates to:
-  /// **'true — auto-advance'**
-  String get teamLoopTrue;
-
-  /// No description provided for @teamLoopFalse.
-  ///
-  /// In en, this message translates to:
-  /// **'false — confirm each phase'**
-  String get teamLoopFalse;
-
-  /// No description provided for @teamLeadBadge.
-  ///
-  /// In en, this message translates to:
-  /// **'Leader'**
-  String get teamLeadBadge;
-
-  /// No description provided for @teamLeadDelegateOnlyTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Team lead: plan and delegate only'**
-  String get teamLeadDelegateOnlyTitle;
-
-  /// No description provided for @teamLeadDelegateOnlySubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'When enabled, the team lead is blocked from using some tools.'**
-  String get teamLeadDelegateOnlySubtitle;
-
-  /// No description provided for @teamForceWaitBeforeStopTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Keep members in the wait loop'**
-  String get teamForceWaitBeforeStopTitle;
-
-  /// No description provided for @teamForceWaitBeforeStopSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'When enabled, a member finishing a turn is pushed back into wait_for_message instead of stopping, so it stays available for new messages and tasks. Disable to let members rest (stop normally).'**
-  String get teamForceWaitBeforeStopSubtitle;
-
-  /// No description provided for @memberLaunchOrder.
-  ///
-  /// In en, this message translates to:
-  /// **'Member launch order'**
-  String get memberLaunchOrder;
-
-  /// No description provided for @saveMember.
-  ///
-  /// In en, this message translates to:
-  /// **'Save Member'**
-  String get saveMember;
-
-  /// No description provided for @editTeamSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit team identity, working directory, and launch order.'**
-  String get editTeamSubtitle;
-
   /// No description provided for @memberName.
   ///
   /// In en, this message translates to:
   /// **'Member name'**
   String get memberName;
-
-  /// No description provided for @memberNameSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Display only in TeamPilot (sidebar, member list). To define responsibilities and boundaries, edit Responsibilities below.'**
-  String get memberNameSubtitle;
 
   /// No description provided for @provider.
   ///
@@ -8448,287 +3392,11 @@ abstract class AppLocalizations {
   /// **'Agent preset'**
   String get agent;
 
-  /// No description provided for @selectAgent.
-  ///
-  /// In en, this message translates to:
-  /// **'Select preset'**
-  String get selectAgent;
-
-  /// No description provided for @agentBuiltInNone.
-  ///
-  /// In en, this message translates to:
-  /// **'Default'**
-  String get agentBuiltInNone;
-
-  /// No description provided for @agentBuiltInCustom.
-  ///
-  /// In en, this message translates to:
-  /// **'Custom…'**
-  String get agentBuiltInCustom;
-
-  /// No description provided for @agentBuiltInSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Which agent role this member uses; shapes behavior and capabilities.'**
-  String get agentBuiltInSubtitle;
-
-  /// No description provided for @agentFlashskyaiPresetSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Passed as flashskyai --agent; pick a built-in or custom sub-agent.'**
-  String get agentFlashskyaiPresetSubtitle;
-
-  /// No description provided for @agentClaudeTypeSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Written to the Claude team roster as agentType; leave empty to use the member id.'**
-  String get agentClaudeTypeSubtitle;
-
-  /// No description provided for @agentClaudeTypeHint.
-  ///
-  /// In en, this message translates to:
-  /// **'e.g. Explore, Plan, or a custom type'**
-  String get agentClaudeTypeHint;
-
-  /// No description provided for @agentCustomIdHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Custom agent id'**
-  String get agentCustomIdHint;
-
-  /// No description provided for @memberExtraArgs.
-  ///
-  /// In en, this message translates to:
-  /// **'Member extra CLI arguments'**
-  String get memberExtraArgs;
-
-  /// No description provided for @memberExtraArgsSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Extra flags applied only when this member starts.'**
-  String get memberExtraArgsSubtitle;
-
-  /// No description provided for @workspaceAdvancedSettings.
-  ///
-  /// In en, this message translates to:
-  /// **'Advanced'**
-  String get workspaceAdvancedSettings;
-
-  /// No description provided for @workspaceAdvancedSettingsSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Agent preset and extra CLI flags for this member.'**
-  String get workspaceAdvancedSettingsSubtitle;
-
-  /// No description provided for @memberDangerouslySkipPermissions.
-  ///
-  /// In en, this message translates to:
-  /// **'Skip all permission checks'**
-  String get memberDangerouslySkipPermissions;
-
-  /// No description provided for @memberDangerouslySkipPermissionsHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Only for isolated / no-network sandboxes. Extremely risky otherwise.'**
-  String get memberDangerouslySkipPermissionsHint;
-
   /// No description provided for @prompt.
   ///
   /// In en, this message translates to:
   /// **'Prompt'**
   String get prompt;
-
-  /// No description provided for @memberResponsibilities.
-  ///
-  /// In en, this message translates to:
-  /// **'Responsibilities'**
-  String get memberResponsibilities;
-
-  /// No description provided for @memberPromptSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'What this member owns and must not do. Written into the agent\'s role definition.'**
-  String get memberPromptSubtitle;
-
-  /// No description provided for @memberPromptPresetsLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Presets'**
-  String get memberPromptPresetsLabel;
-
-  /// No description provided for @memberPromptPresetTeamLead.
-  ///
-  /// In en, this message translates to:
-  /// **'Team lead'**
-  String get memberPromptPresetTeamLead;
-
-  /// No description provided for @memberPromptPresetTeamLeadText.
-  ///
-  /// In en, this message translates to:
-  /// **'Coordinate the team: break the user\'s request into a task list (each item with scope and acceptance criteria), then assign teammates to implement. Unless blocked, do not do large implementation yourself—you may read code and docs to understand the situation.\nTalk to the user in this session window. When assigning and following up, contact only other teammates (by member name); do not assign work to yourself. After teammates finish, reply to the user with conclusions, relevant files, and next steps.'**
-  String get memberPromptPresetTeamLeadText;
-
-  /// No description provided for @memberPromptPresetDeveloper.
-  ///
-  /// In en, this message translates to:
-  /// **'Developer'**
-  String get memberPromptPresetDeveloper;
-
-  /// No description provided for @memberPromptPresetDeveloperText.
-  ///
-  /// In en, this message translates to:
-  /// **'Implement assigned tasks, staying within the agreed scope. Do not expand scope or refactor unrelated code without being asked.'**
-  String get memberPromptPresetDeveloperText;
-
-  /// No description provided for @memberPromptPresetReviewer.
-  ///
-  /// In en, this message translates to:
-  /// **'Reviewer'**
-  String get memberPromptPresetReviewer;
-
-  /// No description provided for @memberPromptPresetReviewerText.
-  ///
-  /// In en, this message translates to:
-  /// **'Review code only. Do not modify files unless explicitly asked.'**
-  String get memberPromptPresetReviewerText;
-
-  /// No description provided for @memberPromptPresetResearcher.
-  ///
-  /// In en, this message translates to:
-  /// **'Researcher'**
-  String get memberPromptPresetResearcher;
-
-  /// No description provided for @memberPromptPresetResearcherText.
-  ///
-  /// In en, this message translates to:
-  /// **'Investigate and report only. Do not change production code unless asked.'**
-  String get memberPromptPresetResearcherText;
-
-  /// No description provided for @memberPlaybook.
-  ///
-  /// In en, this message translates to:
-  /// **'Playbook'**
-  String get memberPlaybook;
-
-  /// No description provided for @memberPlaybookSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'How to execute assigned work: steps, checkpoints, and report format. Sent to the agent as operating instructions.'**
-  String get memberPlaybookSubtitle;
-
-  /// No description provided for @memberPersonaEmptyNoExpert.
-  ///
-  /// In en, this message translates to:
-  /// **'Select an expert to see persona text.'**
-  String get memberPersonaEmptyNoExpert;
-
-  /// No description provided for @memberResponsibilitiesEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'No responsibilities on this expert'**
-  String get memberResponsibilitiesEmpty;
-
-  /// No description provided for @memberPlaybookEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'No playbook on this expert'**
-  String get memberPlaybookEmpty;
-
-  /// No description provided for @memberPlaybookPresetDeveloperText.
-  ///
-  /// In en, this message translates to:
-  /// **'Work test-first: before implementing, write a failing test, then make it pass with the smallest diff. Run the relevant tests after each change and report which files changed and why. Do not bundle unrelated edits; stop at agreed checkpoints. If a test-driven-development skill is available, follow it.'**
-  String get memberPlaybookPresetDeveloperText;
-
-  /// No description provided for @memberPlaybookPresetReviewerText.
-  ///
-  /// In en, this message translates to:
-  /// **'Review in order: (1) confirm tests cover the change; (2) correctness and edge cases; (3) maintainability and consistency with surrounding code. Every finding states file path, line, the problem, and a concrete fix—no vague praise and no nit without a fix. Flag missing tests explicitly.'**
-  String get memberPlaybookPresetReviewerText;
-
-  /// No description provided for @memberPlaybookPresetResearcherText.
-  ///
-  /// In en, this message translates to:
-  /// **'Clarify intent before digging: restate the question and your assumptions, then investigate breadth-first across the codebase before going deep. Report findings with file paths, relevant symbols, and recommended next steps—propose, do not change production code. If a brainstorming skill is available, use it to frame the problem first.'**
-  String get memberPlaybookPresetResearcherText;
-
-  /// No description provided for @selectModel.
-  ///
-  /// In en, this message translates to:
-  /// **'Select a model'**
-  String get selectModel;
-
-  /// No description provided for @appProviderModelEnterCustom.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter custom model ID'**
-  String get appProviderModelEnterCustom;
-
-  /// No description provided for @appProviderModelPickFromList.
-  ///
-  /// In en, this message translates to:
-  /// **'Choose from list'**
-  String get appProviderModelPickFromList;
-
-  /// No description provided for @memberOfficialClaudeModelHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Uses your Claude account default model. Manage Official login in Providers settings.'**
-  String get memberOfficialClaudeModelHint;
-
-  /// No description provided for @editMemberSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit provider, model, optional agent preset, and command arguments.'**
-  String get editMemberSubtitle;
-
-  /// No description provided for @teamLeadNameRequired.
-  ///
-  /// In en, this message translates to:
-  /// **'FlashskyAI team delegation expects this member to be named exactly team-lead.'**
-  String get teamLeadNameRequired;
-
-  /// No description provided for @teamLeadNotice.
-  ///
-  /// In en, this message translates to:
-  /// **'FlashskyAI team delegation expects this member to be named exactly team-lead.'**
-  String get teamLeadNotice;
-
-  /// No description provided for @membersAndFileTree.
-  ///
-  /// In en, this message translates to:
-  /// **'Members and File Tree'**
-  String get membersAndFileTree;
-
-  /// No description provided for @membersAndFileTreeDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Show members and file tree stacked or as tabs.'**
-  String get membersAndFileTreeDescription;
-
-  /// No description provided for @appProviderCatalogLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'App provider catalog'**
-  String get appProviderCatalogLabel;
-
-  /// No description provided for @appProviderCatalogHint.
-  ///
-  /// In en, this message translates to:
-  /// **'TeamPilot stores unified providers here; team launches generate per-tool configs.'**
-  String get appProviderCatalogHint;
-
-  /// No description provided for @appProviderPresetLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Preset'**
-  String get appProviderPresetLabel;
-
-  /// No description provided for @appProviderPresetCustom.
-  ///
-  /// In en, this message translates to:
-  /// **'Custom'**
-  String get appProviderPresetCustom;
 
   /// No description provided for @appProviderClaudeAuthTokenDefault.
   ///
@@ -8741,30 +3409,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'ANTHROPIC_API_KEY'**
   String get appProviderClaudeAuthApiKey;
-
-  /// No description provided for @appProviderAdvancedJson.
-  ///
-  /// In en, this message translates to:
-  /// **'Advanced JSON editor'**
-  String get appProviderAdvancedJson;
-
-  /// No description provided for @appProviderAdvancedOptions.
-  ///
-  /// In en, this message translates to:
-  /// **'Advanced options'**
-  String get appProviderAdvancedOptions;
-
-  /// No description provided for @appProviderWebsite.
-  ///
-  /// In en, this message translates to:
-  /// **'Website'**
-  String get appProviderWebsite;
-
-  /// No description provided for @appProviderEnabledTools.
-  ///
-  /// In en, this message translates to:
-  /// **'Enabled tools'**
-  String get appProviderEnabledTools;
 
   /// No description provided for @appProviderToolFlashskyai.
   ///
@@ -8796,89 +3440,11 @@ abstract class AppLocalizations {
   /// **'Cursor'**
   String get appProviderToolCursor;
 
-  /// No description provided for @appProviderTeamToolSection.
-  ///
-  /// In en, this message translates to:
-  /// **'Tool providers for this team'**
-  String get appProviderTeamToolSection;
-
-  /// No description provided for @appProviderTeamToolSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Select which unified provider each tool uses when this team starts.'**
-  String get appProviderTeamToolSubtitle;
-
-  /// No description provided for @appProviderTeamNone.
-  ///
-  /// In en, this message translates to:
-  /// **'None'**
-  String get appProviderTeamNone;
-
-  /// No description provided for @appProviderClaudeAuthField.
-  ///
-  /// In en, this message translates to:
-  /// **'Authentication field'**
-  String get appProviderClaudeAuthField;
-
-  /// No description provided for @appProviderClaudeAuthFieldHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Select the authentication environment variable written to settings.'**
-  String get appProviderClaudeAuthFieldHint;
-
-  /// No description provided for @appProviderClaudeCredentialBinding.
-  ///
-  /// In en, this message translates to:
-  /// **'OAuth credential source'**
-  String get appProviderClaudeCredentialBinding;
-
-  /// No description provided for @appProviderClaudeCredentialBindingLinked.
-  ///
-  /// In en, this message translates to:
-  /// **'Follow global (~/.claude)'**
-  String get appProviderClaudeCredentialBindingLinked;
-
-  /// No description provided for @appProviderClaudeCredentialBindingIsolated.
-  ///
-  /// In en, this message translates to:
-  /// **'Isolated copy (TeamPilot only)'**
-  String get appProviderClaudeCredentialBindingIsolated;
-
-  /// No description provided for @appProviderClaudeCredentialBindingLinkedHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Shares the same OAuth session as Claude Code in your terminal. Refreshes stay in sync.'**
-  String get appProviderClaudeCredentialBindingLinkedHint;
-
-  /// No description provided for @appProviderClaudeCredentialBindingIsolatedHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Keeps a separate credential copy under TeamPilot. Use when this provider must not share login with global Claude Code.'**
-  String get appProviderClaudeCredentialBindingIsolatedHint;
-
   /// No description provided for @notes.
   ///
   /// In en, this message translates to:
   /// **'Notes'**
   String get notes;
-
-  /// No description provided for @defaultModel.
-  ///
-  /// In en, this message translates to:
-  /// **'Default model'**
-  String get defaultModel;
-
-  /// No description provided for @editProvider.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit provider'**
-  String get editProvider;
-
-  /// No description provided for @invalidJson.
-  ///
-  /// In en, this message translates to:
-  /// **'Invalid JSON. Fix the syntax and try again.'**
-  String get invalidJson;
 
   /// No description provided for @aboutTitle.
   ///
@@ -9132,18 +3698,6 @@ abstract class AppLocalizations {
   /// **'Failed to open browser: {error}'**
   String appUpdateBrowserOpenFailed(String error);
 
-  /// No description provided for @onboardingTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'First-time setup'**
-  String get onboardingTitle;
-
-  /// No description provided for @onboardingProgress.
-  ///
-  /// In en, this message translates to:
-  /// **'Step {current} of {total}'**
-  String onboardingProgress(int current, int total);
-
   /// No description provided for @onboardingSkip.
   ///
   /// In en, this message translates to:
@@ -9167,36 +3721,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Get started'**
   String get onboardingGetStarted;
-
-  /// No description provided for @onboardingStepAppearance.
-  ///
-  /// In en, this message translates to:
-  /// **'Language & theme'**
-  String get onboardingStepAppearance;
-
-  /// No description provided for @onboardingStepSsh.
-  ///
-  /// In en, this message translates to:
-  /// **'SSH'**
-  String get onboardingStepSsh;
-
-  /// No description provided for @onboardingStepCli.
-  ///
-  /// In en, this message translates to:
-  /// **'CLI tools'**
-  String get onboardingStepCli;
-
-  /// No description provided for @onboardingStepProviderImport.
-  ///
-  /// In en, this message translates to:
-  /// **'Import providers'**
-  String get onboardingStepProviderImport;
-
-  /// No description provided for @onboardingStepDefaultPreset.
-  ///
-  /// In en, this message translates to:
-  /// **'Default preset'**
-  String get onboardingStepDefaultPreset;
 
   /// No description provided for @onboardingAppearanceTitle.
   ///
@@ -9222,114 +3746,6 @@ abstract class AppLocalizations {
   /// **'Android runs AI CLIs on a remote host over SSH.'**
   String get onboardingSshSubtitle;
 
-  /// No description provided for @onboardingCliTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Detect CLI tools'**
-  String get onboardingCliTitle;
-
-  /// No description provided for @onboardingCliSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Locate executables used to launch sessions. Install missing ones, or set a path later in Settings.'**
-  String get onboardingCliSubtitle;
-
-  /// No description provided for @onboardingCliFound.
-  ///
-  /// In en, this message translates to:
-  /// **'CLI found'**
-  String get onboardingCliFound;
-
-  /// No description provided for @onboardingCliNotFound.
-  ///
-  /// In en, this message translates to:
-  /// **'Not on PATH'**
-  String get onboardingCliNotFound;
-
-  /// No description provided for @onboardingCliScanning.
-  ///
-  /// In en, this message translates to:
-  /// **'Scanning PATH for CLI tools…'**
-  String get onboardingCliScanning;
-
-  /// No description provided for @onboardingCliRedetect.
-  ///
-  /// In en, this message translates to:
-  /// **'Scan again'**
-  String get onboardingCliRedetect;
-
-  /// No description provided for @onboardingProviderImportTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Import CLI providers'**
-  String get onboardingProviderImportTitle;
-
-  /// No description provided for @onboardingProviderImportSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Scan local CLI configs for existing provider settings.'**
-  String get onboardingProviderImportSubtitle;
-
-  /// No description provided for @onboardingProviderImportResults.
-  ///
-  /// In en, this message translates to:
-  /// **'Import results'**
-  String get onboardingProviderImportResults;
-
-  /// No description provided for @onboardingProviderImportEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'No providers detected. You can configure them later in Settings.'**
-  String get onboardingProviderImportEmpty;
-
-  /// No description provided for @onboardingProviderImportFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Import failed'**
-  String get onboardingProviderImportFailed;
-
-  /// No description provided for @onboardingProviderImportRescan.
-  ///
-  /// In en, this message translates to:
-  /// **'Scan again'**
-  String get onboardingProviderImportRescan;
-
-  /// No description provided for @onboardingDefaultPresetTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Configure default launch preset'**
-  String get onboardingDefaultPresetTitle;
-
-  /// No description provided for @onboardingDefaultPresetSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Personal workspaces and team default launch configs will use this CLI preset.'**
-  String get onboardingDefaultPresetSubtitle;
-
-  /// No description provided for @onboardingDefaultPresetEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'No providers to choose from. Skip this step or add providers in Settings.'**
-  String get onboardingDefaultPresetEmpty;
-
-  /// No description provided for @onboardingDefaultPresetSelectExisting.
-  ///
-  /// In en, this message translates to:
-  /// **'Use existing preset'**
-  String get onboardingDefaultPresetSelectExisting;
-
-  /// No description provided for @onboardingDefaultPresetDefaultName.
-  ///
-  /// In en, this message translates to:
-  /// **'Default'**
-  String get onboardingDefaultPresetDefaultName;
-
-  /// No description provided for @onboardingDefaultPresetModelHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Primary model for this preset'**
-  String get onboardingDefaultPresetModelHint;
-
   /// No description provided for @onboardingRerunSetup.
   ///
   /// In en, this message translates to:
@@ -9348,29 +3764,11 @@ abstract class AppLocalizations {
   /// **'Application and error logs under your TeamPilot app data folder.'**
   String get logViewerSubtitle;
 
-  /// No description provided for @logViewerFileLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Log file'**
-  String get logViewerFileLabel;
-
   /// No description provided for @logViewerSearchHint.
   ///
   /// In en, this message translates to:
   /// **'Search logs…'**
   String get logViewerSearchHint;
-
-  /// No description provided for @logViewerFilterTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Filters'**
-  String get logViewerFilterTitle;
-
-  /// No description provided for @logViewerFilterLevel.
-  ///
-  /// In en, this message translates to:
-  /// **'Level'**
-  String get logViewerFilterLevel;
 
   /// No description provided for @logViewerWrapLines.
   ///
@@ -9600,114 +3998,6 @@ abstract class AppLocalizations {
   /// **'{current} / {total}'**
   String diffChangeCounter(int current, int total);
 
-  /// No description provided for @aiFeatures.
-  ///
-  /// In en, this message translates to:
-  /// **'AI Features'**
-  String get aiFeatures;
-
-  /// No description provided for @aiFeaturesPageSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Choose which CLI provider, model, and effort each AI feature uses.'**
-  String get aiFeaturesPageSubtitle;
-
-  /// No description provided for @aiFeatureCommitMessageTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Commit message generation'**
-  String get aiFeatureCommitMessageTitle;
-
-  /// No description provided for @aiFeatureCommitMessageSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Used by the ✨ button in the source control panel.'**
-  String get aiFeatureCommitMessageSubtitle;
-
-  /// No description provided for @aiFeatureTeamGenerateTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Team configuration generation'**
-  String get aiFeatureTeamGenerateTitle;
-
-  /// No description provided for @aiFeatureTeamGenerateSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Used when generating a team from a description.'**
-  String get aiFeatureTeamGenerateSubtitle;
-
-  /// No description provided for @aiFeatureCliLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'CLI'**
-  String get aiFeatureCliLabel;
-
-  /// No description provided for @aiFeatureModelLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Model'**
-  String get aiFeatureModelLabel;
-
-  /// No description provided for @aiFeatureEffortLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Effort'**
-  String get aiFeatureEffortLabel;
-
-  /// No description provided for @aiFeatureConfigSummary.
-  ///
-  /// In en, this message translates to:
-  /// **'{cli} · {provider} · {model}'**
-  String aiFeatureConfigSummary(String cli, String provider, String model);
-
-  /// No description provided for @gitGenerateCommitMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Generate commit message with AI'**
-  String get gitGenerateCommitMessage;
-
-  /// No description provided for @gitGenerateCommitMessageNoProvider.
-  ///
-  /// In en, this message translates to:
-  /// **'Configure an AI provider in Settings → AI Features first.'**
-  String get gitGenerateCommitMessageNoProvider;
-
-  /// No description provided for @teamGenTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Generate with AI'**
-  String get teamGenTitle;
-
-  /// No description provided for @teamGenDescriptionHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Describe the team you want (e.g. Flutter frontend with code review and tests)'**
-  String get teamGenDescriptionHint;
-
-  /// No description provided for @teamGenButton.
-  ///
-  /// In en, this message translates to:
-  /// **'Generate'**
-  String get teamGenButton;
-
-  /// No description provided for @teamGenNoProvider.
-  ///
-  /// In en, this message translates to:
-  /// **'Configure an AI provider in Settings → AI Features first.'**
-  String get teamGenNoProvider;
-
-  /// No description provided for @teamGenFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not generate a team. Please edit manually.'**
-  String get teamGenFailed;
-
-  /// No description provided for @teamGenApplied.
-  ///
-  /// In en, this message translates to:
-  /// **'Draft applied. Review and adjust before creating.'**
-  String get teamGenApplied;
-
   /// No description provided for @notificationCenterTitle.
   ///
   /// In en, this message translates to:
@@ -9780,162 +4070,6 @@ abstract class AppLocalizations {
   /// **'{days} d ago'**
   String notificationTimeDaysAgo(int days);
 
-  /// No description provided for @memberDetailTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Member detail'**
-  String get memberDetailTitle;
-
-  /// No description provided for @memberDetailViewAction.
-  ///
-  /// In en, this message translates to:
-  /// **'View member detail'**
-  String get memberDetailViewAction;
-
-  /// No description provided for @memberDetailOpenConfigDir.
-  ///
-  /// In en, this message translates to:
-  /// **'Open config directory'**
-  String get memberDetailOpenConfigDir;
-
-  /// No description provided for @memberDetailOpenInFileManager.
-  ///
-  /// In en, this message translates to:
-  /// **'Open in file manager'**
-  String get memberDetailOpenInFileManager;
-
-  /// No description provided for @memberDetailBrowseConfigDirTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Config directory'**
-  String get memberDetailBrowseConfigDirTitle;
-
-  /// No description provided for @memberDetailNeedsSession.
-  ///
-  /// In en, this message translates to:
-  /// **'Open a session first'**
-  String get memberDetailNeedsSession;
-
-  /// No description provided for @memberDetailTabOverview.
-  ///
-  /// In en, this message translates to:
-  /// **'Overview'**
-  String get memberDetailTabOverview;
-
-  /// No description provided for @memberDetailTabSkills.
-  ///
-  /// In en, this message translates to:
-  /// **'Skills'**
-  String get memberDetailTabSkills;
-
-  /// No description provided for @memberDetailTabMcp.
-  ///
-  /// In en, this message translates to:
-  /// **'MCP'**
-  String get memberDetailTabMcp;
-
-  /// No description provided for @memberDetailTabPlugins.
-  ///
-  /// In en, this message translates to:
-  /// **'Plugins'**
-  String get memberDetailTabPlugins;
-
-  /// No description provided for @memberDetailTabSettings.
-  ///
-  /// In en, this message translates to:
-  /// **'Settings'**
-  String get memberDetailTabSettings;
-
-  /// No description provided for @memberDetailSourceRuntime.
-  ///
-  /// In en, this message translates to:
-  /// **'Live session config'**
-  String get memberDetailSourceRuntime;
-
-  /// No description provided for @memberDetailSourceTeam.
-  ///
-  /// In en, this message translates to:
-  /// **'Team-level config (member not launched in this session)'**
-  String get memberDetailSourceTeam;
-
-  /// No description provided for @memberDetailEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'This member has no config yet in this session, and the team layer is empty.'**
-  String get memberDetailEmpty;
-
-  /// No description provided for @memberDetailLoadError.
-  ///
-  /// In en, this message translates to:
-  /// **'Failed to read this member\'s config directory.'**
-  String get memberDetailLoadError;
-
-  /// No description provided for @memberDetailOpenConfigDirFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Couldn\'t open the config directory in a file manager.'**
-  String get memberDetailOpenConfigDirFailed;
-
-  /// No description provided for @memberDetailOpenConfigDirFailedOnHost.
-  ///
-  /// In en, this message translates to:
-  /// **'Couldn\'t open the config directory on {host}. The remote host may have no desktop file manager.'**
-  String memberDetailOpenConfigDirFailedOnHost(String host);
-
-  /// No description provided for @memberDetailSectionEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'None'**
-  String get memberDetailSectionEmpty;
-
-  /// Section header for AI CLI tools in CLI config page
-  ///
-  /// In en, this message translates to:
-  /// **'AI CLI'**
-  String get cliConfigAiCliGroup;
-
-  /// Section header for toolchain tools (git, node) in CLI config page
-  ///
-  /// In en, this message translates to:
-  /// **'Toolchain'**
-  String get cliConfigToolchainGroup;
-
-  /// Label for Git executable path setting
-  ///
-  /// In en, this message translates to:
-  /// **'Git executable path'**
-  String get toolchainGitLabel;
-
-  /// Label for Node.js/npm path setting
-  ///
-  /// In en, this message translates to:
-  /// **'Node.js / npm path'**
-  String get toolchainNodeLabel;
-
-  /// Description for toolchain path setting
-  ///
-  /// In en, this message translates to:
-  /// **'Absolute path to the {tool} executable. Leave empty to use the one on PATH.'**
-  String toolchainPathDescription(String tool);
-
-  /// Description for toolchain path setting in SSH mode
-  ///
-  /// In en, this message translates to:
-  /// **'Absolute path to {tool} on the remote SSH host. Leave empty to auto-discover.'**
-  String toolchainPathDescriptionSsh(String tool);
-
-  /// Label for Cursor CLI executable path setting
-  ///
-  /// In en, this message translates to:
-  /// **'Cursor CLI path'**
-  String get cliCursorExecutablePathLabel;
-
-  /// Progress message when checking for a toolchain tool
-  ///
-  /// In en, this message translates to:
-  /// **'Checking for {tool}...'**
-  String toolchainInstallProgressChecking(String tool);
-
   /// No description provided for @toolchainGit.
   ///
   /// In en, this message translates to:
@@ -9947,24 +4081,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Node.js'**
   String get toolchainNode;
-
-  /// No description provided for @homeWorkspaceLaunchWorkspaceTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Open with…'**
-  String get homeWorkspaceLaunchWorkspaceTitle;
-
-  /// No description provided for @homeWorkspaceSimpleMode.
-  ///
-  /// In en, this message translates to:
-  /// **'Simple mode'**
-  String get homeWorkspaceSimpleMode;
-
-  /// No description provided for @homeWorkspaceRememberLaunchChoice.
-  ///
-  /// In en, this message translates to:
-  /// **'Remember my choice'**
-  String get homeWorkspaceRememberLaunchChoice;
 
   /// No description provided for @worktreeCreateTitle.
   ///
@@ -10104,12 +4220,6 @@ abstract class AppLocalizations {
   /// **'Remove worktree'**
   String get worktreeMenuRemove;
 
-  /// No description provided for @worktreeShowMore.
-  ///
-  /// In en, this message translates to:
-  /// **'Show {count} more'**
-  String worktreeShowMore(Object count);
-
   /// No description provided for @worktreeMore.
   ///
   /// In en, this message translates to:
@@ -10133,12 +4243,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Automations'**
   String get automationsTitle;
-
-  /// Subtitle for automations management page
-  ///
-  /// In en, this message translates to:
-  /// **'Schedule messages and prompts across workspaces and sessions.'**
-  String get automationsSubtitle;
 
   /// No description provided for @automationsNew.
   ///
@@ -10278,12 +4382,6 @@ abstract class AppLocalizations {
   /// **'Enabled'**
   String get automationsEnabled;
 
-  /// No description provided for @automationsCli.
-  ///
-  /// In en, this message translates to:
-  /// **'CLI'**
-  String get automationsCli;
-
   /// No description provided for @automationsReuseSession.
   ///
   /// In en, this message translates to:
@@ -10313,12 +4411,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reuses conversation {sessionId}'**
   String automationsReuseSessionListHint(String sessionId);
-
-  /// No description provided for @automationsTargetMember.
-  ///
-  /// In en, this message translates to:
-  /// **'Target member'**
-  String get automationsTargetMember;
 
   /// No description provided for @automationsCustomCron.
   ///
@@ -10379,12 +4471,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Automations'**
   String get automationsSidebarTitle;
-
-  /// No description provided for @automationsSidebarWithNextRun.
-  ///
-  /// In en, this message translates to:
-  /// **'Automations · {time}'**
-  String automationsSidebarWithNextRun(String time);
 
   /// No description provided for @automationsFilterAll.
   ///
@@ -10614,41 +4700,17 @@ abstract class AppLocalizations {
   /// **'Personal · {profile}'**
   String automationsScopeModePersonal(String profile);
 
-  /// No description provided for @automationsScopeModeTeam.
-  ///
-  /// In en, this message translates to:
-  /// **'Team · {team}'**
-  String automationsScopeModeTeam(String team);
-
   /// No description provided for @automationsScopePersonal.
   ///
   /// In en, this message translates to:
   /// **'Personal · {preset}'**
   String automationsScopePersonal(String preset);
 
-  /// No description provided for @automationsScopeTeam.
-  ///
-  /// In en, this message translates to:
-  /// **'Team · {team} · {member}'**
-  String automationsScopeTeam(String team, String member);
-
-  /// No description provided for @automationsScopeTeamMember.
-  ///
-  /// In en, this message translates to:
-  /// **'Team · {member}'**
-  String automationsScopeTeamMember(String member);
-
   /// No description provided for @automationsScopeScheduledMessage.
   ///
   /// In en, this message translates to:
   /// **'Scheduled message · {sessionId}'**
   String automationsScopeScheduledMessage(String sessionId);
-
-  /// Simple vs team launch mode for automation editor
-  ///
-  /// In en, this message translates to:
-  /// **'Conversation mode'**
-  String get automationsLaunchMode;
 
   /// Workspace project folder for launch-prompt automations
   ///
@@ -10667,12 +4729,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Permissions'**
   String get automationsPermissions;
-
-  /// Deprecated — use automationsLaunchMode
-  ///
-  /// In en, this message translates to:
-  /// **'Launch identity'**
-  String get automationsLaunchProfile;
 
   /// No description provided for @shortcutsWorkspaceNextTab.
   ///
@@ -11022,29 +5078,11 @@ abstract class AppLocalizations {
   /// **'Debug'**
   String get runDebug;
 
-  /// No description provided for @runDebugUnavailable.
-  ///
-  /// In en, this message translates to:
-  /// **'Debug is not available yet'**
-  String get runDebugUnavailable;
-
   /// No description provided for @runBuild.
   ///
   /// In en, this message translates to:
   /// **'Build'**
   String get runBuild;
-
-  /// No description provided for @runBuildUnavailable.
-  ///
-  /// In en, this message translates to:
-  /// **'Build is not available yet'**
-  String get runBuildUnavailable;
-
-  /// No description provided for @runMoreActions.
-  ///
-  /// In en, this message translates to:
-  /// **'More run actions'**
-  String get runMoreActions;
 
   /// No description provided for @runSelectConfiguration.
   ///
@@ -11064,29 +5102,11 @@ abstract class AppLocalizations {
   /// **'{name} (Suggested)'**
   String runSuggestedConfiguration(String name);
 
-  /// No description provided for @runAcceptRecommendation.
-  ///
-  /// In en, this message translates to:
-  /// **'Add suggested configuration to launch.json'**
-  String get runAcceptRecommendation;
-
-  /// No description provided for @runRefreshDiscover.
-  ///
-  /// In en, this message translates to:
-  /// **'Refresh discover recommendations'**
-  String get runRefreshDiscover;
-
   /// No description provided for @runConfigurationTooltip.
   ///
   /// In en, this message translates to:
   /// **'Run configuration'**
   String get runConfigurationTooltip;
-
-  /// No description provided for @runOpenLaunchJson.
-  ///
-  /// In en, this message translates to:
-  /// **'Open launch.json'**
-  String get runOpenLaunchJson;
 
   /// No description provided for @runAlreadyRunningTitle.
   ///
@@ -11159,30 +5179,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Launch type \"{type}\" is not available on remote targets'**
   String runTypeUnavailableRemote(String type);
-
-  /// No description provided for @runErrorNoConfiguration.
-  ///
-  /// In en, this message translates to:
-  /// **'No configuration selected'**
-  String get runErrorNoConfiguration;
-
-  /// No description provided for @runErrorNoFolder.
-  ///
-  /// In en, this message translates to:
-  /// **'No workspace folder'**
-  String get runErrorNoFolder;
-
-  /// No description provided for @runErrorSshProfileMissing.
-  ///
-  /// In en, this message translates to:
-  /// **'SSH profile not found for this run target'**
-  String get runErrorSshProfileMissing;
-
-  /// No description provided for @runErrorSshSpawnerMissing.
-  ///
-  /// In en, this message translates to:
-  /// **'SSH process execution is not configured'**
-  String get runErrorSshSpawnerMissing;
 
   /// No description provided for @runConfigureLaunchItems.
   ///
@@ -11273,12 +5269,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Shell Script'**
   String get runTypeShellScript;
-
-  /// No description provided for @runPickLaunchType.
-  ///
-  /// In en, this message translates to:
-  /// **'Select launch type'**
-  String get runPickLaunchType;
 
   /// No description provided for @runFieldCommand.
   ///
@@ -11382,18 +5372,6 @@ abstract class AppLocalizations {
   /// **'Script text'**
   String get runExecuteScriptText;
 
-  /// No description provided for @runValidationCommandRequired.
-  ///
-  /// In en, this message translates to:
-  /// **'Command is required'**
-  String get runValidationCommandRequired;
-
-  /// No description provided for @runValidationArgsMustBeStringList.
-  ///
-  /// In en, this message translates to:
-  /// **'Arguments must be a list of strings'**
-  String get runValidationArgsMustBeStringList;
-
   /// No description provided for @runValidationEnvMustBeStringMap.
   ///
   /// In en, this message translates to:
@@ -11405,12 +5383,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Working directory must be a string'**
   String get runValidationCwdMustBeString;
-
-  /// No description provided for @runValidationShellMustBeBoolean.
-  ///
-  /// In en, this message translates to:
-  /// **'Shell must be a boolean'**
-  String get runValidationShellMustBeBoolean;
 
   /// No description provided for @runValidationConfigurationMustBeMap.
   ///
@@ -11621,132 +5593,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Show command history'**
   String get shortcutsTerminalCommandHistory;
-
-  /// No description provided for @resourceManagerTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Resource Manager'**
-  String get resourceManagerTitle;
-
-  /// No description provided for @resourceManagerPanelTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Resource Manager - Sessions'**
-  String get resourceManagerPanelTitle;
-
-  /// No description provided for @resourceManagerTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'Resource Manager - {memory} - {count} running sessions'**
-  String resourceManagerTooltip(String memory, int count);
-
-  /// No description provided for @resourceManagerTooltipHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Running sessions across all workspaces.'**
-  String get resourceManagerTooltipHint;
-
-  /// No description provided for @resourceManagerColumnName.
-  ///
-  /// In en, this message translates to:
-  /// **'Name'**
-  String get resourceManagerColumnName;
-
-  /// No description provided for @resourceManagerColumnCpu.
-  ///
-  /// In en, this message translates to:
-  /// **'CPU'**
-  String get resourceManagerColumnCpu;
-
-  /// No description provided for @resourceManagerColumnMemory.
-  ///
-  /// In en, this message translates to:
-  /// **'Memory'**
-  String get resourceManagerColumnMemory;
-
-  /// No description provided for @resourceManagerRefresh.
-  ///
-  /// In en, this message translates to:
-  /// **'Refresh'**
-  String get resourceManagerRefresh;
-
-  /// No description provided for @resourceManagerKill.
-  ///
-  /// In en, this message translates to:
-  /// **'Kill'**
-  String get resourceManagerKill;
-
-  /// No description provided for @resourceManagerKillAll.
-  ///
-  /// In en, this message translates to:
-  /// **'Kill all'**
-  String get resourceManagerKillAll;
-
-  /// No description provided for @resourceManagerKillAllConfirmTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Kill all running sessions?'**
-  String get resourceManagerKillAllConfirmTitle;
-
-  /// No description provided for @resourceManagerKillAllConfirmBody.
-  ///
-  /// In en, this message translates to:
-  /// **'This disconnects every running session and shell in the list.'**
-  String get resourceManagerKillAllConfirmBody;
-
-  /// No description provided for @resourceManagerSpace.
-  ///
-  /// In en, this message translates to:
-  /// **'Space'**
-  String get resourceManagerSpace;
-
-  /// No description provided for @resourceManagerSpaceBeta.
-  ///
-  /// In en, this message translates to:
-  /// **'Beta'**
-  String get resourceManagerSpaceBeta;
-
-  /// No description provided for @resourceManagerSpaceNotScanned.
-  ///
-  /// In en, this message translates to:
-  /// **'Does not scan workspace disk usage.'**
-  String get resourceManagerSpaceNotScanned;
-
-  /// No description provided for @resourceManagerSystemMemoryPercent.
-  ///
-  /// In en, this message translates to:
-  /// **'{percent}% system memory'**
-  String resourceManagerSystemMemoryPercent(String percent);
-
-  /// No description provided for @resourceManagerTerminalsCount.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} running sessions'**
-  String resourceManagerTerminalsCount(int count);
-
-  /// No description provided for @resourceManagerEmptyTree.
-  ///
-  /// In en, this message translates to:
-  /// **'Nothing running right now.'**
-  String get resourceManagerEmptyTree;
-
-  /// No description provided for @resourceManagerAppProcess.
-  ///
-  /// In en, this message translates to:
-  /// **'App'**
-  String get resourceManagerAppProcess;
-
-  /// No description provided for @resourceManagerMetricsError.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not refresh process metrics.'**
-  String get resourceManagerMetricsError;
-
-  /// No description provided for @resourceManagerKillFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not kill session.'**
-  String get resourceManagerKillFailed;
 
   /// No description provided for @terminalColorSchemeTitle.
   ///
