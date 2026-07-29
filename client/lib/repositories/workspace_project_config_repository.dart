@@ -56,7 +56,7 @@ class WorkspaceProjectConfigRepository {
     );
   }
 
-  Future<WorkspaceProjectConfig> updateBundle(
+  Future<WorkspaceProjectConfig> update(
     String workspaceId,
     WorkspaceProjectConfig Function(WorkspaceProjectConfig current) mutate,
   ) async {

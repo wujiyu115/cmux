@@ -1,6 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../models/config_bundle.dart';
 import '../models/workspace_project_config.dart';
 import '../repositories/workspace_project_config_repository.dart';
 
@@ -49,18 +48,10 @@ class WorkspaceProjectConfigCubit extends Cubit<WorkspaceProjectConfigState> {
     }
   }
 
-  Future<void> updateBundle(ConfigBundle bundle) async {
-    final next = await _repository.updateBundle(
-      workspaceId,
-      (current) => current.copyWith(bundle: bundle),
-    );
-    emit(state.copyWith(config: next));
-  }
-
   Future<void> setExtensionOverride(String extensionId, bool? value) async {
     final id = extensionId.trim();
     if (id.isEmpty) return;
-    final next = await _repository.updateBundle(workspaceId, (current) {
+    final next = await _repository.update(workspaceId, (current) {
       final overrides = Map<String, bool>.from(current.extensionOverrides);
       if (value == null) {
         overrides.remove(id);

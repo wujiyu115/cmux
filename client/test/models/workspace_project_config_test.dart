@@ -1,15 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:teampilot/models/config_bundle.dart';
 import 'package:teampilot/models/workspace_project_config.dart';
 
 void main() {
-  test('round-trips bundle and extension overrides', () {
+  test('round-trips extension overrides', () {
     const config = WorkspaceProjectConfig(
-      bundle: ConfigBundle(
-        skillIds: ['s1'],
-        pluginIds: ['p1'],
-        mcpServerIds: ['m1'],
-      ),
       extensionOverrides: {'rtk': false},
     );
     final restored = WorkspaceProjectConfig.fromJson(config.toJson());
