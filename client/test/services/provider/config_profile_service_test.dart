@@ -16,7 +16,6 @@ import 'package:teampilot/services/storage/app_storage.dart';
 import 'package:teampilot/services/storage/runtime_layout.dart';
 import 'package:teampilot/services/cli/registry/config_profile/claude_config_profile_capability.dart';
 import 'package:teampilot/services/cli/registry/config_profile/flashskyai_config_profile_capability.dart';
-import 'package:teampilot/services/team_bus/member_bus_idle_endpoint.dart';
 import 'package:teampilot/services/provider/config_profile_service.dart';
 import 'package:teampilot/models/app_provider_config.dart';
 import 'package:teampilot/repositories/app_provider_repository.dart';
@@ -284,55 +283,6 @@ requires_openai_auth = true
     expect(toml, contains('deepseek-v4-flash'));
   });
 
-  test(
-    'prepareTeamLaunch merges team-bus overlay into codex config for mixed teams',
-    () async {
-      const providerToml = '''
-model_provider = "custom"
-model = "gpt-test"
-
-[model_providers.custom]
-base_url = "https://api.example.com/v1"
-''';
-      await _seedCodexProvider(base.path, id: 'p1', configToml: providerToml);
-
-      await service.prepareTeamLaunch(
-        workspaceId: _testWorkspaceId,
-        sessionId: 'sess-mixed-codex',
-        teamId: 'team-a',
-        cliTeamName: 'sess-mixed-codex',
-        cli: CliTool.codex,
-        team: TeamProfile(
-          id: 'team-a',
-          name: 'team-a',
-          cli: CliTool.codex,
-          teamMode: TeamMode.mixed,
-          providerIdsByTool: const {'codex': 'p1'},
-          members: const [
-            TeamMemberConfig(id: 'worker', name: 'worker', provider: 'p1'),
-          ],
-        ),
-        member: const TeamMemberConfig(
-          id: 'worker',
-          name: 'worker',
-          provider: 'p1',
-        ),
-        busIdle: MemberBusIdleEndpoint(url: 'http://127.0.0.1:59999/idle'),
-        runtimeBundle: const ConfigBundle(),
-      );
-
-      final codexDir = _sessionToolDir(
-        base.path,
-        'sess-mixed-codex',
-        'codex',
-        memberId: 'worker',
-      );
-      final toml = await File(p.join(codexDir, 'config.toml')).readAsString();
-      expect(toml, contains('https://api.example.com/v1'));
-      expect(toml, contains('[mcp_servers.teammate-bus]'));
-      expect(toml, contains('http://127.0.0.1:59999/mcp'));
-    },
-  );
 
   test('prepareTeamLaunch writes role prompt and injects append env', () async {
     const sessionId = 'sess-role-prompt';

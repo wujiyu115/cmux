@@ -5,7 +5,6 @@ import 'package:teampilot/services/cli/session_lifecycle/cli_session_manifest.da
 import 'package:teampilot/services/cli/session_lifecycle/cli_session_manifest_store.dart';
 import 'package:teampilot/services/cli/session_lifecycle/cursor/cursor_session_lifecycle_capability.dart';
 import 'package:teampilot/services/storage/runtime_layout.dart';
-import 'package:teampilot/services/team_bus/member_bus_idle_endpoint.dart';
 
 import '../../../../support/cursor_warm_tier_manifest_paths.dart';
 import '../../../../support/in_memory_filesystem.dart';
@@ -19,10 +18,6 @@ void main() {
   late CliSessionManifestStore store;
   late CursorSessionLifecycleCapability capability;
 
-  const busIdle = MemberBusIdleEndpoint(
-    url: 'http://127.0.0.1:9100/idle',
-    sessionId: sessionId,
-  );
 
   setUp(() {
     final fs = InMemoryFilesystem();
@@ -93,7 +88,6 @@ void main() {
 
   CliSessionGateDecision gate({
     required String memberId,
-    MemberBusIdleEndpoint? endpoint,
   }) {
     return capability.gateConnect(
       CliSessionGateContext(
@@ -102,7 +96,6 @@ void main() {
         memberId: memberId,
         tool: CliTool.cursor,
         team: gateTeam(),
-        busIdle: endpoint ?? busIdle,
       ),
     );
   }
@@ -110,7 +103,7 @@ void main() {
   group('CursorSessionLifecycleCapability.gateConnect', () {
     test('ready allows any member when overlay matches', () async {
       final overlayGen =
-          CursorSessionLifecycleCapability.overlayGenerationForBus(busIdle);
+          CursorSessionLifecycleCapability.overlayGeneration;
       await seedManifest(
         phase: CliSessionPhase.ready,
         members: {
@@ -126,7 +119,7 @@ void main() {
 
     test('degraded allows any member when overlay matches', () async {
       final overlayGen =
-          CursorSessionLifecycleCapability.overlayGenerationForBus(busIdle);
+          CursorSessionLifecycleCapability.overlayGeneration;
       await seedManifest(
         phase: CliSessionPhase.degraded,
         members: {'team-lead': memberWithOverlay(overlayGen)},
@@ -138,7 +131,7 @@ void main() {
 
     test('ready denies when overlay is missing for current session', () async {
       final overlayGen =
-          CursorSessionLifecycleCapability.overlayGenerationForBus(busIdle);
+          CursorSessionLifecycleCapability.overlayGeneration;
       await seedManifest(
         phase: CliSessionPhase.ready,
         members: {'team-lead': memberWithOverlay(overlayGen)},
@@ -151,7 +144,7 @@ void main() {
 
     test('ready denies when overlay generation is stale', () async {
       final overlayGen =
-          CursorSessionLifecycleCapability.overlayGenerationForBus(busIdle);
+          CursorSessionLifecycleCapability.overlayGeneration;
       await seedManifest(
         phase: CliSessionPhase.ready,
         members: {'team-lead': memberWithOverlay(overlayGen + 1)},

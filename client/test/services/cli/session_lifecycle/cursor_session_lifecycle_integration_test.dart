@@ -6,7 +6,6 @@ import 'package:teampilot/services/cli/session_lifecycle/cursor/cursor_session_l
 import 'package:teampilot/services/cli/session_lifecycle/cursor/cursor_session_lifecycle_paths.dart';
 import 'package:teampilot/services/provider/cursor/cursor_home_layout.dart';
 import 'package:teampilot/services/storage/runtime_layout.dart';
-import 'package:teampilot/services/team_bus/member_bus_idle_endpoint.dart';
 import 'package:teampilot/utils/team/team_member_naming.dart';
 
 import '../../../support/cursor_lifecycle_test_paths.dart';
@@ -24,10 +23,6 @@ void main() {
   late CursorSessionLifecycleCapability capability;
   late CursorLifecycleTestPaths pathsDelegate;
 
-  const busIdle = MemberBusIdleEndpoint(
-    url: 'http://127.0.0.1:9100/idle',
-    sessionId: sessionId,
-  );
 
   TeamProfile mixedCursorTeam() => TeamProfile(
     id: 'superpowers',
@@ -49,7 +44,6 @@ void main() {
         tool: CliTool.cursor,
         paths: pathsDelegate,
         team: mixedCursorTeam(),
-        busIdle: busIdle,
       ),
     );
   }
@@ -93,7 +87,6 @@ void main() {
           paths: pathsDelegate,
           team: team,
           workingDirectory: workingDirectory,
-          busIdle: busIdle,
         ),
       );
 
@@ -108,7 +101,6 @@ void main() {
           tool: CliTool.cursor,
           paths: pathsDelegate,
           team: team,
-          busIdle: busIdle,
           workingDirectory: workingDirectory,
         ),
       );
@@ -124,7 +116,6 @@ void main() {
           tool: CliTool.cursor,
           paths: pathsDelegate,
           team: team,
-          busIdle: busIdle,
           workingDirectory: workingDirectory,
         ),
       );

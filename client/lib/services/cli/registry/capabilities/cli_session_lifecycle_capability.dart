@@ -1,5 +1,4 @@
 import '../../../../models/team_config.dart';
-import '../../../team_bus/member_bus_idle_endpoint.dart';
 import '../cli_capability.dart';
 import '../config_profile/config_profile_context.dart';
 
@@ -28,7 +27,6 @@ class CliSessionPersistContext {
     required this.paths,
     this.memberId,
     this.team,
-    this.busIdle,
     this.workingDirectory = '',
     this.crossMachine = false,
   });
@@ -39,7 +37,6 @@ class CliSessionPersistContext {
   final CliTool tool;
   final ConfigProfileDelegate paths;
   final TeamProfile? team;
-  final MemberBusIdleEndpoint? busIdle;
   final String workingDirectory;
   final bool crossMachine;
 }
@@ -52,7 +49,6 @@ class CliSessionInitContext {
     required this.tool,
     required this.paths,
     this.team,
-    this.busIdle,
     this.workingDirectory = '',
     this.crossMachine = false,
     this.resolvedProviderId,
@@ -65,7 +61,6 @@ class CliSessionInitContext {
   final CliTool tool;
   final ConfigProfileDelegate paths;
   final TeamProfile? team;
-  final MemberBusIdleEndpoint? busIdle;
   final String workingDirectory;
   final bool crossMachine;
 
@@ -85,7 +80,6 @@ class CliSessionGateContext {
     required this.tool,
     this.paths,
     this.team,
-    this.busIdle,
     this.workingDirectory = '',
     this.crossMachine = false,
   });
@@ -96,7 +90,6 @@ class CliSessionGateContext {
   final CliTool tool;
   final ConfigProfileDelegate? paths;
   final TeamProfile? team;
-  final MemberBusIdleEndpoint? busIdle;
   final String workingDirectory;
   final bool crossMachine;
 }
@@ -109,7 +102,6 @@ class CliSessionFinalizeContext {
     required this.paths,
     this.memberId,
     this.team,
-    this.busIdle,
     this.workingDirectory = '',
     this.crossMachine = false,
   });
@@ -120,7 +112,6 @@ class CliSessionFinalizeContext {
   final CliTool tool;
   final ConfigProfileDelegate paths;
   final TeamProfile? team;
-  final MemberBusIdleEndpoint? busIdle;
   final String workingDirectory;
   final bool crossMachine;
 }

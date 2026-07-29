@@ -13,7 +13,6 @@ import '../provider/config_profile_service.dart';
 import '../session/session_continue_overrides_apply.dart';
 import '../session/session_lifecycle_service.dart';
 import '../storage/runtime_context.dart';
-import '../team_bus/member_bus_idle_endpoint.dart';
 import '../agent_status/member_agent_status_endpoint.dart';
 import 'launch_manifest.dart';
 import 'launch_manifest_paths.dart';
@@ -55,7 +54,6 @@ class SessionConnectOrchestrator {
     required Workspace workspace,
     required RuntimeTarget launchTarget,
     Map<String, Map<String, Object?>>? extraMcpServers,
-    MemberBusIdleEndpoint? busIdle,
     MemberAgentStatusEndpoint? agentStatus,
     void Function(CliInstallProgress progress)? onProvisionProgress,
   }) async {
@@ -78,7 +76,6 @@ class SessionConnectOrchestrator {
       plan: plan.copyWith(member: finalizedMember),
       launchTarget: launchTarget,
       extraMcpServers: extraMcpServers,
-      busIdle: busIdle,
       agentStatus: agentStatus,
       onProvisionProgress: onProvisionProgress,
     );
@@ -97,7 +94,6 @@ class SessionConnectOrchestrator {
     required String workingDirectory,
     List<String> additionalDirectories = const [],
     Map<String, Map<String, Object?>>? extraMcpServers,
-    MemberBusIdleEndpoint? busIdle,
     MemberAgentStatusEndpoint? agentStatus,
     void Function(CliInstallProgress progress)? onProvisionProgress,
   }) async {
@@ -140,7 +136,6 @@ class SessionConnectOrchestrator {
       workingDirectory: workingDirectory,
       additionalDirectories: additionalDirectories,
       extraMcpServers: extraMcpServers,
-      busIdle: busIdle,
       agentStatus: agentStatus,
       onProvisionProgress: onProvisionProgress,
     );
@@ -159,7 +154,6 @@ class SessionConnectOrchestrator {
     String workingDirectory = '',
     List<String> additionalDirectories = const [],
     Map<String, Map<String, Object?>>? extraMcpServers,
-    MemberBusIdleEndpoint? busIdle,
     MemberAgentStatusEndpoint? agentStatus,
     void Function(CliInstallProgress progress)? onProvisionProgress,
   }) async {
@@ -217,7 +211,6 @@ class SessionConnectOrchestrator {
             ? additionalDirectories
             : session.extraFolderPaths,
         extraMcpServers: extraMcpServers,
-        busIdle: busIdle,
         agentStatus: agentStatus,
       );
     } else {
@@ -250,7 +243,6 @@ class SessionConnectOrchestrator {
         runtimeBundle: plan.runtimeBundle,
         leadSessionId: leadSessionId,
         extraMcpServers: extraMcpServers,
-        busIdle: busIdle,
         agentStatus: agentStatus,
       );
 
@@ -283,7 +275,6 @@ class SessionConnectOrchestrator {
       memberBinding: memberBinding,
       environment: environment,
       extraMcpServers: extraMcpServers,
-      busIdle: busIdle,
       agentStatus: agentStatus,
     );
 

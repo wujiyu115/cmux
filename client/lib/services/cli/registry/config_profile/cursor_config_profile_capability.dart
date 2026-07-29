@@ -102,7 +102,6 @@ final class CursorConfigProfileCapability implements ConfigProfileCapability {
       memberHome: home,
       providerId: providerId.isEmpty ? null : providerId,
       member: ctx.member ?? (throw StateError('Simple launch requires plan.member')),
-      busIdle: null,
       forceTeamLeadDelegateMode: false,
       mixed: false,
       realHomeRoot: paths.home,
@@ -205,11 +204,6 @@ final class CursorConfigProfileCapability implements ConfigProfileCapability {
         }
       } else {
         warnings.add('cursor_provider_missing');
-      }
-
-      final busIdle = ctx.busIdle;
-      if (member != null && member.isValid && busIdle == null) {
-        warnings.add('cursor_bus_idle_missing');
       }
 
       return ConfigProfileLaunchContribution(

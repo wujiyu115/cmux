@@ -33,7 +33,7 @@ final class CodexHomeProvisioner {
   Future<void> provision({
     required String codexHome,
     required AppProviderConfig provider,
-    String? busOverlayToml,
+    String? hookOverlayToml,
     Iterable<String> trustedProjectDirectories = const [],
     String? storedAuthPath,
     String? reasoningEffortOverride,
@@ -68,7 +68,7 @@ final class CodexHomeProvisioner {
 
     var toml = _composer.compose(
       provider: provider,
-      busOverlayToml: busOverlayToml,
+      hookOverlayToml: hookOverlayToml,
       trustedProjectDirectories: trustedProjectDirectories,
       reasoningEffortOverride: reasoningEffortOverride,
     );

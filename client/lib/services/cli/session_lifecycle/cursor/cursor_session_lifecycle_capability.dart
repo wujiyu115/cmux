@@ -11,7 +11,6 @@ import '../../../provider/cursor/cursor_provider_settings_resolver.dart';
 import '../../../provider/cursor/cursor_workspace_warm_tier.dart';
 import '../../../provider/cursor/cursor_workspace_trust_provisioner.dart';
 import '../../../storage/runtime_layout.dart';
-import '../../../team_bus/member_bus_idle_endpoint.dart';
 import '../../registry/config_profile/config_profile_context.dart';
 import '../../registry/capabilities/cli_session_lifecycle_capability.dart';
 import '../cli_session_manifest.dart';
@@ -72,15 +71,9 @@ final class CursorSessionLifecycleCapability
     return id;
   }
 
-  /// Stable overlay generation from bus idle endpoint binding (port/token).
-  static int overlayGenerationForBus(MemberBusIdleEndpoint? busIdle) {
-    if (busIdle == null) return 0;
-    final url = busIdle.url.trim();
-    final token = busIdle.token?.trim() ?? '';
-    final sessionId = busIdle.sessionId?.trim() ?? '';
-    if (url.isEmpty && token.isEmpty && sessionId.isEmpty) return 0;
-    return Object.hash(url, token, sessionId) & 0x7fffffff;
-  }
+  /// Overlay generation for a seat home. Personal seats have no per-session
+  /// overlay binding, so the generation is constant.
+  static const int overlayGeneration = 0;
 
   @override
   Future<CliSessionPersistResult> ensurePersisted(
@@ -201,7 +194,6 @@ final class CursorSessionLifecycleCapability
           tool: ctx.tool,
           paths: ctx.paths,
           team: ctx.team,
-          busIdle: ctx.busIdle,
           workingDirectory: ctx.workingDirectory,
           crossMachine: ctx.crossMachine,
         ),
@@ -232,7 +224,7 @@ final class CursorSessionLifecycleCapability
           blocked: true,
         );
       }
-      final expectedOverlay = overlayGenerationForBus(ctx.busIdle);
+      const expectedOverlay = overlayGeneration;
       final sessionOverlay = manifest.overlayFor(ctx.sessionId, ctx.memberId);
       if (manifest.members[ctx.memberId] != null &&
           sessionOverlay?.overlayGeneration == expectedOverlay) {
@@ -362,13 +354,12 @@ final class CursorSessionLifecycleCapability
     }
 
     final member = manifest.members[ctx.memberId];
-    final expectedOverlay = overlayGenerationForBus(ctx.busIdle);
+    const expectedOverlay = overlayGeneration;
     final sessionOverlay = manifest.overlayFor(ctx.sessionId, ctx.memberId);
-    if (member != null && ctx.busIdle != null) {
-      if (sessionOverlay == null ||
-          sessionOverlay.overlayGeneration != expectedOverlay) {
-        return const CliSessionGateDecision(allowed: false, reason: 'overlay');
-      }
+    if (member != null &&
+        (sessionOverlay == null ||
+            sessionOverlay.overlayGeneration != expectedOverlay)) {
+      return const CliSessionGateDecision(allowed: false, reason: 'overlay');
     }
 
     switch (manifest.phase) {
@@ -518,7 +509,7 @@ final class CursorSessionLifecycleCapability
     CliSessionManifest manifest,
     String memberHome,
   ) async {
-    final expectedOverlay = overlayGenerationForBus(ctx.busIdle);
+    const expectedOverlay = overlayGeneration;
     final sessionOverlay = manifest.overlayFor(ctx.sessionId, ctx.memberId);
     final overlayStale =
         sessionOverlay != null &&
@@ -547,7 +538,6 @@ final class CursorSessionLifecycleCapability
       ).provisionOverlayOnly(
         memberHome: memberHome,
         member: member,
-        busIdle: ctx.busIdle,
         forceTeamLeadDelegateMode: team.forceTeamLeadDelegateMode,
         cliConfigJson: baseJson,
         sharedMcpBasePath: mcpBasePath,

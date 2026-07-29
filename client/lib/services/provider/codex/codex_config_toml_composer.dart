@@ -1,7 +1,8 @@
 import '../../../models/app_provider_config.dart';
+import 'codex_agent_status_overlay.dart';
 import 'codex_effort_toml.dart';
+import 'codex_managed_hook_overlay.dart';
 import 'codex_project_trust_toml.dart';
-import 'codex_team_bus_overlay.dart';
 import '../tool_config_generator.dart';
 
 /// Builds the effective `config.toml` body for a Codex session `CODEX_HOME`.
@@ -13,7 +14,7 @@ final class CodexConfigTomlComposer {
 
   String compose({
     required AppProviderConfig provider,
-    String? busOverlayToml,
+    String? hookOverlayToml,
     Iterable<String> trustedProjectDirectories = const [],
     String? reasoningEffortOverride,
   }) {
@@ -22,12 +23,13 @@ final class CodexConfigTomlComposer {
     if (effortOverride.isNotEmpty) {
       base = CodexEffortToml.applyReasoningEffort(base, effortOverride);
     }
-    final overlay = busOverlayToml?.trim() ?? '';
+    final overlay = hookOverlayToml?.trim() ?? '';
     final withOverlay = overlay.isEmpty
         ? base
         : base.isEmpty
         ? overlay
-        : CodexTeamBusOverlay.containsOverlay(base)
+        : (CodexManagedHookOverlay.containsOverlay(base) ||
+              CodexAgentStatusOverlay.containsOverlay(base))
         ? base
         : '$base\n\n$overlay';
     return CodexProjectTrustToml.applyTrustedDirectories(

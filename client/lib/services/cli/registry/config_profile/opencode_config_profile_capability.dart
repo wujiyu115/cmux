@@ -379,37 +379,6 @@ final class OpencodeConfigProfileCapability implements ConfigProfileCapability {
       changed = true;
     }
 
-    final busIdle = ctx.busIdle;
-    if (mixed && busIdle != null && member != null && member.isValid) {
-      final port = busIdle.port;
-      if (port != null) {
-        await _writeIdlePlugin(paths: paths, opencodeDir: opencodeDir);
-        config = mergeOpencodeIdlePlugin(
-          config,
-          member.id,
-          port,
-          token: busIdle.token,
-          sessionId: busIdle.sessionId,
-        );
-        if (!busIdle.isRemote) {
-          final localNative =
-              !AppStorage.isInstalled ||
-              AppStorage.context.mode == StorageBackendMode.native;
-          final bridgePath = localNative ? BusBridgeLocator.resolve() : null;
-          config = mergeOpencodeTeammateBusMcp(
-            config,
-            member.id,
-            port,
-            sessionId: busIdle.sessionId ?? ctx.sessionId,
-            bridgePath: bridgePath,
-          );
-        }
-        changed = true;
-      } else {
-        warnings.add('opencode_bus_idle_port_missing');
-      }
-    }
-
     // Agent-status plugin: simple + team whenever stamped — not mixed-gated.
     final agentStatus = ctx.agentStatus;
     if (agentStatus != null && member != null && member.isValid) {

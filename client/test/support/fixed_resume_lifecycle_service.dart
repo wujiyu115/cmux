@@ -10,7 +10,6 @@ import 'package:teampilot/services/session/session_lifecycle_service.dart';
 import 'package:teampilot/services/session/shell_launch_spec.dart'
     show LaunchPlan, ShellLaunchSpec;
 import 'package:teampilot/services/agent_status/member_agent_status_endpoint.dart';
-import 'package:teampilot/services/team_bus/member_bus_idle_endpoint.dart';
 
 /// Forces [LaunchPlan.resume] so open-session tests can assert session-id vs resume.
 class FixedResumeLifecycleService extends SessionLifecycleService {
@@ -29,7 +28,6 @@ class FixedResumeLifecycleService extends SessionLifecycleService {
     CliPreset? preset,
     required Map<String, String> environment,
     Map<String, Map<String, Object?>>? extraMcpServers,
-    MemberBusIdleEndpoint? busIdle,
     MemberAgentStatusEndpoint? agentStatus,
   }) async {
     final spec = await super.prepareShellLaunchFromEnvironmentPlan(
@@ -41,7 +39,6 @@ class FixedResumeLifecycleService extends SessionLifecycleService {
       preset: preset,
       environment: environment,
       extraMcpServers: extraMcpServers,
-      busIdle: busIdle,
       agentStatus: agentStatus,
     );
     return _withFixedResume(spec);

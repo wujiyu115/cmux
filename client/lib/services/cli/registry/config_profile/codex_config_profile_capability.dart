@@ -14,13 +14,9 @@ import '../../../provider/provider_catalog_access.dart';
 import '../../../provider/codex/codex_provider_settings_resolver.dart';
 import '../../../provider/codex/codex_agent_status_overlay.dart';
 import '../../../provider/codex/codex_managed_hook_overlay.dart';
-import '../../../provider/codex/codex_team_bus_overlay.dart';
 import '../../../launch/work_plane_paths.dart';
-import '../../../host/host_script_runner.dart';
-import '../../../io/filesystem.dart';
 import '../../../provider/workspace_trust_provisioner.dart';
 import '../../../session/member_role_provision.dart';
-import '../../../team_bus/member_bus_idle_endpoint.dart';
 import '../../../../utils/workspace/trusted_project_paths.dart';
 import '../capabilities/config_profile_capability.dart';
 
@@ -84,37 +80,15 @@ final class CodexConfigProfileCapability implements ConfigProfileCapability {
     if (provider == null) {
       warnings.add('codex_provider_missing');
     } else {
-      final busIdle = mixed ? ctx.busIdle : null;
       final host = paths.hostEnvironmentForProvision();
       final overlayParts = <String>[];
       final installsManagedHooks =
-          (busIdle != null || ctx.agentStatus != null) &&
-          member != null &&
-          member.isValid;
+          ctx.agentStatus != null && member != null && member.isValid;
       if (installsManagedHooks) {
         overlayParts.add(
           CodexManagedHookOverlay.build(
             dangerouslySkipPermissions: member.dangerouslySkipPermissions,
           ),
-        );
-      }
-      if (busIdle != null && member != null && member.isValid) {
-        overlayParts.add(
-          await (busIdle.isRemote
-              ? CodexTeamBusOverlay.provisionStopHook(
-                  fs: paths.fs,
-                  runner: host.scriptRunner,
-                  codexHome: codexHome,
-                  memberId: member.id,
-                  idle: busIdle,
-                )
-              : CodexTeamBusOverlay.buildLocal(
-                  fs: paths.fs,
-                  runner: host.scriptRunner,
-                  codexHome: codexHome,
-                  memberId: member.id,
-                  idle: busIdle,
-                )),
         );
       }
       // Agent-status hooks: simple + team whenever stamped — not mixed-gated.
@@ -130,7 +104,7 @@ final class CodexConfigProfileCapability implements ConfigProfileCapability {
           ),
         );
       }
-      final busOverlay =
+      final hookOverlay =
           overlayParts.isEmpty ? null : overlayParts.join('\n\n');
       final trustedDirectories = await _trustedProjectDirectories(
         paths: paths,
@@ -148,7 +122,7 @@ final class CodexConfigProfileCapability implements ConfigProfileCapability {
         await CodexHomeProvisioner(fs: paths.fs).provision(
           codexHome: codexHome,
           provider: provider,
-          busOverlayToml: busOverlay,
+          hookOverlayToml: hookOverlay,
           trustedProjectDirectories: trustedDirectories,
           storedAuthPath: _storedCodexAuthPath(paths, provider),
           reasoningEffortOverride: _resolveCodexEffort(
@@ -201,22 +175,6 @@ final class CodexConfigProfileCapability implements ConfigProfileCapability {
     if (providers.length == 1) return providers.first;
     return null;
   }
-
-  /// Back-compat for tests that target the team-bus overlay fragment only.
-  @visibleForTesting
-  static Future<String> buildCodexConfigToml({
-    required Filesystem fs,
-    required HostScriptRunner runner,
-    required String codexHome,
-    required String memberId,
-    required MemberBusIdleEndpoint idle,
-  }) => CodexTeamBusOverlay.buildLocal(
-    fs: fs,
-    runner: runner,
-    codexHome: codexHome,
-    memberId: memberId,
-    idle: idle,
-  );
 
   static String _resolveCodexEffort({
     required TeamProfile? team,

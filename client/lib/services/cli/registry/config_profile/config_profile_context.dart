@@ -8,7 +8,6 @@ import '../../../host/host_execution_environment.dart';
 import '../../../provider/provider_catalog_access.dart';
 import '../../../storage/runtime_layout.dart';
 import '../../../agent_status/member_agent_status_endpoint.dart';
-import '../../../team_bus/member_bus_idle_endpoint.dart';
 import 'config_profile_scope.dart';
 
 export 'config_profile_scope.dart';
@@ -157,7 +156,6 @@ class ConfigProfileLaunchContext {
     required this.paths,
     required this.catalog,
     this.leadSessionId,
-    this.busIdle,
     this.agentStatus,
     this.preset,
     this.memberId,
@@ -181,7 +179,6 @@ class ConfigProfileLaunchContext {
   /// Control-plane paths: provider catalog and home credential reads.
   final ConfigProfilePaths catalog;
   final String? leadSessionId;
-  final MemberBusIdleEndpoint? busIdle;
 
   /// Permission / status HTTP hooks (`POST /agent-status`). Stamped at
   /// lifecycle (Task 7); null until then — writers install only when set.

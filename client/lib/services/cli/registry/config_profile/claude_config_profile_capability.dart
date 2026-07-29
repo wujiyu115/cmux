@@ -17,9 +17,7 @@ import '../../../team/claude_team_roster_service.dart';
 import '../capabilities/config_profile_capability.dart';
 import '../../../provider/workspace_trust_provisioner.dart';
 import '../../../agent_status/member_agent_status_endpoint.dart';
-import '../../../team_bus/member_bus_idle_endpoint.dart';
 import 'agent_status_hooks.dart';
-import 'bus_idle_stop_hook.dart';
 import '../../../../utils/logging/logger.dart';
 
 void _logClaudeContributeLaunchStep(
@@ -274,7 +272,6 @@ final class ClaudeConfigProfileCapability implements ConfigProfileCapability {
       forceTeamLeadDelegateMode: team?.forceTeamLeadDelegateMode ?? false,
       mixed: mixed,
       simple: simple,
-      busIdle: ctx.busIdle,
       agentStatus: ctx.agentStatus,
     );
     if (stepSw != null) {
@@ -651,7 +648,6 @@ final class ClaudeConfigProfileCapability implements ConfigProfileCapability {
     required bool forceTeamLeadDelegateMode,
     required bool mixed,
     bool simple = false,
-    MemberBusIdleEndpoint? busIdle,
     MemberAgentStatusEndpoint? agentStatus,
   }) async {
     final selected = launchedMember;
@@ -676,7 +672,6 @@ final class ClaudeConfigProfileCapability implements ConfigProfileCapability {
         forceTeamLeadDelegateMode: forceTeamLeadDelegateMode,
         mixed: mixed,
         simple: simple,
-        busIdle: busIdle,
         agentStatus: agentStatus,
       );
     }
@@ -691,7 +686,6 @@ final class ClaudeConfigProfileCapability implements ConfigProfileCapability {
     required bool forceTeamLeadDelegateMode,
     required bool mixed,
     bool simple = false,
-    MemberBusIdleEndpoint? busIdle,
     MemberAgentStatusEndpoint? agentStatus,
   }) async {
     final memberToolDir = delegate.sessionToolDir(
@@ -735,9 +729,6 @@ final class ClaudeConfigProfileCapability implements ConfigProfileCapability {
       settings,
       mixed: mixed,
     );
-    if (mixed && busIdle != null) {
-      settings = mergeStopIdleHook(settings, member.id, busIdle);
-    }
     if (agentStatus != null) {
       settings = mergeAgentStatusHooks(settings, member.id, agentStatus);
     }

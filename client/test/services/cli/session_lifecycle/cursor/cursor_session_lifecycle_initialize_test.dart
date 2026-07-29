@@ -14,7 +14,6 @@ import 'package:teampilot/services/io/filesystem.dart';
 import 'package:teampilot/services/provider/cursor/cursor_cli_config_policy.dart';
 import 'package:teampilot/services/provider/cursor/cursor_home_layout.dart';
 import 'package:teampilot/services/storage/runtime_layout.dart';
-import 'package:teampilot/services/team_bus/member_bus_idle_endpoint.dart';
 import 'package:teampilot/services/team_bus/mcp/teammate_bus_mcp_config.dart';
 import 'package:teampilot/utils/team/team_member_naming.dart';
 
@@ -35,10 +34,6 @@ void main() {
   late _TestPaths pathsDelegate;
   late _RecordingAuthSync authSync;
 
-  const busIdle = MemberBusIdleEndpoint(
-    url: 'http://127.0.0.1:9100/idle',
-    sessionId: sessionId,
-  );
 
   TeamProfile mixedCursorTeam() => TeamProfile(
     id: 'superpowers',
@@ -63,7 +58,6 @@ void main() {
       tool: CliTool.cursor,
       paths: pathsDelegate,
       team: team ?? mixedCursorTeam(),
-      busIdle: busIdle,
       workingDirectory: workingDirectory,
     );
   }
@@ -90,7 +84,6 @@ void main() {
         paths: pathsDelegate,
         team: mixedCursorTeam(),
         workingDirectory: workingDirectory,
-        busIdle: busIdle,
       ),
     );
   }
@@ -153,27 +146,6 @@ void main() {
       expect(manifest!.phase, CliSessionPhase.ready);
     });
 
-    test('provisions overlay with teammate-bus permissions and X-Member', () async {
-      await seedPersisted();
-
-      final cap = await capability();
-      await cap.initialize(initContext());
-
-      final memberHome = lifecyclePaths.memberHomeRoot(TeamMemberNaming.teamLeadName);
-      final cliConfig =
-          jsonDecode((await fs.readString(homeLayout.cliConfig(memberHome)))!)
-              as Map<String, Object?>;
-      final allow = (cliConfig['permissions']! as Map)['allow'] as List;
-      expect(allow, contains(CursorCliConfigPolicy.teamBusMcpAllowEntry));
-
-      final mcp =
-          jsonDecode((await fs.readString(homeLayout.mcpConfig(memberHome)))!)
-              as Map<String, Object?>;
-      final busServer =
-          (mcp['mcpServers'] as Map)[teammateBusMcpServerName] as Map;
-      final headers = (busServer['headers'] as Map).cast<String, String>();
-      expect(headers[teammateBusMcpMemberHeader], TeamMemberNaming.teamLeadName);
-    });
 
     test('syncs per-member auth from provider store', () async {
       await seedPersisted();
