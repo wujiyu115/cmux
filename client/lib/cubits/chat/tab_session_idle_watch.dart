@@ -86,11 +86,6 @@ final class TabSessionIdleWatch {
       },
     );
     for (final tab in _tabStore.openTabs) {
-      final bus = tab.teamBus;
-      if (bus != null) {
-        if (bus.hasTaskQueue) bus.reclaimExpiredTasks();
-        bus.reengageIdleWorkers();
-      }
       final isPersonal = _coordinationFactory.sessionWorking.isPersonalTab(tab);
       tab.memberShells.forEach((memberId, shell) {
         final key = '${tab.info.id}:$memberId';
@@ -113,8 +108,7 @@ final class TabSessionIdleWatch {
           endTurn: () {
             appLogger.d(
               '[idle-watch] end-turn member=$memberId '
-              'session=${tab.info.id} '
-              'busInTurn=${bus?.isMemberInTurn(memberId)}',
+              'session=${tab.info.id}',
             );
             coordination.endTurn();
           },

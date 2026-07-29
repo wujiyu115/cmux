@@ -6,7 +6,6 @@ import '../cli/registry/capabilities/presence_capability.dart';
 import '../cli/registry/cli_tool_registry.dart';
 import '../io/filesystem.dart';
 import '../storage/app_storage.dart';
-import '../team_bus/team_bus.dart';
 import '../terminal/terminal_session.dart';
 import 'claude_roster_activity_source.dart';
 import 'member_coordination.dart';
@@ -16,7 +15,6 @@ class PresenceSessionContext {
   const PresenceSessionContext({
     required this.team,
     this.appSession,
-    this.teamBus,
     this.globalPresets = const [],
   });
 
@@ -25,7 +23,6 @@ class PresenceSessionContext {
   /// Active tab session — when set, presence polls session pods (not a fresh
   /// expand of possibly-stale [TeamMemberConfig.replicas]).
   final AppSession? appSession;
-  final TeamBus? teamBus;
   final List<CliPreset> globalPresets;
 }
 
@@ -77,7 +74,6 @@ class MemberPresenceService {
 
     final team = session?.team;
     final teamMode = team?.teamMode ?? TeamMode.native;
-    final bus = session?.teamBus;
     final globalPresets = session?.globalPresets ?? const [];
 
     final out = <String, MemberPresence>{};
@@ -92,7 +88,7 @@ class MemberPresenceService {
           team: team ?? TeamProfile(id: '', name: '', cli: teamCli),
           teamMode: teamMode,
           globalPresets: globalPresets,
-          bus: bus,
+          bus: null,
           session: session?.appSession,
           claudeRosterWorking: _claudeRoster.isMemberWorking(
             memberId: member.id,

@@ -81,7 +81,6 @@ final class SessionWorkingResolver {
 
     final resolvedTeam = team ?? _fallbackTeam(tab);
     final teamMode = resolvedTeam.teamMode;
-    final bus = tab.teamBus;
     final isPersonal = isPersonalTab(tab);
     final session = tab.persistedSession;
 
@@ -105,7 +104,7 @@ final class SessionWorkingResolver {
       team: resolvedTeam,
       teamMode: teamMode,
       globalPresets: globalPresets,
-      bus: bus,
+      bus: null,
       session: session,
       isPersonalSession: isPersonal,
       claudeRosterWorking: claudeWorkingByMemberId[memberId] ?? false,
@@ -119,12 +118,10 @@ final class SessionWorkingResolver {
 
   TeamProfile _fallbackTeam(ChatTab tab) {
     final session = tab.persistedSession;
-    final hasBus = tab.teamBus != null;
     return TeamProfile(
       id: session?.sessionTeam.trim() ?? '',
       name: '',
       cli: session?.cli ?? CliTool.claude,
-      teamMode: hasBus ? TeamMode.mixed : TeamMode.native,
     );
   }
 }

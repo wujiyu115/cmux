@@ -5,10 +5,7 @@ import 'package:teampilot/models/app_session.dart';
 import 'package:teampilot/models/member_presence.dart';
 import 'package:teampilot/models/team_config.dart';
 import 'package:teampilot/services/team/session_working_resolver.dart';
-import 'package:teampilot/services/team_bus/team_bus.dart';
 import 'package:teampilot/services/terminal/terminal_session.dart';
-
-import '../team_bus/support/fake_member_launcher.dart';
 
 void main() {
   final resolver = SessionWorkingResolver();
@@ -26,7 +23,6 @@ void main() {
           sessionTeam: 'team-1',
           createdAt: 0,
         )
-        ..teamBus = TeamBus(launcher: FakeMemberLauncher())
         ..memberShells['worker'] = _ConnectedShell()
         ..memberShells['idle-peer'] = _ConnectedShell();
 

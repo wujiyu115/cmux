@@ -37,7 +37,6 @@ void main() {
           tabStore: store,
           shellFactory: ChatSessionShellFactory(executableResolver: () => 'true'),
           globalPresets: () => const [],
-          activeTeam: () => null,
           isClosed: () => false,
         ),
         tabStore: store,

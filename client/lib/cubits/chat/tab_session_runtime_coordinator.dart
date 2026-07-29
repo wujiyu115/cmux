@@ -21,7 +21,6 @@ class TabSessionRuntimeCoordinator {
     required ChatTabStore tabStore,
     required ChatSessionShellFactory shellFactory,
     required List<CliPreset> Function() globalPresets,
-    required TeamProfile? Function() activeTeam,
     required bool Function() isClosed,
     TabMemberCoordinationFactory? coordinationFactory,
     TabMemberPtyDelivery? delivery,
@@ -42,7 +41,6 @@ class TabSessionRuntimeCoordinator {
         TabMemberCoordinationFactory(
           tabStore: tabStore,
           globalPresets: globalPresets,
-          activeTeam: activeTeam,
           sessionWorking: working,
         );
     final ptyDelivery =
@@ -51,7 +49,6 @@ class TabSessionRuntimeCoordinator {
           tabStore: tabStore,
           shellFactory: shellFactory,
           globalPresets: globalPresets,
-          activeTeam: activeTeam,
           isClosed: isClosed,
           coordinationFactory: coordination,
           onAfterTurnLatched: onAfterTurnLatched,
@@ -71,7 +68,6 @@ class TabSessionRuntimeCoordinator {
           tabStore: tabStore,
           sessionWorking: working,
           globalPresets: globalPresets,
-          activeTeam: activeTeam,
           activeSessionId: activeSessionId ?? () => null,
           presence: presence ?? () => const {},
           sessionBusyFromAttention: sessionBusyFromAttention,

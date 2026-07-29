@@ -847,19 +847,11 @@ Future<AppShell> buildAppShell({
     lifecycleService: sessionLifecycleService,
     automationRepository: automationRepo,
     layoutCubit: layoutCubit,
-    autoLaunchAllMembersOnConnect: () =>
-        sessionPreferencesCubit.state.preferences.autoLaunchAllMembersOnConnect,
     executableResolver: () => sessionPreferencesCubit.resolveExecutable(),
     cliExecutableResolver: sessionPreferencesCubit.resolveExecutable,
     transportFactory: transportFactory,
     sshProfileResolver: () => sshProfileCubit.state.selectedProfile,
     sshProfileById: sshProfileById,
-    teamById: (teamId) async {
-      for (final team in await identityRepository.loadTeamProfiles()) {
-        if (team.id == teamId) return team;
-      }
-      return null;
-    },
     sshDefaultWorkingDirectoryResolver: () =>
         sessionPreferencesCubit.state.preferences.defaultSshWorkingDirectory,
     sshUseLoginShellResolver: () =>
@@ -867,9 +859,6 @@ Future<AppShell> buildAppShell({
     defaultTargetResolver: defaultTargetResolver,
     terminalScrollbackLinesResolver: () =>
         sessionPreferencesCubit.state.preferences.terminalScrollbackLines,
-    // P3b (#1): connect remote (ssh) mixed-team members back to the in-process
-    // bus over a reverse tunnel. Local members resolve to null (unchanged).
-    remoteBusResolver: RemoteBusBindingResolver(registry: cliToolRegistry),
     sessionConnect: buildSessionConnectOrchestrator(
       lifecycle: sessionLifecycleService,
       registry: cliToolRegistry,
@@ -980,11 +969,7 @@ Future<AppShell> buildAppShell({
   aiHistoryLoaderRef = aiHistoryLoader;
   final aiHistoryCubit = AiHistoryCubit(
     loader: aiHistoryLoader,
-    loadMailboxRecords: (sessionId, memberId) async {
-      final bus = chatCubit.tabStore.openTabBySessionId(sessionId)?.teamBus;
-      if (bus == null) return const [];
-      return bus.memberMailRecords(memberId);
-    },
+    loadMailboxRecords: (sessionId, memberId) async => const [],
   );
   chatCubit.onSessionHistoryStale = (sessionId) {
     unawaited(aiHistoryCubit.softReloadIfSession(sessionId));

@@ -25,7 +25,6 @@ final class TabMemberPtyDelivery {
     required ChatTabStore tabStore,
     required ChatSessionShellFactory shellFactory,
     required List<CliPreset> Function() globalPresets,
-    required TeamProfile? Function() activeTeam,
     required bool Function() isClosed,
     required TabMemberCoordinationFactory coordinationFactory,
     void Function(String sessionId, String memberId)? onAfterTurnLatched,
@@ -33,7 +32,6 @@ final class TabMemberPtyDelivery {
   }) : _tabStore = tabStore,
        _shellFactory = shellFactory,
        _globalPresets = globalPresets,
-       _activeTeam = activeTeam,
        _isClosed = isClosed,
        _coordinationFactory = coordinationFactory,
        _onAfterTurnLatched = onAfterTurnLatched {
@@ -47,14 +45,12 @@ final class TabMemberPtyDelivery {
   final ChatTabStore _tabStore;
   final ChatSessionShellFactory _shellFactory;
   final List<CliPreset> Function() _globalPresets;
-  final TeamProfile? Function() _activeTeam;
   final bool Function() _isClosed;
   final TabMemberCoordinationFactory _coordinationFactory;
   final void Function(String sessionId, String memberId)? _onAfterTurnLatched;
   late final MemberPtyInjectService _ptyInject;
 
-  TeamBus? busForSession(String sessionId) =>
-      _tabStore.openTabBySessionId(sessionId)?.teamBus;
+  TeamBus? busForSession(String sessionId) => null;
 
   bool hasPendingRetry(String sessionId, String memberId) =>
       _ptyInject.hasPendingRetry(sessionId, memberId);
@@ -383,7 +379,7 @@ final class TabMemberPtyDelivery {
     final tab = _tabStore.openTabBySessionId(sessionId);
     return SessionMemberCliResolver.resolve(
       persistedSession: tab?.persistedSession,
-      team: _activeTeam(),
+      team: null,
       memberId: memberId,
       cliForMember: _shellFactory.cliForMember,
       globalPresets: _globalPresets(),

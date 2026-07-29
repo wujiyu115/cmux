@@ -221,7 +221,6 @@ class _FakeHost implements SessionLaunchHost {
         tabStore: tabStore,
         shellFactory: ChatSessionShellFactory(executableResolver: () => 'true'),
         globalPresets: () => const [],
-        activeTeam: () => null,
         isClosed: () => false,
       );
 

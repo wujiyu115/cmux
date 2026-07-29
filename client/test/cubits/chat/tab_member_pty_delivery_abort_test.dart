@@ -13,12 +13,10 @@ void main() {
       tabStore: tabStore,
       shellFactory: ChatSessionShellFactory(executableResolver: () => 'unused'),
       globalPresets: () => const [],
-      activeTeam: () => null,
       isClosed: () => false,
       coordinationFactory: TabMemberCoordinationFactory(
         tabStore: tabStore,
         globalPresets: () => const [],
-        activeTeam: () => null,
       ),
       ptyInject: ptyInject,
     );

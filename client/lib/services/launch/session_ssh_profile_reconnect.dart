@@ -46,18 +46,6 @@ class SessionSshProfileReconnect {
 
       if (session.sessionTeam.trim().isEmpty) {
         await _reconnectPersonalTab(tab, session, profileId);
-      } else {
-        final team = await _host.teamProfileById(session.sessionTeam.trim());
-        if (team == null) continue;
-        for (final member in team.members.where((m) => m.isValid)) {
-          await _reconnectTeamMemberTab(
-            tab: tab,
-            team: team,
-            member: member,
-            session: session,
-            profileId: profileId,
-          );
-        }
       }
     }
   }

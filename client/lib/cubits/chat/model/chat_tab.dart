@@ -3,9 +3,7 @@ import 'dart:async';
 import '../../../models/app_session.dart';
 import '../../../models/member_remote_provision_progress.dart';
 import '../../../services/ssh/ssh_member_session.dart';
-import '../../../services/team_bus/mcp/teammate_bus_session_registry.dart';
 import '../../../services/team_bus/remote/remote_bus_mount.dart';
-import '../../../services/team_bus/team_bus.dart';
 import '../../../services/terminal/terminal_session.dart';
 import 'chat_tab_info.dart';
 import 'session_workbench_view.dart';
@@ -57,10 +55,6 @@ class ChatTab {
 
   final Map<String, TerminalSession> memberShells = {};
 
-  /// mixed 模式：本 team 会话的进程内总线与其 gateway 注册（随 tab 建/销）。
-  TeamBus? teamBus;
-  TeammateBusSessionRegistration? busSessionRegistration;
-
   /// Per-member reverse-tunnel bus mounts (session plane). One mount per remote
   /// roster member so auto-launching multiple ssh members does not tear down
   /// siblings.
@@ -92,9 +86,6 @@ class ChatTab {
     for (final id in memberSshSessions.keys.toList()) {
       closeMemberSshSession(id);
     }
-    teamBus?.dispose();
-    teamBus = null;
-    busSessionRegistration = null;
   }
 
   /// Member ids with a scheduled or in-flight member connect.

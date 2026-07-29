@@ -1,6 +1,5 @@
 import '../../cubits/chat_cubit.dart';
 import '../../cubits/chat/model/chat_tab.dart';
-import '../../services/team_bus/team_bus.dart';
 
 /// Session id highlighted in a kept-alive workspace sidebar for [tabScopeId].
 ///
@@ -33,6 +32,3 @@ ChatTab? scopedActiveChatTab(ChatCubit cubit, String tabScopeId) {
   final index = store.savedActiveIndexFor(tabScopeId);
   return bucket[index.clamp(0, bucket.length - 1)];
 }
-
-TeamBus? scopedTeamBus(ChatCubit cubit, String tabScopeId) =>
-    scopedActiveChatTab(cubit, tabScopeId)?.teamBus;

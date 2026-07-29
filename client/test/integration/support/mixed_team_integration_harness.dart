@@ -139,7 +139,6 @@ class MixedTeamIntegrationHarness {
       automationRepository: testAutomationRepository(),
       cliExecutableResolver: (_) => claudePath,
       postFrameScheduler: postFrame.scheduler,
-      autoLaunchAllMembersOnConnect: () => true,
       sessionRepository: SessionRepository(),
       lifecycleService: SessionLifecycleService(
         appDataBasePath: AppStorage.paths.basePath,
@@ -165,7 +164,6 @@ class MixedTeamIntegrationHarness {
       automationRepository: testAutomationRepository(),
       cliExecutableResolver: (_) => claudePath,
       postFrameScheduler: postFrame.scheduler,
-      autoLaunchAllMembersOnConnect: () => true,
       sessionRepository: SessionRepository(),
       lifecycleService: lifecycle,
       transportFactory: TerminalTransportFactory(
@@ -176,9 +174,6 @@ class MixedTeamIntegrationHarness {
       ),
       sshProfileById: profileById,
       defaultTargetResolver: RuntimeTarget.local,
-      remoteBusResolver: RemoteBusBindingResolver(
-        registry: CliToolRegistry.builtIn(),
-      ),
       sessionConnect: buildSessionConnectOrchestrator(
         lifecycle: lifecycle,
         registry: CliToolRegistry.builtIn(),
@@ -409,8 +404,7 @@ class MixedTeamIntegrationHarness {
     }
   }
 
-  TeamBus? _busForSession(ChatCubit? cubit, String sessionId) =>
-      cubit?.tabStore.openTabBySessionId(sessionId)?.teamBus;
+  TeamBus? _busForSession(ChatCubit? cubit, String sessionId) => null;
 
   TeammateBusMcpGateway? _gatewayForSession(ChatCubit? cubit) =>
       cubit?.teammateBusMcpGateway;
@@ -686,8 +680,7 @@ class MixedTeamIntegrationHarness {
     }
   }
 
-  TeamBus? tabBus(String sessionId) =>
-      cubit?.tabStore.openTabBySessionId(sessionId)?.teamBus;
+  TeamBus? tabBus(String sessionId) => null;
 
   TeammateBusMcpGateway? tabGateway(ChatCubit? cubit) =>
       _gatewayForSession(cubit ?? this.cubit);

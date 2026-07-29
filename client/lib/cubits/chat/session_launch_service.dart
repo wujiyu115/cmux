@@ -71,8 +71,7 @@ class SessionLaunchService implements SessionShellConnectorDelegate {
       resetTeamConfigValidationSurface: resetTeamConfigValidationSurface,
       scheduleTeamConfigValidation: scheduleTeamConfigValidation,
       activeTab: () => _activeTab,
-      autoLaunchAllMembersOnConnect: () =>
-          _h.autoLaunchAllMembersOnConnect?.call() == true,
+      autoLaunchAllMembersOnConnect: () => false,
       isTabsEmpty: () => _tabStore.activeTabsIsEmpty,
       activeBucketKey: () => _tabStore.activeWorkspaceId,
       uuid: _uuid,
@@ -268,8 +267,6 @@ class SessionLaunchService implements SessionShellConnectorDelegate {
     required int generation,
   }) async {
     if (team == null) return;
-    _h.activeTeam = team;
-    _h.pushPresenceTarget();
   }
 
   void _scheduleShellConnect({
@@ -301,8 +298,6 @@ class SessionLaunchService implements SessionShellConnectorDelegate {
           shell: shell,
           repo: request.repo,
           launched: launched,
-          team: team,
-          member: member,
           workspace: workspace,
         );
         switch (result) {

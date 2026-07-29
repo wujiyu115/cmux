@@ -77,7 +77,6 @@ class ChatCubit extends Cubit<ChatState>
     TerminalSessionFactory terminalSessionFactory =
         defaultTerminalSessionFactory,
     PostFrameScheduler? postFrameScheduler,
-    bool Function()? autoLaunchAllMembersOnConnect,
     SessionLifecycleService? lifecycleService,
     SessionRepository? sessionRepository,
     TerminalTransportFactory? transportFactory,
@@ -87,19 +86,15 @@ class ChatCubit extends Cubit<ChatState>
     bool Function()? sshUseLoginShellResolver,
     RuntimeTarget Function()? defaultTargetResolver,
     int Function()? terminalScrollbackLinesResolver,
-    RemoteBusBindingResolver? remoteBusResolver,
     SessionConnectOrchestrator? sessionConnect,
     TeammateBusMcpGateway? teammateBusMcpGateway,
     AgentStatusSeatLookup? agentStatusSeatLookup,
     AgentAttentionCubit? agentAttentionCubit,
-    Future<TeamProfile?> Function(String teamId)? teamById,
     required AutomationRepository automationRepository,
     LayoutCubit? layoutCubit,
     RemoteCliReadinessService? remoteCliReadiness,
-  }) : _remoteBusResolver = remoteBusResolver,
-       _remoteCliReadiness = remoteCliReadiness,
+  }) : _remoteCliReadiness = remoteCliReadiness,
        _sessionConnect = sessionConnect,
-       _teamById = teamById,
        _teammateBusMcpGateway =
            teammateBusMcpGateway ?? TeammateBusMcpGateway(),
        _agentStatusSeatLookup = agentStatusSeatLookup,
@@ -119,7 +114,6 @@ class ChatCubit extends Cubit<ChatState>
          terminalScrollbackLinesResolver: terminalScrollbackLinesResolver,
        ),
        _postFrameScheduler = postFrameScheduler ?? _defaultPostFrameScheduler,
-       _autoLaunchAllMembersOnConnect = autoLaunchAllMembersOnConnect,
        _lifecycle = lifecycleService ?? SessionLifecycleService(),
        _sessionRepository = sessionRepository,
        super(const ChatState()) {
@@ -137,13 +131,11 @@ class ChatCubit extends Cubit<ChatState>
   /// Fired when a session tab is torn down so History can dispose its seats.
   void Function(String sessionId)? onHistorySeatsDispose;
 
-  final RemoteBusBindingResolver? _remoteBusResolver;
   final RemoteCliReadinessService? _remoteCliReadiness;
   final SessionConnectOrchestrator? _sessionConnect;
 
   /// User-driven remote CLI locate/install (Machines panel + landing gate).
   RemoteCliReadinessService? get remoteCliReadiness => _remoteCliReadiness;
-  final Future<TeamProfile?> Function(String teamId)? _teamById;
   final TeammateBusMcpGateway _teammateBusMcpGateway;
   final AgentStatusSeatLookup? _agentStatusSeatLookup;
   final AgentAttentionCubit? _agentAttentionCubit;
@@ -168,7 +160,6 @@ class ChatCubit extends Cubit<ChatState>
       TabSessionRuntimeCoordinator(
         tabStore: _tabStore,
         shellFactory: _shellFactory,
-        activeTeam: () => _activeTeam,
         isClosed: () => isClosed,
         globalPresets: () => _lifecycle.globalPresets,
         activeSessionId: () => state.activeSessionId,
@@ -193,10 +184,8 @@ class ChatCubit extends Cubit<ChatState>
   );
 
   MemberPresenceCubit? _presenceCubit;
-  TeamProfile? _activeTeam;
   final ChatSessionShellFactory _shellFactory;
   final PostFrameScheduler _postFrameScheduler;
-  final bool Function()? _autoLaunchAllMembersOnConnect;
   final SessionLifecycleService _lifecycle;
   final SessionRepository? _sessionRepository;
 
@@ -280,9 +269,6 @@ class ChatCubit extends Cubit<ChatState>
   ChatTab? get activeTab => _activeTab;
 
   @override
-  set activeTeam(TeamProfile? team) => _activeTeam = team;
-
-  @override
   ChatSessionShellFactory get shellFactory => _shellFactory;
 
   @override
@@ -320,13 +306,6 @@ class ChatCubit extends Cubit<ChatState>
   PostFrameScheduler get postFrameScheduler => _postFrameScheduler;
 
   @override
-  bool Function()? get autoLaunchAllMembersOnConnect =>
-      _autoLaunchAllMembersOnConnect;
-
-  @override
-  RemoteBusBindingResolver? get remoteBusResolver => _remoteBusResolver;
-
-  @override
   SessionConnectOrchestrator get sessionConnect =>
       _sessionConnect ??
       (_defaultSessionConnect ??= buildDefaultSessionConnectOrchestrator(
@@ -342,14 +321,6 @@ class ChatCubit extends Cubit<ChatState>
 
   @override
   CliToolRegistry get cliRegistry => _lifecycle.cliToolRegistry;
-
-  @override
-  Future<TeamProfile?> teamProfileById(String teamId) async {
-    final id = teamId.trim();
-    if (id.isEmpty) return null;
-    if (_activeTeam?.id == id) return _activeTeam;
-    return _teamById?.call(id);
-  }
 
   @override
   Future<bool> isWorkspaceRootSandboxEnvOptIn(String workspaceId) async {
@@ -472,13 +443,7 @@ class ChatCubit extends Cubit<ChatState>
     );
   }
 
-  TeamProfile? _teamForSessionTab(ChatTab tab) {
-    final session = tab.persistedSession;
-    if (session == null || session.sessionTeam.trim().isEmpty) return null;
-    final teamId = session.sessionTeam.trim();
-    if (_activeTeam?.id == teamId) return _activeTeam;
-    return null;
-  }
+  TeamProfile? _teamForSessionTab(ChatTab tab) => null;
 
   /// Exercises History/Terminal submit → [onAfterTurnLatched] without PTY I/O.
   @visibleForTesting
@@ -503,16 +468,7 @@ class ChatCubit extends Cubit<ChatState>
     );
   }
 
-  PresenceSessionContext? _presenceSessionContext(ChatTab tab) {
-    final team = _activeTeam;
-    if (team == null) return null;
-    return PresenceSessionContext(
-      team: team,
-      appSession: tab.persistedSession,
-      teamBus: tab.teamBus,
-      globalPresets: _lifecycle.globalPresets,
-    );
-  }
+  PresenceSessionContext? _presenceSessionContext(ChatTab tab) => null;
 
   /// Switches the active workspace bucket and republishes its tabs into state.
   /// Called by the workspace page whenever the active workspace changes.
@@ -1224,21 +1180,14 @@ class ChatCubit extends Cubit<ChatState>
     session ??= tab?.persistedSession;
     if (session == null) return;
 
-    TeamProfile? team;
-    final teamId = session.sessionTeam.trim();
-    if (teamId.isNotEmpty) {
-      team = await teamProfileById(teamId);
-    }
-
     final request = buildRetryExistingSessionConnect(
       session: session,
       selectedMemberId: tab?.selectedMemberId ?? state.selectedMemberId,
-      team: team,
+      team: null,
     );
     if (request == null) {
       AppLogger.instance.w(
-        'retrySessionLaunch: no team profile for team session $id '
-        '(teamId=${teamId.isEmpty ? "?" : teamId})',
+        'retrySessionLaunch: no connect request for session $id',
       );
       return;
     }

@@ -11,14 +11,12 @@ final class TabWorkingAggregator {
     required ChatTabStore tabStore,
     required SessionWorkingResolver sessionWorking,
     required List<CliPreset> Function() globalPresets,
-    required TeamProfile? Function() activeTeam,
     required String? Function() activeSessionId,
     required Map<String, MemberPresence> Function() presence,
     bool Function(String sessionId)? sessionBusyFromAttention,
   }) : _tabStore = tabStore,
        _sessionWorking = sessionWorking,
        _globalPresets = globalPresets,
-       _activeTeam = activeTeam,
        _activeSessionId = activeSessionId,
        _presence = presence,
        _sessionBusyFromAttention = sessionBusyFromAttention;
@@ -26,7 +24,6 @@ final class TabWorkingAggregator {
   final ChatTabStore _tabStore;
   final SessionWorkingResolver _sessionWorking;
   final List<CliPreset> Function() _globalPresets;
-  final TeamProfile? Function() _activeTeam;
   final String? Function() _activeSessionId;
   final Map<String, MemberPresence> Function() _presence;
   final bool Function(String sessionId)? _sessionBusyFromAttention;
@@ -47,7 +44,7 @@ final class TabWorkingAggregator {
           ? presence.values.any((p) => p.isWorking)
           : _sessionWorking.tabHasWorkingMember(
               tab: tab,
-              team: _teamForTab(tab),
+              team: null,
               globalPresets: _globalPresets(),
             );
       // Why: Orca sidebar follows agent-hook waiting/working; PTY idle-watch
@@ -58,14 +55,5 @@ final class TabWorkingAggregator {
       if (sessionWorking || attentionBusy) working.add(sessionId);
     }
     return working;
-  }
-
-  TeamProfile? _teamForTab(ChatTab tab) {
-    final session = tab.persistedSession;
-    if (session == null || session.sessionTeam.trim().isEmpty) return null;
-    final teamId = session.sessionTeam.trim();
-    final activeTeam = _activeTeam();
-    if (activeTeam?.id == teamId) return activeTeam;
-    return null;
   }
 }

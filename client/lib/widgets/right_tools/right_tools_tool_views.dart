@@ -274,7 +274,7 @@ class _RightToolsToolViewsState extends State<RightToolsToolViews> {
     final chatSlice = context.select<ChatCubit, RightToolsChatSlice>(
       (c) => RightToolsChatSlice.from(
         c.state,
-        hasTeamBus: scopedTeamBus(c, widget.toolsScopeId) != null,
+        hasTeamBus: false,
         persistedSession: c.activeTab?.persistedSession,
       ),
     );

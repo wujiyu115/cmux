@@ -30,7 +30,6 @@ final class MemberCoordinationScope {
   /// Personal sessions have no persisted team roster (`sessionTeam` empty) and
   /// no [TeamBus]. Tabs with a bus always use mixed coordination.
   static bool isPersonalSession({ChatTab? tab, AppSession? session}) {
-    if (tab?.teamBus != null) return false;
     final persisted = session ?? tab?.persistedSession;
     if (persisted != null) return persisted.sessionTeam.trim().isEmpty;
     return true;

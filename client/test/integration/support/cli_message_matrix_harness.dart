@@ -304,7 +304,6 @@ final class CliMessageMatrixHarness {
       automationRepository: testAutomationRepository(),
       cliExecutableResolver: (_) => cliPath,
       postFrameScheduler: postFrame.scheduler,
-      autoLaunchAllMembersOnConnect: () => true,
       sessionRepository: SessionRepository(),
       lifecycleService: life,
     );

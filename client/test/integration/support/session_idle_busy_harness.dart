@@ -9,8 +9,10 @@ import 'package:teampilot/models/team_config.dart';
 import 'package:teampilot/models/workspace_folder.dart';
 import 'package:teampilot/repositories/session_repository.dart';
 import 'package:teampilot/services/team_bus/mcp/teammate_bus_mcp_config.dart';
+import 'package:teampilot/services/team_bus/team_bus.dart';
 import 'package:teampilot/services/terminal/terminal_session.dart';
 
+import '../../services/team_bus/support/fake_member_launcher.dart';
 import 'connected_recording_shell.dart';
 import '../../support/post_frame_test_harness.dart';
 
@@ -98,7 +100,9 @@ openMixedSessionWithShells({
   await postFrame.flush();
 
   final tab = cubit.activeTab!;
-  final bus = tab.teamBus!;
+  // Team launch path removed; bus is no longer tab-owned. Integration harness
+  // kept compiling with a standalone bus (team integration tests are excluded).
+  final bus = TeamBus(launcher: FakeMemberLauncher());
   final leadShell = await ConnectedRecordingShell.connect();
   final workerShell = await ConnectedRecordingShell.connect();
   tab.memberShells['team-lead'] = leadShell.session;

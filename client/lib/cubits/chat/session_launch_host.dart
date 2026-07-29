@@ -73,7 +73,6 @@ abstract interface class SessionLaunchHost
   void pushPresenceTarget();
 
   ChatTab? get activeTab;
-  set activeTeam(TeamProfile? team);
 
   // Collaborators.
   ChatTabStore get tabStore;
@@ -86,12 +85,6 @@ abstract interface class SessionLaunchHost
   // Resolvers.
   SessionRepository? get sessionRepository;
   PostFrameScheduler get postFrameScheduler;
-  bool Function()? get autoLaunchAllMembersOnConnect;
-
-  /// P3b (#1): resolves a remote member's reverse-tunnel bus binding. Null when
-  /// remote-member-over-tunnel is not wired (then all members use local
-  /// transport — pre-P3b behavior).
-  RemoteBusBindingResolver? get remoteBusResolver;
 
   SessionConnectOrchestrator get sessionConnect;
 
@@ -108,8 +101,6 @@ abstract interface class SessionLaunchHost
 
   /// CLI registry for lifecycle gating and tool capabilities at connect time.
   CliToolRegistry get cliRegistry;
-
-  Future<TeamProfile?> teamProfileById(String teamId);
 
   /// Workspace opt-in: inject IS_SANDBOX when launching Claude as root over SSH.
   Future<bool> isWorkspaceRootSandboxEnvOptIn(String workspaceId);
