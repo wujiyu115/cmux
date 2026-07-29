@@ -7,7 +7,7 @@ import 'package:teampilot/cubits/automation_cubit.dart';
 import 'package:teampilot/cubits/chat_cubit.dart';
 import 'package:teampilot/repositories/automation_repository.dart';
 import 'package:teampilot/repositories/session_repository.dart';
-import 'package:teampilot/services/automation/automation_bus_gateway.dart';
+import 'package:teampilot/services/automation/automation_delivery_gateway.dart';
 import 'package:teampilot/services/automation/automation_dispatcher.dart';
 import 'package:teampilot/services/automation/automation_schedule_calculator.dart';
 import 'package:teampilot/services/automation/automation_scheduler.dart';
@@ -158,7 +158,7 @@ AutomationRepository testAutomationRepository() {
   );
 }
 
-class _NoopAutomationBusGateway implements AutomationBusGateway {
+class _NoopAutomationBusGateway implements AutomationDeliveryGateway {
   @override
   Future<void> deliverUserCommandToMember(
     String sessionId,
@@ -184,7 +184,7 @@ AutomationCubit testAutomationCubit({SessionRepository? sessionRepository}) {
     repository: repo,
     scheduleCalculator: calc,
     sessionRepository: sessions,
-    busGateway: _NoopAutomationBusGateway(),
+    deliveryGateway: _NoopAutomationBusGateway(),
     requestOpenSession: (_) async => SessionOpenStatus.opened,
     requestCreateAndOpenSession: (_) async => SessionOpenStatus.opened,
     workspaceById: (_) => null,

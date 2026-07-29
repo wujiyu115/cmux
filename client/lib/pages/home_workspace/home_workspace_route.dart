@@ -1,4 +1,4 @@
-import '../team_config/team_config_section.dart';
+import 'home_config_section.dart';
 import 'home_workspace_global_section.dart';
 import 'workspace/workspace_config_section.dart';
 

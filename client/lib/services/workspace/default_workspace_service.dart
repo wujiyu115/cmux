@@ -3,7 +3,7 @@ import 'package:collection/collection.dart';
 import '../../models/workspace.dart';
 import '../../models/workspace_folder.dart';
 import '../../repositories/session_repository.dart';
-import '../../services/storage/app_storage.dart';
+import '../storage/app_storage.dart';
 import '../../utils/workspace/workspace_path_utils.dart';
 
 /// First-launch bootstrap for the built-in workspace and its starter session.

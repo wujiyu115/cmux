@@ -3,7 +3,7 @@ import 'dart:async';
 import '../../../models/app_session.dart';
 import '../../../models/member_remote_provision_progress.dart';
 import '../../../services/ssh/ssh_member_session.dart';
-import '../../../services/team_bus/remote/remote_bus_mount.dart';
+import '../../../services/agent_status/remote/agent_status_remote_mount.dart';
 import '../../../services/terminal/terminal_session.dart';
 import 'chat_tab_info.dart';
 import 'session_workbench_view.dart';
@@ -44,7 +44,7 @@ class ChatTab {
   /// Per-member reverse-tunnel bus mounts (session plane). One mount per remote
   /// roster member so auto-launching multiple ssh members does not tear down
   /// siblings.
-  final Map<String, RemoteBusMount> memberRemoteBusMounts = {};
+  final Map<String, AgentStatusRemoteMount> memberRemoteBusMounts = {};
 
   /// Session-plane SSH connections keyed by roster member id (or session id for
   /// personal remote). Closed when the member shell disconnects or the tab bus

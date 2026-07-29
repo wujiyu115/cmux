@@ -6,7 +6,7 @@ import '../../repositories/session_repository.dart';
 import '../../services/session/session_lifecycle_service.dart';
 import '../../services/agent_status/agent_status_seat_lookup.dart';
 import '../../cubits/agent_attention_cubit.dart';
-import '../../services/team_bus/mcp/teammate_bus_mcp_gateway.dart';
+import '../../services/agent_status/agent_status_gateway.dart';
 import 'chat_session_shell_factory.dart';
 import 'model/chat_state.dart';
 import 'model/chat_tab.dart';
@@ -78,7 +78,7 @@ abstract interface class SessionLaunchHost
   SessionRepository? get sessionRepository;
   PostFrameScheduler get postFrameScheduler;
 
-  TeammateBusMcpGateway get teammateBusMcpGateway;
+  AgentStatusGateway get agentStatusGateway;
 
   /// Seat CLI + skip-permissions map for `/agent-status` (null in tests).
   AgentStatusSeatLookup? get agentStatusSeatLookup;

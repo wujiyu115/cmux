@@ -23,7 +23,7 @@ import 'terminal_screen_probe_controller.dart';
 import 'terminal_session_link_providers.dart';
 import 'terminal_transport_starter.dart';
 import 'terminal_user_input_pipeline.dart';
-import '../team/terminal_activity_tracker.dart';
+import 'terminal_activity_tracker.dart';
 import '../../models/workspace_shell_launch_plan.dart';
 import '../workspace_dnd/runtime_target.dart';
 import '../../utils/logging/logger.dart';

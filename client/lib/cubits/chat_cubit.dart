@@ -20,7 +20,7 @@ import '../services/workspace/workspace_icon_service.dart';
 import '../services/workspace/workspace_icon_storage.dart';
 import '../services/storage/app_storage.dart';
 import '../services/session/session_lifecycle_service.dart';
-import '../services/team_bus/mcp/teammate_bus_mcp_gateway.dart';
+import '../services/agent_status/agent_status_gateway.dart';
 import '../services/agent_status/agent_status_seat_lookup.dart';
 import 'agent_attention_cubit.dart';
 import '../services/terminal/terminal_session.dart';
@@ -71,13 +71,13 @@ class ChatCubit extends Cubit<ChatState>
     bool Function()? sshUseLoginShellResolver,
     RuntimeTarget Function()? defaultTargetResolver,
     int Function()? terminalScrollbackLinesResolver,
-    TeammateBusMcpGateway? teammateBusMcpGateway,
+    AgentStatusGateway? agentStatusGateway,
     AgentStatusSeatLookup? agentStatusSeatLookup,
     AgentAttentionCubit? agentAttentionCubit,
     required AutomationRepository automationRepository,
     LayoutCubit? layoutCubit,
   }) : _teammateBusMcpGateway =
-           teammateBusMcpGateway ?? TeammateBusMcpGateway(),
+           agentStatusGateway ?? AgentStatusGateway(),
        _agentStatusSeatLookup = agentStatusSeatLookup,
        _agentAttentionCubit = agentAttentionCubit,
        _automationRepository = automationRepository,
@@ -113,7 +113,7 @@ class ChatCubit extends Cubit<ChatState>
   void Function(String sessionId)? onHistorySeatsDispose;
 
 
-  final TeammateBusMcpGateway _teammateBusMcpGateway;
+  final AgentStatusGateway _teammateBusMcpGateway;
   final AgentStatusSeatLookup? _agentStatusSeatLookup;
   final AgentAttentionCubit? _agentAttentionCubit;
   StreamSubscription<AgentAttentionState>? _agentAttentionSub;
@@ -230,7 +230,7 @@ class ChatCubit extends Cubit<ChatState>
   TabMemberMaterializer get memberMaterializer => _memberMaterializer;
 
   @override
-  TeammateBusMcpGateway get teammateBusMcpGateway => _teammateBusMcpGateway;
+  AgentStatusGateway get agentStatusGateway => _teammateBusMcpGateway;
 
   @override
   AgentStatusSeatLookup? get agentStatusSeatLookup => _agentStatusSeatLookup;

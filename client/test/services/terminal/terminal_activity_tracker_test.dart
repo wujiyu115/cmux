@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:teampilot/services/team/terminal_activity_tracker.dart';
+import 'package:teampilot/services/terminal/terminal_activity_tracker.dart';
 
 void main() {
   const idle = Duration(milliseconds: 40);

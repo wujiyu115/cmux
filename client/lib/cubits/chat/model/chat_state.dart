@@ -61,7 +61,7 @@ class ChatState extends Equatable {
   /// Launch error when connect fails before a tab exists (empty workbench).
   final String? sessionLaunchError;
 
-  /// Session ids with at least one member currently in a turn (TeamBus truth).
+  /// Session ids with at least one shell currently in a turn.
   /// Drives the working spinner on session tabs and sidebar list items. Only
   /// open, bus-backed (mixed) sessions appear here.
   final Set<String> workingSessionIds;

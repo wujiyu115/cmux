@@ -1,6 +1,6 @@
 /// Per-remote-seat binding produced by the agent-status reverse-tunnel mount.
-class RemoteBusBinding {
-  const RemoteBusBinding({
+class RemoteStatusBinding {
+  const RemoteStatusBinding({
     required this.token,
     required this.tunnelPort,
   });

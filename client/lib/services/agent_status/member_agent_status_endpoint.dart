@@ -1,6 +1,6 @@
-import '../team_bus/mcp/teammate_bus_mcp_config.dart';
-import '../team_bus/mcp/teammate_bus_mcp_gateway.dart';
-import '../team_bus/remote/member_bus_mcp_config.dart';
+import 'agent_status_headers.dart';
+import 'agent_status_gateway.dart';
+import 'remote/remote_status_binding.dart';
 
 /// Launch env key for seat status hooks (OpenCode plugin fallback, etc.).
 const agentStatusUrlEnvKey = 'TEAMPILOT_AGENT_STATUS_URL';
@@ -33,7 +33,7 @@ class MemberAgentStatusEndpoint {
   }
 
   factory MemberAgentStatusEndpoint.local(
-    TeammateBusMcpGateway gateway, {
+    AgentStatusGateway gateway, {
     required String sessionId,
   }) => MemberAgentStatusEndpoint(
     url: gateway.agentStatusEndpoint.toString(),
@@ -41,21 +41,21 @@ class MemberAgentStatusEndpoint {
   );
 
   /// Remote binding: reverse-tunnel loopback URL + bus token.
-  factory MemberAgentStatusEndpoint.remote(RemoteBusBinding binding) =>
+  factory MemberAgentStatusEndpoint.remote(RemoteStatusBinding binding) =>
       MemberAgentStatusEndpoint(
         url: binding.agentStatusUrl,
         token: binding.token,
       );
 
   Map<String, String> headersFor(String memberId) {
-    final headers = <String, String>{teammateBusMcpMemberHeader: memberId};
+    final headers = <String, String>{agentStatusMemberHeader: memberId};
     final session = sessionId;
     if (session != null && session.isNotEmpty) {
-      headers[teammateBusMcpSessionHeader] = session;
+      headers[agentStatusSessionHeader] = session;
     }
     final t = token;
     if (t != null && t.isNotEmpty) {
-      headers[teammateBusTokenHeader] = t;
+      headers[agentStatusTokenHeader] = t;
     }
     return headers;
   }

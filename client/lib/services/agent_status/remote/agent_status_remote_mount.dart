@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import '../../ssh/ssh_member_session.dart';
-import 'member_bus_mcp_config.dart';
+import 'remote_status_binding.dart';
 import 'reverse_tunnel.dart';
 
 /// Per-tab mount that tunnels a **remote** (ssh) seat's `POST /agent-status`
@@ -11,8 +11,8 @@ import 'reverse_tunnel.dart';
 /// Owns per-member reverse tunnels only. The SSH session plane lives in
 /// [memberSession] and is closed by the tab when the member disconnects — not
 /// by [close].
-class RemoteBusMount {
-  RemoteBusMount({
+class AgentStatusRemoteMount {
+  AgentStatusRemoteMount({
     required this.httpBusPort,
     required SshMemberSession memberSession,
     ReverseTunnel Function()? tunnelFactory,
@@ -22,7 +22,7 @@ class RemoteBusMount {
        _tunnelFactory = tunnelFactory ?? memberSession.newReverseTunnel;
 
   /// Test / harness constructor without a live [SshMemberSession].
-  RemoteBusMount.testing({
+  AgentStatusRemoteMount.testing({
     required this.httpBusPort,
     required ReverseTunnel Function() tunnelFactory,
     String? token,
@@ -38,7 +38,7 @@ class RemoteBusMount {
 
   final _members = <String, _MountedMember>{};
 
-  Future<RemoteBusBinding> bindHttpMember(String memberId) async {
+  Future<RemoteStatusBinding> bindHttpMember(String memberId) async {
     final existing = _members[memberId];
     if (existing != null) return existing.binding;
 
@@ -51,7 +51,7 @@ class RemoteBusMount {
       await pump.start();
       pumpStarted = true;
 
-      final binding = RemoteBusBinding(token: token, tunnelPort: port);
+      final binding = RemoteStatusBinding(token: token, tunnelPort: port);
       _members[memberId] = _MountedMember(
         binding: binding,
         tunnels: [(tunnel: tunnel, pump: pump)],
@@ -86,7 +86,7 @@ class RemoteBusMount {
 class _MountedMember {
   _MountedMember({required this.binding, required this.tunnels});
 
-  final RemoteBusBinding binding;
+  final RemoteStatusBinding binding;
   final List<({ReverseTunnel tunnel, TunnelPump pump})> tunnels;
 }
 

@@ -5,7 +5,7 @@ import 'package:shared_ui/shared_ui.dart';
 import '../../../../cubits/extension_cubit.dart';
 import '../../../../cubits/workspace_project_config_cubit.dart';
 import '../../../../l10n/l10n_extensions.dart';
-import '../../../team_config/team_config_cards.dart';
+import 'workspace_config_cards.dart';
 import 'package:teampilot/theme/workspace_surface_layers.dart';
 
 enum ExtensionOverrideChoice { followGlobal, forceOn, forceOff }

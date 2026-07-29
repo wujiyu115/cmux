@@ -3,12 +3,12 @@ import 'package:teampilot/models/runtime_target.dart';
 import 'package:teampilot/models/cli_tool.dart';
 import 'package:teampilot/services/agent_status/agent_status_seat_lookup.dart';
 import 'package:teampilot/services/agent_status/member_agent_status_endpoint_resolver.dart';
-import 'package:teampilot/services/team_bus/remote/member_bus_mcp_config.dart';
+import 'package:teampilot/services/agent_status/remote/remote_status_binding.dart';
 
 void main() {
-  group('RemoteBusBinding.agentStatusUrl', () {
+  group('RemoteStatusBinding.agentStatusUrl', () {
     test('ends with /agent-status on the tunnel port', () {
-      const binding = RemoteBusBinding(
+      const binding = RemoteStatusBinding(
         token: 'tok',
         tunnelPort: 47214,
       );
@@ -51,7 +51,7 @@ void main() {
     });
 
     test('SSH with mixed binding reuses idle tunnel (no status-only)', () {
-      const binding = RemoteBusBinding(
+      const binding = RemoteStatusBinding(
         token: 'tok',
         tunnelPort: 4000,
       );

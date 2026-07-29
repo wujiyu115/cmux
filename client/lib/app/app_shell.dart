@@ -13,7 +13,7 @@ import '../cubits/agent_attention_cubit.dart';
 import '../cubits/chat_cubit.dart';
 import '../services/agent_status/agent_status_http_handler.dart';
 import '../services/agent_status/agent_status_seat_lookup.dart';
-import '../services/team_bus/mcp/teammate_bus_mcp_gateway.dart';
+import '../services/agent_status/agent_status_gateway.dart';
 import '../services/editor_platform/editor_platform.dart';
 import '../cubits/notification_cubit.dart';
 import '../cubits/command_log_cubit.dart';
@@ -56,7 +56,7 @@ import '../services/extension/extension_acquisition_engine.dart';
 import '../services/storage/app_storage.dart';
 import '../services/perf/live_perf_driver.dart';
 import '../services/storage/workspace_layout.dart';
-import '../services/automation/automation_bus_gateway.dart';
+import '../services/automation/automation_delivery_gateway.dart';
 import '../services/automation/automation_dispatcher.dart';
 import '../services/automation/automation_schedule_calculator.dart';
 import '../services/automation/automation_scheduler.dart';
@@ -497,12 +497,12 @@ Future<AppShell> buildAppShell({
     fs: AppStorage.fs,
     layout: WorkspaceLayout(teampilotRoot: AppStorage.paths.basePath),
   );
-  final teammateBusMcpGateway = TeammateBusMcpGateway();
-  await teammateBusMcpGateway.ensureStarted();
+  final agentStatusGateway = AgentStatusGateway();
+  await agentStatusGateway.ensureStarted();
 
   final agentAttentionCubit = AgentAttentionCubit();
   final agentStatusSeatLookup = AgentStatusSeatLookup();
-  teammateBusMcpGateway.attachAgentStatusHandler(
+  agentStatusGateway.attachAgentStatusHandler(
     AgentStatusHttpHandler(
       attention: agentAttentionCubit,
       resolveCli: agentStatusSeatLookup.resolveCli,
@@ -511,7 +511,7 @@ Future<AppShell> buildAppShell({
   );
 
   chatCubit = ChatCubit(
-    teammateBusMcpGateway: teammateBusMcpGateway,
+    agentStatusGateway: agentStatusGateway,
     agentStatusSeatLookup: agentStatusSeatLookup,
     agentAttentionCubit: agentAttentionCubit,
     sessionRepository: sessionRepo,
@@ -572,7 +572,7 @@ Future<AppShell> buildAppShell({
     repository: automationRepo,
     scheduleCalculator: scheduleCalculator,
     sessionRepository: sessionRepo,
-    busGateway: TabTeamBusGateway(
+    deliveryGateway: AutomationPtyGateway(
       memberMaterializer: chatCubit.memberMaterializer,
       sessionRuntime: chatCubit.sessionRuntime,
     ),

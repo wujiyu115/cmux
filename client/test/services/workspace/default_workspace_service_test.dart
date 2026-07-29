@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:teampilot/repositories/session_repository.dart';
 import 'package:teampilot/services/storage/app_storage.dart';
-import 'package:teampilot/services/team/default_workspace_service.dart';
+import 'package:teampilot/services/workspace/default_workspace_service.dart';
 import 'package:teampilot/utils/workspace/workspace_path_utils.dart';
 
 import '../../support/post_frame_test_harness.dart';

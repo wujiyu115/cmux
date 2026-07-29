@@ -13,7 +13,7 @@ import '../agent_status/agent_attention_state.dart';
 import '../agent_status/agent_status_event.dart';
 import '../agent_status/cursor_title_attention.dart';
 import '../cli/cli_executable_validator.dart';
-import '../team/terminal_activity_tracker.dart';
+import 'terminal_activity_tracker.dart';
 import 'shell_command_tracker.dart';
 import 'terminal_osc_notification_bridge.dart';
 import 'terminal_startup_failure_detector.dart';

@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:teampilot/services/team/terminal_activity_tracker.dart';
+import 'package:teampilot/services/terminal/terminal_activity_tracker.dart';
 import 'package:teampilot/services/terminal/terminal_session.dart';
 
 import '../../support/recording_pty_transport.dart';

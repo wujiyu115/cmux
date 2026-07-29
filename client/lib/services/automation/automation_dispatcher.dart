@@ -15,7 +15,7 @@ import '../../repositories/automation_repository.dart';
 import '../../repositories/session_repository.dart';
 import '../../utils/workspace/automation_launch_directory.dart';
 import '../../utils/logging/logger.dart';
-import 'automation_bus_gateway.dart';
+import 'automation_delivery_gateway.dart';
 import 'automation_dispatch_result.dart';
 import 'automation_launch_session_binding.dart';
 import 'automation_schedule_calculator.dart';
@@ -31,7 +31,7 @@ class AutomationDispatcher {
     required AutomationRepository repository,
     required AutomationScheduleCalculator scheduleCalculator,
     required SessionRepository sessionRepository,
-    required AutomationBusGateway busGateway,
+    required AutomationDeliveryGateway deliveryGateway,
     required Future<SessionOpenStatus> Function(SessionOpenRequest)
     requestOpenSession,
     required Future<SessionOpenStatus> Function(SessionCreateRequest)
@@ -43,7 +43,7 @@ class AutomationDispatcher {
   }) : _repository = repository,
        _scheduleCalculator = scheduleCalculator,
        _sessionRepository = sessionRepository,
-       _busGateway = busGateway,
+       _deliveryGateway = deliveryGateway,
        _requestOpenSession = requestOpenSession,
        _requestCreateAndOpenSession = requestCreateAndOpenSession,
        _workspaceById = workspaceById,
@@ -56,7 +56,7 @@ class AutomationDispatcher {
   final AutomationRepository _repository;
   final AutomationScheduleCalculator _scheduleCalculator;
   final SessionRepository _sessionRepository;
-  final AutomationBusGateway _busGateway;
+  final AutomationDeliveryGateway _deliveryGateway;
   final Future<SessionOpenStatus> Function(SessionOpenRequest)
   _requestOpenSession;
   final Future<SessionOpenStatus> Function(SessionCreateRequest)
@@ -160,7 +160,7 @@ class AutomationDispatcher {
       return (failed, updated);
     }
 
-    await _busGateway.deliverUserCommandToMember(
+    await _deliveryGateway.deliverUserCommandToMember(
       session.sessionId,
       memberId,
       automation.message,
@@ -267,7 +267,7 @@ class AutomationDispatcher {
     if (status != SessionOpenStatus.opened) return false;
 
     try {
-      await _busGateway
+      await _deliveryGateway
           .ensureMemberReady(session.sessionId, memberId)
           .timeout(_memberReadyTimeout);
       return true;

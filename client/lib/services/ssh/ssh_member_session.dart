@@ -1,7 +1,7 @@
 import 'package:dartssh2/dartssh2.dart';
 
 import '../../models/ssh_profile.dart';
-import '../team_bus/remote/reverse_tunnel.dart';
+import '../agent_status/remote/reverse_tunnel.dart';
 import 'ssh_client_factory.dart';
 
 /// Dedicated SSH connection for one remote member's **session plane**: reverse

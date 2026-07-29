@@ -5,7 +5,7 @@ import 'package:flutter_alacritty/flutter_alacritty.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:teampilot/cubits/agent_attention_cubit.dart';
 import 'package:teampilot/services/agent_status/agent_attention_state.dart';
-import 'package:teampilot/services/team/terminal_activity_tracker.dart';
+import 'package:teampilot/services/terminal/terminal_activity_tracker.dart';
 import 'package:teampilot/services/terminal/terminal_launch_controller.dart';
 
 void main() {

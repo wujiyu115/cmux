@@ -7,7 +7,7 @@ import 'package:teampilot/models/automation.dart';
 import 'package:teampilot/models/workspace.dart';
 import 'package:teampilot/repositories/automation_repository.dart';
 import 'package:teampilot/repositories/session_repository.dart';
-import 'package:teampilot/services/automation/automation_bus_gateway.dart';
+import 'package:teampilot/services/automation/automation_delivery_gateway.dart';
 import 'package:teampilot/services/automation/automation_dispatcher.dart';
 import 'package:teampilot/services/automation/automation_schedule_calculator.dart';
 import 'package:teampilot/services/automation/automation_scheduler.dart';
@@ -25,7 +25,7 @@ class _FakeSessionRepository implements SessionRepository {
       const [];
 }
 
-class _NoopBusGateway implements AutomationBusGateway {
+class _NoopBusGateway implements AutomationDeliveryGateway {
   @override
   Future<void> deliverUserCommandToMember(
     String sessionId,
@@ -72,7 +72,7 @@ void main() {
       repository: repo,
       scheduleCalculator: calculator,
       sessionRepository: _FakeSessionRepository(),
-      busGateway: _NoopBusGateway(),
+      deliveryGateway: _NoopBusGateway(),
       requestOpenSession: (_) async => SessionOpenStatus.opened,
       requestCreateAndOpenSession: (_) async => SessionOpenStatus.opened,
       workspaceById: (_) => Workspace(workspaceId: 'ws1', createdAt: 1),
@@ -108,7 +108,7 @@ void main() {
       repository: repo,
       scheduleCalculator: calculator,
       sessionRepository: _FakeSessionRepository(),
-      busGateway: _NoopBusGateway(),
+      deliveryGateway: _NoopBusGateway(),
       requestOpenSession: (_) async => SessionOpenStatus.opened,
       requestCreateAndOpenSession: (_) async => SessionOpenStatus.opened,
       workspaceById: (_) => Workspace(workspaceId: 'ws1', createdAt: 1),
@@ -152,7 +152,7 @@ void main() {
       repository: repo,
       scheduleCalculator: calculator,
       sessionRepository: _FakeSessionRepository(),
-      busGateway: _NoopBusGateway(),
+      deliveryGateway: _NoopBusGateway(),
       requestOpenSession: (_) async => SessionOpenStatus.opened,
       requestCreateAndOpenSession: (_) async => SessionOpenStatus.opened,
       workspaceById: (_) => Workspace(workspaceId: 'ws1', createdAt: 1),

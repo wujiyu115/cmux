@@ -1,10 +1,10 @@
 import 'dart:io';
 import 'dart:math';
 
-import '../../agent_status/agent_attention_state.dart';
-import '../../agent_status/agent_status_event.dart';
-import '../../agent_status/agent_status_http_handler.dart';
-import 'teammate_bus_mcp_config.dart';
+import 'agent_attention_state.dart';
+import 'agent_status_event.dart';
+import 'agent_status_http_handler.dart';
+import 'agent_status_headers.dart';
 
 /// App-wide loopback HTTP gateway for seat `POST /agent-status` reports.
 ///
@@ -12,8 +12,8 @@ import 'teammate_bus_mcp_config.dart';
 /// headers. Remote (ssh) seats reach the same listener through a reverse
 /// tunnel and authenticate with the `X-Bus-Token` value returned by
 /// [registerAgentStatusSession].
-class TeammateBusMcpGateway {
-  TeammateBusMcpGateway();
+class AgentStatusGateway {
+  AgentStatusGateway();
 
   final _agentStatusSessions = <String>{};
   final _agentStatusTokenToSession = <String, String>{};
@@ -104,7 +104,7 @@ class TeammateBusMcpGateway {
     required String? sessionId,
   }) async {
     final handler = _agentStatusHandler;
-    final member = _headerValue(request.headers, teammateBusMcpMemberHeader);
+    final member = _headerValue(request.headers, agentStatusMemberHeader);
     final allowed =
         sessionId != null &&
         sessionId.isNotEmpty &&
@@ -165,13 +165,13 @@ class TeammateBusMcpGateway {
   String? _resolveSessionId(HttpRequest request) {
     final sessionHeader = _headerValue(
       request.headers,
-      teammateBusMcpSessionHeader,
+      agentStatusSessionHeader,
     );
     if (sessionHeader.isNotEmpty) {
       return sessionHeader;
     }
 
-    final token = _headerValue(request.headers, teammateBusTokenHeader);
+    final token = _headerValue(request.headers, agentStatusTokenHeader);
     if (token.isNotEmpty) {
       return _agentStatusTokenToSession[token];
     }

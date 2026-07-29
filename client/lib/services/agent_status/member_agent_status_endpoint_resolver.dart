@@ -1,6 +1,6 @@
 import '../../models/runtime_target.dart';
-import '../team_bus/mcp/teammate_bus_mcp_gateway.dart';
-import '../team_bus/remote/member_bus_mcp_config.dart';
+import 'agent_status_gateway.dart';
+import 'remote/remote_status_binding.dart';
 import 'member_agent_status_endpoint.dart';
 
 /// Whether this SSH seat needs a status-only HTTP reverse tunnel.
@@ -9,7 +9,7 @@ import 'member_agent_status_endpoint.dart';
 /// Local / WSL seats stamp the app-host gateway URL — no reverse tunnel.
 bool needsAgentStatusOnlyHttpTunnel({
   required RuntimeKind launchKind,
-  required RemoteBusBinding? mixedRemoteBinding,
+  required RemoteStatusBinding? mixedRemoteBinding,
 }) =>
     launchKind == RuntimeKind.ssh && mixedRemoteBinding == null;
 
@@ -18,9 +18,9 @@ bool needsAgentStatusOnlyHttpTunnel({
 /// [remoteBinding] covers mixed idle tunnels and status-only [bindHttpMember]
 /// results. Never pass an app-host local URL for a remote agent process.
 MemberAgentStatusEndpoint resolveMemberAgentStatusEndpoint({
-  required TeammateBusMcpGateway gateway,
+  required AgentStatusGateway gateway,
   required String sessionId,
-  RemoteBusBinding? remoteBinding,
+  RemoteStatusBinding? remoteBinding,
 }) {
   if (remoteBinding != null) {
     return MemberAgentStatusEndpoint.remote(remoteBinding);

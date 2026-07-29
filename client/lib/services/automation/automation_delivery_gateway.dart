@@ -2,7 +2,7 @@ import '../../cubits/chat/tab_member_materializer.dart';
 import '../../cubits/chat/tab_session_runtime_coordinator.dart';
 
 /// Delivery seam for automation dispatch (TeamBus / PTY inject path).
-abstract interface class AutomationBusGateway {
+abstract interface class AutomationDeliveryGateway {
   Future<void> deliverUserCommandToMember(
     String sessionId,
     String memberId,
@@ -13,8 +13,8 @@ abstract interface class AutomationBusGateway {
   Future<void> ensureMemberReady(String sessionId, String memberId);
 }
 
-class TabTeamBusGateway implements AutomationBusGateway {
-  TabTeamBusGateway({
+class AutomationPtyGateway implements AutomationDeliveryGateway {
+  AutomationPtyGateway({
     required TabMemberMaterializer memberMaterializer,
     required TabSessionRuntimeCoordinator sessionRuntime,
   }) : _memberMaterializer = memberMaterializer,

@@ -1,4 +1,4 @@
-import '../terminal/terminal_session.dart';
+import 'terminal_session.dart';
 
 /// PTY quiet-after-activity turn sync shared by simple and mixed idle watch.
 abstract final class MemberTurnIdleSync {

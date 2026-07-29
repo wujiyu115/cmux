@@ -5,7 +5,7 @@ import 'package:teampilot/models/automation.dart';
 import 'package:teampilot/models/workspace.dart';
 import 'package:teampilot/repositories/automation_repository.dart';
 import 'package:teampilot/repositories/session_repository.dart';
-import 'package:teampilot/services/automation/automation_bus_gateway.dart';
+import 'package:teampilot/services/automation/automation_delivery_gateway.dart';
 import 'package:teampilot/services/automation/automation_dispatcher.dart';
 import 'package:teampilot/services/automation/automation_schedule_calculator.dart';
 import 'package:teampilot/services/storage/app_storage.dart';
@@ -29,7 +29,7 @@ class _FakeSessionRepository implements SessionRepository {
   }
 }
 
-class _RecordingBusGateway implements AutomationBusGateway {
+class _RecordingBusGateway implements AutomationDeliveryGateway {
   final deliverCalls = <(String sessionId, String memberId, String message)>[];
   final ensureCalls = <(String sessionId, String memberId)>[];
 
@@ -94,7 +94,7 @@ void main() {
       repository: repo,
       scheduleCalculator: AutomationScheduleCalculator(),
       sessionRepository: _FakeSessionRepository([session]),
-      busGateway: bus,
+      deliveryGateway: bus,
       requestOpenSession: (request) async {
         openCalls++;
         expect(request.session.sessionId, 'sess-1');
@@ -127,7 +127,7 @@ void main() {
       repository: repo,
       scheduleCalculator: AutomationScheduleCalculator(),
       sessionRepository: _FakeSessionRepository(const []),
-      busGateway: bus,
+      deliveryGateway: bus,
       requestOpenSession: (_) async => SessionOpenStatus.opened,
       requestCreateAndOpenSession: (_) async => SessionOpenStatus.opened,
       workspaceById: (_) => null,
@@ -157,7 +157,7 @@ void main() {
       repository: repo,
       scheduleCalculator: AutomationScheduleCalculator(),
       sessionRepository: _FakeSessionRepository([session]),
-      busGateway: _SlowBusGateway(),
+      deliveryGateway: _SlowBusGateway(),
       requestOpenSession: (_) async => SessionOpenStatus.opened,
       requestCreateAndOpenSession: (_) async => SessionOpenStatus.opened,
       workspaceById: (_) => workspace,
@@ -188,7 +188,7 @@ void main() {
       repository: repo,
       scheduleCalculator: AutomationScheduleCalculator(),
       sessionRepository: _FakeSessionRepository([session]),
-      busGateway: bus,
+      deliveryGateway: bus,
       requestOpenSession: (_) async => SessionOpenStatus.opened,
       requestCreateAndOpenSession: (_) async => SessionOpenStatus.opened,
       workspaceById: (_) => workspace,
@@ -217,7 +217,7 @@ void main() {
       repository: repo,
       scheduleCalculator: AutomationScheduleCalculator(),
       sessionRepository: _FakeSessionRepository(const []),
-      busGateway: bus,
+      deliveryGateway: bus,
       requestOpenSession: (request) async {
         expect(request.session.sessionId, createdSessionId);
         return SessionOpenStatus.opened;
@@ -284,7 +284,7 @@ void main() {
       repository: repo,
       scheduleCalculator: AutomationScheduleCalculator(),
       sessionRepository: _FakeSessionRepository(const []),
-      busGateway: bus,
+      deliveryGateway: bus,
       requestOpenSession: (_) async => SessionOpenStatus.opened,
       requestCreateAndOpenSession: (request) async {
         capturedWorkingDirectory = request.workingDirectory;
@@ -341,7 +341,7 @@ void main() {
       repository: repo,
       scheduleCalculator: AutomationScheduleCalculator(),
       sessionRepository: _FakeSessionRepository([session]),
-      busGateway: bus,
+      deliveryGateway: bus,
       requestOpenSession: (request) async {
         openCalls++;
         expect(request.session.sessionId, 'bound-sess');
@@ -385,7 +385,7 @@ void main() {
   });
 }
 
-class _SlowBusGateway implements AutomationBusGateway {
+class _SlowBusGateway implements AutomationDeliveryGateway {
   @override
   Future<void> deliverUserCommandToMember(
     String sessionId,
