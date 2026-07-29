@@ -46,8 +46,6 @@ import 'workspace_chat_landing_compose_card.dart';
 import 'workspace_landing_launch_feedback.dart';
 import 'workspace_landing_selectors.dart';
 
-enum _LandingConversationMode { team, simple }
-
 typedef LandingComposeSubmit =
     void Function(String message, LandingLaunchContext draft);
 
@@ -82,10 +80,8 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
   late final ComposeVoiceInput _voiceInput;
   final _headlessAi = HeadlessAiService();
 
-  var _conversationMode = _LandingConversationMode.simple;
   var _dangerouslySkipPermissions = true;
   String? _selectedPresetId;
-  String? _selectedTeamId;
   var _enhancing = false;
   var _voiceListening = false;
   var _voiceSoundLevel = 0.0;
@@ -188,13 +184,6 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.workspace.workspaceId != widget.workspace.workspaceId) {
       unawaited(_loadWorkspaceProjectBundle());
-    }
-    if (!mapEquals(
-          oldWidget.workspace.memberTargetsByTeam,
-          widget.workspace.memberTargetsByTeam,
-        ) ||
-        oldWidget.workspace.updatedAt != widget.workspace.updatedAt) {
-      _scheduleTeamLaunchReadinessCheck();
     }
   }
 
@@ -395,20 +384,9 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
     }
   }
 
-  ConfigBundle _slashBundleForDraft(
-    LandingLaunchContext draft,
-    List<TeamProfile> teams,
-  ) {
-    TeamProfile? team;
-    if (!draft.isPersonal) {
-      final teamId = draft.teamId?.trim() ?? '';
-      if (teamId.isNotEmpty) {
-        team = teams.where((t) => t.id == teamId).firstOrNull;
-      }
-    }
+  ConfigBundle _slashBundleForDraft(LandingLaunchContext draft) {
     return slashBundleForLanding(
       draft: draft,
-      team: team,
       workspace: _workspaceProjectBundle,
     );
   }
@@ -426,8 +404,6 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
     setState(() => _applyDraft(draft));
     await _syncActiveProjectFromDraft();
     // Sync may return early after dispose; do not touch context/setState.
-    if (!mounted) return;
-    _scheduleTeamLaunchReadinessCheck();
   }
 
   Future<void> _syncActiveProjectFromDraft() async {
@@ -455,98 +431,8 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
     }
   }
 
-  void _scheduleTeamLaunchReadinessCheck() {
-    if (!mounted) return;
-    if (_conversationMode != _LandingConversationMode.team) {
-      if (_teamConfigLaunchReady && _launchWarningBlock == null) return;
-      setState(() {
-        _teamConfigLaunchReady = true;
-        _launchWarningBlock = null;
-      });
-      return;
-    }
-    final generation = ++_teamLaunchReadinessGeneration;
-    unawaited(_refreshTeamLaunchReadiness(generation));
-  }
-
-  Future<void> _refreshTeamLaunchReadiness(int generation) async {
-    if (!mounted || generation != _teamLaunchReadinessGeneration) return;
-    final teams = context.read<LaunchProfileCubit>().state.teams;
-    final team = _selectedTeamProfile(teams);
-    if (team == null) {
-      if (!mounted || generation != _teamLaunchReadinessGeneration) return;
-      setState(() {
-        _teamConfigLaunchReady = false;
-        _launchWarningBlock = const TeamNotSelectedLaunchBlock();
-      });
-      return;
-    }
-    final sync = _launchGate.syncBlock(
-      workspace: _workspaceForLaunch(),
-      draft: _currentDraft(),
-      team: team,
-    );
-    if (sync != null) {
-      if (!mounted || generation != _teamLaunchReadinessGeneration) return;
-      setState(() {
-        _teamConfigLaunchReady = false;
-        _launchWarningBlock = sync;
-      });
-      return;
-    }
-    final presets = context.read<CliPresetsCubit>().state.presets;
-    final configBlock = await _launchGate.asyncBlock(
-      team: team,
-      globalPresets: presets,
-    );
-    if (!mounted || generation != _teamLaunchReadinessGeneration) return;
-    if (configBlock != null) {
-      setState(() {
-        _teamConfigLaunchReady = false;
-        _launchWarningBlock = configBlock;
-      });
-      return;
-    }
-
-    final readiness = context.read<ChatCubit>().remoteCliReadiness;
-    final remoteBlock = readiness == null
-        ? null
-        : await _launchGate.asyncRemoteCliBlock(
-            workspace: _workspaceForLaunch(),
-            team: team,
-            globalPresets: presets,
-            selectableTargets: _runtimeTargets,
-            readiness: readiness,
-          );
-    if (!mounted || generation != _teamLaunchReadinessGeneration) return;
-    setState(() {
-      _teamConfigLaunchReady = remoteBlock == null;
-      _launchWarningBlock = remoteBlock;
-    });
-  }
-
-  WorkspaceLandingLaunchBlock? _resolveLaunchWarningBlock(TeamProfile? team) {
-    if (_conversationMode != _LandingConversationMode.team) return null;
-    final sync = _launchGate.syncBlock(
-      workspace: _workspaceForLaunch(),
-      draft: _currentDraft(),
-      team: team,
-    );
-    if (sync != null) return sync;
-    if (_launchWarningBlock is TeamConfigIncompleteLaunchBlock) {
-      return _launchWarningBlock;
-    }
-    if (_launchWarningBlock is RemoteCliMissingLaunchBlock) {
-      return _launchWarningBlock;
-    }
-    return null;
-  }
 
   void _applyDraft(LandingLaunchContext draft) {
-    _conversationMode = draft.isPersonal
-        ? _LandingConversationMode.simple
-        : _LandingConversationMode.team;
-    _selectedTeamId = draft.teamId;
     _selectedPresetId = draft.presetId;
     _selectedProjectPath = draft.projectFolderPath?.trim().isNotEmpty == true
         ? draft.projectFolderPath!.trim()
@@ -557,15 +443,7 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
         : null;
     _dangerouslySkipPermissions = draft.dangerouslySkipPermissions;
 
-    if ((_selectedTeamId == null || _selectedTeamId!.isEmpty) &&
-        _conversationMode == _LandingConversationMode.team) {
-      final teams = context.read<LaunchProfileCubit>().state.teams;
-      if (teams.isNotEmpty) _selectedTeamId = teams.first.id;
-    }
-
-    if (draft.isPersonal) {
-      _selectedPresetId ??= draft.presetId;
-    }
+    _selectedPresetId ??= draft.presetId;
   }
 
   WorktreeState? _worktreeState(BuildContext context) {
@@ -680,11 +558,9 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
     final selectedProjectPath = projectResolver.resolveSelectedProjectPath();
     final worktreeResolver = _worktreeResolver(worktreeState);
     final selectedWorktreePath = worktreeResolver.resolveSelectedWorktreePath();
-    final isSimple = _conversationMode == _LandingConversationMode.simple;
     return LandingLaunchContext(
-      isPersonal: isSimple,
+      isPersonal: true,
       presetId: _selectedPresetId,
-      teamId: _selectedTeamId,
       projectFolderPath: selectedProjectPath.trim().isEmpty
           ? null
           : selectedProjectPath,
@@ -704,24 +580,6 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
   bool get _canSubmit {
     if (widget.disabled || widget.isSubmitting) return false;
     if (_controller.text.trim().isEmpty) return false;
-    if (_conversationMode == _LandingConversationMode.team) {
-      final teams = context.read<LaunchProfileCubit>().state.teams;
-      final team = _selectedTeamProfile(teams);
-      if (_launchGate.syncBlock(
-            workspace: _workspaceForLaunch(),
-            draft: _currentDraft(),
-            team: team,
-          ) !=
-          null) {
-        return false;
-      }
-      if (_launchWarningBlock is TeamConfigIncompleteLaunchBlock) {
-        return false;
-      }
-      if (_launchWarningBlock is RemoteCliMissingLaunchBlock) {
-        return false;
-      }
-    }
     return true;
   }
 
@@ -733,87 +591,7 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
     final text = _controller.text.trim();
     if (text.isEmpty || widget.disabled || widget.isSubmitting) return;
 
-    if (_conversationMode == _LandingConversationMode.team) {
-      final teams = context.read<LaunchProfileCubit>().state.teams;
-      final team = _selectedTeamProfile(teams);
-      final draft = _currentDraft();
-      final workspace = _workspaceForLaunch();
-
-      final sync = _launchGate.syncBlock(
-        workspace: workspace,
-        draft: draft,
-        team: team,
-      );
-      if (!mounted) return;
-      if (sync != null) {
-        showWorkspaceLandingLaunchBlock(context, sync);
-        _scheduleTeamLaunchReadinessCheck();
-        return;
-      }
-
-      if (_launchWarningBlock is TeamConfigIncompleteLaunchBlock) {
-        showWorkspaceLandingLaunchBlock(context, _launchWarningBlock!);
-        _scheduleTeamLaunchReadinessCheck();
-        return;
-      }
-
-      if (_launchWarningBlock is RemoteCliMissingLaunchBlock) {
-        showWorkspaceLandingLaunchBlock(context, _launchWarningBlock!);
-        _scheduleTeamLaunchReadinessCheck();
-        return;
-      }
-
-      if (team != null) {
-        final presets = context.read<CliPresetsCubit>().state.presets;
-        final configBlock = await _launchGate.asyncBlock(
-          team: team,
-          globalPresets: presets,
-        );
-        if (!mounted) return;
-        if (configBlock != null) {
-          setState(() {
-            _teamConfigLaunchReady = false;
-            _launchWarningBlock = configBlock;
-          });
-          showWorkspaceLandingLaunchBlock(context, configBlock);
-          return;
-        }
-
-        final readiness = context.read<ChatCubit>().remoteCliReadiness;
-        if (readiness != null) {
-          final remoteBlock = await _launchGate.asyncRemoteCliBlock(
-            workspace: workspace,
-            team: team,
-            globalPresets: presets,
-            selectableTargets: _runtimeTargets,
-            readiness: readiness,
-          );
-          if (!mounted) return;
-          if (remoteBlock != null) {
-            setState(() {
-              _teamConfigLaunchReady = false;
-              _launchWarningBlock = remoteBlock;
-            });
-            showWorkspaceLandingLaunchBlock(context, remoteBlock);
-            return;
-          }
-        }
-
-        setState(() {
-          _teamConfigLaunchReady = true;
-          _launchWarningBlock = null;
-        });
-      }
-    }
-
     widget.onSubmit(text, _currentDraft());
-  }
-
-  void _setConversationMode(_LandingConversationMode mode) {
-    if (_conversationMode == mode) return;
-    setState(() => _conversationMode = mode);
-    _persistDraft();
-    _scheduleTeamLaunchReadinessCheck();
   }
 
   void _setDangerouslySkipPermissions(bool value) {
@@ -834,50 +612,20 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
     );
   }
 
-  void _selectTeam(String teamId) {
-    setState(() => _selectedTeamId = teamId);
-    _persistDraft();
-    _scheduleTeamLaunchReadinessCheck();
-  }
-
-  TeamProfile? _selectedTeamProfile(List<TeamProfile> teams) {
-    final id = _selectedTeamId?.trim() ?? '';
-    if (id.isEmpty) return null;
-    return teams.where((team) => team.id == id).firstOrNull;
-  }
-
-  String _conversationModeLabel(AppLocalizations l10n) {
-    return switch (_conversationMode) {
-      _LandingConversationMode.team => l10n.workspaceChatLandingModeTeam,
-      _LandingConversationMode.simple => l10n.workspaceChatLandingModeSimple,
-    };
-  }
-
   String _autoChipLabel(
     AppLocalizations l10n, {
     required List<CliPreset> presets,
-    required List<TeamProfile> teams,
   }) {
-    if (_conversationMode == _LandingConversationMode.simple) {
-      final preset = presets
-          .where((p) => p.id == _selectedPresetId)
-          .firstOrNull;
-      return preset?.name.trim().isNotEmpty == true
-          ? preset!.name.trim()
-          : l10n.workspaceChatLandingUsePreset;
-    }
-
-    final team = teams.where((t) => t.id == _selectedTeamId).firstOrNull;
-    return team?.name.trim().isNotEmpty == true
-        ? team!.name.trim()
-        : l10n.selectTeam;
+    final preset = presets.where((p) => p.id == _selectedPresetId).firstOrNull;
+    return preset?.name.trim().isNotEmpty == true
+        ? preset!.name.trim()
+        : l10n.workspaceChatLandingUsePreset;
   }
 
   Widget? _autoChipLeading(
     BuildContext context, {
     required List<CliPreset> presets,
   }) {
-    if (_conversationMode != _LandingConversationMode.simple) return null;
     final preset =
         presets.where((p) => p.id == _selectedPresetId).firstOrNull ??
         presets.firstOrNull;
@@ -891,56 +639,16 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
     );
   }
 
-  List<TpActionMenuSpec> _conversationModeSpecs(AppLocalizations l10n) {
-    return [
-      TpActionMenuSpec.item(
-        value: _LandingConversationMode.team,
-        icon: Icons.groups_outlined,
-        label: l10n.workspaceChatLandingModeTeam,
-        selected: _conversationMode == _LandingConversationMode.team,
-      ),
-      TpActionMenuSpec.item(
-        value: _LandingConversationMode.simple,
-        icon: Icons.chat_bubble_outline,
-        label: l10n.workspaceChatLandingModeSimple,
-        selected: _conversationMode == _LandingConversationMode.simple,
-      ),
-    ];
-  }
-
   List<TpActionMenuSpec> _autoChipSpecs(
     AppLocalizations l10n, {
     required List<CliPreset> presets,
-    required List<TeamProfile> teams,
   }) {
-    if (_conversationMode == _LandingConversationMode.simple) {
-      return buildComposeModelPresetMenuSpecs(
-        sameCliPresets: presets,
-        selectedPresetId: _selectedPresetId,
-        emptyHintLabel: l10n.workspaceCliPresetsEmptyHint,
-        managePresetsLabel: l10n.workspaceCliAddPresetTitle,
-      );
-    }
-
-    if (teams.isEmpty) {
-      return [
-        TpActionMenuSpec.item(
-          value: null,
-          icon: Icons.groups_outlined,
-          label: l10n.selectTeam,
-          enabled: false,
-        ),
-      ];
-    }
-    return [
-      for (final team in teams)
-        TpActionMenuSpec.item(
-          value: team.id,
-          icon: Icons.groups_outlined,
-          label: team.name,
-          selected: team.id == _selectedTeamId,
-        ),
-    ];
+    return buildComposeModelPresetMenuSpecs(
+      sameCliPresets: presets,
+      selectedPresetId: _selectedPresetId,
+      emptyHintLabel: l10n.workspaceCliPresetsEmptyHint,
+      managePresetsLabel: l10n.workspaceCliAddPresetTitle,
+    );
   }
 
   @override
@@ -949,11 +657,9 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
     final cs = Theme.of(context).colorScheme;
     final spacing = context.tpSpacing;
     final presets = context.watch<CliPresetsCubit>().state.presets;
-    final teams = context.watch<LaunchProfileCubit>().state.teams;
     final skills = context.watch<SkillCubit>().state.installed;
     final plugins = context.watch<PluginCubit>().state.installed;
-    final slashBundle = _slashBundleForDraft(_currentDraft(), teams);
-    final isSimple = _conversationMode == _LandingConversationMode.simple;
+    final slashBundle = _slashBundleForDraft(_currentDraft());
     final worktreeState = _worktreeState(context);
     final projectResolver = _projectResolver();
     final selectedProjectPath = projectResolver.resolveSelectedProjectPath();
@@ -961,10 +667,7 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
     final worktreeResolver = _worktreeResolver(worktreeState);
     final selectedWorktreePath = worktreeResolver.resolveSelectedWorktreePath();
     final worktreeLabel = worktreeResolver.labelFor(selectedWorktreePath);
-    final selectedTeam = _conversationMode == _LandingConversationMode.team
-        ? _selectedTeamProfile(teams)
-        : null;
-    final launchWarningBlock = _resolveLaunchWarningBlock(selectedTeam);
+    final launchWarningBlock = _launchWarningBlock;
 
     final composeCard = WorkspaceChatLandingComposeCard(
       controller: _controller,
@@ -974,12 +677,7 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
       canSubmit: _canSubmit,
       onSubmit: _submit,
       onChanged: (_) => setState(() {}),
-      conversationModeLabel: _conversationModeLabel(l10n),
-      autoChipLabel: _autoChipLabel(
-        l10n,
-        presets: presets,
-        teams: teams,
-      ),
+      autoChipLabel: _autoChipLabel(l10n, presets: presets),
       autoChipLeading: _autoChipLeading(
         context,
         presets: presets,
@@ -987,28 +685,14 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
       dangerouslySkipPermissions: _dangerouslySkipPermissions,
       defaultPermissionsLabel: l10n.workspaceChatLandingDefaultPermissions,
       fullAccessPermissionsLabel: l10n.workspaceChatLandingFullAccessPermissions,
-      conversationModeSpecs: _conversationModeSpecs(l10n),
-      autoChipSpecs: _autoChipSpecs(
-        l10n,
-        presets: presets,
-        teams: teams,
-      ),
-      onConversationModeSelected: (value) {
-        if (value is _LandingConversationMode) {
-          _setConversationMode(value);
-        }
-      },
+      autoChipSpecs: _autoChipSpecs(l10n, presets: presets),
       onAutoChipSelected: (value) {
         if (value == ComposeModelPresetChipAction.manage) {
           _openPresetsManageDialog();
           return;
         }
         if (value is! String || value.isEmpty) return;
-        if (_conversationMode == _LandingConversationMode.simple) {
-          _selectPreset(value);
-        } else {
-          _selectTeam(value);
-        }
+        _selectPreset(value);
       },
       onPermissionSelected: _setDangerouslySkipPermissions,
       attachTooltip: l10n.workspaceChatLandingAttach,
@@ -1105,21 +789,11 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
           )
         : composeCard;
 
-    return BlocListener<LaunchProfileCubit, LaunchProfileState>(
-      listenWhen: (previous, current) {
-        final id = _selectedTeamId?.trim() ?? '';
-        if (id.isEmpty) return false;
-        TeamProfile? teamIn(List<TeamProfile> teams) =>
-            teams.where((t) => t.id == id).firstOrNull;
-        return teamIn(previous.teams) != teamIn(current.teams);
-      },
-      listener: (context, state) => _scheduleTeamLaunchReadinessCheck(),
-      child: BlocListener<WorktreeCubit, WorktreeState>(
-        listenWhen: (previous, current) =>
-            previous.currentWorktreePath != current.currentWorktreePath,
-        listener: (context, state) => _syncLaunchFromWorktree(state),
-        child: body,
-      ),
+    return BlocListener<WorktreeCubit, WorktreeState>(
+      listenWhen: (previous, current) =>
+          previous.currentWorktreePath != current.currentWorktreePath,
+      listener: (context, state) => _syncLaunchFromWorktree(state),
+      child: body,
     );
   }
 }

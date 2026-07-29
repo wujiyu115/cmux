@@ -34,14 +34,11 @@ class WorkspaceChatLandingComposeCard extends StatelessWidget {
     required this.canSubmit,
     required this.onSubmit,
     required this.onChanged,
-    required this.conversationModeLabel,
     required this.autoChipLabel,
     required this.dangerouslySkipPermissions,
     required this.defaultPermissionsLabel,
     required this.fullAccessPermissionsLabel,
-    required this.conversationModeSpecs,
     required this.autoChipSpecs,
-    required this.onConversationModeSelected,
     required this.onAutoChipSelected,
     required this.onPermissionSelected,
     this.autoChipLeading,
@@ -79,14 +76,11 @@ class WorkspaceChatLandingComposeCard extends StatelessWidget {
   final bool canSubmit;
   final VoidCallback onSubmit;
   final ValueChanged<String> onChanged;
-  final String conversationModeLabel;
   final String autoChipLabel;
   final bool dangerouslySkipPermissions;
   final String defaultPermissionsLabel;
   final String fullAccessPermissionsLabel;
-  final List<TpActionMenuSpec> conversationModeSpecs;
   final List<TpActionMenuSpec> autoChipSpecs;
-  final ValueChanged<Object?> onConversationModeSelected;
   final ValueChanged<Object?> onAutoChipSelected;
   final ValueChanged<bool> onPermissionSelected;
   final Widget? autoChipLeading;
@@ -128,14 +122,6 @@ class WorkspaceChatLandingComposeCard extends StatelessWidget {
           scrollDirection: Axis.horizontal,
           child: Row(
             children: [
-              ComposeMenuChip(
-                palette: palette,
-                icon: Icons.groups_outlined,
-                label: conversationModeLabel,
-                specs: conversationModeSpecs,
-                onSelected: onConversationModeSelected,
-              ),
-              SizedBox(width: spacing.sm),
               ComposeMenuChip(
                 palette: palette,
                 icon: Icons.autorenew,
