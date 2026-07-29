@@ -1063,18 +1063,9 @@ class ChatCubit extends Cubit<ChatState>
     session ??= tab?.persistedSession;
     if (session == null) return;
 
-    final request = buildRetryExistingSessionConnect(
-      session: session,
-      selectedMemberId: tab?.selectedMemberId ?? state.selectedMemberId,
-      team: null,
+    await connectWorkspaceSession(
+      buildRetryExistingSessionConnect(session: session),
     );
-    if (request == null) {
-      AppLogger.instance.w(
-        'retrySessionLaunch: no connect request for session $id',
-      );
-      return;
-    }
-    await connectWorkspaceSession(request);
   }
 
   void disconnectSession() {

@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../cubits/run_cubit.dart';
 import '../../cubits/workbench/workbench_cubit.dart';
 import '../../cubits/workbench/workbench_tab.dart';
-import '../../models/team_config.dart';
 import '../../models/workspace.dart';
 import '../../services/workbench/workbench_body_keep_alive.dart';
 import '../../services/workbench/workbench_center_mode.dart';
@@ -28,8 +27,6 @@ class WorkbenchBody extends StatelessWidget {
     this.profileId,
     this.routeActive = true,
     this.sessionId,
-    this.isPersonalContext = false,
-    this.team,
     this.workingDirectory,
     this.holdHandle,
     super.key,
@@ -42,8 +39,6 @@ class WorkbenchBody extends StatelessWidget {
   final String? profileId;
   final bool routeActive;
   final String? sessionId;
-  final bool isPersonalContext;
-  final TeamProfile? team;
 
   /// CWD for the workspace shell PTY (worktree / first folder).
   final String? workingDirectory;
@@ -91,8 +86,6 @@ class WorkbenchBody extends StatelessWidget {
             profileId: profileId,
             routeActive: routeActive,
             sessionId: sessionId,
-            isPersonalContext: isPersonalContext,
-            team: team,
             workbenchSlice: workbenchSlice,
           )
         else if (selected.kind == WorkbenchTabKind.file)

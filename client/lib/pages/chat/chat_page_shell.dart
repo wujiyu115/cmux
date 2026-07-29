@@ -22,7 +22,6 @@ import '../../services/workbench/workbench_shell_actions.dart';
 import '../../services/workbench/workbench_shell_launcher.dart';
 import '../../services/workbench/workbench_tab_projection.dart';
 import '../../services/workspace/workspace_tools_scope.dart';
-import '../../utils/workspace/workspace_active_context.dart';
 import '../../cubits/workspace_landing_context_cubit.dart';
 import '../../widgets/workbench/workbench_session_sync.dart';
 import '../../widgets/workbench/workbench_shell_run_sync.dart';
@@ -129,17 +128,12 @@ class _ChatWorkspaceShell extends StatelessWidget {
   final bool routeActive;
   final WorkspaceTerminalHoldHandle? holdHandle;
 
-  String? _profileId(
-    BuildContext context, {
-    required bool isPersonalContext,
-    required TeamProfile? team,
-  }) {
+  String? _profileId(BuildContext context) {
     try {
       final ctx = context.read<WorkspaceLandingContextCubit>().state.context;
       if (ctx.isPersonal) return kSimpleLaunchProfileId;
       return ctx.teamId;
     } on Object {
-      if (!isPersonalContext && team != null) return team.id;
       final workspace = context
           .read<ChatCubit>()
           .state
@@ -179,17 +173,9 @@ class _ChatWorkspaceShell extends StatelessWidget {
       buildWhen: (previous, next) => _scopedTabBuildWhen(cubit, previous, next),
       builder: (context, state) {
         final view = ChatScopedTabView.resolve(cubit, tabScopeId);
-        final active = WorkspaceActiveContext.resolve(
-          chat: cubit,
-          tabScopeId: tabScopeId,
-        );
-        final isPersonalContext = active.isPersonal;
-        const TeamProfile? teamConfig = null;
         final runtimeTabs = _runtimeTabsForScope(cubit, tabScopeId);
         final tabById = {for (final t in runtimeTabs) t.info.id: t};
-        final personalFallbackCli = isPersonalContext
-            ? _personalPresetCli(context)
-            : null;
+        final personalFallbackCli = _personalPresetCli(context);
         final sessionIds = view.tabs.map((t) => t.id).toList(growable: false);
         final workspace = state.workspaces
             .where((w) => w.workspaceId == workspaceId)
@@ -285,13 +271,9 @@ class _ChatWorkspaceShell extends StatelessWidget {
 
                 return WorkspaceShell(
                   showHeader: false,
-                  breadcrumb: isPersonalContext
-                      ? 'Personal / Chat / Shell chat workbench'
-                      : '${teamConfig?.name ?? 'Team'} / Chat / Shell chat workbench',
+                  breadcrumb: 'Personal / Chat / Shell chat workbench',
                   title: 'Shell chat workbench',
-                  subtitle: isPersonalContext
-                      ? 'personal workspace / shell wrapper mode'
-                      : 'target: team / shell wrapper mode',
+                  subtitle: 'personal workspace / shell wrapper mode',
                   showNewChatButton: tabs.isNotEmpty,
                   newChatTooltip: context.l10n.workbenchStripNewMenuTooltip,
                   newConversationLabel:
@@ -383,7 +365,6 @@ class _ChatWorkspaceShell extends StatelessWidget {
                     child: SessionWorkbenchViewToggle(
                       workspaceId: workspaceId,
                       tabScopeId: tabScopeId,
-                      team: teamConfig,
                     ),
                   ),
                   actions: const [],
@@ -393,15 +374,9 @@ class _ChatWorkspaceShell extends StatelessWidget {
                       workspaceId: workspaceId,
                       tabScopeId: tabScopeId,
                       workspace: workspace,
-                      profileId: _profileId(
-                        context,
-                        isPersonalContext: isPersonalContext,
-                        team: teamConfig,
-                      ),
+                      profileId: _profileId(context),
                       routeActive: routeActive,
                       sessionId: sessionId,
-                      isPersonalContext: isPersonalContext,
-                      team: teamConfig,
                       workbenchSlice: view.workbenchSlice,
                       workingDirectory: cwd,
                       holdHandle: holdHandle,

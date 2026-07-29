@@ -3,8 +3,7 @@ import 'package:teampilot/models/landing_launch_context.dart';
 import 'package:teampilot/utils/workspace/workspace_active_context.dart';
 
 void main() {
-  test('idle is personal with no session', () {
-    expect(WorkspaceActiveContext.idle.isPersonal, isTrue);
+  test('idle has no session', () {
     expect(WorkspaceActiveContext.idle.activeSessionId, isNull);
   });
 

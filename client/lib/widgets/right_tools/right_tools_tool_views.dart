@@ -6,11 +6,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../cubits/chat_cubit.dart';
 import '../../cubits/file_tree_cubit.dart';
-import '../../cubits/member_presence_cubit.dart';
 import '../../cubits/worktree_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
-import '../../models/app_session.dart';
-import '../../models/team_config.dart';
 import '../../services/storage/runtime_context.dart';
 import '../../services/workspace/workspace_tools_scope.dart';
 import '../../utils/workspace/workspace_path_utils.dart';
@@ -73,96 +70,6 @@ class _WorkingSetDeltaState extends State<_WorkingSetDelta> {
   }
 }
 
-/// Syncs member presence when the selected team changes.
-class RightToolsPresenceTeamSync extends StatefulWidget {
-  const RightToolsPresenceTeamSync({
-    required this.team,
-    required this.child,
-    super.key,
-  });
-
-  final TeamProfile? team;
-  final Widget child;
-
-  @override
-  State<RightToolsPresenceTeamSync> createState() =>
-      _RightToolsPresenceTeamSyncState();
-}
-
-class _RightToolsPresenceTeamSyncState
-    extends State<RightToolsPresenceTeamSync> {
-  String? _syncedTeamId;
-
-  @override
-  Widget build(BuildContext context) {
-    if (!TickerMode.valuesOf(context).enabled) {
-      return widget.child;
-    }
-    final team = widget.team;
-    if (team != null) {
-      final teamId = team.id;
-      if (teamId != _syncedTeamId) {
-        _syncedTeamId = teamId;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          context.read<MemberPresenceCubit>().syncPresenceTeam(team);
-        });
-      }
-    }
-    return widget.child;
-  }
-}
-
-@immutable
-class RightToolsChatSlice {
-  const RightToolsChatSlice({
-    required this.selectedMemberId,
-    required this.hasActiveTab,
-    required this.activeSessionId,
-    required this.hasTeamBus,
-    this.persistedSession,
-  });
-
-  factory RightToolsChatSlice.from(
-    ChatState state, {
-    required bool hasTeamBus,
-    AppSession? persistedSession,
-  }) {
-    return RightToolsChatSlice(
-      selectedMemberId: state.selectedMemberId,
-      hasActiveTab: state.tabs.isNotEmpty,
-      activeSessionId: state.activeSessionId,
-      hasTeamBus: hasTeamBus,
-      persistedSession: persistedSession,
-    );
-  }
-
-  final String selectedMemberId;
-  final bool hasActiveTab;
-  final String? activeSessionId;
-  final bool hasTeamBus;
-  final AppSession? persistedSession;
-
-  @override
-  bool operator ==(Object other) {
-    return other is RightToolsChatSlice &&
-        selectedMemberId == other.selectedMemberId &&
-        hasActiveTab == other.hasActiveTab &&
-        activeSessionId == other.activeSessionId &&
-        hasTeamBus == other.hasTeamBus &&
-        identical(persistedSession, other.persistedSession);
-  }
-
-  @override
-  int get hashCode => Object.hash(
-    selectedMemberId,
-    hasActiveTab,
-    activeSessionId,
-    hasTeamBus,
-    persistedSession,
-  );
-}
-
 /// Builds the tabbed tool views with narrow bloc subscriptions.
 class RightToolsToolViews extends StatefulWidget {
   const RightToolsToolViews({
@@ -170,8 +77,6 @@ class RightToolsToolViews extends StatefulWidget {
     required this.cwd,
     required this.workspaceId,
     required this.toolsScopeId,
-    required this.isPersonalContext,
-    required this.team,
     required this.dismissDrawerOnAction,
     required this.fileTreeCubit,
     required this.workContext,
@@ -183,8 +88,6 @@ class RightToolsToolViews extends StatefulWidget {
   final String cwd;
   final String workspaceId;
   final String toolsScopeId;
-  final bool isPersonalContext;
-  final TeamProfile? team;
   final bool dismissDrawerOnAction;
   final FileTreeCubit fileTreeCubit;
   final RuntimeContext workContext;
@@ -198,9 +101,6 @@ class RightToolsToolViews extends StatefulWidget {
 class _RightToolsViewsCacheKey {
   const _RightToolsViewsCacheKey({
     required this.preferences,
-    required this.isPersonalContext,
-    required this.team,
-    required this.chatSlice,
     required this.scopeRoots,
     required this.cwd,
     required this.workspaceId,
@@ -208,9 +108,6 @@ class _RightToolsViewsCacheKey {
   });
 
   final RightToolsToolPreferences preferences;
-  final bool isPersonalContext;
-  final TeamProfile? team;
-  final RightToolsChatSlice chatSlice;
   final List<String> scopeRoots;
   final String cwd;
   final String workspaceId;
@@ -221,9 +118,6 @@ class _RightToolsViewsCacheKey {
     return identical(this, other) ||
         other is _RightToolsViewsCacheKey &&
             preferences == other.preferences &&
-            isPersonalContext == other.isPersonalContext &&
-            team == other.team &&
-            chatSlice == other.chatSlice &&
             listEquals(scopeRoots, other.scopeRoots) &&
             cwd == other.cwd &&
             workspaceId == other.workspaceId &&
@@ -233,9 +127,6 @@ class _RightToolsViewsCacheKey {
   @override
   int get hashCode => Object.hash(
     preferences,
-    isPersonalContext,
-    team,
-    chatSlice,
     Object.hashAll(scopeRoots),
     cwd,
     workspaceId,
@@ -249,24 +140,8 @@ class _RightToolsToolViewsState extends State<RightToolsToolViews> {
 
   @override
   Widget build(BuildContext context) {
-    final team = widget.team;
-    if (!widget.isPersonalContext && team == null) {
-      return const SizedBox.shrink();
-    }
-
-    final chatSlice = context.select<ChatCubit, RightToolsChatSlice>(
-      (c) => RightToolsChatSlice.from(
-        c.state,
-        hasTeamBus: false,
-        persistedSession: c.activeTab?.persistedSession,
-      ),
-    );
-
     final cacheKey = _RightToolsViewsCacheKey(
       preferences: widget.preferences,
-      isPersonalContext: widget.isPersonalContext,
-      team: team,
-      chatSlice: chatSlice,
       scopeRoots: widget.scope.roots,
       cwd: widget.cwd,
       workspaceId: widget.workspaceId,
@@ -275,11 +150,7 @@ class _RightToolsToolViewsState extends State<RightToolsToolViews> {
 
     if (_cacheKey != cacheKey || _cachedViews == null) {
       _cacheKey = cacheKey;
-      _cachedViews = _buildViews(
-        context,
-        team: team,
-        chatSlice: chatSlice,
-      );
+      _cachedViews = _buildViews(context);
     }
 
     final panel = TabbedPanel(
@@ -312,19 +183,9 @@ class _RightToolsToolViewsState extends State<RightToolsToolViews> {
     return null;
   }
 
-  List<ToolView> _buildViews(
-    BuildContext context, {
-    required TeamProfile? team,
-    required RightToolsChatSlice chatSlice,
-  }) {
+  List<ToolView> _buildViews(BuildContext context) {
     final l10n = context.l10n;
     final views = <ToolView>[];
-    void maybeDismissDrawer() {
-      if (widget.dismissDrawerOnAction) {
-        Navigator.of(context).maybePop();
-      }
-    }
-
     if (widget.preferences.fileTreeVisible) {
       views.add(
         ToolView(

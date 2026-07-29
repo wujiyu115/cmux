@@ -13,8 +13,6 @@ import '../cubits/chat_cubit.dart';
 import '../cubits/layout_cubit.dart';
 import '../cubits/session_preferences_cubit.dart';
 import '../l10n/l10n_extensions.dart';
-import '../models/app_session.dart';
-import '../models/team_config.dart';
 import '../repositories/session_repository.dart';
 import '../repositories/ssh_profile_repository.dart';
 import '../services/storage/home_target_controller.dart';
@@ -44,8 +42,6 @@ class ChatWorkbench extends StatefulWidget {
     this.profileId,
     this.routeActive = true,
     this.sessionId,
-    this.isPersonalContext = false,
-    this.team,
     super.key,
   });
 
@@ -54,8 +50,6 @@ class ChatWorkbench extends StatefulWidget {
   final String? profileId;
   final bool routeActive;
   final String? sessionId;
-  final bool isPersonalContext;
-  final TeamProfile? team;
   final ChatWorkbenchSlice workbenchSlice;
 
   @override
@@ -108,22 +102,9 @@ class _ChatWorkbenchState extends State<ChatWorkbench> {
     );
   }
 
-  SessionConnectRequest _connectRequest({
-    required bool isPersonal,
-    TeamProfile? team,
-  }) {
-    if (isPersonal) {
-      return PersonalSessionConnect(workspaceId: widget.workspaceId);
-    }
-    return TeamSessionConnect(team!);
-  }
-
-  Future<void> _restartWorkspace({
-    required bool isPersonal,
-    TeamProfile? team,
-  }) async {
+  Future<void> _restartWorkspace() async {
     await context.read<ChatCubit>().restartWorkspaceSession(
-      _connectRequest(isPersonal: isPersonal, team: team),
+      PersonalSessionConnect(workspaceId: widget.workspaceId),
       repo: context.read<SessionRepository>(),
     );
   }
@@ -161,7 +142,7 @@ class _ChatWorkbenchState extends State<ChatWorkbench> {
       );
       if (to == null || !mounted) return;
 
-      final updated = await repo.remapWorkspaceTarget(
+      await repo.remapWorkspaceTarget(
         workspace.workspaceId,
         fromTargetId: fromTargetId,
         toTargetId: to,
@@ -203,8 +184,6 @@ class _ChatWorkbenchState extends State<ChatWorkbench> {
     required TerminalSession session,
     required TerminalTheme terminalTheme,
     required ChatCubit chatCubit,
-    required bool isPersonal,
-    required TeamProfile? team,
     required bool autofocus,
   }) {
     _terminalController = bindChatWorkbenchTerminalController(
@@ -221,14 +200,13 @@ class _ChatWorkbenchState extends State<ChatWorkbench> {
       onControllerSearchChanged: () => setState(() {}),
       onOpenLink: _openTerminalLink,
       onDisconnect: () => chatCubit.disconnectSession(),
-      onRestart: () => _restartWorkspace(isPersonal: isPersonal, team: team),
+      onRestart: _restartWorkspace,
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final slice = widget.workbenchSlice;
-    final team = widget.team;
     return BlocListener<ChatCubit, ChatState>(
       listenWhen: (previous, next) =>
           widget.routeActive && widget.sessionId != null,
@@ -239,9 +217,7 @@ class _ChatWorkbenchState extends State<ChatWorkbench> {
         profileId: widget.profileId,
         routeActive: widget.routeActive,
         sessionId: widget.sessionId,
-        isPersonalContext: widget.isPersonalContext,
         slice: slice,
-        team: team,
         findVisible: _findVisible,
         onSyncTerminalTheme: _syncTerminalTheme,
         buildRunningTerminal: _buildRunningTerminal,
@@ -258,9 +234,7 @@ class _ChatWorkbenchBody extends StatelessWidget {
     this.profileId,
     required this.routeActive,
     required this.sessionId,
-    required this.isPersonalContext,
     required this.slice,
-    required this.team,
     required this.findVisible,
     required this.onSyncTerminalTheme,
     required this.buildRunningTerminal,
@@ -272,9 +246,7 @@ class _ChatWorkbenchBody extends StatelessWidget {
   final String? profileId;
   final bool routeActive;
   final String? sessionId;
-  final bool isPersonalContext;
   final ChatWorkbenchSlice slice;
-  final TeamProfile? team;
   final bool findVisible;
   final void Function(TerminalSession, TerminalTheme, String)
   onSyncTerminalTheme;
@@ -282,8 +254,6 @@ class _ChatWorkbenchBody extends StatelessWidget {
     required TerminalSession session,
     required TerminalTheme terminalTheme,
     required ChatCubit chatCubit,
-    required bool isPersonal,
-    required TeamProfile? team,
     required bool autofocus,
   })
   buildRunningTerminal;
@@ -296,7 +266,6 @@ class _ChatWorkbenchBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final slice = this.slice;
-    final team = this.team;
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final terminalThemeMode = context.select<LayoutCubit, String>(
@@ -326,11 +295,7 @@ class _ChatWorkbenchBody extends StatelessWidget {
 
     final sessionConnectInProgress = slice.isActiveSessionConnecting;
 
-    final session = _resolveSession(
-      chatCubit: chatCubit,
-      slice: slice,
-      team: team,
-    );
+    final session = _resolveSession(chatCubit: chatCubit, slice: slice);
     if (session == null) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -369,7 +334,6 @@ class _ChatWorkbenchBody extends StatelessWidget {
           session: session,
           terminalTheme: terminalTheme,
           chatCubit: chatCubit,
-          team: team,
           sessionConnectInProgress: sessionConnectInProgress,
           launchError: launchError,
           remoteProvision: remoteProvision,
@@ -381,7 +345,6 @@ class _ChatWorkbenchBody extends StatelessWidget {
   TerminalSession? _resolveSession({
     required ChatCubit chatCubit,
     required ChatWorkbenchSlice slice,
-    required TeamProfile? team,
   }) {
     final activeId = slice.activeSessionId;
     if (activeId == null || activeId.isEmpty) return null;
@@ -398,36 +361,7 @@ class _ChatWorkbenchBody extends StatelessWidget {
     final memberId = slice.selectedMemberId.isNotEmpty
         ? slice.selectedMemberId
         : matchedTab.selectedMemberId;
-    final shell = matchedTab.memberShells[memberId] ?? matchedTab.resumeSession;
-    if (shell != null) return shell;
-
-    // Pre-connect placeholder shell for the foreground team tab only.
-    if (routeActive &&
-        chatCubit.tabStore.activeWorkspaceId == tabScopeId &&
-        !isPersonalContext &&
-        team != null) {
-      return chatCubit.ensureSession(team);
-    }
-    return null;
-  }
-
-  AppSession? _resolveAppSession({
-    required ChatCubit chatCubit,
-    required ChatWorkbenchSlice slice,
-  }) {
-    final activeId = slice.activeSessionId;
-    if (activeId == null || activeId.isEmpty) return null;
-
-    for (final session in chatCubit.state.sessions) {
-      if (session.sessionId == activeId) return session;
-    }
-
-    for (final tab in chatCubit.tabStore.tabsForWorkspace(tabScopeId)) {
-      if (tab.info.id == activeId) {
-        return tab.persistedSession;
-      }
-    }
-    return null;
+    return matchedTab.memberShells[memberId] ?? matchedTab.resumeSession;
   }
 
   Widget _buildTerminalBody(
@@ -435,7 +369,6 @@ class _ChatWorkbenchBody extends StatelessWidget {
     required TerminalSession session,
     required TerminalTheme terminalTheme,
     required ChatCubit chatCubit,
-    required TeamProfile? team,
     required bool sessionConnectInProgress,
     required String? launchError,
     required MemberRemoteProvisionProgress? remoteProvision,
@@ -483,8 +416,6 @@ class _ChatWorkbenchBody extends StatelessWidget {
                     session: session,
                     terminalTheme: terminalTheme,
                     chatCubit: chatCubit,
-                    isPersonal: isPersonalContext,
-                    team: team,
                     autofocus: !showSessionStarting &&
                         !showRemoteProvision &&
                         terminalVisible,
@@ -534,28 +465,4 @@ class _ChatWorkbenchBody extends StatelessWidget {
     );
   }
 
-  String _memberDisplayLabel({
-    required TeamProfile? team,
-    required String memberId,
-  }) {
-    final mid = memberId.trim();
-    if (mid.isEmpty) return mid;
-    final member = team?.members.where((m) => m.id == mid).firstOrNull;
-    if (member == null) return mid;
-    final name = member.name.trim();
-    return name.isNotEmpty ? name : mid;
-  }
-
-
-  TeamProfile? _teamProfileForSession(BuildContext context, AppSession session) =>
-      null;
-
-  String _tabSelectedMemberId(ChatCubit chatCubit) {
-    final activeId = slice.activeSessionId;
-    if (activeId == null) return '';
-    for (final tab in chatCubit.tabStore.tabsForWorkspace(tabScopeId)) {
-      if (tab.info.id == activeId) return tab.selectedMemberId;
-    }
-    return '';
-  }
 }

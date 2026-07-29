@@ -6,7 +6,6 @@ import '../../cubits/chat_cubit.dart';
 import '../../cubits/member_presence_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../models/layout_preferences.dart';
-import '../../models/team_config.dart';
 import '../../services/workspace/workspace_tools_scope.dart';
 import '../../utils/ui/app_keys.dart';
 import 'right_tools_lifecycle.dart';
@@ -22,16 +21,12 @@ class RightToolsPanel extends StatefulWidget {
     this.preferences = const LayoutPreferences(),
     this.panelKey = AppKeys.rightToolsPanel,
     this.dismissDrawerOnAction = false,
-    this.isPersonalContext = false,
-    this.team,
     super.key,
   });
 
   final LayoutPreferences preferences;
   final Key panelKey;
   final bool dismissDrawerOnAction;
-  final bool isPersonalContext;
-  final TeamProfile? team;
   final String cwd;
   final List<String> additionalPaths;
   final String workspaceId;
@@ -104,8 +99,6 @@ class _RightToolsPanelState extends State<RightToolsPanel> {
         cwd: widget.cwd,
         workspaceId: widget.workspaceId,
         toolsScopeId: widget._toolsScopeId,
-        isPersonalContext: widget.isPersonalContext,
-        team: widget.team,
         dismissDrawerOnAction: widget.dismissDrawerOnAction,
       ),
     );
@@ -119,8 +112,6 @@ class _RightToolsPanelBody extends StatelessWidget {
     required this.cwd,
     required this.workspaceId,
     required this.toolsScopeId,
-    required this.isPersonalContext,
-    required this.team,
     required this.dismissDrawerOnAction,
   });
 
@@ -129,8 +120,6 @@ class _RightToolsPanelBody extends StatelessWidget {
   final String cwd;
   final String workspaceId;
   final String toolsScopeId;
-  final bool isPersonalContext;
-  final TeamProfile? team;
   final bool dismissDrawerOnAction;
 
   @override
@@ -143,22 +132,17 @@ class _RightToolsPanelBody extends StatelessWidget {
     if (scope.isReady && tools != null && fileTreeCubit != null) {
       return RightToolsWorkingTurnListener(
         onTurnEnd: lifecycle.pokeOnTurnEnd,
-        child: RightToolsPresenceTeamSync(
-          team: team,
-          child: Container(
-            key: panelKey,
-            child: RightToolsToolViews(
-              preferences: toolPreferences,
-              cwd: cwd,
-              workspaceId: workspaceId,
-              toolsScopeId: toolsScopeId,
-              isPersonalContext: isPersonalContext,
-              team: team,
-              dismissDrawerOnAction: dismissDrawerOnAction,
-              fileTreeCubit: fileTreeCubit,
-              workContext: tools.context,
-              scope: scope,
-            ),
+        child: Container(
+          key: panelKey,
+          child: RightToolsToolViews(
+            preferences: toolPreferences,
+            cwd: cwd,
+            workspaceId: workspaceId,
+            toolsScopeId: toolsScopeId,
+            dismissDrawerOnAction: dismissDrawerOnAction,
+            fileTreeCubit: fileTreeCubit,
+            workContext: tools.context,
+            scope: scope,
           ),
         ),
       );

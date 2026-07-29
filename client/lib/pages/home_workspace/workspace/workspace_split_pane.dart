@@ -16,7 +16,6 @@ import '../../../services/workspace/workspace_tools_scope.dart';
 import '../../../services/workspace/workspace_tools_scope_registry.dart';
 import '../../../services/workspace/workspace_worktree_registry.dart';
 import '../../../utils/ui/app_keys.dart';
-import '../../../utils/workspace/workspace_active_context.dart';
 import '../../../utils/workspace/workspace_new_chat_active.dart';
 import '../../../widgets/right_tools/right_tools_panel.dart';
 import '../../../widgets/workspace_terminal_panel.dart';
@@ -199,10 +198,6 @@ class _WorkspaceRightToolsPane extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final chat = context.watch<ChatCubit>();
-    final active = WorkspaceActiveContext.resolve(
-      chat: chat,
-      tabScopeId: tabScopeId,
-    );
     final composeLanding = workspaceNewChatActive(chat, tabScopeId);
     final layoutState = context.watch<LayoutCubit>().state;
     final effectiveRight = composeLanding
@@ -216,8 +211,6 @@ class _WorkspaceRightToolsPane extends StatelessWidget {
       ),
       panelKey: AppKeys.rightToolsPanel,
       dismissDrawerOnAction: false,
-      isPersonalContext: active.isPersonal,
-      team: null,
       workspaceId: workspaceId,
       toolsScopeId: tabScopeId,
     );

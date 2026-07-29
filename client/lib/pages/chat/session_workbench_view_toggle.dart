@@ -8,10 +8,8 @@ import '../../cubits/workbench/workbench_cubit.dart';
 import '../../cubits/workbench/workbench_tab.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../models/app_session.dart';
-import '../../models/team_config.dart';
 import '../../utils/ui/app_keys.dart';
 import '../../cubits/chat/session_launch_retry.dart';
-import '../../utils/logging/logger_utils.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 /// Tab-bar control to switch a session between Chat and Terminal.
@@ -19,13 +17,11 @@ class SessionWorkbenchViewToggle extends StatelessWidget {
   const SessionWorkbenchViewToggle({
     required this.workspaceId,
     required this.tabScopeId,
-    this.team,
     super.key,
   });
 
   final String workspaceId;
   final String tabScopeId;
-  final TeamProfile? team;
 
   @override
   Widget build(BuildContext context) {
@@ -80,25 +76,12 @@ class SessionWorkbenchViewToggle extends StatelessWidget {
       final session = _resolveSession(chat, sessionId);
       if (session == null) return;
 
-      final isPersonal = session.sessionTeam.trim().isEmpty;
-      final resolvedTeam = isPersonal
-          ? null
-          : (team ?? _teamForSession(context, session));
-
-      final request = buildRetryExistingSessionConnect(
-        session: session,
-        selectedMemberId: tab.selectedMemberId,
-        team: resolvedTeam,
-        preserveWorkbenchView: false,
+      await chat.connectWorkspaceSession(
+        buildRetryExistingSessionConnect(
+          session: session,
+          preserveWorkbenchView: false,
+        ),
       );
-      if (request == null) {
-        AppLogger.instance.w(
-          'SessionWorkbenchViewToggle: no team profile for team session '
-          '${session.sessionId}',
-        );
-        return;
-      }
-      await chat.connectWorkspaceSession(request);
       return;
     }
 
@@ -111,6 +94,4 @@ class SessionWorkbenchViewToggle extends StatelessWidget {
     }
     return chat.tabStore.openTabBySessionId(sessionId)?.persistedSession;
   }
-
-  TeamProfile? _teamForSession(BuildContext context, AppSession session) => null;
 }
