@@ -7,9 +7,7 @@ import 'package:teampilot/cubits/automation_cubit.dart';
 import 'package:teampilot/cubits/chat_cubit.dart';
 import 'package:teampilot/cubits/chat/model/chat_state.dart';
 import 'package:teampilot/cubits/cli_presets_cubit.dart';
-import 'package:teampilot/cubits/launch_profile_cubit.dart';
 import 'package:teampilot/cubits/session_preferences_cubit.dart';
-import 'package:teampilot/cubits/team/model/launch_profile_state.dart';
 import 'package:teampilot/l10n/app_localizations.dart';
 import 'package:teampilot/models/cli_preset.dart';
 import 'package:teampilot/models/discoverable_member.dart';
@@ -72,49 +70,9 @@ CliPresetsCubit _cliPresetsCubitWithPreset() {
   return cubit;
 }
 
-LaunchProfileCubit _emptyLaunchProfileCubit() {
-  final cubit = LaunchProfileCubit(
-    repository: testLaunchProfileRepository(
-      Directory.systemTemp.createTempSync('automation_editor_empty_'),
-    ),
-    sessionRepository: SessionRepository(),
-    executableResolver: () => 'claude',
-  );
-  cubit.applyState(const LaunchProfileState(isLoading: false));
-  return cubit;
-}
-
-LaunchProfileCubit _teamLaunchProfileCubit() {
-  final cubit = LaunchProfileCubit(
-    repository: testLaunchProfileRepository(
-      Directory.systemTemp.createTempSync('automation_editor_team_'),
-    ),
-    sessionRepository: SessionRepository(),
-    executableResolver: () => 'claude',
-  );
-  cubit.applyState(
-    const LaunchProfileState(
-      isLoading: false,
-      identities: [
-        TeamProfile(
-          id: 'team-1',
-          name: 'Team',
-          members: [
-            TeamMemberConfig(id: 'team-lead', name: 'Lead'),
-            TeamMemberConfig(id: 'worker', name: 'Worker'),
-          ],
-        ),
-      ],
-      selectedTeamId: 'team-1',
-    ),
-  );
-  return cubit;
-}
-
 Widget _host({
   required AutomationCubit cubit,
   required Widget child,
-  LaunchProfileCubit? launchProfileCubit,
   CliPresetsCubit? cliPresetsCubit,
   ChatCubit? chatCubit,
   SessionPreferencesCubit? sessionPreferencesCubit,
@@ -123,9 +81,6 @@ Widget _host({
   final providers = <BlocProvider>[
     BlocProvider<AutomationCubit>.value(value: cubit),
     BlocProvider<ChatCubit>.value(value: resolvedChat),
-    BlocProvider<LaunchProfileCubit>.value(
-      value: launchProfileCubit ?? _emptyLaunchProfileCubit(),
-    ),
   ];
   if (sessionPreferencesCubit != null) {
     providers.add(

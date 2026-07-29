@@ -43,7 +43,6 @@ void main() {
   });
 
   testWidgets('capture startup and workspace tab switches', (tester) async {
-    final teamCubit = await createPerformanceTeamCubit(tester);
     final sessionPreferencesCubit =
         await createPerformanceSessionPreferences(tester);
 
@@ -79,7 +78,6 @@ void main() {
     await pumpPerformanceDesktopApp(
       tester,
       scenario,
-      teamCubit: teamCubit,
       sessionPreferencesCubit: sessionPreferencesCubit,
       chatCubit: chatCubit,
     );

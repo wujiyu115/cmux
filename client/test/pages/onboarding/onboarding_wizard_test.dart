@@ -5,7 +5,6 @@ import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:teampilot/cubits/app_provider_cubit.dart';
 import 'package:teampilot/cubits/cli_presets_cubit.dart';
-import 'package:teampilot/cubits/launch_profile_cubit.dart';
 import 'package:teampilot/models/app_provider_config.dart';
 import 'package:teampilot/models/team_config.dart';
 import 'package:teampilot/pages/onboarding/onboarding_wizard.dart';

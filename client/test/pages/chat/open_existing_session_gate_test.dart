@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:teampilot/cubits/chat_cubit.dart';
-import 'package:teampilot/cubits/launch_profile_cubit.dart';
 import 'package:teampilot/l10n/app_localizations.dart';
 import 'package:teampilot/models/app_session.dart';
 import 'package:teampilot/models/workspace.dart';
@@ -122,7 +121,6 @@ void main() {
     late SessionRepository repo;
     late PostFrameTestHarness postFrame;
     late _RecordingChatCubit chatCubit;
-    late LaunchProfileCubit launchProfiles;
     final shells = <_SpyTerminalSession>[];
 
     Future<void> boot({required bool forwardOpen}) async {
@@ -143,18 +141,12 @@ void main() {
               return shell;
             },
       );
-      launchProfiles = LaunchProfileCubit(
-        repository: testLaunchProfileRepository(tmp),
-        sessionRepository: repo,
-        executableResolver: () => 'true',
-      );
     }
 
     Future<void> shutdown() async {
       await postFrame.flush();
       await drainPendingAsyncWork();
       await chatCubit.close();
-      await launchProfiles.close();
       await drainPendingAsyncWork();
       await deleteTempDirBestEffort(tmp);
     }

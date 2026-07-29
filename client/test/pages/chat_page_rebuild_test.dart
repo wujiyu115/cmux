@@ -9,7 +9,6 @@ import 'package:teampilot/cubits/chat_cubit.dart';
 import 'package:teampilot/cubits/editor_cubit.dart';
 import 'package:teampilot/cubits/layout_cubit.dart';
 import 'package:teampilot/cubits/member_presence_cubit.dart';
-import 'package:teampilot/cubits/launch_profile_cubit.dart';
 import 'package:teampilot/cubits/cli_presets_cubit.dart';
 import 'package:teampilot/cubits/plugin_cubit.dart';
 import 'package:teampilot/cubits/run_cubit.dart';
@@ -109,14 +108,6 @@ void main() {
         if (appData.existsSync()) appData.deleteSync(recursive: true);
       });
 
-      final teamCubit = LaunchProfileCubit(
-        repository: LaunchProfileRepository(rootDir: appData.path),
-        sessionRepository: SessionRepository(rootDir: appData.path),
-        executableResolver: _executable,
-        appDataBasePath: appData.path,
-        configProfileService: ConfigProfileService(basePath: appData.path),
-      );
-      addTearDown(() => teamCubit.close());
 
       final sessionRepo = SessionRepository(rootDir: appData.path);
       final chatCubit = ChatCubit(
@@ -202,7 +193,6 @@ void main() {
             ],
             child: MultiBlocProvider(
               providers: [
-                BlocProvider.value(value: teamCubit),
                 BlocProvider.value(value: chatCubit),
                 BlocProvider.value(value: layoutCubit),
                 BlocProvider.value(value: editorCubit),
@@ -261,14 +251,6 @@ void main() {
         if (appData.existsSync()) appData.deleteSync(recursive: true);
       });
 
-      final teamCubit = LaunchProfileCubit(
-        repository: LaunchProfileRepository(rootDir: appData.path),
-        sessionRepository: SessionRepository(rootDir: appData.path),
-        executableResolver: _executable,
-        appDataBasePath: appData.path,
-        configProfileService: ConfigProfileService(basePath: appData.path),
-      );
-      addTearDown(() => teamCubit.close());
 
       final sessionRepo = SessionRepository(rootDir: appData.path);
       final chatCubit = ChatCubit(
@@ -366,7 +348,6 @@ void main() {
             ],
             child: MultiBlocProvider(
               providers: [
-                BlocProvider.value(value: teamCubit),
                 BlocProvider.value(value: chatCubit),
                 BlocProvider.value(value: layoutCubit),
                 BlocProvider.value(value: editorCubit),
@@ -430,14 +411,6 @@ void main() {
       if (appData.existsSync()) appData.deleteSync(recursive: true);
     });
 
-    final teamCubit = LaunchProfileCubit(
-      repository: LaunchProfileRepository(rootDir: appData.path),
-      sessionRepository: SessionRepository(rootDir: appData.path),
-      executableResolver: _executable,
-      appDataBasePath: appData.path,
-      configProfileService: ConfigProfileService(basePath: appData.path),
-    );
-    addTearDown(() => teamCubit.close());
 
     final sessionRepo = SessionRepository(rootDir: appData.path);
     final chatCubit = ChatCubit(
@@ -535,7 +508,6 @@ void main() {
           ],
           child: MultiBlocProvider(
             providers: [
-              BlocProvider.value(value: teamCubit),
               BlocProvider.value(value: chatCubit),
               BlocProvider.value(value: layoutCubit),
               BlocProvider.value(value: editorCubit),
@@ -606,14 +578,6 @@ void main() {
         if (appData.existsSync()) appData.deleteSync(recursive: true);
       });
 
-      final teamCubit = LaunchProfileCubit(
-        repository: LaunchProfileRepository(rootDir: appData.path),
-        sessionRepository: SessionRepository(rootDir: appData.path),
-        executableResolver: _executable,
-        appDataBasePath: appData.path,
-        configProfileService: ConfigProfileService(basePath: appData.path),
-      );
-      addTearDown(() => teamCubit.close());
 
       final sessionRepo = SessionRepository(rootDir: appData.path);
       final chatCubit = ChatCubit(
@@ -699,7 +663,6 @@ void main() {
             ],
             child: MultiBlocProvider(
               providers: [
-                BlocProvider.value(value: teamCubit),
                 BlocProvider.value(value: chatCubit),
                 BlocProvider.value(value: layoutCubit),
                 BlocProvider.value(value: editorCubit),

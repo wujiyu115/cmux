@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:teampilot/cubits/chat_cubit.dart';
-import 'package:teampilot/cubits/launch_profile_cubit.dart';
 import 'package:teampilot/l10n/app_localizations.dart';
 import 'package:teampilot/models/runtime_target.dart';
 import 'package:teampilot/models/workspace.dart';
@@ -47,12 +46,6 @@ void main() {
         automationRepository: testAutomationRepository(),
       );
       addTearDown(chat.close);
-      final launchProfiles = LaunchProfileCubit(
-        repository: testLaunchProfileRepository(tmp),
-        sessionRepository: SessionRepository(rootDir: tmp.path),
-        executableResolver: () => 'claude',
-      );
-      addTearDown(launchProfiles.close);
       final ws = Workspace(
         workspaceId: 'w1',
         folders: const [WorkspaceFolder(path: '/proj')],
@@ -75,7 +68,6 @@ void main() {
             child: MultiBlocProvider(
               providers: [
                 BlocProvider<ChatCubit>.value(value: chat),
-                BlocProvider<LaunchProfileCubit>.value(value: launchProfiles),
               ],
               child: Scaffold(body: WorkspaceInfoSection(workspace: ws)),
             ),

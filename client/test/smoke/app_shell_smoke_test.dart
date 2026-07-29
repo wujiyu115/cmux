@@ -39,7 +39,6 @@ void main() {
   testWidgets('renders chat workbench shell on workspace route', (
     tester,
   ) async {
-    final teamCubit = await createTeamCubitInTest(tester);
     final postFrame = PostFrameTestHarness();
     final chatCubit = ChatCubit(
       executableResolver: desktopHarnessExecutable,
@@ -76,7 +75,6 @@ void main() {
     });
     await pumpDesktopApp(
       tester,
-      teamCubit,
       chatCubit: chatCubit,
       layoutCubit: layoutCubit,
     );
@@ -86,8 +84,6 @@ void main() {
 
     expect(find.byKey(AppKeys.chatWorkspace), findsOneWidget);
     expect(find.byKey(AppKeys.membersPanel), findsNothing);
-    final selectedTeam = teamCubit.state.selectedTeam;
-    expect(selectedTeam, isNotNull);
     expect(chatCubit.state.tabs.length, 0);
     final workbenchCtx = tester.element(find.byKey(AppKeys.chatWorkspace));
     final l10n = AppLocalizations.of(workbenchCtx);
@@ -112,7 +108,7 @@ void main() {
     // Real repository I/O must run inside runAsync in widget tests.
     await tester.runAsync(() async {
       await chatCubit.connectWorkspaceSession(
-        TeamSessionConnect(selectedTeam!),
+        PersonalSessionConnect(workspaceId: workspace.workspaceId),
       );
     });
     await tester.pump();
@@ -123,7 +119,14 @@ void main() {
     await tester.pump();
     expect(chatCubit.state.tabs.length, 1);
     expect(chatCubit.state.tabs.single.id.startsWith('local-'), isFalse);
-    expect(chatCubit.isMemberRunning(sessionId: chatCubit.state.activeSessionId!, memberId: 'team-lead'), isTrue);
+    final activeSessionId = chatCubit.state.activeSessionId!;
+    expect(
+      chatCubit.isMemberRunning(
+        sessionId: activeSessionId,
+        memberId: activeSessionId,
+      ),
+      isTrue,
+    );
     await pumpPhaseTransitions(tester);
     // Session exits compose: prefs dock restored. Prefer key mount over
     // hitTestable — pane size sync can lag TpDeferredMountShell in smoke.
@@ -138,13 +141,15 @@ void main() {
       isTrue,
     );
     expect(find.byKey(AppKeys.rightToolsPanel), findsOneWidget);
+    // Personal materialize schedules debounced persistence timers; let them
+    // fire before the tree is disposed.
+    await tester.pump(const Duration(seconds: 5));
   });
 
   testWidgets('renders settings shell with title bar and icon navigation', (
     tester,
   ) async {
-    final teamCubit = await createTeamCubitInTest(tester);
-    await pumpDesktopApp(tester, teamCubit);
+    await pumpDesktopApp(tester);
 
     appRouter.go('/config');
     await pumpPhaseTransitions(tester);
@@ -158,8 +163,7 @@ void main() {
   });
 
   testWidgets('settings pages use the global component theme', (tester) async {
-    final teamCubit = await createTeamCubitInTest(tester);
-    await pumpDesktopApp(tester, teamCubit);
+    await pumpDesktopApp(tester);
 
     appRouter.go('/providers/claude');
     await pumpPhaseTransitions(tester);
@@ -176,8 +180,7 @@ void main() {
   });
 
   testWidgets('desktop add provider opens form in detail area', (tester) async {
-    final teamCubit = await createTeamCubitInTest(tester);
-    await pumpDesktopApp(tester, teamCubit);
+    await pumpDesktopApp(tester);
 
     appRouter.go('/providers/claude');
     await pumpPhaseTransitions(tester);
@@ -200,14 +203,12 @@ void main() {
   });
 
   testWidgets('cli settings configure Claude Code CLI path', (tester) async {
-    final teamCubit = await createTeamCubitInTest(tester);
     final sessionCubit = await tester.runAsync(testSessionPreferencesCubit);
     expect(sessionCubit, isNotNull);
     await sessionCubit!.load();
 
     await pumpDesktopApp(
       tester,
-      teamCubit,
       sessionPreferencesCubit: sessionCubit,
     );
 

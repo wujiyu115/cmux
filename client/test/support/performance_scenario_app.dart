@@ -18,7 +18,6 @@ import 'package:teampilot/repositories/mcp_repository.dart';
 import 'package:teampilot/cubits/config_cubit.dart';
 import 'package:teampilot/cubits/editor_cubit.dart';
 import 'package:teampilot/cubits/extension_cubit.dart';
-import 'package:teampilot/cubits/launch_profile_cubit.dart';
 import 'package:teampilot/cubits/layout_cubit.dart';
 import 'package:teampilot/cubits/llm_config_cubit.dart';
 import 'package:teampilot/cubits/member_presence_cubit.dart';
@@ -104,7 +103,6 @@ class PerformanceScenarioApp {
   Future<void> warmCaches() => homeWorkspaceUiCache.warm();
 
   Widget build({
-    required LaunchProfileCubit teamCubit,
     required SessionPreferencesCubit sessionPreferencesCubit,
     ChatCubit? chatCubit,
     LayoutCubit? layoutCubit,
@@ -223,7 +221,6 @@ class PerformanceScenarioApp {
         ],
         child: MultiBlocProvider(
           providers: [
-            BlocProvider.value(value: teamCubit),
             BlocProvider.value(value: chat),
             BlocProvider.value(value: presence),
             BlocProvider(create: (_) => ConfigCubit()),
@@ -313,28 +310,6 @@ class PerformanceFakeTerminalSession extends TerminalSession {
   });
 }
 
-Future<LaunchProfileCubit> createPerformanceTeamCubit(
-  WidgetTester tester,
-) async {
-  final tmp = await tester.runAsync(
-    () => Directory.systemTemp.createTemp('perf_teams_'),
-  );
-  final appData = await tester.runAsync(
-    () => Directory.systemTemp.createTemp('perf_teams_app_'),
-  );
-  expect(tmp, isNotNull);
-  expect(appData, isNotNull);
-  final repository = testLaunchProfileRepository(tmp!);
-  final cubit = LaunchProfileCubit(
-    repository: repository,
-    sessionRepository: SessionRepository(),
-    executableResolver: () => performanceTestExecutable,
-    appDataBasePath: appData!.path,
-  );
-  await tester.runAsync(cubit.load);
-  return cubit;
-}
-
 Future<SessionPreferencesCubit> createPerformanceSessionPreferences(
   WidgetTester tester,
 ) async {
@@ -349,7 +324,6 @@ Future<SessionPreferencesCubit> createPerformanceSessionPreferences(
 Future<void> pumpPerformanceDesktopApp(
   WidgetTester tester,
   PerformanceScenarioApp scenario, {
-  required LaunchProfileCubit teamCubit,
   required SessionPreferencesCubit sessionPreferencesCubit,
   ChatCubit? chatCubit,
 }) async {
@@ -360,7 +334,6 @@ Future<void> pumpPerformanceDesktopApp(
 
   await tester.pumpWidget(
     scenario.build(
-      teamCubit: teamCubit,
       sessionPreferencesCubit: sessionPreferencesCubit,
       chatCubit: chatCubit,
     ),

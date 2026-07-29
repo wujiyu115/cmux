@@ -5,7 +5,6 @@ import 'package:mocktail/mocktail.dart';
 import 'package:shared_ui/shared_ui.dart';
 import 'package:teampilot/cubits/chat_cubit.dart';
 import 'package:teampilot/cubits/cli_presets_cubit.dart';
-import 'package:teampilot/cubits/launch_profile_cubit.dart';
 import 'package:teampilot/cubits/plugin_cubit.dart';
 import 'package:teampilot/cubits/session_preferences_cubit.dart';
 import 'package:teampilot/cubits/skill_cubit.dart';
@@ -24,7 +23,6 @@ class _MockChatCubit extends Mock implements ChatCubit {}
 
 class _MockCliPresetsCubit extends Mock implements CliPresetsCubit {}
 
-class _MockLaunchProfileCubit extends Mock implements LaunchProfileCubit {}
 
 class _MockPluginCubit extends Mock implements PluginCubit {}
 
@@ -51,7 +49,6 @@ void main() {
       final workspace = Workspace(workspaceId: 'workspace-1', createdAt: 1);
       final chatCubit = _MockChatCubit();
       final cliPresetsCubit = _MockCliPresetsCubit();
-      final launchProfileCubit = _MockLaunchProfileCubit();
       final pluginCubit = _MockPluginCubit();
       final sessionPreferencesCubit = _MockSessionPreferencesCubit();
       final skillCubit = _MockSkillCubit();
@@ -59,7 +56,6 @@ void main() {
 
       _stubCubit(chatCubit, ChatState(workspaces: [workspace]));
       _stubCubit(cliPresetsCubit, const CliPresetsState());
-      _stubCubit(launchProfileCubit, const LaunchProfileState());
       _stubCubit(pluginCubit, const PluginState());
       _stubCubit(sessionPreferencesCubit, SessionPreferencesState());
       _stubCubit(skillCubit, const SkillState());
@@ -76,7 +72,6 @@ void main() {
             providers: [
               BlocProvider<ChatCubit>.value(value: chatCubit),
               BlocProvider<CliPresetsCubit>.value(value: cliPresetsCubit),
-              BlocProvider<LaunchProfileCubit>.value(value: launchProfileCubit),
               BlocProvider<PluginCubit>.value(value: pluginCubit),
               BlocProvider<SessionPreferencesCubit>.value(
                 value: sessionPreferencesCubit,

@@ -6,7 +6,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:teampilot/cubits/app_provider_cubit.dart';
 import 'package:teampilot/cubits/cli_presets_cubit.dart';
-import 'package:teampilot/cubits/launch_profile_cubit.dart';
 import 'package:teampilot/l10n/app_localizations.dart';
 import 'package:teampilot/models/app_provider_config.dart';
 import 'package:teampilot/models/team_config.dart';
@@ -38,12 +37,6 @@ Future<void> _pumpDefaultPresetStep(
   final launchRoot = Directory.systemTemp.createTempSync('onboarding_preset_');
   addTearDown(() => launchRoot.deleteSync(recursive: true));
 
-  final launchCubit = LaunchProfileCubit(
-    repository: testLaunchProfileRepository(launchRoot),
-    sessionRepository: SessionRepository(),
-    executableResolver: () => 'claude',
-  );
-  addTearDown(launchCubit.close);
 
   final cliPresetsCubit = CliPresetsCubit(
     repository: CliPresetsRepository(
@@ -60,7 +53,6 @@ Future<void> _pumpDefaultPresetStep(
       locale: const Locale('en'),
       home: MultiBlocProvider(
         providers: [
-          BlocProvider.value(value: launchCubit),
           BlocProvider.value(value: cliPresetsCubit),
           BlocProvider<AppProviderCubit>.value(value: providerCubit),
         ],
@@ -210,12 +202,6 @@ void main() {
       );
       addTearDown(() => launchRoot.deleteSync(recursive: true));
 
-      final launchCubit = LaunchProfileCubit(
-        repository: testLaunchProfileRepository(launchRoot),
-        sessionRepository: SessionRepository(),
-        executableResolver: () => 'claude',
-      );
-      addTearDown(launchCubit.close);
 
       final fs = InMemoryFilesystem();
       await fs.writeString(
@@ -238,7 +224,6 @@ void main() {
           locale: const Locale('en'),
           home: MultiBlocProvider(
             providers: [
-              BlocProvider.value(value: launchCubit),
               BlocProvider.value(value: cliPresetsCubit),
               BlocProvider<AppProviderCubit>.value(value: providerCubit),
             ],

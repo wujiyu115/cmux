@@ -14,7 +14,6 @@ import 'package:teampilot/cubits/cli_presets_cubit.dart';
 import 'package:teampilot/cubits/config_cubit.dart';
 import 'package:teampilot/cubits/editor_cubit.dart';
 import 'package:teampilot/cubits/extension_cubit.dart';
-import 'package:teampilot/cubits/launch_profile_cubit.dart';
 import 'package:teampilot/cubits/layout_cubit.dart';
 import 'package:teampilot/cubits/llm_config_cubit.dart';
 import 'package:teampilot/cubits/member_presence_cubit.dart';
@@ -119,7 +118,6 @@ Future<void> pumpPhaseTransitions(WidgetTester tester) async {
 }
 
 Widget buildTestApp({
-  required LaunchProfileCubit teamCubit,
   required SessionPreferencesCubit sessionPreferencesCubit,
   ChatCubit? chatCubit,
   MemberPresenceCubit? memberPresenceCubit,
@@ -250,7 +248,6 @@ Widget buildTestApp({
             return bootstrap;
           },
         ),
-        BlocProvider.value(value: teamCubit),
         BlocProvider.value(value: chat),
         BlocProvider.value(value: presence),
         BlocProvider(
@@ -321,8 +318,7 @@ Widget buildTestApp({
 }
 
 Future<void> pumpDesktopApp(
-  WidgetTester tester,
-  LaunchProfileCubit teamCubit, {
+  WidgetTester tester, {
   ChatCubit? chatCubit,
   LayoutCubit? layoutCubit,
   LlmConfigCubit? llmConfigCubit,
@@ -346,7 +342,6 @@ Future<void> pumpDesktopApp(
       }))!;
   await tester.pumpWidget(
     buildTestApp(
-      teamCubit: teamCubit,
       sessionPreferencesCubit: sessionCubit,
       chatCubit: chatCubit,
       layoutCubit: layoutCubit,
@@ -377,29 +372,3 @@ Future<SessionPreferencesCubit> testSessionPreferencesCubit() async {
   );
 }
 
-Future<LaunchProfileCubit> createTeamCubit() async {
-  final tmp = await Directory.systemTemp.createTemp('teams_widget_');
-  final appData = await Directory.systemTemp.createTemp('teams_widget_app_');
-  final repository = testLaunchProfileRepository(tmp);
-  final cubit = LaunchProfileCubit(
-    repository: repository,
-    sessionRepository: SessionRepository(),
-    executableResolver: desktopHarnessExecutable,
-    appDataBasePath: appData.path,
-    configProfileService: ConfigProfileService(basePath: appData.path),
-  );
-  await cubit.load();
-  return cubit;
-}
-
-/// [testWidgets] uses a fake-async zone; futures from real disk I/O (temp dirs,
-/// team JSON) must be created inside [WidgetTester.runAsync] or they never complete.
-Future<LaunchProfileCubit> createTeamCubitInTest(
-  WidgetTester tester,
-) async {
-  final cubit = await tester.runAsync(
-    () => createTeamCubit(),
-  );
-  expect(cubit, isNotNull);
-  return cubit!;
-}
