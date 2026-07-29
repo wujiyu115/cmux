@@ -329,7 +329,6 @@ Future<LaunchProfileCubit> createPerformanceTeamCubit(
     repository: repository,
     sessionRepository: SessionRepository(),
     executableResolver: () => performanceTestExecutable,
-    launcher: (_, __) async {},
     appDataBasePath: appData!.path,
   );
   await tester.runAsync(cubit.load);

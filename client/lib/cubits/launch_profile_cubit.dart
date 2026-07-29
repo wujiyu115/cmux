@@ -23,28 +23,25 @@ import '../utils/logging/logger.dart';
 import '../utils/team/team_member_naming.dart';
 import 'team/launch_profile_cubit_host.dart';
 import 'team/model/launch_profile_state.dart';
-import 'team/team_launch_service.dart';
 import 'team/team_profile_provisioner.dart';
 import 'team/team_resource_sync_service.dart';
 import 'team/team_roster_editor.dart';
 
 export 'team/model/launch_profile_state.dart';
-export 'team/team_launch_service.dart' show TeamLauncher, CliExecutableResolver;
 export 'team/team_resource_sync_service.dart'
     show mergeExtensionMcp, InstalledPluginsLoader, InstalledMcpLoader;
 
 /// Owns workspace identity state (team) and coordinates resource
-/// linking ([TeamResourceSyncService]), launching ([TeamLaunchService]) and
-/// config-profile provisioning ([TeamProfileProvisioner]). Roster transforms
-/// live in [TeamRosterEditor]; this cubit persists and emits.
+/// linking ([TeamResourceSyncService]) and config-profile provisioning
+/// ([TeamProfileProvisioner]). Roster transforms live in [TeamRosterEditor];
+/// this cubit persists and emits.
 class LaunchProfileCubit extends Cubit<LaunchProfileState>
     implements LaunchProfileCubitHost {
   LaunchProfileCubit({
     required LaunchProfileRepository repository,
     required SessionRepository sessionRepository,
     required String Function() executableResolver,
-    CliExecutableResolver? cliExecutableResolver,
-    TeamLauncher? launcher,
+    String Function(CliTool cli)? cliExecutableResolver,
     String? Function()? llmConfigPathOverride,
     String appDataBasePath = '',
     ConfigProfileService? configProfileService,
@@ -63,20 +60,9 @@ class LaunchProfileCubit extends Cubit<LaunchProfileState>
        _identityProvisioner =
            identityProvisioner ??
            LaunchProfileProvisioner(repository: repository),
-       _executableResolver = executableResolver,
-       _cliExecutableResolver = cliExecutableResolver,
        _appDataBasePath = appDataBasePath,
        _configProfileService = configProfileService,
        _storageRootsResolver = storageRootsResolver,
-       _lifecycle =
-           lifecycleService ??
-           SessionLifecycleService(
-             appDataBasePath: appDataBasePath.isNotEmpty
-                 ? appDataBasePath
-                 : null,
-             configProfileService: configProfileService,
-             storageRootsResolver: storageRootsResolver,
-           ),
        _pluginLinker = pluginLinker ?? ProfilePluginLinkerService(),
        _pluginRepository = pluginRepository ?? PluginRepository(),
        _installedPluginsLoader = installedPluginsLoader,
@@ -84,7 +70,6 @@ class LaunchProfileCubit extends Cubit<LaunchProfileState>
        _mcpRepository = mcpRepository ?? McpRepository(),
        _installedMcpLoader = installedMcpLoader,
        _extensionMcpContributor = extensionMcpContributor ?? _noExtensionMcp,
-       _launcher = launcher,
        super(const LaunchProfileState());
 
   static Future<List<McpServer>> _noExtensionMcp(String teamId) async =>
@@ -93,12 +78,9 @@ class LaunchProfileCubit extends Cubit<LaunchProfileState>
   final LaunchProfileRepository _repository;
   final SessionRepository _sessionRepository;
   final LaunchProfileProvisioner _identityProvisioner;
-  final String Function() _executableResolver;
-  final CliExecutableResolver? _cliExecutableResolver;
   final String _appDataBasePath;
   final ConfigProfileService? _configProfileService;
   final StorageRootsResolver? _storageRootsResolver;
-  final SessionLifecycleService _lifecycle;
   final ProfilePluginLinkerService _pluginLinker;
   final PluginRepository _pluginRepository;
   final InstalledPluginsLoader? _installedPluginsLoader;
@@ -107,7 +89,6 @@ class LaunchProfileCubit extends Cubit<LaunchProfileState>
   final InstalledMcpLoader? _installedMcpLoader;
   final Future<List<McpServer>> Function(String teamId)
   _extensionMcpContributor;
-  final TeamLauncher? _launcher;
 
   final TeamRosterEditor _rosterEditor = const TeamRosterEditor();
 
@@ -127,15 +108,6 @@ class LaunchProfileCubit extends Cubit<LaunchProfileState>
     installedPluginsLoader: _installedPluginsLoader,
     installedMcpLoader: _installedMcpLoader,
     extensionMcpContributor: _extensionMcpContributor,
-  );
-
-  late final TeamLaunchService _launchService = TeamLaunchService(
-    host: this,
-    lifecycle: _lifecycle,
-    sync: _sync,
-    executableResolver: _executableResolver,
-    cliExecutableResolver: _cliExecutableResolver,
-    launcher: _launcher,
   );
 
   // ===== LaunchProfileCubitHost =====
@@ -175,18 +147,6 @@ class LaunchProfileCubit extends Cubit<LaunchProfileState>
   }
 
   LaunchProfile? byId(String id) => state.byId(id);
-
-  // ===== Launch / preview (delegated) =====
-
-  String previewFor(TeamMemberConfig member) =>
-      _launchService.previewFor(member);
-
-  String get selectedCommandPreview => _launchService.selectedCommandPreview;
-
-  Future<void> launchMember(String memberId) =>
-      _launchService.launchMember(memberId);
-
-  Future<void> launchSelectedTeam() => _launchService.launchSelectedTeam();
 
   // ===== Resource sync (delegated) =====
 

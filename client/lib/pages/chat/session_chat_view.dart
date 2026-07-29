@@ -53,7 +53,6 @@ import '../../services/terminal/pending_user_message.dart';
 import '../../theme/app_markdown_style_sheet.dart';
 import '../../utils/logging/logger.dart';
 import '../../utils/team/team_member_naming.dart';
-import '../home_workspace/workspace/workspace_landing_team_settings_dialog.dart';
 import 'agent_permission_attention_banner.dart';
 import 'compose_stop_visibility.dart';
 import 'history_awaiting_working_sync.dart';
@@ -642,26 +641,6 @@ class _SessionChatViewState extends State<SessionChatView> {
     }
   }
 
-  Workspace? _workspaceForSettings(BuildContext context) {
-    final id = widget.session.workspaceId;
-    return context
-        .read<ChatCubit>()
-        .state
-        .workspaces
-        .where((w) => w.workspaceId == id)
-        .firstOrNull;
-  }
-
-  Future<void> _openTeamSettings(TeamProfile team) async {
-    final workspace = _workspaceForSettings(context);
-    if (workspace == null) return;
-    await showLandingTeamSettingsDialog(
-      context,
-      workspace: workspace,
-      team: team,
-    );
-  }
-
   void _toastContinueSaveFailed() {
     AppToast.show(
       context,
@@ -1007,13 +986,6 @@ class _SessionChatViewState extends State<SessionChatView> {
       hubState: hubState,
       expertFallback: l10n.expertHubNoneSelected,
     );
-    final workspace = _workspaceForSettings(context);
-    final showTeamSettings = !session.isSimple && team != null;
-    final teamSettingsAttention =
-        showTeamSettings &&
-        workspace != null &&
-        landingTeamSettingsNeedsAttention(workspace: workspace, team: team);
-
     // Rebuild when session working or bus presence changes (seat-level stop).
     context.select<ChatCubit, (String?, Set<String>)>(
       (c) => (c.state.activeSessionId, c.state.workingSessionIds),
@@ -1402,16 +1374,6 @@ class _SessionChatViewState extends State<SessionChatView> {
                                       team: team,
                                     ),
                                   ),
-                                  teamSettingsTooltip: showTeamSettings
-                                      ? l10n.teamSettings
-                                      : null,
-                                  onTeamSettings: showTeamSettings
-                                      ? () => unawaited(
-                                          _openTeamSettings(team),
-                                        )
-                                      : null,
-                                  showTeamSettingsAttention:
-                                      teamSettingsAttention,
                                   showStop: showComposeStop,
                                   onStop: showComposeStop
                                       ? () => unawaited(

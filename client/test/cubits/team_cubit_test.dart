@@ -470,41 +470,6 @@ void main() {
     },
   );
 
-  test('previewFor resolves executable from team cli when available', () async {
-    final base = await Directory.systemTemp.createTemp('team_cli_preview_');
-    final cubit = LaunchProfileCubit(
-      repository: _repo(base),
-      sessionRepository: SessionRepository(),
-      executableResolver: () => 'flashskyai',
-      pluginLinker: _RecordingPluginLinker(),
-      cliExecutableResolver: (cli) =>
-          cli == CliTool.claude ? '/opt/bin/claude' : cli.value,
-      appDataBasePath: base.path,
-      configProfileService: ConfigProfileService(basePath: base.path),
-    );
-    const member = TeamMemberConfig(id: 'team-lead', name: 'team-lead');
-    const team = TeamProfile(
-      id: 'claude-team',
-      name: 'Claude Team',
-      cli: CliTool.claude,
-      roster: [
-        TeamRosterSlot(
-          id: 'team-lead',
-          expertKey: 'teampilot/builtin/team-lead',
-        ),
-      ],
-      members: [member],
-    );
-    await _repo(base).saveTeamProfiles([team]);
-    await cubit.load(awaitProfiles: true);
-
-    expect(cubit.previewFor(member), startsWith('/opt/bin/claude '));
-
-    await _drainAndCloseTeamCubit(cubit);
-    await drainPendingAsyncWork();
-    await deleteTempDirBestEffort(base);
-  });
-
   test('updateMember only saves Claude member metadata', () async {
     final base = await Directory.systemTemp.createTemp(
       'team_claude_member_metadata_',
@@ -563,51 +528,6 @@ void main() {
       cubit.state.selectedTeam!.members.any((m) => m.id == 'team-lead'),
       isTrue,
     );
-
-    await _drainAndCloseTeamCubit(cubit);
-    await _deleteTeamTempDir(base);
-  });
-
-  test('launchSelectedTeam writes Claude roster under CLI team name', () async {
-    final base = await Directory.systemTemp.createTemp(
-      'team_claude_direct_launch_',
-    );
-    final repo = _repo(base);
-    final launched = <String>[];
-    final cubit = LaunchProfileCubit(
-      repository: repo,
-      sessionRepository: SessionRepository(),
-      executableResolver: () => 'claude',
-      pluginLinker: _RecordingPluginLinker(),
-      appDataBasePath: base.path,
-      configProfileService: ConfigProfileService(basePath: base.path),
-      launcher: (_, member) async => launched.add(member.name),
-    );
-
-    const team = TeamProfile(
-      id: 'claude-team',
-      name: 'Claude Team',
-      cli: CliTool.claude,
-      roster: [
-        TeamRosterSlot(
-          id: 'team-lead',
-          expertKey: 'teampilot/builtin/team-lead',
-        ),
-        TeamRosterSlot(
-          id: 'developer',
-          expertKey: 'teampilot/builtin/developer',
-        ),
-      ],
-    );
-    await repo.saveTeamProfiles([team]);
-    await cubit.load(awaitProfiles: true);
-    await cubit.selectTeam('claude-team');
-
-    await cubit.launchSelectedTeam();
-
-    expect(launched, ['Team lead', 'Developer']);
-    final teamRoot = p.join(base.path, 'identities-runtime', 'claude-team');
-    expect(await Directory(teamRoot).exists(), isTrue);
 
     await _drainAndCloseTeamCubit(cubit);
     await _deleteTeamTempDir(base);

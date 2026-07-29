@@ -53,7 +53,6 @@ import 'config/cli_presets_manage_dialog.dart';
 import 'workspace_chat_landing_compose_card.dart';
 import 'workspace_landing_launch_feedback.dart';
 import 'workspace_landing_selectors.dart';
-import 'workspace_landing_team_settings_dialog.dart';
 
 enum _LandingConversationMode { team, simple }
 
@@ -886,19 +885,6 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
     return teams.where((team) => team.id == id).firstOrNull;
   }
 
-  Future<void> _openTeamSettings(List<TeamProfile> teams) async {
-    final team = _selectedTeamProfile(teams);
-    if (team == null) return;
-    final saved = await showLandingTeamSettingsDialog(
-      context,
-      workspace: _workspaceForLaunch(),
-      team: team,
-    );
-    if (saved == true && mounted) {
-      _scheduleTeamLaunchReadinessCheck();
-    }
-  }
-
   void _selectExpert(String? expertKey) {
     final trimmed = expertKey?.trim();
     setState(
@@ -1121,12 +1107,6 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
     final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final spacing = context.tpSpacing;
-    final launchWorkspace = context.select<ChatCubit, Workspace>(
-      (c) => c.state.workspaces.firstWhere(
-        (w) => w.workspaceId == widget.workspace.workspaceId,
-        orElse: () => widget.workspace,
-      ),
-    );
     final presets = context.watch<CliPresetsCubit>().state.presets;
     final teams = context.watch<LaunchProfileCubit>().state.teams;
     final skills = context.watch<SkillCubit>().state.installed;
@@ -1216,16 +1196,6 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
       skills: skills,
       plugins: plugins,
       slashBundle: slashBundle,
-      teamSettingsTooltip: selectedTeam != null ? l10n.teamSettings : null,
-      onTeamSettings: selectedTeam != null
-          ? () => unawaited(_openTeamSettings(teams))
-          : null,
-      showTeamSettingsAttention:
-          selectedTeam != null &&
-          landingTeamSettingsNeedsAttention(
-            workspace: launchWorkspace,
-            team: selectedTeam,
-          ),
       submitBlockedTooltip:
           launchWarningBlock != null && _controller.text.trim().isNotEmpty
           ? landingLaunchBlockMessage(

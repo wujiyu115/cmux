@@ -377,7 +377,7 @@ Future<SessionPreferencesCubit> testSessionPreferencesCubit() async {
   );
 }
 
-Future<LaunchProfileCubit> createTeamCubit({TeamLauncher? launcher}) async {
+Future<LaunchProfileCubit> createTeamCubit() async {
   final tmp = await Directory.systemTemp.createTemp('teams_widget_');
   final appData = await Directory.systemTemp.createTemp('teams_widget_app_');
   final repository = testLaunchProfileRepository(tmp);
@@ -385,7 +385,6 @@ Future<LaunchProfileCubit> createTeamCubit({TeamLauncher? launcher}) async {
     repository: repository,
     sessionRepository: SessionRepository(),
     executableResolver: desktopHarnessExecutable,
-    launcher: launcher ?? (_, __) async {},
     appDataBasePath: appData.path,
     configProfileService: ConfigProfileService(basePath: appData.path),
   );
@@ -396,11 +395,10 @@ Future<LaunchProfileCubit> createTeamCubit({TeamLauncher? launcher}) async {
 /// [testWidgets] uses a fake-async zone; futures from real disk I/O (temp dirs,
 /// team JSON) must be created inside [WidgetTester.runAsync] or they never complete.
 Future<LaunchProfileCubit> createTeamCubitInTest(
-  WidgetTester tester, {
-  TeamLauncher? launcher,
-}) async {
+  WidgetTester tester,
+) async {
   final cubit = await tester.runAsync(
-    () => createTeamCubit(launcher: launcher),
+    () => createTeamCubit(),
   );
   expect(cubit, isNotNull);
   return cubit!;
