@@ -197,25 +197,6 @@ void main() {
     expect(await Directory(claudeDir).exists(), isTrue);
   });
 
-  test('prepareShellLaunch throws without a valid team member', () async {
-    final session = AppSession(
-      sessionId: 'team-sess',
-      workspaceId: 'proj',
-      folders: const [WorkspaceFolder(path: '/work/team')],
-      sessionTeam: 'tid',
-      cliTeamName: 'tid-1',
-      createdAt: 1,
-    );
-
-    expect(
-      () => service().prepareShellLaunch(
-        session: session,
-        team: const TeamProfile(id: 'tid', name: 'Team', members: []),
-      ),
-      throwsA(isA<StateError>()),
-    );
-  });
-
   test('destroyStandaloneCliState removes session runtime tree', () async {
     const workspaceId = 'ws-simple';
     const sessionId = 'sess-simple';

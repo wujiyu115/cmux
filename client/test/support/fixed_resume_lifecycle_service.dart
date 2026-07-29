@@ -20,30 +20,6 @@ class FixedResumeLifecycleService extends SessionLifecycleService {
   final bool resume;
 
   @override
-  Future<ShellLaunchSpec> prepareShellLaunch({
-    required AppSession session,
-    required TeamProfile team,
-    TeamMemberConfig? member,
-    SessionMemberBinding? memberBinding,
-    Workspace? workspace,
-    Map<String, Map<String, Object?>>? extraMcpServers,
-    MemberBusIdleEndpoint? busIdle,
-    MemberAgentStatusEndpoint? agentStatus,
-  }) async {
-    final spec = await super.prepareShellLaunch(
-      session: session,
-      team: team,
-      member: member,
-      memberBinding: memberBinding,
-      workspace: workspace,
-      extraMcpServers: extraMcpServers,
-      busIdle: busIdle,
-      agentStatus: agentStatus,
-    );
-    return _withFixedResume(spec);
-  }
-
-  @override
   Future<ShellLaunchSpec> prepareShellLaunchFromEnvironmentPlan({
     required AppSession session,
     required Workspace workspace,
@@ -67,28 +43,6 @@ class FixedResumeLifecycleService extends SessionLifecycleService {
       extraMcpServers: extraMcpServers,
       busIdle: busIdle,
       agentStatus: agentStatus,
-    );
-    return _withFixedResume(spec);
-  }
-
-  @override
-  Future<ShellLaunchSpec> prepareTeamShellLaunchFromEnvironment({
-    required AppSession session,
-    required TeamProfile team,
-    required TeamMemberConfig member,
-    SessionMemberBinding? memberBinding,
-    Workspace? workspace,
-    required Map<String, String> environment,
-    List<String> launchWarnings = const [],
-  }) async {
-    final spec = await super.prepareTeamShellLaunchFromEnvironment(
-      session: session,
-      team: team,
-      member: member,
-      memberBinding: memberBinding,
-      workspace: workspace,
-      environment: environment,
-      launchWarnings: launchWarnings,
     );
     return _withFixedResume(spec);
   }

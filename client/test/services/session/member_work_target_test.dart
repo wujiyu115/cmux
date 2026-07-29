@@ -231,54 +231,6 @@ void main() {
     );
   });
 
-  test(
-    'prepareShellLaunch rejects invalid member target on mixed workspace',
-    () async {
-      final lifecycle = SessionLifecycleService();
-      final session = AppSession(
-        sessionId: 's-invalid',
-        workspaceId: 'w1',
-        sessionTeam: 'team',
-        cliTeamName: 'team-1',
-        folders: const [
-          WorkspaceFolder(path: '/home/local', targetId: 'local'),
-          WorkspaceFolder(path: '/remote', targetId: 'ssh:p1'),
-        ],
-        memberTargets: const {'m1': 'ssh:missing'},
-        members: const [],
-        createdAt: 1,
-      );
-      const team = TeamProfile(
-        id: 'team',
-        name: 'Team',
-        members: [
-          TeamMemberConfig(id: 'm1', name: 'Builder', agent: 'builder'),
-        ],
-      );
-      final workspace = Workspace(
-        workspaceId: 'w1',
-        folders: [
-          WorkspaceFolder(path: '/home/local', targetId: 'local'),
-          WorkspaceFolder(path: '/remote', targetId: 'ssh:p1'),
-        ],
-        createdAt: 0,
-      );
-      await expectLater(
-        lifecycle.prepareShellLaunch(
-          session: session,
-          team: team,
-          member: team.members.first,
-          memberBinding: const SessionMemberBinding(
-            rosterMemberId: 'm1',
-            taskId: 't1',
-          ),
-          workspace: workspace,
-        ),
-        throwsStateError,
-      );
-    },
-  );
-
   test('memberWorkDirs derives cwd from target', () {
     final lifecycle = SessionLifecycleService();
     const folders = [
