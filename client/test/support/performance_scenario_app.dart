@@ -6,7 +6,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:teampilot/cubits/app_bootstrap_cubit.dart';
-import 'package:teampilot/cubits/ai_feature_settings_cubit.dart';
 import 'package:teampilot/cubits/app_provider_cubit.dart';
 import 'package:teampilot/cubits/chat_cubit.dart';
 import 'package:teampilot/cubits/cli_presets_cubit.dart';
@@ -239,9 +238,6 @@ class PerformanceScenarioApp {
             ),
             BlocProvider.value(value: layoutCubit ?? LayoutCubit()),
             BlocProvider.value(value: sessionPreferencesCubit),
-            BlocProvider(
-              create: (_) => AiFeatureSettingsCubit(repository: settings),
-            ),
             BlocProvider(create: (_) => EditorCubit(fs: LocalFilesystem())),
             BlocProvider(create: (_) => WorkbenchCubit()),
             BlocProvider(

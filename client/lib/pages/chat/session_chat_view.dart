@@ -26,7 +26,6 @@ import '../../models/team_config.dart';
 import '../../models/workspace.dart';
 import '../../models/workspace_launch_context.dart';
 import '../../repositories/workspace_project_config_repository.dart';
-import '../../services/ai/headless_ai_service.dart';
 import '../../services/cli/preset_resolver.dart';
 import '../../services/cli/registry/capabilities/ai_history_capability.dart';
 import '../../services/cli/registry/capabilities/turn_interrupt_capability.dart';
@@ -35,7 +34,6 @@ import '../../services/terminal/session_member_cli_resolver.dart';
 import '../../services/cli/registry/cli_tool_registry_scope.dart';
 import '../../services/compose/compose_file_attach.dart';
 import '../../services/compose/compose_landing_bundle.dart';
-import '../../services/compose/compose_prompt_enhance.dart';
 import '../../services/compose/compose_text_edit.dart';
 import '../../services/compose/compose_voice_input.dart';
 import '../../services/session/ai_history_live_refresh_controller.dart';
@@ -102,7 +100,6 @@ class _SessionChatViewState extends State<SessionChatView> {
   final _controller = TextEditingController();
   late final FocusNode _focusNode;
   late final ComposeVoiceInput _voiceInput;
-  final _headlessAi = HeadlessAiService();
   final _subagentPreview = SubagentPreviewController();
   AiHistoryLiveRefreshController? _liveRefresh;
   AiHistorySeat? _seat;
@@ -110,7 +107,6 @@ class _SessionChatViewState extends State<SessionChatView> {
   final _submitLock = HistoryContinueSubmitLock();
 
   /// mailId → seat key at queue time (guards wrong-seat timeline refresh).
-  var _enhancing = false;
   var _voiceListening = false;
   var _voiceSoundLevel = 0.0;
   var _discardVoiceTranscript = false;
@@ -431,7 +427,7 @@ class _SessionChatViewState extends State<SessionChatView> {
     }
   }
 
-  LandingLaunchContext _enhanceDraft() {
+  LandingLaunchContext _landingDraft() {
     final isPersonal = widget.session.sessionTeam.trim().isEmpty;
     return LandingLaunchContext(
       isPersonal: isPersonal,
@@ -442,7 +438,7 @@ class _SessionChatViewState extends State<SessionChatView> {
 
   ConfigBundle _slashBundle(BuildContext context) {
     return slashBundleForLanding(
-      draft: _enhanceDraft(),
+      draft: _landingDraft(),
       team: widget.team,
       workspace: _workspaceProjectBundle,
     );
@@ -645,7 +641,7 @@ class _SessionChatViewState extends State<SessionChatView> {
   }
 
   Future<void> _attachFiles() async {
-    if (_isSubmitting || _enhancing) return;
+    if (_isSubmitting) return;
     await pickAndInsertComposeFileReferences(
       controller: _controller,
       workspaceRoot: _workspaceRoot,
@@ -657,7 +653,7 @@ class _SessionChatViewState extends State<SessionChatView> {
   }
 
   Future<bool> _pasteComposeImage() async {
-    if (_isSubmitting || _enhancing) return false;
+    if (_isSubmitting) return false;
     final pasted = await pasteComposeImageAttachment(
       controller: _controller,
       workspaceRoot: _workspaceRoot,
@@ -666,67 +662,8 @@ class _SessionChatViewState extends State<SessionChatView> {
     return pasted;
   }
 
-  Future<void> _enhancePrompt() async {
-    final draft = _controller.text.trim();
-    if (draft.isEmpty || _isSubmitting || _enhancing) return;
-
-    final setting = resolveLandingEnhanceSetting(
-      draft: _enhanceDraft(),
-      presets: context.read<CliPresetsCubit>().state.presets,
-      appProviders: context.read<AppProviderCubit>().state,
-      registry: CliToolRegistryScope.of(context),
-    );
-    if (setting == null) {
-      AppToast.show(
-        context,
-        message: context.l10n.workspaceChatLandingEnhanceNotConfigured,
-        variant: TpToastVariant.warning,
-      );
-      return;
-    }
-
-    setState(() => _enhancing = true);
-    try {
-      final result = await _headlessAi.run(
-        setting: setting,
-        prompt: buildComposeEnhancePrompt(draft),
-        workingDirectory: _workspaceRoot.isEmpty ? null : _workspaceRoot,
-      );
-      if (!mounted) return;
-      final enhanced = cleanComposeEnhanceOutput(result.text);
-      if (enhanced.isEmpty) {
-        AppToast.show(
-          context,
-          message: context.l10n.workspaceChatLandingEnhanceFailed,
-          variant: TpToastVariant.warning,
-        );
-        return;
-      }
-      _controller.text = enhanced;
-      _controller.selection = TextSelection.collapsed(offset: enhanced.length);
-      setState(() {});
-      _focusNode.requestFocus();
-    } on HeadlessAiException catch (e) {
-      if (!mounted) return;
-      AppToast.show(
-        context,
-        message: e.message,
-        variant: TpToastVariant.warning,
-      );
-    } on Object {
-      if (!mounted) return;
-      AppToast.show(
-        context,
-        message: context.l10n.workspaceChatLandingEnhanceFailed,
-        variant: TpToastVariant.warning,
-      );
-    } finally {
-      if (mounted) setState(() => _enhancing = false);
-    }
-  }
-
   Future<void> _toggleVoice() async {
-    if (_isSubmitting || _enhancing) return;
+    if (_isSubmitting) return;
 
     final available = await _voiceInput.initialize();
     if (!mounted) return;
@@ -1205,20 +1142,16 @@ class _SessionChatViewState extends State<SessionChatView> {
                                   onChanged: (_) => setState(() {}),
                                   attachTooltip:
                                       l10n.workspaceChatLandingAttach,
-                                  enhanceTooltip:
-                                      l10n.workspaceChatLandingEnhance,
                                   voiceTooltip:
                                       l10n.workspaceChatLandingVoice,
                                   voiceCancelTooltip:
                                       l10n.workspaceChatLandingVoiceCancel,
                                   voiceStopTooltip:
                                       l10n.workspaceChatLandingVoiceStop,
-                                  isEnhancing: _enhancing,
                                   isVoiceListening: _voiceListening,
                                   voiceElapsed: _voiceElapsed,
                                   voiceSoundLevel: _voiceSoundLevel,
                                   onAttach: () => unawaited(_attachFiles()),
-                                  onEnhance: () => unawaited(_enhancePrompt()),
                                   onVoice: () => unawaited(_toggleVoice()),
                                   onVoiceCancel: () =>
                                       unawaited(_cancelVoice()),

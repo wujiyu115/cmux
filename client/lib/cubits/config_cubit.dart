@@ -7,7 +7,6 @@ enum ConfigSection {
   layout,
   session,
   cli,
-  aiFeatures,
   sshProfiles,
   github,
   shortcuts,
@@ -17,7 +16,6 @@ enum ConfigSection {
 
 extension ConfigSectionRoute on ConfigSection {
   String get routeSegment => switch (this) {
-    ConfigSection.aiFeatures => 'ai-features',
     ConfigSection.sshProfiles => 'ssh-profiles',
     _ => name,
   };
@@ -36,7 +34,6 @@ class ConfigState extends Equatable {
     ConfigSection.layout => 'Layout Configuration',
     ConfigSection.session => 'Session Configuration',
     ConfigSection.cli => 'CLI Configuration',
-    ConfigSection.aiFeatures => 'AI Features',
     ConfigSection.sshProfiles => 'SSH Servers',
     ConfigSection.github => 'GitHub',
     ConfigSection.shortcuts => 'Keyboard Shortcuts',
@@ -48,7 +45,6 @@ class ConfigState extends Equatable {
     ConfigSection.layout => 'Config / Layout',
     ConfigSection.session => 'Config / Session',
     ConfigSection.cli => 'Config / CLI',
-    ConfigSection.aiFeatures => 'Config / AI Features',
     ConfigSection.sshProfiles => 'Config / SSH Servers',
     ConfigSection.github => 'Config / GitHub',
     ConfigSection.shortcuts => 'Config / Keyboard Shortcuts',

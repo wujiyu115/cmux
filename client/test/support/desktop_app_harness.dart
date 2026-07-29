@@ -6,7 +6,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:teampilot/app/ui_zoom_baseline.dart';
 import 'package:teampilot/cubits/agent_attention_cubit.dart';
-import 'package:teampilot/cubits/ai_feature_settings_cubit.dart';
 import 'package:teampilot/cubits/app_bootstrap_cubit.dart';
 import 'package:teampilot/cubits/app_provider_cubit.dart';
 import 'package:teampilot/cubits/chat_cubit.dart';
@@ -124,7 +123,6 @@ Widget buildTestApp({
   LlmConfigCubit? llmConfigCubit,
   AppProviderCubit? appProviderCubit,
   AppSettingsRepository? appSettings,
-  AiFeatureSettingsCubit? aiFeatureSettingsCubit,
   ExtensionCubit? extensionCubit,
 }) {
   final connectionModeService = ConnectionModeService(
@@ -134,8 +132,6 @@ Widget buildTestApp({
   final settings =
       appSettings ??
       InMemoryAppSettingsRepository(hasCompletedOnboarding: true);
-  final aiFeatures =
-      aiFeatureSettingsCubit ?? AiFeatureSettingsCubit(repository: settings);
   final chat =
       chatCubit ??
       ChatCubit(
@@ -257,7 +253,6 @@ Widget buildTestApp({
         BlocProvider.value(value: appProviderCubit!),
         BlocProvider.value(value: layoutCubit ?? LayoutCubit()),
         BlocProvider.value(value: sessionPreferencesCubit),
-        BlocProvider.value(value: aiFeatures),
         BlocProvider(create: (_) => ShortcutCubit()),
         BlocProvider(create: (_) => EditorCubit(fs: LocalFilesystem())),
         BlocProvider(create: (_) => WorkbenchCubit()),

@@ -12,7 +12,6 @@ import '../../widgets/settings/workspace_hub_shell.dart';
 import '../../widgets/settings/workspace_section_host.dart';
 import '../about_page.dart';
 import '../system/log_config_workspace.dart';
-import 'ai_features_config_section.dart';
 import 'cli_config_section.dart';
 import 'github_config_section.dart';
 import 'layout_config_section.dart';
@@ -25,12 +24,11 @@ int _configSectionDialogIndex(ConfigSection section) {
     ConfigSection.layout => 0,
     ConfigSection.session => 1,
     ConfigSection.cli => 2,
-    ConfigSection.aiFeatures => 3,
-    ConfigSection.sshProfiles => 4,
-    ConfigSection.github => 5,
-    ConfigSection.shortcuts => 6,
-    ConfigSection.about => 7,
-    ConfigSection.logs => 7,
+    ConfigSection.sshProfiles => 3,
+    ConfigSection.github => 4,
+    ConfigSection.shortcuts => 5,
+    ConfigSection.about => 6,
+    ConfigSection.logs => 6,
   };
 }
 
@@ -80,13 +78,6 @@ Future<void> showWorkspaceSettingsDialog(
         title: (l10n) => l10n.cliConfig,
         subtitle: (l10n) => l10n.cliConfigPageSubtitle,
         bodyBuilder: (_) => const CliConfigWorkspace(showHeading: false),
-      ),
-      SettingsDialogEntry(
-        icon: Icons.auto_awesome_outlined,
-        navLabel: (l10n) => l10n.aiFeatures,
-        title: (l10n) => l10n.aiFeatures,
-        subtitle: (l10n) => l10n.aiFeaturesPageSubtitle,
-        bodyBuilder: (_) => const AiFeaturesConfigWorkspace(showHeading: false),
       ),
       SettingsDialogEntry(
         icon: Icons.dns_outlined,
@@ -161,15 +152,6 @@ class ConfigSettingsHubPage extends StatelessWidget {
           onTap: throttledTap('config_hub_cli', () {
             context.read<ConfigCubit>().selectSection(ConfigSection.cli);
             context.push('/config/cli');
-          }),
-        ),
-        WorkspaceHubEntry(
-          key: AppKeys.configAiFeaturesSectionButton,
-          title: l10n.aiFeatures,
-          icon: Icons.auto_awesome_outlined,
-          onTap: throttledTap('config_hub_ai_features', () {
-            context.read<ConfigCubit>().selectSection(ConfigSection.aiFeatures);
-            context.push('/config/${ConfigSection.aiFeatures.routeSegment}');
           }),
         ),
         WorkspaceHubEntry(
@@ -254,9 +236,6 @@ class ConfigWorkspace extends StatelessWidget {
           showHeading: showHeading,
         ),
         ConfigSection.cli => CliConfigWorkspace(showHeading: showHeading),
-        ConfigSection.aiFeatures => AiFeaturesConfigWorkspace(
-          showHeading: showHeading,
-        ),
         ConfigSection.sshProfiles => SshProfilesConfigWorkspace(
           showHeading: showHeading,
         ),
@@ -316,16 +295,6 @@ class ConfigNavPanel extends StatelessWidget {
           onTap: throttledTap(
             'config_nav_cli',
             () => onSelectSection(ConfigSection.cli),
-          ),
-        ),
-        WorkspaceHubEntry(
-          key: AppKeys.configAiFeaturesSectionButton,
-          title: l10n.aiFeatures,
-          icon: Icons.auto_awesome_outlined,
-          selected: section == ConfigSection.aiFeatures,
-          onTap: throttledTap(
-            'config_nav_ai_features',
-            () => onSelectSection(ConfigSection.aiFeatures),
           ),
         ),
         WorkspaceHubEntry(

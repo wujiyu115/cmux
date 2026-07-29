@@ -43,16 +43,13 @@ class WorkspaceChatLandingComposeCard extends StatelessWidget {
     required this.onPermissionSelected,
     this.autoChipLeading,
     required this.attachTooltip,
-    required this.enhanceTooltip,
     required this.voiceTooltip,
     required this.voiceCancelTooltip,
     required this.voiceStopTooltip,
-    required this.isEnhancing,
     required this.isVoiceListening,
     required this.voiceElapsed,
     required this.voiceSoundLevel,
     required this.onAttach,
-    required this.onEnhance,
     required this.onVoice,
     required this.onVoiceCancel,
     required this.onVoiceStop,
@@ -85,16 +82,13 @@ class WorkspaceChatLandingComposeCard extends StatelessWidget {
   final ValueChanged<bool> onPermissionSelected;
   final Widget? autoChipLeading;
   final String attachTooltip;
-  final String enhanceTooltip;
   final String voiceTooltip;
   final String voiceCancelTooltip;
   final String voiceStopTooltip;
-  final bool isEnhancing;
   final bool isVoiceListening;
   final Duration voiceElapsed;
   final double voiceSoundLevel;
   final VoidCallback onAttach;
-  final VoidCallback onEnhance;
   final VoidCallback onVoice;
   final VoidCallback onVoiceCancel;
   final VoidCallback onVoiceStop;
@@ -109,7 +103,7 @@ class WorkspaceChatLandingComposeCard extends StatelessWidget {
   final WorkspaceDropTarget? dropTarget;
   final Future<bool> Function()? onPasteImage;
 
-  bool get _composeActionsEnabled => !isSubmitting && !isEnhancing;
+  bool get _composeActionsEnabled => !isSubmitting;
 
   List<Widget> _idleActions(
     BuildContext context, {
@@ -163,14 +157,6 @@ class WorkspaceChatLandingComposeCard extends StatelessWidget {
       ),
       _ComposeActionIcon(
         palette: palette,
-        tooltip: enhanceTooltip,
-        icon: Icons.auto_awesome_outlined,
-        enabled: _composeActionsEnabled && controller.text.trim().isNotEmpty,
-        isLoading: isEnhancing,
-        onTap: onEnhance,
-      ),
-      _ComposeActionIcon(
-        palette: palette,
         tooltip: voiceTooltip,
         icon: Icons.mic_none_outlined,
         enabled: _composeActionsEnabled,
@@ -199,14 +185,6 @@ class WorkspaceChatLandingComposeCard extends StatelessWidget {
         icon: Icons.add,
         enabled: _composeActionsEnabled,
         onTap: onAttach,
-      ),
-      _ComposeActionIcon(
-        palette: palette,
-        tooltip: enhanceTooltip,
-        icon: Icons.auto_awesome_outlined,
-        enabled: _composeActionsEnabled && controller.text.trim().isNotEmpty,
-        isLoading: isEnhancing,
-        onTap: onEnhance,
       ),
       Expanded(
         child: Align(

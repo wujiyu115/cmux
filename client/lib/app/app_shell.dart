@@ -31,7 +31,6 @@ import '../services/workbench/workbench_strip_navigator.dart';
 import '../services/editor/markdown_view_mode_store.dart';
 import '../services/session/ai_history_loader.dart';
 import '../services/session/session_history_context_builder.dart';
-import '../cubits/ai_feature_settings_cubit.dart';
 import '../cubits/config_cubit.dart';
 import '../cubits/layout_cubit.dart';
 import '../cubits/workspace_tools_cubit.dart';
@@ -193,7 +192,6 @@ class AppShell {
     required this.githubCredentialsStore,
     required this.githubAccountCubit,
     required this.appSettings,
-    required this.aiFeatureSettingsCubit,
     required this.reinstallStorageContext,
     required this.bootstrapAppData,
     required this.cliToolRegistry,
@@ -258,7 +256,6 @@ class AppShell {
   final GithubCredentialsStore githubCredentialsStore;
   final GithubAccountCubit githubAccountCubit;
   final AppSettingsRepository appSettings;
-  final AiFeatureSettingsCubit aiFeatureSettingsCubit;
   final Future<void> Function() reinstallStorageContext;
   final Future<void> Function() bootstrapAppData;
   final AutomationCubit automationCubit;
@@ -292,9 +289,6 @@ Future<AppShell> buildAppShell({
   );
 
   final appSettings = SharedPrefsAppSettingsRepository(preferences);
-  final aiFeatureSettingsCubit = AiFeatureSettingsCubit(
-    repository: appSettings,
-  );
   final sessionPreferencesCubit = SessionPreferencesCubit(
     repository: SessionPreferencesRepository(preferences),
     cliToolRegistry: cliToolRegistry,
@@ -959,7 +953,6 @@ Future<AppShell> buildAppShell({
       appSettings: appSettings,
       sshProfileCubit: sshProfileCubit,
       cliPresetsCubit: cliPresetsCubit,
-      aiFeatureSettingsCubit: aiFeatureSettingsCubit,
       homeWorkspaceUiCache: homeWorkspaceUiCache,
       workspaces: chatCubit.state.workspaces,
     );
@@ -1069,7 +1062,6 @@ Future<AppShell> buildAppShell({
     githubCredentialsStore: githubCredentialsStore,
     githubAccountCubit: githubAccountCubit,
     appSettings: appSettings,
-    aiFeatureSettingsCubit: aiFeatureSettingsCubit,
     reinstallStorageContext: reinstallStorageContext,
     bootstrapAppData: bootstrapAppData,
     homeWorkspaceUiCache: homeWorkspaceUiCache,

@@ -81,9 +81,6 @@ class AppKeys {
     'config-session-section-button',
   );
   static const configCliSectionButton = Key('config-cli-section-button');
-  static const configAiFeaturesSectionButton = Key(
-    'config-ai-features-section-button',
-  );
   static const configSshProfilesSectionButton = Key(
     'config-ssh-profiles-section-button',
   );

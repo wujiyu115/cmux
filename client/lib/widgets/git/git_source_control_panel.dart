@@ -7,13 +7,10 @@ import 'package:path/path.dart' as p;
 import 'package:shared_ui/shared_ui.dart';
 import 'package:teampilot/widgets/app_toast/app_toast.dart';
 
-import '../../cubits/ai_feature_settings_cubit.dart';
 import '../../cubits/cli_presets_cubit.dart';
 import '../../cubits/git_cubit.dart';
 import '../../cubits/app_provider_cubit.dart';
 import '../../cubits/workbench/workbench_tab.dart';
-import '../../models/ai_feature_setting.dart';
-import '../../services/ai/ai_feature_setting_resolver.dart';
 import '../../services/cli/registry/cli_tool_registry_scope.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../models/git_status.dart';
@@ -433,54 +430,22 @@ class _GitRepoBodyState extends State<_GitRepoBody> {
             },
           ),
           const SizedBox(height: 10),
-          BlocSelector<GitCubit, GitState, (bool, bool, bool, String)>(
+          BlocSelector<GitCubit, GitState, (bool, bool, String)>(
             selector: (state) => (
               state.status.staged.isNotEmpty,
               state.busy,
-              state.generatingCommitMessage,
               state.status.branch ?? 'HEAD',
             ),
             builder: (context, commit) {
-              final (hasStaged, busy, generating, branch) = commit;
+              final (hasStaged, busy, branch) = commit;
               return _CommitBox(
                 controller: _commitController,
                 hint: l10n.gitCommitMessageHint(branch),
                 canCommit: hasStaged && !busy,
-                canGenerate: hasStaged && !busy,
-                generating: generating,
                 onChanged: _cubit.setCommitMessage,
                 onCommit: () async {
                   final ok = await _cubit.commit();
                   if (ok) _commitController.clear();
-                },
-                onGenerate: () async {
-                  final stored = context
-                      .read<AiFeatureSettingsCubit>()
-                      .state
-                      .settingFor(AiFeatureId.commitMessage);
-                  final appProviders = context.read<AppProviderCubit>().state;
-                  final registry = CliToolRegistryScope.of(context);
-                  final presets = context.read<CliPresetsCubit>().state.presets;
-                  if (!aiFeatureIsConfigured(
-                    stored: stored,
-                    registry: registry,
-                    appProviders: appProviders,
-                    globalPresets: presets,
-                  )) {
-                    AppToast.show(
-                      context,
-                      message: l10n.gitGenerateCommitMessageNoProvider,
-                      variant: TpToastVariant.error,
-                    );
-                    return;
-                  }
-                  final setting = resolveAiFeatureSetting(
-                    stored: stored,
-                    appProviders: appProviders,
-                    registry: registry,
-                    globalPresets: presets,
-                  );
-                  await _cubit.generateCommitMessage(setting);
                 },
               );
             },
@@ -679,21 +644,15 @@ class _CommitBox extends StatelessWidget {
     required this.controller,
     required this.hint,
     required this.canCommit,
-    required this.canGenerate,
-    required this.generating,
     required this.onChanged,
     required this.onCommit,
-    required this.onGenerate,
   });
 
   final TextEditingController controller;
   final String hint;
   final bool canCommit;
-  final bool canGenerate;
-  final bool generating;
   final ValueChanged<String> onChanged;
   final VoidCallback onCommit;
-  final VoidCallback onGenerate;
 
   @override
   Widget build(BuildContext context) {
@@ -701,39 +660,17 @@ class _CommitBox extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Builder(
-                builder: (context) {
-                  final bodyStyle = TpTextStyles.of(context).md;
-                  return TpTextarea(
-                    controller: controller,
-                    minHeight: tpTextareaHeightForLines(bodyStyle, lines: 2),
-                    maxHeight: tpTextareaHeightForLines(bodyStyle, lines: 6),
-                    enabled: !generating,
-                    decoration:
-                        InputDecoration(hintText: hint, isDense: true),
-                    onChanged: onChanged,
-                  );
-                },
-              ),
-            ),
-            const SizedBox(width: 8),
-            IconButton(
-              key: const ValueKey('git-generate-commit-button'),
-              tooltip: l10n.gitGenerateCommitMessage,
-              onPressed: (canGenerate && !generating) ? onGenerate : null,
-              icon: generating
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Icon(Icons.auto_awesome_outlined, size: 18),
-            ),
-          ],
+        Builder(
+          builder: (context) {
+            final bodyStyle = TpTextStyles.of(context).md;
+            return TpTextarea(
+              controller: controller,
+              minHeight: tpTextareaHeightForLines(bodyStyle, lines: 2),
+              maxHeight: tpTextareaHeightForLines(bodyStyle, lines: 6),
+              decoration: InputDecoration(hintText: hint, isDense: true),
+              onChanged: onChanged,
+            );
+          },
         ),
         const SizedBox(height: 8),
         FilledButton.icon(

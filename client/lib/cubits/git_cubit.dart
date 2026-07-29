@@ -2,10 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../models/ai_feature_setting.dart';
 import '../models/git_status.dart';
-import '../services/ai/commit_message_prompt.dart';
-import '../services/ai/headless_ai_service.dart';
 import '../services/git/git_changes_visible_rows.dart';
 import '../services/git/git_service.dart';
 
@@ -23,7 +20,6 @@ class GitState extends Equatable {
     this.branches = const [],
     this.errorMessage,
     this.expandedFolderPaths = const {},
-    this.generatingCommitMessage = false,
     this.changesTreeView = const GitChangesTreeViewData(
       stagedRows: [],
       unstagedRows: [],
@@ -41,7 +37,6 @@ class GitState extends Equatable {
   final List<String> branches;
   final String? errorMessage;
   final Set<String> expandedFolderPaths;
-  final bool generatingCommitMessage;
 
   /// Flattened staged/unstaged rows for the changes tree (recomputed in cubit).
   final GitChangesTreeViewData changesTreeView;
@@ -67,7 +62,6 @@ class GitState extends Equatable {
     List<String>? branches,
     String? errorMessage,
     Set<String>? expandedFolderPaths,
-    bool? generatingCommitMessage,
     GitChangesTreeViewData? changesTreeView,
     bool clearError = false,
   }) {
@@ -81,8 +75,6 @@ class GitState extends Equatable {
       branches: branches ?? this.branches,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
       expandedFolderPaths: expandedFolderPaths ?? this.expandedFolderPaths,
-      generatingCommitMessage:
-          generatingCommitMessage ?? this.generatingCommitMessage,
       changesTreeView: changesTreeView ?? this.changesTreeView,
     );
   }
@@ -98,7 +90,6 @@ class GitState extends Equatable {
     branches,
     errorMessage,
     expandedFolderPaths,
-    generatingCommitMessage,
     changesTreeView,
   ];
 }
@@ -110,13 +101,11 @@ class GitState extends Equatable {
 /// [GitState.errorMessage]. Runs git on the active storage backend (local,
 /// WSL, or SSH).
 class GitCubit extends Cubit<GitState> {
-  GitCubit({required GitService service, HeadlessAiService? headless})
+  GitCubit({required GitService service})
     : _service = service,
-      _headless = headless ?? HeadlessAiService(),
       super(const GitState());
 
   final GitService _service;
-  final HeadlessAiService _headless;
 
   /// Seeds [GitState.expandedFolderPaths] once after the first status load.
   bool _treeExpansionInitialized = false;
@@ -361,63 +350,6 @@ class GitCubit extends Cubit<GitState> {
       () => _service.createBranch(state.repoRoot, name.trim()),
     )) {
       await ensureBranches(force: true);
-    }
-  }
-
-  /// Generates a commit message draft from the staged diff via [setting].
-  /// Fills [GitState.commitMessage]; never commits.
-  Future<void> generateCommitMessage(AiFeatureSetting setting) async {
-    final dir = state.repoRoot;
-    if (dir.isEmpty ||
-        state.status.staged.isEmpty ||
-        state.generatingCommitMessage) {
-      return;
-    }
-    _publish(state.copyWith(generatingCommitMessage: true, clearError: true));
-    try {
-      final diff = await _service.stagedDiff(dir);
-      if (isClosed || state.repoRoot != dir) return;
-      if (diff.trim().isEmpty) {
-        _publish(
-          state.copyWith(generatingCommitMessage: false),
-          recomputeRows: false,
-        );
-        return;
-      }
-      final result = await _headless.run(
-        setting: setting,
-        prompt: buildCommitMessagePrompt(diff),
-        workingDirectory: dir,
-      );
-      if (isClosed || state.repoRoot != dir) return;
-      _publish(
-        state.copyWith(
-          commitMessage: cleanCommitMessageOutput(result.text),
-          generatingCommitMessage: false,
-        ),
-        recomputeRows: false,
-      );
-    } on GitException catch (e) {
-      if (isClosed) return;
-      _publish(
-        state.copyWith(generatingCommitMessage: false, errorMessage: e.message),
-        recomputeRows: false,
-      );
-    } on HeadlessAiException catch (e) {
-      if (isClosed) return;
-      _publish(
-        state.copyWith(generatingCommitMessage: false, errorMessage: e.message),
-        recomputeRows: false,
-      );
-    } on Object catch (e) {
-      if (isClosed) return;
-      _publish(
-        state.copyWith(
-          generatingCommitMessage: false,
-          errorMessage: e.toString(),
-        ),
-        recomputeRows: false,
-      );
     }
   }
 

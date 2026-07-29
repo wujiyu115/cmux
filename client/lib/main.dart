@@ -682,7 +682,6 @@ void main() async {
                     value: shell.githubCredentialsStore,
                   ),
                   BlocProvider.value(value: shell.cliPresetsCubit),
-                  BlocProvider.value(value: shell.aiFeatureSettingsCubit),
                   BlocProvider.value(value: shell.shortcutCubit),
                 ],
                 child: CliToolRegistryScope(

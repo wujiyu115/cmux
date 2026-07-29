@@ -2,8 +2,6 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../models/ai_feature_setting.dart';
-
 abstract class AppSettingsRepository {
   Future<String?> loadLlmConfigPathOverride();
   Future<void> saveLlmConfigPathOverride(String? path);
@@ -21,8 +19,6 @@ abstract class AppSettingsRepository {
   Future<String?> loadSkippedUpdateVersion();
   Future<void> saveSkippedUpdateVersion(String? version);
 
-  Future<Map<AiFeatureId, AiFeatureSetting>> loadAiFeatureSettings();
-  Future<void> saveAiFeatureSetting(AiFeatureId id, AiFeatureSetting setting);
 }
 
 class SharedPrefsAppSettingsRepository implements AppSettingsRepository {
@@ -33,7 +29,6 @@ class SharedPrefsAppSettingsRepository implements AppSettingsRepository {
   static const _hasCompletedOnboardingKey = 'hasCompletedOnboarding';
   static const _autoCheckUpdatesKey = 'autoCheckUpdates';
   static const _skippedUpdateVersionKey = 'skippedUpdateVersion';
-  static const _aiFeaturesKey = 'aiFeatures';
 
   final SharedPreferences _preferences;
 
@@ -111,37 +106,6 @@ class SharedPrefsAppSettingsRepository implements AppSettingsRepository {
     await _writeMap(current);
   }
 
-  @override
-  Future<Map<AiFeatureId, AiFeatureSetting>> loadAiFeatureSettings() async {
-    final raw = _readMap()[_aiFeaturesKey];
-    final result = <AiFeatureId, AiFeatureSetting>{};
-    if (raw is Map) {
-      for (final entry in raw.entries) {
-        final id = AiFeatureId.tryParse(entry.key.toString());
-        if (id == null || entry.value is! Map) continue;
-        result[id] = AiFeatureSetting.fromJson(
-          Map<String, Object?>.from(entry.value as Map),
-        );
-      }
-    }
-    return result;
-  }
-
-  @override
-  Future<void> saveAiFeatureSetting(
-    AiFeatureId id,
-    AiFeatureSetting setting,
-  ) async {
-    final current = _readMap();
-    final rawFeatures = current[_aiFeaturesKey];
-    final features = rawFeatures is Map
-        ? Map<String, Object?>.from(rawFeatures)
-        : <String, Object?>{};
-    features[id.key] = setting.toJson();
-    current[_aiFeaturesKey] = features;
-    await _writeMap(current);
-  }
-
   Future<void> _writeMap(Map<String, Object?> current) async {
     if (current.isEmpty) {
       await _preferences.remove(storageKey);
@@ -216,19 +180,5 @@ class InMemoryAppSettingsRepository implements AppSettingsRepository {
     _skippedUpdateVersion = (trimmed == null || trimmed.isEmpty)
         ? null
         : trimmed;
-  }
-
-  final Map<AiFeatureId, AiFeatureSetting> _aiFeatures = {};
-
-  @override
-  Future<Map<AiFeatureId, AiFeatureSetting>> loadAiFeatureSettings() async =>
-      Map<AiFeatureId, AiFeatureSetting>.from(_aiFeatures);
-
-  @override
-  Future<void> saveAiFeatureSetting(
-    AiFeatureId id,
-    AiFeatureSetting setting,
-  ) async {
-    _aiFeatures[id] = setting;
   }
 }

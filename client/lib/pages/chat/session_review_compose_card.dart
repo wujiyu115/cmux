@@ -28,16 +28,13 @@ class SessionReviewComposeCard extends StatelessWidget {
     required this.onSubmit,
     required this.onChanged,
     required this.attachTooltip,
-    required this.enhanceTooltip,
     required this.voiceTooltip,
     required this.voiceCancelTooltip,
     required this.voiceStopTooltip,
-    required this.isEnhancing,
     required this.isVoiceListening,
     required this.voiceElapsed,
     required this.voiceSoundLevel,
     required this.onAttach,
-    required this.onEnhance,
     required this.onVoice,
     required this.onVoiceCancel,
     required this.onVoiceStop,
@@ -79,16 +76,13 @@ class SessionReviewComposeCard extends StatelessWidget {
   final VoidCallback onSubmit;
   final ValueChanged<String> onChanged;
   final String attachTooltip;
-  final String enhanceTooltip;
   final String voiceTooltip;
   final String voiceCancelTooltip;
   final String voiceStopTooltip;
-  final bool isEnhancing;
   final bool isVoiceListening;
   final Duration voiceElapsed;
   final double voiceSoundLevel;
   final VoidCallback onAttach;
-  final VoidCallback onEnhance;
   final VoidCallback onVoice;
   final VoidCallback onVoiceCancel;
   final VoidCallback onVoiceStop;
@@ -131,7 +125,7 @@ class SessionReviewComposeCard extends StatelessWidget {
   final VoidCallback? onStop;
 
   bool get _composeActionsEnabled =>
-      composeEnabled && !isSubmitting && !isEnhancing;
+      composeEnabled && !isSubmitting;
 
   bool get _showContinueToolbar =>
       identityLabel != null ||
@@ -281,14 +275,6 @@ class SessionReviewComposeCard extends StatelessWidget {
       ),
       _ComposeActionIcon(
         palette: palette,
-        tooltip: enhanceTooltip,
-        icon: Icons.auto_awesome_outlined,
-        enabled: _composeActionsEnabled && controller.text.trim().isNotEmpty,
-        isLoading: isEnhancing,
-        onTap: onEnhance,
-      ),
-      _ComposeActionIcon(
-        palette: palette,
         tooltip: voiceTooltip,
         icon: Icons.mic_none_outlined,
         enabled: _composeActionsEnabled,
@@ -311,14 +297,6 @@ class SessionReviewComposeCard extends StatelessWidget {
         icon: Icons.add,
         enabled: _composeActionsEnabled,
         onTap: onAttach,
-      ),
-      _ComposeActionIcon(
-        palette: palette,
-        tooltip: enhanceTooltip,
-        icon: Icons.auto_awesome_outlined,
-        enabled: _composeActionsEnabled && controller.text.trim().isNotEmpty,
-        isLoading: isEnhancing,
-        onTap: onEnhance,
       ),
       Expanded(
         child: Align(

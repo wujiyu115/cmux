@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import '../cubits/app_provider_cubit.dart';
-import '../cubits/ai_feature_settings_cubit.dart';
 import '../cubits/chat_cubit.dart';
 import '../cubits/cli_presets_cubit.dart';
 import '../cubits/extension_cubit.dart';
@@ -239,7 +238,6 @@ abstract final class AppDataBootstrap {
     required AppSettingsRepository appSettings,
     required SshProfileCubit sshProfileCubit,
     required CliPresetsCubit cliPresetsCubit,
-    required AiFeatureSettingsCubit aiFeatureSettingsCubit,
     required HomeWorkspaceUiCache homeWorkspaceUiCache,
     required List<Workspace> workspaces,
   }) async {
@@ -253,8 +251,6 @@ abstract final class AppDataBootstrap {
     );
     await yieldUiFrame();
     await _timed(boot, 'cliPresets', cliPresetsCubit.load);
-    await yieldUiFrame();
-    await _timed(boot, 'aiFeatureSettings', aiFeatureSettingsCubit.load);
     await yieldUiFrame();
     await _timed(boot, 'homeWorkspaceUi', homeWorkspaceUiCache.warm);
     await yieldUiFrame();
