@@ -1,57 +1,8 @@
-/// 单个 teammate-bus MCP server 的配置 dict（claude/flashskyai 的 http 远程格式）。
-///
-/// opencode 用不同的 schema（顶层 `mcp` + `type: "remote"`），见
-/// `mergeOpencodeTeammateBusMcp`。
-Map<String, Object?> teammateBusMcpServerConfig({
-  required Uri endpoint,
-  required String memberId,
-  required String sessionId,
-}) {
-  return {
-    'type': 'http',
-    'url': endpoint.toString(),
-    'headers': <String, String>{
-      agentStatusMemberHeader: memberId,
-      agentStatusSessionHeader: sessionId,
-    },
-  };
-}
-
-/// 单个 teammate-bus MCP server 的 **stdio** 配置（claude mcpServers 的 command 格式）。
-///
-/// 让 claude 经 stdio 传输 spawn `teammate_bus_bridge`，桥接再转回同一个 loopback
-/// [endpoint]。stdio 没有 HTTP 那个写死的 ~6 分钟单请求超时，`wait_for_message`
-/// 因此能真正阻塞一整场（唯一上限是 claude 的应用层 MCP_TOOL_TIMEOUT=24h）。
-/// [bridgePath] 由 `BusBridgeLocator.resolve()` 解析；为空时调用方应回落到
-/// [teammateBusMcpServerConfig]（HTTP）。
-Map<String, Object?> teammateBusMcpServerConfigStdio({
-  required String bridgePath,
-  required Uri endpoint,
-  required String memberId,
-  required String sessionId,
-}) {
-  return {
-    'command': bridgePath,
-    'args': <String>[
-      '--member',
-      memberId,
-      '--session',
-      sessionId,
-      '--bus-url',
-      endpoint.toString(),
-    ],
-  };
-}
-
-/// MCP 配置中使用的 server 名（mcpServers 的 key）。
-const agentStatusServerName = 'teammate-bus';
-
-/// 标识发起请求成员身份的 HTTP header 名。
+/// Identifies the reporting seat on a `POST /agent-status` request.
 const agentStatusMemberHeader = 'X-Member';
 
-/// 标识 mixed session 的 HTTP header 名（gateway 按 session 路由）。
+/// Identifies the session that owns the seat.
 const agentStatusSessionHeader = 'X-Session';
 
-/// 远程成员经反向隧道连回 bus 时携带的 per-session token header 名（HTTP-over-tunnel
-/// 的 cursor 用；长阻塞 CLI 走 raw-socket relay 时 token 在握手帧里）。
+/// Shared secret for status posts that arrive over an SSH reverse tunnel.
 const agentStatusTokenHeader = 'X-Bus-Token';
