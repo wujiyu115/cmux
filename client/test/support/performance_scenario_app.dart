@@ -7,20 +7,16 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:teampilot/cubits/app_bootstrap_cubit.dart';
 import 'package:teampilot/cubits/chat_cubit.dart';
-import 'package:teampilot/cubits/mcp_cubit.dart';
 import 'package:teampilot/cubits/app_update_cubit.dart';
 import 'package:teampilot/cubits/ssh_profile_cubit.dart';
-import 'package:teampilot/repositories/mcp_repository.dart';
 import 'package:teampilot/cubits/config_cubit.dart';
 import 'package:teampilot/cubits/editor_cubit.dart';
 import 'package:teampilot/cubits/extension_cubit.dart';
 import 'package:teampilot/cubits/layout_cubit.dart';
 import 'package:teampilot/cubits/member_presence_cubit.dart';
 import 'package:teampilot/cubits/notification_cubit.dart';
-import 'package:teampilot/cubits/plugin_cubit.dart';
 import 'package:teampilot/cubits/session_preferences_cubit.dart';
 import 'package:teampilot/cubits/shortcut_cubit.dart';
-import 'package:teampilot/cubits/skill_cubit.dart';
 import 'package:teampilot/cubits/workspace_tools_cubit.dart';
 import 'package:teampilot/cubits/workbench/workbench_cubit.dart';
 import 'package:teampilot/app/ui_zoom_baseline.dart';
@@ -29,18 +25,14 @@ import 'package:teampilot/models/runtime_target.dart';
 import 'package:teampilot/pages/home_workspace/workspace_chrome_commands.dart';
 import 'package:teampilot/repositories/extension_repository.dart';
 import 'package:teampilot/repositories/app_settings_repository.dart';
-import 'package:teampilot/repositories/plugin_repository.dart';
 import 'package:teampilot/repositories/session_preferences_repository.dart';
 import 'package:teampilot/repositories/session_repository.dart';
-import 'package:teampilot/repositories/skill_repository.dart';
 import 'package:teampilot/repositories/ssh_credential_store.dart';
 import 'package:teampilot/repositories/ssh_known_host_repository.dart';
 import 'package:teampilot/repositories/ssh_profile_repository.dart';
 import 'package:teampilot/repositories/workspace_project_config_repository.dart';
 import 'package:teampilot/router/app_router.dart';
 import 'package:teampilot/services/app/connection_mode_service.dart';
-import 'package:teampilot/services/cli/registry/cli_tool_registry.dart';
-import 'package:teampilot/services/cli/registry/cli_tool_registry_scope.dart';
 import 'package:teampilot/services/commands/command_bus.dart';
 import 'package:teampilot/services/commands/run_command_registrar.dart';
 import 'package:teampilot/services/commands/workspace_search_command_registrar.dart';
@@ -53,7 +45,6 @@ import 'package:teampilot/services/file_tree/workspace_file_tree_store.dart';
 import 'package:teampilot/services/home_workspace/home_workspace_ui_cache.dart';
 import 'package:teampilot/services/io/local_filesystem.dart';
 import 'package:teampilot/services/cli/installer_types.dart';
-import 'package:teampilot/services/plugin/plugin_repo_service.dart';
 import 'package:teampilot/services/run/workspace_run_platform_factory.dart';
 import 'package:teampilot/services/ssh/ssh_client_factory.dart';
 import 'package:teampilot/services/ssh/ssh_connection_events.dart';
@@ -237,23 +228,11 @@ class PerformanceScenarioApp {
             BlocProvider(create: (_) => WorkspaceToolsCubit()),
             BlocProvider(create: (_) => NotificationCubit()),
             BlocProvider(create: (_) => ShortcutCubit()),
-            BlocProvider(create: (_) => SkillCubit(SkillRepository())),
-            BlocProvider(
-              create: (_) {
-                final repo = PluginRepository();
-                return PluginCubit(
-                  repository: repo,
-                  installService: repo.install,
-                  repoService: PluginRepoService(),
-                );
-              },
-            ),
             BlocProvider(
               create: (_) => testAutomationCubit(
                 sessionRepository: sessionRepository,
               ),
             ),
-            BlocProvider(create: (_) => McpCubit(McpRepository())),
             BlocProvider(create: (_) => AppUpdateCubit(settings: settings)),
             BlocProvider(
               create: (_) => SshProfileCubit(
@@ -262,10 +241,7 @@ class PerformanceScenarioApp {
               ),
             ),
           ],
-          child: CliToolRegistryScope(
-            registry: CliToolRegistry.builtIn(),
-            child: const TeamPilotApp(),
-          ),
+          child: const TeamPilotApp(),
         ),
       ),
     );

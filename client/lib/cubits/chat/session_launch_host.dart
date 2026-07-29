@@ -3,7 +3,6 @@ import 'package:flutter_alacritty/flutter_alacritty.dart';
 import '../../models/app_session.dart';
 import '../../models/member_remote_provision_progress.dart';
 import '../../repositories/session_repository.dart';
-import '../../services/cli/registry/cli_tool_registry.dart';
 import '../../services/session/session_lifecycle_service.dart';
 import '../../services/agent_status/agent_status_seat_lookup.dart';
 import '../../cubits/agent_attention_cubit.dart';
@@ -88,8 +87,6 @@ abstract interface class SessionLaunchHost
   /// Permission-attention state; cleared on seat/tab dispose (null in tests).
   AgentAttentionCubit? get agentAttentionCubit;
 
-  /// CLI registry for lifecycle gating and tool capabilities at connect time.
-  CliToolRegistry get cliRegistry;
 
   /// Workspace opt-in: inject IS_SANDBOX when launching Claude as root over SSH.
   Future<bool> isWorkspaceRootSandboxEnvOptIn(String workspaceId);

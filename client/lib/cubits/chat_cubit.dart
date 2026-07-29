@@ -21,13 +21,10 @@ import '../services/workspace/workspace_icon_service.dart';
 import '../services/workspace/workspace_icon_storage.dart';
 import '../services/storage/app_storage.dart';
 import '../services/session/session_lifecycle_service.dart';
-import '../services/remote/remote_cli_readiness.dart';
 import '../services/team_bus/mcp/teammate_bus_mcp_gateway.dart';
 import '../services/agent_status/agent_status_seat_lookup.dart';
 import 'agent_attention_cubit.dart';
-import '../services/cli/registry/cli_tool_registry.dart';
 import '../services/terminal/terminal_session.dart';
-import '../services/terminal/member_turn_interrupt_service.dart';
 import '../services/terminal/terminal_theme_for_launch.dart';
 import '../services/terminal/terminal_transport_factory.dart';
 import '../utils/session/workspace_sessions.dart';
@@ -82,9 +79,7 @@ class ChatCubit extends Cubit<ChatState>
     AgentAttentionCubit? agentAttentionCubit,
     required AutomationRepository automationRepository,
     LayoutCubit? layoutCubit,
-    RemoteCliReadinessService? remoteCliReadiness,
-  }) : _remoteCliReadiness = remoteCliReadiness,
-       _teammateBusMcpGateway =
+  }) : _teammateBusMcpGateway =
            teammateBusMcpGateway ?? TeammateBusMcpGateway(),
        _agentStatusSeatLookup = agentStatusSeatLookup,
        _agentAttentionCubit = agentAttentionCubit,
@@ -120,10 +115,7 @@ class ChatCubit extends Cubit<ChatState>
   /// Fired when a session tab is torn down so History can dispose its seats.
   void Function(String sessionId)? onHistorySeatsDispose;
 
-  final RemoteCliReadinessService? _remoteCliReadiness;
 
-  /// User-driven remote CLI locate/install (Machines panel + landing gate).
-  RemoteCliReadinessService? get remoteCliReadiness => _remoteCliReadiness;
   final TeammateBusMcpGateway _teammateBusMcpGateway;
   final AgentStatusSeatLookup? _agentStatusSeatLookup;
   final AgentAttentionCubit? _agentAttentionCubit;
@@ -146,11 +138,6 @@ class ChatCubit extends Cubit<ChatState>
         tabStore: _tabStore,
         isClosed: () => isClosed,
         onAfterTurnLatched: _onOperatorTurnLatched,
-      );
-  late final MemberTurnInterruptService _turnInterrupt =
-      MemberTurnInterruptService(
-        cliToolRegistry: CliToolRegistry.builtIn(),
-        abortMemberInject: _sessionRuntime.abortMemberInject,
       );
   late final TabMemberMaterializer _memberMaterializer = TabMemberMaterializer(
     runtime: _sessionRuntime,
@@ -281,9 +268,6 @@ class ChatCubit extends Cubit<ChatState>
   PostFrameScheduler get postFrameScheduler => _postFrameScheduler;
 
   @override
-  CliToolRegistry get cliRegistry => _lifecycle.cliToolRegistry;
-
-  @override
   Future<bool> isWorkspaceRootSandboxEnvOptIn(String workspaceId) async {
     final id = workspaceId.trim();
     if (id.isEmpty) return false;
@@ -360,14 +344,11 @@ class ChatCubit extends Cubit<ChatState>
     final mid = (memberId ?? tab.selectedMemberId).trim();
     if (mid.isEmpty) return;
 
-    final cli = tab.persistedSession?.cli ?? CliTool.claude;
-
-    await _turnInterrupt.interrupt(
-      sessionId: sid,
-      memberId: mid,
-      shell: tab.memberShells[mid],
-      cli: cli,
-    );
+    final shell = tab.memberShells[mid];
+    if (shell == null || !shell.isConnected) return;
+    _sessionRuntime.abortMemberInject(sid, mid);
+    // Plain shells interrupt the foreground job with Ctrl-C.
+    shell.input.writeToPty('');
   }
 
   TeamProfile? _teamForSessionTab(ChatTab tab) => null;

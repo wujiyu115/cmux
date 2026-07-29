@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_ui/shared_ui.dart';
 
-import '../../../models/plugin.dart';
-import '../../../models/skill.dart';
-import '../../../models/config_bundle.dart';
 import '../../../utils/debounce/debounce.dart';
 import '../../../services/workspace_dnd/workspace_drop_target.dart';
 import '../../../widgets/compose/compose_focus_shell.dart';
@@ -49,9 +46,6 @@ class WorkspaceChatLandingComposeCard extends StatelessWidget {
     required this.onVoiceCancel,
     required this.onVoiceStop,
     required this.workspaceRoot,
-    required this.skills,
-    required this.plugins,
-    required this.slashBundle,
     this.teamSettingsTooltip,
     this.onTeamSettings,
     this.showTeamSettingsAttention = false,
@@ -84,9 +78,6 @@ class WorkspaceChatLandingComposeCard extends StatelessWidget {
   final VoidCallback onVoiceCancel;
   final VoidCallback onVoiceStop;
   final String workspaceRoot;
-  final List<Skill> skills;
-  final List<Plugin> plugins;
-  final ConfigBundle slashBundle;
   final String? teamSettingsTooltip;
   final VoidCallback? onTeamSettings;
   final bool showTeamSettingsAttention;
@@ -236,9 +227,6 @@ class WorkspaceChatLandingComposeCard extends StatelessWidget {
                       onSubmit: onSubmit,
                       canSubmit: () => canSubmit,
                       workspaceRoot: workspaceRoot,
-                      skills: skills,
-                      plugins: plugins,
-                      slashBundle: slashBundle,
                       mutedColor: palette.muted,
                       hintColor: palette.hint,
                       onPasteImage: onPasteImage,

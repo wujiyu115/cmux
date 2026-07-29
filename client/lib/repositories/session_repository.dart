@@ -22,7 +22,6 @@ import '../services/workspace/workspace_icon_service.dart';
 import '../services/workspace/workspace_icon_storage.dart';
 import '../services/workspace/workspace_target_remap.dart';
 import '../services/session/session_lifecycle_service.dart';
-import '../services/provider/workspace_trust_provisioner.dart';
 import '../utils/lock_pool.dart';
 import '../utils/logging/logger.dart';
 import '../utils/workspace/workspace_path_utils.dart';
@@ -363,7 +362,6 @@ class SessionRepository {
       updatedAt: now,
     );
     await _writeManifest(fs, workspace);
-    await _provisionWorkspaceTrust(fs, workspace);
     return workspace;
   }
 
@@ -478,7 +476,6 @@ class SessionRepository {
       updatedAt: now,
     );
     await _writeManifest(fs, updated);
-    await _provisionWorkspaceTrust(fs, updated);
   }
 
   static bool _sameTargetIdSet(List<String> a, List<String> b) {
@@ -529,7 +526,6 @@ class SessionRepository {
       updatedAt: now,
     );
     await _writeManifest(fs, updated);
-    await _provisionWorkspaceTrust(fs, updated);
 
     for (final session in applied.sessions) {
       try {
@@ -547,19 +543,6 @@ class SessionRepository {
     return updated;
   }
 
-  Future<void> _provisionWorkspaceTrust(
-    SessionRepositoryFs fs,
-    Workspace workspace,
-  ) async {
-    final layout = RuntimeLayout(teampilotRoot: fs.teampilotRoot, fs: fs.fs);
-    await WorkspaceTrustProvisioner(
-      layout: layout,
-      fs: fs.fs,
-    ).provisionWorkspace(
-      workspaceId: workspace.workspaceId,
-      directories: workspace.folderPaths,
-    );
-  }
 
   Future<({Filesystem fs, RuntimeLayout layout})> _counterContext() async {
     if (_rootOverride == null && AppStorage.isInstalled) {
@@ -832,21 +815,6 @@ class SessionRepository {
       final existing = await _findSession(fs, sessionId);
       if (existing == null) return;
       final workspaceId = existing.workspaceId.trim();
-      final teamId = existing.sessionTeam.trim();
-      if (teamId.isNotEmpty) {
-        await _lifecycleService?.destroyCliState(
-          workspaceId: workspaceId,
-          teamId: teamId,
-          sessionId: sessionId,
-          session: existing,
-        );
-      } else if (workspaceId.isNotEmpty) {
-        await _lifecycleService?.destroyStandaloneCliState(
-          workspaceId: workspaceId,
-          sessionId: sessionId,
-          session: existing,
-        );
-      }
       await fs.deleteSessionDir(workspaceId, sessionId);
       final workspace = await _readManifest(fs, workspaceId);
       if (workspace != null) {

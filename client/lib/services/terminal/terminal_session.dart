@@ -9,7 +9,7 @@ import 'package:flutter_alacritty/links/terminal_link_provider.dart';
 
 import '../cli/cli_executable_validator.dart';
 import '../cli/cli_invocation.dart';
-import '../cli/registry/capabilities/terminal_behavior_capability.dart';
+import 'terminal_path_drop_behavior.dart';
 import '../session/launch_command_builder.dart';
 import '../ssh/ssh_member_session.dart';
 import '../../cubits/agent_attention_cubit.dart';

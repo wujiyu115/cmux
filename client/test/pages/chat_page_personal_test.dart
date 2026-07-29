@@ -7,10 +7,8 @@ import 'package:teampilot/cubits/chat_cubit.dart';
 import 'package:teampilot/cubits/editor_cubit.dart';
 import 'package:teampilot/cubits/layout_cubit.dart';
 import 'package:teampilot/cubits/member_presence_cubit.dart';
-import 'package:teampilot/cubits/plugin_cubit.dart';
 import 'package:teampilot/cubits/run_cubit.dart';
 import 'package:teampilot/cubits/shortcut_cubit.dart';
-import 'package:teampilot/cubits/skill_cubit.dart';
 import 'package:teampilot/cubits/worktree_cubit.dart';
 import 'package:teampilot/cubits/workspace_landing_context_cubit.dart';
 import 'package:teampilot/cubits/workspace_tools_cubit.dart';
@@ -21,13 +19,10 @@ import 'package:teampilot/models/workspace.dart';
 import 'package:teampilot/models/workspace_folder.dart';
 import 'package:teampilot/pages/chat_page.dart';
 import 'package:teampilot/pages/workspace_shell/workspace_shell.dart';
-import 'package:teampilot/repositories/plugin_repository.dart';
 import 'package:teampilot/repositories/session_repository.dart';
-import 'package:teampilot/repositories/skill_repository.dart';
 import 'package:teampilot/services/file_tree/workspace_file_tree_store.dart';
 import 'package:teampilot/services/git/git_repo_store.dart';
 import 'package:teampilot/services/io/local_filesystem.dart';
-import 'package:teampilot/services/plugin/plugin_repo_service.dart';
 import 'package:teampilot/services/terminal/workspace_terminal_registry.dart';
 import 'package:teampilot/services/workspace/workspace_tools_scope.dart';
 
@@ -86,17 +81,6 @@ void main() {
     );
     addTearDown(() => runCubit.close());
 
-    final skillCubit = SkillCubit(SkillRepository());
-    addTearDown(() => skillCubit.close());
-
-    final pluginRepo = PluginRepository();
-    final pluginCubit = PluginCubit(
-      repository: pluginRepo,
-      installService: pluginRepo.install,
-      repoService: PluginRepoService(),
-    );
-    addTearDown(() => pluginCubit.close());
-
     final worktreeCubit = WorktreeCubit();
     addTearDown(() => worktreeCubit.close());
 
@@ -141,8 +125,6 @@ void main() {
               BlocProvider.value(value: editorCubit),
               BlocProvider.value(value: workbenchCubit),
               BlocProvider.value(value: runCubit),
-              BlocProvider.value(value: skillCubit),
-              BlocProvider.value(value: pluginCubit),
               BlocProvider.value(value: worktreeCubit),
               BlocProvider.value(value: presenceCubit),
               BlocProvider.value(value: WorkspaceToolsCubit()),

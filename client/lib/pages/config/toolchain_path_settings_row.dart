@@ -7,10 +7,9 @@ import 'package:teampilot/widgets/app_toast/app_toast.dart';
 import '../../cubits/session_preferences_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../models/session_preferences.dart';
-import '../../services/cli/cli_installer_service.dart';
 import '../../services/cli/git_installer.dart';
 import '../../utils/debounce/debounce.dart';
-import '../../widgets/cli_install_progress_panel.dart';
+import '../../widgets/toolchain_install_progress_panel.dart';
 import 'session_config_constants.dart';
 
 /// A settings row for a toolchain executable path (git, node, etc.).
@@ -248,15 +247,6 @@ class _ToolchainPathSettingsRowState extends State<ToolchainPathSettingsRow> {
     });
   }
 
-  /// Maps [GitInstallPhase] to [CliInstallPhase] for the shared progress panel.
-  static CliInstallPhase _toCliInstallPhase(GitInstallPhase phase) {
-    return switch (phase) {
-      GitInstallPhase.checking => CliInstallPhase.checkingNpm,
-      GitInstallPhase.installing => CliInstallPhase.installingCli,
-      GitInstallPhase.locating => CliInstallPhase.locatingExecutable,
-    };
-  }
-
   // ---- build ---------------------------------------------------------------
 
   @override
@@ -356,8 +346,8 @@ class _ToolchainPathSettingsRowState extends State<ToolchainPathSettingsRow> {
           ),
           if (_isInstalling && _installPhase != null) ...[
             const SizedBox(height: 12),
-            CliInstallProgressPanel(
-              phase: _toCliInstallPhase(_installPhase!),
+            ToolchainInstallProgressPanel(
+              phase: _installPhase!,
               logLines: _installLog,
             ),
           ],

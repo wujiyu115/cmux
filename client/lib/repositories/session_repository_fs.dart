@@ -1,11 +1,8 @@
 import 'dart:convert';
 
-import 'dart:io';
 
 import '../services/io/filesystem.dart';
 import '../services/io/local_filesystem.dart';
-import '../services/provider/cursor/cursor_session_config_dir.dart';
-import '../services/provider/cursor/cursor_windows_home_junction.dart';
 import '../services/storage/app_storage.dart';
 import '../services/storage/workspace_layout.dart';
 import 'session_snapshot_reader.dart';
@@ -59,12 +56,6 @@ class SessionRepositoryFs {
   /// Recursively removes one workspace's entire directory.
   Future<void> deleteWorkspaceDir(String workspaceId) async {
     try {
-      if (Platform.isWindows) {
-        await CursorWindowsHomeJunction.removeLinkedPhysicalHomesUnder(
-          fs: fs,
-          scanRoot: workspaceDir(workspaceId),
-        );
-      }
       await fs.removeRecursive(workspaceDir(workspaceId));
     } on Object {
       // best effort
@@ -74,21 +65,6 @@ class SessionRepositoryFs {
   /// Recursively removes one session's entire directory (metadata + bus + runtime).
   Future<void> deleteSessionDir(String workspaceId, String sessionId) async {
     try {
-      if (Platform.isWindows) {
-        final toolDir = _layout.sessionRuntimeToolDir(
-          workspaceId,
-          sessionId,
-          'cursor',
-        );
-        final canonicalHome = fs.pathContext.join(
-          toolDir,
-          CursorSessionConfigDir.homeSegment,
-        );
-        await CursorWindowsHomeJunction.removeLinkedPhysicalHome(
-          fs: fs,
-          canonicalHome: canonicalHome,
-        );
-      }
       await fs.removeRecursive(sessionDir(workspaceId, sessionId));
     } on Object {
       // best effort

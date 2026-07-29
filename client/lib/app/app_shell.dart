@@ -14,7 +14,6 @@ import '../cubits/chat_cubit.dart';
 import '../services/agent_status/agent_status_http_handler.dart';
 import '../services/agent_status/agent_status_seat_lookup.dart';
 import '../services/team_bus/mcp/teammate_bus_mcp_gateway.dart';
-import '../services/remote/remote_cli_readiness.dart';
 import '../services/editor_platform/editor_platform.dart';
 import '../cubits/member_presence_cubit.dart';
 import '../cubits/notification_cubit.dart';
@@ -31,17 +30,12 @@ import '../cubits/layout_cubit.dart';
 import '../cubits/workspace_tools_cubit.dart';
 import '../cubits/session_preferences_cubit.dart';
 import '../cubits/extension_cubit.dart';
-import '../cubits/mcp_cubit.dart';
-import '../cubits/plugin_cubit.dart';
-import '../cubits/skill_cubit.dart';
-import '../repositories/mcp_repository.dart';
 import '../cubits/ssh_connection_cubit.dart';
 import '../cubits/ssh_profile_cubit.dart';
 import '../cubits/github_account_cubit.dart';
 import '../config/github_oauth_config.dart';
 import '../models/runtime_target.dart';
 import '../models/ssh_profile.dart';
-import '../models/team_config.dart';
 import '../services/app/boot_splash.dart';
 import '../utils/ui/yield_ui_frame.dart';
 import '../l10n/app_localizations.dart';
@@ -51,8 +45,6 @@ import '../repositories/layout_repository.dart';
 import '../repositories/session_preferences_repository.dart';
 import '../repositories/session_repository.dart';
 import '../repositories/automation_repository.dart';
-import '../repositories/plugin_repository.dart';
-import '../repositories/skill_repository.dart';
 import '../repositories/ssh_credential_store.dart';
 import '../repositories/ssh_known_host_repository.dart';
 import '../repositories/ssh_profile_repository.dart';
@@ -70,7 +62,6 @@ import '../services/automation/automation_dispatcher.dart';
 import '../services/automation/automation_schedule_calculator.dart';
 import '../services/automation/automation_scheduler.dart';
 import '../services/home_workspace/home_workspace_ui_cache.dart';
-import '../services/cli/cli_executable_discovery.dart';
 import '../services/cli/toolchain_executable_discovery.dart';
 import '../services/commands/command_bus.dart';
 import '../services/commands/layout_command_registrar.dart';
@@ -79,15 +70,7 @@ import '../services/commands/session_command_registrar.dart';
 import '../services/commands/shortcuts_ui_commands.dart';
 import '../services/commands/workspace_search_command_registrar.dart';
 import '../pages/home_workspace/workspace_chrome_commands.dart';
-import '../services/cli/registry/cli_bootstrap.dart';
-import '../services/cli/registry/cli_tool_registry.dart';
-import '../services/provider/claude/claude_provider_credentials_service.dart';
-import '../services/provider/codex/codex_provider_credentials_service.dart';
-import '../services/provider/opencode/opencode_provider_credentials_service.dart';
-import '../services/provider/cursor/cursor_agent_models_service.dart';
-import '../services/provider/cursor/cursor_provider_credentials_service.dart';
 import '../services/app/connection_mode_service.dart';
-import '../services/cli/remote_cli_locator.dart';
 import '../services/storage/runtime_context_resolver.dart';
 import '../services/storage/runtime_context_registry.dart';
 import '../services/storage/home_target_controller.dart';
@@ -98,15 +81,6 @@ import '../services/storage/targets_repository.dart';
 import '../services/notification/notification_recorder.dart';
 import '../services/terminal/command_log_sink.dart';
 import '../services/session/session_lifecycle_service.dart';
-import '../services/skill/skill_acquisition_engine.dart';
-import '../services/skill/skill_fetch_service.dart';
-import '../services/plugin/plugin_repo_disk_cache_service.dart';
-import '../services/skill/skill_install_service.dart';
-import '../services/skill/skill_manifest_service.dart';
-import '../services/skill/skill_repo_disk_cache_service.dart';
-import '../services/skill/skill_repo_git_service.dart';
-import '../services/skill/skill_repo_service.dart';
-import '../services/storage/runtime_context.dart';
 import '../services/github/github_credentials_store.dart';
 import '../services/github/github_device_flow_auth.dart';
 import '../services/github/github_user_client.dart';
@@ -167,9 +141,6 @@ class AppShell {
     required this.layoutCubit,
     required this.workspaceToolsCubit,
     required this.sessionPreferencesCubit,
-    required this.pluginCubit,
-    required this.skillCubit,
-    required this.mcpCubit,
     required this.extensionCubit,
     required this.appUpdateCubit,
     required this.sshProfileCubit,
@@ -179,7 +150,6 @@ class AppShell {
     required this.appSettings,
     required this.reinstallStorageContext,
     required this.bootstrapAppData,
-    required this.cliToolRegistry,
     required this.homeWorkspaceUiCache,
     required this.automationCubit,
     required this.automationScheduler,
@@ -190,8 +160,6 @@ class AppShell {
     required this.workspaceSearchHost,
     required this.uiZoomBaseline,
   });
-
-  final CliToolRegistry cliToolRegistry;
   final HomeWorkspaceUiCache homeWorkspaceUiCache;
   final HomeTargetController homeTargetController;
   final WorkspaceDirectoryPicker directoryPicker;
@@ -227,9 +195,6 @@ class AppShell {
   final LayoutCubit layoutCubit;
   final WorkspaceToolsCubit workspaceToolsCubit;
   final SessionPreferencesCubit sessionPreferencesCubit;
-  final PluginCubit pluginCubit;
-  final SkillCubit skillCubit;
-  final McpCubit mcpCubit;
   final ExtensionCubit extensionCubit;
   final AppUpdateCubit appUpdateCubit;
   final SshProfileCubit sshProfileCubit;
@@ -264,26 +229,18 @@ Future<AppShell> buildAppShell({
   final documentsFuture =
       defaultWorkspaceDirectoryFuture ??
       DefaultWorkspaceDirectory.resolve(preferences: preferences);
-  final cliToolRegistry = CliToolRegistry.builtIn();
-  final cliExecutableDiscovery = CliExecutableDiscovery(
-    registry: cliToolRegistry,
-  );
-
   final appSettings = SharedPrefsAppSettingsRepository(preferences);
   final sessionPreferencesCubit = SessionPreferencesCubit(
     repository: SessionPreferencesRepository(preferences),
-    cliToolRegistry: cliToolRegistry,
   );
   if (!Platform.isAndroid) {
-    boot('scheduling CLI tool discovery (background)');
+    boot('scheduling toolchain discovery (background)');
     unawaited(() async {
-      final cliPaths = await cliExecutableDiscovery.locateLocal();
       final toolchainPaths = await ToolchainExecutableDiscovery().locateLocal();
-      sessionPreferencesCubit.mergeLocatedExecutables(cliPaths);
       sessionPreferencesCubit.mergeLocatedToolchains(toolchainPaths);
       appLogger.i(
-        '[boot] CLI/toolchain discovery complete '
-        '(${cliPaths.length} CLI, ${toolchainPaths.length} toolchain, background)',
+        '[boot] toolchain discovery complete '
+        '(${toolchainPaths.length} toolchain, background)',
       );
     }());
   }
@@ -326,25 +283,6 @@ Future<AppShell> buildAppShell({
   RuntimeTarget defaultTargetResolver() => homeTarget;
 
   final sshProfileRepo = SshProfileRepository();
-  Future<Map<CliTool, String>> locateRemoteClis(SshProfile profile) async {
-    try {
-      final client = await sshClientFactory.clientForStorage(profile);
-      return cliExecutableDiscovery.locateRemote(
-        run: RemoteCliLocator.runnerForClient(client),
-      );
-    } on Object catch (error, stackTrace) {
-      appLogger.w(
-        '[remote-cli] locate failed for ${profile.hostIdentifier}: $error',
-        error: error,
-        stackTrace: stackTrace,
-      );
-      return const {};
-    }
-  }
-
-  late final PluginCubit pluginCubit;
-  late final SkillCubit skillCubit;
-  late final McpCubit mcpCubit;
   late final ExtensionCubit extensionCubit;
   late final SessionRepository sessionRepo;
   late final ChatCubit chatCubit;
@@ -363,12 +301,7 @@ Future<AppShell> buildAppShell({
   sshProfileCubit = SshProfileCubit(
     profileRepository: sshProfileRepo,
     credentialStore: sshCredentialStore,
-    locateRemoteCliPaths: locateRemoteClis,
-    onRemoteCliLocated: (cli, path) =>
-        sessionPreferencesCubit.setCliExecutablePathFor(cli, path),
     invalidateProfileConnection: sshClientFactory.disconnectProfile,
-    enableRemoteCliDiscovery: () =>
-        Platform.isAndroid && defaultTargetResolver().kind == RuntimeKind.ssh,
     onActiveProfileChanged: () async {
       await reinstallStorageContext();
       await reloadAllAppData();
@@ -399,13 +332,6 @@ Future<AppShell> buildAppShell({
   final targetsRepo = TargetsRepository();
   SshProfile? sshProfileById(String id) =>
       sshProfileCubit.state.profiles.where((p) => p.id == id).firstOrNull;
-  final remoteCliReadiness = RemoteCliReadinessService(
-    registry: cliToolRegistry,
-    sshClientFactory: sshClientFactory,
-    profileById: sshProfileById,
-    cliPathOverride: targetsRepo.cliPathOverride,
-    setCliPathOverride: targetsRepo.setCliPathOverride,
-  );
   final runtimeTargetRegistry = RuntimeTargetRegistry(
     repo: targetsRepo,
     sshProfileRepo: sshProfileRepo,
@@ -466,69 +392,6 @@ Future<AppShell> buildAppShell({
     AppStorage.bindHome(runtimeContextRegistry.home());
   };
 
-  cliToolRegistry.configure(
-    CliBootstrap(
-      cursorAgentModelsService: CursorAgentModelsService(),
-      claudeCredentialsService: ClaudeProviderCredentialsService(
-        fs: AppStorage.fs,
-        basePath: AppStorage.paths.basePath,
-        resolveClaudeExecutable: () =>
-            sessionPreferencesCubit.resolveExecutable(CliTool.claude),
-      ),
-      cursorCredentialsService: CursorProviderCredentialsService(
-        fs: AppStorage.fs,
-        basePath: AppStorage.paths.basePath,
-        resolveCursorExecutable: () =>
-            sessionPreferencesCubit.resolveExecutable(CliTool.cursor),
-      ),
-      codexCredentialsService: CodexProviderCredentialsService(
-        fs: AppStorage.fs,
-        basePath: AppStorage.paths.basePath,
-        resolveCodexExecutable: () =>
-            sessionPreferencesCubit.resolveExecutable(CliTool.codex),
-      ),
-      opencodeCredentialsService: OpencodeProviderCredentialsService(
-        fs: AppStorage.fs,
-        basePath: AppStorage.paths.basePath,
-        resolveOpencodeExecutable: () =>
-            sessionPreferencesCubit.resolveExecutable(CliTool.opencode),
-      ),
-    ),
-  );
-
-  final skillManifest = SkillManifestService();
-  final skillGit = SkillRepoGitService();
-  final skillFetch = SkillFetchService(git: skillGit);
-  final skillRepoCache = SkillRepoDiskCacheService(fetch: skillFetch);
-  final skillInstallService = SkillInstallService(
-    manifest: skillManifest,
-    fetch: skillFetch,
-    repoCache: skillRepoCache,
-  );
-  final skillRepo = SkillRepository(
-    manifest: skillManifest,
-    fetch: skillFetch,
-    repoCache: skillRepoCache,
-    install: skillInstallService,
-    repos: SkillRepoService(),
-  );
-  final skillAcquisitionEngine = SkillAcquisitionEngine(
-    installGitDir: (d, {bool overwrite = false, String? idOverride}) =>
-        skillInstallService.installFromDiscovery(
-          d,
-          overwrite: overwrite,
-          idOverride: idOverride,
-        ),
-    registerDirectory: ({required String id, required String directory}) =>
-        skillInstallService.registerInstalledDirectory(
-          id: id,
-          directory: directory,
-        ),
-    isLocalAcquireSupported: () =>
-        AppStorage.context.mode == StorageBackendMode.native,
-    repoCache: skillRepoCache,
-  );
-
   final extensionRepository = ExtensionRepository(
     fs: AppStorage.fs,
     stateFilePath: AppStorage.paths.extensionsStateJson,
@@ -569,8 +432,6 @@ Future<AppShell> buildAppShell({
       }
       return (await extensionRepository.load(forceReload: true)).globalEnabled;
     },
-    cliToolRegistry: cliToolRegistry,
-    loadInstalledSkills: () => skillRepo.loadInstalled(),
   );
   sessionRepo = SessionRepository(lifecycleService: sessionLifecycleService);
   boot('prefetching home index snapshots');
@@ -578,20 +439,6 @@ Future<AppShell> buildAppShell({
   final homeIndexPrefetch =
       homeIndexPrefetchFuture ??
       Future.wait([sessionRepo.loadWorkspacesIndex()]);
-  final pluginRepository = PluginRepository();
-  final mcpRepository = McpRepository();
-  skillCubit = SkillCubit(
-    skillRepo,
-    acquisitionEngine: skillAcquisitionEngine,
-  );
-  pluginCubit = PluginCubit(
-    repository: pluginRepository,
-    installService: pluginRepository.install,
-    repoService: pluginRepository.repos,
-    diskCache: PluginRepoDiskCacheService(),
-  );
-  mcpCubit = McpCubit(mcpRepository);
-
   final appUpdateCubit = AppUpdateCubit(settings: appSettings);
   final layoutCubit = LayoutCubit(repository: LayoutRepository(preferences));
   // User-imported terminal themes must be in memory before the first terminal
@@ -687,7 +534,6 @@ Future<AppShell> buildAppShell({
     defaultTargetResolver: defaultTargetResolver,
     terminalScrollbackLinesResolver: () =>
         sessionPreferencesCubit.state.preferences.terminalScrollbackLines,
-    remoteCliReadiness: remoteCliReadiness,
   );
 
   // Bound after [WorkbenchCubit] exists; togglePanel no-ops until then.
@@ -797,9 +643,6 @@ Future<AppShell> buildAppShell({
   reloadAllAppData = () => AppDataBootstrap.reloadAll(
     boot: boot,
     sshProfileCubit: sshProfileCubit,
-    pluginCubit: pluginCubit,
-    skillCubit: skillCubit,
-    mcpCubit: mcpCubit,
     extensionCubit: extensionCubit,
     chatCubit: chatCubit,
     sessionRepo: sessionRepo,
@@ -855,9 +698,6 @@ Future<AppShell> buildAppShell({
     bootstrapCubit?.beginWarmAuxiliary();
     await AppDataBootstrap.warmAuxiliaryData(
       boot: boot,
-      pluginCubit: pluginCubit,
-      skillCubit: skillCubit,
-      mcpCubit: mcpCubit,
       extensionCubit: extensionCubit,
       chatCubit: chatCubit,
       sessionRepo: sessionRepo,
@@ -926,7 +766,6 @@ Future<AppShell> buildAppShell({
   );
 
   return AppShell(
-    cliToolRegistry: cliToolRegistry,
     homeTargetController: homeTargetController,
     directoryPicker: directoryPicker,
     chatCubit: chatCubit,
@@ -961,9 +800,6 @@ Future<AppShell> buildAppShell({
     layoutCubit: layoutCubit,
     workspaceToolsCubit: workspaceToolsCubit,
     sessionPreferencesCubit: sessionPreferencesCubit,
-    pluginCubit: pluginCubit,
-    skillCubit: skillCubit,
-    mcpCubit: mcpCubit,
     extensionCubit: extensionCubit,
     appUpdateCubit: appUpdateCubit,
     sshProfileCubit: sshProfileCubit,

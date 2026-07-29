@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:teampilot/models/app_session.dart';
 import 'package:teampilot/models/runtime_target.dart';
-import 'package:teampilot/models/session_member_binding.dart';
 import 'package:teampilot/models/workspace.dart';
 import 'package:teampilot/models/workspace_folder.dart';
 import 'package:teampilot/models/workspace_launch_context.dart';
@@ -134,40 +133,6 @@ void main() {
     ],
     memberTargets: const {'m1': 'ssh:p1'},
     createdAt: 1,
-  );
-
-  test(
-    'hasCliState for a member assigned an ssh folder probes ssh forTarget',
-    () async {
-      final resolved = <String>[];
-      final lifecycle = capturingLifecycle(resolved);
-      await lifecycle.hasCliState(
-        sshSession(),
-        teamId: 'team',
-        memberBinding: const SessionMemberBinding(
-          rosterMemberId: 'm1',
-          taskId: 't1',
-        ),
-      );
-      expect(resolved, isNotEmpty);
-      expect(resolved.last, 'ssh:p1');
-    },
-  );
-
-  test(
-    'destroyCliState cleans on the session workspace machine (ssh, not home)',
-    () async {
-      final resolved = <String>[];
-      final lifecycle = capturingLifecycle(resolved);
-      await lifecycle.destroyCliState(
-        workspaceId: 'w1',
-        teamId: 'team',
-        sessionId: 's1',
-        session: sshSession(),
-      );
-      expect(resolved, isNotEmpty);
-      expect(resolved.last, 'ssh:p1');
-    },
   );
 
   test('launchWorkContext resolves the member ssh work plane', () async {

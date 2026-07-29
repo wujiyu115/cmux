@@ -3,9 +3,6 @@ import 'dart:async';
 import '../cubits/chat_cubit.dart';
 import '../cubits/extension_cubit.dart';
 import '../cubits/layout_cubit.dart';
-import '../cubits/mcp_cubit.dart';
-import '../cubits/plugin_cubit.dart';
-import '../cubits/skill_cubit.dart';
 import '../cubits/ssh_profile_cubit.dart';
 import '../models/layout_preferences.dart';
 import '../models/workspace.dart';
@@ -171,25 +168,15 @@ abstract final class AppDataBootstrap {
     );
   }
 
-  /// Plugins, skills, extensions, default-workspace seed, team resource sync.
+  /// Extensions and default-workspace seed.
   static Future<void> warmAuxiliaryData({
     required BootLog boot,
-    required PluginCubit pluginCubit,
-    required SkillCubit skillCubit,
-    required McpCubit mcpCubit,
     required ExtensionCubit extensionCubit,
     required ChatCubit chatCubit,
     required SessionRepository sessionRepo,
   }) async {
     final phaseSw = Stopwatch()..start();
     boot('warmAuxiliaryData start');
-
-    await _timed(boot, 'plugins', pluginCubit.load);
-    await yieldUiFrame();
-    await _timed(boot, 'skills', skillCubit.loadAll);
-    await yieldUiFrame();
-    await _timed(boot, 'mcp', () => mcpCubit.loadAll());
-    await yieldUiFrame();
 
     await _timed(boot, 'extensions', extensionCubit.loadForBootstrap);
     await yieldUiFrame();
@@ -251,9 +238,6 @@ abstract final class AppDataBootstrap {
   static Future<void> reloadAll({
     required BootLog boot,
     required SshProfileCubit sshProfileCubit,
-    required PluginCubit pluginCubit,
-    required SkillCubit skillCubit,
-    required McpCubit mcpCubit,
     required ExtensionCubit extensionCubit,
     required ChatCubit chatCubit,
     required SessionRepository sessionRepo,
@@ -276,9 +260,6 @@ abstract final class AppDataBootstrap {
     );
     await warmAuxiliaryData(
       boot: boot,
-      pluginCubit: pluginCubit,
-      skillCubit: skillCubit,
-      mcpCubit: mcpCubit,
       extensionCubit: extensionCubit,
       chatCubit: chatCubit,
       sessionRepo: sessionRepo,

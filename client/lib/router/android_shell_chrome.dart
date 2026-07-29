@@ -2,20 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../l10n/l10n_extensions.dart';
-import '../pages/mcp/mcp_routes.dart';
-import '../pages/mcp/mcp_management_page.dart';
-import '../pages/skills/skill_management_page.dart';
 
 /// Resolves Android [Scaffold] title, back affordance, and drawer visibility
-/// for hub-style workspace routes (settings, team config, skills).
+/// for hub-style workspace routes (settings, team config).
 class AndroidShellChrome {
   const AndroidShellChrome._();
 
   static bool isHubDetailPath(String path) {
     if (_isConfigDetail(path)) return true;
     if (_isTeamConfigDetail(path)) return true;
-    if (_isSkillsDetail(path)) return true;
-    if (_isMcpDetail(path)) return true;
     return false;
   }
 
@@ -34,32 +29,10 @@ class AndroidShellChrome {
 
     if (path == '/team-config') return l10n.teamConfig;
     if (path == '/team-config/team') return l10n.teamSettings;
-    if (path == '/team-config/skills') return l10n.teamSkillsNav;
-    if (path == '/team-config/mcp') return l10n.teamMcpNav;
-    if (path == '/mcp') return l10n.mcpNavTitle;
-    if (path == '/mcp/add') return l10n.mcpAddTitle;
-    if (path.startsWith('/mcp/edit/')) return l10n.mcpEdit;
-    if (path.startsWith('/mcp/')) {
-      final segment = path.replaceFirst('/mcp/', '').split('/').first;
-      for (final section in McpSection.values) {
-        if (section.routeSegment == segment) {
-          return section.title(l10n);
-        }
-      }
-    }
     if (path.startsWith('/team-config/members/')) {
       return _memberTitle(context, path) ?? l10n.members;
     }
 
-    if (path == '/skills') return l10n.skillsTitle;
-    if (path.startsWith('/skills/')) {
-      final segment = path.replaceFirst('/skills/', '');
-      for (final section in SkillSection.values) {
-        if (section.routeSegment == segment) {
-          return section.title(l10n);
-        }
-      }
-    }
 
     return 'FlashSkyAI';
   }
@@ -77,17 +50,6 @@ class AndroidShellChrome {
       context.go('/team-config');
       return;
     }
-    if (_isSkillsDetail(path) || path == '/skills') {
-      context.go('/skills');
-      return;
-    }
-    if (mcpPathIsForm(path)) {
-      context.go(mcpInstalledRoute);
-      return;
-    }
-    if (_isMcpDetail(path) || path == '/mcp') {
-      context.go('/mcp');
-    }
   }
 
   static bool _isConfigDetail(String path) =>
@@ -95,12 +57,6 @@ class AndroidShellChrome {
 
   static bool _isTeamConfigDetail(String path) =>
       path.startsWith('/team-config/') && path.length > '/team-config/'.length;
-
-  static bool _isSkillsDetail(String path) =>
-      path.startsWith('/skills/') && path.length > '/skills/'.length;
-
-  static bool _isMcpDetail(String path) =>
-      path.startsWith('/mcp/') && path.length > '/mcp/'.length;
 
   static String? _memberTitle(BuildContext context, String path) => null;
 }

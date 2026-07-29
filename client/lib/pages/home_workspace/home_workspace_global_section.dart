@@ -3,15 +3,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 import '../automations/automation_management_page.dart';
 import '../extensions/extension_management_page.dart';
-import '../mcp/mcp_management_page.dart';
-import '../plugins/plugin_management_page.dart';
-import '../skills/skill_management_page.dart';
 
 /// Which global management view is shown in the workspace-home right pane.
 enum HomeGlobalView {
-  skills,
-  plugins,
-  mcp,
   extensions,
   automations;
 
@@ -27,7 +21,7 @@ enum HomeGlobalView {
     queryParameters: {globalQueryParam: routeSegment},
   ).toString();
 
-  /// Resolves [globalQueryParam] (e.g. `skills`, `mcp`) back to a view.
+  /// Resolves [globalQueryParam] (e.g. `extensions`) back to a view.
   static HomeGlobalView? fromSegment(String? segment) {
     final value = segment?.trim();
     if (value == null || value.isEmpty) return null;
@@ -38,8 +32,8 @@ enum HomeGlobalView {
   }
 }
 
-/// Embeds an existing global management page (Skills / Plugins / MCP) — or the
-/// team Extensions section — inside the workspace-home right pane. Sub-section
+/// Embeds a global management page (Extensions / Automations) inside the
+/// workspace-home right pane. Sub-section
 /// navigation stays local (via [onSelectSection] overrides) so it never breaks
 /// out of the home shell.
 class HomeGlobalSection extends StatefulWidget {
@@ -59,26 +53,11 @@ class HomeGlobalSection extends StatefulWidget {
 }
 
 class _HomeGlobalSectionState extends State<HomeGlobalSection> {
-  SkillSection _skill = SkillSection.installed;
-  PluginSection _plugin = PluginSection.installed;
-  McpSection _mcp = McpSection.installed;
   ExtensionSection _extension = ExtensionSection.installed;
 
   @override
   Widget build(BuildContext context) {
     final content = switch (widget.view) {
-      HomeGlobalView.skills => SkillManagementPage(
-        section: _skill,
-        onSelectSection: (s) => setState(() => _skill = s),
-      ),
-      HomeGlobalView.plugins => PluginManagementPage(
-        section: _plugin,
-        onSelectSection: (s) => setState(() => _plugin = s),
-      ),
-      HomeGlobalView.mcp => McpManagementPage(
-        section: _mcp,
-        onSelectSection: (s) => setState(() => _mcp = s),
-      ),
       HomeGlobalView.extensions => ExtensionManagementPage(
         section: _extension,
         onSelectSection: (s) => setState(() => _extension = s),

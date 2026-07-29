@@ -1,4 +1,4 @@
-import '../cli/registry/capabilities/terminal_behavior_capability.dart';
+import '../terminal/terminal_path_drop_behavior.dart';
 import 'cross_namespace_strategy.dart';
 import 'path_projection.dart';
 import 'path_reference_formatter.dart';

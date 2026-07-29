@@ -7,10 +7,6 @@ import '../cubits/config_cubit.dart';
 import '../pages/config/config_workspace.dart';
 import '../pages/home_workspace/home_workspace_shell.dart';
 import '../pages/extensions/extension_management_page.dart';
-import '../pages/skills/skill_management_page.dart';
-import '../pages/plugins/plugin_management_page.dart';
-import '../pages/mcp/mcp_form_nav_page.dart';
-import '../pages/mcp/mcp_management_page.dart';
 import '../pages/onboarding/onboarding_gate.dart';
 import '../pages/startup_gate.dart';
 import '../widgets/android_ssh_profile_selector.dart';
@@ -177,33 +173,6 @@ final appRouter = GoRouter(
               ),
             ),
             GoRoute(
-              path: '/skills',
-              redirect: (context, state) {
-                if (Platform.isAndroid) return null;
-                return '/skills/installed';
-              },
-              pageBuilder: (context, state) =>
-                  const NoTransitionPage(child: SkillManagementHubPage()),
-            ),
-            GoRoute(
-              path: '/skills/installed',
-              pageBuilder: (context, state) => const NoTransitionPage(
-                child: SkillManagementPage(section: SkillSection.installed),
-              ),
-            ),
-            GoRoute(
-              path: '/skills/discovery',
-              pageBuilder: (context, state) => const NoTransitionPage(
-                child: SkillManagementPage(section: SkillSection.discovery),
-              ),
-            ),
-            GoRoute(
-              path: '/skills/repos',
-              pageBuilder: (context, state) => const NoTransitionPage(
-                child: SkillManagementPage(section: SkillSection.repos),
-              ),
-            ),
-            GoRoute(
               path: '/extensions',
               redirect: (context, state) {
                 if (Platform.isAndroid) return null;
@@ -217,77 +186,6 @@ final appRouter = GoRouter(
               pageBuilder: (context, state) => const NoTransitionPage(
                 child: ExtensionManagementPage(
                   section: ExtensionSection.installed,
-                ),
-              ),
-            ),
-            GoRoute(
-              path: '/plugins',
-              redirect: (context, state) {
-                if (Platform.isAndroid) return null;
-                return '/plugins/installed';
-              },
-              pageBuilder: (context, state) =>
-                  const NoTransitionPage(child: PluginManagementHubPage()),
-            ),
-            GoRoute(
-              path: '/plugins/installed',
-              pageBuilder: (context, state) => const NoTransitionPage(
-                child: PluginManagementPage(section: PluginSection.installed),
-              ),
-            ),
-            GoRoute(
-              path: '/plugins/discovery',
-              pageBuilder: (context, state) => const NoTransitionPage(
-                child: PluginManagementPage(section: PluginSection.discovery),
-              ),
-            ),
-            GoRoute(
-              path: '/plugins/marketplaces',
-              pageBuilder: (context, state) => const NoTransitionPage(
-                child: PluginManagementPage(
-                  section: PluginSection.marketplaces,
-                ),
-              ),
-            ),
-            GoRoute(
-              path: '/mcp',
-              redirect: (context, state) {
-                if (Platform.isAndroid) return null;
-                return '/mcp/installed';
-              },
-              pageBuilder: (context, state) =>
-                  const NoTransitionPage(child: McpManagementHubPage()),
-            ),
-            GoRoute(
-              path: '/mcp/installed',
-              pageBuilder: (context, state) => const NoTransitionPage(
-                child: McpManagementPage(section: McpSection.installed),
-              ),
-            ),
-            GoRoute(
-              path: '/mcp/discovery',
-              pageBuilder: (context, state) => const NoTransitionPage(
-                child: McpManagementPage(section: McpSection.discovery),
-              ),
-            ),
-            GoRoute(
-              path: '/mcp/registries',
-              pageBuilder: (context, state) => const NoTransitionPage(
-                child: McpManagementPage(section: McpSection.registries),
-              ),
-            ),
-            GoRoute(
-              path: '/mcp/add',
-              pageBuilder: (context, state) =>
-                  const NoTransitionPage(child: McpFormNavPage()),
-            ),
-            GoRoute(
-              path: '/mcp/edit/:serverId',
-              pageBuilder: (context, state) => NoTransitionPage(
-                child: McpFormNavPage(
-                  serverId: Uri.decodeComponent(
-                    state.pathParameters['serverId']!,
-                  ),
                 ),
               ),
             ),

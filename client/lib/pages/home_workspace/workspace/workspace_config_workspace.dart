@@ -11,9 +11,6 @@ import '../../../utils/workspace/workspace_chrome_profile.dart';
 import '../../../utils/workspace/workspace_display_name.dart';
 import '../../../widgets/settings/workspace_section_host.dart';
 import 'config/workspace_extensions_section.dart';
-import 'config/workspace_mcp_section.dart';
-import 'config/workspace_plugins_section.dart';
-import 'config/workspace_skills_section.dart';
 import 'workspace_config_nav_panel.dart';
 import 'workspace_config_section.dart';
 import 'workspace_info_section.dart';
@@ -109,15 +106,6 @@ class _ProjectConfigBody extends StatelessWidget {
   Widget build(BuildContext context) {
     return switch (section) {
       WorkspaceConfigSection.settings => WorkspaceInfoSection(workspace: workspace),
-      WorkspaceConfigSection.skills => WorkspaceSkillsSection(
-        workspaceId: workspace.workspaceId,
-      ),
-      WorkspaceConfigSection.plugins => WorkspacePluginsSection(
-        workspaceId: workspace.workspaceId,
-      ),
-      WorkspaceConfigSection.mcp => WorkspaceMcpSection(
-        workspaceId: workspace.workspaceId,
-      ),
       WorkspaceConfigSection.extensions => WorkspaceExtensionsSection(
         workspaceId: workspace.workspaceId,
       ),

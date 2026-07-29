@@ -37,7 +37,6 @@ import '../../widgets/run/run_toolbar.dart';
 import 'home_workspace_body_stack.dart';
 import 'home_workspace_tab_scope.dart';
 import 'home_workspace_title_bar.dart';
-import 'global_resource_manager_host.dart';
 import 'open_workspace_tab_actions.dart';
 import 'workspace_chrome_commands.dart';
 
@@ -459,11 +458,9 @@ class _HomeShellState extends State<HomeShell> {
                   child: HomeTabScope(
                     openWorkspace: (id, {activate = true}) =>
                         _openWorkspace(id, activate: activate),
-                    child: GlobalResourceManagerHost(
-                      child: HomeWorkspaceBodyStack(
-                        location: widget.location,
-                        openTabs: _openTabs,
-                      ),
+                    child: HomeWorkspaceBodyStack(
+                      location: widget.location,
+                      openTabs: _openTabs,
                     ),
                   ),
                 ),

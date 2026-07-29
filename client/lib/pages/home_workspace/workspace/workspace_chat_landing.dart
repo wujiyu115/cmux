@@ -6,9 +6,7 @@ import 'package:shared_ui/shared_ui.dart';
 import 'package:teampilot/widgets/app_toast/app_toast.dart';
 
 import '../../../cubits/chat_cubit.dart';
-import '../../../cubits/plugin_cubit.dart';
 import '../../../cubits/session_preferences_cubit.dart';
-import '../../../cubits/skill_cubit.dart';
 import '../../../cubits/workbench/workbench_cubit.dart';
 import '../../../cubits/worktree_cubit.dart';
 import '../../../utils/ui/app_keys.dart';
@@ -20,7 +18,6 @@ import '../../../models/runtime_target.dart';
 import '../../../services/compose/compose_file_attach.dart';
 import '../../../services/compose/compose_landing_drop_ingestor.dart';
 import '../../../services/storage/app_storage.dart';
-import '../../../services/compose/compose_landing_bundle.dart';
 import '../../../services/compose/compose_text_edit.dart';
 import '../../../services/compose/compose_voice_input.dart';
 import '../../../utils/workspace/landing_draft_resolver.dart';
@@ -302,12 +299,6 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
     }
   }
 
-  ConfigBundle _slashBundleForDraft(LandingLaunchContext draft) {
-    return slashBundleForLanding(
-      draft: draft,
-      workspace: _workspaceProjectBundle,
-    );
-  }
 
   Future<void> _loadDraft() async {
     final draft = await resolveLandingDraft(
@@ -528,9 +519,6 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
     final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final spacing = context.tpSpacing;
-    final skills = context.watch<SkillCubit>().state.installed;
-    final plugins = context.watch<PluginCubit>().state.installed;
-    final slashBundle = _slashBundleForDraft(_currentDraft());
     final worktreeState = _worktreeState(context);
     final projectResolver = _projectResolver();
     final selectedProjectPath = projectResolver.resolveSelectedProjectPath();
@@ -564,9 +552,6 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
       dropTarget: _composeDropIngestor(),
       onPasteImage: _pasteComposeImage,
       workspaceRoot: _activeLaunchDirectory(),
-      skills: skills,
-      plugins: plugins,
-      slashBundle: slashBundle,
     );
 
     final body = widget.showLandingChrome

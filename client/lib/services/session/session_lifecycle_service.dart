@@ -2,31 +2,18 @@ import 'package:flutter/foundation.dart';
 
 import '../../models/workspace.dart';
 import '../../models/app_session.dart';
-import '../../models/session_member_binding.dart';
-import '../../models/skill.dart';
-import '../../models/team_config.dart';
 import '../../utils/logging/logger.dart';
 import '../../models/workspace_topology.dart';
 import '../../models/workspace_launch_context.dart';
 import '../storage/app_storage.dart';
-import '../storage/runtime_layout.dart';
-import '../cli/registry/capabilities/resume/pinned_transcript_probe.dart';
-import '../cli/registry/capabilities/session_resume_capability.dart';
-import '../cli/registry/cli_tool_registry.dart';
 import '../../models/runtime_target.dart';
 import '../io/local_filesystem.dart';
 import '../storage/runtime_context.dart';
-import '../io/filesystem.dart';
 
 
 typedef StorageRootsResolver = Future<RuntimeContext> Function();
 
 class SessionLifecycleService {
-  static final _defaultCliRegistry = () {
-    final registry = CliToolRegistry.builtIn();
-    return registry;
-  }();
-
   SessionLifecycleService({
     String? appDataBasePath,
     StorageRootsResolver? storageRootsResolver,
@@ -34,15 +21,11 @@ class SessionLifecycleService {
     Future<RuntimeContext> Function()? catalogContextResolver,
     Future<Set<String>> Function({String? teamId, String? workspaceId})?
     loadEnabledExtensionIds,
-    CliToolRegistry? cliToolRegistry,
-    Future<List<Skill>> Function()? loadInstalledSkills,
   }) : _appDataBasePath = appDataBasePath,
        _storageRootsResolver = storageRootsResolver,
        _workContextResolver = workContextResolver,
        _catalogContextResolver = catalogContextResolver,
-       _loadEnabledExtensionIds = loadEnabledExtensionIds,
-       _cliToolRegistry = cliToolRegistry ?? _defaultCliRegistry,
-       _loadInstalledSkills = loadInstalledSkills;
+       _loadEnabledExtensionIds = loadEnabledExtensionIds;
 
   final String? _appDataBasePath;
   final StorageRootsResolver? _storageRootsResolver;
@@ -58,104 +41,11 @@ class SessionLifecycleService {
   final Future<RuntimeContext> Function()? _catalogContextResolver;
   final Future<Set<String>> Function({String? teamId, String? workspaceId})?
   _loadEnabledExtensionIds;
-  final CliToolRegistry _cliToolRegistry;
-  final Future<List<Skill>> Function()? _loadInstalledSkills;
 
 
-  CliToolRegistry get cliToolRegistry => _cliToolRegistry;
 
   /// Resolves a global CLI preset by id.
 
-
-  Future<bool> hasCliState(
-    AppSession session, {
-    String? teamId,
-    CliTool? cli,
-    SessionMemberBinding? memberBinding,
-    Workspace? workspace,
-  }) async {
-    final roots = await _resolveRoots(
-      session: session,
-      memberId: memberBinding?.rosterMemberId,
-    );
-    final isPersonal = _isPersonalLaunch(workspace, session);
-    final runtimeTeamId = isPersonal
-        ? session.sessionId.trim()
-        : session.cliTeamName.trim().isNotEmpty
-        ? session.cliTeamName.trim()
-        : session.sessionId.trim();
-    final cliSessionId =
-        memberBinding?.taskId.trim() ?? session.sessionId.trim();
-    CliTool? resolvedCli;
-    if (isPersonal) {
-      resolvedCli = session.cli ?? CliTool.claude;
-    } else {
-      resolvedCli = cli;
-    }
-    final probe = await _findCliState(
-      roots: roots,
-      session: session,
-      teamId: (teamId ?? session.sessionTeam).trim(),
-      runtimeSessionId: runtimeTeamId,
-      cliSessionId: cliSessionId,
-      cli: resolvedCli,
-      workspaceId: isPersonal ? workspace!.workspaceId : null,
-    );
-    return probe.exists;
-  }
-
-  Future<void> destroyCliState({
-    required String workspaceId,
-    required String teamId,
-    required String sessionId,
-    AppSession? session,
-  }) async {
-    final trimmedWorkspaceId = workspaceId.trim();
-    final trimmedTeamId = teamId.trim();
-    final trimmedSessionId = sessionId.trim();
-    if (trimmedWorkspaceId.isEmpty ||
-        trimmedTeamId.isEmpty ||
-        trimmedSessionId.isEmpty) {
-      return;
-    }
-
-    // P2: clean the runtime tree on the *workspace's* machine (work plane),
-    // resolved from the session's folder target, not always home.
-    final roots = await _resolveRoots(session: session);
-    final sessionRoot = roots.layout.workspace.sessionRuntimeDir(
-      trimmedWorkspaceId,
-      trimmedSessionId,
-    );
-    await _removeTree(roots, sessionRoot);
-  }
-
-  Future<void> destroyStandaloneCliState({
-    required String workspaceId,
-    required String sessionId,
-    AppSession? session,
-  }) async {
-    final trimmedWorkspaceId = workspaceId.trim();
-    final trimmedSessionId = sessionId.trim();
-    if (trimmedWorkspaceId.isEmpty || trimmedSessionId.isEmpty) return;
-
-    final roots = await _resolveRoots(session: session);
-    final sessionRoot = roots.layout.workspace.sessionRuntimeDir(
-      trimmedWorkspaceId,
-      trimmedSessionId,
-    );
-    await _removeTree(roots, sessionRoot);
-  }
-
-  Future<void> destroyCliToolState(String teamId) async {
-    final trimmedTeamId = teamId.trim();
-    if (trimmedTeamId.isEmpty) return;
-
-    final roots = await _resolveRoots();
-    final teamRoot = roots.fs.pathContext.dirname(
-      roots.layout.identityToolDir(trimmedTeamId, 'flashskyai'),
-    );
-    await _removeTree(roots, teamRoot);
-  }
 
   bool _isPersonalLaunch(Workspace? workspace, AppSession session) =>
       workspace != null && session.sessionTeam.trim().isEmpty;
@@ -164,21 +54,6 @@ class SessionLifecycleService {
   @visibleForTesting
   bool debugIsPersonalLaunch(Workspace workspace, AppSession session) =>
       _isPersonalLaunch(workspace, session);
-
-  List<String> _standaloneTranscriptSearchRoots({
-    required RuntimeLayout layout,
-    required String workspaceId,
-    required String sessionId,
-    required Iterable<String> tools,
-  }) {
-    final tt = tools.map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
-    return [
-      for (final tool in tt) layout.appToolRoot(tool),
-      for (final tool in tt) layout.workspaceConfigToolDir(workspaceId, tool),
-      for (final tool in tt)
-        layout.sessionRuntimeToolDir(workspaceId, sessionId, tool),
-    ];
-  }
 
   Future<RuntimeContext> _resolveCatalogRoots() async {
     final resolver = _catalogContextResolver ?? _storageRootsResolver;
@@ -326,70 +201,6 @@ class SessionLifecycleService {
   /// (probe / scan / persisted / out-of-band allocate), then derives the
   /// create-vs-resume ids for the launch plan. See
   /// docs/session-resume-architecture.md.
-  Future<_CliStateProbeResult> _findCliState({
-    required RuntimeContext roots,
-    required AppSession session,
-    required String teamId,
-    required String runtimeSessionId,
-    required String cliSessionId,
-    CliTool? cli,
-    String? workspaceId,
-  }) async {
-    final id = cliSessionId.trim();
-    if (id.isEmpty) {
-      return const _CliStateProbeResult(exists: false);
-    }
-
-    final tools = cli != null ? [cli.value] : runtimeLayoutDefaultTools;
-    final trimmedWorkspaceId = workspaceId?.trim() ?? '';
-    final toolRoots = trimmedWorkspaceId.isNotEmpty
-        ? _standaloneTranscriptSearchRoots(
-            layout: roots.layout,
-            workspaceId: trimmedWorkspaceId,
-            sessionId: runtimeSessionId,
-            tools: tools,
-          )
-        : roots.layout.transcriptSearchRoots(
-            workspaceId: session.workspaceId.trim(),
-            sessionId: session.sessionId.trim(),
-            profileId: teamId,
-            tools: tools,
-          );
-    final bucket = RuntimeLayout.workspaceBucketForPrimaryPath(
-      session.firstFolderPath,
-    );
-    return _findCliStateInFilesystem(
-      fs: roots.fs,
-      toolRoots: toolRoots,
-      sessionId: id,
-      bucket: bucket,
-    );
-  }
-
-  Future<_CliStateProbeResult> _findCliStateInFilesystem({
-    required Filesystem fs,
-    required Iterable<String> toolRoots,
-    required String sessionId,
-    required String bucket,
-  }) async {
-    final probe = await probePinnedTranscript(
-      fs: fs,
-      toolRoots: toolRoots,
-      sessionId: sessionId,
-      bucket: bucket,
-      // Claude uses `projects/`; flashskyai uses `workspaces/`.
-      layoutSegments: const ['projects', 'workspaces'],
-    );
-    if (!probe.exists) {
-      return const _CliStateProbeResult(exists: false);
-    }
-    return _CliStateProbeResult(
-      exists: true,
-      rootsTried: toolRoots.toList(growable: false),
-      matchedPath: probe.matchedPath,
-    );
-  }
-
   Future<void> _removeTree(RuntimeContext roots, String path) async {
     try {
       await roots.fs.removeRecursive(path);
@@ -397,16 +208,4 @@ class SessionLifecycleService {
       appLogger.w('[session-lifecycle] cleanup failed: $e', stackTrace: st);
     }
   }
-}
-
-class _CliStateProbeResult {
-  const _CliStateProbeResult({
-    required this.exists,
-    this.rootsTried = const [],
-    this.matchedPath,
-  });
-
-  final bool exists;
-  final List<String> rootsTried;
-  final String? matchedPath;
 }

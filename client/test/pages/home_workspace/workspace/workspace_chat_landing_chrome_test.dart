@@ -4,17 +4,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_ui/shared_ui.dart';
 import 'package:teampilot/cubits/chat_cubit.dart';
-import 'package:teampilot/cubits/plugin_cubit.dart';
 import 'package:teampilot/cubits/session_preferences_cubit.dart';
-import 'package:teampilot/cubits/skill_cubit.dart';
 import 'package:teampilot/cubits/worktree_cubit.dart';
 import 'package:teampilot/l10n/app_localizations.dart';
 import 'package:teampilot/models/workspace.dart';
 import 'package:teampilot/pages/home_workspace/workspace/workspace_chat_landing.dart';
 import 'package:teampilot/pages/home_workspace/workspace/workspace_chat_landing_compose_card.dart';
 import 'package:teampilot/pages/home_workspace/workspace/workspace_landing_selectors.dart';
-import 'package:teampilot/services/cli/registry/cli_tool_registry.dart';
-import 'package:teampilot/services/cli/registry/cli_tool_registry_scope.dart';
 import 'package:teampilot/services/commands/command_bus.dart';
 import 'package:teampilot/theme/app_theme.dart';
 import 'package:teampilot/utils/ui/app_keys.dart';
@@ -25,12 +21,10 @@ class _MockChatCubit extends Mock implements ChatCubit {}
 
 
 
-class _MockPluginCubit extends Mock implements PluginCubit {}
 
 class _MockSessionPreferencesCubit extends Mock
     implements SessionPreferencesCubit {}
 
-class _MockSkillCubit extends Mock implements SkillCubit {}
 
 class _MockWorktreeCubit extends Mock implements WorktreeCubit {}
 
@@ -49,15 +43,11 @@ void main() {
   }) async {
     final workspace = Workspace(workspaceId: 'workspace-1', createdAt: 1);
     final chatCubit = _MockChatCubit();
-    final pluginCubit = _MockPluginCubit();
     final sessionPreferencesCubit = _MockSessionPreferencesCubit();
-    final skillCubit = _MockSkillCubit();
     final worktreeCubit = _MockWorktreeCubit();
 
     _stubCubit(chatCubit, ChatState(workspaces: [workspace]));
-    _stubCubit(pluginCubit, const PluginState());
     _stubCubit(sessionPreferencesCubit, SessionPreferencesState());
-    _stubCubit(skillCubit, const SkillState());
     _stubCubit(worktreeCubit, const WorktreeState());
     when(() => worktreeCubit.worktreesForProject(any())).thenReturn(const []);
 
@@ -70,16 +60,12 @@ void main() {
         child: MultiBlocProvider(
           providers: [
             BlocProvider<ChatCubit>.value(value: chatCubit),
-            BlocProvider<PluginCubit>.value(value: pluginCubit),
             BlocProvider<SessionPreferencesCubit>.value(
               value: sessionPreferencesCubit,
             ),
-            BlocProvider<SkillCubit>.value(value: skillCubit),
             BlocProvider<WorktreeCubit>.value(value: worktreeCubit),
           ],
-          child: CliToolRegistryScope(
-            registry: CliToolRegistry.builtIn(),
-            child: MaterialApp(
+          child: MaterialApp(
               theme: theme,
               localizationsDelegates: AppLocalizations.localizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
@@ -94,7 +80,6 @@ void main() {
                 ),
               ),
             ),
-          ),
         ),
       ),
     );

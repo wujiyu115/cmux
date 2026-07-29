@@ -31,7 +31,6 @@ import 'repositories/ssh_credential_store.dart';
 import 'repositories/ssh_known_host_repository.dart';
 import 'repositories/ssh_profile_repository.dart';
 import 'router/app_router.dart';
-import 'services/cli/registry/cli_tool_registry_scope.dart';
 import 'services/commands/command_bus.dart';
 import 'services/commands/key_chord.dart';
 import 'services/commands/run_command_registrar.dart';
@@ -661,10 +660,7 @@ void main() async {
                   BlocProvider.value(value: shell.layoutCubit),
                   BlocProvider.value(value: shell.workspaceToolsCubit),
                   BlocProvider.value(value: shell.sessionPreferencesCubit),
-                  BlocProvider.value(value: shell.pluginCubit),
-                  BlocProvider.value(value: shell.skillCubit),
                   BlocProvider.value(value: shell.automationCubit),
-                  BlocProvider.value(value: shell.mcpCubit),
                   BlocProvider.value(value: shell.extensionCubit),
                   BlocProvider.value(value: shell.appUpdateCubit),
                   BlocProvider.value(value: shell.sshProfileCubit),
@@ -675,12 +671,9 @@ void main() async {
                   ),
                   BlocProvider.value(value: shell.shortcutCubit),
                 ],
-                child: CliToolRegistryScope(
-                  registry: shell.cliToolRegistry,
-                  child: SshConnectionBinder(
-                    child: const SessionIdleNotificationListener(
-                      child: ShortcutDispatcherHost(child: TeamPilotApp()),
-                    ),
+                child: SshConnectionBinder(
+                  child: const SessionIdleNotificationListener(
+                    child: ShortcutDispatcherHost(child: TeamPilotApp()),
                   ),
                 ),
               ),

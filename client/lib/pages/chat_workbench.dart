@@ -29,7 +29,6 @@ import '../widgets/workspace/workspace_dead_target_remap_dialog.dart';
 import 'home_workspace/workspace/workspace_route_active_scope.dart';
 import 'chat/chat_workbench_overlay.dart';
 import 'chat/chat_workbench_placeholders.dart';
-import 'chat/chat_workbench_remote_provision_view.dart';
 import 'chat/chat_workbench_slice.dart';
 import 'chat/chat_workbench_terminal.dart';
 import '../models/member_remote_provision_progress.dart';
@@ -491,15 +490,7 @@ class _ChatWorkbenchBody extends StatelessWidget {
                         terminalVisible,
                   ),
                 ),
-              if (showRemoteProvision)
-                ChatWorkbenchRemoteProvisionView(
-                  progress: remoteProvision,
-                  memberLabel: _memberDisplayLabel(
-                    team: team,
-                    memberId: remoteProvision.memberId,
-                  ),
-                )
-              else if (showSessionStarting)
+              if (showSessionStarting)
                 ChatWorkbenchSessionLoadingView(
                   message: context.l10n.sessionStarting,
                 ),

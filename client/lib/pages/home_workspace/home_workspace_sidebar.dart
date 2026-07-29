@@ -112,27 +112,6 @@ class _HomeSidebarNavScroll extends StatelessWidget {
     return ListView(
       children: [
         _ShortcutRow(
-          icon: Icons.extension_outlined,
-          label: l10n.teamSkillsNav,
-          active: activeGlobalView == HomeGlobalView.skills,
-          onTap: () => onGlobal?.call(HomeGlobalView.skills),
-        ),
-        const SizedBox(height: 4),
-        _ShortcutRow(
-          icon: Icons.widgets_outlined,
-          label: l10n.teamPluginsNav,
-          active: activeGlobalView == HomeGlobalView.plugins,
-          onTap: () => onGlobal?.call(HomeGlobalView.plugins),
-        ),
-        const SizedBox(height: 4),
-        _ShortcutRow(
-          icon: Icons.hub_outlined,
-          label: l10n.teamMcpNav,
-          active: activeGlobalView == HomeGlobalView.mcp,
-          onTap: () => onGlobal?.call(HomeGlobalView.mcp),
-        ),
-        const SizedBox(height: 4),
-        _ShortcutRow(
           icon: Icons.power_outlined,
           label: l10n.teamExtensionsNav,
           active: activeGlobalView == HomeGlobalView.extensions,

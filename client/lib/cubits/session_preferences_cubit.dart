@@ -3,8 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../models/session_preferences.dart';
 import '../services/cli/cli_tool_locator.dart';
-import '../services/cli/registry/capabilities/executable_resolver_capability.dart';
-import '../services/cli/registry/cli_tool_registry.dart';
 import '../models/team_config.dart';
 import '../repositories/session_preferences_repository.dart';
 
@@ -48,22 +46,14 @@ class SessionPreferencesCubit extends Cubit<SessionPreferencesState> {
     required SessionPreferencesRepository repository,
     Map<CliTool, String> locatedExecutables = const {},
     Map<String, String> locatedToolchains = const {},
-    CliToolRegistry? cliToolRegistry,
   }) : _repository = repository,
        _locatedExecutables = _normalizeLocatedExecutables(locatedExecutables),
        _locatedToolchains = _normalizeLocatedToolchains(locatedToolchains),
-       _cliToolRegistry = cliToolRegistry ?? _defaultCliRegistry,
        super(SessionPreferencesState());
-
-  static final _defaultCliRegistry = () {
-    final r = CliToolRegistry.builtIn();
-    return r;
-  }();
 
   final SessionPreferencesRepository _repository;
   final Map<CliTool, String> _locatedExecutables;
   final Map<String, String> _locatedToolchains;
-  final CliToolRegistry _cliToolRegistry;
 
   /// Merges startup PATH discovery; user-configured paths always win.
   void mergeLocatedExecutables(Map<CliTool, String> discovered) {
@@ -123,11 +113,7 @@ class SessionPreferencesCubit extends Cubit<SessionPreferencesState> {
   }
 
   Future<void> setCliExecutablePathFor(CliTool cli, String value) {
-    final pathKey =
-        _cliToolRegistry
-            .capability<ExecutableResolverCapability>(cli)
-            ?.preferencesPathKey ??
-        cli.value;
+    final pathKey = cli.value;
     final next = Map<String, String>.of(state.preferences.cliExecutablePaths);
     final trimmed = value.trim();
     if (trimmed.isEmpty) {
@@ -148,11 +134,7 @@ class SessionPreferencesCubit extends Cubit<SessionPreferencesState> {
     for (final entry in paths.entries) {
       final trimmed = entry.value.trim();
       if (trimmed.isEmpty) continue;
-      final pathKey =
-          _cliToolRegistry
-              .capability<ExecutableResolverCapability>(entry.key)
-              ?.preferencesPathKey ??
-          entry.key.value;
+      final pathKey = entry.key.value;
       if (next[pathKey] == trimmed) continue;
       next[pathKey] = trimmed;
       changed = true;
@@ -257,20 +239,11 @@ class SessionPreferencesCubit extends Cubit<SessionPreferencesState> {
     if (located != null && located.isNotEmpty) {
       return CliToolLocator.resolveSpawnExecutable(located);
     }
-    final resolver = _cliToolRegistry.capability<ExecutableResolverCapability>(
-      cli,
-    );
-    return resolver?.defaultExecutableName ?? cli.value;
+    return cli.value;
   }
 
-  String _userExecutableFor(CliTool cli) {
-    final pathKey =
-        _cliToolRegistry
-            .capability<ExecutableResolverCapability>(cli)
-            ?.preferencesPathKey ??
-        cli.value;
-    return state.preferences.cliExecutablePathFor(pathKey);
-  }
+  String _userExecutableFor(CliTool cli) =>
+      state.preferences.cliExecutablePathFor(cli.value);
 
   /// User-configured absolute path for [cli], or empty.
   String configuredExecutablePath(CliTool cli) => _userExecutableFor(cli);

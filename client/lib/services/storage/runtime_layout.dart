@@ -4,9 +4,7 @@ import 'package:path/path.dart' as p;
 
 import '../../models/team_config.dart';
 import '../../utils/lock_pool.dart';
-import '../cli/registry/capabilities/plugin_provisioner_capability.dart';
 import '../io/filesystem.dart';
-import '../plugin/cli_plugin_layout.dart';
 import '../session/launch_command_builder.dart';
 import '../storage/app_storage.dart';
 import 'workspace_layout.dart';
@@ -382,40 +380,6 @@ class RuntimeLayout {
     if (!linked) {
       await _fs.copyFile(source, target);
     }
-  }
-
-  Future<String?> provisionSessionPluginsFromIdentity(
-    String workspaceId,
-    String sessionId,
-    String profileId,
-    String tool, {
-    String? memberId,
-  }) async {
-    final trimmedWorkspace = workspaceId.trim();
-    final trimmedSession = sessionId.trim();
-    final trimmedIdentity = profileId.trim();
-    final trimmedTool = tool.trim();
-    if (trimmedWorkspace.isEmpty ||
-        trimmedSession.isEmpty ||
-        trimmedIdentity.isEmpty ||
-        trimmedTool.isEmpty) {
-      return null;
-    }
-    final paths = pluginManifestPathsForTool(
-      CliTool.tryParse(trimmedTool) ?? CliTool.claude,
-    );
-    if (paths == null) return null;
-    return CliPluginLayout.copyBundlesToMember(
-      fs: _fs,
-      teamPluginsDir: identityPluginsDir(trimmedIdentity),
-      memberPluginsDir: sessionRuntimePluginsDir(
-        trimmedWorkspace,
-        trimmedSession,
-        trimmedTool,
-        memberId: memberId,
-      ),
-      paths: paths,
-    );
   }
 
   Future<void> _ensureInheritedChild({

@@ -4,14 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../models/plugin.dart';
-import '../../models/skill.dart';
-import '../../models/config_bundle.dart';
 import '../../services/commands/command_bus.dart';
 import '../../services/commands/shortcut_focus.dart';
 import '../../services/storage/app_storage.dart';
 import '../../services/compose/compose_file_search.dart';
-import '../../services/compose/compose_slash_catalog.dart';
 import '../../services/compose/compose_trigger_caret.dart';
 import '../../services/compose/compose_trigger_insert.dart';
 import '../../services/compose/compose_trigger_query.dart';
@@ -26,12 +22,7 @@ final class ComposeTriggerFileSuggestion extends ComposeTriggerSuggestion {
   final ComposeFileCandidate candidate;
 }
 
-final class ComposeTriggerSlashSuggestion extends ComposeTriggerSuggestion {
-  ComposeTriggerSlashSuggestion(this.candidate);
-  final ComposeSlashCandidate candidate;
-}
-
-/// Multiline compose field with `@` file references and `/` skill/command picks.
+/// Multiline compose field with `@` file reference picks.
 class ComposeTriggerField extends StatefulWidget {
   const ComposeTriggerField({
     required this.controller,
@@ -42,9 +33,6 @@ class ComposeTriggerField extends StatefulWidget {
     required this.onSubmit,
     required this.canSubmit,
     required this.workspaceRoot,
-    required this.skills,
-    required this.plugins,
-    required this.slashBundle,
     required this.mutedColor,
     required this.hintColor,
     this.onPasteImage,
@@ -59,9 +47,6 @@ class ComposeTriggerField extends StatefulWidget {
   final VoidCallback onSubmit;
   final bool Function() canSubmit;
   final String workspaceRoot;
-  final List<Skill> skills;
-  final List<Plugin> plugins;
-  final ConfigBundle slashBundle;
   final Color mutedColor;
   final Color hintColor;
   final Future<bool> Function()? onPasteImage;
@@ -111,9 +96,7 @@ class _ComposeTriggerFieldState extends State<ComposeTriggerField> {
       _registerComposeCommands();
     }
     if (oldWidget.workspaceRoot != widget.workspaceRoot ||
-        oldWidget.skills != widget.skills ||
-        oldWidget.plugins != widget.plugins ||
-        oldWidget.slashBundle != widget.slashBundle) {
+        oldWidget.workspaceRoot != widget.workspaceRoot) {
       _refreshSuggestions(immediate: true);
     }
   }
@@ -273,15 +256,8 @@ class _ComposeTriggerFieldState extends State<ComposeTriggerField> {
           suggestions = const [];
         }
       case ComposeTriggerKind.slashInvoke:
-        final slash = buildComposeSlashCandidates(
-          skills: widget.skills,
-          plugins: widget.plugins,
-          enabledBundle: widget.slashBundle,
-          query: trigger.query,
-        );
-        suggestions = [
-          for (final item in slash) ComposeTriggerSlashSuggestion(item),
-        ];
+        // Slash commands were an agent-CLI concept; nothing to suggest.
+        suggestions = const [];
     }
 
     if (!mounted || generation != _searchGeneration) return;
@@ -304,7 +280,6 @@ class _ComposeTriggerFieldState extends State<ComposeTriggerField> {
 
     final insertion = switch (suggestion) {
       ComposeTriggerFileSuggestion(:final candidate) => candidate.insertText,
-      ComposeTriggerSlashSuggestion(:final candidate) => candidate.insertText,
     };
     widget.controller.value = replaceComposeTrigger(
       widget.controller,
@@ -479,27 +454,9 @@ class _ComposeTriggerSuggestionPanel extends StatelessWidget {
     required TpTextStyles styles,
   }) {
     final children = <Widget>[];
-    ComposeSlashCandidateKind? slashSection;
 
     for (var index = 0; index < suggestions.length; index++) {
       final suggestion = suggestions[index];
-      if (suggestion is ComposeTriggerSlashSuggestion) {
-        final section = suggestion.candidate.kind;
-        if (slashSection != section) {
-          slashSection = section;
-          children.add(
-            _ComposeTriggerSectionHeader(
-              label: section == ComposeSlashCandidateKind.skill
-                  ? 'Skills'
-                  : 'Commands',
-              spacing: spacing,
-              styles: styles,
-              color: cs.onSurfaceVariant,
-            ),
-          );
-        }
-      }
-
       final selected = index == selectedIndex;
       final (icon, label, subtitle) = switch (suggestion) {
         ComposeTriggerFileSuggestion(:final candidate) => (
@@ -508,13 +465,6 @@ class _ComposeTriggerSuggestionPanel extends StatelessWidget {
               : Icons.description_outlined,
           candidate.insertText,
           candidate.relativePath,
-        ),
-        ComposeTriggerSlashSuggestion(:final candidate) => (
-          candidate.kind == ComposeSlashCandidateKind.skill
-              ? Icons.auto_awesome_outlined
-              : Icons.terminal_outlined,
-          candidate.insertText,
-          candidate.subtitle,
         ),
       };
 
