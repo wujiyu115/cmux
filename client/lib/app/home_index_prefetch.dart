@@ -1,13 +1,9 @@
-import '../repositories/launch_profile_repository.dart';
 import '../repositories/session_repository.dart';
 import '../utils/logging/logger.dart';
 
-/// Warms workspace / launch-profile index caches as early as [main] allows.
-///
-/// Sequential reads avoid two isolates fighting for cold disk at once.
+/// Warms the workspace index cache as early as [main] allows.
 Future<void> prefetchHomeIndexSnapshots(String teampilotRoot) async {
   final sw = Stopwatch()..start();
   await SessionRepository(rootDir: teampilotRoot).loadWorkspacesIndex();
-  await LaunchProfileRepository().loadAll();
   appLogger.i('[boot] prefetchHomeIndexSnapshots +${sw.elapsedMilliseconds}ms');
 }

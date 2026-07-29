@@ -8,9 +8,7 @@ import '../../models/cli_preset.dart';
 import '../../models/session_member_binding.dart';
 import '../../models/skill.dart';
 import '../../models/team_config.dart';
-import '../../models/launch_profile.dart';
 import '../../repositories/cli_presets_repository.dart';
-import '../../repositories/launch_profile_repository.dart';
 import '../../repositories/workspace_project_config_repository.dart';
 import '../../models/config_bundle.dart';
 import '../../utils/team/team_member_naming.dart';
@@ -58,7 +56,6 @@ class SessionLifecycleService {
     Future<Set<String>> Function({String? teamId, String? workspaceId})?
     loadEnabledExtensionIds,
     CliToolRegistry? cliToolRegistry,
-    LaunchProfileRepository? identityRepository,
     Future<List<Skill>> Function()? loadInstalledSkills,
     CliPresetsRepository? cliPresetsRepository,
     List<CliPreset> Function()? loadPresets,
@@ -71,7 +68,6 @@ class SessionLifecycleService {
        _catalogContextResolver = catalogContextResolver,
        _loadEnabledExtensionIds = loadEnabledExtensionIds,
        _cliToolRegistry = cliToolRegistry ?? _defaultCliRegistry,
-       _identityRepository = identityRepository,
        _loadInstalledSkills = loadInstalledSkills,
        _cliPresetsRepository = cliPresetsRepository,
        _loadPresets = loadPresets,
@@ -94,7 +90,6 @@ class SessionLifecycleService {
   final Future<Set<String>> Function({String? teamId, String? workspaceId})?
   _loadEnabledExtensionIds;
   final CliToolRegistry _cliToolRegistry;
-  final LaunchProfileRepository? _identityRepository;
   final Future<List<Skill>> Function()? _loadInstalledSkills;
   final CliPresetsRepository? _cliPresetsRepository;
   final List<CliPreset> Function()? _loadPresets;
@@ -124,18 +119,6 @@ class SessionLifecycleService {
     if (repo == null) return null;
     final presets = await repo.load();
     return resolveActivePreset(trimmed, presets);
-  }
-
-  Future<LaunchProfile?> loadIdentity(String profileId) async {
-    final trimmed = profileId.trim();
-    if (trimmed.isEmpty) return null;
-    final repo = _identityRepository;
-    if (repo == null) return null;
-    final all = await repo.loadAll();
-    for (final identity in all) {
-      if (identity.id == trimmed) return identity;
-    }
-    return null;
   }
 
   /// Prepare PTY [LaunchPlan] from an already-built [SessionRuntimePlan].

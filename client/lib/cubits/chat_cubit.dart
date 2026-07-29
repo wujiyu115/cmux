@@ -15,7 +15,6 @@ import '../models/workspace_icon_picker_result.dart';
 import '../models/workspace_icon_ref.dart';
 import '../models/team_config.dart';
 import '../models/runtime_target.dart';
-import '../../repositories/launch_profile_repository.dart';
 import '../repositories/automation_repository.dart';
 import '../repositories/session_repository.dart';
 import '../services/workspace/workspace_icon_service.dart';
@@ -785,25 +784,14 @@ class ChatCubit extends Cubit<ChatState>
   Future<String> createWorkspaceWithFirstSession(
     List<WorkspaceFolder> folders,
     SessionRepository repo, {
-    String sessionTeamId = '',
-    List<TeamMemberConfig> rosterMembers = const [],
-    Map<String, CliTool> memberClis = const {},
-    TeamProfile? team,
     String display = '',
     bool allowDuplicate = false,
-    LaunchProfileRepository? identityRepository,
   }) async {
     final result = await _dataStore.createWorkspaceWithFirstSession(
       folders,
       repo,
-      sessionTeamId: sessionTeamId,
-      rosterMembers: rosterMembers,
-      memberClis: memberClis,
-      team: team,
-      globalPresets: _lifecycle.globalPresets,
       display: display,
       allowDuplicate: allowDuplicate,
-      identityRepository: identityRepository,
     );
     _emitSnapshot(result.snapshot);
     return result.workspaceId;

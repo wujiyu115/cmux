@@ -41,8 +41,6 @@ import '../cubits/session_preferences_cubit.dart';
 import '../cubits/extension_cubit.dart';
 import '../cubits/mcp_cubit.dart';
 import '../cubits/plugin_cubit.dart';
-import '../repositories/launch_profile_repository.dart';
-import '../services/storage/launch_profile_provisioner.dart';
 import '../cubits/cli_presets_cubit.dart';
 import '../repositories/cli_presets_repository.dart';
 import '../cubits/skill_cubit.dart';
@@ -182,7 +180,6 @@ class AppShell {
     required this.sshClientFactory,
     required this.sshProfileConnectionCoordinator,
     required this.connectionModeService,
-    required this.identityRepository,
     required this.configCubit,
     required this.appProviderCubit,
     required this.llmConfigCubit,
@@ -248,7 +245,6 @@ class AppShell {
   final SshClientFactory sshClientFactory;
   final SshProfileConnectionCoordinator sshProfileConnectionCoordinator;
   final ConnectionModeService connectionModeService;
-  final LaunchProfileRepository identityRepository;
   final ConfigCubit configCubit;
   final AppProviderCubit appProviderCubit;
   final LlmConfigCubit llmConfigCubit;
@@ -378,8 +374,6 @@ Future<AppShell> buildAppShell({
   late final LlmConfigCubit llmConfigCubit;
   late final AppProviderCubit appProviderCubit;
   late final PluginCubit pluginCubit;
-  late final LaunchProfileRepository identityRepository;
-  late final LaunchProfileProvisioner identityProvisioner;
   late final CliPresetsCubit cliPresetsCubit;
   late final SkillCubit skillCubit;
   late final McpCubit mcpCubit;
@@ -611,8 +605,6 @@ Future<AppShell> buildAppShell({
     ExtensionAcquisitionEngine(),
   );
 
-  identityRepository = LaunchProfileRepository();
-
   final cliPresetsRepo = CliPresetsRepository(
     fs: AppStorage.fs,
     presetsPath: AppStorage.paths.cliPresetsJson,
@@ -645,7 +637,6 @@ Future<AppShell> buildAppShell({
       return (await extensionRepository.load(forceReload: true)).globalEnabled;
     },
     cliToolRegistry: cliToolRegistry,
-    identityRepository: identityRepository,
     loadInstalledSkills: () => skillRepo.loadInstalled(),
     cliPresetsRepository: cliPresetsRepo,
     loadPresets: () => cliPresetsCubit.state.presets,
@@ -656,15 +647,9 @@ Future<AppShell> buildAppShell({
   bootstrapCubit?.beginHomeIndex();
   final homeIndexPrefetch =
       homeIndexPrefetchFuture ??
-      Future.wait([
-        sessionRepo.loadWorkspacesIndex(),
-        identityRepository.loadAll(),
-      ]);
+      Future.wait([sessionRepo.loadWorkspacesIndex()]);
   final pluginRepository = PluginRepository();
   final mcpRepository = McpRepository();
-  identityProvisioner = LaunchProfileProvisioner(
-    repository: identityRepository,
-  );
   skillCubit = SkillCubit(
     skillRepo,
     acquisitionEngine: skillAcquisitionEngine,
@@ -1096,7 +1081,6 @@ Future<AppShell> buildAppShell({
     sshClientFactory: sshClientFactory,
     sshProfileConnectionCoordinator: sshProfileConnectionCoordinator,
     connectionModeService: connectionModeService,
-    identityRepository: identityRepository,
     configCubit: configCubit,
     appProviderCubit: appProviderCubit,
     llmConfigCubit: llmConfigCubit,

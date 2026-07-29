@@ -7,7 +7,6 @@ import 'package:path/path.dart' as p;
 import 'package:teampilot/cubits/automation_cubit.dart';
 import 'package:teampilot/cubits/chat_cubit.dart';
 import 'package:teampilot/repositories/automation_repository.dart';
-import 'package:teampilot/repositories/launch_profile_repository.dart';
 import 'package:teampilot/repositories/session_repository.dart';
 import 'package:teampilot/services/automation/automation_bus_gateway.dart';
 import 'package:teampilot/services/automation/automation_dispatcher.dart';
@@ -61,18 +60,6 @@ void setUpTestAppStorage() {
   // fake_async that leaves a 5s `.timeout` timer pending after dispose.
   ProcessMetricsService.debugOverrideFactory = _TestProcessMetricsService.new;
   WorkspaceFsWatcher.debugDisable = true;
-}
-
-/// Isolated [LaunchProfileRepository] for tests.
-///
-/// The index snapshot is stored beside [launchProfilesDir], so the repo root must
-/// not be a bare system-temp leaf (that would share `/tmp/launch-profiles-index.json`).
-LaunchProfileRepository testLaunchProfileRepository(Directory isolatedRoot) {
-  final profilesDir = Directory(p.join(isolatedRoot.path, 'launch-profiles'));
-  if (!profilesDir.existsSync()) {
-    profilesDir.createSync(recursive: true);
-  }
-  return LaunchProfileRepository(rootDir: profilesDir.path);
 }
 
 void tearDownTestAppStorage() {

@@ -8,7 +8,6 @@ import 'package:window_manager/window_manager.dart';
 
 import '../../l10n/l10n_extensions.dart';
 import '../../models/home_closed_workspace_entry.dart';
-import '../../models/launch_profile.dart';
 import '../../models/workspace.dart';
 import '../../models/workspace_topology.dart';
 import '../../services/app/desktop_window_actions.dart';
@@ -88,7 +87,6 @@ String? recentlyClosedSubtitleLine({
   required AppLocalizations l10n,
   required HomeClosedWorkspaceEntry entry,
   required List<HomeClosedWorkspaceEntry> entries,
-  required List<LaunchProfile> identities,
 }) {
   final path = entry.primaryPath.trim();
   return path.isNotEmpty ? path : null;
@@ -168,7 +166,6 @@ class HomeTitleBar extends StatefulWidget {
     this.pageChrome = WorkspacePageChrome.home,
     this.recentlyClosed = const [],
     this.workspaces = const [],
-    this.launchProfiles = const [],
     this.trailingActions,
     this.onHomeTap,
     this.onSelectTab,
@@ -191,9 +188,6 @@ class HomeTitleBar extends StatefulWidget {
 
   /// Workspace records for resolving topology in the recently-closed menu.
   final List<Workspace> workspaces;
-
-  /// Launch identities for personal/team badges in the recently-closed menu.
-  final List<LaunchProfile> launchProfiles;
 
   /// Compact actions on the right (e.g. Run toolbar), before pane toggles.
   final Widget? trailingActions;
@@ -295,7 +289,6 @@ class _HomeTitleBarState extends State<HomeTitleBar> with WindowListener {
                     _RecentlyClosedOverflowButton(
                       entries: widget.recentlyClosed,
                       workspaces: widget.workspaces,
-                      launchProfiles: widget.launchProfiles,
                       onReopen: widget.onReopenClosedTab,
                     ),
                     Expanded(
@@ -360,7 +353,6 @@ class _HomeTitleBarState extends State<HomeTitleBar> with WindowListener {
                                 child: _RecentlyClosedOverflowButton(
                                   entries: widget.recentlyClosed,
                                   workspaces: widget.workspaces,
-                                  launchProfiles: widget.launchProfiles,
                                   onReopen: widget.onReopenClosedTab,
                                 ),
                               ),
@@ -676,13 +668,11 @@ class _RecentlyClosedOverflowButton extends StatefulWidget {
   const _RecentlyClosedOverflowButton({
     required this.entries,
     this.workspaces = const [],
-    this.launchProfiles = const [],
     this.onReopen,
   });
 
   final List<HomeClosedWorkspaceEntry> entries;
   final List<Workspace> workspaces;
-  final List<LaunchProfile> launchProfiles;
   final ValueChanged<String>? onReopen;
 
   static const _menuMaxHeight = 320.0;
@@ -745,7 +735,6 @@ class _RecentlyClosedOverflowButtonState
       for (final workspace in widget.workspaces)
         workspace.workspaceId: workspace,
     };
-    final identities = widget.launchProfiles;
 
     return TpActionMenuAnchor(
       controller: _popoverController,
@@ -798,7 +787,6 @@ class _RecentlyClosedOverflowButtonState
                           entry: entries[i],
                           entries: entries,
                           workspace: workspaceById[entries[i].workspaceId],
-                          identities: identities,
                           menuController: _menuController,
                           onReopen: widget.onReopen,
                         ),
@@ -836,7 +824,6 @@ class _RecentlyClosedMenuItem extends StatelessWidget {
     required this.entry,
     required this.entries,
     required this.workspace,
-    required this.identities,
     required this.menuController,
     this.onReopen,
   });
@@ -844,7 +831,6 @@ class _RecentlyClosedMenuItem extends StatelessWidget {
   final HomeClosedWorkspaceEntry entry;
   final List<HomeClosedWorkspaceEntry> entries;
   final Workspace? workspace;
-  final List<LaunchProfile> identities;
   final TpActionMenuController menuController;
   final ValueChanged<String>? onReopen;
 
@@ -857,7 +843,6 @@ class _RecentlyClosedMenuItem extends StatelessWidget {
       l10n: l10n,
       entry: entry,
       entries: entries,
-      identities: identities,
     );
     final topology = recentlyClosedTopology(entry: entry, workspace: workspace);
     final brightness = Theme.of(context).brightness;

@@ -29,7 +29,6 @@ void main() {
         l10n: l10n,
         entry: entry,
         entries: const [entry],
-        identities: const [],
       ),
       '/tmp/a',
     );

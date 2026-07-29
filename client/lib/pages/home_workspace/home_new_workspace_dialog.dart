@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../cubits/chat_cubit.dart';
 import '../../models/workspace_folder.dart';
-import '../../repositories/launch_profile_repository.dart';
 import '../../repositories/session_repository.dart';
 import 'package:shared_ui/shared_ui.dart';
 import '../../widgets/workspace_create_directory_picker.dart';
@@ -16,7 +15,6 @@ Future<void> showHomeNewWorkspaceDialog(
   BuildContext context, {
   required ChatCubit chatCubit,
   required SessionRepository repository,
-  LaunchProfileRepository? identityRepository,
 }) async {
   final result =
       await showDialog<({List<WorkspaceFolder> folders, String display})>(
@@ -28,11 +26,8 @@ Future<void> showHomeNewWorkspaceDialog(
   final workspaceId = await chatCubit.createWorkspaceWithFirstSession(
     result.folders,
     repository,
-    sessionTeamId: '',
     display: result.display,
     allowDuplicate: true,
-    identityRepository:
-        identityRepository ?? context.read<LaunchProfileRepository>(),
   );
   if (!context.mounted) return;
   context.go('/home-v2/workspace/$workspaceId');

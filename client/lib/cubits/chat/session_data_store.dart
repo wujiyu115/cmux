@@ -6,7 +6,6 @@ import '../../models/app_session.dart';
 import '../../models/cli_preset.dart';
 import '../../models/workspace_icon_ref.dart';
 import '../../models/team_config.dart' show CliTool, TeamMemberConfig, TeamProfile;
-import '../../repositories/launch_profile_repository.dart';
 import '../../repositories/session_repository.dart';
 import '../../services/session/session_member_cli_locks.dart';
 import '../../utils/logging/logger.dart';
@@ -217,40 +216,15 @@ class SessionDataStore {
   createWorkspaceWithFirstSession(
     List<WorkspaceFolder> folders,
     SessionRepository repo, {
-    String sessionTeamId = '',
-    List<TeamMemberConfig> rosterMembers = const [],
-    Map<String, CliTool> memberClis = const {},
-    TeamProfile? team,
-    List<CliPreset> globalPresets = const [],
     String display = '',
     bool allowDuplicate = false,
-    LaunchProfileRepository? identityRepository,
   }) async {
     final workspace = await repo.createWorkspace(
       folders,
       display: display,
       allowDuplicate: allowDuplicate,
     );
-    final trimmedTeam = sessionTeamId.trim();
-    final resolvedClis = trimmedTeam.isEmpty
-        ? const <String, CliTool>{}
-        : memberClis.isNotEmpty
-        ? memberClis
-        : team != null
-        ? resolveSessionMemberCliLocks(
-            team: team,
-            rosterMembers: rosterMembers,
-            globalPresets: globalPresets,
-          )
-        : throw ArgumentError(
-            'Team session create requires memberClis or team',
-          );
-    await repo.createSession(
-      workspace.workspaceId,
-      sessionTeam: sessionTeamId,
-      rosterMembers: rosterMembers,
-      memberClis: resolvedClis,
-    );
+    await repo.createSession(workspace.workspaceId);
     final snapshot = await loadWorkspaceData(repo);
     return (workspaceId: workspace.workspaceId, snapshot: snapshot);
   }

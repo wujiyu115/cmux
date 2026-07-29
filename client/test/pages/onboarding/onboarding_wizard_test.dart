@@ -11,9 +11,7 @@ import 'package:teampilot/pages/onboarding/onboarding_wizard.dart';
 import 'package:teampilot/repositories/app_settings_repository.dart';
 import 'package:teampilot/repositories/cli_presets_repository.dart';
 import 'package:teampilot/repositories/session_repository.dart';
-import 'package:teampilot/repositories/launch_profile_repository.dart';
 import 'package:teampilot/services/app/onboarding_service.dart';
-import 'package:teampilot/services/storage/launch_profile_provisioner.dart';
 import 'package:teampilot/services/plugin/profile_plugin_linker_service.dart';
 import '../../support/in_memory_filesystem.dart';
 
@@ -74,17 +72,6 @@ void main() {
   group('OnboardingService.applyDefaultPreset', () {
     test('selects the preset provider for its CLI', () async {
       final dir = await Directory.systemTemp.createTemp('onboarding-preset_');
-      final teamRepo = LaunchProfileRepository(
-        rootDir: p.join(dir.path, 'launch-profiles'),
-      );
-      const team = TeamProfile(
-        id: LaunchProfileProvisioner.defaultNativeTeamId,
-        name: 'Default Native Team',
-        cli: CliTool.claude,
-        members: [TeamMemberConfig(id: 'team-lead', name: 'team-lead')],
-      );
-      await teamRepo.saveTeamProfiles([team]);
-
       final presetsRepo = CliPresetsRepository(
         fs: InMemoryFilesystem(),
         presetsPath: p.join(dir.path, 'cli-presets.json'),

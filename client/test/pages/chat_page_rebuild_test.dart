@@ -29,7 +29,6 @@ import 'package:teampilot/repositories/cli_presets_repository.dart';
 import 'package:teampilot/repositories/plugin_repository.dart';
 import 'package:teampilot/repositories/session_repository.dart';
 import 'package:teampilot/repositories/skill_repository.dart';
-import 'package:teampilot/repositories/launch_profile_repository.dart';
 import 'package:teampilot/services/cli/registry/cli_tool_registry.dart';
 import 'package:teampilot/services/cli/registry/cli_tool_registry_scope.dart';
 import 'package:teampilot/services/file_tree/workspace_file_tree_store.dart';

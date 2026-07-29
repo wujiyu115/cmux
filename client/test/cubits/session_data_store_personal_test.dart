@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:teampilot/cubits/chat/session_data_store.dart';
-import 'package:teampilot/repositories/launch_profile_repository.dart';
 import 'package:teampilot/models/workspace_folder.dart';
 import 'package:teampilot/repositories/session_repository.dart';
 import 'package:teampilot/services/io/local_filesystem.dart';
@@ -11,7 +10,6 @@ import 'package:teampilot/services/storage/app_storage.dart';
 void main() {
   late Directory tmp;
   late SessionRepository sessionRepo;
-  late LaunchProfileRepository identityRepo;
 
   setUp(() async {
     tmp = await Directory.systemTemp.createTemp('session_data_personal_');
@@ -25,7 +23,6 @@ void main() {
       cwd: tmp.path,
     );
     sessionRepo = SessionRepository();
-    identityRepo = LaunchProfileRepository();
   });
 
   tearDown(() {
@@ -42,9 +39,6 @@ void main() {
       final result = await store.createWorkspaceWithFirstSession(
         [WorkspaceFolder(path: primaryPath)],
         sessionRepo,
-        sessionTeamId: '',
-        rosterMembers: const [],
-        identityRepository: identityRepo,
       );
 
       final sessions = result.snapshot.sessions
@@ -79,9 +73,6 @@ void main() {
           WorkspaceFolder(path: '/remote', targetId: 'ssh:p1'),
         ],
         sessionRepo,
-        sessionTeamId: '',
-        rosterMembers: const [],
-        identityRepository: identityRepo,
       );
 
       final workspaces = result.snapshot.workspaces

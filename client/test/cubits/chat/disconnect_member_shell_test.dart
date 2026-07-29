@@ -6,7 +6,6 @@ import 'package:teampilot/cubits/chat_cubit.dart';
 import 'package:teampilot/models/team_config.dart';
 import 'package:teampilot/models/workspace_folder.dart';
 import 'package:teampilot/repositories/session_repository.dart';
-import 'package:teampilot/services/storage/launch_profile_provisioner.dart';
 import 'package:teampilot/utils/team/team_member_naming.dart';
 
 import '../../support/fake_terminal_session.dart';
@@ -22,7 +21,7 @@ void main() {
     'disconnectMemberShell targets arbitrary session member, not only active',
     () async {
       final team = TeamProfile(
-        id: LaunchProfileProvisioner.defaultNativeTeamId,
+        id: 'default-native-team',
         name: 'Team',
         roster: TeamMemberNaming.defaultRoster(),
         members: const [

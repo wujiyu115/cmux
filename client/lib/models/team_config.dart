@@ -7,7 +7,6 @@ import '../utils/team/team_member_naming.dart';
 import 'config_bundle.dart';
 import 'launch_profile_kind.dart';
 import 'workspace_icon_ref.dart';
-import 'launch_profile.dart';
 
 /// Backend CLI identity (`flashskyai`, `codex`, `claude`, `opencode`, or
 /// `cursor`).
@@ -331,7 +330,7 @@ class TeamMemberConfig {
 }
 
 @immutable
-class TeamProfile implements LaunchProfile {
+class TeamProfile {
   /// Sentinel value for [TeamMemberConfig.activePresetId] meaning "inherit the
   /// team's [activePresetId]".
   static const inheritPresetId = '__inherit__';
