@@ -2,12 +2,6 @@ import 'runtime_target.dart';
 import 'workspace_folder.dart';
 import '../utils/workspace/workspace_path_utils.dart';
 
-/// Mixed-workspace machine pin per runtime instance (instanceId → targetId).
-typedef MemberTargetAssignments = Map<String, String>;
-
-/// Instance counts per roster member type on each workspace target.
-typedef MemberPlacementByTarget = Map<String, Map<String, int>>;
-
 /// Emergent workspace shape from [WorkspaceFolder.targetId] uniformity (§4).
 enum WorkspaceTopology {
   /// Every folder is [WorkspaceFolder.localTargetId].
@@ -32,24 +26,6 @@ WorkspaceTopology workspaceTopologyOf(List<WorkspaceFolder> folders) {
 
 bool workspaceFolderIsRemote(String targetId) =>
     runtimeKindOfId(targetId) == RuntimeKind.ssh;
-
-/// Infer mixed first-init from remembered targets (migration / load path).
-bool inferMemberPlacementInitialized({
-  required List<WorkspaceFolder> folders,
-  required MemberTargetAssignments targets,
-  required bool alreadyInitialized,
-}) {
-  if (alreadyInitialized) return true;
-  if (workspaceTopologyOf(folders) != WorkspaceTopology.mixed) return false;
-  if (targets.isEmpty) return false;
-
-  final ids = workspaceTargetIds(folders).toSet();
-  for (final targetId in targets.values) {
-    final trimmed = targetId.trim();
-    if (trimmed.isEmpty || !ids.contains(trimmed)) return false;
-  }
-  return true;
-}
 
 List<String> workspaceTargetIds(List<WorkspaceFolder> folders) {
   final seen = <String>[];
@@ -118,17 +94,6 @@ List<WorkspaceFolder> mergeWorkspaceFolderCatalog({
   return merged;
 }
 
-String? memberTargetForInstanceId(
-  MemberTargetAssignments targets,
-  String instanceId,
-) {
-  final trimmed = instanceId.trim();
-  if (trimmed.isEmpty) return null;
-  final targetId = targets[trimmed]?.trim();
-  if (targetId == null || targetId.isEmpty) return null;
-  return targetId;
-}
-
 /// Personal launch: [primaryPath] is cwd; add-dirs are other catalog folders on
 /// the same target (cross-machine paths are not reachable from one PTY).
 ({String workingDirectory, List<String> addDirs}) personalWorkDirsForPrimaryPath(
@@ -171,32 +136,4 @@ String? memberTargetForInstanceId(
   ];
 
   return (workingDirectory: cwd, addDirs: addDirs);
-}
-
-/// Working directory + add-dirs for a member pinned to [targetId].
-({String workingDirectory, List<String> addDirs}) memberWorkDirsForTarget(
-  List<WorkspaceFolder> folders,
-  String targetId,
-) {
-  final paths = folderPathsForTarget(folders, targetId.trim());
-  if (paths.isEmpty) {
-    return (workingDirectory: '', addDirs: const []);
-  }
-  return (
-    workingDirectory: paths.first,
-    addDirs: paths.skip(1).toList(growable: false),
-  );
-}
-
-MemberTargetAssignments rememberedMemberTargets(
-  Map<String, MemberTargetAssignments> byTeam,
-  String teamId,
-) {
-  final remembered = byTeam[teamId.trim()];
-  if (remembered == null || remembered.isEmpty) return const {};
-  return Map.unmodifiable({
-    for (final e in remembered.entries)
-      if (e.key.trim().isNotEmpty && e.value.trim().isNotEmpty)
-        e.key.trim(): e.value.trim(),
-  });
 }

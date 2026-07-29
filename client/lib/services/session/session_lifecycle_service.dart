@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import '../../models/workspace.dart';
 import '../../models/app_session.dart';
 import '../../utils/logging/logger.dart';
-import '../../models/workspace_topology.dart';
 import '../../models/workspace_launch_context.dart';
 import '../storage/app_storage.dart';
 import '../../models/runtime_target.dart';
@@ -112,7 +111,6 @@ class SessionLifecycleService {
   ///
   /// Personal sessions omit [memberId] and use the workspace session target
   /// (`folders.first.targetId`). Team sessions pin each roster member via
-  /// [memberId] → [AppSession.memberTargets].
   RuntimeTarget launchWorkTarget(
     WorkspaceLaunchContext ctx, {
     String? memberId,
@@ -158,25 +156,8 @@ class SessionLifecycleService {
     WorkspaceLaunchContext ctx,
     String memberId,
   ) {
-    final targetId = memberTargetForInstanceId(
-      ctx.session.memberTargets,
-      memberId,
-    );
-    if (targetId != null &&
-        folderPathsForTarget(ctx.folderCatalog, targetId).isNotEmpty) {
-      return _runtimeTargetFromId(targetId);
-    }
     final fallback = ctx.folderCatalog.isEmpty ? null : ctx.folderCatalog.first;
     return _runtimeTargetFromId(fallback?.targetId ?? RuntimeTarget.localId);
-  }
-
-  bool memberTargetIsValid(WorkspaceLaunchContext ctx, String memberId) {
-    final targetId = memberTargetForInstanceId(
-      ctx.session.memberTargets,
-      memberId,
-    );
-    if (targetId == null) return false;
-    return folderPathsForTarget(ctx.folderCatalog, targetId).isNotEmpty;
   }
 
   ({String workingDirectory, List<String> addDirs}) memberWorkDirs(

@@ -14,7 +14,6 @@ class AppSession {
     required this.sessionId,
     required this.workspaceId,
     required this.folders,
-    this.memberTargets = const {},
     this.display = '',
     this.profileId = '',
     this.cli,
@@ -34,7 +33,6 @@ class AppSession {
     required String sessionId,
     required String workspaceId,
     List<WorkspaceFolder> folders = const [],
-    Map<String, String> memberTargets = const {},
     String display = '',
     String profileId = '',
     CliTool? cli,
@@ -54,11 +52,6 @@ class AppSession {
       sessionId: sessionId,
       workspaceId: workspaceId,
       folders: List.unmodifiable(folders),
-      memberTargets: Map.unmodifiable({
-        for (final e in memberTargets.entries)
-          if (e.key.trim().isNotEmpty && e.value.trim().isNotEmpty)
-            e.key.trim(): e.value.trim(),
-      }),
       display: display,
       profileId: profileId,
       cli: cli,
@@ -81,20 +74,10 @@ class AppSession {
       (e) => e.name == launchRaw,
       orElse: () => AppSessionLaunchState.created,
     );
-    final targetsRaw = json['memberTargets'];
-    final targets = targetsRaw is Map
-        ? <String, String>{
-            for (final e in targetsRaw.entries)
-              if ('${e.key}'.trim().isNotEmpty &&
-                  '${e.value}'.trim().isNotEmpty)
-                '${e.key}'.trim(): '${e.value}'.trim(),
-          }
-        : const <String, String>{};
     return AppSession(
       sessionId: json['sessionId'] as String? ?? '',
       workspaceId: json['workspaceId'] as String? ?? '',
       folders: foldersFromJson(json['folders']),
-      memberTargets: targets,
       display: json['display'] as String? ?? '',
       profileId: json['profileId'] as String? ?? '',
       cli: CliTool.tryParse(json['cli'] as String?),
@@ -120,7 +103,6 @@ class AppSession {
   final List<WorkspaceFolder> folders;
 
   /// Mixed workspace: runtime instance id → machine target id.
-  final Map<String, String> memberTargets;
 
   final String display;
 
@@ -139,15 +121,7 @@ class AppSession {
     if (memberId == null || memberId.trim().isEmpty) {
       return personalWorkDirsForPrimaryPath(folders, firstFolderPath);
     }
-    final targetId = memberTargetForInstanceId(memberTargets, memberId);
-    if (targetId == null) {
-      return (workingDirectory: firstFolderPath, addDirs: extraFolderPaths);
-    }
-    final work = memberWorkDirsForTarget(folders, targetId);
-    if (work.workingDirectory.isEmpty) {
-      return (workingDirectory: firstFolderPath, addDirs: extraFolderPaths);
-    }
-    return work;
+    return (workingDirectory: firstFolderPath, addDirs: extraFolderPaths);
   }
 
   final String profileId;
@@ -195,7 +169,6 @@ class AppSession {
     String? sessionId,
     String? workspaceId,
     List<WorkspaceFolder>? folders,
-    Map<String, String>? memberTargets,
     String? display,
     String? profileId,
     CliTool? cli,
@@ -214,7 +187,6 @@ class AppSession {
       sessionId: sessionId ?? this.sessionId,
       workspaceId: workspaceId ?? this.workspaceId,
       folders: folders ?? this.folders,
-      memberTargets: memberTargets ?? this.memberTargets,
       display: display ?? this.display,
       profileId: profileId ?? this.profileId,
       cli: cli ?? this.cli,
@@ -237,7 +209,6 @@ class AppSession {
       'sessionId': sessionId,
       'workspaceId': workspaceId,
       'folders': folders.map((f) => f.toJson()).toList(),
-      if (memberTargets.isNotEmpty) 'memberTargets': memberTargets,
       'display': display,
       if (profileId.isNotEmpty) 'profileId': profileId,
       if (cli != null) 'cli': cli!.value,
@@ -263,7 +234,6 @@ class AppSession {
             sessionId == other.sessionId &&
             workspaceId == other.workspaceId &&
             listEquals(folders, other.folders) &&
-            mapEquals(memberTargets, other.memberTargets) &&
             display == other.display &&
             profileId == other.profileId &&
             cli == other.cli &&
@@ -284,7 +254,6 @@ class AppSession {
     sessionId,
     workspaceId,
     Object.hashAll(folders),
-    Object.hashAll(memberTargets.entries),
     display,
     profileId,
     cli,

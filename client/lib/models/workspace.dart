@@ -16,8 +16,6 @@ class Workspace {
     required this.createdAt,
     this.updatedAt = 0,
     this.sessionIds = const [],
-    this.memberTargetsByTeam = const {},
-    this.memberPlacementInitializedByTeam = const {},
     this.rootSandboxEnvOptIn = false,
   });
 
@@ -30,8 +28,6 @@ class Workspace {
     required int createdAt,
     int updatedAt = 0,
     List<String> sessionIds = const [],
-    Map<String, MemberTargetAssignments> memberTargetsByTeam = const {},
-    Map<String, bool> memberPlacementInitializedByTeam = const {},
     bool rootSandboxEnvOptIn = false,
   }) {
     return Workspace._(
@@ -43,10 +39,6 @@ class Workspace {
       createdAt: createdAt,
       updatedAt: updatedAt,
       sessionIds: sessionIds,
-      memberTargetsByTeam: _freezeTargetsByTeam(memberTargetsByTeam),
-      memberPlacementInitializedByTeam: _freezeInitializedByTeam(
-        memberPlacementInitializedByTeam,
-      ),
       rootSandboxEnvOptIn: rootSandboxEnvOptIn,
     );
   }
@@ -65,10 +57,6 @@ class Workspace {
       createdAt: json['createdAt'] as int? ?? 0,
       updatedAt: json['updatedAt'] as int? ?? 0,
       sessionIds: sessionIds,
-      memberTargetsByTeam: _targetsByTeamFromJson(json['memberTargetsByTeam']),
-      memberPlacementInitializedByTeam: _initializedByTeamFromJson(
-        json['memberPlacementInitializedByTeam'],
-      ),
       rootSandboxEnvOptIn: json['rootSandboxEnvOptIn'] == true,
     );
   }
@@ -81,12 +69,6 @@ class Workspace {
   final int createdAt;
   final int updatedAt;
   final List<String> sessionIds;
-
-  /// Remembered mixed-workspace machine pins keyed by team id.
-  final Map<String, MemberTargetAssignments> memberTargetsByTeam;
-
-  /// Teams whose member placement has been initialized for this workspace.
-  final Map<String, bool> memberPlacementInitializedByTeam;
 
   final bool rootSandboxEnvOptIn;
 
@@ -156,8 +138,6 @@ class Workspace {
     int? createdAt,
     int? updatedAt,
     List<String>? sessionIds,
-    Map<String, MemberTargetAssignments>? memberTargetsByTeam,
-    Map<String, bool>? memberPlacementInitializedByTeam,
     bool? rootSandboxEnvOptIn,
   }) {
     return Workspace(
@@ -169,10 +149,6 @@ class Workspace {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       sessionIds: sessionIds ?? this.sessionIds,
-      memberTargetsByTeam: memberTargetsByTeam ?? this.memberTargetsByTeam,
-      memberPlacementInitializedByTeam:
-          memberPlacementInitializedByTeam ??
-          this.memberPlacementInitializedByTeam,
       rootSandboxEnvOptIn: rootSandboxEnvOptIn ?? this.rootSandboxEnvOptIn,
     );
   }
@@ -187,75 +163,8 @@ class Workspace {
       'createdAt': createdAt,
       'updatedAt': updatedAt,
       'sessionIds': sessionIds,
-      if (memberTargetsByTeam.isNotEmpty)
-        'memberTargetsByTeam': {
-          for (final e in memberTargetsByTeam.entries) e.key: e.value,
-        },
-      if (memberPlacementInitializedByTeam.isNotEmpty)
-        'memberPlacementInitializedByTeam': {
-          for (final e in memberPlacementInitializedByTeam.entries)
-            e.key: e.value,
-        },
       if (rootSandboxEnvOptIn) 'rootSandboxEnvOptIn': true,
     };
-  }
-
-  static Map<String, MemberTargetAssignments> _freezeTargetsByTeam(
-    Map<String, MemberTargetAssignments> raw,
-  ) {
-    return Map<String, MemberTargetAssignments>.unmodifiable({
-      for (final team in raw.entries)
-        if (team.key.trim().isNotEmpty)
-          team.key: Map<String, String>.unmodifiable({
-            for (final member in team.value.entries)
-              if (member.key.trim().isNotEmpty &&
-                  member.value.trim().isNotEmpty)
-                member.key.trim(): member.value.trim(),
-          }),
-    });
-  }
-
-  static Map<String, MemberTargetAssignments> _targetsByTeamFromJson(
-    Object? raw,
-  ) {
-    if (raw is! Map) return const {};
-    final out = <String, MemberTargetAssignments>{};
-    for (final teamEntry in raw.entries) {
-      final teamId = teamEntry.key.toString().trim();
-      if (teamId.isEmpty || teamEntry.value is! Map) continue;
-      final members = <String, String>{};
-      for (final memberEntry in (teamEntry.value as Map).entries) {
-        final memberId = memberEntry.key.toString().trim();
-        final targetId = memberEntry.value?.toString().trim() ?? '';
-        if (memberId.isEmpty || targetId.isEmpty) continue;
-        members[memberId] = targetId;
-      }
-      if (members.isNotEmpty) out[teamId] = members;
-    }
-    return _freezeTargetsByTeam(out);
-  }
-
-  static Map<String, bool> _freezeInitializedByTeam(Map<String, bool> raw) {
-    return Map<String, bool>.unmodifiable({
-      for (final e in raw.entries)
-        if (e.key.trim().isNotEmpty) e.key.trim(): e.value,
-    });
-  }
-
-  static Map<String, bool> _initializedByTeamFromJson(Object? raw) {
-    if (raw is! Map) return const {};
-    final out = <String, bool>{};
-    for (final e in raw.entries) {
-      final id = e.key.toString().trim();
-      if (id.isEmpty) continue;
-      // Persist explicit false so host-set resets survive load-time infer.
-      if (e.value == true) {
-        out[id] = true;
-      } else if (e.value == false) {
-        out[id] = false;
-      }
-    }
-    return Map.unmodifiable(out);
   }
 
   @override
@@ -271,11 +180,6 @@ class Workspace {
             createdAt == other.createdAt &&
             updatedAt == other.updatedAt &&
             listEquals(sessionIds, other.sessionIds) &&
-            mapEquals(memberTargetsByTeam, other.memberTargetsByTeam) &&
-            mapEquals(
-              memberPlacementInitializedByTeam,
-              other.memberPlacementInitializedByTeam,
-            ) &&
             rootSandboxEnvOptIn == other.rootSandboxEnvOptIn;
   }
 
@@ -289,12 +193,6 @@ class Workspace {
     createdAt,
     updatedAt,
     Object.hashAll(sessionIds),
-    Object.hashAll(
-      memberTargetsByTeam.entries.map(
-        (e) => Object.hash(e.key, Object.hashAll(e.value.entries)),
-      ),
-    ),
-    Object.hashAll(memberPlacementInitializedByTeam.entries),
     rootSandboxEnvOptIn,
   );
 }

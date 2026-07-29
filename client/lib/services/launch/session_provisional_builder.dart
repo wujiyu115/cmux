@@ -29,7 +29,6 @@ AppSession buildProvisionalSession({
     model: identity.model,
     effort: identity.effort,
     presetId: identity.presetId,
-    memberTargets: const {},
     launchState: AppSessionLaunchState.created,
     createdAt: now,
     updatedAt: now,

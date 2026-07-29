@@ -38,22 +38,7 @@ void main() {
       );
     });
 
-    test('same path on local and remote disambiguates via target id', () {
-      const folders = [
-        WorkspaceFolder(path: '/repo'),
-        WorkspaceFolder(path: '/repo', targetId: 'ssh:p1'),
-      ];
-      expect(
-        memberWorkDirsForTarget(folders, 'ssh:p1').workingDirectory,
-        '/repo',
-      );
-      expect(
-        memberWorkDirsForTarget(folders, 'local').workingDirectory,
-        '/repo',
-      );
-    });
-
-    test('personalWorkDirsForPrimaryPath keeps add-dirs on same target only', () {
+      test('personalWorkDirsForPrimaryPath keeps add-dirs on same target only', () {
       const folders = [
         WorkspaceFolder(path: '/local', targetId: 'local'),
         WorkspaceFolder(path: '/local-extra', targetId: 'local'),
