@@ -9,7 +9,6 @@ import 'package:teampilot/models/team_config.dart';
 import 'package:teampilot/models/workspace_folder.dart';
 import 'package:teampilot/repositories/session_repository.dart';
 import 'package:teampilot/services/session/shell_launch_spec.dart';
-import 'package:teampilot/services/team_bus/bus_user_line_capture.dart';
 import 'package:teampilot/services/terminal/terminal_session.dart';
 import 'package:teampilot/services/workbench/workbench_center_mode.dart';
 
@@ -39,7 +38,6 @@ class _FakeTerminalSession extends TerminalSession {
     void Function()? onProcessExited,
     void Function(String line)? onFirstUserLineSubmitted,
     void Function(String line)? onEveryUserLineSubmitted,
-    BusUserInputRouting? busUserInputRouting,
     String? executableOverride,
   }) {
     _running = true;

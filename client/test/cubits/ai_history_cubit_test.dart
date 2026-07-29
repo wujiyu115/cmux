@@ -17,9 +17,6 @@ import 'package:teampilot/services/session/ai_history_loader.dart';
 import 'package:teampilot/services/session/ai_history_locator.dart';
 import 'package:teampilot/services/session/session_history_context_builder.dart';
 import 'package:teampilot/services/session/session_history_pagination.dart';
-import 'package:teampilot/services/team_bus/persistence/bus_message_log.dart';
-import 'package:teampilot/services/team_bus/team_bus.dart';
-import 'package:teampilot/services/team_bus/team_message.dart';
 
 import '../support/fake_ai_history_registry.dart';
 import '../support/post_frame_test_harness.dart';

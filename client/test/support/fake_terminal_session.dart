@@ -1,5 +1,4 @@
 import 'package:teampilot/services/session/shell_launch_spec.dart';
-import 'package:teampilot/services/team_bus/bus_user_line_capture.dart';
 import 'package:teampilot/services/terminal/terminal_session.dart';
 
 /// Recording [TerminalSession] for cubit / smoke tests that assert connect args.
@@ -33,7 +32,6 @@ class FakeTerminalSession extends TerminalSession {
     void Function()? onProcessExited,
     void Function(String line)? onFirstUserLineSubmitted,
     void Function(String line)? onEveryUserLineSubmitted,
-    BusUserInputRouting? busUserInputRouting,
     String? executableOverride,
   }) {
     lastFixedSessionIds.add(fixedSessionId);

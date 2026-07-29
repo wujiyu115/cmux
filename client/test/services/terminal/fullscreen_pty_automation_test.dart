@@ -4,9 +4,11 @@ import 'package:teampilot/services/terminal/fullscreen_cr_ack_config.dart';
 import 'package:teampilot/services/terminal/fullscreen_input_screen_probe.dart';
 import 'package:teampilot/services/terminal/fullscreen_pty_automation.dart';
 import 'package:teampilot/services/terminal/fullscreen_pty_delivery_port.dart';
-import 'package:teampilot/services/team_bus/team_bus.dart';
 
 import 'support/fake_fullscreen_pty_delivery_port.dart';
+
+/// Stand-in for the notice text an automation retry pastes at the prompt.
+const _doorbellNotice = 'You have new messages. Call read_messages now.';
 
 void main() {
   final timing = PtyAutomationTiming.instant();
@@ -83,7 +85,7 @@ void main() {
 
       final outcome = await automation.deliverPasteAndSubmit(
         port: port,
-        text: TeamBus.doorbellNotice,
+        text: _doorbellNotice,
         pasteSettle: Duration.zero,
       );
 
@@ -120,11 +122,11 @@ void main() {
 
   group('nudgeCrUntilClear', () {
     test('submits CR when text already visible', () async {
-      final port = FakeFullscreenPtyDeliveryPort()..staged = TeamBus.doorbellNotice;
+      final port = FakeFullscreenPtyDeliveryPort()..staged = _doorbellNotice;
 
       final outcome = await automation.nudgeCrUntilClear(
         port: port,
-        text: TeamBus.doorbellNotice,
+        text: _doorbellNotice,
       );
 
       expect(outcome, FullscreenPtyDeliveryOutcome.submitted);
@@ -137,7 +139,7 @@ void main() {
 
       final outcome = await automation.nudgeCrUntilClear(
         port: port,
-        text: TeamBus.doorbellNotice,
+        text: _doorbellNotice,
       );
 
       expect(outcome, FullscreenPtyDeliveryOutcome.pasteNotFound);
@@ -150,7 +152,7 @@ void main() {
 
       final outcome = await automation.retry(
         port: port,
-        text: TeamBus.doorbellNotice,
+        text: _doorbellNotice,
         pasteSettle: Duration.zero,
       );
 
@@ -160,11 +162,11 @@ void main() {
 
     test('repastes when text already visible', () async {
       final port = FakeFullscreenPtyDeliveryPort()
-        ..staged = TeamBus.doorbellNotice;
+        ..staged = _doorbellNotice;
 
       final outcome = await automation.retry(
         port: port,
-        text: TeamBus.doorbellNotice,
+        text: _doorbellNotice,
         pasteSettle: Duration.zero,
       );
 

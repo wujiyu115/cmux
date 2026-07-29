@@ -532,15 +532,9 @@ class SessionShellConnector {
 
     try {
       final token = gateway.registerAgentStatusSession(sessionId: sessionId);
-      final workCtx = await _host.lifecycle.resolveWorkContextForTargetId(
-        launchTarget.id,
-      );
-      final arch = archFromUname(await memberSshSession.run('uname -m'));
       final mount = buildStatusOnlyRemoteBusMount(
         memberSession: memberSshSession,
         gateway: gateway,
-        storageFs: workCtx.fs,
-        arch: arch,
         token: token,
       );
       tab.memberRemoteBusMounts[memberId] = mount;

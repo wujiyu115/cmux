@@ -7,10 +7,10 @@ import 'package:teampilot/services/team_bus/remote/member_bus_mcp_config.dart';
 
 void main() {
   group('RemoteBusBinding.agentStatusUrl', () {
-    test('ends with /agent-status on the idle tunnel port', () {
+    test('ends with /agent-status on the tunnel port', () {
       const binding = RemoteBusBinding(
         token: 'tok',
-        idleHttpTunnelPort: 47214,
+        tunnelPort: 47214,
       );
       expect(binding.agentStatusUrl, 'http://127.0.0.1:47214/agent-status');
       expect(binding.agentStatusUrl, endsWith('/agent-status'));
@@ -53,7 +53,7 @@ void main() {
     test('SSH with mixed binding reuses idle tunnel (no status-only)', () {
       const binding = RemoteBusBinding(
         token: 'tok',
-        idleHttpTunnelPort: 4000,
+        tunnelPort: 4000,
       );
       expect(
         needsAgentStatusOnlyHttpTunnel(

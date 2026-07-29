@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:teampilot/services/team_bus/team_bus.dart';
 import 'package:teampilot/services/terminal/member_pty_inject_service.dart';
 import 'package:teampilot/services/terminal/pty_automation_retry_queue.dart';
 
@@ -46,8 +45,7 @@ void main() {
     expect(queue.isPending(key), isFalse);
   });
 
-  test('maxPtyNotifyAttempts aligns with TeamBus', () {
-    expect(MemberPtyInjectService.maxPtyNotifyAttempts, TeamBus.maxPtyNotifyAttempts);
-    expect(TeamBus.maxPtyNotifyAttempts, 6);
+  test('maxPtyNotifyAttempts caps automation retries', () {
+    expect(MemberPtyInjectService.maxPtyNotifyAttempts, 6);
   });
 }
