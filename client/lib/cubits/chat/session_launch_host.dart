@@ -63,7 +63,6 @@ abstract interface class SessionLaunchHost
     String newName,
   );
   Future<void> loadWorkspaceData(SessionRepository repo);
-  void pushPresenceTarget();
 
   ChatTab? get activeTab;
 

@@ -11,7 +11,6 @@ import 'model/chat_state.dart';
 mixin ChatConnectStateMixin on Cubit<ChatState> {
   ChatTabStore get tabStore;
 
-  void onTabRunningChanged();
 
   void beginSessionConnect(String sessionId) {
     appLogger.d('[session-launch] connecting start session=$sessionId');
@@ -92,17 +91,13 @@ mixin ChatConnectStateMixin on Cubit<ChatState> {
     final tab = tabStore.openTabBySessionId(tabId);
     if (tab == null) return;
     tab.info = tab.info.copyWith(isRunning: tab.isRunning);
-    if (tabStore.activeIndexOfSession(tabId) == -1) {
-      onTabRunningChanged();
-      return;
-    }
+    if (tabStore.activeIndexOfSession(tabId) == -1) return;
     emit(
       state.copyWith(
         tabs: tabStore.activeTabInfos(),
         stateVersion: state.stateVersion + 1,
       ),
     );
-    onTabRunningChanged();
   }
 
   void emitLaunchWarnings(List<String> warnings) {

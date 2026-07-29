@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_ui/shared_ui.dart';
 
-import '../../cubits/chat_cubit.dart';
-import '../../cubits/member_presence_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../models/layout_preferences.dart';
 import '../../services/workspace/workspace_tools_scope.dart';
@@ -39,48 +37,8 @@ class RightToolsPanel extends StatefulWidget {
 }
 
 class _RightToolsPanelState extends State<RightToolsPanel> {
-  ChatCubit? _chatCubit;
-  MemberPresenceCubit? _presenceCubit;
-  bool _uiPollAttached = false;
-
   RightToolsToolPreferences get _toolPreferences =>
       RightToolsToolPreferences.from(widget.preferences);
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final chatCubit = context.read<ChatCubit>();
-    final presenceCubit = context.read<MemberPresenceCubit>();
-    final shouldAttach = TickerMode.valuesOf(context).enabled;
-
-    if (!identical(_chatCubit, chatCubit)) {
-      if (_uiPollAttached) {
-        _detachUiPoll();
-      }
-      _chatCubit = chatCubit;
-      _presenceCubit = presenceCubit;
-    }
-
-    if (shouldAttach && !_uiPollAttached) {
-      presenceCubit.attachPresenceUi(this);
-      _uiPollAttached = true;
-    } else if (!shouldAttach && _uiPollAttached) {
-      _detachUiPoll();
-    }
-  }
-
-  void _detachUiPoll() {
-    _presenceCubit?.detachPresenceUi(this);
-    _uiPollAttached = false;
-  }
-
-  @override
-  void dispose() {
-    if (_uiPollAttached) {
-      _detachUiPoll();
-    }
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {

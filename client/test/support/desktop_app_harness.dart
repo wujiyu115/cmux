@@ -12,7 +12,6 @@ import 'package:teampilot/cubits/config_cubit.dart';
 import 'package:teampilot/cubits/editor_cubit.dart';
 import 'package:teampilot/cubits/extension_cubit.dart';
 import 'package:teampilot/cubits/layout_cubit.dart';
-import 'package:teampilot/cubits/member_presence_cubit.dart';
 import 'package:teampilot/cubits/notification_cubit.dart';
 import 'package:teampilot/cubits/session_preferences_cubit.dart';
 import 'package:teampilot/cubits/shortcut_cubit.dart';
@@ -105,7 +104,6 @@ Future<void> pumpPhaseTransitions(WidgetTester tester) async {
 Widget buildTestApp({
   required SessionPreferencesCubit sessionPreferencesCubit,
   ChatCubit? chatCubit,
-  MemberPresenceCubit? memberPresenceCubit,
   LayoutCubit? layoutCubit,
   AppSettingsRepository? appSettings,
   ExtensionCubit? extensionCubit,
@@ -123,8 +121,6 @@ Widget buildTestApp({
         executableResolver: desktopHarnessExecutable,
         automationRepository: testAutomationRepository(),
       );
-  final presence = memberPresenceCubit ?? MemberPresenceCubit();
-  chat.bindPresenceCubit(presence);
   final sshEvents = SshConnectionEvents();
   final sshCredentialStore = InMemorySshCredentialStore();
   final sshKnownHosts = InMemorySshKnownHostRepository();
@@ -229,7 +225,6 @@ Widget buildTestApp({
           },
         ),
         BlocProvider.value(value: chat),
-        BlocProvider.value(value: presence),
         BlocProvider(
           create: (_) => AgentAttentionCubit(pruneInterval: null),
         ),

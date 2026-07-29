@@ -8,7 +8,6 @@ import 'package:teampilot/cubits/chat/model/chat_tab_info.dart';
 import 'package:teampilot/cubits/chat_cubit.dart';
 import 'package:teampilot/cubits/editor_cubit.dart';
 import 'package:teampilot/cubits/layout_cubit.dart';
-import 'package:teampilot/cubits/member_presence_cubit.dart';
 import 'package:teampilot/cubits/run_cubit.dart';
 import 'package:teampilot/cubits/shortcut_cubit.dart';
 import 'package:teampilot/cubits/worktree_cubit.dart';
@@ -119,9 +118,6 @@ void main() {
       final worktreeCubit = WorktreeCubit();
       addTearDown(() => worktreeCubit.close());
 
-      final presenceCubit = MemberPresenceCubit();
-      chatCubit.bindPresenceCubit(presenceCubit);
-      addTearDown(() => presenceCubit.close());
 
       final sessionPreferencesCubit =
           (await tester.runAsync(testSessionPreferencesCubit))!;
@@ -161,7 +157,6 @@ void main() {
                 BlocProvider.value(value: workbenchCubit),
                 BlocProvider.value(value: runCubit),
                 BlocProvider.value(value: worktreeCubit),
-                BlocProvider.value(value: presenceCubit),
                 BlocProvider.value(value: WorkspaceToolsCubit()),
                 BlocProvider.value(value: sessionPreferencesCubit),
                 BlocProvider(create: (_) => ShortcutCubit()),
@@ -237,9 +232,6 @@ void main() {
       final worktreeCubit = WorktreeCubit();
       addTearDown(() => worktreeCubit.close());
 
-      final presenceCubit = MemberPresenceCubit();
-      chatCubit.bindPresenceCubit(presenceCubit);
-      addTearDown(() => presenceCubit.close());
 
       final sessionPreferencesCubit =
           (await tester.runAsync(testSessionPreferencesCubit))!;
@@ -291,7 +283,6 @@ void main() {
                 BlocProvider.value(value: workbenchCubit),
                 BlocProvider.value(value: runCubit),
                 BlocProvider.value(value: worktreeCubit),
-                BlocProvider.value(value: presenceCubit),
                 BlocProvider.value(value: WorkspaceToolsCubit()),
                 BlocProvider.value(value: sessionPreferencesCubit),
                 BlocProvider(create: (_) => ShortcutCubit()),
@@ -372,9 +363,6 @@ void main() {
     final worktreeCubit = WorktreeCubit();
     addTearDown(() => worktreeCubit.close());
 
-    final presenceCubit = MemberPresenceCubit();
-    chatCubit.bindPresenceCubit(presenceCubit);
-    addTearDown(() => presenceCubit.close());
 
     final sessionPreferencesCubit =
         (await tester.runAsync(testSessionPreferencesCubit))!;
@@ -426,7 +414,6 @@ void main() {
               BlocProvider.value(value: workbenchCubit),
               BlocProvider.value(value: runCubit),
               BlocProvider.value(value: worktreeCubit),
-              BlocProvider.value(value: presenceCubit),
               BlocProvider.value(value: WorkspaceToolsCubit()),
               BlocProvider.value(value: sessionPreferencesCubit),
               BlocProvider(create: (_) => ShortcutCubit()),
@@ -514,9 +501,6 @@ void main() {
       final worktreeCubit = WorktreeCubit();
       addTearDown(() => worktreeCubit.close());
 
-      final presenceCubit = MemberPresenceCubit();
-      chatCubit.bindPresenceCubit(presenceCubit);
-      addTearDown(() => presenceCubit.close());
 
       final sessionPreferencesCubit =
           (await tester.runAsync(testSessionPreferencesCubit))!;
@@ -556,7 +540,6 @@ void main() {
                 BlocProvider.value(value: workbenchCubit),
                 BlocProvider.value(value: runCubit),
                 BlocProvider.value(value: worktreeCubit),
-                BlocProvider.value(value: presenceCubit),
                 BlocProvider.value(value: WorkspaceToolsCubit()),
                 BlocProvider.value(value: sessionPreferencesCubit),
                 BlocProvider(create: (_) => ShortcutCubit()),

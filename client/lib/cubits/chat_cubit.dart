@@ -10,7 +10,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../models/workspace.dart';
 import '../models/workspace_folder.dart';
 import '../models/app_session.dart';
-import '../services/team/member_presence_service.dart';
 import '../models/workspace_icon_picker_result.dart';
 import '../models/workspace_icon_ref.dart';
 import '../models/team_config.dart';
@@ -39,7 +38,6 @@ import 'chat/session_launch_service.dart';
 import 'chat/tab_member_materializer.dart';
 import 'chat/tab_session_runtime_coordinator.dart';
 import 'layout_cubit.dart';
-import 'member_presence_cubit.dart';
 import 'chat/model/chat_state.dart';
 import 'chat/model/chat_tab.dart';
 import 'chat/model/session_connect_request.dart';
@@ -144,7 +142,6 @@ class ChatCubit extends Cubit<ChatState>
     isClosed: () => isClosed,
   );
 
-  MemberPresenceCubit? _presenceCubit;
   final ChatSessionShellFactory _shellFactory;
   final PostFrameScheduler _postFrameScheduler;
   final SessionLifecycleService _lifecycle;
@@ -152,9 +149,6 @@ class ChatCubit extends Cubit<ChatState>
 
   @override
   ChatTabStore get tabStore => _tabStore;
-
-  @override
-  void onTabRunningChanged() => _pushPresenceTarget();
 
   // ===== SessionLaunchHost =====
 
@@ -224,9 +218,6 @@ class ChatCubit extends Cubit<ChatState>
   }
 
   @override
-  void pushPresenceTarget() => _pushPresenceTarget();
-
-  @override
   ChatTab? get activeTab => _activeTab;
 
   @override
@@ -287,11 +278,7 @@ class ChatCubit extends Cubit<ChatState>
     );
   }
 
-  /// Wired by app_shell after both cubits are constructed.
-  void bindPresenceCubit(MemberPresenceCubit cubit) => _presenceCubit = cubit;
-
-  /// Pushed after each idle-watch tick once member presence has been refreshed.
-  /// Session spinners follow the members panel ([MemberAvailability.working]).
+  /// Session spinners follow shell activity, not agent presence.
   void _updateWorkingSessions(Set<String> ids) {
     if (isClosed || setEquals(ids, state.workingSessionIds)) return;
     emit(state.copyWith(workingSessionIds: ids));
@@ -354,26 +341,6 @@ class ChatCubit extends Cubit<ChatState>
   @visibleForTesting
   void debugNotifyOperatorTurnLatched(String sessionId, String memberId) =>
       _onOperatorTurnLatched(sessionId, memberId);
-
-  void _pushPresenceTarget() {
-    final cubit = _presenceCubit;
-    if (cubit == null) return;
-    final tab = _activeTab;
-    if (tab == null) {
-      cubit.updateTarget(null);
-      return;
-    }
-    cubit.updateTarget(
-      PresenceTarget(
-        cliTeamName: tab.effectiveCliTeamName,
-        memberToolConfigDir: tab.memberToolConfigDir,
-        memberShells: tab.memberShells,
-        session: _presenceSessionContext(tab),
-      ),
-    );
-  }
-
-  PresenceSessionContext? _presenceSessionContext(ChatTab tab) => null;
 
   /// Switches the active workspace bucket and republishes its tabs into state.
   /// Called by the workspace page whenever the active workspace changes.
@@ -438,7 +405,6 @@ class ChatCubit extends Cubit<ChatState>
           visibleSessions: empty?.visibleSessions,
         ),
       );
-      _pushPresenceTarget();
       return;
     }
     final index = desiredIndex.clamp(0, _tabStore.activeTabCount - 1);
@@ -457,7 +423,6 @@ class ChatCubit extends Cubit<ChatState>
           visibleSessions: snapshot?.visibleSessions,
         ),
       );
-      _pushPresenceTarget();
       return;
     }
     final tab = _tabStore.activeTabs[index];
@@ -474,7 +439,6 @@ class ChatCubit extends Cubit<ChatState>
         visibleSessions: snapshot?.visibleSessions,
       ),
     );
-    _pushPresenceTarget();
   }
 
   static void _defaultPostFrameScheduler(VoidCallback callback) {
@@ -855,7 +819,6 @@ class ChatCubit extends Cubit<ChatState>
       );
     }
     unawaited(_tearDownTab(tab));
-    _pushPresenceTarget();
   }
 
   /// Number of open session-backed tabs in [workspaceId]'s bucket (excludes
@@ -905,7 +868,6 @@ class ChatCubit extends Cubit<ChatState>
     for (final tab in removed) {
       unawaited(_tearDownTab(tab));
     }
-    _pushPresenceTarget();
   }
 
   void closeRightTabs(int index) {
@@ -932,7 +894,6 @@ class ChatCubit extends Cubit<ChatState>
     for (final tab in removed) {
       unawaited(_tearDownTab(tab));
     }
-    _pushPresenceTarget();
   }
 
   void selectTab(int index) {
@@ -947,7 +908,6 @@ class ChatCubit extends Cubit<ChatState>
         newChatActive: false,
       ),
     );
-    _pushPresenceTarget();
   }
 
   /// Sets Chat vs Terminal center body for an open session tab.
@@ -981,7 +941,6 @@ class ChatCubit extends Cubit<ChatState>
         newChatActive: true,
       ),
     );
-    _pushPresenceTarget();
   }
 
   /// Leaves new-chat mode and selects the remembered session tab index.
@@ -1004,7 +963,6 @@ class ChatCubit extends Cubit<ChatState>
         newChatActive: false,
       ),
     );
-    _pushPresenceTarget();
   }
 
   /// Clears new-chat mode without selecting a session (e.g. opening a file/diff tab).

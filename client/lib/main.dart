@@ -648,7 +648,6 @@ void main() async {
               child: MultiBlocProvider(
                 providers: [
                   BlocProvider.value(value: shell.chatCubit),
-                  BlocProvider.value(value: shell.memberPresenceCubit),
                   BlocProvider.value(value: shell.agentAttentionCubit),
                   BlocProvider.value(value: shell.notificationCubit),
                   BlocProvider.value(value: shell.commandLogCubit),

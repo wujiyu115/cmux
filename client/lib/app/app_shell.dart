@@ -15,7 +15,6 @@ import '../services/agent_status/agent_status_http_handler.dart';
 import '../services/agent_status/agent_status_seat_lookup.dart';
 import '../services/team_bus/mcp/teammate_bus_mcp_gateway.dart';
 import '../services/editor_platform/editor_platform.dart';
-import '../cubits/member_presence_cubit.dart';
 import '../cubits/notification_cubit.dart';
 import '../cubits/command_log_cubit.dart';
 import '../cubits/shortcut_cubit.dart';
@@ -110,7 +109,6 @@ class AppShell {
     required this.homeTargetController,
     required this.directoryPicker,
     required this.chatCubit,
-    required this.memberPresenceCubit,
     required this.agentAttentionCubit,
     required this.agentStatusSeatLookup,
     required this.notificationCubit,
@@ -164,7 +162,6 @@ class AppShell {
   final HomeTargetController homeTargetController;
   final WorkspaceDirectoryPicker directoryPicker;
   final ChatCubit chatCubit;
-  final MemberPresenceCubit memberPresenceCubit;
   final AgentAttentionCubit agentAttentionCubit;
   final AgentStatusSeatLookup agentStatusSeatLookup;
   final NotificationCubit notificationCubit;
@@ -286,7 +283,6 @@ Future<AppShell> buildAppShell({
   late final ExtensionCubit extensionCubit;
   late final SessionRepository sessionRepo;
   late final ChatCubit chatCubit;
-  late final MemberPresenceCubit memberPresenceCubit;
   late final AutomationCubit automationCubit;
   late final AutomationScheduler automationScheduler;
   late final EditorCubit editorCubit;
@@ -548,8 +544,6 @@ Future<AppShell> buildAppShell({
     },
   );
 
-  memberPresenceCubit = MemberPresenceCubit();
-  chatCubit.bindPresenceCubit(memberPresenceCubit);
 
   final sshProfileConnectionCoordinator = SshProfileConnectionCoordinator(
     factory: sshClientFactory,
@@ -769,7 +763,6 @@ Future<AppShell> buildAppShell({
     homeTargetController: homeTargetController,
     directoryPicker: directoryPicker,
     chatCubit: chatCubit,
-    memberPresenceCubit: memberPresenceCubit,
     agentAttentionCubit: agentAttentionCubit,
     agentStatusSeatLookup: agentStatusSeatLookup,
     notificationCubit: notificationCubit,

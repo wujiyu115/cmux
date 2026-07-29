@@ -3,7 +3,6 @@ import 'package:teampilot/models/app_session.dart';
 import 'package:teampilot/models/member_instance.dart';
 import 'package:teampilot/models/session_member_binding.dart';
 import 'package:teampilot/models/team_config.dart';
-import 'package:teampilot/services/team/runtime_roster_cache.dart';
 
 TeamProfile team(List<TeamMemberConfig> members) => TeamProfile(
   id: 'team-1',
@@ -162,30 +161,4 @@ void main() {
       );
     },
   );
-
-  test('RuntimeRosterCache returns the same list for the same team', () {
-    final cache = RuntimeRosterCache();
-    final profile = team(const [
-      TeamMemberConfig(id: 'team-lead', name: 'team-lead'),
-      TeamMemberConfig(id: 'builder', name: 'Builder', replicas: 2),
-    ]);
-
-    final first = cache.resolve(profile);
-    final second = cache.resolve(profile);
-    expect(identical(first, second), isTrue);
-  });
-
-  test('RuntimeRosterCache clears when replicas change', () {
-    final cache = RuntimeRosterCache();
-    final base = team(const [
-      TeamMemberConfig(id: 'builder', name: 'Builder', replicas: 1),
-    ]);
-    final expanded = team(const [
-      TeamMemberConfig(id: 'builder', name: 'Builder', replicas: 2),
-    ]);
-
-    expect(cache.resolve(base), hasLength(1));
-    cache.clear();
-    expect(cache.resolve(expanded), hasLength(2));
-  });
 }

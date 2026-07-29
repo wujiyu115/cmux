@@ -13,7 +13,6 @@ import 'package:teampilot/cubits/config_cubit.dart';
 import 'package:teampilot/cubits/editor_cubit.dart';
 import 'package:teampilot/cubits/extension_cubit.dart';
 import 'package:teampilot/cubits/layout_cubit.dart';
-import 'package:teampilot/cubits/member_presence_cubit.dart';
 import 'package:teampilot/cubits/notification_cubit.dart';
 import 'package:teampilot/cubits/session_preferences_cubit.dart';
 import 'package:teampilot/cubits/shortcut_cubit.dart';
@@ -100,8 +99,6 @@ class PerformanceScenarioApp {
           executableResolver: () => performanceTestExecutable,
           automationRepository: testAutomationRepository(),
         );
-    final presence = MemberPresenceCubit();
-    chat.bindPresenceCubit(presence);
     final sshEvents = SshConnectionEvents();
     final sshCredentialStore = InMemorySshCredentialStore();
     final sshKnownHosts = InMemorySshKnownHostRepository();
@@ -206,7 +203,6 @@ class PerformanceScenarioApp {
         child: MultiBlocProvider(
           providers: [
             BlocProvider.value(value: chat),
-            BlocProvider.value(value: presence),
             BlocProvider(create: (_) => ConfigCubit()),
             BlocProvider.value(value: layoutCubit ?? LayoutCubit()),
             BlocProvider.value(value: sessionPreferencesCubit),
