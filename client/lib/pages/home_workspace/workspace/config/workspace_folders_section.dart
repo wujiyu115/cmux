@@ -104,7 +104,7 @@ class _WorkspaceFoldersSectionState extends State<WorkspaceFoldersSection> {
       );
       if (to == null || !mounted) return;
 
-      final updated = await repo.remapWorkspaceTarget(
+      await repo.remapWorkspaceTarget(
         widget.workspace.workspaceId,
         fromTargetId: fromTargetId,
         toTargetId: to,

@@ -520,32 +520,3 @@ class _ComposeTriggerSuggestionPanel extends StatelessWidget {
   }
 }
 
-class _ComposeTriggerSectionHeader extends StatelessWidget {
-  const _ComposeTriggerSectionHeader({
-    required this.label,
-    required this.spacing,
-    required this.styles,
-    required this.color,
-  });
-
-  final String label;
-  final TpSpacing spacing;
-  final TpTextStyles styles;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        spacing.md,
-        spacing.sm,
-        spacing.md,
-        spacing.xs,
-      ),
-      child: Text(
-        label,
-        style: styles.smSemiboldTrackColored(color),
-      ),
-    );
-  }
-}

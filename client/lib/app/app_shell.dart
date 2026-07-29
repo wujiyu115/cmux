@@ -403,31 +403,8 @@ Future<AppShell> buildAppShell({
 
   sessionLifecycleService = SessionLifecycleService(
     storageRootsResolver: () async => AppStorage.context,
-    catalogContextResolver: () async => runtimeContextRegistry.home(),
     // P2: launch resolves the work-plane on the workspace's target machine.
     workContextResolver: runtimeContextRegistry.forTarget,
-    loadEnabledExtensionIds: ({teamId, workspaceId}) async {
-      final trimmedTeamId = teamId?.trim() ?? '';
-      if (trimmedTeamId.isNotEmpty) {
-        return extensionRepository.effectiveEnabledIds(trimmedTeamId);
-      }
-      final trimmedWorkspaceId = workspaceId?.trim() ?? '';
-      if (trimmedWorkspaceId.isNotEmpty) {
-        final config = await workspaceProjectConfigRepository.load(
-          trimmedWorkspaceId,
-        );
-        final global = (await extensionRepository.load()).globalEnabled;
-        return {
-          for (final manifest in builtInExtensionManifests())
-            if (config.effectiveExtensionEnabled(
-              extensionId: manifest.id,
-              globalEnabled: global,
-            ))
-              manifest.id,
-        };
-      }
-      return (await extensionRepository.load(forceReload: true)).globalEnabled;
-    },
   );
   sessionRepo = SessionRepository();
   boot('prefetching home index snapshots');

@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 
 import '../../models/workspace.dart';
 import '../../models/app_session.dart';
-import '../../utils/logging/logger.dart';
 import '../../models/workspace_launch_context.dart';
 import '../storage/app_storage.dart';
 import '../../models/runtime_target.dart';
@@ -17,14 +16,9 @@ class SessionLifecycleService {
     String? appDataBasePath,
     StorageRootsResolver? storageRootsResolver,
     Future<RuntimeContext> Function(RuntimeTarget target)? workContextResolver,
-    Future<RuntimeContext> Function()? catalogContextResolver,
-    Future<Set<String>> Function({String? teamId, String? workspaceId})?
-    loadEnabledExtensionIds,
   }) : _appDataBasePath = appDataBasePath,
        _storageRootsResolver = storageRootsResolver,
-       _workContextResolver = workContextResolver,
-       _catalogContextResolver = catalogContextResolver,
-       _loadEnabledExtensionIds = loadEnabledExtensionIds;
+       _workContextResolver = workContextResolver;
 
   final String? _appDataBasePath;
   final StorageRootsResolver? _storageRootsResolver;
@@ -35,17 +29,6 @@ class SessionLifecycleService {
   final Future<RuntimeContext> Function(RuntimeTarget target)?
   _workContextResolver;
 
-  /// Control-plane context (`registry.home()`). Provider catalog reads use this
-  /// even when the member launches on a remote work machine.
-  final Future<RuntimeContext> Function()? _catalogContextResolver;
-  final Future<Set<String>> Function({String? teamId, String? workspaceId})?
-  _loadEnabledExtensionIds;
-
-
-
-  /// Resolves a global CLI preset by id.
-
-
   bool _isPersonalLaunch(Workspace? workspace, AppSession session) =>
       workspace != null;
 
@@ -54,11 +37,6 @@ class SessionLifecycleService {
   bool debugIsPersonalLaunch(Workspace workspace, AppSession session) =>
       _isPersonalLaunch(workspace, session);
 
-  Future<RuntimeContext> _resolveCatalogRoots() async {
-    final resolver = _catalogContextResolver ?? _storageRootsResolver;
-    if (resolver != null) return resolver();
-    return _localRoots(_appDataBasePath ?? AppStorage.paths.basePath);
-  }
 
   /// Test seam: resolve the work-plane context for [session] (and optionally a
   /// [memberId], exercising the per-member folder-target → forTarget path).
@@ -178,15 +156,4 @@ class SessionLifecycleService {
     );
   }
 
-  /// Resolves the native session id for [cli] via its [SessionResumeCapability]
-  /// (probe / scan / persisted / out-of-band allocate), then derives the
-  /// create-vs-resume ids for the launch plan. See
-  /// docs/session-resume-architecture.md.
-  Future<void> _removeTree(RuntimeContext roots, String path) async {
-    try {
-      await roots.fs.removeRecursive(path);
-    } on Object catch (e, st) {
-      appLogger.w('[session-lifecycle] cleanup failed: $e', stackTrace: st);
-    }
-  }
 }

@@ -10,7 +10,6 @@ import '../../../cubits/session_preferences_cubit.dart';
 import '../../../cubits/workbench/workbench_cubit.dart';
 import '../../../cubits/worktree_cubit.dart';
 import '../../../utils/ui/app_keys.dart';
-import '../../../models/config_bundle.dart';
 import '../../../models/landing_launch_context.dart';
 import '../../../l10n/l10n_extensions.dart';
 import '../../../models/workspace.dart';
@@ -23,7 +22,6 @@ import '../../../services/compose/compose_voice_input.dart';
 import '../../../utils/workspace/landing_draft_resolver.dart';
 import '../../../utils/workspace/workspace_path_utils.dart';
 import '../../../services/storage/home_target_controller.dart';
-import '../../../repositories/workspace_project_config_repository.dart';
 import 'workspace_chat_landing_compose_card.dart';
 import 'workspace_landing_selectors.dart';
 
@@ -72,8 +70,6 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
   String? _selectedWorktreePath;
   List<RuntimeTarget> _runtimeTargets = const [];
   Future<void>? _runtimeTargetsLoad;
-  ConfigBundle _workspaceProjectBundle = const ConfigBundle();
-  int _workspaceBundleGeneration = 0;
 
   @override
   void initState() {
@@ -126,7 +122,6 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
       );
     }
     unawaited(_loadDraft());
-    unawaited(_loadWorkspaceProjectBundle());
   }
 
   void _applyVoiceListening(bool listening) {
@@ -158,17 +153,7 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
   void didUpdateWidget(covariant WorkspaceChatLanding oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.workspace.workspaceId != widget.workspace.workspaceId) {
-      unawaited(_loadWorkspaceProjectBundle());
     }
-  }
-
-  /// Latest workspace manifest (member machine pins) from [ChatCubit].
-  Workspace _workspaceForLaunch() {
-    final id = widget.workspace.workspaceId;
-    return context.read<ChatCubit>().state.workspaces.firstWhere(
-      (w) => w.workspaceId == id,
-      orElse: () => widget.workspace,
-    );
   }
 
   Future<void> _loadRuntimeTargets() async {
@@ -284,21 +269,6 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
     _discardVoiceTranscript = false;
     await _voiceInput.endSession(discard: false);
   }
-
-  Future<void> _loadWorkspaceProjectBundle() async {
-    final generation = ++_workspaceBundleGeneration;
-    try {
-      final config = await WorkspaceProjectConfigRepository().load(
-        widget.workspace.workspaceId,
-      );
-      if (!mounted || generation != _workspaceBundleGeneration) return;
-      setState(() => _workspaceProjectBundle = config.bundle);
-    } on Object {
-      if (!mounted || generation != _workspaceBundleGeneration) return;
-      setState(() => _workspaceProjectBundle = const ConfigBundle());
-    }
-  }
-
 
   Future<void> _loadDraft() async {
     final draft = await resolveLandingDraft(
@@ -451,11 +421,6 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
     return _worktreeResolver(worktreeState).resolveSelectedWorktreePath();
   }
 
-  String? _optionalLaunchDirectory() {
-    final path = _activeLaunchDirectory().trim();
-    return path.isEmpty ? null : path;
-  }
-
   LandingLaunchContext _currentDraft() {
     WorktreeState? worktreeState;
     try {
@@ -506,11 +471,6 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
   void _setDangerouslySkipPermissions(bool value) {
     if (_dangerouslySkipPermissions == value) return;
     setState(() => _dangerouslySkipPermissions = value);
-    _persistDraft();
-  }
-
-  void _selectPreset(String presetId) {
-    setState(() => _selectedPresetId = presetId);
     _persistDraft();
   }
 

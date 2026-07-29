@@ -99,7 +99,6 @@ class SshProfileCubit extends Cubit<SshProfileState> {
 
   Future<void> selectProfile(String profileId) async {
     if (!state.profiles.any((p) => p.id == profileId)) return;
-    final profile = state.profiles.firstWhere((p) => p.id == profileId);
     await _profileRepository.saveSelectedProfileId(profileId);
     emit(state.copyWith(selectedProfileId: profileId));
     await _onActiveProfileChanged?.call();
