@@ -138,40 +138,4 @@ class McpCubit extends Cubit<McpState> {
 
   void clearError() => emit(state.copyWith(clearError: true));
 
-  /// TeamHub clone path: upsert one template MCP dep and refresh cubit state.
-  Future<String?> installTeamDependency(McpDependencyRef ref) async {
-    final busy = {...state.busyIds, ref.id};
-    emit(state.copyWith(busyIds: busy, clearError: true));
-    try {
-      final existing = await _repository.findById(ref.id);
-      if (existing != null) {
-        final list = [
-          ...state.servers.where((s) => s.id != existing.id),
-          existing,
-        ];
-        emit(state.copyWith(servers: list, clearError: true));
-        return existing.id;
-      }
-      final now = DateTime.now().millisecondsSinceEpoch;
-      final saved = await _repository.upsert(
-        McpServer(
-          id: ref.id,
-          name: ref.name,
-          description: ref.description,
-          server: ref.server,
-          createdAt: now,
-          updatedAt: now,
-        ),
-      );
-      final list = [...state.servers.where((s) => s.id != saved.id), saved];
-      emit(state.copyWith(servers: list, clearError: true));
-      return saved.id;
-    } catch (e) {
-      appLogger.w('[team-hub] mcp dep ${ref.name} failed: $e');
-      return null;
-    } finally {
-      final nextBusy = {...state.busyIds}..remove(ref.id);
-      emit(state.copyWith(busyIds: nextBusy));
-    }
-  }
 }

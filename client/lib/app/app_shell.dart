@@ -83,8 +83,6 @@ import '../services/automation/automation_schedule_calculator.dart';
 import '../services/automation/automation_scheduler.dart';
 import '../services/launch/session_runtime_plan_builder.dart';
 import '../services/home_workspace/home_workspace_ui_cache.dart';
-import '../services/team_hub/composite_team_hub_source.dart';
-import '../services/team_hub/git_registry_team_hub_source.dart';
 import '../services/cli/cli_executable_discovery.dart';
 import '../services/cli/toolchain_executable_discovery.dart';
 import '../services/commands/command_bus.dart';
@@ -663,9 +661,6 @@ Future<AppShell> buildAppShell({
   cliPresetsCubit = CliPresetsCubit(repository: cliPresetsRepo);
   mcpCubit = McpCubit(mcpRepository);
 
-  final teamHubSource = CompositeTeamHubSource.withDefaults(
-    GitRegistryTeamHubSource(),
-  );
   final sessionRuntimePlanBuilder = SessionRuntimePlanBuilder(
     workspaceProjectConfig: workspaceProjectConfigRepository,
   );

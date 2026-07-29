@@ -419,43 +419,6 @@ class SkillCubit extends Cubit<SkillState> {
     }
   }
 
-  /// TeamHub clone path: install one template skill dep and refresh cubit state.
-  /// Failures are non-blocking for the caller; returns null on error.
-  Future<String?> installTeamDependency(SkillDependencyRef ref) async {
-    final busyId = ref.expectedLocalId;
-    final busy = {...state.busyIds, busyId};
-    emit(state.copyWith(busyIds: busy, clearError: true));
-    try {
-      if (state.installed.any((s) => s.id == busyId)) {
-        return busyId;
-      }
-
-      final result = await _acquisitionEngine.install(ref);
-      if (result.success) {
-        await _emitInstalled();
-        return result.skillId;
-      }
-      if (_isAlreadyExistsMessage(result.message)) {
-        await _emitInstalled();
-        return ref.expectedLocalId;
-      }
-      appLogger.w(
-        '[team-hub] skill dep ${ref.name} failed: ${result.message}',
-      );
-      return null;
-    } catch (e) {
-      if (_isAlreadyExistsMessage('$e')) {
-        await _emitInstalled();
-        return ref.expectedLocalId;
-      }
-      appLogger.w('[team-hub] skill dep ${ref.name} failed: $e');
-      return null;
-    } finally {
-      final next = {...state.busyIds}..remove(busyId);
-      emit(state.copyWith(busyIds: next));
-    }
-  }
-
   Future<void> _emitInstalled() async {
     final installed = await _repo.loadInstalled();
     emit(state.copyWith(installed: installed));

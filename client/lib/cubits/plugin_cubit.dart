@@ -322,52 +322,6 @@ class PluginCubit extends Cubit<PluginState> {
     }
   }
 
-  /// TeamHub clone path: install one template plugin dep and refresh cubit state.
-  Future<String?> installTeamDependency(PluginDependencyRef ref) async {
-    final busyId = ref.expectedLocalId;
-    final busy = {...state.busyIds, busyId};
-    emit(state.copyWith(busyIds: busy, clearError: true));
-    try {
-      final marketplace = PluginMarketplace(
-        owner: ref.marketplaceOwner,
-        name: ref.marketplaceName,
-        branch: ref.marketplaceBranch,
-      );
-      final dirPath = await _diskCache.syncMarketplace(marketplace);
-      final discoverable = _diskCache.parseMarketplaceManifest(
-        directory: dirPath,
-        marketplace: marketplace,
-      );
-      DiscoverablePlugin? match;
-      for (final d in discoverable) {
-        if (d.name == ref.entryName) {
-          match = d;
-          break;
-        }
-      }
-      if (match == null) {
-        appLogger.w('[team-hub] plugin ${ref.entryName} not in marketplace');
-        return null;
-      }
-      final sourceDir = Directory(p.join(dirPath, match.source));
-      if (!sourceDir.existsSync()) return null;
-      final plugin = await installService.installFromDirectory(
-        sourceDir,
-        marketplace: marketplace,
-        marketplaceEntryName: ref.entryName,
-      );
-      final installed = await repository.loadAll();
-      emit(state.copyWith(installed: installed));
-      return plugin.id;
-    } catch (e) {
-      appLogger.w('[team-hub] plugin dep ${ref.name} failed: $e');
-      return null;
-    } finally {
-      final next = {...state.busyIds}..remove(busyId);
-      emit(state.copyWith(busyIds: next));
-    }
-  }
-
   Future<void> installFromZip(File zip) async {
     if (state.toolbarBusy) return;
     emit(state.copyWith(toolbarBusy: true, clearError: true));

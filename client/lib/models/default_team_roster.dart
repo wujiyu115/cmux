@@ -1,4 +1,3 @@
-import '../services/team_hub/builtin_team_templates.dart';
 import '../utils/team/team_member_naming.dart';
 import 'team_roster_slot.dart';
 
@@ -7,8 +6,10 @@ abstract final class DefaultTeamRoster {
   static const developerMemberId = 'developer';
   static const reviewerMemberId = 'reviewer';
 
-  static String expertKeyForSlug(String slug) =>
-      '$kBuiltinTeamHubKeyPrefix/$slug';
+  /// Canonical key prefix for rosters shipped inside the app.
+  static const builtinKeyPrefix = 'teampilot/builtin';
+
+  static String expertKeyForSlug(String slug) => '$builtinKeyPrefix/$slug';
 
   static List<TeamRosterSlot> bootstrap({int? joinedAt}) {
     final ts = joinedAt ?? DateTime.now().millisecondsSinceEpoch;
