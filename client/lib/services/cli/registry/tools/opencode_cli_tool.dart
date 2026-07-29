@@ -18,7 +18,6 @@ import '../capabilities/provider_catalog_capability.dart';
 import '../capabilities/provider_credential_capability.dart';
 import '../capabilities/provider_model_capability.dart';
 import '../capabilities/session_resume_capability.dart';
-import '../capabilities/history/builtin_ai_history_capabilities.dart';
 import '../capabilities/resume/opencode_resume_strategy.dart';
 import '../capabilities/headless_provision_capability.dart';
 import '../config_profile/opencode_config_profile_capability.dart';
@@ -60,7 +59,6 @@ final class OpencodeCliTool implements CliToolDefinition {
     this.resource = const OpencodeResourceCapability(),
     this.mcpConfigWriter = const OpencodeMcpConfigWriter(),
     this.turnInterrupt = const CtrlCTurnInterrupt(),
-    this.aiHistory = const OpencodeAiHistoryCapability(),
     ProviderCredentialCapability? providerCredential,
   }) : providerCredential =
            providerCredential ?? OpencodeProviderCredentialCapability();
@@ -89,7 +87,6 @@ final class OpencodeCliTool implements CliToolDefinition {
   final BusTransportCapability busTransport;
   final RemoteCliLocatorCapability remoteCliLocator;
   final TurnInterruptCapability turnInterrupt;
-  final OpencodeAiHistoryCapability aiHistory;
 
   @override
   CliTool get id => CliTool.opencode;
@@ -121,6 +118,5 @@ final class OpencodeCliTool implements CliToolDefinition {
     resource,
     mcpConfigWriter,
     turnInterrupt,
-    aiHistory,
   ];
 }

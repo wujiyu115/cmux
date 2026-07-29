@@ -22,7 +22,6 @@ import 'cubits/chat_cubit.dart';
 import 'cubits/layout_cubit.dart';
 import 'cubits/notification_cubit.dart';
 import 'cubits/command_log_cubit.dart';
-import 'cubits/ai_history_cubit.dart';
 import 'cubits/shortcut_cubit.dart';
 import 'l10n/l10n_extensions.dart';
 import 'repositories/app_settings_repository.dart';
@@ -221,7 +220,6 @@ class _AppShutdownScope extends StatefulWidget {
     required this.chatCubit,
     required this.automationScheduler,
     required this.automationCubit,
-    required this.aiHistoryCubit,
     required this.notificationCubit,
     required this.commandLogCubit,
     required this.sshConnectionCubit,
@@ -237,7 +235,6 @@ class _AppShutdownScope extends StatefulWidget {
   final ChatCubit chatCubit;
   final AutomationScheduler automationScheduler;
   final AutomationCubit automationCubit;
-  final AiHistoryCubit aiHistoryCubit;
   final NotificationCubit notificationCubit;
   final CommandLogCubit commandLogCubit;
   final SshConnectionCubit sshConnectionCubit;
@@ -259,7 +256,6 @@ class _AppShutdownScopeState extends State<_AppShutdownScope> {
     widget.automationScheduler.stop();
     unawaited(widget.chatCubit.close());
     unawaited(widget.automationCubit.close());
-    unawaited(widget.aiHistoryCubit.close());
     unawaited(widget.notificationCubit.close());
     unawaited(widget.commandLogCubit.close());
     unawaited(widget.sshConnectionCubit.close());
@@ -561,7 +557,6 @@ void main() async {
             chatCubit: shell.chatCubit,
             automationScheduler: shell.automationScheduler,
             automationCubit: shell.automationCubit,
-            aiHistoryCubit: shell.aiHistoryCubit,
             notificationCubit: shell.notificationCubit,
             commandLogCubit: shell.commandLogCubit,
             sshConnectionCubit: shell.sshConnectionCubit,
@@ -656,7 +651,6 @@ void main() async {
                   BlocProvider.value(value: shell.chatCubit),
                   BlocProvider.value(value: shell.memberPresenceCubit),
                   BlocProvider.value(value: shell.agentAttentionCubit),
-                  BlocProvider.value(value: shell.aiHistoryCubit),
                   BlocProvider.value(value: shell.notificationCubit),
                   BlocProvider.value(value: shell.commandLogCubit),
                   BlocProvider.value(value: shell.editorCubit),

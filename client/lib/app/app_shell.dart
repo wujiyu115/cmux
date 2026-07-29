@@ -20,7 +20,6 @@ import '../services/editor_platform/editor_platform.dart';
 import '../cubits/member_presence_cubit.dart';
 import '../cubits/notification_cubit.dart';
 import '../cubits/command_log_cubit.dart';
-import '../cubits/ai_history_cubit.dart';
 import '../cubits/shortcut_cubit.dart';
 import '../cubits/editor_cubit.dart';
 import '../cubits/workbench/workbench_cubit.dart';
@@ -28,8 +27,6 @@ import '../services/workbench/workbench_editor_opener.dart';
 import '../services/workbench/workbench_shell_launcher.dart';
 import '../services/workbench/workbench_strip_navigator.dart';
 import '../services/editor/markdown_view_mode_store.dart';
-import '../services/session/ai_history_loader.dart';
-import '../services/session/session_history_context_builder.dart';
 import '../cubits/config_cubit.dart';
 import '../cubits/layout_cubit.dart';
 import '../cubits/workspace_tools_cubit.dart';
@@ -146,7 +143,6 @@ class AppShell {
     required this.memberPresenceCubit,
     required this.agentAttentionCubit,
     required this.agentStatusSeatLookup,
-    required this.aiHistoryCubit,
     required this.notificationCubit,
     required this.commandLogCubit,
     required this.editorCubit,
@@ -207,7 +203,6 @@ class AppShell {
   final MemberPresenceCubit memberPresenceCubit;
   final AgentAttentionCubit agentAttentionCubit;
   final AgentStatusSeatLookup agentStatusSeatLookup;
-  final AiHistoryCubit aiHistoryCubit;
   final NotificationCubit notificationCubit;
   final CommandLogCubit commandLogCubit;
   final EditorCubit editorCubit;
@@ -432,9 +427,6 @@ Future<AppShell> buildAppShell({
         Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'],
     nativeCwd: defaultWorkspaceDirectory,
   );
-  // Late holder: registry is created before AiHistoryLoader; onEvict clears
-  // history memory cache when a work-plane target is disposed.
-  AiHistoryLoader? aiHistoryLoaderRef;
   final runtimeContextRegistry = RuntimeContextRegistry(
     resolver: runtimeContextResolver,
     homeTarget: defaultTargetResolver(),
@@ -442,8 +434,6 @@ Future<AppShell> buildAppShell({
     onEvict: (targetId) async {
       final pid = sshProfileIdOfId(targetId);
       if (pid != null) sshClientFactory.disconnectProfile(pid);
-      // v1: clear all history memory cache on work-plane drop.
-      aiHistoryLoaderRef?.clearCache();
     },
   );
   boot('installing home runtime context');
@@ -775,24 +765,6 @@ Future<AppShell> buildAppShell({
     }
   });
 
-  final aiHistoryLoader = AiHistoryLoader(
-    contextBuilder: const SessionHistoryContextBuilder(),
-    resolveWorkContext: (launchCtx, {String? memberId}) =>
-        sessionLifecycleService.launchWorkContext(
-          launchCtx,
-          memberId: memberId,
-        ),
-    registry: cliToolRegistry,
-  );
-  aiHistoryLoaderRef = aiHistoryLoader;
-  final aiHistoryCubit = AiHistoryCubit(
-    loader: aiHistoryLoader,
-  );
-  chatCubit.onSessionHistoryStale = (sessionId) {
-    unawaited(aiHistoryCubit.softReloadIfSession(sessionId));
-  };
-  chatCubit.onHistorySeatsDispose = aiHistoryCubit.disposeSeatsForSession;
-
   final notificationCubit = NotificationCubit();
   final notificationBootstrap = notificationCubit.load();
   NotificationRecorder.install(notificationCubit);
@@ -965,7 +937,6 @@ Future<AppShell> buildAppShell({
     memberPresenceCubit: memberPresenceCubit,
     agentAttentionCubit: agentAttentionCubit,
     agentStatusSeatLookup: agentStatusSeatLookup,
-    aiHistoryCubit: aiHistoryCubit,
     notificationCubit: notificationCubit,
     commandLogCubit: commandLogCubit,
     editorCubit: editorCubit,

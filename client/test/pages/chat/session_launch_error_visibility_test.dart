@@ -50,13 +50,5 @@ void main() {
       ),
       isFalse,
     );
-    expect(
-      shouldShowTerminalSessionLaunchErrorBanner(
-        overlay: ChatWorkbenchOverlay.chat,
-        launchError: 'boom',
-        sessionConnectInProgress: false,
-      ),
-      isFalse,
-    );
   });
 }

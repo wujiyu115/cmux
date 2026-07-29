@@ -36,10 +36,6 @@ import 'chat/chat_workbench_remote_provision_view.dart';
 import 'chat/chat_workbench_slice.dart';
 import 'chat/chat_workbench_terminal.dart';
 import '../models/member_remote_provision_progress.dart';
-import 'chat/history_continue_delivery.dart';
-import 'chat/session_chat_continue_seat.dart';
-import 'chat/session_chat_view.dart';
-import 'chat/session_history_review_submit.dart';
 import 'chat/session_launch_error_banner.dart';
 import 'chat/session_launch_error_visibility.dart';
 import 'chat/session_launch_failure_presenter.dart';
@@ -350,15 +346,6 @@ class _ChatWorkbenchBody extends StatelessWidget {
         ? (chatCubit.activeLaunchError ?? slice.sessionLaunchError)
         : slice.sessionLaunchError;
 
-    final workbenchView = context.select<ChatCubit, SessionWorkbenchView>((c) {
-      final activeId = slice.activeSessionId;
-      if (activeId == null || activeId.isEmpty) {
-        return SessionWorkbenchView.chat;
-      }
-      final tab = c.tabStore.openTabBySessionId(activeId);
-      return tab?.workbenchView ?? SessionWorkbenchView.chat;
-    });
-
     final memberId = slice.selectedMemberId.isNotEmpty
         ? slice.selectedMemberId
         : '';
@@ -389,7 +376,6 @@ class _ChatWorkbenchBody extends StatelessWidget {
           team: team,
           sessionConnectInProgress: sessionConnectInProgress,
           launchError: launchError,
-          workbenchView: workbenchView,
           remoteProvision: remoteProvision,
         ),
       ),
@@ -456,7 +442,6 @@ class _ChatWorkbenchBody extends StatelessWidget {
     required TeamProfile? team,
     required bool sessionConnectInProgress,
     required String? launchError,
-    required SessionWorkbenchView workbenchView,
     required MemberRemoteProvisionProgress? remoteProvision,
   }) {
     final routeForeground =
@@ -469,11 +454,9 @@ class _ChatWorkbenchBody extends StatelessWidget {
     final mountTerminalForLayout =
         sessionConnectInProgress || session.isRunning || showRemoteProvision;
     final overlay = resolveChatWorkbenchOverlay(
-      workbenchView: workbenchView,
       sessionConnectInProgress: sessionConnectInProgress,
       showRemoteProvision: showRemoteProvision,
     );
-    final showChat = overlay == ChatWorkbenchOverlay.chat;
     final showSessionStarting =
         overlay == ChatWorkbenchOverlay.sessionStarting;
     final failure = presentSessionLaunchFailure(launchError);
@@ -499,9 +482,7 @@ class _ChatWorkbenchBody extends StatelessWidget {
             children: [
               if (mountTerminalForLayout)
                 Offstage(
-                  offstage: showSessionStarting ||
-                      showChat ||
-                      showRemoteProvision,
+                  offstage: showSessionStarting || showRemoteProvision,
                   child: buildRunningTerminal(
                     session: session,
                     terminalTheme: terminalTheme,
@@ -509,7 +490,6 @@ class _ChatWorkbenchBody extends StatelessWidget {
                     isPersonal: isPersonalContext,
                     team: team,
                     autofocus: !showSessionStarting &&
-                        !showChat &&
                         !showRemoteProvision &&
                         terminalVisible,
                   ),
@@ -521,14 +501,6 @@ class _ChatWorkbenchBody extends StatelessWidget {
                     team: team,
                     memberId: remoteProvision.memberId,
                   ),
-                )
-              else if (showChat)
-                _buildSessionChatView(
-                  context,
-                  chatCubit: chatCubit,
-                  team: team,
-                  launchError: launchError,
-                  sessionConnectInProgress: sessionConnectInProgress,
                 )
               else if (showSessionStarting)
                 ChatWorkbenchSessionLoadingView(
@@ -586,122 +558,6 @@ class _ChatWorkbenchBody extends StatelessWidget {
     return name.isNotEmpty ? name : mid;
   }
 
-  Widget _buildSessionChatView(
-    BuildContext context, {
-    required ChatCubit chatCubit,
-    required TeamProfile? team,
-    required String? launchError,
-    required bool sessionConnectInProgress,
-  }) {
-    final appSession = _resolveAppSession(chatCubit: chatCubit, slice: slice);
-    if (appSession == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    final memberId = slice.selectedMemberId.isNotEmpty
-        ? slice.selectedMemberId
-        : _tabSelectedMemberId(chatCubit);
-
-    final isPersonal = appSession.sessionTeam.trim().isEmpty;
-    // Simple seats use sessionId as selectedMemberId for PTY shells; history
-    // locate treats non-empty memberId as a team roster seat.
-    final historyMemberId = isPersonal ? '' : memberId;
-    final resolvedTeam = isPersonal
-        ? null
-        : (team ?? _teamProfileForSession(context, appSession));
-    // Prefer session/runtime pods so numbered seats (developer-0) match the
-    // Members panel — looking up team.members type ids alone retargeted Chat
-    // continue to the team lead.
-    final connectMember = (!isPersonal && resolvedTeam != null)
-        ? resolveSessionChatContinueMember(
-            session: appSession,
-            team: resolvedTeam,
-            selectedMemberId: memberId,
-          )
-        : null;
-    final shellMemberId = isPersonal
-        ? appSession.sessionId
-        : (connectMember?.id ?? memberId);
-    return SessionChatView(
-      session: appSession,
-      workspace: chatCubit.state.workspaces
-              .where((w) => w.workspaceId == workspaceId)
-              .firstOrNull ??
-          Workspace(
-            workspaceId: workspaceId,
-            folders: appSession.folders,
-            createdAt: 0,
-          ),
-      selectedMemberId: historyMemberId,
-      team: resolvedTeam,
-      routeActive: routeActive,
-      launchError: launchError,
-      sessionConnectInProgress: sessionConnectInProgress,
-      onRetry: () => unawaited(
-        chatCubit.retrySessionLaunch(appSession.sessionId),
-      ),
-      onRemapDeadTarget: deadSshTargetIdFromError(launchError) != null
-          ? () => unawaited(
-              onRemapDeadTargetFromLaunch(
-                launchError: launchError!,
-                sessionId: appSession.sessionId,
-              ),
-            )
-          : null,
-      onSubmit: (message) async {
-        final switchToTerminal = shouldSwitchToTerminalAfterChatSubmit(
-          context
-              .read<SessionPreferencesCubit>()
-              .state
-              .preferences
-              .chatSubmitSwitchesToTerminal,
-        );
-        if (switchToTerminal) {
-          chatCubit.setSessionWorkbenchView(
-            appSession.sessionId,
-            SessionWorkbenchView.terminal,
-          );
-        }
-        context.read<WorkbenchCubit>().ensureTab(
-          workspaceId,
-          WorkbenchTabId.session(appSession.sessionId),
-          preview: false,
-        );
-        final connectRequest = ExistingSessionConnect(
-          session: appSession,
-          team: resolvedTeam,
-          member: connectMember,
-          // Stay-on-Chat must not let connect force-switch to Terminal.
-          preserveWorkbenchView: !switchToTerminal,
-        );
-
-        return submitSessionHistoryReviewMessage(
-          sessionId: appSession.sessionId,
-          memberId: shellMemberId,
-          message: message,
-          connectRequest: connectRequest,
-          connectWorkspaceSession: chatCubit.connectWorkspaceSession,
-          ensureMemberInputReady:
-              (sessionId, mid, {bool directToPty = false}) => chatCubit
-                  .memberMaterializer
-                  .ensureMemberInputReady(
-                    sessionId,
-                    mid,
-                    directToPty: directToPty,
-                  ),
-          deliverUserCommandToMember:
-              (sessionId, mid, text, {bool directToPty = false}) =>
-                  chatCubit.sessionRuntime.deliverUserCommandToMember(
-                    sessionId,
-                    mid,
-                    text,
-                    directToPty: directToPty,
-                  ),
-          applyFirstPromptTitle: chatCubit.applyFirstPromptTitle,
-        );
-      },
-    );
-  }
 
   TeamProfile? _teamProfileForSession(BuildContext context, AppSession session) =>
       null;

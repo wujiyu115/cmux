@@ -1,24 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:teampilot/cubits/chat/model/session_workbench_view.dart';
 import 'package:teampilot/pages/chat/chat_workbench_overlay.dart';
 
 void main() {
   group('resolveChatWorkbenchOverlay', () {
-    test('keeps Chat while connect is in progress (continue-from-Chat)', () {
+    test('shows sessionStarting while connect is in progress', () {
       expect(
         resolveChatWorkbenchOverlay(
-          workbenchView: SessionWorkbenchView.chat,
-          sessionConnectInProgress: true,
-          showRemoteProvision: false,
-        ),
-        ChatWorkbenchOverlay.chat,
-      );
-    });
-
-    test('shows sessionStarting when Terminal connects', () {
-      expect(
-        resolveChatWorkbenchOverlay(
-          workbenchView: SessionWorkbenchView.terminal,
           sessionConnectInProgress: true,
           showRemoteProvision: false,
         ),
@@ -26,21 +13,9 @@ void main() {
       );
     });
 
-    test('shows Chat overlay when idle on Chat view', () {
+    test('remote provision wins over the connect spinner', () {
       expect(
         resolveChatWorkbenchOverlay(
-          workbenchView: SessionWorkbenchView.chat,
-          sessionConnectInProgress: false,
-          showRemoteProvision: false,
-        ),
-        ChatWorkbenchOverlay.chat,
-      );
-    });
-
-    test('remote provision wins over Chat and connect spinner', () {
-      expect(
-        resolveChatWorkbenchOverlay(
-          workbenchView: SessionWorkbenchView.chat,
           sessionConnectInProgress: true,
           showRemoteProvision: true,
         ),
@@ -48,10 +23,9 @@ void main() {
       );
     });
 
-    test('none when Terminal and not connecting', () {
+    test('none when idle', () {
       expect(
         resolveChatWorkbenchOverlay(
-          workbenchView: SessionWorkbenchView.terminal,
           sessionConnectInProgress: false,
           showRemoteProvision: false,
         ),

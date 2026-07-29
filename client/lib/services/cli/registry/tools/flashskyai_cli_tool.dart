@@ -19,7 +19,6 @@ import '../capabilities/launch_args_capability.dart';
 import '../capabilities/presence_capability.dart';
 import '../capabilities/provider_model_capability.dart';
 import '../capabilities/session_resume_capability.dart';
-import '../capabilities/history/builtin_ai_history_capabilities.dart';
 import '../capabilities/resume/transcript_resume_strategy.dart';
 import '../capabilities/headless_provision_capability.dart';
 import '../config_profile/flashskyai_config_profile_capability.dart';
@@ -60,7 +59,6 @@ final class FlashskyaiCliTool implements CliToolDefinition {
     this.resource = const DefaultResourceCapability(),
     this.mcpConfigWriter = const FlashskyaiMcpConfigWriter(),
     this.turnInterrupt = const CtrlCTurnInterrupt(),
-    this.aiHistory = const FlashskyaiAiHistoryCapability(),
   });
 
   final LaunchArgsCapability launchArgs;
@@ -85,7 +83,6 @@ final class FlashskyaiCliTool implements CliToolDefinition {
   final BusTransportCapability busTransport;
   final RemoteCliLocatorCapability remoteCliLocator;
   final TurnInterruptCapability turnInterrupt;
-  final FlashskyaiAiHistoryCapability aiHistory;
 
   @override
   CliTool get id => CliTool.flashskyai;
@@ -121,6 +118,5 @@ final class FlashskyaiCliTool implements CliToolDefinition {
     resource,
     mcpConfigWriter,
     turnInterrupt,
-    aiHistory,
   ];
 }
