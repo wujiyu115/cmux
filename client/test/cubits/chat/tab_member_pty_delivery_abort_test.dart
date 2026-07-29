@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:teampilot/cubits/chat/chat_session_shell_factory.dart';
 import 'package:teampilot/cubits/chat/chat_tab_store.dart';
 import 'package:teampilot/cubits/chat/tab_member_coordination_factory.dart';
 import 'package:teampilot/cubits/chat/tab_member_pty_delivery.dart';
@@ -11,8 +10,6 @@ void main() {
     final ptyInject = MemberPtyInjectService();
     final delivery = TabMemberPtyDelivery(
       tabStore: tabStore,
-      shellFactory: ChatSessionShellFactory(executableResolver: () => 'unused'),
-      globalPresets: () => const [],
       isClosed: () => false,
       coordinationFactory: TabMemberCoordinationFactory(
         tabStore: tabStore,

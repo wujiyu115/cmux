@@ -46,8 +46,6 @@ class TabSessionRuntimeCoordinator {
         delivery ??
         TabMemberPtyDelivery(
           tabStore: tabStore,
-          shellFactory: shellFactory,
-          globalPresets: globalPresets,
           isClosed: isClosed,
           coordinationFactory: coordination,
           onAfterTurnLatched: onAfterTurnLatched,

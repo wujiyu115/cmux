@@ -1,14 +1,9 @@
-import 'package:flutter/foundation.dart';
 
 import '../../models/cli_preset.dart';
-import '../../models/team_config.dart';
-import '../../services/cli/registry/capabilities/terminal_behavior_capability.dart';
-import '../../services/cli/registry/cli_tool_registry.dart';
 import '../../services/terminal/fullscreen_cr_ack_config.dart';
 import '../../services/terminal/fullscreen_pty_automation.dart';
 import '../../services/terminal/member_pty_inject_service.dart';
 import '../../services/terminal/pty_automation_retry_queue.dart';
-import '../../services/terminal/session_member_cli_resolver.dart';
 import '../../services/terminal/terminal_input_controller.dart';
 import '../../services/terminal/terminal_session.dart';
 import '../../utils/logging/logger.dart';
@@ -20,15 +15,11 @@ import 'tab_member_coordination_factory.dart';
 final class TabMemberPtyDelivery {
   TabMemberPtyDelivery({
     required ChatTabStore tabStore,
-    required ChatSessionShellFactory shellFactory,
-    required List<CliPreset> Function() globalPresets,
     required bool Function() isClosed,
     required TabMemberCoordinationFactory coordinationFactory,
     void Function(String sessionId, String memberId)? onAfterTurnLatched,
     MemberPtyInjectService? ptyInject,
   }) : _tabStore = tabStore,
-       _shellFactory = shellFactory,
-       _globalPresets = globalPresets,
        _isClosed = isClosed,
        _coordinationFactory = coordinationFactory,
        _onAfterTurnLatched = onAfterTurnLatched {
@@ -40,8 +31,6 @@ final class TabMemberPtyDelivery {
   }
 
   final ChatTabStore _tabStore;
-  final ChatSessionShellFactory _shellFactory;
-  final List<CliPreset> Function() _globalPresets;
   final bool Function() _isClosed;
   final TabMemberCoordinationFactory _coordinationFactory;
   final void Function(String sessionId, String memberId)? _onAfterTurnLatched;
@@ -305,59 +294,27 @@ final class TabMemberPtyDelivery {
     return false;
   }
 
-  CliTool _memberCli(String sessionId, String memberId) {
-    final tab = _tabStore.openTabBySessionId(sessionId);
-    return SessionMemberCliResolver.resolve(
-      persistedSession: tab?.persistedSession,
-      team: null,
-      memberId: memberId,
-      cliForMember: _shellFactory.cliForMember,
-      globalPresets: _globalPresets(),
-    );
-  }
+  /// Plain shells never take over the screen, so submit is line-based.
+  bool _memberUsesFullScreen(String sessionId, String memberId) => false;
 
-  bool _memberUsesFullScreen(String sessionId, String memberId) {
-    final cli = _memberCli(sessionId, memberId);
-    final behavior = CliToolRegistry.builtIn()
-        .capability<TerminalBehaviorCapability>(cli);
-    return behavior?.usesFullScreenInput ?? false;
-  }
-
-  bool _memberUsesGridPasteAck(String sessionId, String memberId) {
-    final cli = _memberCli(sessionId, memberId);
-    final behavior = CliToolRegistry.builtIn()
-        .capability<TerminalBehaviorCapability>(cli);
-    return behavior?.usesGridPasteAck ?? true;
-  }
+  bool _memberUsesGridPasteAck(String sessionId, String memberId) => true;
 
   Duration _pasteSettleForMember(
     String sessionId,
     String memberId, {
     required bool automation,
   }) {
-    final cli = _memberCli(sessionId, memberId);
-    final behavior = CliToolRegistry.builtIn()
-        .capability<TerminalBehaviorCapability>(cli);
-    final base =
-        behavior?.fullScreenPasteSettleDelay ??
-        TerminalInputController.fullScreenSubmitDelay;
+    const base = TerminalInputController.fullScreenSubmitDelay;
     if (!automation) return base;
     return Duration(
       milliseconds: base.inMilliseconds < 500 ? 500 : base.inMilliseconds,
     );
   }
 
-  FullscreenCrAckConfig _crAckForMember(String sessionId, String memberId) {
-    final cli = _memberCli(sessionId, memberId);
-    final behavior = CliToolRegistry.builtIn()
-        .capability<TerminalBehaviorCapability>(cli);
-    return FullscreenCrAckConfig(
-      strategy:
-          behavior?.fullscreenCrAckStrategy ??
-          FullscreenCrAckStrategy.anchorCellClears,
-      composerPrefix: behavior?.fullscreenComposerPrefix,
-    );
-  }
+  FullscreenCrAckConfig _crAckForMember(String sessionId, String memberId) =>
+      const FullscreenCrAckConfig(
+        strategy: FullscreenCrAckStrategy.anchorCellClears,
+      );
 
   void _markMemberTurnStartedOnSubmitSuccess(
     String sessionId,
