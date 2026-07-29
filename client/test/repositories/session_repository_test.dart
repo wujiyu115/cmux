@@ -305,7 +305,6 @@ void main() {
 
       final disk = (await repo.loadSessions()).single;
       expect(disk.launchState, AppSessionLaunchState.started);
-      expect(disk.cliTeamName, '');
     },
   );
 
@@ -375,7 +374,6 @@ void main() {
       workspace.workspaceId,
     );
 
-    expect(session.members, isEmpty);
     expect(session.cli, isNull);
   });
 

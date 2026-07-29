@@ -8,32 +8,15 @@ import 'package:teampilot/models/workspace_folder.dart';
 
 ChatTab _tab(String id) => ChatTab(
   info: ChatTabInfo(id: id, title: id, subtitle: ''),
-  cliTeamName: id,
 );
 
 void main() {
-  test('effectiveCliTeamName prefers persisted session over provisional', () {
-    final tab = ChatTab(
-      info: ChatTabInfo(id: 's1', title: 'S', subtitle: ''),
-      cliTeamName: '',
-    )..persistedSession = AppSession(
-        sessionId: 's1',
-        workspaceId: 'ws',
-        folders: const [],
-        cliTeamName: 'default-native-team-3',
-        createdAt: 0,
-      );
-
-    expect(tab.effectiveCliTeamName, 'default-native-team-3');
-  });
-
   test('append + activeTabBySessionId + activeTabInfos', () {
     final store = ChatTabStore();
     store.append(_tab('a'));
     store.append(_tab('b'));
 
     expect(store.activeTabCount, 2);
-    expect(store.activeTabBySessionId('b')!.cliTeamName, 'b');
     expect(store.activeTabInfos().map((i) => i.id).toList(), ['a', 'b']);
   });
 

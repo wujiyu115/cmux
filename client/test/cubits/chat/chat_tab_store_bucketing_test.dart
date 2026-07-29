@@ -5,7 +5,6 @@ import 'package:teampilot/cubits/chat/model/chat_tab_info.dart';
 
 ChatTab _tab(String id) => ChatTab(
   info: ChatTabInfo(id: id, title: id, subtitle: ''),
-  cliTeamName: id,
 );
 
 void main() {

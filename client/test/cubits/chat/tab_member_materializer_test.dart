@@ -22,7 +22,6 @@ void main() {
       final tab = ChatTab(
         info: const ChatTabInfo(id: 'sess-1', title: 't', subtitle: ''),
         workspaceId: 'ws-1',
-        cliTeamName: '',
       )..persistedSession = AppSession(
           sessionId: 'sess-1',
           workspaceId: 'ws-1',

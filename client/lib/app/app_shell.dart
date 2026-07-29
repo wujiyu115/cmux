@@ -429,7 +429,7 @@ Future<AppShell> buildAppShell({
       return (await extensionRepository.load(forceReload: true)).globalEnabled;
     },
   );
-  sessionRepo = SessionRepository(lifecycleService: sessionLifecycleService);
+  sessionRepo = SessionRepository();
   boot('prefetching home index snapshots');
   bootstrapCubit?.beginHomeIndex();
   final homeIndexPrefetch =

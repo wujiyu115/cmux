@@ -31,7 +31,6 @@ void main() {
     cubit.tabStore.append(
       ChatTab(
         info: const ChatTabInfo(id: 'sess-1', title: 'Old title', subtitle: ''),
-        cliTeamName: 'sess-1',
       ),
     );
     cubit.tabStore.setNewChatActive('ws', false);

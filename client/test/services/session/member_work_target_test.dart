@@ -47,7 +47,6 @@ void main() {
       final session = AppSession(
         sessionId: 's1',
         workspaceId: 'w1',
-        cliTeamName: 'team-1',
         folders: const [
           WorkspaceFolder(path: '/repo', targetId: 'ssh:p1'),
           WorkspaceFolder(path: '/local', targetId: 'local'),
@@ -124,7 +123,6 @@ void main() {
   AppSession sshSession() => AppSession(
     sessionId: 's1',
     workspaceId: 'w1',
-    cliTeamName: 'team-1',
     folders: const [
       WorkspaceFolder(path: '/repo', targetId: 'ssh:p1'),
       WorkspaceFolder(path: '/local', targetId: 'local'),

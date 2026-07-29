@@ -45,8 +45,6 @@ void main() {
           .where((s) => s.workspaceId == result.workspaceId)
           .toList();
       expect(sessions, hasLength(1));
-      expect(sessions.first.cliTeamName, '');
-      expect(sessions.first.members, isEmpty);
 
       final workspaces = result.snapshot.workspaces
           .where((p) => p.workspaceId == result.workspaceId)

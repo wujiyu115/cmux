@@ -14,7 +14,6 @@ TerminalSession _testSession() => TerminalSession(
 
 ChatTab _tab(String id) => ChatTab(
   info: ChatTabInfo(id: id, title: id, subtitle: ''),
-  cliTeamName: id,
 );
 
 void main() {

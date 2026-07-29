@@ -60,7 +60,6 @@ void _openSessionTab(ChatCubit chatCubit, AppSession session, String title) {
   chatCubit.tabStore.append(
     ChatTab(
       info: ChatTabInfo(id: session.sessionId, title: title, subtitle: ''),
-      cliTeamName: session.sessionId,
     ),
   );
   chatCubit.tabStore.setNewChatActive('personal-test', false);

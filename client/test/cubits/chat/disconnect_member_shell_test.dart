@@ -5,7 +5,6 @@ import 'package:teampilot/cubits/chat/model/session_open_request.dart';
 import 'package:teampilot/cubits/chat_cubit.dart';
 import 'package:teampilot/models/workspace_folder.dart';
 import 'package:teampilot/repositories/session_repository.dart';
-import 'package:teampilot/services/session/session_lifecycle_service.dart';
 
 import '../../support/fake_terminal_session.dart';
 import '../../support/post_frame_test_harness.dart';
@@ -42,7 +41,6 @@ void main() {
                   scrollbackLines: scrollbackLines,
                 ),
         postFrameScheduler: postFrame.scheduler,
-        lifecycleService: SessionLifecycleService(),
       );
       addTearDown(() => tearDownChatCubitWithSessionPersist(cubit, postFrame));
       await cubit.loadWorkspaceData(repo);

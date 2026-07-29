@@ -101,7 +101,6 @@ void main() {
           title: 'Chat',
           subtitle: 'simple',
         ),
-        cliTeamName: '',
         workbenchView: SessionWorkbenchView.chat,
       ),
     );
@@ -151,7 +150,6 @@ void main() {
           title: 'Chat',
           subtitle: 'simple',
         ),
-        cliTeamName: '',
         workbenchView: SessionWorkbenchView.chat,
       ),
     );
@@ -179,7 +177,6 @@ void main() {
           title: 'Chat',
           subtitle: 'simple',
         ),
-        cliTeamName: '',
         workbenchView: SessionWorkbenchView.terminal,
       ),
     );

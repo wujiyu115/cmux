@@ -139,11 +139,7 @@ class SessionTabSurfaceCoordinator {
       subtitle: session.firstFolderPath,
     );
     final tab =
-        ChatTab(
-            info: info,
-            cliTeamName: session.cliTeamName,
-            workspaceId: session.workspaceId,
-          )
+        ChatTab(info: info, workspaceId: session.workspaceId)
           ..persistedSession = session
           ..selectedMemberId = placeholderMemberId;
     tab.bumpLaunchGeneration();

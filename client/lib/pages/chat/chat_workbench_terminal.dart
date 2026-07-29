@@ -96,16 +96,7 @@ class _ChatWorkbenchRunningTerminalState
     }
 
     final memberId = chat.state.selectedMemberId.trim();
-    String taskId = '';
-    if (appSession != null) {
-      for (final binding in appSession.members) {
-        if (binding.rosterMemberId == memberId) {
-          taskId = binding.taskId.trim();
-          break;
-        }
-      }
-    }
-
+    const taskId = '';
     const memberName = '';
 
     final effectiveSessionId = appSession?.sessionId.trim().isNotEmpty == true

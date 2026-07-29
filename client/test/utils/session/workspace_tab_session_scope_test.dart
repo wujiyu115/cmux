@@ -12,7 +12,6 @@ ChatCubit _cubit() => ChatCubit(
 
 ChatTab _tab(String id, {String? launchError}) => ChatTab(
   info: ChatTabInfo(id: id, title: id, subtitle: '', launchError: launchError),
-  cliTeamName: id,
 );
 
 void main() {

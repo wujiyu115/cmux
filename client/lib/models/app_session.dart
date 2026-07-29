@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 
 import 'session_continue_overrides.dart';
-import 'session_member_binding.dart';
 import 'simple_launch_identity.dart';
 import 'cli_tool.dart';
 import 'workspace_folder.dart';
@@ -18,14 +17,11 @@ class AppSession {
     this.memberTargets = const {},
     this.display = '',
     this.profileId = '',
-    this.cliTeamName = '',
     this.cli,
     this.provider = '',
     this.model = '',
     this.effort = '',
     this.presetId = '',
-    this.members = const [],
-    this.nativeSessionIds = const {},
     this.launchState = AppSessionLaunchState.created,
     required this.createdAt,
     this.updatedAt = 0,
@@ -41,14 +37,11 @@ class AppSession {
     Map<String, String> memberTargets = const {},
     String display = '',
     String profileId = '',
-    String cliTeamName = '',
     CliTool? cli,
     String provider = '',
     String model = '',
     String effort = '',
     String presetId = '',
-    List<SessionMemberBinding> members = const [],
-    Map<String, String> nativeSessionIds = const {},
     AppSessionLaunchState launchState = AppSessionLaunchState.created,
     required int createdAt,
     int updatedAt = 0,
@@ -68,14 +61,11 @@ class AppSession {
       }),
       display: display,
       profileId: profileId,
-      cliTeamName: cliTeamName,
       cli: cli,
       provider: provider.trim(),
       model: model.trim(),
       effort: effort.trim(),
       presetId: presetId.trim(),
-      members: members,
-      nativeSessionIds: nativeSessionIds,
       launchState: launchState,
       createdAt: createdAt,
       updatedAt: updatedAt,
@@ -91,23 +81,6 @@ class AppSession {
       (e) => e.name == launchRaw,
       orElse: () => AppSessionLaunchState.created,
     );
-    final membersRaw = json['members'];
-    final members = membersRaw is List
-        ? membersRaw
-              .whereType<Map>()
-              .map(
-                (e) =>
-                    SessionMemberBinding.fromJson(Map<String, Object?>.from(e)),
-              )
-              .toList()
-        : const <SessionMemberBinding>[];
-    final nativeRaw = json['nativeSessionIds'];
-    final native = nativeRaw is Map
-        ? {
-            for (final e in nativeRaw.entries)
-              if (e.value != null) '${e.key}': '${e.value}',
-          }
-        : const <String, String>{};
     final targetsRaw = json['memberTargets'];
     final targets = targetsRaw is Map
         ? <String, String>{
@@ -124,14 +97,11 @@ class AppSession {
       memberTargets: targets,
       display: json['display'] as String? ?? '',
       profileId: json['profileId'] as String? ?? '',
-      cliTeamName: json['cliTeamName'] as String? ?? '',
       cli: CliTool.tryParse(json['cli'] as String?),
       provider: json['provider'] as String? ?? '',
       model: json['model'] as String? ?? '',
       effort: json['effort'] as String? ?? '',
       presetId: json['presetId'] as String? ?? '',
-      members: members,
-      nativeSessionIds: native,
       launchState: launch,
       createdAt: json['createdAt'] as int? ?? 0,
       updatedAt: json['updatedAt'] as int? ?? 0,
@@ -181,7 +151,6 @@ class AppSession {
   }
 
   final String profileId;
-  final String cliTeamName;
   final CliTool? cli;
 
   /// Simple launch: denormalized provider/model/effort (see [simpleIdentity]).
@@ -192,15 +161,6 @@ class AppSession {
   /// Simple launch: provenance of the global CLI preset chosen at create.
   final String presetId;
 
-  final List<SessionMemberBinding> members;
-  final Map<String, String> nativeSessionIds;
-
-  AppSession withNativeSessionId(String toolValue, String nativeId) {
-    final tool = toolValue.trim();
-    final id = nativeId.trim();
-    if (tool.isEmpty || id.isEmpty || nativeSessionIds[tool] == id) return this;
-    return copyWith(nativeSessionIds: {...nativeSessionIds, tool: id});
-  }
 
   final AppSessionLaunchState launchState;
   final int createdAt;
@@ -231,17 +191,6 @@ class AppSession {
   String resolveDisplayTitle(String whenDisplayEmpty) =>
       display.isNotEmpty ? display : whenDisplayEmpty;
 
-  SessionMemberBinding? bindingFor(String rosterMemberId) {
-    for (final binding in members) {
-      if (binding.rosterMemberId == rosterMemberId) return binding;
-    }
-    return null;
-  }
-
-  SessionMemberBinding requireBinding(String rosterMemberId) =>
-      bindingFor(rosterMemberId) ??
-      (throw StateError('No task binding for roster member $rosterMemberId'));
-
   AppSession copyWith({
     String? sessionId,
     String? workspaceId,
@@ -249,14 +198,11 @@ class AppSession {
     Map<String, String>? memberTargets,
     String? display,
     String? profileId,
-    String? cliTeamName,
     CliTool? cli,
     String? provider,
     String? model,
     String? effort,
     String? presetId,
-    List<SessionMemberBinding>? members,
-    Map<String, String>? nativeSessionIds,
     AppSessionLaunchState? launchState,
     int? createdAt,
     int? updatedAt,
@@ -271,14 +217,11 @@ class AppSession {
       memberTargets: memberTargets ?? this.memberTargets,
       display: display ?? this.display,
       profileId: profileId ?? this.profileId,
-      cliTeamName: cliTeamName ?? this.cliTeamName,
       cli: cli ?? this.cli,
       provider: provider ?? this.provider,
       model: model ?? this.model,
       effort: effort ?? this.effort,
       presetId: presetId ?? this.presetId,
-      members: members ?? this.members,
-      nativeSessionIds: nativeSessionIds ?? this.nativeSessionIds,
       launchState: launchState ?? this.launchState,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -297,15 +240,11 @@ class AppSession {
       if (memberTargets.isNotEmpty) 'memberTargets': memberTargets,
       'display': display,
       if (profileId.isNotEmpty) 'profileId': profileId,
-      if (cliTeamName.isNotEmpty) 'cliTeamName': cliTeamName,
       if (cli != null) 'cli': cli!.value,
       if (provider.isNotEmpty) 'provider': provider,
       if (model.isNotEmpty) 'model': model,
       if (effort.isNotEmpty) 'effort': effort,
       if (presetId.isNotEmpty) 'presetId': presetId,
-      if (members.isNotEmpty)
-        'members': members.map((m) => m.toJson()).toList(),
-      if (nativeSessionIds.isNotEmpty) 'nativeSessionIds': nativeSessionIds,
       'launchState': launchState.name,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
@@ -327,14 +266,11 @@ class AppSession {
             mapEquals(memberTargets, other.memberTargets) &&
             display == other.display &&
             profileId == other.profileId &&
-            cliTeamName == other.cliTeamName &&
             cli == other.cli &&
             provider == other.provider &&
             model == other.model &&
             effort == other.effort &&
             presetId == other.presetId &&
-            listEquals(members, other.members) &&
-            mapEquals(nativeSessionIds, other.nativeSessionIds) &&
             launchState == other.launchState &&
             createdAt == other.createdAt &&
             updatedAt == other.updatedAt &&
@@ -351,16 +287,11 @@ class AppSession {
     Object.hashAll(memberTargets.entries),
     display,
     profileId,
-    cliTeamName,
     cli,
     provider,
     model,
     effort,
     presetId,
-    Object.hashAll(members),
-    Object.hashAll(
-      nativeSessionIds.entries.map((e) => Object.hash(e.key, e.value)),
-    ),
     launchState,
     createdAt,
     updatedAt,

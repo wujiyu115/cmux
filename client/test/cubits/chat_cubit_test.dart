@@ -2,8 +2,6 @@ import 'dart:io';
 
 import 'package:teampilot/cubits/chat/model/session_connect_request.dart';
 import 'package:teampilot/cubits/chat_cubit.dart';
-import 'package:teampilot/models/workspace.dart';
-import 'package:teampilot/models/app_session.dart';
 import 'package:teampilot/models/workspace_folder.dart';
 import 'package:teampilot/models/cli_tool.dart';
 import 'package:teampilot/repositories/session_repository.dart';
@@ -12,8 +10,6 @@ import 'package:teampilot/services/terminal/terminal_session.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../support/post_frame_test_harness.dart';
-
-String _executable() => 'flashskyai';
 
 void _registerTempCubitCleanup({
   required Directory tmp,

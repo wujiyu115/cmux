@@ -33,7 +33,6 @@ void main() {
       );
       existing = ChatTab(
         info: ChatTabInfo(id: 'sess-1', title: 'Review', subtitle: '/tmp'),
-        cliTeamName: 'team-1',
         workspaceId: 'ws-1',
         workbenchView: SessionWorkbenchView.chat,
       )..persistedSession = session;

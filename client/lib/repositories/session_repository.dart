@@ -16,7 +16,6 @@ import '../services/workspace/target_liveness.dart';
 import '../services/workspace/workspace_icon_service.dart';
 import '../services/workspace/workspace_icon_storage.dart';
 import '../services/workspace/workspace_target_remap.dart';
-import '../services/session/session_lifecycle_service.dart';
 import '../utils/lock_pool.dart';
 import '../utils/logging/logger.dart';
 import '../utils/workspace/workspace_path_utils.dart';
@@ -25,14 +24,9 @@ import 'session_repository_fs.dart';
 import 'workspace_index_store.dart';
 
 class SessionRepository {
-  SessionRepository({
-    String? rootDir,
-    SessionLifecycleService? lifecycleService,
-  }) : _rootOverride = rootDir,
-       _lifecycleService = lifecycleService;
+  SessionRepository({String? rootDir}) : _rootOverride = rootDir;
 
   final String? _rootOverride;
-  final SessionLifecycleService? _lifecycleService;
   final _sessionFileLocks = LockPool();
   static final Map<String, List<Workspace>> _workspacesIndexByRoot = {};
 
@@ -566,13 +560,11 @@ class SessionRepository {
       ),
       display: '',
       profileId: '',
-      cliTeamName: '',
       cli: cli,
       provider: provider?.trim() ?? '',
       model: model?.trim() ?? '',
       effort: effort?.trim() ?? '',
       presetId: presetId?.trim() ?? '',
-      members: const [],
       memberTargets: const {},
       launchState: AppSessionLaunchState.created,
       createdAt: now,
@@ -630,48 +622,6 @@ class SessionRepository {
 
   Future<void> markSessionLaunched(String sessionId) {
     return markSessionStarted(sessionId);
-  }
-
-  /// Records a CLI-native resume id for [sessionId]. Team sessions store it on
-  /// the matching member binding ([rosterMemberId]); personal sessions store it
-  /// at the session level. No-op when already equal. See
-  /// `docs/session-resume-architecture.md`.
-  Future<void> recordNativeSessionId(
-    String sessionId, {
-    required String tool,
-    required String nativeId,
-    String? rosterMemberId,
-  }) {
-    final trimmedTool = tool.trim();
-    final trimmedId = nativeId.trim();
-    if (trimmedTool.isEmpty || trimmedId.isEmpty) return Future.value();
-    return _withSessionFile(sessionId, () async {
-      final fs = await _fs();
-      final existing = await _findSession(fs, sessionId);
-      if (existing == null) return;
-      final memberId = rosterMemberId?.trim() ?? '';
-      AppSession updated;
-      if (memberId.isNotEmpty) {
-        final binding = existing.bindingFor(memberId);
-        if (binding == null) return;
-        final next = binding.withNativeSessionId(trimmedTool, trimmedId);
-        if (identical(next, binding)) return;
-        updated = existing.copyWith(
-          members: [
-            for (final m in existing.members)
-              if (m.rosterMemberId == memberId) next else m,
-          ],
-        );
-      } else {
-        final next = existing.withNativeSessionId(trimmedTool, trimmedId);
-        if (identical(next, existing)) return;
-        updated = next;
-      }
-      await _writeSession(
-        fs,
-        updated.copyWith(updatedAt: DateTime.now().millisecondsSinceEpoch),
-      );
-    });
   }
 
   Future<void> markSessionStarted(String sessionId) {
@@ -850,7 +800,6 @@ class SessionRepository {
       workspaceId: targetWorkspaceId,
       folders: List.of(source.folders),
       display: source.display,
-      cliTeamName: '',
       launchState: AppSessionLaunchState.created,
       createdAt: now,
       updatedAt: now,

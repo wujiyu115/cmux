@@ -48,7 +48,6 @@ void main() {
       cubit.tabStore.append(
         ChatTab(
           info: ChatTabInfo(id: session.sessionId, title: 'S', subtitle: ''),
-          cliTeamName: '',
         )..persistedSession = session,
       );
 

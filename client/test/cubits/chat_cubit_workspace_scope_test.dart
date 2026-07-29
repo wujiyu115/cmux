@@ -11,7 +11,6 @@ ChatCubit _cubit() => ChatCubit(
 
 ChatTab _tab(String id) => ChatTab(
   info: ChatTabInfo(id: id, title: id, subtitle: ''),
-  cliTeamName: id,
 );
 
 class _RunningShell extends TerminalSession {
