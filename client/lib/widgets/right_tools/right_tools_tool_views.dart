@@ -10,7 +10,6 @@ import '../../cubits/cli_presets_cubit.dart';
 import '../../cubits/chat_cubit.dart';
 import '../../cubits/chat/model/session_workbench_view.dart';
 import '../../cubits/file_tree_cubit.dart';
-import '../../cubits/mailbox_cubit.dart';
 import '../../cubits/member_presence_cubit.dart';
 import '../../utils/session/workspace_tab_session_scope.dart';
 import '../../cubits/worktree_cubit.dart';
@@ -34,9 +33,7 @@ import '../../utils/debounce/debounce.dart';
 import '../../utils/team/team_member_naming.dart';
 import '../../utils/workspace/workspace_path_utils.dart';
 import '../git/git_source_control_panel.dart';
-import 'board_panel.dart';
 import 'file_tree_panel.dart';
-import 'mailbox_panel.dart';
 import 'members_panel.dart';
 import 'right_tools_tool_preferences.dart';
 import 'tabbed_panel.dart';
@@ -136,49 +133,6 @@ class _RightToolsPresenceTeamSyncState
 }
 
 @immutable
-class RightToolsMailboxGate {
-  const RightToolsMailboxGate({
-    required this.showMailbox,
-    required this.showBoard,
-    required this.unreadCount,
-  });
-
-  final bool showMailbox;
-  final bool showBoard;
-  final int unreadCount;
-
-  static RightToolsMailboxGate resolve({
-    required bool isPersonalContext,
-    required TeamProfile? team,
-    required bool hasTeamBus,
-    required bool boardVisible,
-    required int unreadCount,
-  }) {
-    final showMailbox =
-        !isPersonalContext &&
-        team != null &&
-        team.teamMode == TeamMode.mixed &&
-        hasTeamBus;
-    return RightToolsMailboxGate(
-      showMailbox: showMailbox,
-      showBoard: showMailbox && boardVisible,
-      unreadCount: unreadCount,
-    );
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is RightToolsMailboxGate &&
-        showMailbox == other.showMailbox &&
-        showBoard == other.showBoard &&
-        unreadCount == other.unreadCount;
-  }
-
-  @override
-  int get hashCode => Object.hash(showMailbox, showBoard, unreadCount);
-}
-
-@immutable
 class RightToolsChatSlice {
   const RightToolsChatSlice({
     required this.selectedMemberId,
@@ -266,7 +220,6 @@ class _RightToolsViewsCacheKey {
     required this.isPersonalContext,
     required this.team,
     required this.chatSlice,
-    required this.mailboxGate,
     required this.scopeRoots,
     required this.cwd,
     required this.workspaceId,
@@ -277,7 +230,6 @@ class _RightToolsViewsCacheKey {
   final bool isPersonalContext;
   final TeamProfile? team;
   final RightToolsChatSlice chatSlice;
-  final RightToolsMailboxGate mailboxGate;
   final List<String> scopeRoots;
   final String cwd;
   final String workspaceId;
@@ -291,7 +243,6 @@ class _RightToolsViewsCacheKey {
             isPersonalContext == other.isPersonalContext &&
             team == other.team &&
             chatSlice == other.chatSlice &&
-            mailboxGate == other.mailboxGate &&
             listEquals(scopeRoots, other.scopeRoots) &&
             cwd == other.cwd &&
             workspaceId == other.workspaceId &&
@@ -304,7 +255,6 @@ class _RightToolsViewsCacheKey {
     isPersonalContext,
     team,
     chatSlice,
-    mailboxGate,
     Object.hashAll(scopeRoots),
     cwd,
     workspaceId,
@@ -318,26 +268,6 @@ class _RightToolsToolViewsState extends State<RightToolsToolViews> {
 
   @override
   Widget build(BuildContext context) {
-    final mailboxCubit = _maybeMailboxCubit(context);
-    if (mailboxCubit == null) {
-      return _buildWithUnread(context, unreadCount: 0, hasMailboxCubit: false);
-    }
-    return BlocSelector<MailboxCubit, MailboxState, int>(
-      bloc: mailboxCubit,
-      selector: (state) => state.totalUnread,
-      builder: (context, unreadCount) => _buildWithUnread(
-        context,
-        unreadCount: unreadCount,
-        hasMailboxCubit: true,
-      ),
-    );
-  }
-
-  Widget _buildWithUnread(
-    BuildContext context, {
-    required int unreadCount,
-    required bool hasMailboxCubit,
-  }) {
     final team = widget.team;
     if (!widget.isPersonalContext && team == null) {
       return const SizedBox.shrink();
@@ -351,20 +281,11 @@ class _RightToolsToolViewsState extends State<RightToolsToolViews> {
       ),
     );
 
-    final mailboxGate = RightToolsMailboxGate.resolve(
-      isPersonalContext: widget.isPersonalContext,
-      team: team,
-      hasTeamBus: chatSlice.hasTeamBus && hasMailboxCubit,
-      boardVisible: widget.preferences.boardVisible,
-      unreadCount: unreadCount,
-    );
-
     final cacheKey = _RightToolsViewsCacheKey(
       preferences: widget.preferences,
       isPersonalContext: widget.isPersonalContext,
       team: team,
       chatSlice: chatSlice,
-      mailboxGate: mailboxGate,
       scopeRoots: widget.scope.roots,
       cwd: widget.cwd,
       workspaceId: widget.workspaceId,
@@ -377,7 +298,6 @@ class _RightToolsToolViewsState extends State<RightToolsToolViews> {
         context,
         team: team,
         chatSlice: chatSlice,
-        mailboxGate: mailboxGate,
       );
     }
 
@@ -411,19 +331,10 @@ class _RightToolsToolViewsState extends State<RightToolsToolViews> {
     return null;
   }
 
-  static MailboxCubit? _maybeMailboxCubit(BuildContext context) {
-    try {
-      return context.read<MailboxCubit>();
-    } on Object {
-      return null;
-    }
-  }
-
   List<ToolView> _buildViews(
     BuildContext context, {
     required TeamProfile? team,
     required RightToolsChatSlice chatSlice,
-    required RightToolsMailboxGate mailboxGate,
   }) {
     final l10n = context.l10n;
     final views = <ToolView>[];
@@ -508,27 +419,6 @@ class _RightToolsToolViewsState extends State<RightToolsToolViews> {
             workContext: widget.workContext,
             workspaceId: widget.workspaceId,
           ),
-        ),
-      );
-    }
-
-    if (mailboxGate.showMailbox && team != null) {
-      views.add(
-        ToolView(
-          icon: Icons.mail_outline,
-          label: l10n.mailbox,
-          badgeCount: mailboxGate.unreadCount,
-          child: MailboxPanel(team: team, cwd: widget.cwd),
-        ),
-      );
-    }
-
-    if (mailboxGate.showBoard && team != null) {
-      views.add(
-        ToolView(
-          icon: Icons.view_kanban_outlined,
-          label: l10n.board,
-          child: BoardPanel(team: team, cwd: widget.cwd),
         ),
       );
     }

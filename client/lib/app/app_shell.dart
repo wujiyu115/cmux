@@ -20,9 +20,6 @@ import '../services/remote/local_credential_exporter.dart';
 import '../services/remote/remote_cli_readiness.dart';
 import '../services/editor_platform/editor_platform.dart';
 import '../services/launch/launch_factory.dart';
-import '../cubits/board_cubit.dart';
-import '../utils/session/workspace_tab_session_scope.dart';
-import '../cubits/mailbox_cubit.dart';
 import '../cubits/member_presence_cubit.dart';
 import '../cubits/notification_cubit.dart';
 import '../cubits/command_log_cubit.dart';
@@ -168,8 +165,6 @@ class AppShell {
     required this.memberPresenceCubit,
     required this.agentAttentionCubit,
     required this.agentStatusSeatLookup,
-    required this.mailboxCubit,
-    required this.boardCubit,
     required this.aiHistoryCubit,
     required this.notificationCubit,
     required this.commandLogCubit,
@@ -239,8 +234,6 @@ class AppShell {
   final MemberPresenceCubit memberPresenceCubit;
   final AgentAttentionCubit agentAttentionCubit;
   final AgentStatusSeatLookup agentStatusSeatLookup;
-  final MailboxCubit mailboxCubit;
-  final BoardCubit boardCubit;
   final AiHistoryCubit aiHistoryCubit;
   final NotificationCubit notificationCubit;
   final CommandLogCubit commandLogCubit;
@@ -974,14 +967,6 @@ Future<AppShell> buildAppShell({
     }
   });
 
-  final mailboxCubit = MailboxCubit(
-    busForScope: (scope) => scopedTeamBus(chatCubit, scope),
-  );
-
-  final boardCubit = BoardCubit(
-    busForScope: (scope) => scopedTeamBus(chatCubit, scope),
-  );
-
   final aiHistoryLoader = AiHistoryLoader(
     contextBuilder: const SessionHistoryContextBuilder(),
     resolveWorkContext: (launchCtx, {String? memberId}) =>
@@ -1188,8 +1173,6 @@ Future<AppShell> buildAppShell({
     memberPresenceCubit: memberPresenceCubit,
     agentAttentionCubit: agentAttentionCubit,
     agentStatusSeatLookup: agentStatusSeatLookup,
-    mailboxCubit: mailboxCubit,
-    boardCubit: boardCubit,
     aiHistoryCubit: aiHistoryCubit,
     notificationCubit: notificationCubit,
     commandLogCubit: commandLogCubit,

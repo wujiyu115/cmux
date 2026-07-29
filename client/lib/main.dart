@@ -16,12 +16,10 @@ import 'app/ui_zoom_baseline.dart';
 import 'app/home_index_prefetch.dart';
 import 'cubits/app_bootstrap_cubit.dart';
 import 'cubits/app_update_cubit.dart';
-import 'cubits/board_cubit.dart';
 import 'cubits/automation_cubit.dart';
 import 'cubits/ssh_connection_cubit.dart';
 import 'cubits/chat_cubit.dart';
 import 'cubits/layout_cubit.dart';
-import 'cubits/mailbox_cubit.dart';
 import 'cubits/notification_cubit.dart';
 import 'cubits/command_log_cubit.dart';
 import 'cubits/ai_history_cubit.dart';
@@ -225,8 +223,6 @@ class _AppShutdownScope extends StatefulWidget {
     required this.chatCubit,
     required this.automationScheduler,
     required this.automationCubit,
-    required this.mailboxCubit,
-    required this.boardCubit,
     required this.aiHistoryCubit,
     required this.notificationCubit,
     required this.commandLogCubit,
@@ -243,8 +239,6 @@ class _AppShutdownScope extends StatefulWidget {
   final ChatCubit chatCubit;
   final AutomationScheduler automationScheduler;
   final AutomationCubit automationCubit;
-  final MailboxCubit mailboxCubit;
-  final BoardCubit boardCubit;
   final AiHistoryCubit aiHistoryCubit;
   final NotificationCubit notificationCubit;
   final CommandLogCubit commandLogCubit;
@@ -267,8 +261,6 @@ class _AppShutdownScopeState extends State<_AppShutdownScope> {
     widget.automationScheduler.stop();
     unawaited(widget.chatCubit.close());
     unawaited(widget.automationCubit.close());
-    unawaited(widget.mailboxCubit.close());
-    unawaited(widget.boardCubit.close());
     unawaited(widget.aiHistoryCubit.close());
     unawaited(widget.notificationCubit.close());
     unawaited(widget.commandLogCubit.close());
@@ -571,8 +563,6 @@ void main() async {
             chatCubit: shell.chatCubit,
             automationScheduler: shell.automationScheduler,
             automationCubit: shell.automationCubit,
-            mailboxCubit: shell.mailboxCubit,
-            boardCubit: shell.boardCubit,
             aiHistoryCubit: shell.aiHistoryCubit,
             notificationCubit: shell.notificationCubit,
             commandLogCubit: shell.commandLogCubit,
@@ -675,8 +665,6 @@ void main() async {
                   BlocProvider.value(value: shell.chatCubit),
                   BlocProvider.value(value: shell.memberPresenceCubit),
                   BlocProvider.value(value: shell.agentAttentionCubit),
-                  BlocProvider.value(value: shell.mailboxCubit),
-                  BlocProvider.value(value: shell.boardCubit),
                   BlocProvider.value(value: shell.aiHistoryCubit),
                   BlocProvider.value(value: shell.notificationCubit),
                   BlocProvider.value(value: shell.commandLogCubit),

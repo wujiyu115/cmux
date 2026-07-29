@@ -9,9 +9,7 @@ import 'package:teampilot/cubits/app_bootstrap_cubit.dart';
 import 'package:teampilot/cubits/ai_feature_settings_cubit.dart';
 import 'package:teampilot/cubits/app_provider_cubit.dart';
 import 'package:teampilot/cubits/chat_cubit.dart';
-import 'package:teampilot/cubits/board_cubit.dart';
 import 'package:teampilot/cubits/cli_presets_cubit.dart';
-import 'package:teampilot/cubits/mailbox_cubit.dart';
 import 'package:teampilot/cubits/mcp_cubit.dart';
 import 'package:teampilot/cubits/app_update_cubit.dart';
 import 'package:teampilot/cubits/ssh_profile_cubit.dart';
@@ -31,7 +29,6 @@ import 'package:teampilot/cubits/shortcut_cubit.dart';
 import 'package:teampilot/cubits/skill_cubit.dart';
 import 'package:teampilot/cubits/workspace_tools_cubit.dart';
 import 'package:teampilot/cubits/workbench/workbench_cubit.dart';
-import 'package:teampilot/utils/session/workspace_tab_session_scope.dart';
 import 'package:teampilot/app/ui_zoom_baseline.dart';
 import 'package:teampilot/main.dart';
 import 'package:teampilot/models/llm_config.dart';
@@ -288,16 +285,6 @@ class PerformanceScenarioApp {
                   fs: InMemoryFilesystem(),
                   presetsPath: '/test/cli-presets.json',
                 ),
-              ),
-            ),
-            BlocProvider(
-              create: (_) => MailboxCubit(
-                busForScope: (scope) => scopedTeamBus(chat, scope),
-              ),
-            ),
-            BlocProvider(
-              create: (_) => BoardCubit(
-                busForScope: (scope) => scopedTeamBus(chat, scope),
               ),
             ),
             BlocProvider(create: (_) => McpCubit(McpRepository())),

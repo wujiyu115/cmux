@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_ui/shared_ui.dart';
 
-import '../../cubits/board_cubit.dart';
 import '../../cubits/chat_cubit.dart';
-import '../../cubits/mailbox_cubit.dart';
 import '../../cubits/member_presence_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../models/layout_preferences.dart';
@@ -48,8 +46,6 @@ class RightToolsPanel extends StatefulWidget {
 class _RightToolsPanelState extends State<RightToolsPanel> {
   ChatCubit? _chatCubit;
   MemberPresenceCubit? _presenceCubit;
-  MailboxCubit? _mailboxCubit;
-  BoardCubit? _boardCubit;
   bool _uiPollAttached = false;
 
   RightToolsToolPreferences get _toolPreferences =>
@@ -62,30 +58,16 @@ class _RightToolsPanelState extends State<RightToolsPanel> {
     final presenceCubit = context.read<MemberPresenceCubit>();
     final shouldAttach = TickerMode.valuesOf(context).enabled;
 
-    MailboxCubit? mailboxCubit;
-    BoardCubit? boardCubit;
-    try {
-      mailboxCubit = context.read<MailboxCubit>();
-      boardCubit = context.read<BoardCubit>();
-    } on Object {
-      mailboxCubit = null;
-      boardCubit = null;
-    }
-
     if (!identical(_chatCubit, chatCubit)) {
       if (_uiPollAttached) {
         _detachUiPoll();
       }
       _chatCubit = chatCubit;
       _presenceCubit = presenceCubit;
-      _mailboxCubit = mailboxCubit;
-      _boardCubit = boardCubit;
     }
 
     if (shouldAttach && !_uiPollAttached) {
       presenceCubit.attachPresenceUi(this);
-      _mailboxCubit?.attachUi(widget._toolsScopeId, this);
-      _boardCubit?.attachUi(widget._toolsScopeId, this);
       _uiPollAttached = true;
     } else if (!shouldAttach && _uiPollAttached) {
       _detachUiPoll();
@@ -94,8 +76,6 @@ class _RightToolsPanelState extends State<RightToolsPanel> {
 
   void _detachUiPoll() {
     _presenceCubit?.detachPresenceUi(this);
-    _mailboxCubit?.detachUi(this);
-    _boardCubit?.detachUi(this);
     _uiPollAttached = false;
   }
 
