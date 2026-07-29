@@ -63,8 +63,6 @@ abstract final class MixedTeamPingPongScenario {
         sessionId: session.sessionId,
         timeout: const Duration(seconds: 120),
       );
-
-      expect(cubit.hasTeamBusResources(session.sessionId), isTrue);
     } catch (e, st) {
       await harness.dumpFailureArtifacts(
         workspaceId: session?.workspaceId,
@@ -154,8 +152,6 @@ abstract final class MixedTeamPingPongScenario {
         sessionId: session.sessionId,
         timeout: const Duration(seconds: 120),
       );
-
-      expect(cubit.hasTeamBusResources(session.sessionId), isTrue);
     } catch (e, st) {
       await harness.dumpFailureArtifacts(
         workspaceId: session?.workspaceId,

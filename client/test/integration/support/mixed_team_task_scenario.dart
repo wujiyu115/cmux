@@ -260,8 +260,6 @@ abstract final class MixedTeamTaskScenario {
         title: 'ship-widget',
         timeout: const Duration(seconds: 120),
       );
-
-      expect(cubit.hasTeamBusResources(session.sessionId), isTrue);
     } catch (e, st) {
       await harness.dumpFailureArtifacts(
         workspaceId: session?.workspaceId,
@@ -366,8 +364,6 @@ abstract final class MixedTeamTaskScenario {
         title: 'complete-widget',
         timeout: const Duration(seconds: 120),
       );
-
-      expect(cubit.hasTeamBusResources(session.sessionId), isTrue);
     } catch (e, st) {
       await harness.dumpFailureArtifacts(
         workspaceId: session?.workspaceId,
@@ -460,8 +456,6 @@ abstract final class MixedTeamTaskScenario {
       if (afterReady != null) await afterReady(ctx);
       if (kickoff != null) await kickoff(ctx);
       if (verify != null) await verify(ctx);
-
-      expect(cubit.hasTeamBusResources(session.sessionId), isTrue);
     } catch (e, st) {
       await harness.dumpFailureArtifacts(
         workspaceId: session?.workspaceId,

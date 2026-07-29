@@ -301,7 +301,7 @@ class _ChatWorkspaceShell extends StatelessWidget {
                   title: 'Shell chat workbench',
                   subtitle: isPersonalContext
                       ? 'personal workspace / shell wrapper mode'
-                      : 'target: ${teamConfig != null ? cubit.selectedMemberName(teamConfig) : 'team'} / shell wrapper mode',
+                      : 'target: team / shell wrapper mode',
                   showNewChatButton: tabs.isNotEmpty,
                   newChatTooltip: context.l10n.workbenchStripNewMenuTooltip,
                   newConversationLabel:

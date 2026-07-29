@@ -1072,23 +1072,6 @@ class ChatCubit extends Cubit<ChatState>
   Future<SessionOpenStatus> requestOpenSession(SessionOpenRequest request) =>
       _launchService.requestOpenSession(request);
 
-  Future<void> scheduleTeamConfigValidation(TeamProfile team) =>
-      _launchService.scheduleTeamConfigValidation(team);
-
-  Future<void> openMemberTab(
-    TeamProfile team,
-    TeamMemberConfig member, {
-    SessionRepository? repo,
-    String? workspaceCwd,
-    bool scheduleTeamConfigValidation = true,
-  }) => _launchService.openMemberTab(
-    team,
-    member,
-    repo: repo,
-    workspaceCwd: workspaceCwd,
-    scheduleTeamConfigValidation: scheduleTeamConfigValidation,
-  );
-
   Future<void> reconnectSshProfile(String profileId) =>
       _launchService.reconnectSshProfile(profileId);
 
@@ -1306,17 +1289,6 @@ class ChatCubit extends Cubit<ChatState>
     }
   }
 
-  void syncTeam(TeamProfile team) {
-    if (team.members.isEmpty) {
-      emit(state.copyWith(selectedMemberId: ''));
-      return;
-    }
-    if (team.members.any((m) => m.id == state.selectedMemberId)) return;
-    final newId = _tabStore.defaultMemberId(team);
-    _activeTab?.selectedMemberId = newId;
-    emit(state.copyWith(selectedMemberId: newId));
-  }
-
   @override
   void selectMember(String memberId) {
     if (state.selectedMemberId == memberId) return;
@@ -1332,23 +1304,6 @@ class ChatCubit extends Cubit<ChatState>
     final tab = _tabStore.openTabBySessionId(sessionId);
     final shell = tab?.memberShells[memberId];
     return shell?.isRunning ?? false;
-  }
-
-  Future<void> launchAllMembers(
-    TeamProfile team, {
-    SessionRepository? repo,
-    String? workspaceCwd,
-  }) => _launchService.launchAllMembers(
-    team,
-    repo: repo,
-    workspaceCwd: workspaceCwd,
-  );
-
-  String selectedMemberName(TeamProfile team) {
-    for (final m in team.members) {
-      if (m.id == state.selectedMemberId) return m.name;
-    }
-    return team.members.isEmpty ? 'member' : team.members.first.name;
   }
 
   TerminalSession? ensureSession(TeamProfile team) =>
@@ -1674,13 +1629,6 @@ class ChatCubit extends Cubit<ChatState>
     final target = currentSession;
     target?.write('\r\n[system] $content\r\n');
   }
-
-  bool hasTeamBusResources(String sessionId) =>
-      _teamBus.hasTeamBusResources(sessionId);
-
-  @visibleForTesting
-  Uri? teammateBusMcpEndpointForSession(String sessionId) =>
-      _teamBus.teammateBusMcpEndpointForSession(sessionId);
 
   @override
   Future<void> close() async {
