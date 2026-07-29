@@ -88,9 +88,6 @@ Future<void> openWorkspaceSessionTab(
       .state
       .preferences
       .openExistingSessionStartsTerminal;
-  if (team != null) {
-    unawaited(chatCubit.scheduleTeamConfigValidation(team));
-  }
 
   final status = await chatCubit.requestOpenSession(
     buildOpenExistingSessionRequest(
@@ -584,10 +581,6 @@ Future<SessionOpenStatus?> _requestCreateWorkspaceConversation(
               expertKey: expertKey,
             ))
       : null;
-
-  if (team != null) {
-    unawaited(chatCubit.scheduleTeamConfigValidation(team));
-  }
 
   try {
     return await chatCubit.requestCreateAndOpenSession(

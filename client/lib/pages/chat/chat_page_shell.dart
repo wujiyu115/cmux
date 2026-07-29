@@ -24,8 +24,6 @@ import '../../services/workbench/workbench_shell_actions.dart';
 import '../../services/workbench/workbench_shell_launcher.dart';
 import '../../services/workbench/workbench_tab_projection.dart';
 import '../../services/workspace/workspace_tools_scope.dart';
-import '../../utils/ui/app_keys.dart';
-import '../../utils/debounce/debounce.dart';
 import '../../utils/workspace/workspace_active_context.dart';
 import '../../cubits/workspace_landing_context_cubit.dart';
 import '../../widgets/workbench/workbench_session_sync.dart';
@@ -398,9 +396,7 @@ class _ChatWorkspaceShell extends StatelessWidget {
                       team: teamConfig,
                     ),
                   ),
-                  actions: isPersonalContext || teamConfig == null
-                      ? const []
-                      : _chatActions(context, teamConfig),
+                  actions: const [],
                   child: ChatPageStructuralBodyProbe(
                     key: chatPageStructuralBodyProbeKey,
                     child: WorkbenchBody(
@@ -428,44 +424,6 @@ class _ChatWorkspaceShell extends StatelessWidget {
         );
       },
     );
-  }
-
-  List<Widget> _chatActions(BuildContext context, TeamProfile team) {
-    return [
-      IconButton.filledTonal(
-        key: AppKeys.openTeamLeadButton,
-        tooltip: 'Open team-lead',
-        onPressed: throttledOnPressed('chat_open_team_lead', () {
-          final lead = team.members.where((m) => m.id == 'team-lead');
-          if (lead.isEmpty) {
-            context.read<ChatCubit>().addSystemMessage(
-              'FlashskyAI requires a member named team-lead.',
-            );
-            return;
-          }
-          unawaited(
-            context.read<ChatCubit>().openMemberTab(
-              team,
-              lead.first,
-              workspaceCwd: cwd,
-            ),
-          );
-        }),
-        icon: Icon(Icons.person_outline),
-      ),
-      IconButton.filled(
-        key: AppKeys.openTeamButton,
-        tooltip: 'Open Team',
-        onPressed: throttledAsync(
-          'chat_launch_all_members',
-          () => context.read<ChatCubit>().launchAllMembers(
-            team,
-            workspaceCwd: cwd,
-          ),
-        ),
-        icon: Icon(Icons.groups_outlined),
-      ),
-    ];
   }
 }
 

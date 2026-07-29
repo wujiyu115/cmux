@@ -626,12 +626,10 @@ class _ChatWorkbenchBody extends StatelessWidget {
         ? appSession.sessionId
         : (connectMember?.id ?? memberId);
     HistoryContinueChannel resolveChannel() {
-      final bus = chatCubit.sessionRuntime.busForSession(appSession.sessionId);
       return resolveHistoryContinueChannel(
-        teamBusInstalled: bus != null,
-        memberWaitingForMessage:
-            bus?.isWaitingForMessage(shellMemberId) ?? false,
-        memberInTurn: bus?.isMemberInTurn(shellMemberId) ?? false,
+        teamBusInstalled: false,
+        memberWaitingForMessage: false,
+        memberInTurn: false,
       );
     }
 
@@ -654,13 +652,7 @@ class _ChatWorkbenchBody extends StatelessWidget {
         chatCubit.retrySessionLaunch(appSession.sessionId),
       ),
       peekContinueChannel: resolveChannel,
-      isMailboxUnread: (mailId) {
-        final bus = chatCubit.sessionRuntime.busForSession(
-          appSession.sessionId,
-        );
-        if (bus == null) return false;
-        return bus.isUnread(shellMemberId, mailId);
-      },
+      isMailboxUnread: (mailId) => false,
       onRemapDeadTarget: deadSshTargetIdFromError(launchError) != null
           ? () => unawaited(
               onRemapDeadTargetFromLaunch(

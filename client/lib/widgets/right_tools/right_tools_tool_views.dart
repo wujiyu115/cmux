@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:shared_ui/shared_ui.dart';
 
 import 'package:flutter/foundation.dart';
@@ -29,7 +28,6 @@ import '../../services/cli/member_config/member_config_inspector.dart';
 import '../../services/storage/home_target_controller.dart';
 import '../../services/storage/runtime_context.dart';
 import '../../services/workspace/workspace_tools_scope.dart';
-import '../../utils/debounce/debounce.dart';
 import '../../utils/team/team_member_naming.dart';
 import '../../utils/workspace/workspace_path_utils.dart';
 import '../git/git_source_control_panel.dart';
@@ -500,13 +498,7 @@ class _ScopedMembersPanelState extends State<_ScopedMembersPanel> {
       onSelected: (id) => _onMemberRowTap(context, id),
       onSwitchTo: (id) => _switchToMember(context, id),
       onOpen: (id) => _openMember(context, id),
-      onLaunchAll: throttledAsync('right_tools_launch_all', () async {
-        await context.read<ChatCubit>().launchAllMembers(
-          widget.team,
-          workspaceCwd: widget.cwd,
-        );
-        widget.maybeDismissDrawer();
-      }),
+      onLaunchAll: widget.maybeDismissDrawer,
       canViewDetail: widget.canViewDetail,
       onViewDetail: (id) => _viewDetail(context, id),
       onOpenConfigDir: (id) => _openConfigDir(context, id),
@@ -537,20 +529,7 @@ class _ScopedMembersPanelState extends State<_ScopedMembersPanel> {
   }
 
   void _openMember(BuildContext context, String id) {
-    final chat = context.read<ChatCubit>();
-    final sessionId = chat.state.activeSessionId;
-    if (sessionId != null && sessionId.isNotEmpty) {
-      chat.setSessionWorkbenchView(sessionId, SessionWorkbenchView.terminal);
-    }
-    final member = widget.runtimeMembers.firstWhere((m) => m.id == id);
-    unawaited(
-      chat.openMemberTab(
-        widget.team,
-        member,
-        workspaceCwd: widget.cwd,
-      ),
-    );
-    widget.maybeDismissDrawer();
+    _switchToMember(context, id);
   }
 
   Future<void> _viewDetail(BuildContext context, String id) async {

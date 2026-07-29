@@ -368,7 +368,6 @@ void consumeChatWorkbenchRouteSession({
     return;
   }
 
-  unawaited(chatCubit.scheduleTeamConfigValidation(profile));
   unawaited(
     chatCubit.requestOpenSession(
       buildOpenExistingSessionRequest(
