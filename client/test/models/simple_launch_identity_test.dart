@@ -22,14 +22,12 @@ void main() {
       provider: 'claude-official',
       model: 'claude-sonnet',
       effort: 'medium',
-      expertKey: 'expert/key',
     );
 
     expect(identity.cli, CliTool.cursor);
     expect(identity.provider, 'cursor-account');
     expect(identity.model, 'gpt-5.5');
     expect(identity.effort, 'high');
-    expect(identity.expertKey, 'expert/key');
     expect(identity.presetId, 'preset-1');
   });
 

@@ -588,7 +588,6 @@ class SessionRepository {
     String? presetId,
     String? workingDirectory,
     String? fixedSessionId,
-    String? expertKey,
     SessionContinueOverrides? continueOverrides,
   }) async {
     final fs = await _fs();
@@ -600,7 +599,6 @@ class SessionRepository {
     final pinnedId = fixedSessionId?.trim() ?? '';
     final sessionId = pinnedId.isNotEmpty ? pinnedId : const Uuid().v4();
     final now = DateTime.now().millisecondsSinceEpoch;
-    final resolvedExpertKey = expertKey?.trim() ?? '';
     final session = AppSession(
       sessionId: sessionId,
       workspaceId: workspaceId,
@@ -622,7 +620,6 @@ class SessionRepository {
       launchState: AppSessionLaunchState.created,
       createdAt: now,
       updatedAt: now,
-      expertKey: resolvedExpertKey,
       continueOverrides: continueOverrides ?? const SessionContinueOverrides(),
     );
     await fs.ensureSessionDir(workspaceId, sessionId);

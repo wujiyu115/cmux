@@ -13,7 +13,6 @@ class SessionRuntimePlan {
     required this.workspaceId,
     required this.sessionId,
     required this.memberId,
-    this.expertKey = '',
     required this.runtimeBundle,
     required this.member,
     this.teamId,
@@ -24,7 +23,6 @@ class SessionRuntimePlan {
   final String workspaceId;
   final String sessionId;
   final String memberId;
-  final String expertKey;
   final String? teamId;
   final String? presetId;
   final ConfigBundle runtimeBundle;
@@ -35,7 +33,6 @@ class SessionRuntimePlan {
     String? workspaceId,
     String? sessionId,
     String? memberId,
-    String? expertKey,
     String? teamId,
     String? presetId,
     ConfigBundle? runtimeBundle,
@@ -46,7 +43,6 @@ class SessionRuntimePlan {
       workspaceId: workspaceId ?? this.workspaceId,
       sessionId: sessionId ?? this.sessionId,
       memberId: memberId ?? this.memberId,
-      expertKey: expertKey ?? this.expertKey,
       teamId: teamId ?? this.teamId,
       presetId: presetId ?? this.presetId,
       runtimeBundle: runtimeBundle ?? this.runtimeBundle,

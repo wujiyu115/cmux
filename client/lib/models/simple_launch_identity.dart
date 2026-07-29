@@ -14,7 +14,6 @@ class SimpleLaunchIdentity {
     this.provider = '',
     this.model = '',
     this.effort = '',
-    this.expertKey = '',
     this.presetId = '',
   });
 
@@ -22,7 +21,6 @@ class SimpleLaunchIdentity {
   final String provider;
   final String model;
   final String effort;
-  final String expertKey;
 
   /// Provenance only — which global preset was chosen at create.
   final String presetId;
@@ -44,7 +42,6 @@ class SimpleLaunchIdentity {
     String? provider,
     String? model,
     String? effort,
-    String? expertKey,
     String? presetId,
   }) {
     final resolvedCli = preset?.cli ?? cli ?? CliTool.claude;
@@ -73,7 +70,6 @@ class SimpleLaunchIdentity {
       provider: resolvedProvider,
       model: resolvedModel,
       effort: resolvedEffort,
-      expertKey: expertKey?.trim() ?? '',
       presetId: resolvedPresetId,
     );
   }
@@ -83,7 +79,6 @@ class SimpleLaunchIdentity {
     String? provider,
     String? model,
     String? effort,
-    String? expertKey,
     String? presetId,
   }) {
     return SimpleLaunchIdentity(
@@ -91,7 +86,6 @@ class SimpleLaunchIdentity {
       provider: provider ?? this.provider,
       model: model ?? this.model,
       effort: effort ?? this.effort,
-      expertKey: expertKey ?? this.expertKey,
       presetId: presetId ?? this.presetId,
     );
   }
@@ -113,7 +107,6 @@ class SimpleLaunchIdentity {
     if (provider.isNotEmpty) 'provider': provider,
     if (model.isNotEmpty) 'model': model,
     if (effort.isNotEmpty) 'effort': effort,
-    if (expertKey.isNotEmpty) 'expertKey': expertKey,
     if (presetId.isNotEmpty) 'presetId': presetId,
   };
 
@@ -125,11 +118,10 @@ class SimpleLaunchIdentity {
             provider == other.provider &&
             model == other.model &&
             effort == other.effort &&
-            expertKey == other.expertKey &&
             presetId == other.presetId;
   }
 
   @override
   int get hashCode =>
-      Object.hash(cli, provider, model, effort, expertKey, presetId);
+      Object.hash(cli, provider, model, effort, presetId);
 }

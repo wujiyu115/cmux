@@ -17,7 +17,6 @@ class SessionCreateRequest {
     this.workingDirectory,
     this.emptyDisplayTitleFallback = 'New Chat',
     this.fixedSessionId,
-    this.expertKey,
     this.continueOverrides,
     this.preserveWorkbenchView = false,
   });
@@ -39,8 +38,6 @@ class SessionCreateRequest {
   /// When set, the staged session uses this id instead of a fresh UUID.
   final String? fixedSessionId;
 
-  /// Simple summon: catalog expert key (also on [simpleIdentity.expertKey]).
-  final String? expertKey;
 
   /// Session-level continue overrides (e.g. landing permission chip).
   final SessionContinueOverrides? continueOverrides;

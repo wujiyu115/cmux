@@ -228,11 +228,9 @@ class AutomationDispatcher {
     final plannedSessionId = _uuid.v4();
     final presetId = automation.presetId?.trim() ?? '';
     final preset = presetId.isEmpty ? null : _resolveCliPreset?.call(presetId);
-    final expertKey = automation.expertKey?.trim() ?? '';
     final simpleIdentity = SimpleLaunchIdentity.resolve(
       preset: preset,
       presetId: presetId,
-      expertKey: expertKey,
     );
     final status = await _requestCreateAndOpenSession(
       SessionCreateRequest(
@@ -241,8 +239,7 @@ class AutomationDispatcher {
         repo: _sessionRepository,
         cli: simpleIdentity.cli,
         simpleIdentity: simpleIdentity,
-        expertKey: expertKey,
-        continueOverrides: SessionContinueOverrides(
+          continueOverrides: SessionContinueOverrides(
           dangerouslySkipPermissions: automation.dangerouslySkipPermissions,
         ),
         workingDirectory: workingDirectory,

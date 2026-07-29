@@ -58,7 +58,6 @@ class Automation {
     this.isPersonal = true,
     this.presetId,
     this.teamId,
-    this.expertKey,
     this.projectFolderPath,
     this.workingDirectoryPath,
     this.dangerouslySkipPermissions = false,
@@ -96,7 +95,6 @@ class Automation {
       isPersonal: json['isPersonal'] as bool? ?? true,
       presetId: json['presetId'] as String?,
       teamId: json['teamId'] as String?,
-      expertKey: json['expertKey'] as String?,
       projectFolderPath: json['projectFolderPath'] as String?,
       workingDirectoryPath: json['workingDirectoryPath'] as String?,
       dangerouslySkipPermissions:
@@ -142,9 +140,6 @@ class Automation {
   /// Team identity when not [isPersonal].
   final String? teamId;
 
-  /// Expert Hub key when [isPersonal].
-  final String? expertKey;
-
   /// Workspace folder (git project root) for launch-prompt sessions.
   final String? projectFolderPath;
 
@@ -187,7 +182,6 @@ class Automation {
     presetId: presetId,
     teamId: teamId,
     projectFolderPath: projectFolderPath,
-    expertKey: expertKey,
     workingDirectoryPath: workingDirectoryPath,
     dangerouslySkipPermissions: dangerouslySkipPermissions,
   );
@@ -262,8 +256,6 @@ class Automation {
     bool clearPresetId = false,
     String? teamId,
     bool clearTeamId = false,
-    String? expertKey,
-    bool clearExpertKey = false,
     String? projectFolderPath,
     bool clearProjectFolderPath = false,
     String? workingDirectoryPath,
@@ -303,7 +295,6 @@ class Automation {
       isPersonal: isPersonal ?? this.isPersonal,
       presetId: clearPresetId ? null : (presetId ?? this.presetId),
       teamId: clearTeamId ? null : (teamId ?? this.teamId),
-      expertKey: clearExpertKey ? null : (expertKey ?? this.expertKey),
       projectFolderPath: clearProjectFolderPath
           ? null
           : (projectFolderPath ?? this.projectFolderPath),
@@ -345,8 +336,6 @@ class Automation {
         'isPersonal': isPersonal,
         if (isPersonal) ...{
           if (presetId != null && presetId!.isNotEmpty) 'presetId': presetId,
-          if (expertKey != null && expertKey!.isNotEmpty)
-            'expertKey': expertKey,
         } else ...{
           if (teamId != null && teamId!.isNotEmpty) 'teamId': teamId,
           'targetMemberId': targetMemberId,
@@ -391,7 +380,6 @@ class Automation {
             isPersonal == other.isPersonal &&
             presetId == other.presetId &&
             teamId == other.teamId &&
-            expertKey == other.expertKey &&
             projectFolderPath == other.projectFolderPath &&
             workingDirectoryPath == other.workingDirectoryPath &&
             dangerouslySkipPermissions == other.dangerouslySkipPermissions &&
@@ -425,7 +413,6 @@ class Automation {
     isPersonal,
     presetId,
     teamId,
-    expertKey,
     projectFolderPath,
     workingDirectoryPath,
     dangerouslySkipPermissions,

@@ -10,7 +10,6 @@ class LandingPrefs {
     this.presetId,
     this.teamId,
     this.projectFolderPath,
-    this.expertKey,
     this.workingDirectoryPath,
     this.dangerouslySkipPermissions = true,
   });
@@ -19,7 +18,6 @@ class LandingPrefs {
   final String? presetId;
   final String? teamId;
   final String? projectFolderPath;
-  final String? expertKey;
   final String? workingDirectoryPath;
   final bool dangerouslySkipPermissions;
 
@@ -29,7 +27,6 @@ class LandingPrefs {
     if (teamId != null && teamId!.isNotEmpty) 'teamId': teamId,
     if (projectFolderPath != null && projectFolderPath!.isNotEmpty)
       'projectFolderPath': projectFolderPath,
-    if (expertKey != null && expertKey!.isNotEmpty) 'expertKey': expertKey,
     if (workingDirectoryPath != null && workingDirectoryPath!.isNotEmpty)
       'workingDirectoryPath': workingDirectoryPath,
     'dangerouslySkipPermissions': dangerouslySkipPermissions,
@@ -64,7 +61,6 @@ class LandingPrefsStore {
           presetId: m['presetId'] as String?,
           teamId: m['teamId'] as String?,
           projectFolderPath: m['projectFolderPath'] as String?,
-          expertKey: m['expertKey'] as String?,
           workingDirectoryPath: m['workingDirectoryPath'] as String?,
           dangerouslySkipPermissions:
               m['dangerouslySkipPermissions'] as bool? ?? true,

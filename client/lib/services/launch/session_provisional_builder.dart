@@ -12,7 +12,6 @@ AppSession buildProvisionalSession({
   SimpleLaunchIdentity? simpleIdentity,
   String? workingDirectory,
   String sessionTeamId = '',
-  String? expertKey,
 }) {
   final now = DateTime.now().millisecondsSinceEpoch;
   final trimmedTeam = sessionTeamId.trim();
@@ -24,7 +23,6 @@ AppSession buildProvisionalSession({
       ? (simpleIdentity ??
             SimpleLaunchIdentity.resolve(
               cli: cli,
-              expertKey: expertKey,
             ))
       : null;
 
@@ -46,8 +44,5 @@ AppSession buildProvisionalSession({
     launchState: AppSessionLaunchState.created,
     createdAt: now,
     updatedAt: now,
-    expertKey: identity?.expertKey.isNotEmpty == true
-        ? identity!.expertKey
-        : (expertKey?.trim() ?? ''),
   );
 }

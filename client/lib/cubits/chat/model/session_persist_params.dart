@@ -10,7 +10,6 @@ class SessionPersistParams {
     this.cli,
     this.simpleIdentity,
     this.workingDirectory,
-    this.expertKey,
     this.continueOverrides,
   });
 
@@ -21,6 +20,5 @@ class SessionPersistParams {
   /// Simple launch: denormalized identity written to [AppSession].
   final SimpleLaunchIdentity? simpleIdentity;
   final String? workingDirectory;
-  final String? expertKey;
   final SessionContinueOverrides? continueOverrides;
 }

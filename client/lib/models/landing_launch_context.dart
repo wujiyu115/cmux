@@ -10,7 +10,6 @@ class LandingLaunchContext {
     this.presetId,
     this.teamId,
     this.projectFolderPath,
-    this.expertKey,
     this.workingDirectoryPath,
     this.dangerouslySkipPermissions = true,
   });
@@ -28,7 +27,6 @@ class LandingLaunchContext {
   final String? projectFolderPath;
 
   /// Expert Hub member key when [isPersonal] is true (Simple mode).
-  final String? expertKey;
 
   /// Launch cwd: the selected worktree path under [projectFolderPath].
   final String? workingDirectoryPath;
@@ -41,7 +39,6 @@ class LandingLaunchContext {
     String? presetId,
     String? teamId,
     Object? projectFolderPath = _unset,
-    Object? expertKey = _unset,
     Object? workingDirectoryPath = _unset,
     bool? dangerouslySkipPermissions,
   }) {
@@ -52,7 +49,6 @@ class LandingLaunchContext {
       projectFolderPath: projectFolderPath == _unset
           ? this.projectFolderPath
           : projectFolderPath as String?,
-      expertKey: expertKey == _unset ? this.expertKey : expertKey as String?,
       workingDirectoryPath: workingDirectoryPath == _unset
           ? this.workingDirectoryPath
           : workingDirectoryPath as String?,
@@ -69,7 +65,6 @@ class LandingLaunchContext {
           presetId == other.presetId &&
           teamId == other.teamId &&
           projectFolderPath == other.projectFolderPath &&
-          expertKey == other.expertKey &&
           workingDirectoryPath == other.workingDirectoryPath &&
           dangerouslySkipPermissions == other.dangerouslySkipPermissions;
 
@@ -79,7 +74,6 @@ class LandingLaunchContext {
     presetId,
     teamId,
     projectFolderPath,
-    expertKey,
     workingDirectoryPath,
     dangerouslySkipPermissions,
   );

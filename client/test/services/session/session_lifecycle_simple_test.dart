@@ -81,7 +81,6 @@ void main() {
       workspaceId: workspaceId,
       sessionId: sessionId,
       memberId: member?.id ?? 'seat-1',
-      expertKey: 'teampilot/builtin/default',
       presetId: presetId,
       runtimeBundle: runtimeBundle,
       member:
@@ -116,7 +115,6 @@ void main() {
         workspaceId: workspaceId,
         folders: const [WorkspaceFolder(path: '/work/simple')],
         sessionTeam: '',
-        expertKey: 'teampilot/builtin/default',
         createdAt: 1,
       );
       final plan = simplePlan(
@@ -326,7 +324,6 @@ void main() {
       workspaceId: workspaceId,
       folders: const [WorkspaceFolder(path: '/work/pack')],
       sessionTeam: '',
-      expertKey: 'teampilot/builtin/default',
       createdAt: 1,
     );
     final plan = simplePlan(

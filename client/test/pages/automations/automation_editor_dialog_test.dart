@@ -10,7 +10,6 @@ import 'package:teampilot/cubits/cli_presets_cubit.dart';
 import 'package:teampilot/cubits/session_preferences_cubit.dart';
 import 'package:teampilot/l10n/app_localizations.dart';
 import 'package:teampilot/models/cli_preset.dart';
-import 'package:teampilot/models/discoverable_member.dart';
 import 'package:teampilot/models/team_config.dart';
 import 'package:teampilot/models/workspace.dart';
 import 'package:teampilot/models/workspace_folder.dart';

@@ -101,7 +101,6 @@ class AppSession {
     this.updatedAt = 0,
     this.pinned = false,
     this.sortOrder = 0,
-    this.expertKey = '',
     this.continueOverrides = const SessionContinueOverrides(),
   });
 
@@ -126,7 +125,6 @@ class AppSession {
     int updatedAt = 0,
     bool pinned = false,
     int sortOrder = 0,
-    String expertKey = '',
     SessionContinueOverrides continueOverrides =
         const SessionContinueOverrides(),
   }) {
@@ -155,7 +153,6 @@ class AppSession {
       updatedAt: updatedAt,
       pinned: pinned,
       sortOrder: sortOrder,
-      expertKey: expertKey.trim(),
       continueOverrides: continueOverrides,
     );
   }
@@ -213,7 +210,6 @@ class AppSession {
       updatedAt: json['updatedAt'] as int? ?? 0,
       pinned: json['pinned'] as bool? ?? false,
       sortOrder: json['sortOrder'] as int? ?? 0,
-      expertKey: json['expertKey'] as String? ?? '',
       continueOverrides: SessionContinueOverrides.fromJson(
         json['continueOverrides'] is Map
             ? Map<String, Object?>.from(json['continueOverrides'] as Map)
@@ -286,9 +282,6 @@ class AppSession {
   final bool pinned;
   final int sortOrder;
 
-  /// Expert Hub discovery key when this personal session summons an expert.
-  final String expertKey;
-
   /// Session-scoped continue chrome: permission + per-member model overrides.
   final SessionContinueOverrides continueOverrides;
 
@@ -311,7 +304,6 @@ class AppSession {
       provider: resolvedProvider,
       model: model.trim(),
       effort: effort.trim(),
-      expertKey: expertKey.trim(),
       presetId: presetId.trim(),
     );
   }
@@ -351,7 +343,6 @@ class AppSession {
     int? updatedAt,
     bool? pinned,
     int? sortOrder,
-    String? expertKey,
     SessionContinueOverrides? continueOverrides,
   }) {
     return AppSession(
@@ -375,7 +366,6 @@ class AppSession {
       updatedAt: updatedAt ?? this.updatedAt,
       pinned: pinned ?? this.pinned,
       sortOrder: sortOrder ?? this.sortOrder,
-      expertKey: expertKey ?? this.expertKey,
       continueOverrides: continueOverrides ?? this.continueOverrides,
     );
   }
@@ -404,7 +394,6 @@ class AppSession {
       'updatedAt': updatedAt,
       'pinned': pinned,
       if (sortOrder != 0) 'sortOrder': sortOrder,
-      if (expertKey.isNotEmpty) 'expertKey': expertKey,
       if (continueOverrides != const SessionContinueOverrides())
         'continueOverrides': continueOverrides.toJson(),
     };
@@ -435,7 +424,6 @@ class AppSession {
             updatedAt == other.updatedAt &&
             pinned == other.pinned &&
             sortOrder == other.sortOrder &&
-            expertKey == other.expertKey &&
             continueOverrides == other.continueOverrides;
   }
 
@@ -463,7 +451,6 @@ class AppSession {
     updatedAt,
     pinned,
     sortOrder,
-    expertKey,
     continueOverrides,
   ]);
 }

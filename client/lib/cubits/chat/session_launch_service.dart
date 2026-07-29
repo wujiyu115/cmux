@@ -178,7 +178,6 @@ class SessionLaunchService implements SessionShellConnectorDelegate {
       presetId: params.simpleIdentity?.presetId,
       workingDirectory: params.workingDirectory,
       fixedSessionId: session.sessionId,
-      expertKey: params.simpleIdentity?.expertKey ?? params.expertKey,
       continueOverrides: params.continueOverrides,
     );
     tab.persistedSession = persisted;

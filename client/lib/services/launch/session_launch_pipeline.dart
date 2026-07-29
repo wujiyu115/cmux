@@ -186,7 +186,6 @@ class SessionLaunchPipeline {
       simpleIdentity: request.simpleIdentity,
       workingDirectory: request.workingDirectory,
       sessionTeamId: sessionTeamId,
-      expertKey: request.expertKey,
     );
 
     // Team sessions need provisional member bindings so history loading (which
@@ -217,7 +216,6 @@ class SessionLaunchPipeline {
       cli: request.cli,
       simpleIdentity: request.simpleIdentity,
       workingDirectory: request.workingDirectory,
-      expertKey: request.expertKey,
       continueOverrides: request.continueOverrides,
     );
 

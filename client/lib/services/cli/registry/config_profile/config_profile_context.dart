@@ -1,7 +1,6 @@
 import 'package:path/path.dart' as p;
 
 import '../../../../models/cli_preset.dart';
-import '../../../../models/discoverable_member.dart';
 import '../../../../models/team_config.dart';
 import '../../../io/filesystem.dart';
 import '../../../host/host_execution_environment.dart';
@@ -159,8 +158,6 @@ class ConfigProfileLaunchContext {
     this.agentStatus,
     this.preset,
     this.memberId,
-    this.sessionExpertKey,
-    this.resolvedExpert,
   });
 
   final String workspaceId;
@@ -185,8 +182,6 @@ class ConfigProfileLaunchContext {
   final MemberAgentStatusEndpoint? agentStatus;
   final CliPreset? preset;
   final String? memberId;
-  final String? sessionExpertKey;
-  final DiscoverableMember? resolvedExpert;
 
   bool get crossMachine => configProfileCrossMachine(catalog, paths);
 

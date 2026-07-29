@@ -436,9 +436,6 @@ class _SessionChatViewState extends State<SessionChatView> {
     return LandingLaunchContext(
       isPersonal: isPersonal,
       teamId: isPersonal ? null : widget.session.sessionTeam,
-      expertKey: widget.session.expertKey.trim().isEmpty
-          ? null
-          : widget.session.expertKey,
       workingDirectoryPath: _workspaceRoot,
     );
   }
