@@ -15,7 +15,6 @@ import '../pages/mcp/mcp_form_nav_page.dart';
 import '../pages/mcp/mcp_management_page.dart';
 import '../pages/onboarding/onboarding_gate.dart';
 import '../pages/startup_gate.dart';
-import '../pages/team_config/team_config_page.dart';
 import '../widgets/android_ssh_profile_selector.dart';
 import 'android_shell_chrome.dart';
 import '../models/layout_preferences.dart';
@@ -279,54 +278,6 @@ final appRouter = GoRouter(
               path: '/config/logs',
               pageBuilder: (context, state) => const NoTransitionPage(
                 child: ConfigWorkspace(section: ConfigSection.logs),
-              ),
-            ),
-            GoRoute(
-              path: '/team-config',
-              redirect: (context, state) {
-                if (Platform.isAndroid) return null;
-                return '/team-config/team';
-              },
-              pageBuilder: (context, state) =>
-                  const NoTransitionPage(child: TeamConfigHubPage()),
-            ),
-            GoRoute(
-              path: '/team-config/team',
-              pageBuilder: (context, state) => const NoTransitionPage(
-                child: TeamConfigPage(section: TeamConfigSection.team),
-              ),
-            ),
-            GoRoute(
-              path: '/team-config/skills',
-              pageBuilder: (context, state) => const NoTransitionPage(
-                child: TeamConfigPage(section: TeamConfigSection.skills),
-              ),
-            ),
-            GoRoute(
-              path: '/team-config/plugins',
-              pageBuilder: (context, state) => const NoTransitionPage(
-                child: TeamConfigPage(section: TeamConfigSection.plugins),
-              ),
-            ),
-            GoRoute(
-              path: '/team-config/mcp',
-              pageBuilder: (context, state) => const NoTransitionPage(
-                child: TeamConfigPage(section: TeamConfigSection.mcp),
-              ),
-            ),
-            GoRoute(
-              path: '/team-config/extensions',
-              pageBuilder: (context, state) => const NoTransitionPage(
-                child: TeamConfigPage(section: TeamConfigSection.extensions),
-              ),
-            ),
-            GoRoute(
-              path: '/team-config/members/:memberId',
-              pageBuilder: (context, state) => NoTransitionPage(
-                child: TeamConfigPage(
-                  section: TeamConfigSection.members,
-                  memberId: state.pathParameters['memberId'],
-                ),
               ),
             ),
             GoRoute(

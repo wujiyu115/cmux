@@ -11,7 +11,6 @@ import '../../theme/workspace_surface_layers.dart';
 import '../../widgets/split_layout.dart';
 import '../team_config/team_config_section.dart';
 import 'home_all_workspaces_pane.dart';
-import 'home_workspace_content.dart';
 import 'home_workspace_global_section.dart';
 import 'home_workspace_library_section.dart';
 import 'home_workspace_library_view.dart';
@@ -194,38 +193,6 @@ class _HomeRightPane extends StatefulWidget {
 
 class _HomeRightPaneState extends State<_HomeRightPane> {
   WorkspaceRightPaneDescriptor? _previousDescriptor;
-  var _consumedTeamDeepLink = false;
-  final Map<String, int> _teamTabIndexById = {};
-
-  static const _teamSections = <TeamConfigSection>[
-    TeamConfigSection.skills,
-    TeamConfigSection.plugins,
-    TeamConfigSection.mcp,
-    TeamConfigSection.extensions,
-    TeamConfigSection.members,
-    TeamConfigSection.team,
-  ];
-
-  int _teamTabIndex(String teamId, TeamConfigSection? deepLinkSection) {
-    if (deepLinkSection != null) {
-      final index = _teamSections.indexOf(deepLinkSection);
-      if (index >= 0) return index;
-    }
-    return _teamTabIndexById[teamId] ?? 0;
-  }
-
-  void _rememberTeamTabIndex(String teamId, int index) {
-    _teamTabIndexById[teamId] = index;
-  }
-
-  ({TeamConfigSection? section, String? memberId}) _takeTeamDeepLink() {
-    if (_consumedTeamDeepLink) {
-      return (section: null, memberId: null);
-    }
-    _consumedTeamDeepLink = true;
-    return (section: widget.initialSection, memberId: widget.initialMemberId);
-  }
-
   @override
   Widget build(BuildContext context) {
     final descriptor = _resolveDescriptor(context);
@@ -256,25 +223,7 @@ class _HomeRightPaneState extends State<_HomeRightPane> {
       return const WorkspaceRightPaneDescriptor.allWorkspaces();
     }
 
-    final resolvedProfileId =
-        widget.selectedIdentityId ??
-        context.select<LaunchProfileCubit, String?>(
-          (c) => c.state.selectedTeamId,
-        );
-    final identityKind = context.select<LaunchProfileCubit, LaunchProfileKind?>(
-      (c) {
-        final id = resolvedProfileId;
-        if (id == null) return null;
-        return c.byId(id)?.kind;
-      },
-    );
-
-    return switch (identityKind) {
-      LaunchProfileKind.team => WorkspaceRightPaneDescriptor.team(
-        resolvedProfileId ?? '',
-      ),
-      _ => const WorkspaceRightPaneDescriptor.allWorkspaces(),
-    };
+    return const WorkspaceRightPaneDescriptor.allWorkspaces();
   }
 
   Widget _buildPane(
@@ -290,51 +239,7 @@ class _HomeRightPaneState extends State<_HomeRightPane> {
       WorkspaceRightPaneKind.library => HomeLibrarySection(
         view: descriptor.libraryView!,
       ),
-      WorkspaceRightPaneKind.team => () {
-        final deepLink = _takeTeamDeepLink();
-        final teamId = descriptor.identityId ?? '';
-        return _HomeTeamPane(
-          teamId: teamId,
-          initialTabIndex: _teamTabIndex(teamId, deepLink.section),
-          initialMemberId: deepLink.memberId,
-          onTabIndexChanged: (index) => _rememberTeamTabIndex(teamId, index),
-          onSelectGlobalView: widget.onSelectGlobalView,
-        );
-      }(),
     };
   }
 }
 
-class _HomeTeamPane extends StatelessWidget {
-  const _HomeTeamPane({
-    required this.teamId,
-    required this.initialTabIndex,
-    required this.initialMemberId,
-    required this.onTabIndexChanged,
-    required this.onSelectGlobalView,
-  });
-
-  final String teamId;
-  final int initialTabIndex;
-  final String? initialMemberId;
-  final ValueChanged<int> onTabIndexChanged;
-  final ValueChanged<HomeGlobalView> onSelectGlobalView;
-
-  @override
-  Widget build(BuildContext context) {
-    final team = context.select<LaunchProfileCubit, TeamProfile?>(
-      (c) => LaunchProfileSelectors.teamById(c.state, teamId),
-    );
-    if (team == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    return HomeContent(
-      team: team,
-      cubit: context.read<LaunchProfileCubit>(),
-      initialTabIndex: initialTabIndex,
-      initialMemberId: initialMemberId,
-      onTabIndexChanged: onTabIndexChanged,
-      onSelectGlobalView: onSelectGlobalView,
-    );
-  }
-}

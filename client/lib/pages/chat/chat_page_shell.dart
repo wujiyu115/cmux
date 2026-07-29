@@ -37,7 +37,6 @@ import 'chat_page_shell_probe.dart';
 import 'chat_scoped_tab_view.dart';
 import 'session_tab_cli.dart';
 import 'session_workbench_view_toggle.dart';
-import 'team_config_incomplete_dialog.dart';
 
 Future<void> _showStripNewTerminalMenu({
   required BuildContext context,
@@ -474,20 +473,7 @@ Widget _chatLaunchListener(BuildContext context, Widget child) {
         AppToast.show(listenerContext, message: message);
         listenerContext.read<EditorCubit>().clearSnackbarMessage();
       },
-      child: BlocListener<ChatCubit, ChatState>(
-        listenWhen: (previous, next) =>
-            previous.teamConfigValidation != next.teamConfigValidation &&
-            next.teamConfigValidation != null,
-        listener: (listenerContext, state) {
-          final validation = state.teamConfigValidation;
-          listenerContext.read<ChatCubit>().clearTeamConfigValidation();
-          if (validation == null || !listenerContext.mounted) return;
-          unawaited(
-            showTeamConfigIncompleteDialog(listenerContext, validation),
-          );
-        },
-        child: child,
-      ),
+      child: child,
     ),
   );
 }

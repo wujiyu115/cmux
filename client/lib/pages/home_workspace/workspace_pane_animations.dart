@@ -6,7 +6,7 @@ import 'home_workspace_global_section.dart';
 import 'home_workspace_library_view.dart';
 
 /// Which right-hand workspace-home pane is active.
-enum WorkspaceRightPaneKind { allWorkspaces, global, library, team }
+enum WorkspaceRightPaneKind { allWorkspaces, global, library }
 
 /// Stable identity for [AnimatedSwitcher] and transition selection.
 class WorkspaceRightPaneDescriptor {
@@ -31,14 +31,10 @@ class WorkspaceRightPaneDescriptor {
   const WorkspaceRightPaneDescriptor.library(HomeLibraryView view)
     : this._(kind: WorkspaceRightPaneKind.library, libraryView: view);
 
-  const WorkspaceRightPaneDescriptor.team(String teamId)
-    : this._(kind: WorkspaceRightPaneKind.team, identityId: teamId);
-
   String get switchKey => switch (kind) {
     WorkspaceRightPaneKind.allWorkspaces => 'all-workspaces',
     WorkspaceRightPaneKind.global => 'global-${globalView!.name}',
     WorkspaceRightPaneKind.library => 'library-${libraryView!.name}',
-    WorkspaceRightPaneKind.team => 'team-$identityId',
   };
 
   @override
@@ -62,7 +58,6 @@ abstract final class WorkspacePaneAnimations {
   static bool _paneHandlesOwnEntryMotion(WorkspaceRightPaneKind kind) =>
       switch (kind) {
         WorkspaceRightPaneKind.global ||
-        WorkspaceRightPaneKind.team ||
         WorkspaceRightPaneKind.allWorkspaces ||
         WorkspaceRightPaneKind.library => true,
       };
