@@ -76,7 +76,6 @@ void main() {
       requestOpenSession: (_) async => SessionOpenStatus.opened,
       requestCreateAndOpenSession: (_) async => SessionOpenStatus.opened,
       workspaceById: (_) => Workspace(workspaceId: 'ws1', createdAt: 1),
-      teamById: (_) => null,
       nowMs: () => 1_700_000_000_000,
     );
     final scheduler = AutomationScheduler(
@@ -113,7 +112,6 @@ void main() {
       requestOpenSession: (_) async => SessionOpenStatus.opened,
       requestCreateAndOpenSession: (_) async => SessionOpenStatus.opened,
       workspaceById: (_) => Workspace(workspaceId: 'ws1', createdAt: 1),
-      teamById: (_) => null,
       nowMs: () => 1_700_000_000_000,
     );
     final scheduler = AutomationScheduler(
@@ -158,7 +156,6 @@ void main() {
       requestOpenSession: (_) async => SessionOpenStatus.opened,
       requestCreateAndOpenSession: (_) async => SessionOpenStatus.opened,
       workspaceById: (_) => Workspace(workspaceId: 'ws1', createdAt: 1),
-      teamById: (_) => null,
       nowMs: () => 1_700_000_000_000,
     );
     final scheduler = AutomationScheduler(

@@ -109,7 +109,6 @@ void main() {
       },
       requestCreateAndOpenSession: (_) async => SessionOpenStatus.opened,
       workspaceById: (_) => workspace,
-      teamById: (id) => id == 'team-1' ? team : null,
       nowMs: () => 100,
     );
 
@@ -139,7 +138,6 @@ void main() {
       requestOpenSession: (_) async => SessionOpenStatus.opened,
       requestCreateAndOpenSession: (_) async => SessionOpenStatus.opened,
       workspaceById: (_) => null,
-      teamById: (_) => null,
       nowMs: () => 50,
     );
 
@@ -171,7 +169,6 @@ void main() {
       requestOpenSession: (_) async => SessionOpenStatus.opened,
       requestCreateAndOpenSession: (_) async => SessionOpenStatus.opened,
       workspaceById: (_) => workspace,
-      teamById: (_) => null,
       nowMs: () => 10,
       memberReadyTimeout: const Duration(milliseconds: 50),
     );
@@ -209,7 +206,6 @@ void main() {
       requestOpenSession: (_) async => SessionOpenStatus.opened,
       requestCreateAndOpenSession: (_) async => SessionOpenStatus.opened,
       workspaceById: (_) => workspace,
-      teamById: (id) => id == 'team-1' ? team : null,
       nowMs: () => 100,
     );
 
@@ -246,7 +242,6 @@ void main() {
         return SessionOpenStatus.opened;
       },
       workspaceById: (_) => workspace,
-      teamById: (_) => null,
       sessionById: (sessionId, workspaceId) {
         if (createdSessionId == null || sessionId != createdSessionId) {
           return null;
@@ -310,7 +305,6 @@ void main() {
         return SessionOpenStatus.opened;
       },
       workspaceById: (_) => workspace,
-      teamById: (_) => null,
       sessionById: (sessionId, workspaceId) => AppSession(
         sessionId: sessionId,
         workspaceId: workspaceId,
@@ -373,7 +367,6 @@ void main() {
         return SessionOpenStatus.opened;
       },
       workspaceById: (_) => workspace,
-      teamById: (_) => null,
       nowMs: () => 200,
     );
 

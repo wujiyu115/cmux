@@ -23,7 +23,6 @@ import 'automation_launch_session_binding.dart';
 import 'automation_schedule_calculator.dart';
 
 typedef AutomationWorkspaceResolver = Workspace? Function(String workspaceId);
-typedef AutomationTeamResolver = TeamProfile? Function(String teamId);
 typedef AutomationSessionLookup =
     AppSession? Function(String sessionId, String workspaceId);
 
@@ -40,7 +39,6 @@ class AutomationDispatcher {
     required Future<SessionOpenStatus> Function(SessionCreateRequest)
     requestCreateAndOpenSession,
     required AutomationWorkspaceResolver workspaceById,
-    required AutomationTeamResolver teamById,
     CliPreset? Function(String id)? resolveCliPreset,
     AutomationSessionLookup? sessionById,
     int Function()? nowMs,
@@ -52,7 +50,6 @@ class AutomationDispatcher {
        _requestOpenSession = requestOpenSession,
        _requestCreateAndOpenSession = requestCreateAndOpenSession,
        _workspaceById = workspaceById,
-       _teamById = teamById,
        _resolveCliPreset = resolveCliPreset,
        _sessionById = sessionById,
        _nowMs = nowMs ?? _automationDefaultNowMs,
@@ -70,7 +67,6 @@ class AutomationDispatcher {
   final Future<SessionOpenStatus> Function(SessionCreateRequest)
   _requestCreateAndOpenSession;
   final AutomationWorkspaceResolver _workspaceById;
-  final AutomationTeamResolver _teamById;
   final CliPreset? Function(String id)? _resolveCliPreset;
   final AutomationSessionLookup? _sessionById;
   final int Function() _nowMs;
@@ -230,52 +226,29 @@ class AutomationDispatcher {
       workspace: workspace,
     );
     final plannedSessionId = _uuid.v4();
-    final SessionOpenStatus status;
-    if (automation.isPersonal) {
-      final presetId = automation.presetId?.trim() ?? '';
-      final preset = presetId.isEmpty ? null : _resolveCliPreset?.call(presetId);
-      final expertKey = automation.expertKey?.trim() ?? '';
-      final simpleIdentity = SimpleLaunchIdentity.resolve(
-        preset: preset,
-        presetId: presetId,
+    final presetId = automation.presetId?.trim() ?? '';
+    final preset = presetId.isEmpty ? null : _resolveCliPreset?.call(presetId);
+    final expertKey = automation.expertKey?.trim() ?? '';
+    final simpleIdentity = SimpleLaunchIdentity.resolve(
+      preset: preset,
+      presetId: presetId,
+      expertKey: expertKey,
+    );
+    final status = await _requestCreateAndOpenSession(
+      SessionCreateRequest(
+        workspace: workspace,
+        isPersonal: true,
+        repo: _sessionRepository,
+        cli: simpleIdentity.cli,
+        simpleIdentity: simpleIdentity,
         expertKey: expertKey,
-      );
-      status = await _requestCreateAndOpenSession(
-        SessionCreateRequest(
-          workspace: workspace,
-          isPersonal: true,
-          repo: _sessionRepository,
-          cli: simpleIdentity.cli,
-          simpleIdentity: simpleIdentity,
-          expertKey: expertKey,
-          continueOverrides: SessionContinueOverrides(
-            dangerouslySkipPermissions: automation.dangerouslySkipPermissions,
-          ),
-          workingDirectory: workingDirectory,
-          fixedSessionId: plannedSessionId,
+        continueOverrides: SessionContinueOverrides(
+          dangerouslySkipPermissions: automation.dangerouslySkipPermissions,
         ),
-      );
-    } else {
-      final teamId = automation.teamId?.trim() ?? '';
-      if (teamId.isEmpty) return null;
-      final team = _teamById(teamId);
-      if (team == null) return null;
-      final member = _resolveTeamMember(team, automation.targetMemberId);
-      status = await _requestCreateAndOpenSession(
-        SessionCreateRequest(
-          workspace: workspace,
-          isPersonal: false,
-          team: team,
-          member: member,
-          repo: _sessionRepository,
-          continueOverrides: SessionContinueOverrides(
-            dangerouslySkipPermissions: automation.dangerouslySkipPermissions,
-          ),
-          workingDirectory: workingDirectory,
-          fixedSessionId: plannedSessionId,
-        ),
-      );
-    }
+        workingDirectory: workingDirectory,
+        fixedSessionId: plannedSessionId,
+      ),
+    );
     if (status != SessionOpenStatus.opened) return null;
 
     final fromSnapshot = _sessionById?.call(
@@ -297,21 +270,10 @@ class AutomationDispatcher {
     final workspace = _workspaceById(session.workspaceId);
     if (workspace == null) return false;
 
-    final isPersonal = session.sessionTeam.trim().isEmpty;
-    TeamProfile? team;
-    TeamMemberConfig? member;
-    if (!isPersonal) {
-      team = _teamById(session.sessionTeam);
-      if (team == null) return false;
-      member = _resolveTeamMember(team, memberId);
-    }
-
     final status = await _requestOpenSession(
       SessionOpenRequest(
         session: session,
         workspace: workspace,
-        team: team,
-        member: member,
         repo: _sessionRepository,
         connectImmediately: true,
       ),
@@ -344,17 +306,6 @@ class AutomationDispatcher {
     }
     final target = automation.targetMemberId.trim();
     return target.isEmpty ? _leadMemberId : target;
-  }
-
-  TeamMemberConfig? _resolveTeamMember(TeamProfile team, String memberId) {
-    final trimmed = memberId.trim();
-    if (trimmed.isNotEmpty) {
-      final match = team.members.where((m) => m.id == trimmed).firstOrNull;
-      if (match != null && match.isValid) return match;
-    }
-    final lead = team.members.where((m) => m.id == _leadMemberId).firstOrNull;
-    if (lead != null && lead.isValid) return lead;
-    return team.members.where((m) => m.isValid).firstOrNull;
   }
 
   AutomationRun _pendingRun(

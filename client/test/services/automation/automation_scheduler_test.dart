@@ -87,7 +87,6 @@ AutomationDispatcher _buildDispatcher({
     requestOpenSession: (_) async => SessionOpenStatus.opened,
     requestCreateAndOpenSession: (_) async => SessionOpenStatus.opened,
     workspaceById: (_) => workspace,
-    teamById: (id) => id == 'team-1' ? team : null,
     nowMs: () => 2_000,
   );
 }
