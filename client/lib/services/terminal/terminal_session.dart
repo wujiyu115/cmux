@@ -27,7 +27,6 @@ import 'terminal_session_link_providers.dart';
 import 'terminal_transport_starter.dart';
 import 'terminal_user_input_pipeline.dart';
 import '../team/terminal_activity_tracker.dart';
-import '../team_bus/bus_user_line_capture.dart';
 import '../../models/workspace_shell_launch_plan.dart';
 import '../workspace_dnd/runtime_target.dart';
 import '../../utils/logging/logger.dart';
@@ -232,7 +231,6 @@ class TerminalSession {
     VoidCallback? onProcessExited,
     void Function(String line)? onFirstUserLineSubmitted,
     void Function(String line)? onEveryUserLineSubmitted,
-    BusUserInputRouting? busUserInputRouting,
     String? executableOverride,
   }) {
     if (isDisposed) return;
@@ -330,7 +328,6 @@ class TerminalSession {
       onFirstUserLineSubmitted: onFirstUserLineSubmitted,
       onEveryUserLineSubmitted: onEveryUserLineSubmitted,
       onTurnStart: markUserTurnStarted,
-      busUserInputRouting: busUserInputRouting,
       forwardsColorScheme: forwardsColorScheme,
     );
 

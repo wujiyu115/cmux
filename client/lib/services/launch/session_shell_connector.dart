@@ -277,7 +277,6 @@ class SessionShellConnector {
         resumeSessionId: plan.resumeSessionId,
         shellLaunch: shellLaunch,
         extraEnvironment: plan.env.isEmpty ? null : plan.env,
-        busUserInputRouting: null,
         onFirstUserLineSubmitted: _delegate.autoRenameOnFirstPrompt(
           activeSession.sessionId,
         ),

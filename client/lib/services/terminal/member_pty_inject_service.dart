@@ -1,6 +1,5 @@
 import 'fullscreen_cr_ack_config.dart';
 import '../../utils/logging/logger.dart';
-import '../team_bus/team_bus.dart';
 import 'fullscreen_pty_automation.dart';
 import 'pty_automation_retry_queue.dart';
 import 'pty_automation_session_lock.dart';
@@ -20,11 +19,12 @@ final class MemberPtyInjectService {
        _retryQueue =
            retryQueue ??
            PtyAutomationRetryQueue(
-             retryIntervalMs: TeamBus.doorbellRetryMs,
-             maxAttempts: TeamBus.maxPtyNotifyAttempts,
+             retryIntervalMs: _doorbellRetryMs,
+             maxAttempts: maxPtyNotifyAttempts,
            );
 
-  static const maxPtyNotifyAttempts = TeamBus.maxPtyNotifyAttempts;
+  static const int _doorbellRetryMs = 5 * 1000;
+  static const int maxPtyNotifyAttempts = 6;
 
   final FullscreenPtyAutomation _automation;
   final PtyAutomationSessionLock _lock;
