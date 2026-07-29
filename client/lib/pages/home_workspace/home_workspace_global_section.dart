@@ -1,24 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:go_router/go_router.dart';
-import 'package:shared_ui/shared_ui.dart';
-import 'package:teampilot/widgets/app_toast/app_toast.dart';
 
-import '../../cubits/expert_hub_cubit.dart';
-import '../../l10n/l10n_extensions.dart';
-import '../../models/discoverable_member.dart';
 import '../automations/automation_management_page.dart';
-import '../expert_hub/expert_hub_page.dart';
-import '../expert_hub/expert_team_picker_dialog.dart';
-import '../expert_hub/expert_workspace_picker_dialog.dart';
-import '../expert_hub/member_hub_add_feedback.dart';
 import '../extensions/extension_management_page.dart';
 import '../mcp/mcp_management_page.dart';
 import '../plugins/plugin_management_page.dart';
 import '../skills/skill_management_page.dart';
 import '../llm_config/llm_config_workspace.dart';
-import '../my_experts/my_experts_page.dart';
-import '../my_teams/my_teams_page.dart';
 
 /// Which global management view is shown in the workspace-home right pane.
 enum HomeGlobalView {
@@ -26,9 +14,6 @@ enum HomeGlobalView {
   plugins,
   mcp,
   extensions,
-  myTeams,
-  myExperts,
-  expertHub,
   providers,
   automations;
 
@@ -100,12 +85,6 @@ class _HomeGlobalSectionState extends State<HomeGlobalSection> {
         section: _extension,
         onSelectSection: (s) => setState(() => _extension = s),
       ),
-      HomeGlobalView.myTeams => MyTeamsPage(onOpenTeam: widget.onOpenTeam),
-      HomeGlobalView.myExperts => const MyExpertsPage(),
-      HomeGlobalView.expertHub => ExpertHubPage(
-        onAddToTeam: expertHubAddToTeam,
-        onLaunchInWorkspace: expertHubLaunchInWorkspace,
-      ),
       HomeGlobalView.providers => const LlmConfigWorkspace(),
       HomeGlobalView.automations => const AutomationManagementPage(),
     };
@@ -120,37 +99,4 @@ class _HomeGlobalSectionState extends State<HomeGlobalSection> {
           curve: Curves.easeOutCubic,
         );
   }
-}
-
-Future<void> expertHubAddToTeam(
-  BuildContext context,
-  ExpertHubCubit cubit,
-  DiscoverableMember member,
-) async {
-  final teamId = await showExpertTeamPickerDialog(context);
-  if (teamId == null || !context.mounted) return;
-
-  final l10n = context.l10n;
-  final result = await cubit.addToTeam(teamId: teamId, member: member);
-  if (!context.mounted) return;
-  AppToast.show(
-    context,
-    message: memberHubAddToastMessage(
-      l10n,
-      memberName: member.name,
-      result: result,
-    ),
-    variant: memberHubAddToastIsWarning(result)
-        ? TpToastVariant.warning
-        : TpToastVariant.success,
-  );
-}
-
-void expertHubLaunchInWorkspace(BuildContext context, DiscoverableMember member) {
-  showExpertWorkspacePickerDialog(context).then((workspaceId) {
-    if (workspaceId == null || !context.mounted) return;
-    context.go(
-      '/home-v2/workspace/$workspaceId?expert=${Uri.encodeComponent(member.key)}',
-    );
-  });
 }

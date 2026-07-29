@@ -113,44 +113,12 @@ class _HomeSidebarNavScroll extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     final l10n = context.l10n;
     final onGlobal = this.onGlobal;
     final activeGlobalView = this.activeGlobalView;
 
     return ListView(
       children: [
-        _ShortcutRow(
-          icon: Icons.groups_2_outlined,
-          label: l10n.myTeamsNav,
-          active: activeGlobalView == HomeGlobalView.myTeams,
-          onTap: () => onGlobal?.call(HomeGlobalView.myTeams),
-        ),
-        const SizedBox(height: 4),
-        _ShortcutRow(
-          icon: Icons.badge_outlined,
-          label: l10n.myExpertsNav,
-          active: activeGlobalView == HomeGlobalView.myExperts,
-          onTap: () => onGlobal?.call(HomeGlobalView.myExperts),
-        ),
-        const SizedBox(height: 8),
-        Divider(
-          height: 1,
-          color: cs.outlineVariant.withValues(alpha: 0.5),
-        ),
-        const SizedBox(height: 8),
-        _ShortcutRow(
-          icon: Icons.psychology_outlined,
-          label: l10n.expertHubNav,
-          active: activeGlobalView == HomeGlobalView.expertHub,
-          onTap: () => onGlobal?.call(HomeGlobalView.expertHub),
-        ),
-        const SizedBox(height: 8),
-        Divider(
-          height: 1,
-          color: cs.outlineVariant.withValues(alpha: 0.5),
-        ),
-        const SizedBox(height: 8),
         _ShortcutRow(
           icon: Icons.extension_outlined,
           label: l10n.teamSkillsNav,
