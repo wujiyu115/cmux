@@ -4,7 +4,6 @@ import '../../cubits/chat/model/chat_tab.dart';
 import '../../cubits/chat/model/session_open_request.dart';
 import '../../cubits/chat/session_launch_host.dart';
 import '../../models/app_session.dart';
-import '../../models/team_config.dart';
 import '../../models/workspace.dart';
 import '../../services/terminal/terminal_session.dart';
 import '../../utils/logging/logger.dart';
@@ -19,8 +18,6 @@ typedef ScheduleShellConnectFn =
       required SessionOpenRequest request,
       required bool launched,
       required Workspace? workspace,
-      required TeamProfile? team,
-      required TeamMemberConfig? member,
       VoidCallback? onFinally,
     });
 
@@ -40,32 +37,17 @@ class SessionLaunchConnectPrepRunner {
     required bool Function(SessionOpenRequest request) shouldAutoConnect,
     required ScheduleShellConnectFn scheduleShellConnect,
     required RollbackStagedLaunchFn rollbackStagedLaunch,
-    required Future<void> Function({
-      required ChatTab tab,
-      required AppSession session,
-      required TeamProfile? team,
-      required int generation,
-    })
-    installTeamRuntimeIfNeeded,
   }) : _host = host,
        _prepCallbacks = prepCallbacks,
        _shouldAutoConnect = shouldAutoConnect,
        _scheduleShellConnect = scheduleShellConnect,
-       _rollbackStagedLaunch = rollbackStagedLaunch,
-       _installTeamRuntimeIfNeeded = installTeamRuntimeIfNeeded;
+       _rollbackStagedLaunch = rollbackStagedLaunch;
 
   final SessionLaunchHost _host;
   final SessionTabConnectPrepCallbacks _prepCallbacks;
   final bool Function(SessionOpenRequest request) _shouldAutoConnect;
   final ScheduleShellConnectFn _scheduleShellConnect;
   final RollbackStagedLaunchFn _rollbackStagedLaunch;
-  final Future<void> Function({
-    required ChatTab tab,
-    required AppSession session,
-    required TeamProfile? team,
-    required int generation,
-  })
-  _installTeamRuntimeIfNeeded;
 
   Future<void> prepareNewTabConnect({
     required int generation,
@@ -83,7 +65,6 @@ class SessionLaunchConnectPrepRunner {
         session: session,
         request: request,
         workspace: workspace,
-        installTeamRuntime: true,
       );
       if (prep == null) return;
 
@@ -101,8 +82,6 @@ class SessionLaunchConnectPrepRunner {
         request: request,
         launched: launched,
         workspace: workspace,
-        team: prep.resolved.team,
-        member: request.isPersonal ? null : prep.resolved.member,
       );
     } on Object catch (e, st) {
       await _handlePrepFailure(
@@ -117,39 +96,6 @@ class SessionLaunchConnectPrepRunner {
     }
   }
 
-  Future<void> prepareDeferredTeamTab({
-    required int generation,
-    required ChatTab tab,
-    required AppSession session,
-    required SessionOpenRequest request,
-  }) async {
-    final team = request.team;
-    if (team == null || request.member == null) return;
-    try {
-      await _installTeamRuntimeIfNeeded(
-        tab: tab,
-        session: session,
-        team: team,
-        generation: generation,
-      );
-      if (!_prepCallbacks.launchStillValid(tab, generation)) return;
-      tab.selectedMemberId = request.member!.id;
-      _host.applyState(
-        _host.state.copyWith(selectedMemberId: request.member!.id),
-      );
-      _host.updateTabRunning(session.sessionId);
-    } on Object catch (e, st) {
-      appLogger.e(
-        '[session-launch] deferred team tab prep failed session=${session.sessionId}: $e',
-        error: e,
-        stackTrace: st,
-      );
-      if (_prepCallbacks.launchStillValid(tab, generation)) {
-        _host.setLaunchError(session.sessionId, e.toString());
-      }
-    }
-  }
-
   Future<void> prepareExistingTabConnect({
     required int generation,
     required ChatTab tab,
@@ -157,16 +103,9 @@ class SessionLaunchConnectPrepRunner {
     required bool connect,
     required Workspace? Function(String workspaceId) workspaceById,
   }) async {
-    var session = request.session;
-    final persisted = tab.persistedSession;
-    if (!request.isPersonal &&
-        session.cliTeamName.isEmpty &&
-        persisted != null &&
-        persisted.cliTeamName.isNotEmpty) {
-      session = persisted;
-    }
+    final session = request.session;
     final workspace = request.workspace ?? workspaceById(session.workspaceId);
-    if (request.isPersonal && workspace == null) return;
+    if (workspace == null) return;
 
     try {
       final prep = await runSessionTabConnectPrep(
@@ -176,7 +115,6 @@ class SessionLaunchConnectPrepRunner {
         session: session,
         request: request,
         workspace: workspace,
-        installTeamRuntime: false,
       );
       if (prep == null) return;
 
@@ -191,7 +129,7 @@ class SessionLaunchConnectPrepRunner {
         }
         return;
       }
-      if (tab.membersPendingConnect.contains(prep.resolved.member.id)) return;
+      if (tab.membersPendingConnect.contains(prep.resolved.memberId)) return;
 
       if (!connect) {
         _host.updateTabRunning(tab.info.id);
@@ -203,7 +141,7 @@ class SessionLaunchConnectPrepRunner {
         _host.beginSessionConnect(launchSession.sessionId);
       }
 
-      tab.membersPendingConnect.add(prep.resolved.member.id);
+      tab.membersPendingConnect.add(prep.resolved.memberId);
       final launched =
           launchSession.launchState == AppSessionLaunchState.started;
       _scheduleShellConnect(
@@ -214,10 +152,8 @@ class SessionLaunchConnectPrepRunner {
         request: request,
         launched: launched,
         workspace: workspace,
-        team: prep.resolved.team,
-        member: request.isPersonal ? null : prep.resolved.member,
         onFinally: () =>
-            tab.membersPendingConnect.remove(prep.resolved.member.id),
+            tab.membersPendingConnect.remove(prep.resolved.memberId),
       );
     } on Object catch (e, st) {
       await _handlePrepFailure(

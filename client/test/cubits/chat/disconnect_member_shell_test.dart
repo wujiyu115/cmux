@@ -71,16 +71,12 @@ void main() {
       await cubit.requestOpenSession(
         SessionOpenRequest(
           session: sessionA,
-          team: team,
-          member: team.members.first,
           repo: repo,
         ),
       );
       await cubit.requestOpenSession(
         SessionOpenRequest(
           session: sessionB,
-          team: team,
-          member: team.members.first,
           repo: repo,
         ),
       );

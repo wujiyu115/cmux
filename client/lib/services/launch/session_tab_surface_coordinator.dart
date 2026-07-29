@@ -11,7 +11,6 @@ import '../../cubits/chat/session_launch_host.dart';
 import '../../models/app_session.dart';
 import '../../models/workspace.dart';
 import '../../utils/logging/logger.dart';
-import '../../utils/team/team_member_naming.dart';
 
 typedef PrepareNewTabConnectFn =
     Future<void> Function({
@@ -31,14 +30,6 @@ typedef PrepareExistingTabConnectFn =
       required bool connect,
     });
 
-typedef PrepareDeferredTeamTabFn =
-    Future<void> Function({
-      required int generation,
-      required ChatTab tab,
-      required AppSession session,
-      required SessionOpenRequest request,
-    });
-
 /// Stages new or reuses existing conversation tabs before async connect prep.
 class SessionTabSurfaceCoordinator {
   SessionTabSurfaceCoordinator({
@@ -49,15 +40,13 @@ class SessionTabSurfaceCoordinator {
     required bool Function(SessionOpenRequest request) shouldAutoConnect,
     required PrepareNewTabConnectFn prepareNewTabConnect,
     required PrepareExistingTabConnectFn prepareExistingTabConnect,
-    required PrepareDeferredTeamTabFn prepareDeferredTeamTab,
   }) : _host = host,
        _tabStore = tabStore,
        _state = state,
        _workspaceById = workspaceById,
        _shouldAutoConnect = shouldAutoConnect,
        _prepareNewTabConnect = prepareNewTabConnect,
-       _prepareExistingTabConnect = prepareExistingTabConnect,
-       _prepareDeferredTeamTab = prepareDeferredTeamTab;
+       _prepareExistingTabConnect = prepareExistingTabConnect;
 
   final SessionLaunchHost _host;
   final ChatTabStore _tabStore;
@@ -66,7 +55,6 @@ class SessionTabSurfaceCoordinator {
   final bool Function(SessionOpenRequest request) _shouldAutoConnect;
   final PrepareNewTabConnectFn _prepareNewTabConnect;
   final PrepareExistingTabConnectFn _prepareExistingTabConnect;
-  final PrepareDeferredTeamTabFn _prepareDeferredTeamTab;
 
   SessionOpenStatus surfaceExistingTab({
     required SessionOpenRequest request,
@@ -78,9 +66,7 @@ class SessionTabSurfaceCoordinator {
       'session=${session.sessionId} idx=$existingIdx',
     );
     final existing = _tabStore.activeTabs[existingIdx];
-    final memberId = request.isPersonal
-        ? existing.selectedMemberId
-        : (request.member?.id ?? existing.selectedMemberId);
+    final memberId = existing.selectedMemberId;
     if (memberId.isNotEmpty) {
       existing.selectedMemberId = memberId;
     }
@@ -142,13 +128,11 @@ class SessionTabSurfaceCoordinator {
     required AppSession session,
   }) {
     final workspace = request.workspace ?? _workspaceById(session.workspaceId);
-    if (request.isPersonal && workspace == null) {
+    if (workspace == null) {
       return SessionOpenStatus.missingWorkspace;
     }
 
-    final placeholderMemberId = request.isPersonal
-        ? ''
-        : (request.member?.id ?? TeamMemberNaming.teamLeadName);
+    const placeholderMemberId = '';
     final info = ChatTabInfo(
       id: session.sessionId,
       title: session.resolveDisplayTitle(request.emptyDisplayTitleFallback),
@@ -193,29 +177,17 @@ class SessionTabSurfaceCoordinator {
     if (!request.preserveWorkbenchView) {
       tab.workbenchView = SessionWorkbenchView.terminal;
     }
-    if (_shouldAutoConnect(request)) {
-      _host.beginSessionConnect(session.sessionId);
-      unawaited(
-        _prepareNewTabConnect(
-          generation: generation,
-          tab: tab,
-          session: session,
-          request: request,
-          workspace: workspace,
-          connect: true,
-        ),
-      );
-    } else {
-      unawaited(
-        _prepareDeferredTeamTab(
-          generation: generation,
-          tab: tab,
-          session: session,
-          request: request,
-        ),
-      );
-      _host.updateTabRunning(session.sessionId);
-    }
+    _host.beginSessionConnect(session.sessionId);
+    unawaited(
+      _prepareNewTabConnect(
+        generation: generation,
+        tab: tab,
+        session: session,
+        request: request,
+        workspace: workspace,
+        connect: true,
+      ),
+    );
     return SessionOpenStatus.opened;
   }
 }

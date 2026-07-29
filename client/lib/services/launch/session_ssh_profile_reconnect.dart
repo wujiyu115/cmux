@@ -4,14 +4,10 @@ import '../../cubits/chat/model/chat_tab.dart';
 import '../../cubits/chat/session_launch_host.dart';
 import '../../models/app_session.dart';
 import '../../models/runtime_target.dart';
-import '../../models/team_config.dart';
 import '../../models/workspace_launch_context.dart';
 import '../../services/launch/session_shell_connector.dart';
 import '../../utils/logging/logger.dart';
 import 'session_launch_workspace_index.dart';
-
-typedef ScheduleMemberConnectFn =
-    void Function(TeamProfile team, TeamMemberConfig member, ChatTab tab);
 
 /// Reconnects open session tabs after an SSH profile change.
 class SessionSshProfileReconnect {
@@ -19,20 +15,17 @@ class SessionSshProfileReconnect {
     required SessionLaunchHost host,
     required SessionShellConnector shellConnector,
     required WorkspaceLaunchContext Function(AppSession session) launchContextFor,
-    required ScheduleMemberConnectFn scheduleMemberConnect,
     required SessionLaunchWorkspaceIndex Function() workspaceIndex,
     required Iterable<ChatTab> Function() openTabs,
   }) : _host = host,
        _shellConnector = shellConnector,
        _launchContextFor = launchContextFor,
-       _scheduleMemberConnect = scheduleMemberConnect,
        _workspaceIndex = workspaceIndex,
        _openTabs = openTabs;
 
   final SessionLaunchHost _host;
   final SessionShellConnector _shellConnector;
   final WorkspaceLaunchContext Function(AppSession session) _launchContextFor;
-  final ScheduleMemberConnectFn _scheduleMemberConnect;
   final SessionLaunchWorkspaceIndex Function() _workspaceIndex;
   final Iterable<ChatTab> Function() _openTabs;
 
@@ -44,9 +37,7 @@ class SessionSshProfileReconnect {
       final session = tab.persistedSession;
       if (session == null) continue;
 
-      if (session.sessionTeam.trim().isEmpty) {
-        await _reconnectPersonalTab(tab, session, profileId);
-      }
+      await _reconnectPersonalTab(tab, session, profileId);
     }
   }
 
@@ -54,29 +45,6 @@ class SessionSshProfileReconnect {
     if (target.kind != RuntimeKind.ssh) return false;
     final id = target.sshProfileId ?? sshProfileIdOfId(target.id);
     return id == profileId;
-  }
-
-  Future<void> _reconnectTeamMemberTab({
-    required ChatTab tab,
-    required TeamProfile team,
-    required TeamMemberConfig member,
-    required AppSession session,
-    required String profileId,
-  }) async {
-    final target = _host.lifecycle.launchWorkTarget(
-      _launchContextFor(session),
-      memberId: member.id,
-    );
-    if (!_targetUsesProfile(target, profileId)) return;
-
-    final shell = tab.memberShells[member.id];
-    if (shell == null || shell.isDisposed || shell.isConnecting) return;
-
-    shell.disconnect();
-    await tab.closeMemberRemotePlane(member.id);
-    tab.membersPendingConnect.remove(member.id);
-    _host.clearAgentStatusSeat(sessionId: tab.info.id, memberId: member.id);
-    _scheduleMemberConnect(team, member, tab);
   }
 
   Future<void> _reconnectPersonalTab(

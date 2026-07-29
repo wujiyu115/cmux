@@ -22,7 +22,6 @@ void main() {
       dangerouslySkipPermissions: true,
     );
     final params = SessionPersistParams(
-      sessionTeamId: '',
       cli: CliTool.claude,
       continueOverrides: SessionContinueOverrides(
         dangerouslySkipPermissions: draft.dangerouslySkipPermissions,

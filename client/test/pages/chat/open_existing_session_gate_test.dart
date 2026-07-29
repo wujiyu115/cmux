@@ -249,7 +249,6 @@ void main() {
         final status = await chatCubit.requestCreateAndOpenSession(
           SessionCreateRequest(
             workspace: workspace,
-            isPersonal: true,
             repo: repo,
           ),
         );

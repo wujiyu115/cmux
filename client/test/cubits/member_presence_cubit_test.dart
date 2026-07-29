@@ -1,16 +1,11 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:teampilot/cubits/chat/model/session_connect_request.dart';
-import 'package:teampilot/cubits/chat_cubit.dart';
 import 'package:teampilot/cubits/member_presence_cubit.dart';
 import 'package:teampilot/models/member_presence.dart';
 import 'package:teampilot/models/team_config.dart';
-import 'package:teampilot/models/workspace_folder.dart';
-import 'package:teampilot/repositories/session_repository.dart';
 import 'package:teampilot/services/team/member_presence_service.dart';
 import 'package:teampilot/services/terminal/terminal_session.dart';
 
@@ -118,58 +113,6 @@ void main() {
       cubit.syncPresenceTeam(team);
       await harness.flush();
       expect(service.computeCalls, 0);
-    });
-
-    test('detach invalidates in-flight tick', () {
-      fakeAsync((async) {
-        final service = _DelayedPresenceService({
-          'm-lead': const MemberPresence(
-            connection: MemberConnection.connected,
-            availability: MemberAvailability.working,
-          ),
-        });
-        final harness = PostFrameTestHarness();
-        final presenceCubit = MemberPresenceCubit(
-          memberPresenceService: service,
-        );
-        final chatCubit = ChatCubit(
-          executableResolver: () => 'true',
-          automationRepository: testAutomationRepository(),
-          postFrameScheduler: harness.scheduler,
-          terminalSessionFactory:
-              ({required String executable, int scrollbackLines = 10000}) =>
-                  _FakeTerminalSession(executable: executable),
-        );
-        chatCubit.bindPresenceCubit(presenceCubit);
-
-        const team = TeamProfile(
-          id: 'team-a',
-          name: 'A',
-          members: [TeamMemberConfig(id: 'm-lead', name: 'team-lead')],
-        );
-
-        unawaited(chatCubit.connectWorkspaceSession(TeamSessionConnect(team)));
-        async.flushMicrotasks();
-        unawaited(harness.flush());
-        async.flushMicrotasks();
-
-        presenceCubit.attachPresenceUi();
-        presenceCubit.syncPresenceTeam(team);
-        async.flushMicrotasks();
-        unawaited(harness.flush());
-        async.flushMicrotasks();
-
-        presenceCubit.detachPresenceUi();
-        expect(presenceCubit.state.presence, isEmpty);
-
-        presenceCubit.tickFromIdleWatch();
-        async.elapse(const Duration(milliseconds: 200));
-        async.flushMicrotasks();
-        expect(presenceCubit.state.presence, isEmpty);
-
-        unawaited(chatCubit.close());
-        unawaited(presenceCubit.close());
-      });
     });
 
     // ── workspace switch: overlapping panel attach/detach must not drop UI ──
@@ -419,84 +362,6 @@ void main() {
         // detachPresenceUi synchronously clears state.
         cubit.detachPresenceUi();
         expect(cubit.state.presence, isEmpty);
-      });
-    });
-
-    test('selectTab to tab without shells stops polling', () async {
-      fakeAsync((async) {
-        final service = _DelayedPresenceService(const {});
-        final harness = PostFrameTestHarness();
-        final tmp = Directory.systemTemp.createTempSync('presence_tabs_');
-        final repo = SessionRepository(rootDir: tmp.path);
-        final presenceCubit = MemberPresenceCubit(
-          memberPresenceService: service,
-        );
-        final chatCubit = ChatCubit(
-          executableResolver: () => 'true',
-          automationRepository: testAutomationRepository(),
-          postFrameScheduler: harness.scheduler,
-          sessionRepository: repo,
-          terminalSessionFactory:
-              ({required String executable, int scrollbackLines = 10000}) =>
-                  _FakeTerminalSession(executable: executable),
-        );
-        chatCubit.bindPresenceCubit(presenceCubit);
-
-        const team = TeamProfile(
-          id: 'team-a',
-          name: 'A',
-          members: [TeamMemberConfig(id: 'm-lead', name: 'team-lead')],
-        );
-
-        unawaited(chatCubit.connectWorkspaceSession(TeamSessionConnect(team)));
-        async.flushMicrotasks();
-        unawaited(harness.flush());
-        async.flushMicrotasks();
-
-        unawaited(
-          repo.createWorkspace([WorkspaceFolder(path: '/tmp')]).then((
-            workspace,
-          ) async {
-            final localSession = await repo.createSession(
-              workspace.workspaceId,
-            );
-            await chatCubit.requestOpenSession(
-              SessionOpenRequest(
-                session: localSession,
-                connectImmediately: false,
-              ),
-            );
-            async.flushMicrotasks();
-            unawaited(harness.flush());
-            async.flushMicrotasks();
-
-            presenceCubit.attachPresenceUi();
-            presenceCubit.syncPresenceTeam(team);
-            async.flushMicrotasks();
-            unawaited(harness.flush());
-            async.flushMicrotasks();
-
-            expect(service.computeCalls, greaterThan(0));
-            final callsWithTeamTab = service.computeCalls;
-
-            chatCubit.selectTab(1);
-            async.flushMicrotasks();
-            unawaited(harness.flush());
-            async.flushMicrotasks();
-
-            presenceCubit.tickFromIdleWatch();
-            async.elapse(const Duration(milliseconds: 50));
-            async.flushMicrotasks();
-            expect(service.computeCalls, callsWithTeamTab);
-
-            await chatCubit.close();
-            await presenceCubit.close();
-            if (tmp.existsSync()) {
-              tmp.deleteSync(recursive: true);
-            }
-          }),
-        );
-        async.elapse(const Duration(seconds: 5));
       });
     });
 

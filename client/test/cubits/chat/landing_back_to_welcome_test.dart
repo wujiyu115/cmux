@@ -92,8 +92,6 @@ void main() {
       await chat.requestOpenSession(
         SessionOpenRequest(
           session: session,
-          team: team,
-          member: team.members.first,
           repo: repo,
         ),
       );

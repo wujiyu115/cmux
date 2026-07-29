@@ -23,7 +23,6 @@ import '../../../models/team_config.dart';
 import '../../../repositories/session_repository.dart';
 import '../../../services/workbench/workbench_shell_actions.dart';
 import '../../../utils/workspace/landing_draft_resolver.dart';
-import '../../../utils/team/team_member_naming.dart';
 import '../../../utils/logging/logger.dart';
 import '../../../utils/workspace/workspace_path_utils.dart';
 
@@ -37,8 +36,6 @@ const _uuid = Uuid();
 SessionOpenRequest buildOpenExistingSessionRequest({
   required AppSession session,
   Workspace? workspace,
-  TeamProfile? team,
-  TeamMemberConfig? member,
   SessionRepository? repo,
   required String emptyDisplayTitleFallback,
   bool connectImmediately = false,
@@ -46,8 +43,6 @@ SessionOpenRequest buildOpenExistingSessionRequest({
   return SessionOpenRequest(
     session: session,
     workspace: workspace,
-    team: team,
-    member: member,
     repo: repo,
     emptyDisplayTitleFallback: emptyDisplayTitleFallback,
     connectImmediately: connectImmediately,
@@ -60,13 +55,11 @@ Future<void> openWorkspaceSessionTab(
   AppSession session, {
   String? tabScopeId,
 }) async {
-  final isPersonal = session.sessionTeam.trim().isEmpty;
   appLogger.d(
     '[session-launch] openWorkspaceSessionTab start '
     'session=${session.sessionId} workspace=${workspace.workspaceId} '
-    'personal=$isPersonal launchState=${session.launchState.name}',
+    'launchState=${session.launchState.name}',
   );
-  final team = await _syncSessionTeam(context, session);
 
   _syncWorktreeForSession(context, session);
 
@@ -83,8 +76,6 @@ Future<void> openWorkspaceSessionTab(
     buildOpenExistingSessionRequest(
       session: session,
       workspace: workspace,
-      team: team,
-      member: isPersonal ? null : _teamLead(team),
       repo: repo,
       emptyDisplayTitleFallback: fallback,
       connectImmediately: connectImmediately,
@@ -158,21 +149,6 @@ void _handleSessionOpenStatus(
   }
 }
 
-TeamProfile? _teamProfileById(BuildContext context, String teamId) => null;
-
-Future<TeamProfile?> _syncSessionTeam(
-  BuildContext context,
-  AppSession session,
-) async => null;
-
-TeamMemberConfig? _teamLead(TeamProfile? team) {
-  if (team == null) return null;
-  for (final member in team.members) {
-    if (TeamMemberNaming.isTeamLead(member)) return member;
-  }
-  return null;
-}
-
 void _syncWorktreeForSession(BuildContext context, AppSession session) {
   try {
     context.read<WorktreeCubit>().syncCurrentForSessionPath(
@@ -180,41 +156,6 @@ void _syncWorktreeForSession(BuildContext context, AppSession session) {
     );
   } on ProviderNotFoundException {
     // Outside the workspace split pane — no worktree scope to sync.
-  }
-}
-
-Future<void> createAndOpenWorkspaceConversation(
-  BuildContext context,
-  Workspace workspace, {
-  required bool isPersonal,
-  String sessionTeamId = '',
-  CliTool? cli,
-  String? workingDirectory,
-}) async {
-  // Silent create always lands on Chat (preference ignored).
-  final status = await _requestCreateWorkspaceConversation(
-    context,
-    workspace,
-    isPersonal: isPersonal,
-    sessionTeamId: sessionTeamId,
-    cli: cli,
-    workingDirectory: workingDirectory,
-    preserveWorkbenchView: true,
-  );
-  if (!context.mounted || status == null) return;
-  _handleSessionOpenStatus(
-    context,
-    status,
-    blockedMixedMessage: context.l10n.mixedWorkspaceCreateSessionBlocked,
-  );
-  if (status != SessionOpenStatus.opened) return;
-  // syncSessions will not override an active run/shell/file tab.
-  final sessionId = context.read<ChatCubit>().state.activeSessionId?.trim() ?? '';
-  if (sessionId.isNotEmpty) {
-    context.read<WorkbenchCubit>().ensureTab(
-      workspace.workspaceId,
-      WorkbenchTabId.session(sessionId),
-    );
   }
 }
 
@@ -294,19 +235,14 @@ Future<void> submitWorkspaceLandingMessage(
     (w) => w.workspaceId == workspace.workspaceId,
     orElse: () => workspace,
   );
-  final isPersonal = launch.isPersonal;
-  final sessionTeamId = isPersonal ? '' : (launch.teamId?.trim() ?? '');
-  final team = isPersonal ? null : _teamProfileById(context, sessionTeamId);
-
-  final simpleIdentity = isPersonal
-      ? _resolveSimpleLaunchIdentity(context, presetId: launch.presetId)
-      : null;
+  final simpleIdentity = _resolveSimpleLaunchIdentity(
+    context,
+    presetId: launch.presetId,
+  );
   final plannedSessionId = _uuid.v4();
   final status = await _requestCreateWorkspaceConversation(
     context,
     liveWorkspace,
-    isPersonal: isPersonal,
-    sessionTeamId: sessionTeamId,
     simpleIdentity: simpleIdentity,
     workingDirectory: workingDirectory,
     fixedSessionId: plannedSessionId,
@@ -354,13 +290,7 @@ Future<void> submitWorkspaceLandingMessage(
     return;
   }
 
-  final memberId = await _resolveLandingMemberId(
-    chatCubit: chatCubit,
-    session: session,
-    workspace: liveWorkspace,
-    isPersonal: isPersonal,
-    team: team,
-  );
+  final memberId = session.sessionId;
 
   final connected = await _ensureLandingSessionConnected(
     chatCubit: chatCubit,
@@ -421,20 +351,6 @@ Future<AppSession?> _sessionById({
   return loaded.where((s) => s.sessionId == sessionId).firstOrNull;
 }
 
-Future<String> _resolveLandingMemberId({
-  required ChatCubit chatCubit,
-  required AppSession session,
-  required Workspace workspace,
-  required bool isPersonal,
-  required TeamProfile? team,
-}) async {
-  if (isPersonal) {
-    return session.sessionId;
-  }
-  final lead = _teamLead(team);
-  return lead?.id ?? 'team-lead';
-}
-
 Future<bool> _ensureLandingSessionConnected({
   required ChatCubit chatCubit,
   required AppSession session,
@@ -460,8 +376,6 @@ Future<bool> _ensureLandingSessionConnected({
 Future<SessionOpenStatus?> _requestCreateWorkspaceConversation(
   BuildContext context,
   Workspace workspace, {
-  required bool isPersonal,
-  String sessionTeamId = '',
   CliTool? cli,
   SimpleLaunchIdentity? simpleIdentity,
   String? workingDirectory,
@@ -472,25 +386,15 @@ Future<SessionOpenStatus?> _requestCreateWorkspaceConversation(
   final chatCubit = context.read<ChatCubit>();
   final repo = context.read<SessionRepository>();
   final l10n = context.l10n;
-  final team = isPersonal ? null : _teamProfileById(context, sessionTeamId);
-
-  final identity = isPersonal
-      ? (simpleIdentity ??
-            _resolveSimpleLaunchIdentity(
-              context,
-              cli: cli,
-            ))
-      : null;
+  final identity =
+      simpleIdentity ?? _resolveSimpleLaunchIdentity(context, cli: cli);
 
   try {
     return await chatCubit.requestCreateAndOpenSession(
       SessionCreateRequest(
         workspace: workspace,
-        isPersonal: isPersonal,
-        team: team,
-        member: isPersonal ? null : _teamLead(team),
         repo: repo,
-        cli: identity?.cli,
+        cli: identity.cli,
         simpleIdentity: identity,
         workingDirectory: workingDirectory,
         emptyDisplayTitleFallback: l10n.defaultNewChatSessionTitle,
@@ -515,24 +419,6 @@ Future<SessionOpenStatus?> _requestCreateWorkspaceConversation(
     return null;
   }
 }
-
-/// Pins the new session's working directory to [worktreePath] (a git worktree
-/// under the workspace's repo).
-Future<void> createSessionInWorktree(
-  BuildContext context,
-  Workspace workspace, {
-  required bool isPersonal,
-  required String worktreePath,
-  String sessionTeamId = '',
-  CliTool? cli,
-}) => createAndOpenWorkspaceConversation(
-  context,
-  workspace,
-  isPersonal: isPersonal,
-  sessionTeamId: sessionTeamId,
-  cli: cli,
-  workingDirectory: worktreePath,
-);
 
 SimpleLaunchIdentity _resolveSimpleLaunchIdentity(
   BuildContext context, {

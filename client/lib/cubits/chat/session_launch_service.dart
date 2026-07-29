@@ -9,7 +9,6 @@ import '../../models/workspace_launch_context.dart';
 import '../../models/app_session.dart';
 import '../../models/team_config.dart';
 import '../../repositories/session_repository.dart';
-import '../../services/launch/session_launch_readiness.dart';
 import '../../services/launch/connect_shell_result.dart';
 import '../../services/launch/launch_operation.dart';
 import '../../services/launch/launch_outcome.dart';
@@ -44,11 +43,6 @@ class SessionLaunchService implements SessionShellConnectorDelegate {
     _h,
     this,
   );
-  void _noopScheduleMemberConnect(
-    TeamProfile team,
-    TeamMemberConfig member,
-    ChatTab tab,
-  ) {}
   late final SessionLaunchBundle _launch = SessionLaunchBundle.create(
     SessionLaunchBundleDeps(
       host: _h,
@@ -60,18 +54,9 @@ class SessionLaunchService implements SessionShellConnectorDelegate {
       shouldAutoConnect: _shouldAutoConnect,
       scheduleShellConnect: _scheduleShellConnect,
       rollbackStagedLaunch: _rollbackStagedLaunch,
-      installTeamRuntimeIfNeeded: _installTeamRuntimeIfNeeded,
-      scheduleMemberConnect: _noopScheduleMemberConnect,
       disconnectSession: disconnectSession,
-      ensureSession: ensureSession,
-      appendLocalTab: _appendLocalTab,
-      ensureActiveSessionTab: _ensureActiveSessionTab,
-      resetTeamConfigValidationSurface: resetTeamConfigValidationSurface,
-      scheduleTeamConfigValidation: scheduleTeamConfigValidation,
       activeTab: () => _activeTab,
-      autoLaunchAllMembersOnConnect: () => false,
       isTabsEmpty: () => _tabStore.activeTabsIsEmpty,
-      activeBucketKey: () => _tabStore.activeWorkspaceId,
       uuid: _uuid,
     ),
   );
@@ -81,7 +66,6 @@ class SessionLaunchService implements SessionShellConnectorDelegate {
         host: _h,
         shellConnector: _shellConnector,
         launchContextFor: launchContextFor,
-        scheduleMemberConnect: _noopScheduleMemberConnect,
         workspaceIndex: () => _workspaceIndex,
         openTabs: () => _tabStore.openTabs,
       );
@@ -91,10 +75,7 @@ class SessionLaunchService implements SessionShellConnectorDelegate {
 
   SessionTabConnectPrepCallbacks get _tabConnectCallbacks => (
     persistSessionIfNeeded: _persistSessionIfNeeded,
-    ensureTeamSessionReady: _ensureTeamSessionReady,
-    onMixedPlacementNotReady: _onMixedPlacementNotReady,
     resolveLaunchMembers: _resolveLaunchMembers,
-    installTeamRuntimeIfNeeded: _installTeamRuntimeIfNeeded,
     updateSelectedMember: _updateSelectedMember,
     shellForLaunch: _shellForLaunch,
     launchStillValid: _launchStillValid,
@@ -117,26 +98,6 @@ class SessionLaunchService implements SessionShellConnectorDelegate {
     final tabMemberId = memberId;
     if (_state.selectedMemberId != tabMemberId) {
       _h.applyState(_state.copyWith(selectedMemberId: tabMemberId));
-    }
-  }
-
-  void _onMixedPlacementNotReady({
-    required ChatTab tab,
-    required AppSession launchSession,
-    required SessionOpenRequest request,
-  }) {
-    if (request.persistParams != null) {
-      _rollbackStagedLaunch(
-        tab: tab,
-        sessionId: launchSession.sessionId,
-        request: request,
-        message: 'mixed_workspace_member_placement_uninitialized',
-      );
-    } else {
-      _h.failSessionConnect(
-        launchSession.sessionId,
-        'mixed_workspace_member_placement_uninitialized',
-      );
     }
   }
 
@@ -205,56 +166,16 @@ class SessionLaunchService implements SessionShellConnectorDelegate {
     return tab.launchGeneration == generation;
   }
 
-  Future<AppSession?> _ensureTeamSessionReady({
-    required SessionOpenRequest request,
-    required AppSession session,
-    required Workspace? workspace,
-  }) async {
-    if (request.isPersonal) return session;
-    final team = request.team;
-    final repo = request.repo ?? _h.sessionRepository;
-    if (team == null || workspace == null || repo == null) return session;
-    return ensureSessionLaunchReady(
-      workspace: workspace,
-      session: session,
-      team: team,
-      repository: repo,
-    );
-  }
-
   Future<ResolvedLaunchMembers> _resolveLaunchMembers({
     required AppSession session,
     required SessionOpenRequest request,
     Workspace? workspace,
   }) async {
-    if (request.isPersonal) {
-      final resolvedWorkspace =
-          workspace ?? _workspaceById(session.workspaceId);
-      if (resolvedWorkspace == null) {
-        throw StateError('Simple session requires workspace');
-      }
-      final identity = session.simpleIdentity;
-      final cli = identity.cli;
-      // Member persona comes from SessionRuntimePlan at connect time.
-      final member = TeamMemberConfig(
-        id: session.sessionId,
-        name: session.sessionId,
-        cli: cli,
-      );
-      return (team: null, member: member, cli: cli);
+    final resolvedWorkspace = workspace ?? _workspaceById(session.workspaceId);
+    if (resolvedWorkspace == null) {
+      throw StateError('Session requires workspace');
     }
-    final team = request.team!;
-    final member = request.member!;
-    return (team: team, member: member, cli: member.cli ?? team.cli);
-  }
-
-  Future<void> _installTeamRuntimeIfNeeded({
-    required ChatTab tab,
-    required AppSession session,
-    required TeamProfile? team,
-    required int generation,
-  }) async {
-    if (team == null) return;
+    return (memberId: session.sessionId, cli: session.simpleIdentity.cli);
   }
 
   void _scheduleShellConnect({
@@ -265,8 +186,6 @@ class SessionLaunchService implements SessionShellConnectorDelegate {
     required SessionOpenRequest request,
     required bool launched,
     required Workspace? workspace,
-    required TeamProfile? team,
-    required TeamMemberConfig? member,
     VoidCallback? onFinally,
   }) {
     _h.postFrameScheduler(() async {
@@ -275,7 +194,7 @@ class SessionLaunchService implements SessionShellConnectorDelegate {
           tab: tab,
           shell: shell,
           reason: 'launch_generation_stale',
-          remoteMemberKey: member?.id,
+          remoteMemberKey: session.sessionId,
         );
         return;
       }
@@ -305,9 +224,7 @@ class SessionLaunchService implements SessionShellConnectorDelegate {
         );
         final message = 'Failed to resume session: $e';
         shell.write('\r\n[$message]\r\n');
-        if (member != null) {
-          unawaited(tab.closeMemberRemotePlane(member.id));
-        }
+        unawaited(tab.closeMemberRemotePlane(session.sessionId));
         if (_launchStillValid(tab, generation)) {
           _h.failSessionConnect(tab.info.id, message);
         }
@@ -316,12 +233,6 @@ class SessionLaunchService implements SessionShellConnectorDelegate {
       }
     });
   }
-
-  /// Team provider/model config validation is removed with the team launch
-  /// path; kept as no-ops so the launch pipeline plumbing stays intact.
-  void resetTeamConfigValidationSurface() {}
-
-  Future<void> scheduleTeamConfigValidation(TeamProfile team) async {}
 
   @override
   WorkspaceLaunchContext launchContextFor(AppSession session) =>
@@ -347,9 +258,8 @@ class SessionLaunchService implements SessionShellConnectorDelegate {
     required String shellKey,
     required CliTool cli,
     required AppSession session,
-    String? rosterMemberId,
   }) {
-    final workTarget = _launchWorkTarget(session, memberId: rosterMemberId);
+    final workTarget = _launchWorkTarget(session);
     final needsRemoteLaunch = workTarget.kind == RuntimeKind.ssh;
     _discardIdleShellIfMismatched(
       tab: tab,
@@ -385,42 +295,6 @@ class SessionLaunchService implements SessionShellConnectorDelegate {
     if (sessionId != null) {
       _h.clearAgentStatusSeat(sessionId: sessionId, memberId: shellKey);
     }
-  }
-
-  TerminalSession? ensureSession(TeamProfile team) {
-    var tab = _activeTab;
-    if (tab == null && _h.sessionRepository == null) {
-      tab = _appendLocalTab(team, emitChange: false);
-    }
-    if (tab == null) return null;
-    if (tab.selectedMemberId.isEmpty) {
-      tab.selectedMemberId = _tabStore.defaultMemberId(team);
-    }
-    if (tab.selectedMemberId.isNotEmpty) {
-      final memberId = tab.selectedMemberId;
-      final session = tab.persistedSession;
-      final cli = session?.cli ?? team.cli;
-      if (session != null) {
-        return _shellForLaunch(
-          tab: tab,
-          shellKey: memberId,
-          cli: cli,
-          session: session,
-          rosterMemberId: memberId,
-        );
-      }
-      _discardIdleShellIfMismatched(
-        tab: tab,
-        shellKey: memberId,
-        cli: cli,
-        needsRemoteLaunch: false,
-      );
-      return tab.memberShells.putIfAbsent(
-        memberId,
-        () => _h.shellFactory.newSession(),
-      );
-    }
-    return tab.resumeSession ??= _h.shellFactory.newSession();
   }
 
   Future<void> connectWorkspaceSession(
@@ -477,28 +351,4 @@ class SessionLaunchService implements SessionShellConnectorDelegate {
   Future<void> applyFirstPromptTitle(String sessionId, String firstPrompt) =>
       _promptMetadata.applyFirstPromptTitle(sessionId, firstPrompt);
 
-  ChatTab _appendLocalTab(TeamProfile team, {required bool emitChange}) {
-    final tab = _tabStore.appendLocalTab(team, cliTeamName: _uuid.v4());
-    if (emitChange) {
-      _h.applyState(
-        _state.copyWith(
-          tabs: _tabStore.activeTabInfos(),
-          activeTabIndex: _tabStore.activeTabCount - 1,
-          activeSessionId: tab.info.id,
-          selectedMemberId: tab.selectedMemberId,
-          newChatActive: false,
-        ),
-      );
-    }
-    return tab;
-  }
-
-  ChatTab _ensureActiveSessionTab(
-    TeamProfile team, {
-    required bool emitChange,
-  }) {
-    final existing = _activeTab;
-    if (existing != null) return existing;
-    return _appendLocalTab(team, emitChange: emitChange);
-  }
 }

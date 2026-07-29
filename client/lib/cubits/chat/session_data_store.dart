@@ -4,7 +4,7 @@ import '../../models/workspace_folder.dart';
 import '../../models/workspace.dart';
 import '../../models/app_session.dart';
 import '../../models/workspace_icon_ref.dart';
-import '../../models/team_config.dart' show CliTool, TeamMemberConfig, TeamProfile;
+import '../../models/team_config.dart' show CliTool, TeamMemberConfig;
 import '../../repositories/session_repository.dart';
 import '../../utils/logging/logger.dart';
 import '../../utils/workspace/workspace_path_utils.dart';

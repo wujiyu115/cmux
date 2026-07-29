@@ -29,7 +29,6 @@ import '../services/terminal/terminal_theme_for_launch.dart';
 import '../services/terminal/terminal_transport_factory.dart';
 import '../utils/session/workspace_sessions.dart';
 import '../../widgets/workspace_icon_picker_dialog.dart';
-import '../utils/logging/logger_utils.dart';
 import 'chat/session_launch_retry.dart';
 import 'chat/chat_connect_state_mixin.dart';
 import 'chat/session_data_store.dart';
@@ -350,8 +349,6 @@ class ChatCubit extends Cubit<ChatState>
     // Plain shells interrupt the foreground job with Ctrl-C.
     shell.input.writeToPty('');
   }
-
-  TeamProfile? _teamForSessionTab(ChatTab tab) => null;
 
   /// Exercises History/Terminal submit → [onAfterTurnLatched] without PTY I/O.
   @visibleForTesting
@@ -1038,9 +1035,6 @@ class ChatCubit extends Cubit<ChatState>
     final shell = tab?.memberShells[memberId];
     return shell?.isRunning ?? false;
   }
-
-  TerminalSession? ensureSession(TeamProfile team) =>
-      _launchService.ensureSession(team);
 
   Future<void> connectWorkspaceSession(
     SessionConnectRequest request, {

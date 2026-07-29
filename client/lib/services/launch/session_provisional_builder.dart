@@ -7,38 +7,29 @@ import '../../models/team_config.dart';
 AppSession buildProvisionalSession({
   required String sessionId,
   required Workspace workspace,
-  required bool isPersonal,
   CliTool? cli,
   SimpleLaunchIdentity? simpleIdentity,
   String? workingDirectory,
-  String sessionTeamId = '',
 }) {
   final now = DateTime.now().millisecondsSinceEpoch;
-  final trimmedTeam = sessionTeamId.trim();
   final folders = Workspace.foldersForPrimaryPath(
     workspace.folders,
     workingDirectory ?? '',
   );
-  final identity = isPersonal
-      ? (simpleIdentity ??
-            SimpleLaunchIdentity.resolve(
-              cli: cli,
-            ))
-      : null;
+  final identity = simpleIdentity ?? SimpleLaunchIdentity.resolve(cli: cli);
 
   return AppSession(
     sessionId: sessionId,
     workspaceId: workspace.workspaceId,
     folders: folders,
     display: '',
-    sessionTeam: trimmedTeam,
     profileId: '',
     cliTeamName: '',
-    cli: isPersonal ? (identity?.cli ?? cli) : null,
-    provider: identity?.provider ?? '',
-    model: identity?.model ?? '',
-    effort: identity?.effort ?? '',
-    presetId: identity?.presetId ?? '',
+    cli: identity.cli,
+    provider: identity.provider,
+    model: identity.model,
+    effort: identity.effort,
+    presetId: identity.presetId,
     members: const [],
     memberTargets: const {},
     launchState: AppSessionLaunchState.created,

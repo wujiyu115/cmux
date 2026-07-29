@@ -8,9 +8,6 @@ import '../../../repositories/session_repository.dart';
 class SessionCreateRequest {
   const SessionCreateRequest({
     required this.workspace,
-    required this.isPersonal,
-    this.team,
-    this.member,
     this.repo,
     this.cli,
     this.simpleIdentity,
@@ -23,10 +20,6 @@ class SessionCreateRequest {
 
   final Workspace workspace;
 
-  /// True for Simple (unteamed) launch — empty [sessionTeam].
-  final bool isPersonal;
-  final TeamProfile? team;
-  final TeamMemberConfig? member;
   final SessionRepository? repo;
   final CliTool? cli;
 

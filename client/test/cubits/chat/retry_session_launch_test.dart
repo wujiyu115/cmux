@@ -57,8 +57,6 @@ void main() {
       expect(cubit.connects, hasLength(1));
       final request = cubit.connects.single as ExistingSessionConnect;
       expect(request.preserveWorkbenchView, isTrue);
-      expect(request.team, isNull);
-      expect(request.member, isNull);
       expect(request.session.sessionId, session.sessionId);
     },
   );

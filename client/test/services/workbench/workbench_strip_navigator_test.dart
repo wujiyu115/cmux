@@ -77,8 +77,6 @@ void main() {
       await chat.requestOpenSession(
         SessionOpenRequest(
           session: session,
-          team: _team,
-          member: _team.members.first,
           repo: repo,
         ),
       );

@@ -393,7 +393,6 @@ void main() {
         await cubit.requestCreateAndOpenSession(
           SessionCreateRequest(
             workspace: workspace,
-            isPersonal: true,
             repo: repo,
             cli: CliTool.claude,
           ),
@@ -445,8 +444,6 @@ void main() {
           SessionOpenRequest(
             session: session,
             workspace: workspace,
-            team: team,
-            member: team.members.first,
             repo: repo,
           ),
         );
@@ -499,8 +496,6 @@ void main() {
         await cubit.requestOpenSession(
           SessionOpenRequest(
             session: session,
-            team: team,
-            member: team.members.first,
             repo: repo,
           ),
         );

@@ -226,7 +226,6 @@ class AutomationDispatcher {
     final status = await _requestCreateAndOpenSession(
       SessionCreateRequest(
         workspace: workspace,
-        isPersonal: true,
         repo: _sessionRepository,
         cli: simpleIdentity.cli,
         simpleIdentity: simpleIdentity,

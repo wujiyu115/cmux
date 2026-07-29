@@ -64,13 +64,6 @@ void main() {
               required request,
               required connect,
             }) async {},
-        prepareDeferredTeamTab:
-            ({
-              required generation,
-              required tab,
-              required session,
-              required request,
-            }) async {},
       );
     });
 
@@ -153,13 +146,6 @@ void main() {
               required tab,
               required request,
               required connect,
-            }) async {},
-        prepareDeferredTeamTab:
-            ({
-              required generation,
-              required tab,
-              required session,
-              required request,
             }) async {},
       );
     });
