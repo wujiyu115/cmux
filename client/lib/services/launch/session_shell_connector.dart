@@ -37,16 +37,6 @@ import '../../utils/logging/logger.dart';
 abstract interface class SessionShellConnectorDelegate {
   WorkspaceLaunchContext launchContextFor(AppSession session);
 
-  Future<ConnectShellResult?> lifecycleGateBeforeAttach({
-    required TeamProfile team,
-    required TeamMemberConfig member,
-    required AppSession session,
-    required ChatTab tab,
-    String? remoteMemberKeyForRollback,
-  });
-
-  void cancelLifecycleConnectRetry(String sessionId, String memberId);
-
   void Function(String line)? autoRenameOnFirstPrompt(String sessionId);
 
   void Function(String line)? autoTouchOnEveryPrompt(String sessionId);
@@ -363,20 +353,6 @@ class SessionShellConnector {
         return ConnectShellResult.aborted;
       }
 
-      if (team != null && member != null) {
-        final gateStop = await _delegate.lifecycleGateBeforeAttach(
-          team: team,
-          member: member,
-          session: activeSession,
-          tab: tab,
-          remoteMemberKeyForRollback: remoteMemberKeyForRollback,
-        );
-        if (gateStop != null) {
-          remoteMemberKeyForRollback = null;
-          return gateStop;
-        }
-      }
-
       if (launchTarget.kind == RuntimeKind.ssh) {
         final injectRootSandboxEnv = await _host.isWorkspaceRootSandboxEnvOptIn(
           activeSession.workspaceId,
@@ -476,9 +452,7 @@ class SessionShellConnector {
         resumeSessionId: plan.resumeSessionId,
         shellLaunch: shellLaunch,
         extraEnvironment: plan.env.isEmpty ? null : plan.env,
-        busUserInputRouting: team != null && member != null
-            ? _host.teamBus.busUserInputRouting(tab, team, member)
-            : null,
+        busUserInputRouting: null,
         onFirstUserLineSubmitted: _delegate.autoRenameOnFirstPrompt(
           activeSession.sessionId,
         ),
@@ -500,7 +474,6 @@ class SessionShellConnector {
         },
         onProcessStarted: () {
           if (team != null && member != null) {
-            _delegate.cancelLifecycleConnectRetry(tab.info.id, member.id);
             tab.teamBus?.markMemberRunning(member.id);
             _host.memberMaterializer.markMemberReady(tab.info.id, member.id);
           } else if (isPersonal) {

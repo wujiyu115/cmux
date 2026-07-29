@@ -97,22 +97,6 @@ class SessionLaunchPipeline {
         _runConnect(request, repo: repo),
       RestartWorkspaceOperation(:final request, :final repo) =>
         _runRestart(request, repo: repo),
-      OpenMemberTabOperation(
-        :final team,
-        :final member,
-        :final repo,
-        :final workspaceCwd,
-        :final scheduleTeamConfigValidation,
-      ) =>
-        _runOpenMemberTab(
-          team,
-          member,
-          repo: repo,
-          workspaceCwd: workspaceCwd,
-          scheduleTeamConfigValidation: scheduleTeamConfigValidation,
-        ),
-      LaunchAllMembersOperation(:final team, :final repo, :final workspaceCwd) =>
-        _runLaunchAllMembers(team, repo: repo, workspaceCwd: workspaceCwd),
     };
   }
 

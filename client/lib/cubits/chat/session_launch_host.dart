@@ -19,7 +19,6 @@ import 'model/chat_tab.dart';
 import 'session_data_store.dart';
 import 'tab_member_materializer.dart';
 import 'tab_session_runtime_coordinator.dart';
-import 'tab_team_bus_coordinator.dart';
 import 'chat_tab_store.dart';
 
 /// Connect-state transitions owned by [ChatCubit] (via [ChatConnectStateMixin]).
@@ -80,7 +79,6 @@ abstract interface class SessionLaunchHost
   ChatTabStore get tabStore;
   ChatSessionShellFactory get shellFactory;
   TabSessionRuntimeCoordinator get sessionRuntime;
-  TabTeamBusCoordinator get teamBus;
   TabMemberMaterializer get memberMaterializer;
   SessionLifecycleService get lifecycle;
   SessionDataStore get dataStore;

@@ -9,7 +9,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../models/workspace.dart';
 import '../models/workspace_folder.dart';
-import '../models/workspace_launch_context.dart';
 import '../models/app_session.dart';
 import '../services/team/member_presence_service.dart';
 import '../models/workspace_icon_picker_result.dart';
@@ -25,12 +24,8 @@ import '../services/storage/app_storage.dart';
 import '../services/session/session_lifecycle_service.dart';
 import '../services/session/session_member_cli_locks.dart';
 import '../services/remote/remote_cli_readiness.dart';
-import '../services/team_bus/artifacts/artifact_registry.dart';
-import '../services/team_bus/artifacts/artifact_transfer_service.dart';
 import '../services/team_bus/mcp/teammate_bus_mcp_gateway.dart';
 import '../services/team_bus/remote/remote_bus_binding_resolver.dart';
-import '../services/agent_status/agent_attention_state.dart';
-import '../services/agent_status/agent_status_event.dart';
 import '../services/agent_status/agent_status_seat_lookup.dart';
 import 'agent_attention_cubit.dart';
 import '../services/launch/launch_factory.dart';
@@ -54,7 +49,6 @@ import 'chat/session_launch_host.dart';
 import 'chat/session_launch_service.dart';
 import 'chat/tab_member_materializer.dart';
 import 'chat/tab_session_runtime_coordinator.dart';
-import 'chat/tab_team_bus_coordinator.dart';
 import 'layout_cubit.dart';
 import 'member_presence_cubit.dart';
 import 'chat/model/chat_state.dart';
@@ -182,15 +176,6 @@ class ChatCubit extends Cubit<ChatState>
         sessionBusyFromAttention: (sessionId) {
           final attention = _agentAttentionCubit;
           if (attention == null) return false;
-          final bus = _tabStore.openTabBySessionId(sessionId)?.teamBus;
-          // Why: WaitEntered clears hook working, but a late PreToolUse can
-          // re-stamp attention while the member is still bus-parked.
-          if (bus != null) {
-            return attention.state.sessionIsAgentActive(
-              sessionId,
-              includeMember: (id) => !bus.isWaitingForMessage(id),
-            );
-          }
           return attention.state.sessionIsAgentActive(sessionId);
         },
         onAfterIdleWatchTick: () => unawaited(_onIdleWatchTick()),
@@ -204,81 +189,8 @@ class ChatCubit extends Cubit<ChatState>
   late final TabMemberMaterializer _memberMaterializer = TabMemberMaterializer(
     runtime: _sessionRuntime,
     tabStore: _tabStore,
-    connector: _launchService,
-    activeTeam: () => _activeTeam,
     isClosed: () => isClosed,
-    isMixedBusRegistered: _teammateBusMcpGateway.isSessionRegistered,
-    isMemberConnectOwnedElsewhere: _launchService.isMemberConnectOwnedElsewhere,
-    isDirectPtyLifecycleReady: _launchService.isMemberDirectPtyLifecycleReady,
   );
-  late final TabTeamBusCoordinator _teamBus = TabTeamBusCoordinator(
-    gateway: _teammateBusMcpGateway,
-    tabStore: _tabStore,
-    materializer: _memberMaterializer,
-    globalPresets: () => _lifecycle.globalPresets,
-    onAfterTurnLatched: _onOperatorTurnLatched,
-    onMemberWaitEntered: _onMemberWaitEntered,
-    artifactServiceFactory: _buildArtifactService,
-    launchWorkTarget: (session, {String? memberId}) =>
-        _lifecycle.launchWorkTarget(
-          _launchService.launchContextFor(session),
-          memberId: memberId,
-        ),
-    memberWorkDirs: (session, memberId) => _lifecycle.memberWorkDirs(
-      _launchService.launchContextFor(session),
-      memberId,
-    ),
-    sshProfileById: _shellFactory.profileById,
-  );
-
-  /// P3d: a per-session cross-machine artifact transfer service. The registry is
-  /// session-scoped (one per bus install), so published handles live only as
-  /// long as the session. Resolvers reuse the launch path's member→target and
-  /// work-context seams so publisher/fetcher bytes move on the right machines.
-  ArtifactTransferService _buildArtifactService(AppSession session) {
-    return ArtifactTransferService(
-      registry: ArtifactRegistry(),
-      resolveFs: (targetId) async =>
-          (await _lifecycle.resolveWorkContextForTargetId(targetId)).filesystem,
-      targetForMember: (memberId) {
-        final workspace = state.workspaces
-            .where((w) => w.workspaceId == session.workspaceId)
-            .firstOrNull;
-        return _lifecycle
-            .launchWorkTarget(
-              WorkspaceLaunchContext(
-                session: session,
-                workspace:
-                    workspace ??
-                    Workspace(
-                      workspaceId: session.workspaceId,
-                      folders: session.folders,
-                      createdAt: 0,
-                    ),
-              ),
-              memberId: memberId,
-            )
-            .id;
-      },
-      inboxDirFor: (memberId) {
-        final workspace = state.workspaces
-            .where((w) => w.workspaceId == session.workspaceId)
-            .firstOrNull;
-        final ctx = WorkspaceLaunchContext(
-          session: session,
-          workspace:
-              workspace ??
-              Workspace(
-                workspaceId: session.workspaceId,
-                folders: session.folders,
-                createdAt: 0,
-              ),
-        );
-        final cwd = _lifecycle.memberWorkDirs(ctx, memberId).workingDirectory;
-        return cwd.isEmpty ? '.teampilot-inbox' : '$cwd/.teampilot-inbox';
-      },
-    );
-  }
 
   MemberPresenceCubit? _presenceCubit;
   TeamProfile? _activeTeam;
@@ -375,9 +287,6 @@ class ChatCubit extends Cubit<ChatState>
 
   @override
   TabSessionRuntimeCoordinator get sessionRuntime => _sessionRuntime;
-
-  @override
-  TabTeamBusCoordinator get teamBus => _teamBus;
 
   @override
   TabMemberMaterializer get memberMaterializer => _memberMaterializer;
@@ -500,20 +409,6 @@ class ChatCubit extends Cubit<ChatState>
       attention.clearSeat(sessionId: sessionId, memberId: memberId);
     }
     _recomputeWorkingSessions();
-  }
-
-  /// Mixed `wait_for_message` park — drop PreToolUse working so the sidebar
-  /// spinner matches member presence (bus idle while the MCP tool blocks).
-  void _onMemberWaitEntered(String sessionId, String memberId) {
-    final attention = _agentAttentionCubit;
-    if (attention == null || memberId.trim().isEmpty) return;
-    attention.clearSeat(sessionId: sessionId, memberId: memberId);
-    attention.applyEvent(
-      sessionId: sessionId,
-      memberId: memberId,
-      event: const AgentStatusEvent(state: AgentSeatAttention.done),
-      skipPermissions: false,
-    );
   }
 
   @visibleForTesting
@@ -1084,7 +979,6 @@ class ChatCubit extends Cubit<ChatState>
     _agentAttentionCubit?.clearSession(sessionId);
     _agentStatusSeatLookup?.clearSession(sessionId);
     _teammateBusMcpGateway.unregisterAgentStatusSession(sessionId);
-    await _teamBus.disposeSessionBus(sessionId);
     await tab.disposeBus();
   }
 

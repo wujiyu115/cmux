@@ -358,34 +358,6 @@ void main() {
       },
     );
 
-    test('uses team cli executable for member shell', () async {
-      final executables = <String>[];
-      final cubit = ChatCubit(
-        executableResolver: () => 'flashskyai',
-        automationRepository: testAutomationRepository(),
-        cliExecutableResolver: (cli) =>
-            cli == CliTool.claude ? '/opt/bin/claude' : 'flashskyai',
-        terminalSessionFactory:
-            ({required String executable, int scrollbackLines = 10000}) {
-              executables.add(executable);
-              return _FakeTerminalSession(executable: executable);
-            },
-        postFrameScheduler: postFrame.scheduler,
-      );
-      addTearDown(cubit.close);
-      const team = TeamProfile(
-        id: 'team-a',
-        name: 'A',
-        cli: CliTool.claude,
-        members: [TeamMemberConfig(id: 'm-lead', name: 'team-lead')],
-      );
-
-      await cubit.connectWorkspaceSession(TeamSessionConnect(team));
-      await postFrame.flush();
-
-      expect(executables, contains('/opt/bin/claude'));
-    });
-
     test(
       'requestOpenSession stages tab and connecting before async prep completes',
       () async {
@@ -509,68 +481,6 @@ void main() {
       },
     );
 
-    test(
-      'openSessionTab starts all members when auto-launch enabled',
-      () async {
-        final fakeSessions = <_FakeTerminalSession>[];
-        const team = TeamProfile(
-          id: 'team-a',
-          name: 'A',
-          members: [
-            TeamMemberConfig(id: 'm-lead', name: 'team-lead'),
-            TeamMemberConfig(id: 'm-dev', name: 'developer'),
-          ],
-        );
-        final tmp = await Directory.systemTemp.createTemp('chat_cubit_');
-        final repo = SessionRepository(rootDir: tmp.path);
-        final workspace = await repo.createWorkspace([
-          WorkspaceFolder(path: '/tmp'),
-        ]);
-        final session = await repo.createSession(
-          workspace.workspaceId,
-          sessionTeam: team.id,
-          rosterMembers: team.members,
-
-          memberClis: {for (final m in team.members) m.id: CliTool.claude},
-        );
-        final postFrame = PostFrameTestHarness();
-        final cubit = ChatCubit(
-          executableResolver: () => 'true',
-          automationRepository: testAutomationRepository(),
-          sessionRepository: repo,
-          terminalSessionFactory:
-              ({required String executable, int scrollbackLines = 10000}) {
-                final fake = _FakeTerminalSession(executable: executable);
-                fakeSessions.add(fake);
-                return fake;
-              },
-          postFrameScheduler: postFrame.scheduler,
-          autoLaunchAllMembersOnConnect: () => true,
-        );
-        _registerTempCubitCleanup(tmp: tmp, cubit: cubit, postFrame: postFrame);
-
-        await cubit.requestOpenSession(
-          SessionOpenRequest(
-            session: session,
-            team: team,
-            member: team.members.first,
-            repo: repo,
-          ),
-        );
-        await drainPendingAsyncWork();
-        await postFrame.flush();
-
-        expect(cubit.state.tabs.length, 1);
-        expect(cubit.isMemberRunning(sessionId: cubit.state.activeSessionId!, memberId: 'm-lead'), isTrue);
-        expect(cubit.isMemberRunning(sessionId: cubit.state.activeSessionId!, memberId: 'm-dev'), isTrue);
-        expect(cubit.state.selectedMemberId, 'm-lead');
-        expect(fakeSessions, hasLength(2));
-        expect(
-          fakeSessions.map((shell) => shell.connectedSessionTeams.single),
-          everyElement('team-a-1'),
-        );
-      },
-    );
 
     test(
       'closeTabsForWorkspace counts and terminates a workspace\'s open tabs',
@@ -776,53 +686,6 @@ void main() {
     );
 
     test(
-      'connectSession auto-launch does not reconnect queued member shells',
-      () async {
-        final scheduled = <void Function()>[];
-        final fakeSessions = <_FakeTerminalSession>[];
-        final cubit = ChatCubit(
-          executableResolver: () => 'true',
-          automationRepository: testAutomationRepository(),
-          sessionRepository: repo,
-          terminalSessionFactory:
-              ({required String executable, int scrollbackLines = 10000}) {
-                final fake = _FakeTerminalSession(executable: executable);
-                fakeSessions.add(fake);
-                return fake;
-              },
-          postFrameScheduler: scheduled.add,
-          autoLaunchAllMembersOnConnect: () => true,
-        );
-        addTearDown(cubit.close);
-        const team = TeamProfile(
-          id: 'team-a',
-          name: 'A',
-          members: [
-            TeamMemberConfig(id: 'm-lead', name: 'team-lead'),
-            TeamMemberConfig(id: 'm-dev', name: 'developer'),
-          ],
-        );
-        final workspace = await repo.createWorkspace([
-          WorkspaceFolder(path: '/tmp/auto-launch'),
-        ]);
-        await cubit.loadWorkspaceData(repo);
-        cubit.setActiveWorkspace(workspace.workspaceId);
-
-        await cubit.connectWorkspaceSession(TeamSessionConnect(team));
-        await drainPendingAsyncWork();
-        await drainPostFrameQueue(scheduled);
-
-        final connectedMembers = fakeSessions
-            .expand((session) => session.connectedMembers)
-            .toList();
-        expect(connectedMembers.where((id) => id == 'm-lead'), hasLength(1));
-        expect(connectedMembers.where((id) => id == 'm-dev'), hasLength(1));
-        expect(cubit.isMemberRunning(sessionId: cubit.state.activeSessionId!, memberId: 'm-lead'), isTrue);
-        expect(cubit.isMemberRunning(sessionId: cubit.state.activeSessionId!, memberId: 'm-dev'), isTrue);
-      },
-    );
-
-    test(
       'mixed openSessionTab seeds member shell with member cli executable',
       () async {
         final fakeSessions = <_FakeTerminalSession>[];
@@ -946,77 +809,6 @@ void main() {
       );
       expect(cubit.isMemberRunning(sessionId: cubit.state.activeSessionId!, memberId: 'm-dev'), isFalse);
     });
-
-    test(
-      'mixed openSessionTab does not connect non-lead until user connect',
-      () async {
-        final fakeSessions = <_FakeTerminalSession>[];
-        const team = TeamProfile(
-          id: 'team-a',
-          name: 'A',
-          teamMode: TeamMode.mixed,
-          members: [
-            TeamMemberConfig(id: 'team-lead', name: 'team-lead'),
-            TeamMemberConfig(id: 'm-dev', name: 'developer'),
-          ],
-        );
-        final tmp = await Directory.systemTemp.createTemp('chat_cubit_mixed_');
-        final repo = SessionRepository(rootDir: tmp.path);
-        final workspace = await repo.createWorkspace([
-          WorkspaceFolder(path: '/tmp'),
-        ]);
-        final session = await repo.createSession(
-          workspace.workspaceId,
-          sessionTeam: team.id,
-          rosterMembers: team.members,
-
-          memberClis: {for (final m in team.members) m.id: CliTool.claude},
-        );
-        final postFrame = PostFrameTestHarness();
-        final cubit = ChatCubit(
-          executableResolver: () => 'true',
-          automationRepository: testAutomationRepository(),
-          sessionRepository: repo,
-          terminalSessionFactory:
-              ({required String executable, int scrollbackLines = 10000}) {
-                final fake = _FakeTerminalSession(executable: executable);
-                fakeSessions.add(fake);
-                return fake;
-              },
-          postFrameScheduler: postFrame.scheduler,
-        );
-        _registerTempCubitCleanup(tmp: tmp, cubit: cubit, postFrame: postFrame);
-
-        await cubit.requestOpenSession(
-          SessionOpenRequest(
-            session: session,
-            team: team,
-            member: team.members[1],
-            repo: repo,
-            connectImmediately: true,
-          ),
-        );
-        await drainPendingAsyncWork();
-        await postFrame.flush();
-
-        expect(cubit.state.tabs.length, 1);
-        expect(cubit.isMemberRunning(sessionId: cubit.state.activeSessionId!, memberId: 'team-lead'), isFalse);
-        expect(cubit.isMemberRunning(sessionId: cubit.state.activeSessionId!, memberId: 'm-dev'), isFalse);
-        expect(fakeSessions.expand((s) => s.connectedMembers), isEmpty);
-
-        await cubit.connectWorkspaceSession(
-          TeamSessionConnect(team),
-          repo: repo,
-        );
-        await postFrame.flush();
-
-        expect(cubit.isMemberRunning(sessionId: cubit.state.activeSessionId!, memberId: 'm-dev'), isTrue);
-        expect(
-          fakeSessions.expand((s) => s.connectedMembers),
-          contains('m-dev'),
-        );
-      },
-    );
 
   });
 }
