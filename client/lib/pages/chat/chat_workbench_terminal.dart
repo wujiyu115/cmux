@@ -109,19 +109,7 @@ class _ChatWorkbenchRunningTerminalState
       }
     }
 
-    String memberName = '';
-    final teamId = appSession?.sessionTeam.trim() ?? '';
-    if (appSession != null && teamId.isNotEmpty) {
-      final profile = context.read<LaunchProfileCubit>().byId(teamId);
-      if (profile is TeamProfile) {
-        for (final member in sessionRosterMembers(appSession, profile)) {
-          if (member.id == memberId) {
-            memberName = member.name.trim();
-            break;
-          }
-        }
-      }
-    }
+    const memberName = '';
 
     final effectiveSessionId = appSession?.sessionId.trim().isNotEmpty == true
         ? appSession!.sessionId.trim()
@@ -313,7 +301,6 @@ void consumeChatWorkbenchRouteSession({
   required bool handledRouteSession,
   required ChatState state,
   required ChatCubit chatCubit,
-  required LaunchProfileCubit teamCubit,
   required SessionRepository sessionRepo,
   required AppLocalizations l10n,
   required void Function(bool handled) onHandled,
@@ -336,44 +323,10 @@ void consumeChatWorkbenchRouteSession({
     return;
   }
 
-  if (session.sessionTeam.trim().isEmpty) {
-    unawaited(
-      chatCubit.requestOpenSession(
-        buildOpenExistingSessionRequest(
-          session: session,
-          repo: sessionRepo,
-          emptyDisplayTitleFallback: l10n.defaultNewChatSessionTitle,
-          connectImmediately: connectImmediately,
-        ),
-      ),
-    );
-    return;
-  }
-
-  final teamId = session.sessionTeam.trim();
-  final profile = teamCubit.byId(teamId);
-  if (profile is! TeamProfile) {
-    chatCubit.addSystemMessage(l10n.sessionLaunchMissingTeamMember);
-    return;
-  }
-  TeamMemberConfig? lead;
-  for (final member in profile.members) {
-    if (TeamMemberNaming.isTeamLead(member)) {
-      lead = member;
-      break;
-    }
-  }
-  if (lead == null) {
-    chatCubit.addSystemMessage(l10n.sessionLaunchMissingTeamMember);
-    return;
-  }
-
   unawaited(
     chatCubit.requestOpenSession(
       buildOpenExistingSessionRequest(
         session: session,
-        team: profile,
-        member: lead,
         repo: sessionRepo,
         emptyDisplayTitleFallback: l10n.defaultNewChatSessionTitle,
         connectImmediately: connectImmediately,

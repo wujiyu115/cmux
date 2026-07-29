@@ -279,7 +279,6 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
     final setting = resolveLandingEnhanceSetting(
       draft: _currentDraft(),
       presets: context.read<CliPresetsCubit>().state.presets,
-      teams: context.read<LaunchProfileCubit>().state.teams,
       appProviders: context.read<AppProviderCubit>().state,
       registry: CliToolRegistryScope.of(context),
     );

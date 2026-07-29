@@ -45,7 +45,6 @@ class ChatPage extends StatelessWidget {
     final launchProfiles = context.watch<LaunchProfileCubit>();
     final active = WorkspaceActiveContext.resolve(
       chat: chat,
-      launchProfiles: launchProfiles,
       tabScopeId: _tabScopeId,
     );
 

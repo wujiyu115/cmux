@@ -202,7 +202,6 @@ class _WorkspaceRightToolsPane extends StatelessWidget {
     final chat = context.watch<ChatCubit>();
     final active = WorkspaceActiveContext.resolve(
       chat: chat,
-      launchProfiles: context.read<LaunchProfileCubit>(),
       tabScopeId: tabScopeId,
     );
     final composeLanding = workspaceNewChatActive(chat, tabScopeId);
@@ -219,7 +218,7 @@ class _WorkspaceRightToolsPane extends StatelessWidget {
       panelKey: AppKeys.rightToolsPanel,
       dismissDrawerOnAction: false,
       isPersonalContext: active.isPersonal,
-      team: active.team,
+      team: null,
       workspaceId: workspaceId,
       toolsScopeId: tabScopeId,
     );

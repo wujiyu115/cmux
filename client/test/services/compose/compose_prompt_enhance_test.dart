@@ -66,7 +66,6 @@ void main() {
       resolveLandingEnhanceSetting(
         draft: const LandingLaunchContext(isPersonal: true),
         presets: const [],
-        teams: const [],
         appProviders: providers,
         registry: registry,
       ),
@@ -81,7 +80,6 @@ void main() {
         presetId: 'preset-a',
       ),
       presets: presets,
-      teams: const [],
       appProviders: providers,
       registry: registry,
     );
@@ -92,40 +90,5 @@ void main() {
     expect(setting.model, 'sonnet');
   });
 
-  test('resolveLandingEnhanceSetting returns null when team has no provider',
-      () {
-    expect(
-      resolveLandingEnhanceSetting(
-        draft: const LandingLaunchContext(
-          isPersonal: false,
-          teamId: 'team-empty',
-        ),
-        presets: presets,
-        teams: const [
-          TeamProfile(id: 'team-empty', name: 'Empty', cli: CliTool.claude),
-        ],
-        appProviders: providers,
-        registry: registry,
-      ),
-      isNull,
-    );
-  });
 
-  test('resolveLandingEnhanceSetting uses selected team provider', () {
-    final setting = resolveLandingEnhanceSetting(
-      draft: const LandingLaunchContext(
-        isPersonal: false,
-        teamId: 'team-1',
-      ),
-      presets: presets,
-      teams: teams,
-      appProviders: providers,
-      registry: registry,
-    );
-
-    expect(setting, isNotNull);
-    expect(setting!.cli, CliTool.claude);
-    expect(setting.providerId, 'claude-official');
-    expect(setting.model, 'sonnet');
-  });
 }

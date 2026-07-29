@@ -476,10 +476,6 @@ class _SessionChatViewState extends State<SessionChatView> {
   TeamProfile? _liveTeam(BuildContext context) {
     final session = _displaySession(context);
     if (session.isSimple) return null;
-    final teamId = session.sessionTeam.trim();
-    if (teamId.isEmpty) return null;
-    final profile = context.watch<LaunchProfileCubit>().byId(teamId);
-    if (profile is TeamProfile) return profile;
     return widget.team;
   }
 
@@ -681,7 +677,6 @@ class _SessionChatViewState extends State<SessionChatView> {
     final setting = resolveLandingEnhanceSetting(
       draft: _enhanceDraft(),
       presets: context.read<CliPresetsCubit>().state.presets,
-      teams: context.read<LaunchProfileCubit>().state.teams,
       appProviders: context.read<AppProviderCubit>().state,
       registry: CliToolRegistryScope.of(context),
     );

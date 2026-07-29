@@ -220,50 +220,12 @@ void main() {
     );
 
     expect(find.text(l10n.automationsCreateTitle), findsOneWidget);
-    expect(find.text(l10n.automationsLaunchMode), findsOneWidget);
     expect(find.text(l10n.presetPickerTitle), findsOneWidget);
     expect(find.text(l10n.automationsPermissions), findsOneWidget);
     expect(find.text('Default'), findsOneWidget);
     expect(find.text(l10n.automationsTargetMember), findsNothing);
   });
 
-  testWidgets('team launch prompt shows team member picker', (tester) async {
-    final setup = testAutomationSetup();
-    final chatCubit = _chatCubitWithWorkspace();
-    final launchProfileCubit = _teamLaunchProfileCubit();
-    addTearDown(setup.cubit.close);
-    addTearDown(chatCubit.close);
-    addTearDown(launchProfileCubit.close);
-
-    await tester.pumpWidget(
-      _host(
-        cubit: setup.cubit,
-        chatCubit: chatCubit,
-        launchProfileCubit: launchProfileCubit,
-        child: AutomationEditorDialog(
-          workspaceId: 'ws1',
-          initial: sampleAutomation(
-            id: 'edit-team',
-            workspaceId: 'ws1',
-            isPersonal: false,
-            teamId: 'team-1',
-          ),
-        ),
-      ),
-    );
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 200));
-
-    final l10n = AppLocalizations.of(
-      tester.element(find.byType(AutomationEditorDialog)),
-    );
-
-    expect(find.text(l10n.automationsEditTitle), findsOneWidget);
-    expect(find.text(l10n.automationsTargetMember), findsOneWidget);
-    expect(find.text('Lead'), findsOneWidget);
-    expect(find.text(l10n.presetPickerTitle), findsNothing);
-    expect(find.text(l10n.hubPublishKindExpert), findsNothing);
-  });
 
   testWidgets('scheduled message editor pre-fills session defaults', (
     tester,

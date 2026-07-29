@@ -31,11 +31,10 @@ String cleanComposeEnhanceOutput(String raw) => cleanCommitMessageOutput(raw);
 AiFeatureSetting? resolveLandingEnhanceSetting({
   required LandingLaunchContext draft,
   required List<CliPreset> presets,
-  required List<TeamProfile> teams,
   required AppProviderState appProviders,
   required CliToolRegistry registry,
 }) {
-  if (draft.isPersonal) {
+  {
     final presetId = draft.presetId?.trim() ?? '';
     final preset = presetId.isEmpty
         ? null
@@ -55,26 +54,4 @@ AiFeatureSetting? resolveLandingEnhanceSetting({
     );
   }
 
-  final teamId = draft.teamId?.trim() ?? '';
-  final team = teamId.isEmpty
-      ? null
-      : teams.where((t) => t.id == teamId).firstOrNull;
-  final selectedTeam = team ?? teams.firstOrNull;
-  if (selectedTeam == null) return null;
-
-  final cli = selectedTeam.cli;
-  final providerId = selectedTeam.providerForCli(cli);
-  if (providerId.isEmpty) return null;
-
-  return resolveAiFeatureSetting(
-    stored: AiFeatureSetting(
-      cli: cli,
-      providerId: providerId,
-      model: selectedTeam.modelForCli(cli),
-      effort: selectedTeam.effortForCli(cli),
-    ),
-    appProviders: appProviders,
-    registry: registry,
-    globalPresets: presets,
-  );
 }

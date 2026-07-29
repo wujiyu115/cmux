@@ -183,11 +183,10 @@ class _ChatWorkspaceShell extends StatelessWidget {
         final view = ChatScopedTabView.resolve(cubit, tabScopeId);
         final active = WorkspaceActiveContext.resolve(
           chat: cubit,
-          launchProfiles: context.read<LaunchProfileCubit>(),
           tabScopeId: tabScopeId,
         );
         final isPersonalContext = active.isPersonal;
-        final teamConfig = active.team;
+        const TeamProfile? teamConfig = null;
         final runtimeTabs = _runtimeTabsForScope(cubit, tabScopeId);
         final tabById = {for (final t in runtimeTabs) t.info.id: t};
         final personalFallbackCli = isPersonalContext

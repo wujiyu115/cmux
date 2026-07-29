@@ -2,9 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../cubits/launch_profile_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
-import '../../models/team_config.dart';
 import '../../models/workspace.dart';
 import '../../pages/home_workspace/workspace/workspace_landing_location_fields.dart';
 import '../../widgets/cli/cli_preset_dropdown_field.dart';
@@ -14,50 +12,32 @@ import 'package:shared_ui/shared_ui.dart';
 class AutomationEditorLaunchSection extends StatelessWidget {
   const AutomationEditorLaunchSection({
     required this.workspace,
-    required this.isPersonal,
     required this.projectFolderPath,
     required this.workingDirectoryPath,
     required this.presetId,
-    required this.teamId,
     required this.dangerouslySkipPermissions,
-    required this.targetMemberId,
     required this.labelWidth,
     required this.onProjectChanged,
     required this.onWorktreeChanged,
-    required this.onIsPersonalChanged,
     required this.onPresetChanged,
-    required this.onTeamChanged,
     required this.onPermissionsChanged,
-    required this.onTargetMemberChanged,
     super.key,
   });
 
   final Workspace workspace;
-  final bool isPersonal;
   final String? projectFolderPath;
   final String? workingDirectoryPath;
   final String? presetId;
-  final String? teamId;
   final bool dangerouslySkipPermissions;
-  final String targetMemberId;
   final double labelWidth;
   final ValueChanged<String?> onProjectChanged;
   final ValueChanged<String?> onWorktreeChanged;
-  final ValueChanged<bool> onIsPersonalChanged;
   final ValueChanged<String?> onPresetChanged;
-  final ValueChanged<String?> onTeamChanged;
   final ValueChanged<bool> onPermissionsChanged;
-  final ValueChanged<String> onTargetMemberChanged;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final teams = context.watch<LaunchProfileCubit>().state.teams;
-    final team = teams.where((t) => t.id == teamId).firstOrNull;
-    final teamMembers =
-        team?.members.where((m) => m.isValid).toList(growable: false) ??
-        const <TeamMemberConfig>[];
-
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -71,142 +51,25 @@ class AutomationEditorLaunchSection extends StatelessWidget {
           onWorktreeChanged: onWorktreeChanged,
         ),
         TpFormField<String>(
-          key: ValueKey('launch-mode-$isPersonal'),
-          id: 'launchMode',
-          initialValue: isPersonal ? 'simple' : 'team',
-          label: Text(l10n.automationsLaunchMode),
+          key: ValueKey('preset-${presetId ?? ''}'),
+          id: 'presetId',
+          initialValue: presetId ?? '',
+          label: Text(l10n.presetPickerTitle),
           layoutStyle: TpFormFieldLayoutStyle.inline,
           labelWidth: labelWidth,
+          validator: (v) => (v == null || v.trim().isEmpty)
+              ? l10n.workspaceCliPresetsEmptyHint
+              : null,
           builder: (state) {
-            return TpSelect<String>(
-              items: const ['simple', 'team'],
-              initialItem: state.value ?? 'simple',
-              decoration: TpSelectDecorations.themed(context),
-              itemLabel: (value) => value == 'simple'
-                  ? l10n.workspaceChatLandingModeSimple
-                  : l10n.workspaceChatLandingModeTeam,
+            return CliPresetDropdownField(
+              selectedPresetId: state.value,
               onChanged: (value) {
-                if (value == null) return;
-                state.didChange(value);
-                onIsPersonalChanged(value == 'simple');
+                state.didChange(value ?? '');
+                onPresetChanged(value);
               },
             );
           },
         ),
-        const SizedBox(height: 12),
-        if (isPersonal) ...[
-          TpFormField<String>(
-            key: ValueKey('preset-${presetId ?? ''}'),
-            id: 'presetId',
-            initialValue: presetId ?? '',
-            label: Text(l10n.presetPickerTitle),
-            layoutStyle: TpFormFieldLayoutStyle.inline,
-            labelWidth: labelWidth,
-            validator: (v) =>
-                (v == null || v.trim().isEmpty)
-                ? l10n.workspaceCliPresetsEmptyHint
-                : null,
-            builder: (state) {
-              return CliPresetDropdownField(
-                selectedPresetId: state.value,
-                onChanged: (value) {
-                  state.didChange(value ?? '');
-                  onPresetChanged(value);
-                },
-              );
-            },
-          ),
-        ] else ...[
-          TpFormField<String>(
-            key: ValueKey('team-${teamId ?? ''}'),
-            id: 'teamId',
-            initialValue: teamId ?? '',
-            label: Text(l10n.selectTeam),
-            layoutStyle: TpFormFieldLayoutStyle.inline,
-            labelWidth: labelWidth,
-            validator: (v) {
-              if (teams.isEmpty) return l10n.automationsValidationRequired;
-              final id = v?.trim() ?? '';
-              if (id.isEmpty) return l10n.automationsValidationRequired;
-              return null;
-            },
-            builder: (state) {
-              if (teams.isEmpty) {
-                return Text(
-                  l10n.automationsValidationRequired,
-                  style: TpTextStyles.of(context).mdColored(
-                    Theme.of(context).colorScheme.error,
-                  ),
-                );
-              }
-              final initial = teams.any((t) => t.id == state.value)
-                  ? state.value
-                  : teams.first.id;
-              return TpSelect<String>(
-                items: teams.map((t) => t.id).toList(growable: false),
-                initialItem: initial,
-                decoration: TpSelectDecorations.themed(context),
-                itemLabel: (id) {
-                  final match = teams.where((t) => t.id == id).firstOrNull;
-                  return match?.name.trim().isNotEmpty == true
-                      ? match!.name.trim()
-                      : id;
-                },
-                onChanged: (value) {
-                  if (value == null) return;
-                  state.didChange(value);
-                  onTeamChanged(value);
-                },
-              );
-            },
-          ),
-          const SizedBox(height: 12),
-          TpFormField<String>(
-            key: ValueKey('target-member-$targetMemberId'),
-            id: 'targetMemberId',
-            initialValue: targetMemberId,
-            label: Text(l10n.automationsTargetMember),
-            layoutStyle: TpFormFieldLayoutStyle.inline,
-            labelWidth: labelWidth,
-            validator: (v) {
-              if (teamMembers.isEmpty) {
-                return l10n.automationsValidationRequired;
-              }
-              final id = v?.trim() ?? '';
-              if (id.isEmpty) return l10n.automationsValidationRequired;
-              return null;
-            },
-            builder: (state) {
-              if (teamMembers.isEmpty) {
-                return Text(
-                  l10n.automationsValidationRequired,
-                  style: TpTextStyles.of(context).mdColored(
-                    Theme.of(context).colorScheme.error,
-                  ),
-                );
-              }
-              final initial = teamMembers.any((m) => m.id == state.value)
-                  ? state.value
-                  : teamMembers.first.id;
-              return TpSelect<String>(
-                items: teamMembers.map((m) => m.id).toList(growable: false),
-                initialItem: initial,
-                decoration: TpSelectDecorations.themed(context),
-                itemLabel: (memberId) {
-                  final member = teamMembers
-                      .where((m) => m.id == memberId)
-                      .firstOrNull;
-                  return member?.name ?? memberId;
-                },
-                onChanged: (value) {
-                  if (value == null) return;
-                  state.didChange(value);
-                  onTargetMemberChanged(value);
-                },
-              );
-            },
-          ),
-        ],
         const SizedBox(height: 12),
         TpFormField<bool>(
           key: ValueKey('permissions-$dangerouslySkipPermissions'),

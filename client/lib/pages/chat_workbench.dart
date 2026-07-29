@@ -110,7 +110,6 @@ class _ChatWorkbenchState extends State<ChatWorkbench> {
       handledRouteSession: _handledRouteSession,
       state: state,
       chatCubit: context.read<ChatCubit>(),
-      teamCubit: context.read<LaunchProfileCubit>(),
       sessionRepo: context.read<SessionRepository>(),
       l10n: AppLocalizations.of(context),
       onHandled: (handled) => _handledRouteSession = handled,
@@ -706,12 +705,8 @@ class _ChatWorkbenchBody extends StatelessWidget {
     );
   }
 
-  TeamProfile? _teamProfileForSession(BuildContext context, AppSession session) {
-    final teamId = session.sessionTeam.trim();
-    if (teamId.isEmpty) return null;
-    final profile = context.read<LaunchProfileCubit>().byId(teamId);
-    return profile is TeamProfile ? profile : null;
-  }
+  TeamProfile? _teamProfileForSession(BuildContext context, AppSession session) =>
+      null;
 
   String _tabSelectedMemberId(ChatCubit chatCubit) {
     final activeId = slice.activeSessionId;
