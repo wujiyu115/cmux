@@ -27,19 +27,8 @@ class TimelineEvent {
   final int cliOrder;
 }
 
-class UnreadUserMail {
-  const UnreadUserMail({required this.id, required this.content});
-
-  final String id;
-  final String content;
-}
-
 class TimelineSnapshot {
-  const TimelineSnapshot({
-    required this.messages,
-    this.unreadUserMails = const [],
-  });
+  const TimelineSnapshot({required this.messages});
 
   final List<AiMessage> messages;
-  final List<UnreadUserMail> unreadUserMails;
 }

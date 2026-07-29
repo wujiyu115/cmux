@@ -35,14 +35,12 @@ void main() {
 
     Future<HistoryContinueSubmitResult> runSubmit(
       String message, {
-      HistoryContinueChannel channel = HistoryContinueChannel.pty,
       String? mailboxMailId = 'mail-1',
     }) {
       return submitSessionHistoryReviewMessage(
         sessionId: 'sess-1',
         memberId: 'member-1',
         message: message,
-        channel: channel,
         connectRequest: connectRequest,
         connectWorkspaceSession: (request) async {
           connectCalls.add(request);
@@ -77,8 +75,6 @@ void main() {
         final result = await runSubmit('  continue here  ');
 
         expect(result.ok, isTrue);
-        expect(result.channel, HistoryContinueChannel.pty);
-        expect(result.mailId, isNull);
         expect(connectCalls, [connectRequest]);
         expect(readyCalls, [('sess-1', 'member-1', true)]);
         expect(deliverCalls, [('sess-1', 'member-1', 'continue here', true)]);
@@ -87,87 +83,9 @@ void main() {
       },
     );
 
-    test(
-      'mailbox: connects and delivers without ready-wait or PTY inject',
-      () async {
-        final result = await runSubmit(
-          '  follow up  ',
-          channel: HistoryContinueChannel.mailbox,
-        );
 
-        expect(result.ok, isTrue);
-        expect(result.channel, HistoryContinueChannel.mailbox);
-        expect(result.mailId, 'mail-1');
-        expect(connectCalls, [connectRequest]);
-        expect(readyCalls, isEmpty);
-        expect(deliverCalls, [('sess-1', 'member-1', 'follow up', false)]);
-        expect(titleCalls, isEmpty);
-      },
-    );
 
-    test('mailbox fails when deliver returns empty mail id', () async {
-      final result = await runSubmit(
-        'hello',
-        channel: HistoryContinueChannel.mailbox,
-        mailboxMailId: '',
-      );
 
-      expect(result.ok, isFalse);
-      expect(deliverCalls, [('sess-1', 'member-1', 'hello', false)]);
-      expect(titleCalls, isEmpty);
-    });
-
-    test('mailbox fails when deliver returns null (no bus)', () async {
-      final result = await runSubmit(
-        'hello',
-        channel: HistoryContinueChannel.mailbox,
-        mailboxMailId: null,
-      );
-
-      expect(result.ok, isFalse);
-      expect(deliverCalls, [('sess-1', 'member-1', 'hello', false)]);
-      expect(titleCalls, isEmpty);
-    });
-
-    test(
-      'resolveChannel after connect can switch pty default to mailbox',
-      () async {
-        var connected = false;
-        final result = await submitSessionHistoryReviewMessage(
-          sessionId: 'sess-1',
-          memberId: 'member-1',
-          message: 'hello',
-          channel: HistoryContinueChannel.pty,
-          resolveChannel: () => connected
-              ? HistoryContinueChannel.mailbox
-              : HistoryContinueChannel.pty,
-          connectRequest: connectRequest,
-          connectWorkspaceSession: (request) async {
-            connectCalls.add(request);
-            connected = true;
-          },
-          ensureMemberInputReady:
-              (sessionId, memberId, {bool directToPty = false}) async {
-                readyCalls.add((sessionId, memberId, directToPty));
-              },
-          deliverUserCommandToMember:
-              (sessionId, memberId, text, {bool directToPty = false}) async {
-                deliverCalls.add((sessionId, memberId, text, directToPty));
-                return 'mail-post';
-              },
-          applyFirstPromptTitle: (sessionId, firstPrompt) async {
-            titleCalls.add((sessionId, firstPrompt));
-          },
-        );
-
-        expect(result.ok, isTrue);
-        expect(result.channel, HistoryContinueChannel.mailbox);
-        expect(result.mailId, 'mail-post');
-        expect(readyCalls, isEmpty);
-        expect(deliverCalls, [('sess-1', 'member-1', 'hello', false)]);
-        expect(titleCalls, isEmpty);
-      },
-    );
 
     test('keeps failure when connect throws', () async {
       final result = await submitSessionHistoryReviewMessage(

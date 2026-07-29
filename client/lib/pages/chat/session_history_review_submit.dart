@@ -32,14 +32,14 @@ final class HistoryContinueSubmitLock {
   }
 }
 
-/// Connects an already-open review tab, then delivers [message] on [channel].
+/// Connects an already-open review tab, then injects [message] at the prompt.
 ///
 /// [connectRequest] must be [ExistingSessionConnect] for the open session tab.
 /// Must not call [ChatCubit.requestOpenSession] with `connectImmediately: true`
 /// — that path is for landing create / automation only.
 ///
-/// PTY: waits for member ready, injects at the prompt, applies first-prompt
-/// title. Mailbox: skips ready-wait and returns the TeamBus mail id.
+/// Waits for member ready, injects at the prompt, applies the first-prompt
+/// title.
 ///
 /// On connect/ready/inject failure returns [HistoryContinueSubmitResult.failed]
 /// so compose text is kept; launch errors surface via existing tab
@@ -66,15 +66,11 @@ Future<HistoryContinueSubmitResult> submitSessionHistoryReviewMessage({
   deliverUserCommandToMember,
   required Future<void> Function(String sessionId, String firstPrompt)
   applyFirstPromptTitle,
-  HistoryContinueChannel channel = HistoryContinueChannel.pty,
-
-  /// When set, called after connect so a newly installed TeamBus is visible.
-  HistoryContinueChannel Function()? resolveChannel,
   Duration readyTimeout = const Duration(seconds: 120),
 }) async {
   final trimmed = message.trim();
   if (trimmed.isEmpty) {
-    return HistoryContinueSubmitResult.failed(channel: channel);
+    return const HistoryContinueSubmitResult.failed();
   }
 
   try {
@@ -85,45 +81,7 @@ Future<HistoryContinueSubmitResult> submitSessionHistoryReviewMessage({
       error: error,
       stackTrace: stackTrace,
     );
-    return HistoryContinueSubmitResult.failed(channel: channel);
-  }
-
-  // Prefer post-connect resolution so a freshly installed TeamBus is visible.
-  final effectiveChannel = resolveChannel?.call() ?? channel;
-
-  if (effectiveChannel == HistoryContinueChannel.mailbox) {
-    try {
-      final mailId = await deliverUserCommandToMember(
-        sessionId,
-        memberId,
-        trimmed,
-        directToPty: false,
-      );
-      final id = mailId?.trim() ?? '';
-      if (id.isEmpty) {
-        appLogger.w(
-          'submitSessionHistoryReviewMessage: mailbox deliver missing id '
-          'session=$sessionId member=$memberId',
-        );
-        return const HistoryContinueSubmitResult.failed(
-          channel: HistoryContinueChannel.mailbox,
-        );
-      }
-      return HistoryContinueSubmitResult(
-        ok: true,
-        channel: HistoryContinueChannel.mailbox,
-        mailId: id,
-      );
-    } on Object catch (error, stackTrace) {
-      appLogger.e(
-        'submitSessionHistoryReviewMessage: mailbox deliver failed',
-        error: error,
-        stackTrace: stackTrace,
-      );
-      return const HistoryContinueSubmitResult.failed(
-        channel: HistoryContinueChannel.mailbox,
-      );
-    }
+    return const HistoryContinueSubmitResult.failed();
   }
 
   try {
@@ -156,10 +114,7 @@ Future<HistoryContinueSubmitResult> submitSessionHistoryReviewMessage({
     );
     // Review inject bypasses FirstUserLineCapture (keyboard path only).
     await applyFirstPromptTitle(sessionId, trimmed);
-    return const HistoryContinueSubmitResult(
-      ok: true,
-      channel: HistoryContinueChannel.pty,
-    );
+    return const HistoryContinueSubmitResult(ok: true);
   } on Object catch (error, stackTrace) {
     appLogger.e(
       'submitSessionHistoryReviewMessage',

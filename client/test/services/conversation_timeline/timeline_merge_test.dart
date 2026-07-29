@@ -37,7 +37,6 @@ void main() {
             deliveryChannel: 'mailbox',
           ),
         ],
-        unread: const [],
       );
 
       expect(snapshot.messages.map((m) => m.id), [
@@ -49,36 +48,6 @@ void main() {
       expect(snapshot.messages[0].deliveryChannel, isNull);
     });
 
-    test('passes unread through without adding them to messages', () {
-      const unread = [
-        UnreadUserMail(id: 'mail-unread-1', content: 'queued text'),
-        UnreadUserMail(id: 'mail-unread-2', content: 'parked text'),
-      ];
-
-      final snapshot = mergeTimeline(
-        events: [
-          TimelineEvent(
-            id: 'cli-assistant-1',
-            role: AiRole.assistant,
-            parts: [AiTextPart(text: 'reply')],
-            createdAt: DateTime.utc(2026, 1, 1, 10),
-            source: 'cli',
-          ),
-        ],
-        unread: unread,
-      );
-
-      expect(snapshot.unreadUserMails, unread);
-      expect(snapshot.messages, hasLength(1));
-      expect(
-        snapshot.messages.map((m) => m.id),
-        isNot(contains('mail-unread-1')),
-      );
-      expect(
-        snapshot.messages.map((m) => m.id),
-        isNot(contains('mail-unread-2')),
-      );
-    });
 
     test('dedupes same id with last write winning', () {
       final t1 = DateTime.utc(2026, 1, 1, 10);
@@ -103,7 +72,6 @@ void main() {
             deliveryChannel: 'mailbox',
           ),
         ],
-        unread: const [],
       );
 
       expect(snapshot.messages, hasLength(1));
@@ -140,7 +108,6 @@ void main() {
             deliveryChannel: 'mailbox',
           ),
         ],
-        unread: const [],
       );
 
       expect(snapshot.messages.map((m) => m.id), [

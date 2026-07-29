@@ -28,7 +28,6 @@ void main() {
         await gate.future;
         return const HistoryContinueSubmitResult(
           ok: true,
-          channel: HistoryContinueChannel.pty,
         );
       });
       // Second call while first is awaiting must not run the action.
@@ -36,7 +35,6 @@ void main() {
         calls++;
         return const HistoryContinueSubmitResult(
           ok: true,
-          channel: HistoryContinueChannel.pty,
         );
       });
       expect(second.ok, isFalse);

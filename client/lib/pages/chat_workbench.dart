@@ -625,14 +625,6 @@ class _ChatWorkbenchBody extends StatelessWidget {
     final shellMemberId = isPersonal
         ? appSession.sessionId
         : (connectMember?.id ?? memberId);
-    HistoryContinueChannel resolveChannel() {
-      return resolveHistoryContinueChannel(
-        teamBusInstalled: false,
-        memberWaitingForMessage: false,
-        memberInTurn: false,
-      );
-    }
-
     return SessionChatView(
       session: appSession,
       workspace: chatCubit.state.workspaces
@@ -651,8 +643,6 @@ class _ChatWorkbenchBody extends StatelessWidget {
       onRetry: () => unawaited(
         chatCubit.retrySessionLaunch(appSession.sessionId),
       ),
-      peekContinueChannel: resolveChannel,
-      isMailboxUnread: (mailId) => false,
       onRemapDeadTarget: deadSshTargetIdFromError(launchError) != null
           ? () => unawaited(
               onRemapDeadTargetFromLaunch(
@@ -693,7 +683,6 @@ class _ChatWorkbenchBody extends StatelessWidget {
           memberId: shellMemberId,
           message: message,
           connectRequest: connectRequest,
-          resolveChannel: resolveChannel,
           connectWorkspaceSession: chatCubit.connectWorkspaceSession,
           ensureMemberInputReady:
               (sessionId, mid, {bool directToPty = false}) => chatCubit

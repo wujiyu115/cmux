@@ -13,10 +13,7 @@ int _compareTimelineEvents(TimelineEvent a, TimelineEvent b) {
 }
 
 /// Sort by (createdAt ?? epoch, cliOrder, id); missing timestamps keep CLI order via cliOrder.
-TimelineSnapshot mergeTimeline({
-  required List<TimelineEvent> events,
-  required List<UnreadUserMail> unread,
-}) {
+TimelineSnapshot mergeTimeline({required List<TimelineEvent> events}) {
   final sorted = [...events]..sort(_compareTimelineEvents);
 
   final deduped = <TimelineEvent>[];
@@ -40,5 +37,5 @@ TimelineSnapshot mergeTimeline({
       ),
   ];
 
-  return TimelineSnapshot(messages: messages, unreadUserMails: unread);
+  return TimelineSnapshot(messages: messages);
 }

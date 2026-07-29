@@ -57,7 +57,6 @@ import 'agent_permission_attention_banner.dart';
 import 'compose_stop_visibility.dart';
 import 'history_awaiting_working_sync.dart';
 import 'history_continue_delivery.dart';
-import 'history_mailbox_queued_strip.dart';
 import 'session_history_live_chrome.dart';
 import 'session_history_review_messages.dart';
 import 'session_history_review_submit.dart';
@@ -77,8 +76,6 @@ class SessionChatView extends StatefulWidget {
     this.onRetry,
     this.sessionConnectInProgress = false,
     this.isSubmitting = false,
-    this.isMailboxUnread,
-    this.peekContinueChannel,
     this.routeActive = true,
     super.key,
   });
@@ -88,20 +85,13 @@ class SessionChatView extends StatefulWidget {
   final String selectedMemberId;
   final TeamProfile? team;
 
-  /// Connect+deliver outcome so compose can clear and latch mailbox Queued rows.
+  /// Connect+deliver outcome so compose can clear on success.
   final Future<HistoryContinueSubmitResult> Function(String message) onSubmit;
   final String? launchError;
   final VoidCallback? onRemapDeadTarget;
   final VoidCallback? onRetry;
   final bool sessionConnectInProgress;
   final bool isSubmitting;
-
-  /// When non-null, mailbox Queued rows poll this until the member consumes mail.
-  final bool Function(String mailId)? isMailboxUnread;
-
-  /// Optional pre-submit channel peek so mailbox continues skip optimistic
-  /// thread pending (confirmed again after connect inside [onSubmit]).
-  final HistoryContinueChannel Function()? peekContinueChannel;
 
   /// When false and the seat member is not running, live transcript refresh stops
   /// (warm keep-alive). Task 7 plumbs this from the workspace route scope.
@@ -121,11 +111,8 @@ class _SessionChatViewState extends State<SessionChatView> {
   AiHistorySeat? _seat;
 
   final _submitLock = HistoryContinueSubmitLock();
-  final _mailboxQueued = StreamController<PendingUserMessage>.broadcast();
 
   /// mailId → seat key at queue time (guards wrong-seat timeline refresh).
-  final Map<String, String> _mailboxQueuedSeats = {};
-  var _mailboxQueuedClearToken = 0;
   var _enhancing = false;
   var _voiceListening = false;
   var _voiceSoundLevel = 0.0;
@@ -224,7 +211,6 @@ class _SessionChatViewState extends State<SessionChatView> {
         oldWidget.team?.id != widget.team?.id;
     if (seatChanged) {
       unawaited(_stopLiveRefreshForSeatChange());
-      _clearMailboxQueuedUi();
       _subagentPreview.clear();
       _bindSeat();
       // Defer: load → runtime.setLoading sync-notifies seat listeners
@@ -242,18 +228,6 @@ class _SessionChatViewState extends State<SessionChatView> {
     }
   }
 
-  String _mailboxSeatKey() => historySeatKey(
-    sessionId: widget.session.sessionId,
-    selectedMemberId: widget.selectedMemberId,
-  );
-
-  /// Drop Queued rows on seat change without promoting them as consumed.
-  void _clearMailboxQueuedUi() {
-    _mailboxQueuedSeats.clear();
-    _mailboxQueuedClearToken++;
-    if (mounted) setState(() {});
-  }
-
   @override
   void dispose() {
     _awaitingIdleGraceTimer?.cancel();
@@ -263,7 +237,6 @@ class _SessionChatViewState extends State<SessionChatView> {
     final live = _liveRefresh;
     _liveRefresh = null;
     unawaited(live?.stop() ?? Future<void>.value());
-    unawaited(_mailboxQueued.close());
     _voiceInput.dispose();
     _subagentPreview.dispose();
     _controller.dispose();
@@ -834,15 +807,8 @@ class _SessionChatViewState extends State<SessionChatView> {
 
     final seat = _seat;
     if (seat == null) return;
-    // Peek before connect so mailbox continues skip optimistic thread pending.
-    // onSubmit re-resolves after connect; rollback if peek was wrong.
-    final peek =
-        widget.peekContinueChannel?.call() ?? HistoryContinueChannel.pty;
-    final optimisticPty = peek == HistoryContinueChannel.pty;
-    if (optimisticPty) {
-      seat.enqueuePendingUser(text);
-      _syncAwaitingFromWorkingSessions(context.read<ChatCubit>().state);
-    }
+    seat.enqueuePendingUser(text);
+    _syncAwaitingFromWorkingSessions(context.read<ChatCubit>().state);
     _controller.clear();
     if (mounted) setState(() {});
 
@@ -854,7 +820,7 @@ class _SessionChatViewState extends State<SessionChatView> {
     setState(() {});
     if (!result.ok) {
       _cancelAwaitingIdleGrace();
-      if (optimisticPty) seat.removePendingMatching(text);
+      seat.removePendingMatching(text);
       _controller
         ..text = text
         ..selection = TextSelection.collapsed(offset: text.length);
@@ -862,22 +828,6 @@ class _SessionChatViewState extends State<SessionChatView> {
       return;
     }
 
-    if (result.isMailbox) {
-      _cancelAwaitingIdleGrace();
-      if (optimisticPty) seat.removePendingMatching(text);
-      final mailId = result.mailId!;
-      _mailboxQueuedSeats[mailId] = _mailboxSeatKey();
-      _mailboxQueued.add(PendingUserMessage(id: mailId, content: text));
-      setState(() {});
-      // Mailbox text is not in the CLI transcript — skip live refresh churn.
-      return;
-    }
-
-    if (!optimisticPty) {
-      // Peek said mailbox but post-connect path was PTY — show the bubble now.
-      seat.enqueuePendingUser(text);
-      _syncAwaitingFromWorkingSessions(context.read<ChatCubit>().state);
-    }
     unawaited(_startLiveRefresh());
   }
 
@@ -1279,29 +1229,6 @@ class _SessionChatViewState extends State<SessionChatView> {
                                   session: widget.session,
                                   selectedMemberId: widget.selectedMemberId,
                                 ),
-                                if (widget.isMailboxUnread != null)
-                                  HistoryMailboxQueuedStrip(
-                                    key: ValueKey(
-                                      'mailbox-queued-$_mailboxQueuedClearToken',
-                                    ),
-                                    submissions: _mailboxQueued.stream,
-                                    isUnread: widget.isMailboxUnread!,
-                                    clearToken: _mailboxQueuedClearToken,
-                                    onConsumed: (msg) {
-                                      if (!mounted) return;
-                                      final seatKey = _mailboxQueuedSeats
-                                          .remove(msg.id);
-                                      if (seatKey != _mailboxSeatKey()) {
-                                        return;
-                                      }
-                                      // Mail is read in the bus log now —
-                                      // refresh the merged timeline so the
-                                      // message appears as real history.
-                                      unawaited(
-                                        _seat?.refreshMailboxTimeline(),
-                                      );
-                                    },
-                                  ),
                                 SessionReviewComposeCard(
                                   floating: true,
                                   controller: _controller,

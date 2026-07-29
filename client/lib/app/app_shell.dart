@@ -968,7 +968,6 @@ Future<AppShell> buildAppShell({
   aiHistoryLoaderRef = aiHistoryLoader;
   final aiHistoryCubit = AiHistoryCubit(
     loader: aiHistoryLoader,
-    loadMailboxRecords: (sessionId, memberId) async => const [],
   );
   chatCubit.onSessionHistoryStale = (sessionId) {
     unawaited(aiHistoryCubit.softReloadIfSession(sessionId));
