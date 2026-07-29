@@ -8,12 +8,9 @@ import 'package:flutter_alacritty/flutter_alacritty.dart';
 import 'package:flutter_alacritty/links/terminal_link_provider.dart';
 
 import '../cli/cli_executable_validator.dart';
-import '../cli/preset_resolver.dart';
 import '../cli/cli_invocation.dart';
 import '../cli/registry/capabilities/terminal_behavior_capability.dart';
-import '../cli/registry/cli_tool_registry.dart';
 import '../session/launch_command_builder.dart';
-import '../session/shell_launch_spec.dart';
 import '../ssh/ssh_member_session.dart';
 import '../../cubits/agent_attention_cubit.dart';
 import 'pending_user_message.dart';
@@ -219,12 +216,13 @@ class TerminalSession {
   void onViewportResize(int columns, int rows) =>
       _launch.onViewportResize(columns, rows);
 
+  /// Starts the session shell in [workingDirectory].
+  ///
+  /// Unlike [connectWorkspaceShell] this installs the session input pipeline,
+  /// so first/every-line hooks (session auto-title, touch) fire.
   void connect({
     required String workingDirectory,
-    List<String> additionalDirectories = const [],
-    String? fixedSessionId,
-    String? resumeSessionId,
-    ShellLaunchSpec? shellLaunch,
+    List<String> arguments = const [],
     Map<String, String>? extraEnvironment,
     VoidCallback? onProcessStarted,
     void Function(String message)? onProcessFailed,
@@ -273,25 +271,8 @@ class TerminalSession {
       inheritHostEnvironment: !sshRemote,
     );
 
-    final args = shellLaunch != null
-        ? LaunchCommandBuilder.buildShellArguments(
-            shellLaunch,
-            fixedSessionId: fixedSessionId,
-            resumeSessionId: resumeSessionId,
-            environment: normalizedEnvironment,
-            useWslPaths: invocation.usesWsl,
-          )
-        : LaunchCommandBuilder.buildSessionPrefixArgs(
-            workingDirectory: workingDirectory.isNotEmpty
-                ? workingDirectory
-                : null,
-            additionalDirectories: additionalDirectories,
-            fixedSessionId: fixedSessionId,
-            resumeSessionId: resumeSessionId,
-            useWslPaths: invocation.usesWsl,
-          );
     final launchArgs = invocation.withArgs(
-      args,
+      arguments,
       environment: _extraEnvironment,
     );
 
@@ -310,25 +291,11 @@ class TerminalSession {
       '--------------------------------\n',
     );
 
-    final terminalBehavior = shellLaunch != null
-        ? CliToolRegistry.builtIn().capability<TerminalBehaviorCapability>(
-            stagedMemberLaunchCli(
-              shellLaunch.launchContext.team,
-              shellLaunch.launchContext.member,
-            ),
-          )
-        : null;
-    final forwardsColorScheme =
-        terminalBehavior?.forwardsColorSchemeReport ?? true;
-    if (terminalBehavior != null) {
-      _pathDropBehavior = terminalBehavior.pathDropBehavior;
-    }
-
     _inputPipeline.install(
       onFirstUserLineSubmitted: onFirstUserLineSubmitted,
       onEveryUserLineSubmitted: onEveryUserLineSubmitted,
       onTurnStart: markUserTurnStarted,
-      forwardsColorScheme: forwardsColorScheme,
+      forwardsColorScheme: true,
     );
 
     _launch.onProcessStarted = onProcessStarted;

@@ -29,17 +29,13 @@ class _SpyTerminalSession extends TerminalSession {
   @override
   void connect({
     required String workingDirectory,
-    List<String> additionalDirectories = const [],
-    String? fixedSessionId,
-    String? resumeSessionId,
-    shellLaunch,
+    List<String> arguments = const [],
     Map<String, String>? extraEnvironment,
     void Function()? onProcessStarted,
     void Function(String message)? onProcessFailed,
     void Function()? onProcessExited,
     void Function(String line)? onFirstUserLineSubmitted,
     void Function(String line)? onEveryUserLineSubmitted,
-    busUserInputRouting,
     String? executableOverride,
   }) {
     connectCalls++;

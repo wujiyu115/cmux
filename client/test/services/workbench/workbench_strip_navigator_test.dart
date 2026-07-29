@@ -7,7 +7,6 @@ import 'package:teampilot/cubits/workbench/workbench_tab.dart';
 import 'package:teampilot/models/team_config.dart';
 import 'package:teampilot/models/workspace_folder.dart';
 import 'package:teampilot/repositories/session_repository.dart';
-import 'package:teampilot/services/session/shell_launch_spec.dart';
 import 'package:teampilot/services/terminal/terminal_session.dart';
 import 'package:teampilot/services/workbench/workbench_strip_navigator.dart';
 
@@ -27,10 +26,7 @@ class _FakeTerminalSession extends TerminalSession {
   @override
   void connect({
     required String workingDirectory,
-    List<String> additionalDirectories = const [],
-    String? fixedSessionId,
-    String? resumeSessionId,
-    ShellLaunchSpec? shellLaunch,
+    List<String> arguments = const [],
     Map<String, String>? extraEnvironment,
     void Function()? onProcessStarted,
     void Function(String message)? onProcessFailed,

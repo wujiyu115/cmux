@@ -1,4 +1,3 @@
-import 'package:teampilot/services/session/shell_launch_spec.dart';
 import 'package:teampilot/services/terminal/terminal_session.dart';
 
 /// Recording [TerminalSession] for cubit / smoke tests that assert connect args.
@@ -9,11 +8,8 @@ class FakeTerminalSession extends TerminalSession {
   });
 
   var _running = false;
-  final connectedMembers = <String>[];
-  final resumedSessions = <String>[];
-  final lastFixedSessionIds = <String?>[];
-  final lastResumeSessionIds = <String?>[];
-  final lastAdditionalDirectoriesLists = <List<String>>[];
+  final lastWorkingDirectories = <String>[];
+  final lastArgumentLists = <List<String>>[];
   final lastExtraEnvironments = <Map<String, String>?>[];
 
   @override
@@ -22,10 +18,7 @@ class FakeTerminalSession extends TerminalSession {
   @override
   void connect({
     required String workingDirectory,
-    List<String> additionalDirectories = const [],
-    String? fixedSessionId,
-    String? resumeSessionId,
-    ShellLaunchSpec? shellLaunch,
+    List<String> arguments = const [],
     Map<String, String>? extraEnvironment,
     void Function()? onProcessStarted,
     void Function(String message)? onProcessFailed,
@@ -34,27 +27,14 @@ class FakeTerminalSession extends TerminalSession {
     void Function(String line)? onEveryUserLineSubmitted,
     String? executableOverride,
   }) {
-    lastFixedSessionIds.add(fixedSessionId);
-    lastResumeSessionIds.add(resumeSessionId);
-    lastAdditionalDirectoriesLists.add(
-      List<String>.from(
-        shellLaunch?.launchContext.additionalDirectories ??
-            additionalDirectories,
-      ),
-    );
+    lastWorkingDirectories.add(workingDirectory);
+    lastArgumentLists.add(List<String>.from(arguments));
     lastExtraEnvironments.add(
       extraEnvironment == null
           ? null
           : Map<String, String>.from(extraEnvironment),
     );
     _running = true;
-    if (resumeSessionId != null && resumeSessionId.isNotEmpty) {
-      resumedSessions.add(resumeSessionId);
-    }
-    final member = shellLaunch?.launchContext.member;
-    if (member != null) {
-      connectedMembers.add(member.id);
-    }
     onProcessStarted?.call();
   }
 

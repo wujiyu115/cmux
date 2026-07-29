@@ -28,10 +28,7 @@ class _FakeTerminalSession extends TerminalSession {
   @override
   void connect({
     required String workingDirectory,
-    List<String> additionalDirectories = const [],
-    String? fixedSessionId,
-    String? resumeSessionId,
-    ShellLaunchSpec? shellLaunch,
+    List<String> arguments = const [],
     Map<String, String>? extraEnvironment,
     void Function()? onProcessStarted,
     void Function(String message)? onProcessFailed,
