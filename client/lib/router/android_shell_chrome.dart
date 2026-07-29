@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../cubits/launch_profile_cubit.dart';
 import '../l10n/l10n_extensions.dart';
 import '../pages/mcp/mcp_routes.dart';
 import '../pages/mcp/mcp_management_page.dart';
@@ -154,16 +153,5 @@ class AndroidShellChrome {
   static bool _isMcpDetail(String path) =>
       path.startsWith('/mcp/') && path.length > '/mcp/'.length;
 
-  static String? _memberTitle(BuildContext context, String path) {
-    final id = path.split('/').last;
-    final team = context.read<LaunchProfileCubit>().state.selectedTeam;
-    if (team == null) return null;
-    for (final member in team.members) {
-      if (member.id == id) {
-        final name = member.name.trim();
-        return name.isEmpty ? context.l10n.memberName : name;
-      }
-    }
-    return null;
-  }
+  static String? _memberTitle(BuildContext context, String path) => null;
 }

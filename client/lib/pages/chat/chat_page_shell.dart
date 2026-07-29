@@ -9,7 +9,6 @@ import '../../cubits/chat_cubit.dart';
 import '../../cubits/chat/model/chat_tab.dart';
 import '../../cubits/cli_presets_cubit.dart';
 import '../../cubits/editor_cubit.dart';
-import '../../cubits/launch_profile_cubit.dart';
 import '../../cubits/run_cubit.dart';
 import '../../cubits/workbench/workbench_cubit.dart';
 import '../../l10n/l10n_extensions.dart';

@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 import '../../cubits/chat_cubit.dart';
-import '../../cubits/launch_profile_cubit.dart';
 import '../../cubits/resource_manager_cubit.dart';
 import '../../cubits/workbench/workbench_cubit.dart';
 import '../../cubits/workbench/workbench_tab.dart';
@@ -162,7 +161,6 @@ class _GlobalResourceManagerHostState extends State<GlobalResourceManagerHost> {
     final chat = context.read<ChatCubit>();
     final registry = context.read<WorkspaceTerminalRegistry>();
     final emptyTitle = context.l10n.defaultNewChatSessionTitle;
-    final profiles = context.read<LaunchProfileCubit>();
 
     return collectLiveResourceBindingsAllWorkspaces(
       workspaces: chat.state.workspaces,
@@ -173,16 +171,10 @@ class _GlobalResourceManagerHostState extends State<GlobalResourceManagerHost> {
         emptyFallback: emptyTitle,
       ),
       memberName: (tab, memberId) {
-        final teamId = tab.persistedSession?.sessionTeam.trim() ?? '';
-        TeamProfile? team;
-        if (teamId.isNotEmpty) {
-          final profile = profiles.byId(teamId);
-          if (profile is TeamProfile) team = profile;
-        }
         return resourceManagerMemberName(
           tab: tab,
           memberId: memberId,
-          team: team,
+          team: null,
         );
       },
     );

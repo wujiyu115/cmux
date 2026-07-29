@@ -5,7 +5,6 @@ import '../cubits/ai_feature_settings_cubit.dart';
 import '../cubits/chat_cubit.dart';
 import '../cubits/cli_presets_cubit.dart';
 import '../cubits/extension_cubit.dart';
-import '../cubits/launch_profile_cubit.dart';
 import '../cubits/layout_cubit.dart';
 import '../cubits/llm_config_cubit.dart';
 import '../cubits/mcp_cubit.dart';
@@ -34,13 +33,11 @@ abstract final class AppDataBootstrap {
   /// Hydrates launch profiles + workspace index before the home shell is shown.
   static Future<void> hydrateNativeHomeIndex({
     required BootLog boot,
-    required LaunchProfileCubit teamCubit,
     required ChatCubit chatCubit,
     required SessionRepository sessionRepo,
     required LayoutCubit layoutCubit,
   }) async {
     await Future.wait([
-      _timed(boot, 'launchProfiles', () => teamCubit.load(bootSilent: true)),
       _timed(
         boot,
         'loadWorkspaceIndex',
@@ -56,12 +53,10 @@ abstract final class AppDataBootstrap {
     boot(
       'hydrateNativeHomeIndex index ready '
       'workspaces=${chatCubit.state.workspaces.length} '
-      'identities=${teamCubit.state.identities.length}',
     );
 
     await _seedDefaultWorkspace(
       boot: boot,
-      teamCubit: teamCubit,
       chatCubit: chatCubit,
       sessionRepo: sessionRepo,
       layoutCubit: layoutCubit,
@@ -70,14 +65,12 @@ abstract final class AppDataBootstrap {
 
   static Future<void> _seedDefaultWorkspace({
     required BootLog boot,
-    required LaunchProfileCubit teamCubit,
     required ChatCubit chatCubit,
     required SessionRepository sessionRepo,
     required LayoutCubit layoutCubit,
   }) async {
     await _ensureDefaultWorkspace(
       boot,
-      teamCubit: teamCubit,
       chatCubit: chatCubit,
       sessionRepo: sessionRepo,
     );
@@ -124,7 +117,6 @@ abstract final class AppDataBootstrap {
   static Future<void> bootstrapHomeIndex({
     required BootLog boot,
     required SshProfileCubit sshProfileCubit,
-    required LaunchProfileCubit teamCubit,
     required ChatCubit chatCubit,
     required SessionRepository sessionRepo,
     required LayoutCubit layoutCubit,
@@ -147,7 +139,6 @@ abstract final class AppDataBootstrap {
         boot('bootstrapHomeIndex home storage context reinstalled');
       }
       await Future.wait([
-        _timed(boot, 'launchProfiles', () => teamCubit.load(bootSilent: true)),
         _timed(
           boot,
           'loadWorkspaceIndex',
@@ -156,7 +147,6 @@ abstract final class AppDataBootstrap {
       ]);
     } else {
       await Future.wait([
-        _timed(boot, 'launchProfiles', () => teamCubit.load(bootSilent: true)),
         _timed(
           boot,
           'loadWorkspaceIndex',
@@ -174,7 +164,6 @@ abstract final class AppDataBootstrap {
 
     await _seedDefaultWorkspace(
       boot: boot,
-      teamCubit: teamCubit,
       chatCubit: chatCubit,
       sessionRepo: sessionRepo,
       layoutCubit: layoutCubit,
@@ -192,7 +181,6 @@ abstract final class AppDataBootstrap {
     required BootLog boot,
     required LlmConfigCubit llmConfigCubit,
     required AppProviderCubit appProviderCubit,
-    required LaunchProfileCubit teamCubit,
     required PluginCubit pluginCubit,
     required SkillCubit skillCubit,
     required McpCubit mcpCubit,
@@ -227,19 +215,6 @@ abstract final class AppDataBootstrap {
       () => appProviderCubit.reconcileCredentials(),
     );
     await yieldUiFrame();
-    await _timed(
-      boot,
-      'syncTeamPlugins',
-      () => teamCubit.syncSelectedTeamPlugins(
-        installed: pluginCubit.state.installed,
-      ),
-    );
-    await yieldUiFrame();
-    await _timed(
-      boot,
-      'syncTeamMcp',
-      () => teamCubit.syncSelectedTeamMcp(installed: mcpCubit.state.servers),
-    );
 
     boot('warmAuxiliaryData complete +${phaseSw.elapsedMilliseconds}ms');
     await yieldUiFrame();
@@ -306,7 +281,6 @@ abstract final class AppDataBootstrap {
     required SshProfileCubit sshProfileCubit,
     required LlmConfigCubit llmConfigCubit,
     required AppProviderCubit appProviderCubit,
-    required LaunchProfileCubit teamCubit,
     required PluginCubit pluginCubit,
     required SkillCubit skillCubit,
     required McpCubit mcpCubit,
@@ -322,7 +296,6 @@ abstract final class AppDataBootstrap {
     await bootstrapHomeIndex(
       boot: boot,
       sshProfileCubit: sshProfileCubit,
-      teamCubit: teamCubit,
       chatCubit: chatCubit,
       sessionRepo: sessionRepo,
       layoutCubit: layoutCubit,
@@ -335,7 +308,6 @@ abstract final class AppDataBootstrap {
       boot: boot,
       llmConfigCubit: llmConfigCubit,
       appProviderCubit: appProviderCubit,
-      teamCubit: teamCubit,
       pluginCubit: pluginCubit,
       skillCubit: skillCubit,
       mcpCubit: mcpCubit,
@@ -365,7 +337,6 @@ abstract final class AppDataBootstrap {
 
   static Future<void> _ensureDefaultWorkspace(
     BootLog boot, {
-    required LaunchProfileCubit teamCubit,
     required ChatCubit chatCubit,
     required SessionRepository sessionRepo,
   }) async {

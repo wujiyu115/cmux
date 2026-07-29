@@ -8,7 +8,6 @@ import 'package:uuid/uuid.dart';
 import '../../cubits/automation_cubit.dart';
 import '../../cubits/chat_cubit.dart';
 import '../../cubits/cli_presets_cubit.dart';
-import '../../cubits/launch_profile_cubit.dart';
 import '../../cubits/session_preferences_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../models/automation.dart';
@@ -98,13 +97,7 @@ class _AutomationEditorDialogState extends State<AutomationEditorDialog> {
     return runCount >= maxRun;
   }
 
-  TeamProfile? get _selectedTeam {
-    final id = _teamId?.trim() ?? '';
-    if (id.isEmpty) return null;
-    return context.read<LaunchProfileCubit>().state.teams
-        .where((t) => t.id == id)
-        .firstOrNull;
-  }
+  TeamProfile? get _selectedTeam => null;
 
   @override
   void initState() {
@@ -237,20 +230,7 @@ class _AutomationEditorDialogState extends State<AutomationEditorDialog> {
     setState(() => _presetId = presets.first.id);
   }
 
-  void _seedTeamMemberDefault() {
-    if (_isPersonal) return;
-    final team = _selectedTeam ??
-        context.read<LaunchProfileCubit>().state.teams.firstOrNull;
-    if (team == null) return;
-    if (_teamId == null || _teamId!.trim().isEmpty) {
-      setState(() => _teamId = team.id);
-    }
-    final members = team.members.where((m) => m.isValid).toList();
-    if (members.isEmpty) return;
-    if (members.any((m) => m.id == _targetMemberId)) return;
-    final lead = members.where((m) => m.id == 'team-lead').firstOrNull;
-    setState(() => _targetMemberId = lead?.id ?? members.first.id);
-  }
+  void _seedTeamMemberDefault() {}
 
   void _onIsPersonalChanged(bool isPersonal) {
     setState(() {
@@ -259,8 +239,7 @@ class _AutomationEditorDialogState extends State<AutomationEditorDialog> {
         _teamId = null;
       } else {
         _presetId = null;
-        final teams = context.read<LaunchProfileCubit>().state.teams;
-        _teamId = teams.firstOrNull?.id;
+        _teamId = null;
       }
     });
     if (isPersonal) {

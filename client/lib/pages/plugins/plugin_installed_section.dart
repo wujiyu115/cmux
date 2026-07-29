@@ -6,7 +6,6 @@ import 'package:shared_ui/shared_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../cubits/plugin_cubit.dart';
-import '../../cubits/launch_profile_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../models/plugin.dart';
 import '../../utils/debounce/debounce.dart';
@@ -355,18 +354,10 @@ class PluginInstalledRow extends StatelessWidget {
     AppLocalizations l10n,
     PluginCubit cubit,
   ) async {
-    final teams = context.read<LaunchProfileCubit>().state.teams;
-    final impacted = teams
-        .where((t) => t.pluginIds.contains(plugin.id))
-        .toList();
     final ok = await pluginConfirmDialog(
       context,
       title: plugin.name,
-      message: l10n.pluginsUninstallConfirm(plugin.name, impacted.length),
-      detailHeading: impacted.isNotEmpty
-          ? l10n.pluginsUninstallImpactList
-          : null,
-      detailLines: impacted.map((t) => t.name).toList(growable: false),
+      message: l10n.pluginsUninstallConfirm(plugin.name, 0),
       confirmLabel: l10n.pluginsCardUninstall,
       destructive: true,
     );

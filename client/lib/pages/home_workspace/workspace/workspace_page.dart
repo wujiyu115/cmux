@@ -7,7 +7,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../cubits/chat_cubit.dart';
-import '../../../cubits/launch_profile_cubit.dart';
 import '../../../cubits/session_preferences_cubit.dart';
 import '../../../cubits/workspace_landing_context_cubit.dart';
 import '../../../l10n/l10n_extensions.dart';
@@ -93,14 +92,7 @@ class _WorkspacePageState extends State<WorkspacePage> {
     final ctx = cubit.state.context;
     final current = ctx.isPersonal ? '' : (ctx.teamId ?? '');
     if (current == routeProfile) return;
-    final launchProfiles = context.read<LaunchProfileCubit>();
-    final profile = launchProfiles.byId(routeProfile);
-    if (profile == null) return;
-    final next = LandingLaunchContext(
-      isPersonal: false,
-      teamId: profile.id,
-    );
-    cubit.update(next);
+    cubit.update(const LandingLaunchContext(isPersonal: true));
   }
 
   void _syncSessionFromRoute() {

@@ -13,7 +13,6 @@ import '../../cubits/chat_cubit.dart';
 import '../../cubits/editor_cubit.dart';
 import '../../cubits/cli_presets_cubit.dart';
 import '../../cubits/layout_cubit.dart';
-import '../../cubits/launch_profile_cubit.dart';
 import '../../cubits/member_presence_cubit.dart';
 import '../../cubits/plugin_cubit.dart';
 import '../../cubits/skill_cubit.dart';

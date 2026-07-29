@@ -6,7 +6,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_alacritty/flutter_alacritty.dart';
 
 import '../../cubits/chat_cubit.dart';
-import '../../cubits/launch_profile_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../models/app_session.dart';
 import '../../models/team_config.dart';

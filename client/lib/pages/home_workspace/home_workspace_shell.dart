@@ -9,7 +9,6 @@ import 'package:path/path.dart' as p;
 
 import '../../cubits/chat_cubit.dart';
 import '../../cubits/layout_cubit.dart';
-import '../../cubits/launch_profile_cubit.dart';
 import '../../cubits/run_cubit.dart';
 import '../../cubits/session_preferences_cubit.dart';
 import '../../cubits/workbench/workbench_cubit.dart';
@@ -418,10 +417,8 @@ class _HomeShellState extends State<HomeShell> {
         .state
         .preferences
         .scopeSessionsToSelectedTeam;
-    final selectedTeam = context.read<LaunchProfileCubit>().state.selectedTeam;
     context.read<ChatCubit>().setTeamSessionScope(
       scopeSessionsToSelectedTeam: scopeOn,
-      selectedTeamId: selectedTeam?.id,
     );
   }
 
@@ -432,11 +429,7 @@ class _HomeShellState extends State<HomeShell> {
           previous.preferences.scopeSessionsToSelectedTeam !=
           next.preferences.scopeSessionsToSelectedTeam,
       listener: (context, _) => _syncTeamSessionScope(context),
-      child: BlocListener<LaunchProfileCubit, LaunchProfileState>(
-        listenWhen: (previous, next) =>
-            previous.selectedTeam?.id != next.selectedTeam?.id,
-        listener: (context, _) => _syncTeamSessionScope(context),
-        child: Scaffold(
+      child: Scaffold(
           backgroundColor: Theme.of(context).colorScheme.workspacePageChrome(
             WorkspaceTabRef.fromLocation(widget.location) == null
                 ? WorkspacePageChrome.home
@@ -478,8 +471,7 @@ class _HomeShellState extends State<HomeShell> {
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 
   static Workspace? _resolve(List<Workspace> workspaces, String id) {

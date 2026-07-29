@@ -11,7 +11,6 @@ import 'package:uuid/uuid.dart';
 import '../../../cubits/ai_history_cubit.dart';
 import '../../../cubits/chat_cubit.dart';
 import '../../../cubits/cli_presets_cubit.dart';
-import '../../../cubits/launch_profile_cubit.dart';
 import '../../../cubits/session_preferences_cubit.dart';
 import '../../../cubits/workbench/workbench_cubit.dart';
 import '../../../cubits/workbench/workbench_tab.dart';
@@ -164,29 +163,12 @@ void _handleSessionOpenStatus(
   }
 }
 
-TeamProfile? _teamProfileById(BuildContext context, String teamId) {
-  final id = teamId.trim();
-  if (id.isEmpty) return null;
-  final profile = context.read<LaunchProfileCubit>().byId(id);
-  return profile is TeamProfile ? profile : null;
-}
+TeamProfile? _teamProfileById(BuildContext context, String teamId) => null;
 
 Future<TeamProfile?> _syncSessionTeam(
   BuildContext context,
   AppSession session,
-) async {
-  final teamId = session.sessionTeam.trim();
-  if (teamId.isEmpty) return null;
-  final launchProfiles = context.read<LaunchProfileCubit>();
-  final existing = launchProfiles.byId(teamId);
-  if (existing is TeamProfile) {
-    await launchProfiles.selectTeam(teamId, silent: true);
-    return existing;
-  }
-  await launchProfiles.selectTeam(teamId, silent: true);
-  final resolved = launchProfiles.byId(teamId);
-  return resolved is TeamProfile ? resolved : null;
-}
+) async => null;
 
 TeamMemberConfig? _teamLead(TeamProfile? team) {
   if (team == null) return null;

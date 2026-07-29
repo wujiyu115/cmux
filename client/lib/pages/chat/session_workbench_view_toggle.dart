@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../cubits/chat_cubit.dart';
-import '../../cubits/launch_profile_cubit.dart';
 import '../../cubits/workbench/workbench_cubit.dart';
 import '../../cubits/workbench/workbench_tab.dart';
 import '../../l10n/l10n_extensions.dart';
@@ -113,10 +112,5 @@ class SessionWorkbenchViewToggle extends StatelessWidget {
     return chat.tabStore.openTabBySessionId(sessionId)?.persistedSession;
   }
 
-  TeamProfile? _teamForSession(BuildContext context, AppSession session) {
-    final teamId = session.sessionTeam.trim();
-    if (teamId.isEmpty) return null;
-    final profile = context.read<LaunchProfileCubit>().byId(teamId);
-    return profile is TeamProfile ? profile : null;
-  }
+  TeamProfile? _teamForSession(BuildContext context, AppSession session) => null;
 }

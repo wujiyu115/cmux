@@ -10,7 +10,6 @@ import 'package:teampilot/widgets/app_toast/app_toast.dart';
 import '../../../cubits/app_provider_cubit.dart';
 import '../../../cubits/chat_cubit.dart';
 import '../../../cubits/cli_presets_cubit.dart';
-import '../../../cubits/launch_profile_cubit.dart';
 import '../../../cubits/plugin_cubit.dart';
 import '../../../cubits/session_preferences_cubit.dart';
 import '../../../cubits/skill_cubit.dart';

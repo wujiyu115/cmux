@@ -9,7 +9,6 @@ import '../../cubits/automation_cubit.dart';
 import '../../cubits/automation_state.dart';
 import '../../cubits/chat_cubit.dart';
 import '../../cubits/cli_presets_cubit.dart';
-import '../../cubits/launch_profile_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../models/automation.dart';
 import '../../models/automation_list_scope.dart';
@@ -316,8 +315,8 @@ class _FlatList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<LaunchProfileCubit, LaunchProfileState>(
-      builder: (context, profileState) {
+    return Builder(
+      builder: (context) {
         return BlocBuilder<CliPresetsCubit, CliPresetsState>(
           builder: (context, presetState) {
             final l10n = context.l10n;
@@ -396,8 +395,8 @@ class _GroupedList extends StatelessWidget {
     final styles = TpTextStyles.of(context);
     return BlocBuilder<ChatCubit, ChatState>(
       builder: (context, chatState) {
-        return BlocBuilder<LaunchProfileCubit, LaunchProfileState>(
-          builder: (context, profileState) {
+        return Builder(
+          builder: (context) {
             return BlocBuilder<CliPresetsCubit, CliPresetsState>(
               builder: (context, presetState) {
                 final groups = _groupAutomations(

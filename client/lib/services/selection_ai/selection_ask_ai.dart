@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 import '../../cubits/chat_cubit.dart';
-import '../../cubits/launch_profile_cubit.dart';
 import '../../cubits/worktree_cubit.dart';
 import '../../models/landing_launch_context.dart';
 import '../../models/workspace.dart';
@@ -102,13 +101,6 @@ class _SelectionAskAiDialogState extends State<_SelectionAskAiDialog> {
         }
       }
 
-      final launchProfiles = context.read<LaunchProfileCubit>();
-      if (!draft.isPersonal) {
-        final teamId = draft.teamId?.trim() ?? '';
-        if (teamId.isNotEmpty) {
-          await launchProfiles.selectTeam(teamId, silent: true);
-        }
-      }
 
       await persistLandingDraft(workspace.workspaceId, draft);
 

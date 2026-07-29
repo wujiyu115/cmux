@@ -7,7 +7,6 @@ import 'package:shared_ui/shared_ui.dart';
 import 'package:teampilot/widgets/app_toast/app_toast.dart';
 
 import '../../cubits/chat_cubit.dart';
-import '../../cubits/launch_profile_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../models/workspace.dart';
 import '../../repositories/session_repository.dart';
@@ -62,7 +61,6 @@ Future<void> showRenameWorkspaceDialog(
 Future<void> cloneWorkspace(BuildContext context, Workspace workspace) async {
   final l10n = context.l10n;
   final repo = context.read<SessionRepository>();
-  final team = context.read<LaunchProfileCubit>().state.selectedTeam;
   final baseName = workspace.localizedName(l10n);
   final display = l10n.homeWorkspaceCloneWorkspaceDisplayName(baseName);
 
@@ -71,7 +69,6 @@ Future<void> cloneWorkspace(BuildContext context, Workspace workspace) async {
       repo,
       workspace.workspaceId,
       display: display,
-      rosterMembers: team?.members ?? const [],
     );
     if (!context.mounted) return;
     AppToast.show(

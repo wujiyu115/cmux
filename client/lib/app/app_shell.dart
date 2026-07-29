@@ -52,7 +52,6 @@ import '../cubits/ssh_connection_cubit.dart';
 import '../cubits/ssh_profile_cubit.dart';
 import '../cubits/github_account_cubit.dart';
 import '../config/github_oauth_config.dart';
-import '../cubits/launch_profile_cubit.dart';
 import '../models/runtime_target.dart';
 import '../models/ssh_profile.dart';
 import '../models/team_config.dart';
@@ -184,7 +183,6 @@ class AppShell {
     required this.sshProfileConnectionCoordinator,
     required this.connectionModeService,
     required this.identityRepository,
-    required this.teamCubit,
     required this.configCubit,
     required this.appProviderCubit,
     required this.llmConfigCubit,
@@ -251,7 +249,6 @@ class AppShell {
   final SshProfileConnectionCoordinator sshProfileConnectionCoordinator;
   final ConnectionModeService connectionModeService;
   final LaunchProfileRepository identityRepository;
-  final LaunchProfileCubit teamCubit;
   final ConfigCubit configCubit;
   final AppProviderCubit appProviderCubit;
   final LlmConfigCubit llmConfigCubit;
@@ -380,7 +377,6 @@ Future<AppShell> buildAppShell({
 
   late final LlmConfigCubit llmConfigCubit;
   late final AppProviderCubit appProviderCubit;
-  late final LaunchProfileCubit teamCubit;
   late final PluginCubit pluginCubit;
   late final LaunchProfileRepository identityRepository;
   late final LaunchProfileProvisioner identityProvisioner;
@@ -669,48 +665,18 @@ Future<AppShell> buildAppShell({
   identityProvisioner = LaunchProfileProvisioner(
     repository: identityRepository,
   );
-  teamCubit = LaunchProfileCubit(
-    repository: identityRepository,
-    sessionRepository: sessionRepo,
-    identityProvisioner: identityProvisioner,
-    executableResolver: () => sessionPreferencesCubit.resolveExecutable(),
-    cliExecutableResolver: sessionPreferencesCubit.resolveExecutable,
-    llmConfigPathOverride: llmConfigPathOverrideForLaunch,
-    storageRootsResolver: () async => AppStorage.context,
-    lifecycleService: sessionLifecycleService,
-    pluginLinker: ProfilePluginLinkerService(),
-    pluginRepository: pluginRepository,
-    installedPluginsLoader: () => pluginRepository.loadAll(),
-    mcpLinker: ProfileMcpLinkerService(),
-    mcpRepository: mcpRepository,
-    installedMcpLoader: () => mcpRepository.loadAll(),
-    extensionMcpContributor: (teamId) async {
-      final enabled = await extensionRepository.effectiveEnabledIds(teamId);
-      final provisioner = ExtensionProvisioner(
-        manifests: builtInExtensionManifests(),
-        isEnabled: (id) async => enabled.contains(id),
-      );
-      return provisioner.collectMcpContributions();
-    },
-  );
   skillCubit = SkillCubit(
     skillRepo,
     acquisitionEngine: skillAcquisitionEngine,
-    onSkillUninstalled: teamCubit.removeSkillFromAllTeams,
   );
   pluginCubit = PluginCubit(
     repository: pluginRepository,
     installService: pluginRepository.install,
     repoService: pluginRepository.repos,
     diskCache: PluginRepoDiskCacheService(),
-    onPluginUninstalled: teamCubit.removePluginFromAllTeams,
-    onPluginUpdated: teamCubit.syncTeamsUsingPlugin,
   );
   cliPresetsCubit = CliPresetsCubit(repository: cliPresetsRepo);
-  mcpCubit = McpCubit(
-    mcpRepository,
-    onMcpDeleted: teamCubit.removeMcpFromAllTeams,
-  );
+  mcpCubit = McpCubit(mcpRepository);
 
   final teamHubSource = CompositeTeamHubSource.withDefaults(
     GitRegistryTeamHubSource(),
@@ -965,7 +931,6 @@ Future<AppShell> buildAppShell({
     sshProfileCubit: sshProfileCubit,
     llmConfigCubit: llmConfigCubit,
     appProviderCubit: appProviderCubit,
-    teamCubit: teamCubit,
     pluginCubit: pluginCubit,
     skillCubit: skillCubit,
     mcpCubit: mcpCubit,
@@ -993,7 +958,6 @@ Future<AppShell> buildAppShell({
         await AppDataBootstrap.bootstrapHomeIndex(
           boot: boot,
           sshProfileCubit: sshProfileCubit,
-          teamCubit: teamCubit,
           chatCubit: chatCubit,
           sessionRepo: sessionRepo,
           layoutCubit: layoutCubit,
@@ -1005,7 +969,6 @@ Future<AppShell> buildAppShell({
       } else {
         await AppDataBootstrap.hydrateNativeHomeIndex(
           boot: boot,
-          teamCubit: teamCubit,
           chatCubit: chatCubit,
           sessionRepo: sessionRepo,
           layoutCubit: layoutCubit,
@@ -1028,7 +991,6 @@ Future<AppShell> buildAppShell({
       boot: boot,
       llmConfigCubit: llmConfigCubit,
       appProviderCubit: appProviderCubit,
-      teamCubit: teamCubit,
       pluginCubit: pluginCubit,
       skillCubit: skillCubit,
       mcpCubit: mcpCubit,
@@ -1135,7 +1097,6 @@ Future<AppShell> buildAppShell({
     sshProfileConnectionCoordinator: sshProfileConnectionCoordinator,
     connectionModeService: connectionModeService,
     identityRepository: identityRepository,
-    teamCubit: teamCubit,
     configCubit: configCubit,
     appProviderCubit: appProviderCubit,
     llmConfigCubit: llmConfigCubit,

@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../cubits/skill_cubit.dart';
-import '../../cubits/launch_profile_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../models/skill.dart';
 import '../../models/team_config.dart';
@@ -12,93 +11,6 @@ import '../../utils/github/github_source_url.dart';
 import '../../widgets/github_details_button.dart';
 import 'team_config_cards.dart';
 import 'package:teampilot/theme/workspace_surface_layers.dart';
-
-class TeamSkillsSection extends StatelessWidget {
-  const TeamSkillsSection({
-    super.key,
-    required this.team,
-    required this.cubit,
-    this.onManageGlobal,
-  });
-
-  final TeamProfile team;
-  final LaunchProfileCubit cubit;
-
-  /// Opens global skill management. When null, falls back to the v1
-  /// `/skills` route so this section stays usable outside the v2 workspace.
-  final VoidCallback? onManageGlobal;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final onManage = onManageGlobal ?? () => context.go('/skills');
-    final skillState = context.select<SkillCubit, SkillState>((c) => c.state);
-    final enabled = skillState.installed
-        .where((s) => s.enabled)
-        .toList(growable: false);
-    final assignedCount = enabled
-        .where((s) => team.skillIds.contains(s.id))
-        .length;
-
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          TeamConfigCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                TeamConfigCardHeader(
-                  title: l10n.teamSkillsAssignedCount(
-                    assignedCount,
-                    enabled.length,
-                  ),
-                  trailing: OutlinedButton.icon(
-                    onPressed: onManage,
-                    icon: Icon(
-                      Icons.extension_outlined,
-                      size: context.tpIconSizes.md,
-                    ),
-                    label: Text(l10n.teamSkillsManage),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                if (enabled.isEmpty)
-                  TpEmptyState(
-                    icon: Icons.inventory_2_outlined,
-                    title: l10n.skillsNoInstalled,
-                    hint: l10n.skillsNoInstalledHint,
-                    actionLabel: l10n.teamSkillsManage,
-                    onAction: onManage,
-                  )
-                else
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      for (final skill in enabled)
-                        TeamSkillRow(
-                          skill: skill,
-                          assigned: team.skillIds.contains(skill.id),
-                          onAssignedChanged: (assigned) {
-                            final ids = List<String>.from(team.skillIds);
-                            if (assigned) {
-                              if (!ids.contains(skill.id)) ids.add(skill.id);
-                            } else {
-                              ids.remove(skill.id);
-                            }
-                            cubit.updateSelected(team.copyWith(skillIds: ids));
-                          },
-                        ),
-                    ],
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class TeamSkillRow extends StatelessWidget {
   const TeamSkillRow({

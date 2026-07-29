@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../cubits/launch_profile_cubit.dart';
 import '../../cubits/layout_cubit.dart';
 import '../../cubits/team/launch_profile_selectors.dart';
 import '../../models/launch_profile_kind.dart';
@@ -61,11 +60,6 @@ class _HomePageState extends State<HomePage> {
     }
     if (widget.initialSection != null) {
       _allWorkspacesActive = false;
-      _selectedIdentityId = context
-          .read<LaunchProfileCubit>()
-          .state
-          .selectedTeam
-          ?.id;
     }
   }
 
@@ -89,14 +83,6 @@ class _HomePageState extends State<HomePage> {
       _globalView = null;
       _libraryView = null;
     });
-    final identity = context.read<LaunchProfileCubit>().byId(profileId);
-    if (identity is TeamProfile) {
-      context.read<LaunchProfileCubit>().selectTeam(
-        profileId,
-        syncResources: false,
-        silent: true,
-      );
-    }
   }
 
   @override

@@ -4,92 +4,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../cubits/mcp_cubit.dart';
-import '../../cubits/launch_profile_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../models/mcp_server.dart';
 import '../../models/team_config.dart';
 import 'team_config_cards.dart';
 import 'package:teampilot/theme/workspace_surface_layers.dart';
-
-class TeamMcpSection extends StatelessWidget {
-  const TeamMcpSection({
-    super.key,
-    required this.team,
-    required this.cubit,
-    this.onManageGlobal,
-  });
-
-  final TeamProfile team;
-  final LaunchProfileCubit cubit;
-
-  /// Opens global MCP management. When null, falls back to the v1 `/mcp`
-  /// route so this section stays usable outside the v2 workspace.
-  final VoidCallback? onManageGlobal;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final onManage = onManageGlobal ?? () => context.go('/mcp');
-    final mcpState = context.watch<McpCubit>().state;
-    final enabled = mcpState.servers.where((s) => s.enabled).toList();
-    final assignedCount = enabled
-        .where((s) => team.mcpServerIds.contains(s.id))
-        .length;
-
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          TeamConfigCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                TeamConfigCardHeader(
-                  title: l10n.teamMcpAssignedCount(
-                    assignedCount,
-                    enabled.length,
-                  ),
-                  trailing: OutlinedButton.icon(
-                    onPressed: onManage,
-                    icon: Icon(
-                      Icons.hub_outlined,
-                      size: context.tpIconSizes.md,
-                    ),
-                    label: Text(l10n.teamMcpManage),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                if (enabled.isEmpty)
-                  TpEmptyState(
-                    icon: Icons.dns_outlined,
-                    title: l10n.mcpNoInstalled,
-                    hint: l10n.mcpNoInstalledHint,
-                    actionLabel: l10n.teamMcpManage,
-                    onAction: onManage,
-                  )
-                else
-                  for (final server in enabled)
-                    TeamMcpRow(
-                      server: server,
-                      assigned: team.mcpServerIds.contains(server.id),
-                      onAssignedChanged: (assigned) {
-                        final ids = List<String>.from(team.mcpServerIds);
-                        if (assigned) {
-                          if (!ids.contains(server.id)) ids.add(server.id);
-                        } else {
-                          ids.remove(server.id);
-                        }
-                        cubit.updateSelected(team.copyWith(mcpServerIds: ids));
-                      },
-                    ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class TeamMcpRow extends StatelessWidget {
   const TeamMcpRow({

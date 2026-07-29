@@ -11,7 +11,6 @@ import '../cubits/chat/model/session_connect_request.dart';
 import '../cubits/chat/model/chat_tab.dart';
 import '../cubits/chat_cubit.dart';
 import '../cubits/layout_cubit.dart';
-import '../cubits/launch_profile_cubit.dart';
 import '../cubits/session_preferences_cubit.dart';
 import '../cubits/workbench/workbench_cubit.dart';
 import '../cubits/workbench/workbench_tab.dart';

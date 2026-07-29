@@ -6,7 +6,6 @@ import 'package:provider/provider.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 import '../../../cubits/chat_cubit.dart';
-import '../../../cubits/launch_profile_cubit.dart';
 import '../../../cubits/worktree_cubit.dart';
 import '../../../l10n/l10n_extensions.dart';
 import '../../../models/landing_launch_context.dart';
@@ -59,14 +58,6 @@ class _WorkspaceChatPaneState extends State<WorkspaceChatPane> {
               context.read<WorktreeCubit>().state.pathForNewSession;
         } on ProviderNotFoundException {
           workingDirectory = workspace.firstFolderPath;
-        }
-      }
-
-      final launchProfiles = context.read<LaunchProfileCubit>();
-      if (!draft.isPersonal) {
-        final teamId = draft.teamId?.trim() ?? '';
-        if (teamId.isNotEmpty) {
-          await launchProfiles.selectTeam(teamId, silent: true);
         }
       }
 

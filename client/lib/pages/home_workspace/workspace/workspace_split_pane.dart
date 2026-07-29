@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 import '../../../cubits/chat_cubit.dart';
-import '../../../cubits/launch_profile_cubit.dart';
 import '../../../cubits/layout_cubit.dart';
 import '../../../cubits/run_cubit.dart';
 import '../../../cubits/worktree_cubit.dart';
