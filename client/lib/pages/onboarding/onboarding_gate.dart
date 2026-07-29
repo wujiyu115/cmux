@@ -8,7 +8,6 @@ import '../../cubits/app_bootstrap_cubit.dart';
 import '../../cubits/app_provider_cubit.dart';
 import '../../cubits/chat_cubit.dart';
 import '../../cubits/cli_presets_cubit.dart';
-import '../../cubits/launch_profile_cubit.dart';
 import '../../models/workspace.dart';
 import '../../repositories/app_settings_repository.dart';
 import '../../services/app/onboarding_service.dart';
@@ -38,14 +37,8 @@ class OnboardingGateState extends State<OnboardingGate> {
   Future<void> _completeOnboarding() async {
     if (!mounted) return;
     final appProviderCubit = context.read<AppProviderCubit>();
-    final teamCubit = context.read<LaunchProfileCubit>();
     final cliPresetsCubit = context.read<CliPresetsCubit>();
     final settingsRepo = context.read<AppSettingsRepository>();
-    await OnboardingService.finalizeOnboardingDefaults(
-      cliPresetsCubit: cliPresetsCubit,
-      launchProfileCubit: teamCubit,
-      appProviderCubit: appProviderCubit,
-    );
     await settingsRepo.saveHasCompletedOnboarding(true);
     if (!mounted) return;
 

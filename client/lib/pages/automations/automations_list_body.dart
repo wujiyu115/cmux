@@ -338,7 +338,6 @@ class _FlatList extends StatelessWidget {
                   scopeSubtitle: automationScopeSubtitle(
                     l10n,
                     automation: automation,
-                    profiles: profileState,
                     presets: presetState,
                   ),
                   scheduleSummary: localizedScheduleSummary(
@@ -405,7 +404,6 @@ class _GroupedList extends StatelessWidget {
                   automations,
                   listScope: listScope,
                   workspaces: chatState.workspaces,
-                  profiles: profileState,
                   l10n: l10n,
                 );
                 return ListView(
@@ -435,7 +433,6 @@ class _GroupedList extends StatelessWidget {
                           scopeSubtitle: automationScopeSubtitle(
                             l10n,
                             automation: automation,
-                            profiles: profileState,
                             presets: presetState,
                           ),
                           scheduleSummary: localizedScheduleSummary(
@@ -479,15 +476,12 @@ List<_AutomationGroup> _groupAutomations(
   List<Automation> automations, {
   required AutomationListScope? listScope,
   required List<Workspace> workspaces,
-  required LaunchProfileState profiles,
   required AppLocalizations l10n,
 }) {
   final includeWorkspaceName = listScope == null || listScope.isAll;
   final grouped = <String, List<Automation>>{};
   for (final automation in automations) {
-    final contextKey = automation.isPersonal
-        ? 'personal'
-        : (automation.teamId?.trim() ?? '');
+    const contextKey = 'personal';
     final key = includeWorkspaceName
         ? '${automation.workspaceId}\x1f$contextKey'
         : contextKey;
@@ -496,11 +490,7 @@ List<_AutomationGroup> _groupAutomations(
 
   final groups = grouped.entries.map((entry) {
     final automation = entry.value.first;
-    final profileLabel = automationLaunchContextGroupLabel(
-      l10n,
-      automation: automation,
-      profiles: profiles,
-    );
+    final profileLabel = l10n.automationsScopeModePersonal('Simple');
     final workspace = workspaces
         .where((w) => w.workspaceId == automation.workspaceId)
         .firstOrNull;

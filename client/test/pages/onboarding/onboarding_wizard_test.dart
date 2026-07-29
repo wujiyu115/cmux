@@ -73,7 +73,7 @@ void main() {
   });
 
   group('OnboardingService.applyDefaultPreset', () {
-    test('applies preset to personal identities and teams', () async {
+    test('selects the preset provider for its CLI', () async {
       final dir = await Directory.systemTemp.createTemp('onboarding-preset_');
       final teamRepo = LaunchProfileRepository(
         rootDir: p.join(dir.path, 'launch-profiles'),
@@ -99,14 +99,6 @@ void main() {
       );
       final presetId = presetsCubit.state.presets.single.id;
 
-      final teamCubit = LaunchProfileCubit(
-        repository: teamRepo,
-        sessionRepository: SessionRepository(),
-        executableResolver: () => 'claude',
-        pluginLinker: _NoopPluginLinker(),
-      );
-      await teamCubit.load();
-
       final appProviderCubit = AppProviderCubit(basePath: dir.path);
       await appProviderCubit.load();
       await appProviderCubit.upsertProvider(
@@ -122,76 +114,18 @@ void main() {
       await OnboardingService.applyDefaultPreset(
         presetId: presetId,
         cliPresetsCubit: presetsCubit,
-        launchProfileCubit: teamCubit,
         appProviderCubit: appProviderCubit,
       );
 
-      expect(teamCubit.state.selectedTeam!.activePresetId, presetId);
       expect(
         appProviderCubit.state.selectedProviderIdByCli[CliTool.claude],
         'deepseek',
       );
 
       await appProviderCubit.close();
-      await teamCubit.close();
       await presetsCubit.close();
       await dir.delete(recursive: true);
     });
   });
 
-  group('OnboardingService.applyDefaultClaudeProviderBinding', () {
-    test(
-      'binds selected claude provider to teams without team binding',
-      () async {
-        final dir = await Directory.systemTemp.createTemp(
-          'onboarding-provider-bind_',
-        );
-        final teamRepo = LaunchProfileRepository(
-          rootDir: p.join(dir.path, 'launch-profiles'),
-        );
-        const team = TeamProfile(
-          id: LaunchProfileProvisioner.defaultNativeTeamId,
-          name: 'Default Native Team',
-          cli: CliTool.claude,
-          members: [TeamMemberConfig(id: 'team-lead', name: 'team-lead')],
-        );
-        await teamRepo.saveTeamProfiles([team]);
-
-        final teamCubit = LaunchProfileCubit(
-          repository: teamRepo,
-          sessionRepository: SessionRepository(),
-          executableResolver: () => 'claude',
-          pluginLinker: _NoopPluginLinker(),
-        );
-        await teamCubit.load();
-
-        final appProviderCubit = AppProviderCubit(basePath: dir.path);
-        await appProviderCubit.load();
-        await appProviderCubit.upsertProvider(
-          const AppProviderConfig(
-            id: 'deepseek',
-            cli: CliTool.claude,
-            name: 'DeepSeek',
-            baseUrl: 'https://api.deepseek.com/anthropic',
-            defaultModel: 'deepseek-chat',
-          ),
-        );
-        appProviderCubit.selectProvider('deepseek');
-
-        await OnboardingService.applyDefaultClaudeProviderBinding(
-          appProviderCubit: appProviderCubit,
-          teamCubit: teamCubit,
-        );
-
-        expect(
-          teamCubit.state.selectedTeam!.providerIdsByTool['claude'],
-          'deepseek',
-        );
-
-        await appProviderCubit.close();
-        await teamCubit.close();
-        await dir.delete(recursive: true);
-      },
-    );
-  });
 }

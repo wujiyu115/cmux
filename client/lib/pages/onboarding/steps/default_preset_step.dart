@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../cubits/app_provider_cubit.dart';
 import '../../../cubits/cli_presets_cubit.dart';
-import '../../../cubits/launch_profile_cubit.dart';
 import '../../../l10n/l10n_extensions.dart';
 import '../../../models/app_provider_config.dart';
 import '../../../models/cli_preset.dart';
@@ -139,7 +138,6 @@ class OnboardingDefaultPresetStepState
     final l10n = context.l10n;
     final name = l10n.onboardingDefaultPresetDefaultName;
     final presetsCubit = context.read<CliPresetsCubit>();
-    final launchCubit = context.read<LaunchProfileCubit>();
     final appProviderCubit = context.read<AppProviderCubit>();
 
     String presetId = _presetId ?? '';
@@ -179,7 +177,6 @@ class OnboardingDefaultPresetStepState
     await OnboardingService.applyDefaultPreset(
       presetId: presetId,
       cliPresetsCubit: presetsCubit,
-      launchProfileCubit: launchCubit,
       appProviderCubit: appProviderCubit,
     );
   }
