@@ -7,7 +7,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../cubits/chat_cubit.dart';
-import '../../../cubits/expert_hub_cubit.dart';
 import '../../../cubits/launch_profile_cubit.dart';
 import '../../../cubits/session_preferences_cubit.dart';
 import '../../../cubits/workspace_landing_context_cubit.dart';
@@ -18,12 +17,9 @@ import '../../../models/workspace.dart';
 import '../../../models/launch_profile_kind.dart';
 import '../../../pages/home_workspace/home_workspace_route.dart';
 import '../../../repositories/session_repository.dart';
-import '../../../services/expert_hub/expert_capability_resolver.dart';
-import '../../../services/expert_hub/expert_landing_deep_link.dart';
 import '../../../theme/workspace_surface_layers.dart';
 import '../../../utils/logging/logger.dart';
 import '../../../widgets/app_toast/app_toast.dart';
-import '../../expert_hub/expert_landing_preflight_feedback.dart';
 import 'workspace_config_workspace.dart';
 import 'workspace_section.dart';
 import 'workspace_split_pane.dart';
@@ -50,8 +46,6 @@ class _WorkspacePageState extends State<WorkspacePage> {
   bool _wasRouteActive = false;
   String? _lastScopeView;
   bool _activationScheduled = false;
-  String? _lastSyncedRouteExpert;
-  bool _expertSyncScheduled = false;
   String? _lastSyncedRouteSession;
   bool _sessionSyncScheduled = false;
 
@@ -88,7 +82,6 @@ class _WorkspacePageState extends State<WorkspacePage> {
     }
     _wasRouteActive = active;
     _syncProfileFromRoute();
-    _syncExpertFromRoute();
     _syncSessionFromRoute();
   }
 
@@ -108,106 +101,6 @@ class _WorkspacePageState extends State<WorkspacePage> {
       teamId: profile.id,
     );
     cubit.update(next);
-  }
-
-  void _syncExpertFromRoute() {
-    final location = GoRouterState.of(context).uri.toString();
-    final expert = HomeWorkspaceRoute.expert(location);
-    if (expert == _lastSyncedRouteExpert) return;
-    _lastSyncedRouteExpert = expert;
-    if (expert == null) return;
-    if (_expertSyncScheduled) return;
-    _expertSyncScheduled = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _expertSyncScheduled = false;
-      if (!mounted) return;
-      unawaited(_applyExpertFromRoute(expert));
-    });
-  }
-
-  Future<void> _applyExpertFromRoute(String expertKey) async {
-    final workspace = context.read<ChatCubit>().state.workspaces
-        .where((w) => w.workspaceId == widget.workspaceId)
-        .firstOrNull;
-    if (workspace == null) return;
-
-    final location = GoRouterState.of(context).uri.toString();
-    final routeProfile = HomeWorkspaceRoute.profile(location);
-    final launchProfiles = context.read<LaunchProfileCubit>();
-    final profile = routeProfile == null ? null : launchProfiles.byId(routeProfile);
-    final routeProfileIsTeam = profile != null
-        ? profile.kind == LaunchProfileKind.team
-        : false;
-
-    ExpertCapabilityResolver? resolver;
-    try {
-      resolver = context.read<ExpertCapabilityResolver>();
-    } on ProviderNotFoundException {
-      resolver = null;
-    }
-
-    final result = await applyExpertDeepLink(
-      expertKey: expertKey,
-      workspaceId: widget.workspaceId,
-      workspace: workspace,
-      routeProfileIsTeam: routeProfileIsTeam,
-      hubState: context.mounted ? context.read<ExpertHubCubit>().state : null,
-      resolver: resolver,
-      simpleModeDefaultFullAccess: context
-          .read<SessionPreferencesCubit>()
-          .state
-          .preferences
-          .simpleModeDefaultFullAccess,
-    );
-    if (!mounted) return;
-
-    final l10n = context.l10n;
-    switch (result.outcome) {
-      case ExpertDeepLinkOutcome.none:
-        return;
-      case ExpertDeepLinkOutcome.applied:
-        context.read<WorkspaceLandingContextCubit>().update(
-          context.read<WorkspaceLandingContextCubit>().state.context.copyWith(
-            isPersonal: true,
-            expertKey: expertKey,
-          ),
-        );
-        final pack = result.pack;
-        if (pack != null && pack.hasFailures) {
-          final message = expertLandingPreflightToastMessage(
-            l10n,
-            expertName: pack.member.name,
-            pack: pack,
-          );
-          if (message.isNotEmpty) {
-            AppToast.show(
-              context,
-              message: message,
-              variant: TpToastVariant.warning,
-            );
-          }
-        }
-        await showWorkspaceComposeLanding(
-          context,
-          workspace,
-          tabScopeId: widget.tabKey,
-        );
-        return;
-      case ExpertDeepLinkOutcome.ignoredTeamMode:
-        AppToast.show(
-          context,
-          message: l10n.expertHubIgnoredInTeamMode,
-          variant: TpToastVariant.warning,
-        );
-        return;
-      case ExpertDeepLinkOutcome.notFound:
-        AppToast.show(
-          context,
-          message: l10n.expertHubNotFound,
-          variant: TpToastVariant.warning,
-        );
-        return;
-    }
   }
 
   void _syncSessionFromRoute() {

@@ -7,7 +7,6 @@ import 'package:teampilot/cubits/automation_cubit.dart';
 import 'package:teampilot/cubits/chat_cubit.dart';
 import 'package:teampilot/cubits/chat/model/chat_state.dart';
 import 'package:teampilot/cubits/cli_presets_cubit.dart';
-import 'package:teampilot/cubits/expert_hub_cubit.dart';
 import 'package:teampilot/cubits/launch_profile_cubit.dart';
 import 'package:teampilot/cubits/session_preferences_cubit.dart';
 import 'package:teampilot/cubits/team/model/launch_profile_state.dart';
@@ -22,36 +21,14 @@ import 'package:teampilot/repositories/cli_presets_repository.dart';
 import 'package:teampilot/repositories/session_repository.dart';
 import 'package:teampilot/services/cli/registry/cli_tool_registry.dart';
 import 'package:teampilot/services/cli/registry/cli_tool_registry_scope.dart';
-import 'package:teampilot/services/expert_hub/composite_expert_hub_source.dart';
-import 'package:teampilot/services/expert_hub/expert_hub_source.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 import '../../support/automation_test_fixtures.dart';
 import '../../support/desktop_app_harness.dart';
 import '../../support/in_memory_filesystem.dart';
 import '../../support/post_frame_test_harness.dart';
-import '../../support/stub_member_roster_service.dart';
 
 const _testPresetId = 'preset-test';
-
-class _FakeExpertHubSource extends CompositeExpertHubSource {
-  _FakeExpertHubSource() : super(builtIns: const [], registry: _EmptyRegistry());
-
-  @override
-  Future<List<DiscoverableMember>> fetchMembers({
-    bool forceRefresh = false,
-  }) async => const [];
-}
-
-class _EmptyRegistry implements ExpertHubSource {
-  @override
-  Future<List<DiscoverableMember>> fetchMembers({bool forceRefresh = false}) =>
-      Future.value(const []);
-
-  @override
-  Future<List<String>> categories({bool forceRefresh = false}) =>
-      Future.value(const []);
-}
 
 ChatCubit _chatCubitWithWorkspace() {
   final cubit = testChatCubit(executableResolver: () => 'claude');
@@ -134,20 +111,11 @@ LaunchProfileCubit _teamLaunchProfileCubit() {
   return cubit;
 }
 
-ExpertHubCubit _expertHubCubit() => ExpertHubCubit(
-  source: _FakeExpertHubSource(),
-  loadFavorites: () async => const {},
-  saveFavoriteToggle: (_) async => true,
-  memberRosterService: stubMemberRosterService(),
-  launchProfiles: () => throw UnimplementedError('not used'),
-);
-
 Widget _host({
   required AutomationCubit cubit,
   required Widget child,
   LaunchProfileCubit? launchProfileCubit,
   CliPresetsCubit? cliPresetsCubit,
-  ExpertHubCubit? expertHubCubit,
   ChatCubit? chatCubit,
   SessionPreferencesCubit? sessionPreferencesCubit,
 }) {
@@ -155,7 +123,6 @@ Widget _host({
   final providers = <BlocProvider>[
     BlocProvider<AutomationCubit>.value(value: cubit),
     BlocProvider<ChatCubit>.value(value: resolvedChat),
-    BlocProvider<ExpertHubCubit>.value(value: expertHubCubit ?? _expertHubCubit()),
     BlocProvider<LaunchProfileCubit>.value(
       value: launchProfileCubit ?? _emptyLaunchProfileCubit(),
     ),

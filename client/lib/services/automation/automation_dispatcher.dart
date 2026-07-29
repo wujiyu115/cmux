@@ -15,7 +15,6 @@ import '../../models/team_config.dart';
 import '../../models/workspace.dart';
 import '../../repositories/automation_repository.dart';
 import '../../repositories/session_repository.dart';
-import '../../services/expert_hub/expert_landing_preflight.dart';
 import '../../utils/workspace/automation_launch_directory.dart';
 import '../../utils/logging/logger.dart';
 import 'automation_bus_gateway.dart';
@@ -235,7 +234,7 @@ class AutomationDispatcher {
     if (automation.isPersonal) {
       final presetId = automation.presetId?.trim() ?? '';
       final preset = presetId.isEmpty ? null : _resolveCliPreset?.call(presetId);
-      final expertKey = resolveLandingSessionExpertKey(automation.expertKey);
+      final expertKey = automation.expertKey?.trim() ?? '';
       final simpleIdentity = SimpleLaunchIdentity.resolve(
         preset: preset,
         presetId: presetId,

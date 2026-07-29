@@ -11,7 +11,6 @@ import 'package:uuid/uuid.dart';
 import '../../../cubits/ai_history_cubit.dart';
 import '../../../cubits/chat_cubit.dart';
 import '../../../cubits/cli_presets_cubit.dart';
-import '../../../cubits/expert_hub_cubit.dart';
 import '../../../cubits/launch_profile_cubit.dart';
 import '../../../cubits/session_preferences_cubit.dart';
 import '../../../cubits/workbench/workbench_cubit.dart';
@@ -27,9 +26,6 @@ import '../../../models/session_continue_overrides.dart';
 import '../../../models/team_config.dart';
 import '../../../repositories/session_repository.dart';
 import '../../../services/cli/preset_resolver.dart';
-import '../../../services/expert_hub/expert_hub_recent_store.dart';
-import '../../../services/expert_hub/expert_landing_preflight.dart';
-import '../../../services/expert_hub/expert_member_resolver.dart';
 import '../../../services/workbench/workbench_shell_actions.dart';
 import '../../../utils/workspace/landing_draft_resolver.dart';
 import '../../../utils/team/team_member_naming.dart';
@@ -309,7 +305,6 @@ Future<void> submitWorkspaceLandingMessage(
   required LandingLaunchContext launch,
   required String message,
   String? workingDirectory,
-  String? expertKey,
   void Function(String sessionId)? onSessionOpened,
 }) async {
   final trimmed = message.trim();
@@ -327,32 +322,8 @@ Future<void> submitWorkspaceLandingMessage(
   final sessionTeamId = isPersonal ? '' : (launch.teamId?.trim() ?? '');
   final team = isPersonal ? null : _teamProfileById(context, sessionTeamId);
 
-  // Simple always carries a resolved expert key (selected or builtin default).
-  final trimmedExpert = isPersonal
-      ? resolveLandingSessionExpertKey(expertKey ?? launch.expertKey)
-      : (expertKey?.trim() ?? launch.expertKey?.trim() ?? '');
-  if (isPersonal) {
-    final resolved = await ExpertMemberResolver.resolveMember(
-      key: trimmedExpert,
-      hubState: context.mounted ? context.read<ExpertHubCubit>().state : null,
-    );
-    if (!context.mounted) return;
-    if (resolved == null) {
-      AppToast.show(
-        context,
-        message: l10n.expertHubNotFound,
-        variant: TpToastVariant.warning,
-      );
-      return;
-    }
-  }
-
   final simpleIdentity = isPersonal
-      ? _resolveSimpleLaunchIdentity(
-          context,
-          presetId: launch.presetId,
-          expertKey: trimmedExpert,
-        )
+      ? _resolveSimpleLaunchIdentity(context, presetId: launch.presetId)
       : null;
   final switchToTerminal = shouldSwitchToTerminalAfterChatSubmit(
     context
@@ -370,7 +341,6 @@ Future<void> submitWorkspaceLandingMessage(
     simpleIdentity: simpleIdentity,
     workingDirectory: workingDirectory,
     fixedSessionId: plannedSessionId,
-    expertKey: trimmedExpert.isNotEmpty ? trimmedExpert : null,
     continueOverrides: SessionContinueOverrides(
       dangerouslySkipPermissions: launch.dangerouslySkipPermissions,
     ),
@@ -396,10 +366,6 @@ Future<void> submitWorkspaceLandingMessage(
       liveWorkspace.workspaceId,
       WorkbenchTabId.session(plannedSessionId),
     );
-  }
-
-  if (trimmedExpert.isNotEmpty) {
-    unawaited(ExpertHubRecentStore().touch(trimmedExpert));
   }
 
   onSessionOpened?.call(plannedSessionId);
@@ -564,7 +530,6 @@ Future<SessionOpenStatus?> _requestCreateWorkspaceConversation(
   SimpleLaunchIdentity? simpleIdentity,
   String? workingDirectory,
   String? fixedSessionId,
-  String? expertKey,
   SessionContinueOverrides? continueOverrides,
   bool preserveWorkbenchView = false,
 }) async {
@@ -578,7 +543,6 @@ Future<SessionOpenStatus?> _requestCreateWorkspaceConversation(
             _resolveSimpleLaunchIdentity(
               context,
               cli: cli,
-              expertKey: expertKey,
             ))
       : null;
 
@@ -595,7 +559,6 @@ Future<SessionOpenStatus?> _requestCreateWorkspaceConversation(
         workingDirectory: workingDirectory,
         emptyDisplayTitleFallback: l10n.defaultNewChatSessionTitle,
         fixedSessionId: fixedSessionId,
-        expertKey: expertKey,
         continueOverrides: continueOverrides,
         preserveWorkbenchView: preserveWorkbenchView,
       ),
@@ -639,7 +602,6 @@ SimpleLaunchIdentity _resolveSimpleLaunchIdentity(
   BuildContext context, {
   String? presetId,
   CliTool? cli,
-  String? expertKey,
 }) {
   final presets = context.read<CliPresetsCubit>().state.presets;
   final preset = _presetById(presetId, presets);
@@ -647,7 +609,6 @@ SimpleLaunchIdentity _resolveSimpleLaunchIdentity(
     cli: cli,
     preset: preset,
     presetId: presetId,
-    expertKey: expertKey,
   );
 }
 

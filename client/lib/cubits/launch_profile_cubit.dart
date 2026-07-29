@@ -7,7 +7,6 @@ import '../models/mcp_server.dart';
 import '../models/plugin.dart';
 import '../models/team_config.dart';
 import '../models/team_roster_slot.dart';
-import '../services/expert_hub/expert_member_materializer.dart';
 import '../models/launch_profile.dart';
 import '../repositories/mcp_repository.dart';
 import '../repositories/plugin_repository.dart';
@@ -124,11 +123,10 @@ class LaunchProfileCubit extends Cubit<LaunchProfileState>
     }
   }
 
-  Future<TeamProfile> _materializeTeam(TeamProfile team) =>
-      ExpertMemberMaterializer.attachMaterializedMembers(team);
+  Future<TeamProfile> _materializeTeam(TeamProfile team) async => team;
 
-  Future<List<TeamProfile>> _materializeTeams(List<TeamProfile> teams) =>
-      ExpertMemberMaterializer.attachMaterializedMembersAll(teams);
+  Future<List<TeamProfile>> _materializeTeams(List<TeamProfile> teams) async =>
+      teams;
 
   List<TeamProfile> _sortTeams(List<TeamProfile> teams) {
     final hasCustomOrder = teams.any((team) => team.sortOrder > 0);

@@ -121,7 +121,6 @@ class _SelectionAskAiDialogState extends State<_SelectionAskAiDialog> {
         launch: draft,
         message: message,
         workingDirectory: workingDirectory,
-        expertKey: draft.expertKey,
         onSessionOpened: (_) {
           if (mounted) Navigator.of(context).pop();
         },

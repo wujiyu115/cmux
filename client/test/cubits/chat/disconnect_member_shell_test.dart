@@ -6,7 +6,6 @@ import 'package:teampilot/cubits/chat_cubit.dart';
 import 'package:teampilot/models/team_config.dart';
 import 'package:teampilot/models/workspace_folder.dart';
 import 'package:teampilot/repositories/session_repository.dart';
-import 'package:teampilot/services/expert_hub/expert_member_materializer.dart';
 import 'package:teampilot/services/storage/launch_profile_provisioner.dart';
 import 'package:teampilot/utils/team/team_member_naming.dart';
 
@@ -22,12 +21,14 @@ void main() {
   test(
     'disconnectMemberShell targets arbitrary session member, not only active',
     () async {
-      final team = await ExpertMemberMaterializer.attachMaterializedMembers(
-        TeamProfile(
-          id: LaunchProfileProvisioner.defaultNativeTeamId,
-          name: 'Team',
-          roster: TeamMemberNaming.defaultRoster(),
-        ),
+      final team = TeamProfile(
+        id: LaunchProfileProvisioner.defaultNativeTeamId,
+        name: 'Team',
+        roster: TeamMemberNaming.defaultRoster(),
+        members: const [
+          TeamMemberConfig(id: 'team-lead', name: 'team-lead'),
+          TeamMemberConfig(id: 'developer', name: 'developer'),
+        ],
       );
       final tmp = await Directory.systemTemp.createTemp('disconnect_member_');
       addTearDown(() => deleteTempDirBestEffort(tmp));

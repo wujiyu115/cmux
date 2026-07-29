@@ -78,7 +78,6 @@ class _WorkspaceChatPaneState extends State<WorkspaceChatPane> {
         launch: draft,
         message: message,
         workingDirectory: workingDirectory,
-        expertKey: draft.expertKey,
       );
     } finally {
       if (mounted) setState(() => _submitting = false);

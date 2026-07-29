@@ -13,7 +13,7 @@ class SessionRuntimePlan {
     required this.workspaceId,
     required this.sessionId,
     required this.memberId,
-    required this.expertKey,
+    this.expertKey = '',
     required this.runtimeBundle,
     required this.member,
     this.teamId,

@@ -53,7 +53,6 @@ import '../cubits/ssh_profile_cubit.dart';
 import '../cubits/github_account_cubit.dart';
 import '../config/github_oauth_config.dart';
 import '../cubits/launch_profile_cubit.dart';
-import '../cubits/expert_hub_cubit.dart';
 import '../models/runtime_target.dart';
 import '../models/ssh_profile.dart';
 import '../models/team_config.dart';
@@ -89,11 +88,6 @@ import '../services/launch/session_runtime_plan_builder.dart';
 import '../services/home_workspace/home_workspace_ui_cache.dart';
 import '../services/team_hub/composite_team_hub_source.dart';
 import '../services/team_hub/git_registry_team_hub_source.dart';
-import '../services/expert_hub/composite_expert_hub_source.dart';
-import '../services/expert_hub/expert_capability_resolver.dart';
-import '../services/expert_hub/expert_hub_favorites_store.dart';
-import '../services/expert_hub/git_registry_expert_hub_source.dart';
-import '../services/expert_hub/member_roster_service.dart';
 import '../services/cli/cli_executable_discovery.dart';
 import '../services/cli/toolchain_executable_discovery.dart';
 import '../services/commands/command_bus.dart';
@@ -133,7 +127,7 @@ import '../services/skill/skill_repo_service.dart';
 import '../services/storage/runtime_context.dart';
 import '../services/github/github_credentials_store.dart';
 import '../services/github/github_device_flow_auth.dart';
-import '../services/hub_publish/http_github_api_client.dart';
+import '../services/github/github_user_client.dart';
 import '../services/ssh/ssh_client_factory.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/ssh/ssh_connection_events.dart';
@@ -201,8 +195,6 @@ class AppShell {
     required this.cliPresetsCubit,
     required this.skillCubit,
     required this.mcpCubit,
-    required this.expertHubCubit,
-    required this.expertCapabilityResolver,
     required this.extensionCubit,
     required this.appUpdateCubit,
     required this.sshProfileCubit,
@@ -270,8 +262,6 @@ class AppShell {
   final CliPresetsCubit cliPresetsCubit;
   final SkillCubit skillCubit;
   final McpCubit mcpCubit;
-  final ExpertHubCubit expertHubCubit;
-  final ExpertCapabilityResolver expertCapabilityResolver;
   final ExtensionCubit extensionCubit;
   final AppUpdateCubit appUpdateCubit;
   final SshProfileCubit sshProfileCubit;
@@ -397,7 +387,6 @@ Future<AppShell> buildAppShell({
   late final CliPresetsCubit cliPresetsCubit;
   late final SkillCubit skillCubit;
   late final McpCubit mcpCubit;
-  late final ExpertHubCubit expertHubCubit;
   late final ExtensionCubit extensionCubit;
   late final SessionRepository sessionRepo;
   late final ChatCubit chatCubit;
@@ -441,12 +430,7 @@ Future<AppShell> buildAppShell({
       final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
       if (!ok) throw StateError('Could not launch $uri');
     },
-    fetchLogin: (token) async {
-      final user = await HttpGithubApiClient().getAuthenticatedUser(
-        token: token,
-      );
-      return user.login;
-    },
+    fetchLogin: (token) => GithubUserClient().fetchLogin(token: token),
     deviceFlowAvailable: githubDeviceFlowAvailable,
   );
   unawaited(githubAccountCubit.hydrate());
@@ -731,34 +715,7 @@ Future<AppShell> buildAppShell({
   final teamHubSource = CompositeTeamHubSource.withDefaults(
     GitRegistryTeamHubSource(),
   );
-  final expertHubFavorites = ExpertHubFavoritesStore();
-  final compositeExpertHubSource = CompositeExpertHubSource.withDefaults(
-    registry: GitRegistryExpertHubSource(),
-    teamIndex: teamHubSource.fetchTeams,
-  );
-  final expertCapabilityResolver = ExpertCapabilityResolver(
-    installSkill: skillCubit.installTeamDependency,
-    installPlugin: pluginCubit.installTeamDependency,
-    installMcp: mcpCubit.installTeamDependency,
-    source: compositeExpertHubSource,
-  );
-  final memberRosterService = MemberRosterService(
-    resolver: expertCapabilityResolver,
-  );
-  expertHubCubit = ExpertHubCubit(
-    source: compositeExpertHubSource,
-    loadFavorites: expertHubFavorites.load,
-    saveFavoriteToggle: expertHubFavorites.toggle,
-    memberRosterService: memberRosterService,
-    launchProfiles: () => teamCubit,
-    loadInstalledDepIds: () async {
-      final skills = await skillRepo.loadInstalled();
-      return skills.map((s) => s.id).toSet();
-    },
-  );
-  expertCapabilityResolver.attachHubCubit(expertHubCubit);
   final sessionRuntimePlanBuilder = SessionRuntimePlanBuilder(
-    expertResolver: expertCapabilityResolver,
     workspaceProjectConfig: workspaceProjectConfigRepository,
   );
   sessionLifecycleService.attachRuntimePlanBuilder(sessionRuntimePlanBuilder);
@@ -1193,8 +1150,6 @@ Future<AppShell> buildAppShell({
     cliPresetsCubit: cliPresetsCubit,
     skillCubit: skillCubit,
     mcpCubit: mcpCubit,
-    expertHubCubit: expertHubCubit,
-    expertCapabilityResolver: expertCapabilityResolver,
     extensionCubit: extensionCubit,
     appUpdateCubit: appUpdateCubit,
     sshProfileCubit: sshProfileCubit,

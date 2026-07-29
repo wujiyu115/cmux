@@ -5,7 +5,6 @@ import '../../repositories/ssh_credential_store.dart';
 import '../../repositories/ssh_known_host_repository.dart';
 import '../../repositories/workspace_project_config_repository.dart';
 import '../cli/registry/cli_tool_registry.dart';
-import '../expert_hub/expert_capability_resolver.dart';
 import '../remote/remote_app_data_materializer.dart';
 import '../session/session_lifecycle_service.dart';
 import '../ssh/ssh_client_factory.dart';
@@ -98,11 +97,6 @@ SessionConnectOrchestrator buildDefaultSessionConnectOrchestrator({
   final builder =
       runtimePlanBuilder ??
       SessionRuntimePlanBuilder(
-        expertResolver: ExpertCapabilityResolver(
-          installSkill: (_) async => null,
-          installPlugin: (_) async => null,
-          installMcp: (_) async => null,
-        ),
         workspaceProjectConfig: WorkspaceProjectConfigRepository(),
       );
 

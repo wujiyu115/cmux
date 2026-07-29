@@ -369,17 +369,11 @@ abstract final class AppDataBootstrap {
     required ChatCubit chatCubit,
     required SessionRepository sessionRepo,
   }) async {
-    final defaultTeam = teamCubit.state.teams
-        .where((t) => t.id == LaunchProfileProvisioner.defaultNativeTeamId)
-        .firstOrNull;
-    if (defaultTeam == null) return;
-
     final mutated = await _timed(
       boot,
       'defaultWorkspaceEnsure',
       () => DefaultWorkspaceService.ensureDefault(
         sessionRepo,
-        defaultTeam: defaultTeam,
         knownWorkspaces: chatCubit.state.workspaces,
       ),
     );

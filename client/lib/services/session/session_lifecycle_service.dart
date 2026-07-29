@@ -35,7 +35,6 @@ import '../io/filesystem.dart';
 import '../launch/layered_config_bundle.dart';
 import '../launch/session_runtime_plan.dart';
 import '../launch/session_runtime_plan_builder.dart';
-import '../expert_hub/builtin_member_templates.dart';
 import '../skill/skill_pack_install_store.dart';
 import 'session_continue_overrides_apply.dart';
 import 'shell_launch_spec.dart';

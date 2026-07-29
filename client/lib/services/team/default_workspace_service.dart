@@ -1,18 +1,12 @@
 import 'package:collection/collection.dart';
 
-import '../../models/team_config.dart';
 import '../../models/workspace.dart';
 import '../../models/workspace_folder.dart';
 import '../../repositories/session_repository.dart';
-import '../../services/session/session_member_cli_locks.dart';
 import '../../services/storage/app_storage.dart';
 import '../../utils/workspace/workspace_path_utils.dart';
-import '../expert_hub/expert_member_materializer.dart';
 
-/// First-launch bootstrap for the built-in workspace and starter sessions.
-///
-/// Workspaces and launch identities (team) are otherwise independent:
-/// creating a team does not create a workspace.
+/// First-launch bootstrap for the built-in workspace and its starter session.
 abstract final class DefaultWorkspaceService {
   DefaultWorkspaceService._();
 
@@ -22,12 +16,11 @@ abstract final class DefaultWorkspaceService {
   static Future<String> resolvePrimaryPath() =>
       DefaultWorkspaceDirectory.resolveDefaultWorkspacePath();
 
-  /// Ensures the default workspace exists with Simple + team launch sessions.
-  /// Returns whether storage was mutated. Pass [knownWorkspaces] when the index
-  /// was just loaded to avoid a second full scan.
+  /// Ensures the default workspace exists with one starter session. Returns
+  /// whether storage was mutated. Pass [knownWorkspaces] when the index was
+  /// just loaded to avoid a second full scan.
   static Future<bool> ensureDefault(
     SessionRepository repository, {
-    required TeamProfile defaultTeam,
     List<Workspace>? knownWorkspaces,
   }) async {
     final primaryPath = await resolvePrimaryPath();
@@ -54,37 +47,13 @@ abstract final class DefaultWorkspaceService {
       mutated = true;
     }
 
-    final hasTeam = workspaceSessions.any(
-      (s) => s.sessionTeam.trim() == defaultTeam.id,
-    );
-    if (!hasTeam) {
-      final rosterMembers = defaultTeam.members.isNotEmpty
-          ? defaultTeam.members
-          : await ExpertMemberMaterializer.materializeRosterAsync(
-              team: defaultTeam,
-            );
-      await repository.createSession(
-        workspace.workspaceId,
-        sessionTeam: defaultTeam.id,
-        rosterMembers: rosterMembers,
-        memberClis: resolveSessionMemberCliLocks(
-          team: defaultTeam,
-          rosterMembers: rosterMembers,
-        ),
-      );
-      mutated = true;
-    }
-
     return mutated;
   }
 
   /// Idempotent — safe to call on every bootstrap.
-  static Future<Workspace> seed(
-    SessionRepository repository, {
-    required TeamProfile defaultTeam,
-  }) async {
+  static Future<Workspace> seed(SessionRepository repository) async {
     final primaryPath = await resolvePrimaryPath();
-    await ensureDefault(repository, defaultTeam: defaultTeam);
+    await ensureDefault(repository);
     final workspaces = await repository.loadWorkspaces();
     return workspaces
         .where((w) => workspacePathsEqual(w.firstFolderPath, primaryPath))
