@@ -6,7 +6,9 @@ import '../../../../cubits/extension_cubit.dart';
 import '../../../../cubits/workspace_project_config_cubit.dart';
 import '../../../../l10n/l10n_extensions.dart';
 import '../../../team_config/team_config_cards.dart';
-import '../../../team_config/team_config_extensions_section.dart';
+import 'package:teampilot/theme/workspace_surface_layers.dart';
+
+enum ExtensionOverrideChoice { followGlobal, forceOn, forceOff }
 
 class WorkspaceExtensionsSection extends StatelessWidget {
   const WorkspaceExtensionsSection({required this.workspaceId, super.key});
@@ -76,6 +78,82 @@ class WorkspaceExtensionsSection extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class TeamExtensionRow extends StatelessWidget {
+  const TeamExtensionRow({
+    super.key,
+    required this.row,
+    required this.choice,
+    required this.effective,
+    required this.onChoice,
+    this.effectiveOnLabel,
+    this.effectiveOffLabel,
+  });
+
+  final ExtensionRow row;
+  final ExtensionOverrideChoice choice;
+  final bool effective;
+  final ValueChanged<ExtensionOverrideChoice> onChoice;
+  final String? effectiveOnLabel;
+  final String? effectiveOffLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: workspaceInsetDecoration(cs, radius: 10),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    row.name,
+                    style: TpTextStyles.of(
+                      context,
+                    ).mdBold,
+                  ),
+                  Text(
+                    effective
+                        ? (effectiveOnLabel ?? l10n.teamExtensionEffectiveOn)
+                        : (effectiveOffLabel ?? l10n.teamExtensionEffectiveOff),
+                    style: TpTextStyles.of(context).smColored(cs.onSurface.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Flexible(
+              fit: FlexFit.loose,
+              child: TpCompactSelect<ExtensionOverrideChoice>(
+                value: choice,
+                onChanged: (c) {
+                  if (c != null) onChoice(c);
+                },
+                entries: [
+                  (
+                    ExtensionOverrideChoice.followGlobal,
+                    l10n.teamExtensionFollowGlobal,
+                  ),
+                  (ExtensionOverrideChoice.forceOn, l10n.teamExtensionForceOn),
+                  (
+                    ExtensionOverrideChoice.forceOff,
+                    l10n.teamExtensionForceOff,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

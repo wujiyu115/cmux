@@ -48,7 +48,7 @@ class SessionLifecycleService {
 
 
   bool _isPersonalLaunch(Workspace? workspace, AppSession session) =>
-      workspace != null && session.sessionTeam.trim().isEmpty;
+      workspace != null;
 
   /// Test-only seam for [_isPersonalLaunch].
   @visibleForTesting

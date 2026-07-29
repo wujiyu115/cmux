@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:teampilot/models/app_session.dart';
 import 'package:teampilot/models/workspace_icon_ref.dart';
-import 'package:teampilot/models/team_config.dart';
 import 'package:teampilot/models/workspace_folder.dart';
 import 'package:teampilot/repositories/session_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -306,7 +305,6 @@ void main() {
 
       final disk = (await repo.loadSessions()).single;
       expect(disk.launchState, AppSessionLaunchState.started);
-      expect(disk.sessionTeam, '');
       expect(disk.cliTeamName, '');
     },
   );
@@ -375,10 +373,8 @@ void main() {
     final workspace = await repo.createWorkspace([WorkspaceFolder(path: '/w')]);
     final session = await repo.createSession(
       workspace.workspaceId,
-      memberClis: const {'team-lead': CliTool.cursor},
     );
 
-    expect(session.sessionTeam, '');
     expect(session.members, isEmpty);
     expect(session.cli, isNull);
   });

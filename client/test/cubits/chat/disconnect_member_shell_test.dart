@@ -3,11 +3,9 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:teampilot/cubits/chat/model/session_open_request.dart';
 import 'package:teampilot/cubits/chat_cubit.dart';
-import 'package:teampilot/models/team_config.dart';
 import 'package:teampilot/models/workspace_folder.dart';
 import 'package:teampilot/repositories/session_repository.dart';
 import 'package:teampilot/services/session/session_lifecycle_service.dart';
-import 'package:teampilot/utils/team/team_member_naming.dart';
 
 import '../../support/fake_terminal_session.dart';
 import '../../support/post_frame_test_harness.dart';
@@ -19,15 +17,6 @@ void main() {
   test(
     'disconnectMemberShell targets arbitrary session member, not only active',
     () async {
-      final team = TeamProfile(
-        id: 'default-native-team',
-        name: 'Team',
-        roster: TeamMemberNaming.defaultRoster(),
-        members: const [
-          TeamMemberConfig(id: 'team-lead', name: 'team-lead'),
-          TeamMemberConfig(id: 'developer', name: 'developer'),
-        ],
-      );
       final tmp = await Directory.systemTemp.createTemp('disconnect_member_');
       addTearDown(() => deleteTempDirBestEffort(tmp));
       final repo = SessionRepository(rootDir: tmp.path);
@@ -36,15 +25,9 @@ void main() {
       ]);
       final sessionA = await repo.createSession(
         workspace.workspaceId,
-        sessionTeam: team.id,
-        rosterMembers: team.members,
-        memberClis: {for (final m in team.members) m.id: CliTool.claude},
       );
       final sessionB = await repo.createSession(
         workspace.workspaceId,
-        sessionTeam: team.id,
-        rosterMembers: team.members,
-        memberClis: {for (final m in team.members) m.id: CliTool.claude},
       );
 
       final postFrame = PostFrameTestHarness();
@@ -65,7 +48,6 @@ void main() {
       await cubit.loadWorkspaceData(repo);
       cubit.activateWorkspaceTab(
         workspaceTabKey: workspace.workspaceId,
-        scopeSessionsToSelectedTeam: false,
       );
 
       await cubit.requestOpenSession(
@@ -85,7 +67,7 @@ void main() {
 
       final tabA = cubit.tabStore.openTabBySessionId(sessionA.sessionId)!;
       final tabB = cubit.tabStore.openTabBySessionId(sessionB.sessionId)!;
-      final memberId = team.members.first.id;
+      final memberId = sessionA.sessionId;
 
       final shellA = FakeTerminalSession(executable: 'bin-a');
       final shellB = FakeTerminalSession(executable: 'bin-b');

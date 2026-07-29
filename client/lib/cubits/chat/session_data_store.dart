@@ -4,7 +4,7 @@ import '../../models/workspace_folder.dart';
 import '../../models/workspace.dart';
 import '../../models/app_session.dart';
 import '../../models/workspace_icon_ref.dart';
-import '../../models/team_config.dart' show CliTool, TeamMemberConfig;
+import '../../models/cli_tool.dart';
 import '../../repositories/session_repository.dart';
 import '../../utils/logging/logger.dart';
 import '../../utils/workspace/workspace_path_utils.dart';
@@ -34,8 +34,6 @@ class ChatDataSnapshot extends Equatable {
 /// Owns team-scope flags and wraps SessionRepository. Returns snapshots;
 /// ChatCubit emits them (single emit owner).
 class SessionDataStore {
-  bool _scopeSessionsToSelectedTeam = false;
-  String? _selectedTeamId;
   final Set<String> _hydratedSessionWorkspaceIds = {};
 
   void _resetSessionHydration() => _hydratedSessionWorkspaceIds.clear();
@@ -55,38 +53,13 @@ class SessionDataStore {
   bool sessionsLoadedForWorkspace(String workspaceId) =>
       _hydratedSessionWorkspaceIds.contains(workspaceId.trim());
 
-  bool setScope({
-    required bool scopeSessionsToSelectedTeam,
-    String? selectedTeamId,
-  }) {
-    final normalized = (selectedTeamId != null && selectedTeamId.isNotEmpty)
-        ? selectedTeamId
-        : null;
-    if (_scopeSessionsToSelectedTeam == scopeSessionsToSelectedTeam &&
-        _selectedTeamId == normalized) {
-      return false;
-    }
-    _scopeSessionsToSelectedTeam = scopeSessionsToSelectedTeam;
-    _selectedTeamId = normalized;
-    return true;
-  }
-
-  List<AppSession> _computeVisibleSessions(List<AppSession> all) {
-    if (!_scopeSessionsToSelectedTeam) return all;
-    final tid = _selectedTeamId;
-    if (tid == null || tid.isEmpty) {
-      return all.where((s) => s.sessionTeam.isEmpty).toList();
-    }
-    return all.where((s) => s.sessionTeam == tid).toList();
-  }
-
   List<Workspace> _computeVisibleWorkspaces(List<Workspace> all) => all;
 
   ChatDataSnapshot deriveSnapshot({
     required List<Workspace> workspaces,
     required List<AppSession> sessions,
   }) {
-    final visS = _computeVisibleSessions(sessions);
+    final visS = sessions;
     final visP = _computeVisibleWorkspaces(workspaces);
     return ChatDataSnapshot(
       workspaces: workspaces,
@@ -164,18 +137,12 @@ class SessionDataStore {
   Future<AppSession> createSession(
     String workspaceId,
     SessionRepository repo, {
-    String sessionTeamId = '',
-    List<TeamMemberConfig> rosterMembers = const [],
-    Map<String, CliTool> memberClis = const {},
     CliTool? cli,
     String? workingDirectory,
     String? fixedSessionId,
   }) {
     return repo.createSession(
       workspaceId,
-      sessionTeam: sessionTeamId,
-      rosterMembers: rosterMembers,
-      memberClis: memberClis,
       cli: cli,
       workingDirectory: workingDirectory,
       fixedSessionId: fixedSessionId,
@@ -302,12 +269,10 @@ class SessionDataStore {
     SessionRepository repo,
     String sourceWorkspaceId, {
     String? display,
-    List<TeamMemberConfig> rosterMembers = const [],
   }) async {
     final workspace = await repo.cloneWorkspace(
       sourceWorkspaceId,
       display: display,
-      rosterMembers: rosterMembers,
     );
     final snapshot = await loadWorkspaceData(repo);
     return (workspace: workspace, snapshot: snapshot);

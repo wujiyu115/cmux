@@ -1,80 +1,11 @@
 import 'package:flutter/foundation.dart';
 
-import 'member_instance.dart';
 import 'session_continue_overrides.dart';
 import 'session_member_binding.dart';
 import 'simple_launch_identity.dart';
-import 'team_config.dart';
+import 'cli_tool.dart';
 import 'workspace_folder.dart';
 import 'workspace_topology.dart';
-
-/// Runtime pods for [session.members], resolved from [team] member **types**.
-///
-/// Trusts session bindings as the pod list (createSession may have healed
-/// expansion from workspace pins). Does **not** re-expand from
-/// [TeamMemberConfig.replicas], which can lag behind disk after placement
-/// saves — filtering an expand of stale replicas=1 drops `builder-0`/`builder-1`.
-///
-/// Lives here (not [member_instance.dart]) to avoid an AppSession import cycle
-/// through [workspace_topology].
-List<TeamMemberConfig> sessionRosterMembers(
-  AppSession session,
-  TeamProfile team,
-) {
-  final typesById = {for (final m in team.members) m.id: m};
-  final poolSizeByType = <String, int>{};
-  for (final b in session.members) {
-    final type = _sessionBindingMemberType(b, typesById);
-    if (type == null) continue;
-    poolSizeByType[type.id] = (poolSizeByType[type.id] ?? 0) + 1;
-  }
-
-  final out = <TeamMemberConfig>[];
-  for (final b in session.members) {
-    final type = _sessionBindingMemberType(b, typesById);
-    if (type == null) continue;
-    final instanceId = b.rosterMemberId.trim();
-    if (instanceId.isEmpty) continue;
-    final pool = poolSizeByType[type.id] ?? 1;
-    final ordinal = _sessionBindingOrdinal(instanceId, type.id);
-    // Numbered ids need replicas > 1 so [MemberInstance] keeps `type-N` naming.
-    final replicas = instanceId == type.id && pool <= 1
-        ? 1
-        : (pool > ordinal ? pool : ordinal + 1).clamp(2, 999);
-    out.add(
-      MemberInstance(
-        type: type,
-        ordinal: ordinal,
-        replicas: replicas,
-      ).toMemberConfig(),
-    );
-  }
-  return out;
-}
-
-TeamMemberConfig? _sessionBindingMemberType(
-  SessionMemberBinding binding,
-  Map<String, TeamMemberConfig> typesById,
-) {
-  final typeId = binding.typeId.trim();
-  final direct = typesById[typeId];
-  if (direct != null) return direct;
-  final instanceId = binding.rosterMemberId.trim();
-  final byInstance = typesById[instanceId];
-  if (byInstance != null) return byInstance;
-  final dash = instanceId.lastIndexOf('-');
-  if (dash <= 0) return null;
-  final suffix = instanceId.substring(dash + 1);
-  if (int.tryParse(suffix) == null) return null;
-  return typesById[instanceId.substring(0, dash)];
-}
-
-int _sessionBindingOrdinal(String instanceId, String typeId) {
-  if (instanceId == typeId) return 0;
-  final prefix = '$typeId-';
-  if (!instanceId.startsWith(prefix)) return 0;
-  return int.tryParse(instanceId.substring(prefix.length)) ?? 0;
-}
 
 enum AppSessionLaunchState { created, started }
 
@@ -86,7 +17,6 @@ class AppSession {
     required this.folders,
     this.memberTargets = const {},
     this.display = '',
-    this.sessionTeam = '',
     this.profileId = '',
     this.cliTeamName = '',
     this.cli,
@@ -110,7 +40,6 @@ class AppSession {
     List<WorkspaceFolder> folders = const [],
     Map<String, String> memberTargets = const {},
     String display = '',
-    String sessionTeam = '',
     String profileId = '',
     String cliTeamName = '',
     CliTool? cli,
@@ -138,7 +67,6 @@ class AppSession {
             e.key.trim(): e.value.trim(),
       }),
       display: display,
-      sessionTeam: sessionTeam,
       profileId: profileId,
       cliTeamName: cliTeamName,
       cli: cli,
@@ -195,7 +123,6 @@ class AppSession {
       folders: foldersFromJson(json['folders']),
       memberTargets: targets,
       display: json['display'] as String? ?? '',
-      sessionTeam: json['sessionTeam'] as String? ?? '',
       profileId: json['profileId'] as String? ?? '',
       cliTeamName: json['cliTeamName'] as String? ?? '',
       cli: CliTool.tryParse(json['cli'] as String?),
@@ -253,7 +180,6 @@ class AppSession {
     return work;
   }
 
-  final String sessionTeam;
   final String profileId;
   final String cliTeamName;
   final CliTool? cli;
@@ -285,14 +211,8 @@ class AppSession {
   /// Session-scoped continue chrome: permission + per-member model overrides.
   final SessionContinueOverrides continueOverrides;
 
-  /// True when this session has no team roster (Simple / unteamed).
-  bool get isSimple => sessionTeam.trim().isEmpty;
-
-  /// Denormalized Simple launch identity. Throws if this is a team session.
+  /// Denormalized launch identity for this session.
   SimpleLaunchIdentity get simpleIdentity {
-    if (!isSimple) {
-      throw StateError('simpleIdentity requires a Simple (unteamed) session');
-    }
     final resolvedCli = cli ?? CliTool.claude;
     var resolvedProvider = provider.trim();
     if (resolvedProvider.isEmpty) {
@@ -328,7 +248,6 @@ class AppSession {
     List<WorkspaceFolder>? folders,
     Map<String, String>? memberTargets,
     String? display,
-    String? sessionTeam,
     String? profileId,
     String? cliTeamName,
     CliTool? cli,
@@ -351,7 +270,6 @@ class AppSession {
       folders: folders ?? this.folders,
       memberTargets: memberTargets ?? this.memberTargets,
       display: display ?? this.display,
-      sessionTeam: sessionTeam ?? this.sessionTeam,
       profileId: profileId ?? this.profileId,
       cliTeamName: cliTeamName ?? this.cliTeamName,
       cli: cli ?? this.cli,
@@ -378,7 +296,6 @@ class AppSession {
       'folders': folders.map((f) => f.toJson()).toList(),
       if (memberTargets.isNotEmpty) 'memberTargets': memberTargets,
       'display': display,
-      'sessionTeam': sessionTeam,
       if (profileId.isNotEmpty) 'profileId': profileId,
       if (cliTeamName.isNotEmpty) 'cliTeamName': cliTeamName,
       if (cli != null) 'cli': cli!.value,
@@ -409,7 +326,6 @@ class AppSession {
             listEquals(folders, other.folders) &&
             mapEquals(memberTargets, other.memberTargets) &&
             display == other.display &&
-            sessionTeam == other.sessionTeam &&
             profileId == other.profileId &&
             cliTeamName == other.cliTeamName &&
             cli == other.cli &&
@@ -434,7 +350,6 @@ class AppSession {
     Object.hashAll(folders),
     Object.hashAll(memberTargets.entries),
     display,
-    sessionTeam,
     profileId,
     cliTeamName,
     cli,

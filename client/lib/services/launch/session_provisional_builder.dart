@@ -1,7 +1,7 @@
 import '../../models/app_session.dart';
 import '../../models/simple_launch_identity.dart';
 import '../../models/workspace.dart';
-import '../../models/team_config.dart';
+import '../../models/cli_tool.dart';
 
 /// In-memory session used to stage the workbench before disk persistence.
 AppSession buildProvisionalSession({

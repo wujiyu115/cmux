@@ -189,7 +189,6 @@ class _WorkspacePageState extends State<WorkspacePage> {
   void _activateRoute() {
     context.read<ChatCubit>().activateWorkspaceTab(
       workspaceTabKey: widget.tabKey,
-      scopeSessionsToSelectedTeam: false,
     );
     unawaited(
       context.read<ChatCubit>().ensureSessionsForWorkspace(widget.workspaceId),

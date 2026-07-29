@@ -1,7 +1,7 @@
 import '../../cubits/chat/model/chat_tab.dart';
 import '../../cubits/chat/model/session_open_request.dart';
 import '../../models/app_session.dart';
-import '../../models/team_config.dart';
+import '../../models/cli_tool.dart';
 import '../../models/workspace.dart';
 import '../../services/terminal/terminal_session.dart';
 

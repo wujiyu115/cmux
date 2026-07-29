@@ -47,7 +47,6 @@ void main() {
       final session = AppSession(
         sessionId: 's1',
         workspaceId: 'w1',
-        sessionTeam: 'team',
         cliTeamName: 'team-1',
         folders: const [
           WorkspaceFolder(path: '/repo', targetId: 'ssh:p1'),
@@ -125,7 +124,6 @@ void main() {
   AppSession sshSession() => AppSession(
     sessionId: 's1',
     workspaceId: 'w1',
-    sessionTeam: 'team',
     cliTeamName: 'team-1',
     folders: const [
       WorkspaceFolder(path: '/repo', targetId: 'ssh:p1'),
@@ -223,7 +221,6 @@ void main() {
     final session = AppSession(
       sessionId: 's-personal',
       workspaceId: 'w1',
-      sessionTeam: '',
       folders: const [WorkspaceFolder(path: '/root/hhoa', targetId: 'ssh:p1')],
       createdAt: 1,
     );
@@ -235,7 +232,6 @@ void main() {
     final session = AppSession(
       sessionId: 's-personal',
       workspaceId: 'w1',
-      sessionTeam: '',
       folders: const [
         WorkspaceFolder(path: '/local', targetId: 'local'),
         WorkspaceFolder(path: '/local-extra', targetId: 'local'),

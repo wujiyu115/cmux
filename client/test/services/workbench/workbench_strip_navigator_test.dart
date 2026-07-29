@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:teampilot/cubits/chat_cubit.dart';
 import 'package:teampilot/cubits/workbench/workbench_cubit.dart';
 import 'package:teampilot/cubits/workbench/workbench_tab.dart';
-import 'package:teampilot/models/team_config.dart';
 import 'package:teampilot/models/workspace_folder.dart';
 import 'package:teampilot/repositories/session_repository.dart';
 import 'package:teampilot/services/terminal/terminal_session.dart';
@@ -46,12 +45,6 @@ class _FakeTerminalSession extends TerminalSession {
   void dispose() => _running = false;
 }
 
-const _team = TeamProfile(
-  id: 'team-a',
-  name: 'A',
-  members: [TeamMemberConfig(id: 'm-lead', name: 'team-lead')],
-);
-
 void main() {
   setUp(setUpTestAppStorage);
   tearDown(tearDownTestAppStorage);
@@ -69,9 +62,6 @@ void main() {
     Future<void> openSession() async {
       final session = await repo.createSession(
         workspaceId,
-        sessionTeam: _team.id,
-        rosterMembers: _team.members,
-        memberClis: {for (final m in _team.members) m.id: CliTool.claude},
       );
       sessionIds.add(session.sessionId);
       await chat.requestOpenSession(

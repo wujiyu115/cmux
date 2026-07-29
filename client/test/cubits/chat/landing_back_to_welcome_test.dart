@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:teampilot/cubits/chat_cubit.dart';
 import 'package:teampilot/cubits/workbench/workbench_cubit.dart';
 import 'package:teampilot/cubits/workbench/workbench_tab.dart';
-import 'package:teampilot/models/team_config.dart';
 import 'package:teampilot/models/workspace_folder.dart';
 import 'package:teampilot/repositories/session_repository.dart';
 import 'package:teampilot/services/terminal/terminal_session.dart';
@@ -47,11 +46,6 @@ void main() {
   test(
     'dismissNewChat + clearActive yields welcome and keeps tabOrder',
     () async {
-      const team = TeamProfile(
-        id: 'team-a',
-        name: 'A',
-        members: [TeamMemberConfig(id: 'm-lead', name: 'team-lead')],
-      );
       final tmp = await Directory.systemTemp.createTemp('landing_back_tabs_');
       addTearDown(() async {
         try {
@@ -67,9 +61,6 @@ void main() {
       ]);
       final session = await repo.createSession(
         workspace.workspaceId,
-        sessionTeam: team.id,
-        rosterMembers: team.members,
-        memberClis: {for (final m in team.members) m.id: CliTool.claude},
       );
 
       final postFrame = PostFrameTestHarness();

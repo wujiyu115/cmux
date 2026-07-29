@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:teampilot/models/session_member_binding.dart';
-import 'package:teampilot/models/team_config.dart';
+import 'package:teampilot/models/cli_tool.dart';
 
 void main() {
   test('typeId round-trips; defaults to the instance id when absent', () {

@@ -13,7 +13,7 @@ import '../../cubits/workbench/workbench_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../utils/workspace/workspace_chrome_profile.dart';
 import '../../models/run/run_session.dart';
-import '../../models/team_config.dart';
+import '../../models/cli_tool.dart';
 import '../../services/run/run_panel_session.dart';
 import '../../services/terminal/workspace_shell_connector.dart';
 import '../../services/terminal/workspace_terminal_registry.dart';

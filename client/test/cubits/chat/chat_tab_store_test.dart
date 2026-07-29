@@ -3,7 +3,6 @@ import 'package:teampilot/cubits/chat/chat_tab_store.dart';
 import 'package:teampilot/cubits/chat/model/chat_tab.dart';
 import 'package:teampilot/cubits/chat/model/chat_tab_info.dart';
 import 'package:teampilot/models/app_session.dart';
-import 'package:teampilot/models/team_config.dart';
 import 'package:teampilot/models/workspace.dart';
 import 'package:teampilot/models/workspace_folder.dart';
 
@@ -21,7 +20,6 @@ void main() {
         sessionId: 's1',
         workspaceId: 'ws',
         folders: const [],
-        sessionTeam: 'team-1',
         cliTeamName: 'default-native-team-3',
         createdAt: 0,
       );
@@ -88,18 +86,4 @@ void main() {
       expect(m2.$2, ['/x', '/remote']);
     },
   );
-
-  test('defaultMemberId prefers team-lead', () {
-    final store = ChatTabStore();
-    const team = TeamProfile(
-      id: 't',
-      name: 'T',
-      members: [
-        TeamMemberConfig(id: 'member-1', name: 'dev'),
-        TeamMemberConfig(id: 'team-lead', name: 'team-lead'),
-      ],
-    );
-    expect(store.defaultMemberId(team), 'team-lead');
-    expect(store.activeTabCount, 0);
-  });
 }

@@ -18,7 +18,6 @@ void main() {
 
     expect(loaded.cliExecutablePathFor('flashskyai'), '');
     expect(loaded.autoLaunchAllMembersOnConnect, true);
-    expect(loaded.scopeSessionsToSelectedTeam, true);
   });
 
   test('round-trips through SharedPreferences', () async {
@@ -29,7 +28,6 @@ void main() {
       SessionPreferences(
         cliExecutablePaths: const {'flashskyai': '/usr/local/bin/flashskyai'},
         autoLaunchAllMembersOnConnect: true,
-        scopeSessionsToSelectedTeam: true,
       ),
     );
 
@@ -40,7 +38,6 @@ void main() {
       '/usr/local/bin/flashskyai',
     );
     expect(loaded.autoLaunchAllMembersOnConnect, true);
-    expect(loaded.scopeSessionsToSelectedTeam, true);
   });
 
   test('falls back to defaults on malformed JSON', () async {
@@ -54,7 +51,6 @@ void main() {
 
     expect(loaded.cliExecutablePathFor('flashskyai'), '');
     expect(loaded.autoLaunchAllMembersOnConnect, true);
-    expect(loaded.scopeSessionsToSelectedTeam, true);
   });
 
   test('stores JSON under the documented key', () async {

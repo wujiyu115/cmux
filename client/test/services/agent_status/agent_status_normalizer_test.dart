@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:teampilot/models/team_config.dart';
+import 'package:teampilot/models/cli_tool.dart';
 import 'package:teampilot/services/agent_status/agent_status_normalizer.dart';
 import 'package:teampilot/services/agent_status/agent_attention_state.dart';
 

@@ -9,12 +9,7 @@ import '../models/workspace_topology.dart';
 import '../models/workspace_folder.dart';
 import '../models/app_session.dart';
 import '../models/session_continue_overrides.dart';
-import '../models/member_instance.dart';
-import '../models/session_member_binding.dart';
-import '../models/team_config.dart';
-import '../services/storage/runtime_layout.dart';
-import '../services/io/filesystem.dart';
-import '../services/session/session_team_counter.dart';
+import '../models/cli_tool.dart';
 import '../services/storage/app_storage.dart';
 import '../models/workspace_icon_ref.dart';
 import '../services/workspace/target_liveness.dart';
@@ -135,7 +130,6 @@ class SessionRepository {
       );
       if (!inferMemberPlacementInitialized(
         folders: workspace.folders,
-        members: const [],
         targets: targets,
         alreadyInitialized: false,
       )) {
@@ -544,24 +538,8 @@ class SessionRepository {
   }
 
 
-  Future<({Filesystem fs, RuntimeLayout layout})> _counterContext() async {
-    if (_rootOverride == null && AppStorage.isInstalled) {
-      final snap = AppStorage.context;
-      return (fs: snap.fs, layout: snap.layout);
-    }
-    final teampilotRoot = _rootOverride ?? AppStorage.paths.basePath;
-    final fs = AppStorage.fs;
-    return (
-      fs: fs,
-      layout: RuntimeLayout(teampilotRoot: teampilotRoot, fs: fs),
-    );
-  }
-
   Future<AppSession> createSession(
     String workspaceId, {
-    String sessionTeam = '',
-    List<TeamMemberConfig> rosterMembers = const [],
-    Map<String, CliTool> memberClis = const {},
     CliTool? cli,
     String? provider,
     String? model,
@@ -576,7 +554,6 @@ class SessionRepository {
     if (workspace == null) {
       throw StateError('Unknown workspaceId: $workspaceId');
     }
-    // Team launch removed: sessions are always personal (empty sessionTeam).
     final pinnedId = fixedSessionId?.trim() ?? '';
     final sessionId = pinnedId.isNotEmpty ? pinnedId : const Uuid().v4();
     final now = DateTime.now().millisecondsSinceEpoch;
@@ -588,7 +565,6 @@ class SessionRepository {
         workingDirectory ?? '',
       ),
       display: '',
-      sessionTeam: '',
       profileId: '',
       cliTeamName: '',
       cli: cli,
@@ -829,7 +805,6 @@ class SessionRepository {
   Future<Workspace> cloneWorkspace(
     String sourceWorkspaceId, {
     String? display,
-    List<TeamMemberConfig> rosterMembers = const [],
   }) async {
     final fs = await _fs();
     final source = await _readManifest(fs, sourceWorkspaceId);
@@ -855,7 +830,6 @@ class SessionRepository {
         fs,
         old,
         newWorkspaceId,
-        rosterMembers: rosterMembers,
       );
     }
 
@@ -867,47 +841,16 @@ class SessionRepository {
   Future<AppSession> _cloneSessionRecord(
     SessionRepositoryFs fs,
     AppSession source,
-    String targetWorkspaceId, {
-    required List<TeamMemberConfig> rosterMembers,
-  }) async {
+    String targetWorkspaceId,
+  ) async {
     final now = DateTime.now().millisecondsSinceEpoch;
-    var cliTeamName = '';
-    var members = const <SessionMemberBinding>[];
-    final trimmedTeam = source.sessionTeam.trim();
-    if (trimmedTeam.isNotEmpty) {
-      final valid = rosterMembers.where((m) => m.isValid).toList();
-      if (valid.isNotEmpty) {
-        final counterCtx = await _counterContext();
-        final counter = SessionTeamCounter(
-          fs: counterCtx.fs,
-          layout: counterCtx.layout,
-        );
-        cliTeamName = await counter.nextCliTeamName(trimmedTeam);
-        members = [
-          for (final inst in expandTeamRoster(valid))
-            SessionMemberBinding(
-              rosterMemberId: inst.instanceId,
-              typeId: inst.type.id,
-              taskId: const Uuid().v4(),
-              cli: _copyCliFromSourceBinding(
-                sourceMembers: source.members,
-                rosterMemberId: inst.instanceId,
-                typeId: inst.type.id,
-              ),
-            ),
-        ];
-      }
-    }
-
     final sessionId = const Uuid().v4();
     final session = AppSession(
       sessionId: sessionId,
       workspaceId: targetWorkspaceId,
       folders: List.of(source.folders),
       display: source.display,
-      sessionTeam: source.sessionTeam,
-      cliTeamName: cliTeamName,
-      members: members,
+      cliTeamName: '',
       launchState: AppSessionLaunchState.created,
       createdAt: now,
       updatedAt: now,
@@ -939,22 +882,4 @@ class SessionRepository {
     _invalidateWorkspacesIndexCache();
     await WorkspaceIndexStore(fs).remove(workspaceId);
   }
-}
-
-/// Copies a locked CLI from [sourceMembers] for a cloned binding.
-///
-/// Prefer an exact [rosterMemberId] match; otherwise any binding with the same
-/// [typeId]. Returns null when there is no usable match.
-CliTool? _copyCliFromSourceBinding({
-  required List<SessionMemberBinding> sourceMembers,
-  required String rosterMemberId,
-  required String typeId,
-}) {
-  for (final m in sourceMembers) {
-    if (m.rosterMemberId == rosterMemberId) return m.cli;
-  }
-  for (final m in sourceMembers) {
-    if (m.typeId == typeId) return m.cli;
-  }
-  return null;
 }

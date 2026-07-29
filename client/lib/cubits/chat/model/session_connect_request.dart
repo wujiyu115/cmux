@@ -1,5 +1,5 @@
 import '../../../models/app_session.dart';
-import '../../../models/team_config.dart';
+import '../../../models/cli_tool.dart';
 import '../../../models/workspace.dart';
 
 /// Target for [SessionLaunchService.connectWorkspaceSession].

@@ -1,6 +1,5 @@
 import '../../models/app_session.dart';
 import '../../models/workspace.dart';
-import '../../models/team_config.dart';
 import '../../services/storage/app_storage.dart';
 import 'model/chat_tab.dart';
 import 'model/chat_tab_info.dart';
@@ -187,29 +186,6 @@ class ChatTabStore {
   }
 
   ChatTab removeAt(int index) => _active.removeAt(index);
-
-  String defaultMemberId(TeamProfile team) {
-    if (team.members.isEmpty) return '';
-    final lead = team.members.where((m) => m.id == 'team-lead');
-    return lead.isEmpty ? team.members.first.id : lead.first.id;
-  }
-
-  ChatTabInfo localSessionInfo(TeamProfile team) => ChatTabInfo(
-    id: 'local-${team.id}',
-    title: team.name,
-    subtitle: 'local session',
-  );
-
-  ChatTab appendLocalTab(TeamProfile team, {required String cliTeamName}) {
-    final tab = ChatTab(
-      info: localSessionInfo(team),
-      cliTeamName: cliTeamName,
-      selectedMemberId: defaultMemberId(team),
-      workspaceId: _activeWorkspaceId,
-    );
-    _active.add(tab);
-    return tab;
-  }
 
   (String, List<String>) workingDirectoryAndAddDirsForTab(
     ChatTab tab,

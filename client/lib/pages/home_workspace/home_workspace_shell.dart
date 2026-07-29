@@ -10,7 +10,6 @@ import 'package:path/path.dart' as p;
 import '../../cubits/chat_cubit.dart';
 import '../../cubits/layout_cubit.dart';
 import '../../cubits/run_cubit.dart';
-import '../../cubits/session_preferences_cubit.dart';
 import '../../cubits/workbench/workbench_cubit.dart';
 import '../../cubits/workspace_tools_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
@@ -141,12 +140,6 @@ class _HomeShellState extends State<HomeShell> {
     }
     _registerChromeCommands();
     unawaited(_finishOpenTabsBootstrap(routeTab));
-    if (routeTab == null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        _syncTeamSessionScope(context);
-      });
-    }
   }
 
   void _registerChromeCommands() {
@@ -156,10 +149,7 @@ class _HomeShellState extends State<HomeShell> {
       ..register(CommandIds.workspaceNextTab, _nextWorkspaceTab)
       ..register(CommandIds.workspacePrevTab, _prevWorkspaceTab)
       ..register(CommandIds.workspaceCloseTab, _closeActiveWorkspaceTab)
-      ..register(
-        CommandIds.workspaceReopenClosed,
-        _reopenClosedWorkspaceTab,
-      );
+      ..register(CommandIds.workspaceReopenClosed, _reopenClosedWorkspaceTab);
     _chromeCommands
       ..nextWorkspaceTab = _nextWorkspaceTab
       ..prevWorkspaceTab = _prevWorkspaceTab
@@ -209,10 +199,7 @@ class _HomeShellState extends State<HomeShell> {
       ..unregister(CommandIds.workspaceNextTab, _nextWorkspaceTab)
       ..unregister(CommandIds.workspacePrevTab, _prevWorkspaceTab)
       ..unregister(CommandIds.workspaceCloseTab, _closeActiveWorkspaceTab)
-      ..unregister(
-        CommandIds.workspaceReopenClosed,
-        _reopenClosedWorkspaceTab,
-      );
+      ..unregister(CommandIds.workspaceReopenClosed, _reopenClosedWorkspaceTab);
     _chromeCommands.clear();
     super.dispose();
   }
@@ -272,8 +259,6 @@ class _HomeShellState extends State<HomeShell> {
         context.read<LayoutCubit>().setLastOpenedWorkspaceId(
           routeTab.workspaceId,
         );
-      } else {
-        _syncTeamSessionScope(context);
       }
     }
   }
@@ -410,65 +395,47 @@ class _HomeShellState extends State<HomeShell> {
     );
   }
 
-  void _syncTeamSessionScope(BuildContext context) {
-    final scopeOn = context
-        .read<SessionPreferencesCubit>()
-        .state
-        .preferences
-        .scopeSessionsToSelectedTeam;
-    context.read<ChatCubit>().setTeamSessionScope(
-      scopeSessionsToSelectedTeam: scopeOn,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    return BlocListener<SessionPreferencesCubit, SessionPreferencesState>(
-      listenWhen: (previous, next) =>
-          previous.preferences.scopeSessionsToSelectedTeam !=
-          next.preferences.scopeSessionsToSelectedTeam,
-      listener: (context, _) => _syncTeamSessionScope(context),
-      child: Scaffold(
-          backgroundColor: Theme.of(context).colorScheme.workspacePageChrome(
-            WorkspaceTabRef.fromLocation(widget.location) == null
-                ? WorkspacePageChrome.home
-                : WorkspacePageChrome.workspace,
+    return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.workspacePageChrome(
+        WorkspaceTabRef.fromLocation(widget.location) == null
+            ? WorkspacePageChrome.home
+            : WorkspacePageChrome.workspace,
+      ),
+      body: Column(
+        children: [
+          _HomeShellTitleBar(
+            location: widget.location,
+            openTabs: _openTabs,
+            recentlyClosed: _recentlyClosed,
+            onHomeTap: _goHome,
+            onSelectTab: (tabKey) {
+              final tab = _openTabs
+                  .where((t) => t.tabKey == tabKey)
+                  .firstOrNull;
+              if (tab != null) _selectTab(tab);
+            },
+            onCloseTab: (tabKey) => unawaited(_closeTab(tabKey)),
+            onReopenClosedTab: (tabKey) => unawaited(_reopenClosedTab(tabKey)),
           ),
-          body: Column(
-            children: [
-              _HomeShellTitleBar(
-                location: widget.location,
-                openTabs: _openTabs,
-                recentlyClosed: _recentlyClosed,
-                onHomeTap: _goHome,
-                onSelectTab: (tabKey) {
-                  final tab = _openTabs
-                      .where((t) => t.tabKey == tabKey)
-                      .firstOrNull;
-                  if (tab != null) _selectTab(tab);
-                },
-                onCloseTab: (tabKey) => unawaited(_closeTab(tabKey)),
-                onReopenClosedTab: (tabKey) =>
-                    unawaited(_reopenClosedTab(tabKey)),
-              ),
-              Expanded(
-                child: SafeArea(
-                  top: false,
-                  bottom: false,
-                  child: HomeTabScope(
-                    openWorkspace: (id, {activate = true}) =>
-                        _openWorkspace(id, activate: activate),
-                    child: HomeWorkspaceBodyStack(
-                      location: widget.location,
-                      openTabs: _openTabs,
-                    ),
-                  ),
+          Expanded(
+            child: SafeArea(
+              top: false,
+              bottom: false,
+              child: HomeTabScope(
+                openWorkspace: (id, {activate = true}) =>
+                    _openWorkspace(id, activate: activate),
+                child: HomeWorkspaceBodyStack(
+                  location: widget.location,
+                  openTabs: _openTabs,
                 ),
               ),
-            ],
+            ),
           ),
-        ),
-      );
+        ],
+      ),
+    );
   }
 
   static Workspace? _resolve(List<Workspace> workspaces, String id) {

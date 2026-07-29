@@ -1,7 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../models/team_config.dart';
 
 enum ConfigSection {
   layout,
@@ -68,15 +67,6 @@ class ConfigCubit extends Cubit<ConfigState> {
     emit(state.copyWith(section: section));
   }
 
-  void syncTeam(TeamProfile team) {
-    if (team.members.isEmpty) {
-      if (state.selectedMemberId.isEmpty) return;
-      emit(state.copyWith(selectedMemberId: ''));
-      return;
-    }
-    if (team.members.any((m) => m.id == state.selectedMemberId)) return;
-    emit(state.copyWith(selectedMemberId: team.members.first.id));
-  }
 
   void selectMember(String memberId) {
     if (state.selectedMemberId == memberId) return;

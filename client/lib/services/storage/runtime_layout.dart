@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-import '../../models/team_config.dart';
+import '../../models/cli_tool.dart';
 import '../../utils/lock_pool.dart';
 import '../io/filesystem.dart';
 import '../session/launch_command_builder.dart';

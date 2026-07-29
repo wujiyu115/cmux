@@ -1,6 +1,6 @@
 import '../../../models/simple_launch_identity.dart';
 import '../../../models/session_continue_overrides.dart';
-import '../../../models/team_config.dart';
+import '../../../models/cli_tool.dart';
 import '../../../models/workspace.dart';
 import '../../../repositories/session_repository.dart';
 

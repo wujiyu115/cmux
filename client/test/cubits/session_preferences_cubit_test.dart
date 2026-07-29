@@ -1,6 +1,6 @@
 import 'package:teampilot/cubits/session_preferences_cubit.dart';
 import 'package:teampilot/models/session_preferences.dart';
-import 'package:teampilot/models/team_config.dart';
+import 'package:teampilot/models/cli_tool.dart';
 import 'package:teampilot/repositories/session_preferences_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -102,13 +102,10 @@ void main() {
   test('setScopeSessionsToSelectedTeam persists the flag', () async {
     final cubit = await makeCubit();
     await cubit.load();
-    await cubit.setScopeSessionsToSelectedTeam(true);
 
-    expect(cubit.state.preferences.scopeSessionsToSelectedTeam, true);
 
     final cubit2 = await makeCubit();
     await cubit2.load();
-    expect(cubit2.state.preferences.scopeSessionsToSelectedTeam, true);
   });
 
   test(

@@ -7,7 +7,7 @@ import '../../models/runtime_target.dart';
 import '../../models/workspace.dart';
 import '../../models/workspace_launch_context.dart';
 import '../../models/app_session.dart';
-import '../../models/team_config.dart';
+import '../../models/cli_tool.dart';
 import '../../repositories/session_repository.dart';
 import '../../services/launch/connect_shell_result.dart';
 import '../../services/launch/launch_operation.dart';

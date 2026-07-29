@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../models/team_config.dart';
+import '../../models/cli_tool.dart';
 
 enum AppSection { chat, runs, config }
 

@@ -3,7 +3,7 @@ import 'package:path/path.dart' as p;
 
 import '../../cubits/editor_cubit.dart';
 import '../../cubits/workbench/workbench_tab.dart';
-import '../../models/team_config.dart';
+import '../../models/cli_tool.dart';
 import '../../pages/workspace_shell/workspace_shell_models.dart';
 
 /// Builds [TabInfo] rows for [WorkspaceShell] from workbench + domain state.

@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../models/session_preferences.dart';
 import '../services/cli/cli_tool_locator.dart';
-import '../models/team_config.dart';
+import '../models/cli_tool.dart';
 import '../repositories/session_preferences_repository.dart';
 
 class SessionPreferencesState extends Equatable {
@@ -184,12 +184,6 @@ class SessionPreferencesCubit extends Cubit<SessionPreferencesState> {
   Future<void> setAutoLaunchAllMembersOnConnect(bool value) {
     return _save(
       state.preferences.copyWith(autoLaunchAllMembersOnConnect: value),
-    );
-  }
-
-  Future<void> setScopeSessionsToSelectedTeam(bool value) {
-    return _save(
-      state.preferences.copyWith(scopeSessionsToSelectedTeam: value),
     );
   }
 

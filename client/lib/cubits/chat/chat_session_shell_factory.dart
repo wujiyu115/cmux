@@ -1,7 +1,7 @@
 import '../../models/runtime_target.dart' as rt;
 import '../../models/runtime_target.dart' show RuntimeKind, sshProfileIdOfId;
 import '../../models/ssh_profile.dart';
-import '../../models/team_config.dart';
+import '../../models/cli_tool.dart';
 import '../../services/host/host_interactive_shell.dart';
 import '../../services/session/remote_flashskyai_command_builder.dart';
 import '../../services/ssh/ssh_client_factory.dart';

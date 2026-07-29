@@ -23,15 +23,11 @@ class AgentPermissionAttentionBanner extends StatelessWidget {
   /// Scoped member for this chat body (not foreground [ChatCubit] selection).
   final String selectedMemberId;
 
-  /// Seat id used for attention lookup (simple → [AppSession.sessionId]).
+  /// Seat id used for attention lookup.
   static String attentionMemberId({
     required AppSession session,
     required String selectedMemberId,
-  }) {
-    if (session.isSimple) return session.sessionId;
-    final mid = selectedMemberId.trim();
-    return mid.isEmpty ? session.sessionId : mid;
-  }
+  }) => session.sessionId;
 
   /// Whether Chat compose should lock for the selected seat.
   static bool isSelectedSeatWaiting({
@@ -127,12 +123,9 @@ class AgentPermissionAttentionBanner extends StatelessWidget {
     required String seatId,
     required String selectedMemberId,
   }) {
-    final chat = context.read<ChatCubit>();
-    if (!session.isSimple &&
-        seatId.isNotEmpty &&
-        seatId != selectedMemberId.trim()) {
-      chat.selectMember(seatId);
-    }
-    chat.setSessionWorkbenchView(sessionId, SessionWorkbenchView.terminal);
+    context.read<ChatCubit>().setSessionWorkbenchView(
+      sessionId,
+      SessionWorkbenchView.terminal,
+    );
   }
 }

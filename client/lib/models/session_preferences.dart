@@ -5,7 +5,6 @@ class SessionPreferences {
     this.defaultSshWorkingDirectory = '',
     this.sshUseLoginShell = false,
     this.autoLaunchAllMembersOnConnect = true,
-    this.scopeSessionsToSelectedTeam = true,
     this.terminalScrollbackLines = 10000,
     this.terminalLinkClickOpensInApp = true,
     this.notifyOnSessionIdle = true,
@@ -34,8 +33,6 @@ class SessionPreferences {
       sshUseLoginShell: json['sshUseLoginShell'] as bool? ?? false,
       autoLaunchAllMembersOnConnect:
           json['autoLaunchAllMembersOnConnect'] as bool? ?? true,
-      scopeSessionsToSelectedTeam:
-          json['scopeSessionsToSelectedTeam'] as bool? ?? true,
       terminalScrollbackLines:
           (json['terminalScrollbackLines'] as num?)?.toInt() ?? 10000,
       terminalLinkClickOpensInApp:
@@ -73,7 +70,6 @@ class SessionPreferences {
 
   /// When true, the sidebar lists only sessions whose [AppSession.sessionTeam]
   /// matches the selected team id.
-  final bool scopeSessionsToSelectedTeam;
 
   /// Maximum scrollback lines retained per embedded terminal session.
   final int terminalScrollbackLines;
@@ -110,7 +106,6 @@ class SessionPreferences {
     String? defaultSshWorkingDirectory,
     bool? sshUseLoginShell,
     bool? autoLaunchAllMembersOnConnect,
-    bool? scopeSessionsToSelectedTeam,
     int? terminalScrollbackLines,
     bool? terminalLinkClickOpensInApp,
     bool? notifyOnSessionIdle,
@@ -126,8 +121,6 @@ class SessionPreferences {
       sshUseLoginShell: sshUseLoginShell ?? this.sshUseLoginShell,
       autoLaunchAllMembersOnConnect:
           autoLaunchAllMembersOnConnect ?? this.autoLaunchAllMembersOnConnect,
-      scopeSessionsToSelectedTeam:
-          scopeSessionsToSelectedTeam ?? this.scopeSessionsToSelectedTeam,
       terminalScrollbackLines:
           terminalScrollbackLines ?? this.terminalScrollbackLines,
       terminalLinkClickOpensInApp:
@@ -150,7 +143,6 @@ class SessionPreferences {
       'defaultSshWorkingDirectory': defaultSshWorkingDirectory,
       'sshUseLoginShell': sshUseLoginShell,
       'autoLaunchAllMembersOnConnect': autoLaunchAllMembersOnConnect,
-      'scopeSessionsToSelectedTeam': scopeSessionsToSelectedTeam,
       'terminalScrollbackLines': terminalScrollbackLines,
       'terminalLinkClickOpensInApp': terminalLinkClickOpensInApp,
       'notifyOnSessionIdle': notifyOnSessionIdle,

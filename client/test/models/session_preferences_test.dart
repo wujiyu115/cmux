@@ -9,7 +9,6 @@ void main() {
       expect(prefs.defaultSshWorkingDirectory, '');
       expect(prefs.sshUseLoginShell, false);
       expect(prefs.autoLaunchAllMembersOnConnect, true);
-      expect(prefs.scopeSessionsToSelectedTeam, true);
       expect(prefs.notifyOnSessionIdle, true);
       expect(prefs.openExistingSessionStartsTerminal, false);
       expect(prefs.simpleModeDefaultFullAccess, true);
@@ -25,7 +24,6 @@ void main() {
         defaultSshWorkingDirectory: '~/work',
         sshUseLoginShell: true,
         autoLaunchAllMembersOnConnect: true,
-        scopeSessionsToSelectedTeam: true,
         notifyOnSessionIdle: false,
         openExistingSessionStartsTerminal: true,
         simpleModeDefaultFullAccess: false,
@@ -39,7 +37,6 @@ void main() {
       expect(restored.defaultSshWorkingDirectory, '~/work');
       expect(restored.sshUseLoginShell, true);
       expect(restored.autoLaunchAllMembersOnConnect, true);
-      expect(restored.scopeSessionsToSelectedTeam, true);
       expect(restored.notifyOnSessionIdle, false);
       expect(restored.openExistingSessionStartsTerminal, true);
       expect(restored.simpleModeDefaultFullAccess, false);
@@ -57,7 +54,6 @@ void main() {
       expect(restored.defaultSshWorkingDirectory, '');
       expect(restored.sshUseLoginShell, false);
       expect(restored.autoLaunchAllMembersOnConnect, true);
-      expect(restored.scopeSessionsToSelectedTeam, true);
       expect(restored.openExistingSessionStartsTerminal, false);
       expect(restored.simpleModeDefaultFullAccess, true);
     });
@@ -74,7 +70,6 @@ void main() {
       expect(next.defaultSshWorkingDirectory, '');
       expect(next.sshUseLoginShell, false);
       expect(next.autoLaunchAllMembersOnConnect, true);
-      expect(next.scopeSessionsToSelectedTeam, true);
       expect(next.openExistingSessionStartsTerminal, true);
       expect(next.simpleModeDefaultFullAccess, false);
     });

@@ -26,7 +26,6 @@ void main() {
       )..persistedSession = AppSession(
           sessionId: 'sess-1',
           workspaceId: 'ws-1',
-          sessionTeam: '',
           createdAt: 0,
         );
       store.append(tab);

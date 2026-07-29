@@ -7,12 +7,7 @@ bool automationMatchesSession(Automation automation, AppSession session) {
   if (automation.isScheduledMessage) {
     return automation.sessionId == session.sessionId;
   }
-  if (automation.isPersonal) {
-    return session.isSimple;
-  }
-  final teamId = automation.teamId?.trim() ?? '';
-  if (teamId.isEmpty) return false;
-  return session.sessionTeam.trim() == teamId;
+  return automation.isPersonal;
 }
 
 /// Session-scoped automation list without loading the full [AppSession].

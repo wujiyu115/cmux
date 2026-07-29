@@ -1,6 +1,6 @@
 import '../../cubits/chat/model/chat_tab.dart';
 import '../../models/app_session.dart';
-import '../../models/team_config.dart';
+import '../../models/cli_tool.dart';
 
 /// CLI brand shown on a workspace session tab.
 CliTool resolveSessionTabCli({

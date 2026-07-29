@@ -41,8 +41,7 @@ abstract final class DefaultWorkspaceService {
       workspace.workspaceId,
     );
 
-    final hasSimple = workspaceSessions.any((s) => s.sessionTeam.isEmpty);
-    if (!hasSimple) {
+    if (workspaceSessions.isEmpty) {
       await repository.createSession(workspace.workspaceId);
       mutated = true;
     }

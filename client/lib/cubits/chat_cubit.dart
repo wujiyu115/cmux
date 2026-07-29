@@ -12,7 +12,7 @@ import '../models/workspace_folder.dart';
 import '../models/app_session.dart';
 import '../models/workspace_icon_picker_result.dart';
 import '../models/workspace_icon_ref.dart';
-import '../models/team_config.dart';
+import '../models/cli_tool.dart';
 import '../models/runtime_target.dart';
 import '../repositories/automation_repository.dart';
 import '../repositories/session_repository.dart';
@@ -352,29 +352,13 @@ class ChatCubit extends Cubit<ChatState>
     _publishActiveWorkspaceTabs(restoredIndex);
   }
 
-  /// Switches the chat tab bucket and session visibility scope in one [emit].
-  /// Use on workspace tab activation so [setTeamSessionScope] does not fire a
-  /// second rebuild on the next frame.
-  void activateWorkspaceTab({
-    required String workspaceTabKey,
-    required bool scopeSessionsToSelectedTeam,
-    String? selectedTeamId,
-  }) {
+  /// Switches the chat tab bucket for a workspace tab activation.
+  void activateWorkspaceTab({required String workspaceTabKey}) {
     final restoredIndex = _tabStore.setActiveWorkspace(
       workspaceTabKey,
       currentActiveIndex: state.activeTabIndex,
     );
-    final scopeChanged = _dataStore.setScope(
-      scopeSessionsToSelectedTeam: scopeSessionsToSelectedTeam,
-      selectedTeamId: selectedTeamId,
-    );
-    final snapshot = scopeChanged
-        ? _dataStore.deriveSnapshot(
-            workspaces: state.workspaces,
-            sessions: state.sessions,
-          )
-        : null;
-    _publishActiveWorkspaceTabs(restoredIndex, snapshot: snapshot);
+    _publishActiveWorkspaceTabs(restoredIndex);
   }
 
   /// Re-emits the active bucket's tab infos without changing the workspace, after
@@ -443,24 +427,6 @@ class ChatCubit extends Cubit<ChatState>
 
   static void _defaultPostFrameScheduler(VoidCallback callback) {
     WidgetsBinding.instance.addPostFrameCallback((_) => callback());
-  }
-
-  void setTeamSessionScope({
-    required bool scopeSessionsToSelectedTeam,
-    String? selectedTeamId,
-  }) {
-    if (!_dataStore.setScope(
-      scopeSessionsToSelectedTeam: scopeSessionsToSelectedTeam,
-      selectedTeamId: selectedTeamId,
-    )) {
-      return;
-    }
-    _emitSnapshot(
-      _dataStore.deriveSnapshot(
-        workspaces: state.workspaces,
-        sessions: state.sessions,
-      ),
-    );
   }
 
   void _emitSnapshot(ChatDataSnapshot snap, {ChatState? base}) {
@@ -599,24 +565,13 @@ class ChatCubit extends Cubit<ChatState>
   Future<AppSession> createSession(
     String workspaceId,
     SessionRepository repo, {
-    String sessionTeamId = '',
-    List<TeamMemberConfig> rosterMembers = const [],
-    Map<String, CliTool> memberClis = const {},
-    TeamProfile? team,
     CliTool? cli,
     String? workingDirectory,
     String? fixedSessionId,
   }) async {
-    final trimmedTeam = sessionTeamId.trim();
-    final resolvedClis = trimmedTeam.isEmpty
-        ? const <String, CliTool>{}
-        : memberClis;
     final session = await _dataStore.createSession(
       workspaceId,
       repo,
-      sessionTeamId: sessionTeamId,
-      rosterMembers: rosterMembers,
-      memberClis: resolvedClis,
       cli: cli,
       workingDirectory: workingDirectory,
       fixedSessionId: fixedSessionId,
@@ -1197,13 +1152,11 @@ class ChatCubit extends Cubit<ChatState>
     SessionRepository repo,
     String sourceWorkspaceId, {
     String? display,
-    List<TeamMemberConfig> rosterMembers = const [],
   }) async {
     final result = await _dataStore.cloneWorkspace(
       repo,
       sourceWorkspaceId,
       display: display,
-      rosterMembers: rosterMembers,
     );
     _emitSnapshot(result.snapshot);
     return result.workspace;

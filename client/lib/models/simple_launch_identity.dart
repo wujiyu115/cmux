@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-import 'team_config.dart';
+import 'cli_tool.dart';
 
 /// Denormalized Simple (unteamed) launch identity.
 ///
@@ -72,38 +72,4 @@ class SimpleLaunchIdentity {
     );
   }
 
-  /// Apply identity onto an expert-pack member for staging / shell.
-  TeamMemberConfig applyToMember(TeamMemberConfig member) {
-    return member.copyWith(
-      cli: cli,
-      updateCli: true,
-      provider: provider.isNotEmpty ? provider : member.provider,
-      model: model.isNotEmpty ? model : member.model,
-      effort: effort.isNotEmpty ? effort : member.effort,
-      updateEffort: effort.isNotEmpty,
-    );
-  }
-
-  Map<String, Object?> toJsonFields() => {
-    'cli': cli.value,
-    if (provider.isNotEmpty) 'provider': provider,
-    if (model.isNotEmpty) 'model': model,
-    if (effort.isNotEmpty) 'effort': effort,
-    if (presetId.isNotEmpty) 'presetId': presetId,
-  };
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        other is SimpleLaunchIdentity &&
-            cli == other.cli &&
-            provider == other.provider &&
-            model == other.model &&
-            effort == other.effort &&
-            presetId == other.presetId;
-  }
-
-  @override
-  int get hashCode =>
-      Object.hash(cli, provider, model, effort, presetId);
 }

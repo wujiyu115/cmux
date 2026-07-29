@@ -3,7 +3,7 @@
 
 import 'package:flutter/widgets.dart';
 
-import '../models/team_config.dart';
+import '../models/cli_tool.dart';
 import '../services/editor/editor_messages.dart';
 import 'app_localizations.dart';
 

@@ -82,11 +82,7 @@ void main() {
         cubit.refreshActiveWorkspaceTabs();
         expect(cubit.state.tabs, isNotEmpty);
 
-        cubit.activateWorkspaceTab(
-          workspaceTabKey: 'B',
-          scopeSessionsToSelectedTeam: true,
-          selectedTeamId: 'team-1',
-        );
+        cubit.activateWorkspaceTab(workspaceTabKey: 'B');
 
         expect(cubit.tabStore.activeWorkspaceId, 'B');
         expect(cubit.state.tabs, isEmpty);

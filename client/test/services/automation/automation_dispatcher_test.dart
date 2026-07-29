@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:teampilot/cubits/chat/model/session_open_status.dart';
 import 'package:teampilot/models/app_session.dart';
 import 'package:teampilot/models/automation.dart';
-import 'package:teampilot/models/team_config.dart';
 import 'package:teampilot/models/workspace.dart';
 import 'package:teampilot/repositories/automation_repository.dart';
 import 'package:teampilot/repositories/session_repository.dart';
@@ -85,15 +84,9 @@ void main() {
     final session = AppSession(
       sessionId: 'sess-1',
       workspaceId: 'ws1',
-      sessionTeam: 'team-1',
       createdAt: 1,
     );
     final workspace = Workspace(workspaceId: 'ws1', createdAt: 1);
-    final team = TeamProfile(
-      id: 'team-1',
-      name: 'Team',
-      members: const [TeamMemberConfig(id: 'team-lead', name: 'Lead')],
-    );
     final bus = _RecordingBusGateway();
     var openCalls = 0;
 
@@ -117,8 +110,8 @@ void main() {
     );
 
     expect(openCalls, 1);
-    expect(bus.ensureCalls, [('sess-1', 'team-lead')]);
-    expect(bus.deliverCalls, [('sess-1', 'team-lead', '/clear')]);
+    expect(bus.ensureCalls, [('sess-1', 'sess-1')]);
+    expect(bus.deliverCalls, [('sess-1', 'sess-1', '/clear')]);
     expect(result.run.status, AutomationRunStatus.completed);
     expect(result.automation.lastRunAtMs, 100);
     final runs = await repo.runsFor('ws1', automationId: 'auto-1');
@@ -156,7 +149,6 @@ void main() {
     final session = AppSession(
       sessionId: 'sess-2',
       workspaceId: 'ws1',
-      sessionTeam: 'team-1',
       createdAt: 1,
     );
     final workspace = Workspace(workspaceId: 'ws1', createdAt: 1);
@@ -187,15 +179,9 @@ void main() {
     final session = AppSession(
       sessionId: 'sess-1',
       workspaceId: 'ws1',
-      sessionTeam: 'team-1',
       createdAt: 1,
     );
     final workspace = Workspace(workspaceId: 'ws1', createdAt: 1);
-    final team = TeamProfile(
-      id: 'team-1',
-      name: 'Team',
-      members: const [TeamMemberConfig(id: 'team-lead', name: 'Lead')],
-    );
     final bus = _RecordingBusGateway();
 
     final dispatcher = AutomationDispatcher(

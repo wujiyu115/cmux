@@ -9,7 +9,7 @@ import '../../cubits/chat/model/session_open_request.dart';
 import '../../cubits/chat/model/session_persist_params.dart';
 import '../../cubits/chat/session_launch_host.dart';
 import '../../models/app_session.dart';
-import '../../models/team_config.dart';
+import '../../models/cli_tool.dart';
 import '../../models/workspace.dart';
 import '../../repositories/session_repository.dart';
 import '../../utils/logging/logger.dart';

@@ -4,7 +4,7 @@ import 'package:flutter/widgets.dart';
 import '../../../models/workspace.dart';
 import '../../../models/app_session.dart';
 import '../../../models/ssh_profile.dart';
-import '../../../models/team_config.dart';
+import '../../../models/cli_tool.dart';
 import '../../../services/terminal/terminal_session.dart';
 import 'chat_tab_info.dart';
 

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:teampilot/models/runtime_target.dart';
-import 'package:teampilot/models/team_config.dart';
+import 'package:teampilot/models/cli_tool.dart';
 import 'package:teampilot/services/agent_status/agent_status_seat_lookup.dart';
 import 'package:teampilot/services/agent_status/member_agent_status_endpoint_resolver.dart';
 import 'package:teampilot/services/team_bus/remote/member_bus_mcp_config.dart';

@@ -19,7 +19,7 @@ import '../../../models/simple_launch_identity.dart';
 import '../../../models/workspace.dart';
 import '../../../models/app_session.dart';
 import '../../../models/session_continue_overrides.dart';
-import '../../../models/team_config.dart';
+import '../../../models/cli_tool.dart';
 import '../../../repositories/session_repository.dart';
 import '../../../services/workbench/workbench_shell_actions.dart';
 import '../../../utils/workspace/landing_draft_resolver.dart';

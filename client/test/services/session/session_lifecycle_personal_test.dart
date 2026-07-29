@@ -23,20 +23,8 @@ void main() {
       sessionId: 's1',
       workspaceId: 'p1',
       folders: const [WorkspaceFolder(path: '/tmp/repo')],
-      sessionTeam: '',
       createdAt: 0,
     );
     expect(_Svc().personalFor(workspace, session), isTrue);
-  });
-
-  test('non-empty sessionTeam => team launch', () {
-    final session = AppSession(
-      sessionId: 's1',
-      workspaceId: 'p1',
-      folders: const [WorkspaceFolder(path: '/tmp/repo')],
-      sessionTeam: 'team-x',
-      createdAt: 0,
-    );
-    expect(_Svc().personalFor(workspace, session), isFalse);
   });
 }

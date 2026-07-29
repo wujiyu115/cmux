@@ -3,7 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import '../../cubits/agent_attention_cubit.dart';
-import '../../models/team_config.dart';
+import '../../models/cli_tool.dart';
 import 'agent_status_normalizer.dart';
 
 /// Max POST body size for `/agent-status` (~1 MiB).

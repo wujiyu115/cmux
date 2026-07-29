@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-import '../../models/team_config.dart';
+import '../../models/cli_tool.dart';
 
 class AppKeys {
   const AppKeys._();
@@ -62,9 +62,6 @@ class AppKeys {
   );
   static const sidebarSessionWaitingMarker = Key(
     'sidebar-session-waiting-marker',
-  );
-  static const scopeSessionsToSelectedTeamSwitch = Key(
-    'scope-sessions-to-selected-team-switch',
   );
   static const terminalLinkClickOpensInAppSwitch = Key(
     'terminal-link-click-opens-in-app-switch',

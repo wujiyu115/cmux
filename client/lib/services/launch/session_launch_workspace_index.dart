@@ -1,5 +1,4 @@
 import '../../models/app_session.dart';
-import '../../models/team_config.dart';
 import '../../models/workspace.dart';
 import '../../utils/workspace/workspace_path_utils.dart';
 
@@ -30,31 +29,9 @@ class SessionLaunchWorkspaceIndex {
     return null;
   }
 
-  AppSession? firstForWorkspaceAndTeam(String workspaceId, String teamId) {
+  AppSession? firstForPersonalWorkspace(String workspaceId) {
     for (final session in _sessions) {
       if (session.workspaceId != workspaceId) continue;
-      if (session.sessionTeam.trim() != teamId) continue;
-      return session;
-    }
-    return null;
-  }
-
-  AppSession? firstForPersonalWorkspace(String workspaceId) =>
-      firstForWorkspaceAndTeam(workspaceId, '');
-
-  AppSession? existingTeamSessionForMaterialize({
-    required TeamProfile team,
-    String? workspaceCwd,
-  }) {
-    if (workspaceCwd != null && workspaceCwd.trim().isNotEmpty) {
-      final workspace = matchingPath(workspaceCwd);
-      if (workspace != null) {
-        final session = firstForWorkspaceAndTeam(workspace.workspaceId, team.id);
-        if (session != null) return session;
-      }
-    }
-    for (final session in _sessions) {
-      if (session.sessionTeam.trim() != team.id) continue;
       return session;
     }
     return null;

@@ -283,17 +283,6 @@ class _SessionControlsState extends State<_SessionControls> {
                   showDividerBelow: true,
                 ),
                 TpPreferenceRow(
-                  title: l10n.scopeSessionsToSelectedTeamTitle,
-                  subtitle: l10n.scopeSessionsToSelectedTeamDescription,
-                  trailing: Switch(
-                    key: AppKeys.scopeSessionsToSelectedTeamSwitch,
-                    value: snapshot.scopeSessionsToSelectedTeam,
-                    onChanged: (value) =>
-                        cubit.setScopeSessionsToSelectedTeam(value),
-                  ),
-                  showDividerBelow: true,
-                ),
-                TpPreferenceRow(
                   title: l10n.notifyOnSessionIdleTitle,
                   subtitle: l10n.notifyOnSessionIdleDescription,
                   trailing: Switch(
@@ -321,7 +310,6 @@ class _SessionControlsSnapshot {
     required this.openExistingSessionStartsTerminal,
     required this.chatSubmitSwitchesToTerminal,
     required this.simpleModeDefaultFullAccess,
-    required this.scopeSessionsToSelectedTeam,
     required this.notifyOnSessionIdle,
   });
 
@@ -333,7 +321,6 @@ class _SessionControlsSnapshot {
   final bool openExistingSessionStartsTerminal;
   final bool chatSubmitSwitchesToTerminal;
   final bool simpleModeDefaultFullAccess;
-  final bool scopeSessionsToSelectedTeam;
   final bool notifyOnSessionIdle;
 
   static _SessionControlsSnapshot from(SessionPreferences preferences) {
@@ -347,7 +334,6 @@ class _SessionControlsSnapshot {
           preferences.openExistingSessionStartsTerminal,
       chatSubmitSwitchesToTerminal: preferences.chatSubmitSwitchesToTerminal,
       simpleModeDefaultFullAccess: preferences.simpleModeDefaultFullAccess,
-      scopeSessionsToSelectedTeam: preferences.scopeSessionsToSelectedTeam,
       notifyOnSessionIdle: preferences.notifyOnSessionIdle,
     );
   }
@@ -364,7 +350,6 @@ class _SessionControlsSnapshot {
             openExistingSessionStartsTerminal &&
         other.chatSubmitSwitchesToTerminal == chatSubmitSwitchesToTerminal &&
         other.simpleModeDefaultFullAccess == simpleModeDefaultFullAccess &&
-        other.scopeSessionsToSelectedTeam == scopeSessionsToSelectedTeam &&
         other.notifyOnSessionIdle == notifyOnSessionIdle;
   }
 
@@ -378,7 +363,6 @@ class _SessionControlsSnapshot {
     openExistingSessionStartsTerminal,
     chatSubmitSwitchesToTerminal,
     simpleModeDefaultFullAccess,
-    scopeSessionsToSelectedTeam,
     notifyOnSessionIdle,
   );
 }

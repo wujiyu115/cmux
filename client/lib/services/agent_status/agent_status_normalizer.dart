@@ -1,4 +1,4 @@
-import '../../models/team_config.dart';
+import '../../models/cli_tool.dart';
 import 'agent_attention_state.dart';
 import 'agent_status_event.dart';
 import 'agent_status_tool_input.dart';

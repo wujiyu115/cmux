@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:teampilot/cubits/chat/model/session_persist_params.dart';
 import 'package:teampilot/models/landing_launch_context.dart';
 import 'package:teampilot/models/session_continue_overrides.dart';
-import 'package:teampilot/models/team_config.dart';
+import 'package:teampilot/models/cli_tool.dart';
 import 'package:teampilot/models/workspace_folder.dart';
 import 'package:teampilot/repositories/session_repository.dart';
 

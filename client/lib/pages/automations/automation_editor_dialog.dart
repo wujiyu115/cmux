@@ -10,7 +10,6 @@ import '../../cubits/chat_cubit.dart';
 import '../../cubits/session_preferences_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../models/automation.dart';
-import '../../models/team_config.dart';
 import '../../models/workspace.dart';
 import '../../pages/home_workspace/workspace/workspace_landing_selectors.dart';
 import '../../services/automation/automation_launch_session_binding.dart';
@@ -95,8 +94,6 @@ class _AutomationEditorDialogState extends State<AutomationEditorDialog> {
     if (maxRun == null || maxRun < 1) return false;
     return runCount >= maxRun;
   }
-
-  TeamProfile? get _selectedTeam => null;
 
   @override
   void initState() {

@@ -52,7 +52,6 @@ class AutomationDispatcher {
        _memberReadyTimeout = memberReadyTimeout;
 
   static const _uuid = Uuid();
-  static const _leadMemberId = 'team-lead';
 
   final AutomationRepository _repository;
   final AutomationScheduleCalculator _scheduleCalculator;
@@ -277,23 +276,13 @@ class AutomationDispatcher {
     }
   }
 
-  Future<String> _resolveLeadMemberId(AppSession session) async {
-    if (session.sessionTeam.trim().isEmpty) {
-      return session.sessionId;
-    }
-    return _leadMemberId;
-  }
+  Future<String> _resolveLeadMemberId(AppSession session) async =>
+      session.sessionId;
 
   Future<String> _resolveLaunchMemberId(
     Automation automation,
     AppSession session,
-  ) async {
-    if (session.sessionTeam.trim().isEmpty) {
-      return session.sessionId;
-    }
-    final target = automation.targetMemberId.trim();
-    return target.isEmpty ? _leadMemberId : target;
-  }
+  ) async => session.sessionId;
 
   AutomationRun _pendingRun(
     Automation automation, {
