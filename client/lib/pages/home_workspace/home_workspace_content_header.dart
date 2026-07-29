@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_ui/shared_ui.dart';
 
-import '../../models/team_config.dart';
-import '../../l10n/l10n_extensions.dart';
 
 class HomeContentTabBar extends StatelessWidget {
   const HomeContentTabBar({

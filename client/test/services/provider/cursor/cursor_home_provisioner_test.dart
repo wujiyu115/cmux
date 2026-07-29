@@ -7,7 +7,6 @@ import 'package:teampilot/services/provider/cursor/cursor_cli_config_policy.dart
 import 'package:teampilot/services/provider/cursor/cursor_home_layout.dart';
 import 'package:teampilot/services/provider/cursor/cursor_home_provisioner.dart';
 import 'package:teampilot/services/provider/cursor/cursor_provider_credentials_service.dart';
-import 'package:teampilot/services/team_bus/mcp/teammate_bus_mcp_config.dart';
 
 import '../../../support/in_memory_filesystem.dart';
 

@@ -10,7 +10,6 @@ import '../../models/run/launch_type_contribution.dart';
 import '../../models/workspace_folder.dart';
 import '../../services/run/launch_config_l10n.dart';
 import '../../services/run/shell_script_launch_schema.dart';
-import '../../theme/app_dialog_theme.dart';
 import 'package:shared_ui/shared_ui.dart';
 import 'launch_config_schema_form.dart';
 

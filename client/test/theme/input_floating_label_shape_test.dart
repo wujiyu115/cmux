@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:teampilot/theme/app_font_resolver.dart';
 import 'package:teampilot/theme/app_fonts.dart';
 import 'package:teampilot/theme/app_outline_input_theme.dart';
-import 'package:teampilot/theme/app_text_styles_warmup.dart';
 import 'package:teampilot/theme/app_typography_scale.dart';
 import 'package:teampilot/theme/font_catalog.dart';
 import 'package:shared_ui/shared_ui.dart';

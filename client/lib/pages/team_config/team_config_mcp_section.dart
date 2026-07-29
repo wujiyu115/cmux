@@ -1,13 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_ui/shared_ui.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../cubits/mcp_cubit.dart';
-import '../../l10n/l10n_extensions.dart';
 import '../../models/mcp_server.dart';
-import '../../models/team_config.dart';
-import 'team_config_cards.dart';
 import 'package:teampilot/theme/workspace_surface_layers.dart';
 
 class TeamMcpRow extends StatelessWidget {

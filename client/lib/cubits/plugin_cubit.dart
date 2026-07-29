@@ -1,13 +1,11 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:path/path.dart' as p;
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../models/discoverable_team.dart';
 import '../models/plugin.dart';
 import '../repositories/plugin_repository.dart';
 import '../services/plugin/plugin_install_service.dart';

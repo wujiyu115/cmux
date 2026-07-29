@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 
 import '../../../../models/app_provider_config.dart';
 import '../../../../models/simple_launch_identity.dart';

@@ -14,8 +14,6 @@ import '../../../provider/opencode/opencode_provider_settings_resolver.dart';
 import '../../../provider/opencode/opencode_effort_capability.dart';
 import '../../../provider/opencode/opencode_shared_plugin_deps.dart';
 import '../../../session/member_role_provision.dart';
-import '../../../storage/runtime_context.dart';
-import '../../../storage/app_storage.dart';
 import '../../../team_bus/mcp/teammate_bus_mcp_config.dart';
 import '../capabilities/cli_effort_capability.dart';
 import '../capabilities/config_profile_capability.dart';

@@ -1,16 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:shared_ui/shared_ui.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../cubits/plugin_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../models/plugin.dart';
-import '../../models/team_config.dart';
-import '../../services/cli/registry/cli_tool_registry_scope.dart';
 import '../../utils/github/github_source_url.dart';
 import '../../widgets/github_details_button.dart';
-import 'team_config_cards.dart';
 import 'package:teampilot/theme/workspace_surface_layers.dart';
 
 class TeamPluginRow extends StatelessWidget {

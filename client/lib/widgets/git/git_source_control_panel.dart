@@ -9,7 +9,6 @@ import 'package:teampilot/widgets/app_toast/app_toast.dart';
 
 import '../../cubits/git_cubit.dart';
 import '../../cubits/workbench/workbench_tab.dart';
-import '../../services/cli/registry/cli_tool_registry_scope.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../models/git_status.dart';
 import '../../services/git/git_repo_store.dart';

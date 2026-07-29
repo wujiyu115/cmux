@@ -3,7 +3,6 @@ import 'package:path/path.dart' as p;
 import 'package:re_editor/re_editor.dart';
 import 'package:shared_ui/shared_ui.dart';
 
-import '../../theme/app_fonts.dart';
 import '../../theme/app_typography_scale.dart';
 import '../../theme/workspace_surface_layers.dart';
 import '../editor_platform/editor_syntax_theme.dart';

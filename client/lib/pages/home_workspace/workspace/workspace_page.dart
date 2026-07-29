@@ -7,18 +7,15 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../cubits/chat_cubit.dart';
-import '../../../cubits/session_preferences_cubit.dart';
 import '../../../cubits/workspace_landing_context_cubit.dart';
 import '../../../l10n/l10n_extensions.dart';
 import '../../../models/app_session.dart';
 import '../../../models/landing_launch_context.dart';
 import '../../../models/workspace.dart';
-import '../../../models/launch_profile_kind.dart';
 import '../../../pages/home_workspace/home_workspace_route.dart';
 import '../../../repositories/session_repository.dart';
 import '../../../theme/workspace_surface_layers.dart';
 import '../../../utils/logging/logger.dart';
-import '../../../widgets/app_toast/app_toast.dart';
 import 'workspace_config_workspace.dart';
 import 'workspace_section.dart';
 import 'workspace_split_pane.dart';

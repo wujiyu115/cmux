@@ -38,7 +38,6 @@ import 'package:teampilot/services/workspace/workspace_tools_scope.dart';
 
 import '../support/desktop_app_harness.dart';
 import '../support/idle_run_platform.dart';
-import '../support/in_memory_filesystem.dart';
 import '../support/post_frame_test_harness.dart';
 
 String _executable() => 'flashskyai';

@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:teampilot/cubits/chat/chat_session_shell_factory.dart';
 import 'package:teampilot/models/runtime_target.dart';
 import 'package:teampilot/models/ssh_profile.dart';
-import 'package:teampilot/models/team_config.dart';
 import 'package:teampilot/repositories/ssh_credential_store.dart';
 import 'package:teampilot/repositories/ssh_known_host_repository.dart';
 import 'package:teampilot/repositories/ssh_profile_repository.dart';

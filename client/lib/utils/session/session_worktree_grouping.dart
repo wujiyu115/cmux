@@ -1,6 +1,5 @@
 import '../../models/app_session.dart';
 import '../../models/git_worktree.dart';
-import '../../models/workspace.dart';
 import '../workspace/workspace_path_utils.dart';
 
 /// One sidebar group: a git worktree, a non-git project folder, or orphans.

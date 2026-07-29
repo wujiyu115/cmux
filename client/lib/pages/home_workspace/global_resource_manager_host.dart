@@ -9,7 +9,6 @@ import '../../cubits/resource_manager_cubit.dart';
 import '../../cubits/workbench/workbench_cubit.dart';
 import '../../cubits/workbench/workbench_tab.dart';
 import '../../l10n/l10n_extensions.dart';
-import '../../models/team_config.dart';
 import '../../services/resource_manager/process_metrics_service.dart';
 import '../../services/resource_manager/pty_process_registry.dart';
 import '../../services/resource_manager/resource_binding.dart';

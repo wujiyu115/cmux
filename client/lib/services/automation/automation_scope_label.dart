@@ -1,4 +1,3 @@
-import 'package:collection/collection.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../models/automation.dart';

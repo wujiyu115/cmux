@@ -1,16 +1,9 @@
-import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:teampilot/models/app_provider_config.dart';
-import 'package:teampilot/models/team_config.dart';
 import 'package:teampilot/pages/onboarding/onboarding_wizard.dart';
 import 'package:teampilot/repositories/app_settings_repository.dart';
-import 'package:teampilot/repositories/session_repository.dart';
 import 'package:teampilot/services/app/onboarding_service.dart';
-import 'package:teampilot/services/plugin/profile_plugin_linker_service.dart';
-import '../../support/in_memory_filesystem.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

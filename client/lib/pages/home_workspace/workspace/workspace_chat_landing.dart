@@ -1,9 +1,7 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:shared_ui/shared_ui.dart';
 import 'package:teampilot/widgets/app_toast/app_toast.dart';
 
@@ -17,7 +15,6 @@ import '../../../utils/ui/app_keys.dart';
 import '../../../models/config_bundle.dart';
 import '../../../models/landing_launch_context.dart';
 import '../../../l10n/l10n_extensions.dart';
-import '../../../models/team_config.dart';
 import '../../../models/workspace.dart';
 import '../../../models/runtime_target.dart';
 import '../../../services/compose/compose_file_attach.dart';
@@ -26,8 +23,6 @@ import '../../../services/storage/app_storage.dart';
 import '../../../services/compose/compose_landing_bundle.dart';
 import '../../../services/compose/compose_text_edit.dart';
 import '../../../services/compose/compose_voice_input.dart';
-import '../../../services/cli/registry/cli_tool_registry_scope.dart';
-import '../../../pages/home_workspace/home_workspace_route.dart';
 import '../../../utils/workspace/landing_draft_resolver.dart';
 import '../../../utils/workspace/workspace_path_utils.dart';
 import '../../../services/storage/home_target_controller.dart';

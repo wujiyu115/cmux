@@ -10,7 +10,6 @@ import '../../models/app_session.dart';
 import '../../models/automation.dart';
 import '../../models/session_continue_overrides.dart';
 import '../../models/simple_launch_identity.dart';
-import '../../models/team_config.dart';
 import '../../models/workspace.dart';
 import '../../repositories/automation_repository.dart';
 import '../../repositories/session_repository.dart';

@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../cubits/config_cubit.dart';
-import '../models/app_provider_config.dart';
 import '../pages/config/config_workspace.dart';
 import '../pages/home_workspace/home_workspace_shell.dart';
 import '../pages/extensions/extension_management_page.dart';

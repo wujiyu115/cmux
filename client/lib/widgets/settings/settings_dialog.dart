@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 import '../../l10n/l10n_extensions.dart';
-import '../../theme/app_dialog_theme.dart';
 import '../../theme/workspace_surface_layers.dart';
 import 'settings_dialog_pane_host.dart';
 import 'workspace_hub_shell.dart';

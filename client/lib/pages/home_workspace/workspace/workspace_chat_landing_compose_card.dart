@@ -7,7 +7,6 @@ import '../../../models/config_bundle.dart';
 import '../../../utils/debounce/debounce.dart';
 import '../../../services/workspace_dnd/workspace_drop_target.dart';
 import '../../../widgets/compose/compose_focus_shell.dart';
-import '../../../widgets/compose/compose_menu_chip.dart';
 import '../../../widgets/compose/compose_permission_chip.dart';
 import '../../../widgets/compose/compose_trigger_field.dart';
 import '../../../widgets/workspace_dnd/external_file_drop_region.dart';

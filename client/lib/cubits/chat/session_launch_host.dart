@@ -2,7 +2,6 @@ import 'package:flutter_alacritty/flutter_alacritty.dart';
 
 import '../../models/app_session.dart';
 import '../../models/member_remote_provision_progress.dart';
-import '../../models/team_config.dart';
 import '../../repositories/session_repository.dart';
 import '../../services/cli/registry/cli_tool_registry.dart';
 import '../../services/session/session_lifecycle_service.dart';
