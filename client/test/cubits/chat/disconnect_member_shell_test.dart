@@ -6,10 +6,10 @@ import 'package:teampilot/cubits/chat_cubit.dart';
 import 'package:teampilot/models/team_config.dart';
 import 'package:teampilot/models/workspace_folder.dart';
 import 'package:teampilot/repositories/session_repository.dart';
+import 'package:teampilot/services/session/session_lifecycle_service.dart';
 import 'package:teampilot/utils/team/team_member_naming.dart';
 
 import '../../support/fake_terminal_session.dart';
-import '../../support/fixed_resume_lifecycle_service.dart';
 import '../../support/post_frame_test_harness.dart';
 import '../../support/test_runtime_context.dart';
 
@@ -60,7 +60,7 @@ void main() {
                   scrollbackLines: scrollbackLines,
                 ),
         postFrameScheduler: postFrame.scheduler,
-        lifecycleService: FixedResumeLifecycleService(resume: false),
+        lifecycleService: SessionLifecycleService(),
       );
       addTearDown(() => tearDownChatCubitWithSessionPersist(cubit, postFrame));
       await cubit.loadWorkspaceData(repo);

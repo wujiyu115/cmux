@@ -110,17 +110,4 @@ void main() {
     }
   });
 
-  test(
-    'buildArguments converts working directories when wsl mode is enabled',
-    () {
-      expect(
-        LaunchCommandBuilder.buildSessionPrefixArgs(
-          workingDirectory: r'C:\Users\hhoa\git\agent',
-          additionalDirectories: const [r'D:\data'],
-          useWslPaths: true,
-        ),
-        ['--dir', '/mnt/c/Users/hhoa/git/agent', '--add-dir', '/mnt/d/data'],
-      );
-    },
-  );
 }

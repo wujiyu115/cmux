@@ -172,7 +172,7 @@ class ProcessRunExecutor {
     Map<String, String>? env,
     required bool shell,
   }) {
-    final launchEnv = LaunchCommandBuilder.launchEnvironmentForProcess(env);
+    final launchEnv = env;
     return switch (plan.runtimeTarget.kind) {
       RuntimeKind.local => _spawner(
         executable: command,

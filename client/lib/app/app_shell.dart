@@ -80,7 +80,6 @@ import '../services/automation/automation_bus_gateway.dart';
 import '../services/automation/automation_dispatcher.dart';
 import '../services/automation/automation_schedule_calculator.dart';
 import '../services/automation/automation_scheduler.dart';
-import '../services/launch/session_runtime_plan_builder.dart';
 import '../services/home_workspace/home_workspace_ui_cache.dart';
 import '../services/cli/cli_executable_discovery.dart';
 import '../services/cli/toolchain_executable_discovery.dart';
@@ -637,7 +636,6 @@ Future<AppShell> buildAppShell({
     loadInstalledSkills: () => skillRepo.loadInstalled(),
     cliPresetsRepository: cliPresetsRepo,
     loadPresets: () => cliPresetsCubit.state.presets,
-    projectConfigRepository: workspaceProjectConfigRepository,
   );
   sessionRepo = SessionRepository(lifecycleService: sessionLifecycleService);
   boot('prefetching home index snapshots');
@@ -659,11 +657,6 @@ Future<AppShell> buildAppShell({
   );
   cliPresetsCubit = CliPresetsCubit(repository: cliPresetsRepo);
   mcpCubit = McpCubit(mcpRepository);
-
-  final sessionRuntimePlanBuilder = SessionRuntimePlanBuilder(
-    workspaceProjectConfig: workspaceProjectConfigRepository,
-  );
-  sessionLifecycleService.attachRuntimePlanBuilder(sessionRuntimePlanBuilder);
 
   final appUpdateCubit = AppUpdateCubit(settings: appSettings);
   final layoutCubit = LayoutCubit(repository: LayoutRepository(preferences));

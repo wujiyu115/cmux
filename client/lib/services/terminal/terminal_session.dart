@@ -261,9 +261,7 @@ class TerminalSession {
           extraEnvironment,
           useWslPaths: invocation.usesWsl,
         );
-    _extraEnvironment = LaunchCommandBuilder.launchEnvironmentForProcess(
-      normalizedEnvironment,
-    );
+    _extraEnvironment = normalizedEnvironment;
     final sshRemote = _runtimeTarget?.namespace.isSsh ?? false;
     _ptyEnvironment = PtyLaunchEnvironment.buildPtyEnvironment(
       _extraEnvironment,
