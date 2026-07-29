@@ -17,7 +17,6 @@ import '../cli/registry/capabilities/resume/pinned_transcript_probe.dart';
 import '../cli/registry/capabilities/session_resume_capability.dart';
 import '../cli/registry/cli_tool_registry.dart';
 import '../provider/control_plane_profile_paths.dart';
-import '../provider/config_profile_service.dart';
 import '../../models/runtime_target.dart';
 import '../io/local_filesystem.dart';
 import '../storage/runtime_context.dart';
@@ -34,7 +33,6 @@ class SessionLifecycleService {
 
   SessionLifecycleService({
     String? appDataBasePath,
-    ConfigProfileService? configProfileService,
     StorageRootsResolver? storageRootsResolver,
     Future<RuntimeContext> Function(RuntimeTarget target)? workContextResolver,
     Future<RuntimeContext> Function()? catalogContextResolver,
@@ -45,7 +43,6 @@ class SessionLifecycleService {
     CliPresetsRepository? cliPresetsRepository,
     List<CliPreset> Function()? loadPresets,
   }) : _appDataBasePath = appDataBasePath,
-       _configProfileService = configProfileService,
        _storageRootsResolver = storageRootsResolver,
        _workContextResolver = workContextResolver,
        _catalogContextResolver = catalogContextResolver,
@@ -56,7 +53,6 @@ class SessionLifecycleService {
        _loadPresets = loadPresets;
 
   final String? _appDataBasePath;
-  final ConfigProfileService? _configProfileService;
   final StorageRootsResolver? _storageRootsResolver;
 
   /// P2: resolves the work-plane context for a workspace's target (local/wsl/
@@ -80,14 +76,7 @@ class SessionLifecycleService {
   CliToolRegistry get cliToolRegistry => _cliToolRegistry;
 
   /// Resolves a global CLI preset by id.
-  Future<CliPreset?> resolvePresetById(String presetId) async {
-    final trimmed = presetId.trim();
-    if (trimmed.isEmpty) return null;
-    final repo = _cliPresetsRepository;
-    if (repo == null) return null;
-    final presets = await repo.load();
-    return resolveActivePreset(trimmed, presets);
-  }
+
 
   Future<bool> hasCliState(
     AppSession session, {
@@ -200,43 +189,6 @@ class SessionLifecycleService {
       for (final tool in tt)
         layout.sessionRuntimeToolDir(workspaceId, sessionId, tool),
     ];
-  }
-
-  Future<ConfigProfileService> configProfileServiceFor(
-    RuntimeContext roots, {
-    String? launchWorkspaceId,
-  }) => _configProfileServiceFor(roots, launchWorkspaceId: launchWorkspaceId);
-
-  Future<ConfigProfileService> _configProfileServiceFor(
-    RuntimeContext roots, {
-    String? launchWorkspaceId,
-  }) async {
-    final injected = _configProfileService;
-    if (injected != null) return injected;
-    final loader = _loadEnabledExtensionIds;
-    final trimmedWorkspaceId = launchWorkspaceId?.trim() ?? '';
-    final catalogRoots = await _resolveCatalogRoots();
-    final catalog = catalogRoots.appDataRoot == roots.appDataRoot
-        ? null
-        : ControlPlaneProfilePaths(catalogRoots);
-    return ConfigProfileService(
-      basePath: roots.teampilotRoot,
-      home: roots.home,
-      fs: roots.fs,
-      layout: roots.layout,
-      catalog: catalog,
-      loadEnabledExtensionIds: loader == null
-          ? null
-          : ({teamId, workspaceId}) => loader(
-              teamId: teamId,
-              workspaceId: (workspaceId?.trim().isNotEmpty ?? false)
-                  ? workspaceId
-                  : (trimmedWorkspaceId.isNotEmpty ? trimmedWorkspaceId : null),
-            ),
-      cliRegistry: _cliToolRegistry,
-      loadInstalledSkills: _loadInstalledSkills,
-      loadGlobalPresets: () async => _loadPresets?.call() ?? const [],
-    );
   }
 
   Future<RuntimeContext> _resolveCatalogRoots() async {

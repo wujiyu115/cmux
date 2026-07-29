@@ -58,7 +58,6 @@ import 'package:teampilot/services/git/git_repo_store.dart';
 import 'package:teampilot/services/home_workspace/home_workspace_ui_cache.dart';
 import 'package:teampilot/services/io/local_filesystem.dart';
 import 'package:teampilot/services/plugin/plugin_repo_service.dart';
-import 'package:teampilot/services/provider/config_profile_service.dart';
 import 'package:teampilot/services/run/workspace_run_platform_factory.dart';
 import 'package:teampilot/services/ssh/ssh_client_factory.dart';
 import 'package:teampilot/services/ssh/ssh_connection_events.dart';
