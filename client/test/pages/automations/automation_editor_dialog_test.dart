@@ -255,7 +255,6 @@ void main() {
     expect(find.text(l10n.automationsCreateTitle), findsOneWidget);
     expect(find.text(l10n.automationsLaunchMode), findsOneWidget);
     expect(find.text(l10n.presetPickerTitle), findsOneWidget);
-    expect(find.text(l10n.hubPublishKindExpert), findsOneWidget);
     expect(find.text(l10n.automationsPermissions), findsOneWidget);
     expect(find.text('Default'), findsOneWidget);
     expect(find.text(l10n.automationsTargetMember), findsNothing);

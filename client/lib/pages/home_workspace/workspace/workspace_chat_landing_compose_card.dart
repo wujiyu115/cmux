@@ -45,9 +45,6 @@ class WorkspaceChatLandingComposeCard extends StatelessWidget {
     required this.onAutoChipSelected,
     required this.onPermissionSelected,
     this.autoChipLeading,
-    this.expertChipLabel,
-    this.expertChipSpecs = const [],
-    this.onExpertChipSelected,
     required this.attachTooltip,
     required this.enhanceTooltip,
     required this.voiceTooltip,
@@ -93,9 +90,6 @@ class WorkspaceChatLandingComposeCard extends StatelessWidget {
   final ValueChanged<Object?> onAutoChipSelected;
   final ValueChanged<bool> onPermissionSelected;
   final Widget? autoChipLeading;
-  final String? expertChipLabel;
-  final List<TpActionMenuSpec> expertChipSpecs;
-  final ValueChanged<Object?>? onExpertChipSelected;
   final String attachTooltip;
   final String enhanceTooltip;
   final String voiceTooltip;
@@ -158,16 +152,6 @@ class WorkspaceChatLandingComposeCard extends StatelessWidget {
                   showAttention: showTeamSettingsAttention,
                   enabled: _composeActionsEnabled,
                   onTap: onTeamSettings!,
-                ),
-              ],
-              if (expertChipLabel != null && onExpertChipSelected != null) ...[
-                SizedBox(width: spacing.sm),
-                ComposeMenuChip(
-                  palette: palette,
-                  icon: Icons.psychology_outlined,
-                  label: expertChipLabel!,
-                  specs: expertChipSpecs,
-                  onSelected: onExpertChipSelected!,
                 ),
               ],
               SizedBox(width: spacing.sm),

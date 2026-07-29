@@ -12,7 +12,6 @@ import '../../cubits/app_provider_cubit.dart';
 import '../../cubits/chat_cubit.dart';
 import '../../cubits/editor_cubit.dart';
 import '../../cubits/cli_presets_cubit.dart';
-import '../../cubits/expert_hub_cubit.dart';
 import '../../cubits/layout_cubit.dart';
 import '../../cubits/launch_profile_cubit.dart';
 import '../../cubits/member_presence_cubit.dart';
@@ -40,7 +39,6 @@ import '../../services/compose/compose_landing_bundle.dart';
 import '../../services/compose/compose_prompt_enhance.dart';
 import '../../services/compose/compose_text_edit.dart';
 import '../../services/compose/compose_voice_input.dart';
-import '../../services/expert_hub/expert_member_resolver.dart';
 import '../../services/session/ai_history_live_refresh_controller.dart';
 import '../../services/session/history_seat_key.dart';
 import '../../services/session/session_continue_overrides_apply.dart';
@@ -451,7 +449,6 @@ class _SessionChatViewState extends State<SessionChatView> {
       draft: _enhanceDraft(),
       team: widget.team,
       workspace: _workspaceProjectBundle,
-      hubState: _expertHubState(context),
     );
   }
 
@@ -590,28 +587,10 @@ class _SessionChatViewState extends State<SessionChatView> {
   String? _identityLabel({
     required AppSession session,
     required TeamProfile? team,
-    required ExpertHubState? hubState,
-    required String expertFallback,
   }) {
-    if (!session.isSimple) {
-      final name = team?.name.trim() ?? '';
-      return name.isEmpty ? null : name;
-    }
-    final key = session.expertKey.trim();
-    if (key.isEmpty) return null;
-    return ExpertMemberResolver.labelForKey(
-      key: key,
-      fallbackLabel: expertFallback,
-      hubState: hubState,
-    );
-  }
-
-  ExpertHubState? _expertHubState(BuildContext context) {
-    try {
-      return context.watch<ExpertHubCubit>().state;
-    } on ProviderNotFoundException {
-      return null;
-    }
+    if (session.isSimple) return null;
+    final name = team?.name.trim() ?? '';
+    return name.isEmpty ? null : name;
   }
 
   void _toastContinueSaveFailed() {
@@ -898,7 +877,6 @@ class _SessionChatViewState extends State<SessionChatView> {
     final presets = context.watch<CliPresetsCubit>().state.presets;
     final session = _displaySession(context);
     final team = _liveTeam(context);
-    final hubState = _expertHubState(context);
     final selectedMemberId = widget.selectedMemberId;
     final permissionWaiting = context.select<AgentAttentionCubit, bool>(
       (c) => AgentPermissionAttentionBanner.isSelectedSeatWaiting(
@@ -930,12 +908,7 @@ class _SessionChatViewState extends State<SessionChatView> {
     final modelLabel = selectedPreset?.name.trim().isNotEmpty == true
         ? selectedPreset!.name.trim()
         : l10n.workspaceChatLandingUsePreset;
-    final identityLabel = _identityLabel(
-      session: session,
-      team: team,
-      hubState: hubState,
-      expertFallback: l10n.expertHubNoneSelected,
-    );
+    final identityLabel = _identityLabel(session: session, team: team);
     // Rebuild when session working or bus presence changes (seat-level stop).
     context.select<ChatCubit, (String?, Set<String>)>(
       (c) => (c.state.activeSessionId, c.state.workingSessionIds),

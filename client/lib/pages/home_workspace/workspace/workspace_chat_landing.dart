@@ -10,7 +10,6 @@ import 'package:teampilot/widgets/app_toast/app_toast.dart';
 import '../../../cubits/app_provider_cubit.dart';
 import '../../../cubits/chat_cubit.dart';
 import '../../../cubits/cli_presets_cubit.dart';
-import '../../../cubits/expert_hub_cubit.dart';
 import '../../../cubits/launch_profile_cubit.dart';
 import '../../../cubits/plugin_cubit.dart';
 import '../../../cubits/session_preferences_cubit.dart';
@@ -33,10 +32,6 @@ import '../../../services/compose/compose_landing_bundle.dart';
 import '../../../services/compose/compose_prompt_enhance.dart';
 import '../../../services/compose/compose_text_edit.dart';
 import '../../../services/compose/compose_voice_input.dart';
-import '../../../services/expert_hub/expert_capability_resolver.dart';
-import '../../../services/expert_hub/expert_hub_recent_store.dart';
-import '../../../services/expert_hub/expert_landing_preflight.dart';
-import '../../../services/expert_hub/expert_member_resolver.dart';
 import '../../../services/cli/registry/cli_tool_registry_scope.dart';
 import '../../../pages/home_workspace/home_workspace_route.dart';
 import '../../../utils/workspace/landing_draft_resolver.dart';
@@ -46,9 +41,6 @@ import '../../../widgets/cli/cli_brand_icon.dart';
 import '../../../widgets/compose/compose_model_preset_chip.dart';
 import '../../../services/launch/workspace_landing_launch_gate.dart';
 import '../../../repositories/workspace_project_config_repository.dart';
-import '../../expert_hub/expert_landing_chip_menu.dart';
-import '../../expert_hub/expert_landing_picker_sheet.dart';
-import '../../expert_hub/expert_landing_preflight_feedback.dart';
 import 'config/cli_presets_manage_dialog.dart';
 import 'workspace_chat_landing_compose_card.dart';
 import 'workspace_landing_launch_feedback.dart';
@@ -94,7 +86,6 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
   var _dangerouslySkipPermissions = true;
   String? _selectedPresetId;
   String? _selectedTeamId;
-  String? _selectedExpertKey;
   var _enhancing = false;
   var _voiceListening = false;
   var _voiceSoundLevel = 0.0;
@@ -112,9 +103,6 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
   int _teamLaunchReadinessGeneration = 0;
   ConfigBundle _workspaceProjectBundle = const ConfigBundle();
   int _workspaceBundleGeneration = 0;
-  String? _lastRouteExpert;
-  final _expertRecentStore = ExpertHubRecentStore();
-  List<String> _recentExpertKeys = const [];
 
   @override
   void initState() {
@@ -168,13 +156,6 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
     }
     unawaited(_loadDraft());
     unawaited(_loadWorkspaceProjectBundle());
-    unawaited(_loadRecentExperts());
-  }
-
-  Future<void> _loadRecentExperts() async {
-    final keys = await _expertRecentStore.loadOrderedKeys();
-    if (!mounted) return;
-    setState(() => _recentExpertKeys = keys);
   }
 
   void _applyVoiceListening(bool listening) {
@@ -200,20 +181,6 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     _runtimeTargetsLoad ??= _loadRuntimeTargets();
-    _reloadDraftIfRouteExpertChanged();
-  }
-
-  void _reloadDraftIfRouteExpertChanged() {
-    // GoRouterState.of walks up to the enclosing GoRoute page and throws when
-    // there is none: widget tests mount landing under a plain MaterialApp, and
-    // Selection → Ask AI mounts it inside a showDialog route.
-    final location = GoRouter.maybeOf(context)?.state.uri.toString();
-    if (location == null) return;
-    final routeExpert = HomeWorkspaceRoute.expert(location);
-    if (routeExpert == _lastRouteExpert) return;
-    _lastRouteExpert = routeExpert;
-    if (routeExpert == null) return;
-    unawaited(_loadDraft());
   }
 
   @override
@@ -431,7 +398,6 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
   ConfigBundle _slashBundleForDraft(
     LandingLaunchContext draft,
     List<TeamProfile> teams,
-    ExpertHubState? hubState,
   ) {
     TeamProfile? team;
     if (!draft.isPersonal) {
@@ -444,7 +410,6 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
       draft: draft,
       team: team,
       workspace: _workspaceProjectBundle,
-      hubState: hubState,
     );
   }
 
@@ -583,9 +548,6 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
         : _LandingConversationMode.team;
     _selectedTeamId = draft.teamId;
     _selectedPresetId = draft.presetId;
-    _selectedExpertKey = draft.expertKey?.trim().isNotEmpty == true
-        ? draft.expertKey!.trim()
-        : null;
     _selectedProjectPath = draft.projectFolderPath?.trim().isNotEmpty == true
         ? draft.projectFolderPath!.trim()
         : null;
@@ -723,7 +685,6 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
       isPersonal: isSimple,
       presetId: _selectedPresetId,
       teamId: _selectedTeamId,
-      expertKey: isSimple ? _selectedExpertKey : null,
       projectFolderPath: selectedProjectPath.trim().isEmpty
           ? null
           : selectedProjectPath,
@@ -885,126 +846,6 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
     return teams.where((team) => team.id == id).firstOrNull;
   }
 
-  void _selectExpert(String? expertKey) {
-    final trimmed = expertKey?.trim();
-    setState(
-      () => _selectedExpertKey = trimmed?.isNotEmpty == true ? trimmed : null,
-    );
-    _persistDraft();
-  }
-
-  Future<void> _selectExpertWithPreflight(String expertKey) async {
-    final trimmed = expertKey.trim();
-    if (trimmed.isEmpty) {
-      _selectExpert(null);
-      return;
-    }
-
-    // Keep selection even when some deps fail (soft fail policy).
-    _selectExpert(trimmed);
-    unawaited(_touchRecentExpert(trimmed));
-
-    ExpertCapabilityResolver? resolver;
-    try {
-      resolver = context.read<ExpertCapabilityResolver>();
-    } on ProviderNotFoundException {
-      return;
-    }
-
-    final result = await selectLandingExpert(
-      resolver: resolver,
-      expertKey: trimmed,
-    );
-    if (!mounted) return;
-
-    final preflight = result.preflight;
-    if (preflight == null) return;
-
-    final l10n = context.l10n;
-    if (preflight.notFound) {
-      AppToast.show(
-        context,
-        message: l10n.expertHubNotFound,
-        variant: TpToastVariant.warning,
-      );
-      return;
-    }
-
-    final pack = preflight.pack;
-    if (pack == null || !pack.hasFailures) return;
-    final message = expertLandingPreflightToastMessage(
-      l10n,
-      expertName: pack.member.name,
-      pack: pack,
-    );
-    if (message.isEmpty) return;
-    AppToast.show(context, message: message, variant: TpToastVariant.warning);
-  }
-
-  Future<void> _touchRecentExpert(String expertKey) async {
-    await _expertRecentStore.touch(expertKey);
-    await _loadRecentExperts();
-  }
-
-  Future<void> _openExpertPicker() async {
-    final key = await showExpertLandingPickerSheet(
-      context,
-      selectedKey: _selectedExpertKey,
-    );
-    if (!mounted || key == null) return;
-    await _selectExpertWithPreflight(key);
-  }
-
-  void _onExpertChipSelected(Object? value) {
-    if (value == ExpertLandingChipAction.clear) {
-      _selectExpert(null);
-      return;
-    }
-    if (value == ExpertLandingChipAction.browseAll) {
-      unawaited(_openExpertPicker());
-      return;
-    }
-    if (value is String && value.isNotEmpty) {
-      unawaited(_selectExpertWithPreflight(value));
-    }
-  }
-
-  ExpertHubState? _expertHubState(BuildContext context) {
-    try {
-      return context.watch<ExpertHubCubit>().state;
-    } on ProviderNotFoundException {
-      return null;
-    }
-  }
-
-  String _expertChipLabel(AppLocalizations l10n, ExpertHubState? hubState) {
-    return ExpertMemberResolver.labelForKey(
-      key: _selectedExpertKey,
-      fallbackLabel: l10n.expertHubNoneSelected,
-      hubState: hubState,
-    );
-  }
-
-  List<TpActionMenuSpec> _expertChipSpecs(
-    AppLocalizations l10n,
-    ExpertHubState? hubState,
-  ) {
-    final recent = <({String key, String name})>[];
-    for (final key in _recentExpertKeys) {
-      final member = ExpertMemberResolver.resolve(key: key, hubState: hubState);
-      final name = member?.name.trim() ?? '';
-      if (name.isEmpty) continue;
-      recent.add((key: key, name: name));
-      if (recent.length >= kExpertLandingChipRecentLimit) break;
-    }
-    return buildExpertLandingChipMenuSpecs(
-      noneSelectedLabel: l10n.expertHubNoneSelected,
-      browseAllLabel: l10n.expertHubBrowseAll,
-      selectedExpertKey: _selectedExpertKey,
-      recentExperts: recent,
-    );
-  }
-
   String _conversationModeLabel(AppLocalizations l10n) {
     return switch (_conversationMode) {
       _LandingConversationMode.team => l10n.workspaceChatLandingModeTeam,
@@ -1111,8 +952,7 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
     final teams = context.watch<LaunchProfileCubit>().state.teams;
     final skills = context.watch<SkillCubit>().state.installed;
     final plugins = context.watch<PluginCubit>().state.installed;
-    final hubState = _expertHubState(context);
-    final slashBundle = _slashBundleForDraft(_currentDraft(), teams, hubState);
+    final slashBundle = _slashBundleForDraft(_currentDraft(), teams);
     final isSimple = _conversationMode == _LandingConversationMode.simple;
     final worktreeState = _worktreeState(context);
     final projectResolver = _projectResolver();
@@ -1171,11 +1011,6 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
         }
       },
       onPermissionSelected: _setDangerouslySkipPermissions,
-      expertChipLabel: isSimple ? _expertChipLabel(l10n, hubState) : null,
-      expertChipSpecs: isSimple
-          ? _expertChipSpecs(l10n, hubState)
-          : const [],
-      onExpertChipSelected: isSimple ? _onExpertChipSelected : null,
       attachTooltip: l10n.workspaceChatLandingAttach,
       enhanceTooltip: l10n.workspaceChatLandingEnhance,
       voiceTooltip: l10n.workspaceChatLandingVoice,

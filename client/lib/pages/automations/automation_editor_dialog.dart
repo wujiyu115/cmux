@@ -78,7 +78,6 @@ class _AutomationEditorDialogState extends State<AutomationEditorDialog> {
   late bool _isPersonal;
   String? _presetId;
   String? _teamId;
-  String? _expertKey;
   String? _projectFolderPath;
   String? _workingDirectoryPath;
   late bool _dangerouslySkipPermissions;
@@ -122,7 +121,6 @@ class _AutomationEditorDialogState extends State<AutomationEditorDialog> {
     _isPersonal = initial?.isPersonal ?? true;
     _presetId = initial?.presetId;
     _teamId = initial?.teamId;
-    _expertKey = initial?.expertKey;
     _projectFolderPath = initial?.projectFolderPath;
     _workingDirectoryPath = initial?.workingDirectoryPath;
     _dangerouslySkipPermissions = initial?.dangerouslySkipPermissions ?? false;
@@ -176,7 +174,6 @@ class _AutomationEditorDialogState extends State<AutomationEditorDialog> {
       _isPersonal = draft.isPersonal;
       _presetId = draft.presetId;
       _teamId = draft.teamId;
-      _expertKey = draft.expertKey;
       _projectFolderPath = draft.projectFolderPath;
       _workingDirectoryPath = draft.workingDirectoryPath;
       _dangerouslySkipPermissions = draft.dangerouslySkipPermissions;
@@ -262,7 +259,6 @@ class _AutomationEditorDialogState extends State<AutomationEditorDialog> {
         _teamId = null;
       } else {
         _presetId = null;
-        _expertKey = null;
         final teams = context.read<LaunchProfileCubit>().state.teams;
         _teamId = teams.firstOrNull?.id;
       }
@@ -311,7 +307,6 @@ class _AutomationEditorDialogState extends State<AutomationEditorDialog> {
 
     final presetId = _presetId?.trim();
     final teamId = _teamId?.trim();
-    final expertKey = _expertKey?.trim();
     final workspace = _workspace;
     final projectFolderPath = _resolvedProjectFolderPath(workspace);
     final workingDirectoryPath = _resolvedWorkingDirectoryPath(workspace);
@@ -326,9 +321,6 @@ class _AutomationEditorDialogState extends State<AutomationEditorDialog> {
       isPersonal: _isPersonal,
       presetId: _isPersonal ? presetId : null,
       teamId: _isPersonal ? null : teamId,
-      expertKey: _isPersonal && expertKey != null && expertKey.isNotEmpty
-          ? expertKey
-          : null,
       projectFolderPath: _isScheduledMessage ? null : projectFolderPath,
       workingDirectoryPath: _isScheduledMessage ? null : workingDirectoryPath,
       dangerouslySkipPermissions: _dangerouslySkipPermissions,
@@ -425,7 +417,6 @@ class _AutomationEditorDialogState extends State<AutomationEditorDialog> {
             workingDirectoryPath: _workingDirectoryPath,
             presetId: _presetId,
             teamId: _teamId,
-            expertKey: _expertKey,
             dangerouslySkipPermissions: _dangerouslySkipPermissions,
             targetMemberId: _targetMemberId,
             onIsPersonalChanged: _onIsPersonalChanged,
@@ -433,7 +424,6 @@ class _AutomationEditorDialogState extends State<AutomationEditorDialog> {
             onWorktreeChanged: (v) => setState(() => _workingDirectoryPath = v),
             onPresetChanged: (v) => setState(() => _presetId = v),
             onTeamChanged: _onTeamChanged,
-            onExpertChanged: (v) => setState(() => _expertKey = v),
             onPermissionsChanged: (v) =>
                 setState(() => _dangerouslySkipPermissions = v),
             onTargetMemberChanged: (v) => setState(() => _targetMemberId = v),

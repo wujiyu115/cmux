@@ -2,14 +2,11 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../cubits/expert_hub_cubit.dart';
 import '../../cubits/launch_profile_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../models/team_config.dart';
 import '../../models/workspace.dart';
-import '../../pages/expert_hub/expert_landing_picker_sheet.dart';
 import '../../pages/home_workspace/workspace/workspace_landing_location_fields.dart';
-import '../../services/expert_hub/expert_member_resolver.dart';
 import '../../widgets/cli/cli_preset_dropdown_field.dart';
 import 'package:shared_ui/shared_ui.dart';
 
@@ -22,7 +19,6 @@ class AutomationEditorLaunchSection extends StatelessWidget {
     required this.workingDirectoryPath,
     required this.presetId,
     required this.teamId,
-    required this.expertKey,
     required this.dangerouslySkipPermissions,
     required this.targetMemberId,
     required this.labelWidth,
@@ -31,7 +27,6 @@ class AutomationEditorLaunchSection extends StatelessWidget {
     required this.onIsPersonalChanged,
     required this.onPresetChanged,
     required this.onTeamChanged,
-    required this.onExpertChanged,
     required this.onPermissionsChanged,
     required this.onTargetMemberChanged,
     super.key,
@@ -43,7 +38,6 @@ class AutomationEditorLaunchSection extends StatelessWidget {
   final String? workingDirectoryPath;
   final String? presetId;
   final String? teamId;
-  final String? expertKey;
   final bool dangerouslySkipPermissions;
   final String targetMemberId;
   final double labelWidth;
@@ -52,7 +46,6 @@ class AutomationEditorLaunchSection extends StatelessWidget {
   final ValueChanged<bool> onIsPersonalChanged;
   final ValueChanged<String?> onPresetChanged;
   final ValueChanged<String?> onTeamChanged;
-  final ValueChanged<String?> onExpertChanged;
   final ValueChanged<bool> onPermissionsChanged;
   final ValueChanged<String> onTargetMemberChanged;
 
@@ -60,7 +53,6 @@ class AutomationEditorLaunchSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final teams = context.watch<LaunchProfileCubit>().state.teams;
-    final hubState = context.watch<ExpertHubCubit>().state;
     final team = teams.where((t) => t.id == teamId).firstOrNull;
     final teamMembers =
         team?.members.where((m) => m.isValid).toList(growable: false) ??
@@ -121,37 +113,6 @@ class AutomationEditorLaunchSection extends StatelessWidget {
                   state.didChange(value ?? '');
                   onPresetChanged(value);
                 },
-              );
-            },
-          ),
-          const SizedBox(height: 12),
-          TpFormField<String>(
-            key: ValueKey('expert-${expertKey ?? ''}'),
-            id: 'expertKey',
-            initialValue: expertKey ?? '',
-            label: Text(l10n.hubPublishKindExpert),
-            layoutStyle: TpFormFieldLayoutStyle.inline,
-            labelWidth: labelWidth,
-            builder: (state) {
-              final label = ExpertMemberResolver.labelForKey(
-                key: expertKey,
-                fallbackLabel: l10n.expertHubNoneSelected,
-                hubState: hubState,
-              );
-              return Align(
-                alignment: Alignment.centerLeft,
-                child: OutlinedButton(
-                  onPressed: () async {
-                    final key = await showExpertLandingPickerSheet(
-                      context,
-                      selectedKey: expertKey,
-                    );
-                    if (!context.mounted) return;
-                    state.didChange(key ?? '');
-                    onExpertChanged(key);
-                  },
-                  child: Text(label),
-                ),
               );
             },
           ),

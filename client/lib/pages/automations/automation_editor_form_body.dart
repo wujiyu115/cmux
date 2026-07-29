@@ -34,7 +34,6 @@ class AutomationEditorFormBody extends StatelessWidget {
     this.workingDirectoryPath,
     this.presetId,
     this.teamId,
-    this.expertKey,
     this.dangerouslySkipPermissions = false,
     this.targetMemberId = 'team-lead',
     this.onIsPersonalChanged,
@@ -42,7 +41,6 @@ class AutomationEditorFormBody extends StatelessWidget {
     this.onWorktreeChanged,
     this.onPresetChanged,
     this.onTeamChanged,
-    this.onExpertChanged,
     this.onPermissionsChanged,
     this.onTargetMemberChanged,
     super.key,
@@ -68,7 +66,6 @@ class AutomationEditorFormBody extends StatelessWidget {
   final String? workingDirectoryPath;
   final String? presetId;
   final String? teamId;
-  final String? expertKey;
   final bool dangerouslySkipPermissions;
   final String targetMemberId;
   final ValueChanged<bool>? onIsPersonalChanged;
@@ -76,7 +73,6 @@ class AutomationEditorFormBody extends StatelessWidget {
   final ValueChanged<String?>? onWorktreeChanged;
   final ValueChanged<String?>? onPresetChanged;
   final ValueChanged<String?>? onTeamChanged;
-  final ValueChanged<String?>? onExpertChanged;
   final ValueChanged<bool>? onPermissionsChanged;
   final ValueChanged<String>? onTargetMemberChanged;
 
@@ -134,7 +130,6 @@ class AutomationEditorFormBody extends StatelessWidget {
             workingDirectoryPath: workingDirectoryPath,
             presetId: presetId,
             teamId: teamId,
-            expertKey: expertKey,
             dangerouslySkipPermissions: dangerouslySkipPermissions,
             targetMemberId: targetMemberId,
             labelWidth: kAutomationEditorFormLabelWidth,
@@ -143,7 +138,6 @@ class AutomationEditorFormBody extends StatelessWidget {
             onIsPersonalChanged: onIsPersonalChanged ?? (_) {},
             onPresetChanged: onPresetChanged ?? (_) {},
             onTeamChanged: onTeamChanged ?? (_) {},
-            onExpertChanged: onExpertChanged ?? (_) {},
             onPermissionsChanged: onPermissionsChanged ?? (_) {},
             onTargetMemberChanged: onTargetMemberChanged ?? (_) {},
           ),
