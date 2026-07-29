@@ -8,18 +8,13 @@ class RightToolsToolPreferences {
   const RightToolsToolPreferences({
     required this.fileTreeVisible,
     required this.gitVisible,
-    required this.membersVisible,
-    required this.boardVisible,
   });
 
   final bool fileTreeVisible;
   final bool gitVisible;
-  final bool membersVisible;
-  final bool boardVisible;
 
   /// True when any right-tools tab needs [RightToolsLifecycleHost].
-  bool get needsLifecycleHost =>
-      fileTreeVisible || gitVisible || membersVisible || boardVisible;
+  bool get needsLifecycleHost => fileTreeVisible || gitVisible;
 
   /// True when file-tree or git panels need disk watchers / refresh.
   bool get needsDiskSideEffects => fileTreeVisible || gitVisible;
@@ -28,8 +23,6 @@ class RightToolsToolPreferences {
     return RightToolsToolPreferences(
       fileTreeVisible: preferences.fileTreeVisible,
       gitVisible: preferences.gitVisible,
-      membersVisible: preferences.membersVisible,
-      boardVisible: preferences.boardVisible,
     );
   }
 
@@ -38,12 +31,9 @@ class RightToolsToolPreferences {
     return identical(this, other) ||
         other is RightToolsToolPreferences &&
             fileTreeVisible == other.fileTreeVisible &&
-            gitVisible == other.gitVisible &&
-            membersVisible == other.membersVisible &&
-            boardVisible == other.boardVisible;
+            gitVisible == other.gitVisible;
   }
 
   @override
-  int get hashCode =>
-      Object.hash(fileTreeVisible, gitVisible, membersVisible, boardVisible);
+  int get hashCode => Object.hash(fileTreeVisible, gitVisible);
 }

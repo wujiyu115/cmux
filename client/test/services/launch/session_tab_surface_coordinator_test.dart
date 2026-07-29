@@ -5,7 +5,6 @@ import 'package:teampilot/cubits/chat/model/chat_tab.dart';
 import 'package:teampilot/cubits/chat/model/chat_tab_info.dart';
 import 'package:teampilot/cubits/chat/model/session_open_request.dart';
 import 'package:teampilot/cubits/chat/model/session_open_status.dart';
-import 'package:teampilot/cubits/chat/model/session_workbench_view.dart';
 import 'package:teampilot/cubits/chat/session_launch_host.dart';
 import 'package:teampilot/cubits/chat/tab_session_runtime_coordinator.dart';
 import 'package:teampilot/models/app_session.dart';
@@ -34,7 +33,6 @@ void main() {
       existing = ChatTab(
         info: ChatTabInfo(id: 'sess-1', title: 'Review', subtitle: '/tmp'),
         workspaceId: 'ws-1',
-        workbenchView: SessionWorkbenchView.chat,
       )..persistedSession = session;
       tabStore.append(existing);
       host = _FakeHost(
@@ -78,7 +76,6 @@ void main() {
         );
 
         expect(status, SessionOpenStatus.opened);
-        expect(existing.workbenchView, SessionWorkbenchView.terminal);
       },
     );
 
@@ -95,7 +92,6 @@ void main() {
         );
 
         expect(status, SessionOpenStatus.opened);
-        expect(existing.workbenchView, SessionWorkbenchView.chat);
         expect(host.beginConnectIds, ['sess-1']);
       },
     );
@@ -164,7 +160,6 @@ void main() {
         expect(status, SessionOpenStatus.opened);
         final tab = tabStore.openTabBySessionId('sess-new');
         expect(tab, isNotNull);
-        expect(tab!.workbenchView, SessionWorkbenchView.terminal);
       },
     );
 
@@ -184,7 +179,6 @@ void main() {
         expect(status, SessionOpenStatus.opened);
         final tab = tabStore.openTabBySessionId('sess-new');
         expect(tab, isNotNull);
-        expect(tab!.workbenchView, SessionWorkbenchView.chat);
         expect(host.beginConnectIds, ['sess-new']);
       },
     );

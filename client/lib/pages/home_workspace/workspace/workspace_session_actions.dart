@@ -94,10 +94,6 @@ Future<void> openWorkspaceSessionTab(
   final tabId = WorkbenchTabId.session(session.sessionId);
   final asPreview = !connectImmediately;
   if (connectImmediately) {
-    chatCubit.setSessionWorkbenchView(
-      session.sessionId,
-      SessionWorkbenchView.terminal,
-    );
   } else {
     final existing = chatCubit.tabStore.openTabBySessionId(session.sessionId);
     // Already live: focus + pin, keep whatever Chat/Terminal view the user set.

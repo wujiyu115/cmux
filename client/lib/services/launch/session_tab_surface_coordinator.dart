@@ -6,7 +6,6 @@ import '../../cubits/chat/model/chat_tab.dart';
 import '../../cubits/chat/model/chat_tab_info.dart';
 import '../../cubits/chat/model/session_open_request.dart';
 import '../../cubits/chat/model/session_open_status.dart';
-import '../../cubits/chat/model/session_workbench_view.dart';
 import '../../cubits/chat/session_launch_host.dart';
 import '../../models/app_session.dart';
 import '../../models/workspace.dart';
@@ -97,11 +96,6 @@ class SessionTabSurfaceCoordinator {
       );
       return SessionOpenStatus.opened;
     }
-    // Chat continue connects the PTY while staying on Chat; do not
-    // force-switch the workbench (would unmount SessionChatView).
-    if (!request.preserveWorkbenchView) {
-      existing.workbenchView = SessionWorkbenchView.terminal;
-    }
     if (_shouldAutoConnect(request) && !connectAlreadyScheduled) {
       _host.beginSessionConnect(session.sessionId);
     }
@@ -170,9 +164,6 @@ class SessionTabSurfaceCoordinator {
       return SessionOpenStatus.opened;
     }
 
-    if (!request.preserveWorkbenchView) {
-      tab.workbenchView = SessionWorkbenchView.terminal;
-    }
     _host.beginSessionConnect(session.sessionId);
     unawaited(
       _prepareNewTabConnect(

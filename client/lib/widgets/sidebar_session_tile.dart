@@ -282,9 +282,7 @@ class _SidebarSessionTileState extends State<SidebarSessionTile> {
     final open = widget.onTap();
     if (open is Future) await open;
     if (!mounted || waitingIds.isEmpty) return;
-    final chat = context.read<ChatCubit>();
-    chat.selectMember(waitingIds.first);
-    chat.setSessionWorkbenchView(sessionId, SessionWorkbenchView.terminal);
+    context.read<ChatCubit>().selectMember(waitingIds.first);
   }
 
   @override

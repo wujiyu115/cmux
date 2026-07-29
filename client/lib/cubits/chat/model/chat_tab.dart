@@ -6,7 +6,6 @@ import '../../../services/ssh/ssh_member_session.dart';
 import '../../../services/agent_status/remote/agent_status_remote_mount.dart';
 import '../../../services/terminal/terminal_session.dart';
 import 'chat_tab_info.dart';
-import 'session_workbench_view.dart';
 
 /// Per-tab runtime aggregate shared by ChatCubit and its collaborators.
 /// (Formerly the private `_InternalTab`.)
@@ -15,15 +14,11 @@ class ChatTab {
     required this.info,
     this.selectedMemberId = '',
     this.workspaceId = '',
-    this.workbenchView = SessionWorkbenchView.chat,
   });
 
   ChatTabInfo info;
   TerminalSession? resumeSession;
   String selectedMemberId;
-
-  /// Center body: chat vs live terminal (independent of [isRunning]).
-  SessionWorkbenchView workbenchView;
 
   /// Owning workspace bucket in [ChatTabStore]. Empty for legacy/local scratch
   /// tabs created without a workspace context.

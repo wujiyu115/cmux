@@ -43,10 +43,8 @@ class LayoutPreferences {
     this.workspaceEntryMode = WorkspaceEntryMode.home,
     this.lastOpenedWorkspaceId = '',
     this.appRailVisible = true,
-    this.membersVisible = true,
     this.fileTreeVisible = true,
     this.gitVisible = true,
-    this.boardVisible = true,
     this.rightToolsVisible = true,
     this.sidebarVisible = true,
     this.rightToolsWidth = defaultRightToolsWidth,
@@ -82,10 +80,8 @@ class LayoutPreferences {
       ),
       lastOpenedWorkspaceId: json['lastOpenedWorkspaceId'] as String? ?? '',
       appRailVisible: json['appRailVisible'] as bool? ?? true,
-      membersVisible: json['membersVisible'] as bool? ?? true,
       fileTreeVisible: json['fileTreeVisible'] as bool? ?? true,
       gitVisible: json['gitVisible'] as bool? ?? true,
-      boardVisible: json['boardVisible'] as bool? ?? true,
       rightToolsVisible: json['rightToolsVisible'] as bool? ?? true,
       sidebarVisible: json['sidebarVisible'] as bool? ?? true,
       rightToolsWidth: _doubleValue(
@@ -176,10 +172,8 @@ class LayoutPreferences {
   final WorkspaceEntryMode workspaceEntryMode;
   final String lastOpenedWorkspaceId;
   final bool appRailVisible;
-  final bool membersVisible;
   final bool fileTreeVisible;
   final bool gitVisible;
-  final bool boardVisible;
   final bool rightToolsVisible;
   final bool sidebarVisible;
   final double rightToolsWidth;
@@ -221,10 +215,8 @@ class LayoutPreferences {
     WorkspaceEntryMode? workspaceEntryMode,
     String? lastOpenedWorkspaceId,
     bool? appRailVisible,
-    bool? membersVisible,
     bool? fileTreeVisible,
     bool? gitVisible,
-    bool? boardVisible,
     bool? rightToolsVisible,
     bool? sidebarVisible,
     double? rightToolsWidth,
@@ -255,10 +247,8 @@ class LayoutPreferences {
       lastOpenedWorkspaceId:
           lastOpenedWorkspaceId ?? this.lastOpenedWorkspaceId,
       appRailVisible: appRailVisible ?? this.appRailVisible,
-      membersVisible: membersVisible ?? this.membersVisible,
       fileTreeVisible: fileTreeVisible ?? this.fileTreeVisible,
       gitVisible: gitVisible ?? this.gitVisible,
-      boardVisible: boardVisible ?? this.boardVisible,
       rightToolsVisible: rightToolsVisible ?? this.rightToolsVisible,
       sidebarVisible: sidebarVisible ?? this.sidebarVisible,
       rightToolsWidth: (rightToolsWidth ?? this.rightToolsWidth).clamp(
@@ -319,18 +309,14 @@ class LayoutPreferences {
   }
 
   LayoutPreferences withAtLeastOneToolVisible() {
-    if (membersVisible || fileTreeVisible) {
-      return this;
-    }
+    if (fileTreeVisible) return this;
     return LayoutPreferences(
       preset: preset,
       workspaceEntryMode: workspaceEntryMode,
       lastOpenedWorkspaceId: lastOpenedWorkspaceId,
       appRailVisible: appRailVisible,
-      membersVisible: true,
-      fileTreeVisible: false,
+      fileTreeVisible: true,
       gitVisible: gitVisible,
-      boardVisible: boardVisible,
       rightToolsVisible: rightToolsVisible,
       sidebarVisible: sidebarVisible,
       rightToolsWidth: rightToolsWidth,
@@ -363,10 +349,8 @@ class LayoutPreferences {
       'workspaceEntryMode': workspaceEntryMode.name,
       'lastOpenedWorkspaceId': lastOpenedWorkspaceId,
       'appRailVisible': appRailVisible,
-      'membersVisible': membersVisible,
       'fileTreeVisible': fileTreeVisible,
       'gitVisible': gitVisible,
-      'boardVisible': boardVisible,
       'rightToolsVisible': rightToolsVisible,
       'sidebarVisible': sidebarVisible,
       'rightToolsWidth': rightToolsWidth,

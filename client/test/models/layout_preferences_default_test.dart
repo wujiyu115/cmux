@@ -10,7 +10,6 @@ void main() {
       'membersSplit': 0.5,
     });
     expect(prefs.rightToolsWidth, LayoutPreferences.defaultRightToolsWidth);
-    expect(prefs.membersVisible, isTrue);
     expect(prefs.fileTreeVisible, isTrue);
   });
 

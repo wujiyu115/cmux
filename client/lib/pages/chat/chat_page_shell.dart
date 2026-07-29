@@ -33,7 +33,6 @@ import 'chat_page_structural_signal.dart';
 import 'chat_page_shell_probe.dart';
 import 'chat_scoped_tab_view.dart';
 import 'session_tab_cli.dart';
-import 'session_workbench_view_toggle.dart';
 
 Future<void> _showStripNewTerminalMenu({
   required BuildContext context,
@@ -360,13 +359,6 @@ class _ChatWorkspaceShell extends StatelessWidget {
                           unawaited(cubit.toggleSessionPin(sessionId));
                         }
                       : null,
-                  tabBarTrailing: Padding(
-                    padding: const EdgeInsets.only(left: 8),
-                    child: SessionWorkbenchViewToggle(
-                      workspaceId: workspaceId,
-                      tabScopeId: tabScopeId,
-                    ),
-                  ),
                   actions: const [],
                   child: ChatPageStructuralBodyProbe(
                     key: chatPageStructuralBodyProbeKey,

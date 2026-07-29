@@ -52,17 +52,9 @@ class _RecordingChatCubit extends ChatCubit {
         automationRepository: testAutomationRepository(),
       );
 
-  final workbenchViews = <(String, SessionWorkbenchView)>[];
   final selectedMembers = <String>[];
   final activeSessionAtSelectMember = <String?>[];
   final eventOrder = <String>[];
-
-  @override
-  void setSessionWorkbenchView(String sessionId, SessionWorkbenchView view) {
-    eventOrder.add('workbench:$sessionId');
-    workbenchViews.add((sessionId, view));
-    super.setSessionWorkbenchView(sessionId, view);
-  }
 
   @override
   void selectMember(String memberId) {
@@ -399,9 +391,6 @@ void main() {
 
     expect(activated, isTrue);
     expect(chatCubit.selectedMembers, ['seat-waiting']);
-    expect(chatCubit.workbenchViews, [
-      (_session.sessionId, SessionWorkbenchView.terminal),
-    ]);
   });
 
   testWidgets(
@@ -463,7 +452,6 @@ void main() {
 
       // Still opening B — must not selectMember / switch Terminal on A yet.
       expect(chatCubit.selectedMembers, isEmpty);
-      expect(chatCubit.workbenchViews, isEmpty);
       expect(chatCubit.state.activeSessionId, 'sess-a');
 
       openCompleter.complete();
@@ -473,15 +461,6 @@ void main() {
       expect(chatCubit.state.activeSessionId, sessionB.sessionId);
       expect(chatCubit.activeSessionAtSelectMember, [sessionB.sessionId]);
       expect(chatCubit.selectedMembers, ['seat-b']);
-      expect(chatCubit.workbenchViews, [
-        (sessionB.sessionId, SessionWorkbenchView.terminal),
-      ]);
-      expect(chatCubit.eventOrder, [
-        'activate-start',
-        'activate-done',
-        'selectMember:seat-b',
-        'workbench:sess-b',
-      ]);
     },
   );
 }

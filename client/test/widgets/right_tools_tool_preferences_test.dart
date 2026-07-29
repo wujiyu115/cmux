@@ -7,30 +7,24 @@ void main() {
       const prefs = RightToolsToolPreferences(
         fileTreeVisible: false,
         gitVisible: false,
-        membersVisible: false,
-        boardVisible: false,
       );
       expect(prefs.needsLifecycleHost, isFalse);
       expect(prefs.needsDiskSideEffects, isFalse);
     });
 
-    test('needsDiskSideEffects only for file tree and git', () {
-      const membersOnly = RightToolsToolPreferences(
-        fileTreeVisible: false,
-        gitVisible: false,
-        membersVisible: true,
-        boardVisible: false,
-      );
-      expect(membersOnly.needsLifecycleHost, isTrue);
-      expect(membersOnly.needsDiskSideEffects, isFalse);
-
+    test('needsDiskSideEffects covers file tree and git', () {
       const fileTree = RightToolsToolPreferences(
         fileTreeVisible: true,
         gitVisible: false,
-        membersVisible: false,
-        boardVisible: false,
       );
+      expect(fileTree.needsLifecycleHost, isTrue);
       expect(fileTree.needsDiskSideEffects, isTrue);
+
+      const git = RightToolsToolPreferences(
+        fileTreeVisible: false,
+        gitVisible: true,
+      );
+      expect(git.needsDiskSideEffects, isTrue);
     });
   });
 }
