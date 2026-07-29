@@ -4,7 +4,6 @@ import '../../models/cli_preset.dart';
 import '../../models/member_presence.dart';
 import '../../models/team_config.dart';
 import '../../services/team/session_working_resolver.dart';
-import '../../services/team_bus/team_bus.dart';
 import 'chat_session_shell_factory.dart';
 import 'chat_tab_store.dart';
 import 'tab_member_coordination_factory.dart';
@@ -100,8 +99,6 @@ class TabSessionRuntimeCoordinator {
 
   void abortMemberInject(String sessionId, String memberId) =>
       _delivery.abortMemberInject(sessionId, memberId);
-
-  TeamBus? busForSession(String sessionId) => _delivery.busForSession(sessionId);
 
   bool isMemberReadyForAutomationInput(
     String sessionId,

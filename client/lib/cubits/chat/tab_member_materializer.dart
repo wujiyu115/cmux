@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import '../../services/team_bus/chat_cubit_member_launcher.dart';
 import '../../utils/logging/logger.dart';
 import 'chat_tab_store.dart';
 import 'tab_session_runtime_coordinator.dart';
@@ -10,7 +9,7 @@ import 'tab_session_runtime_coordinator.dart';
 /// Simple (unteamed) sessions run a single PTY keyed on the session id. This
 /// waits for that shell to reach the TUI prompt before automation / prompt
 /// inject.
-class TabMemberMaterializer implements MemberMaterializer {
+class TabMemberMaterializer {
   TabMemberMaterializer({
     required TabSessionRuntimeCoordinator runtime,
     required ChatTabStore tabStore,
@@ -86,7 +85,6 @@ class TabMemberMaterializer implements MemberMaterializer {
         'selected=${tab.selectedMemberId}';
   }
 
-  @override
   Future<void> materializeMember(
     String sessionId,
     String memberId,
@@ -114,7 +112,6 @@ class TabMemberMaterializer implements MemberMaterializer {
     await ready.future;
   }
 
-  @override
   void injectMemberStdin(String sessionId, String memberId, String text) {
     unawaited(
       _runtime.deliverMemberStdin(
@@ -127,7 +124,6 @@ class TabMemberMaterializer implements MemberMaterializer {
     );
   }
 
-  @override
   void retryDelivery(String sessionId, String memberId, String notice) {
     unawaited(_runtime.retryMemberDelivery(sessionId, memberId, notice));
   }

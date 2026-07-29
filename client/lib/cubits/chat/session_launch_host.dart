@@ -12,7 +12,6 @@ import '../../services/session/session_lifecycle_service.dart';
 import '../../services/agent_status/agent_status_seat_lookup.dart';
 import '../../cubits/agent_attention_cubit.dart';
 import '../../services/team_bus/mcp/teammate_bus_mcp_gateway.dart';
-import '../../services/team_bus/remote/remote_bus_binding_resolver.dart';
 import 'chat_session_shell_factory.dart';
 import 'model/chat_state.dart';
 import 'model/chat_tab.dart';

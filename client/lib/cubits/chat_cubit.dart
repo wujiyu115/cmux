@@ -25,7 +25,6 @@ import '../services/session/session_lifecycle_service.dart';
 import '../services/session/session_member_cli_locks.dart';
 import '../services/remote/remote_cli_readiness.dart';
 import '../services/team_bus/mcp/teammate_bus_mcp_gateway.dart';
-import '../services/team_bus/remote/remote_bus_binding_resolver.dart';
 import '../services/agent_status/agent_status_seat_lookup.dart';
 import 'agent_attention_cubit.dart';
 import '../services/launch/launch_factory.dart';
