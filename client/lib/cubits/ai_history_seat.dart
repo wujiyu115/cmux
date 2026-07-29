@@ -14,8 +14,8 @@ import '../services/conversation_timeline/mailbox_user_source.dart';
 import '../services/session/ai_history_loader.dart';
 import '../services/session/ai_history_pending_text.dart';
 import '../services/session/session_history_pagination.dart';
-import '../services/team_bus/persistence/bus_message_log.dart';
 import '../utils/logging/logger.dart';
+import '../services/team_bus/persistence/bus_message_log.dart';
 
 /// Host-local AI history status — not session connect / "starting…".
 enum AiHistoryViewStatus { loading, ready, empty, error }

@@ -104,7 +104,6 @@ final class SessionWorkingResolver {
       team: resolvedTeam,
       teamMode: teamMode,
       globalPresets: globalPresets,
-      bus: null,
       session: session,
       isPersonalSession: isPersonal,
       claudeRosterWorking: claudeWorkingByMemberId[memberId] ?? false,

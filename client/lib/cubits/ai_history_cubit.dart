@@ -9,8 +9,8 @@ import '../models/workspace_launch_context.dart';
 import '../services/session/ai_history_loader.dart';
 import '../services/session/ai_history_pending_text.dart';
 import '../services/session/history_seat_key.dart';
-import '../services/team_bus/persistence/bus_message_log.dart';
 import 'ai_history_seat.dart';
+import '../services/team_bus/persistence/bus_message_log.dart';
 
 export 'ai_history_seat.dart'
     show AiHistorySeat, AiHistoryState, AiHistoryViewStatus;

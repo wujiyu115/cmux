@@ -88,7 +88,6 @@ class MemberPresenceService {
           team: team ?? TeamProfile(id: '', name: '', cli: teamCli),
           teamMode: teamMode,
           globalPresets: globalPresets,
-          bus: null,
           session: session?.appSession,
           claudeRosterWorking: _claudeRoster.isMemberWorking(
             memberId: member.id,

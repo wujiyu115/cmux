@@ -44,7 +44,6 @@ final class TabMemberCoordinationFactory {
       team: resolvedTeam,
       teamMode: resolvedTeam.teamMode,
       globalPresets: _globalPresets(),
-      bus: null,
       session: tab.persistedSession,
       isPersonalSession: isPersonal,
     );
@@ -63,7 +62,6 @@ final class TabMemberCoordinationFactory {
       team: resolvedTeam,
       teamMode: resolvedTeam.teamMode,
       globalPresets: _globalPresets(),
-      bus: null,
       session: tab.persistedSession,
       isPersonalSession: isPersonal,
     );

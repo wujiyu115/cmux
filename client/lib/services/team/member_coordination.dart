@@ -5,7 +5,6 @@ import '../../models/team_config.dart';
 import '../cli/preset_resolver.dart';
 import '../cli/registry/capabilities/presence_capability.dart';
 import '../cli/registry/cli_tool_registry.dart';
-import '../team_bus/team_bus.dart';
 import '../terminal/terminal_session.dart';
 import 'member_coordination_scope.dart';
 
@@ -13,7 +12,6 @@ export 'member_coordination_scope.dart' show MemberCoordinationScope;
 
 enum MemberCoordinationKind {
   personal,
-  mixed,
   nativeClaudeRoster,
   nativeShellActivity,
 }
@@ -26,7 +24,6 @@ sealed class MemberCoordination {
 
   TerminalSession get shell => scope.shell;
   TeamMemberConfig get member => scope.member;
-  TeamBus? get bus => scope.bus;
 
   bool inTurn({required bool pendingDelivery});
   void latchTurnStarted();
@@ -41,7 +38,6 @@ sealed class MemberCoordination {
     required TeamProfile team,
     required TeamMode teamMode,
     required List<CliPreset> globalPresets,
-    TeamBus? bus,
     AppSession? session,
     bool? isPersonalSession,
     bool claudeRosterWorking = false,
@@ -52,8 +48,6 @@ sealed class MemberCoordination {
     final personal =
         isPersonalSession ??
         (MemberCoordinationScope.inferPersonalFromLegacyFlags(
-          teamMode: teamMode,
-          bus: bus,
           usesClaudeRoster: usesClaudeRoster,
           usesShellActivity: usesShellActivity,
         ) &&
@@ -64,7 +58,6 @@ sealed class MemberCoordination {
       team: team,
       teamMode: teamMode,
       globalPresets: globalPresets,
-      bus: bus,
       session: session,
       claudeRosterWorking: claudeRosterWorking,
     );
@@ -72,15 +65,12 @@ sealed class MemberCoordination {
     final presenceCap = registry.capability<PresenceCapability>(team.cli);
     final kind = _kindFor(
       isPersonalSession: personal,
-      teamMode: teamMode,
-      bus: bus,
       usesClaudeRoster: presenceCap?.usesClaudeRoster ?? usesClaudeRoster,
       usesShellActivity: presenceCap?.usesShellActivity ?? usesShellActivity,
     );
     return switch (kind) {
       MemberCoordinationKind.personal =>
         PersonalMemberCoordination(coordinationScope),
-      MemberCoordinationKind.mixed => MixedMemberCoordination(coordinationScope),
       MemberCoordinationKind.nativeClaudeRoster =>
         NativeClaudeRosterCoordination(coordinationScope),
       MemberCoordinationKind.nativeShellActivity =>
@@ -90,14 +80,9 @@ sealed class MemberCoordination {
 
   static MemberCoordinationKind _kindFor({
     required bool isPersonalSession,
-    required TeamMode teamMode,
-    required TeamBus? bus,
     required bool usesClaudeRoster,
     required bool usesShellActivity,
   }) {
-    if (teamMode == TeamMode.mixed && bus != null) {
-      return MemberCoordinationKind.mixed;
-    }
     if (isPersonalSession) return MemberCoordinationKind.personal;
     if (usesClaudeRoster) return MemberCoordinationKind.nativeClaudeRoster;
     if (usesShellActivity) return MemberCoordinationKind.nativeShellActivity;
@@ -177,71 +162,4 @@ final class NativeShellActivityCoordination extends ShellLatchCoordination {
 
   @override
   bool countsAsSessionWorkingWhileBooting() => false;
-}
-
-final class MixedMemberCoordination extends MemberCoordination {
-  const MixedMemberCoordination(super.scope);
-
-  @override
-  bool inTurn({required bool pendingDelivery}) {
-    final b = bus;
-    if (b == null) return false;
-    final memberId = member.id;
-    if (b.isWaitingForMessage(memberId)) return false;
-    return b.isMemberInTurn(memberId);
-  }
-
-  @override
-  void latchTurnStarted() => bus?.markTurnStarted(member.id);
-
-  @override
-  void endTurn() => bus?.onMemberIdle(member.id, fromPtyQuietWatch: true);
-
-  @override
-  MemberAvailability availability() => _bootingOr(_mixedAvailability());
-
-  MemberAvailability _mixedAvailability() {
-    final b = bus!;
-    final memberId = member.id;
-    if (b.isWaitingForMessage(memberId)) {
-      return MemberAvailability.idle;
-    }
-    if (b.isMemberInTurn(memberId)) {
-      return MemberAvailability.working;
-    }
-    if (!shell.activityTracker.isWorking) {
-      return MemberAvailability.idle;
-    }
-    if (!_pushCliAllowsPtyWorking(b, memberId)) {
-      return MemberAvailability.idle;
-    }
-    return MemberAvailability.working;
-  }
-
-  @override
-  bool countsAsSessionWorkingWhileBooting() => false;
-
-  @override
-  bool isReadyForAutomationInput({bool directToPty = false}) {
-    if (!shell.activityTracker.isBootFrameReady) return false;
-    if (directToPty) return true;
-    final b = bus;
-    if (b == null) return true;
-    final launchCli = sessionMemberLaunchCli(
-      session: scope.session,
-      team: scope.team,
-      member: member,
-      globalPresets: scope.globalPresets,
-    );
-    if (member.effectiveForceWaitBeforeStop(scope.team, launchCli: launchCli) &&
-        !b.isWaitingForMessage(member.id)) {
-      return false;
-    }
-    return true;
-  }
-
-  static bool _pushCliAllowsPtyWorking(TeamBus bus, String memberId) {
-    if (bus.isMemberInTurn(memberId)) return true;
-    return bus.memberById(memberId)?.doorbelled ?? false;
-  }
 }
