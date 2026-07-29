@@ -108,14 +108,6 @@ abstract final class MixedTeamPingPongScenario {
           targetId: remote.sshTargetId,
         ),
       ]);
-      await repo.updateWorkspaceMemberTargets(
-        workspace.workspaceId,
-        kItMixedClaudeTeam.id,
-        targets: {
-          kLeadMember.id: 'local',
-          kWorkerMember.id: remote.sshTargetId,
-        },
-      );
       session = await repo.createSession(
         workspace.workspaceId,
         sessionTeam: kItMixedClaudeTeam.id,

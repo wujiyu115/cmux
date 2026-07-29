@@ -207,14 +207,6 @@ abstract final class MixedTeamTaskScenario {
           targetId: remote.sshTargetId,
         ),
       ]);
-      await repo.updateWorkspaceMemberTargets(
-        workspace.workspaceId,
-        kItMixedClaudeTeam.id,
-        targets: {
-          kLeadMember.id: 'local',
-          kWorkerMember.id: remote.sshTargetId,
-        },
-      );
       session = await repo.createSession(
         workspace.workspaceId,
         sessionTeam: kItMixedClaudeTeam.id,
@@ -311,14 +303,6 @@ abstract final class MixedTeamTaskScenario {
           targetId: remote.sshTargetId,
         ),
       ]);
-      await repo.updateWorkspaceMemberTargets(
-        workspace.workspaceId,
-        kItMixedClaudeTeam.id,
-        targets: {
-          kLeadMember.id: 'local',
-          kWorkerMember.id: remote.sshTargetId,
-        },
-      );
       session = await repo.createSession(
         workspace.workspaceId,
         sessionTeam: kItMixedClaudeTeam.id,

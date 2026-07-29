@@ -488,76 +488,6 @@ class SessionRepository {
     return Set<String>.from(a).containsAll(b);
   }
 
-  /// Persists remembered mixed-workspace machine pins for a team.
-  Future<void> updateWorkspaceMemberTargets(
-    String workspaceId,
-    String teamId, {
-    required MemberTargetAssignments targets,
-  }) async {
-    await _updateWorkspaceMemberTargetsAndInit(
-      workspaceId,
-      teamId,
-      targets: targets,
-      markInitialized: false,
-    );
-  }
-
-  /// Persists member targets and marks placement initialized for [teamId].
-  Future<void> updateWorkspaceMemberPlacement(
-    String workspaceId,
-    String teamId, {
-    required MemberTargetAssignments targets,
-  }) async {
-    await _updateWorkspaceMemberTargetsAndInit(
-      workspaceId,
-      teamId,
-      targets: targets,
-      markInitialized: true,
-    );
-  }
-
-  Future<void> _updateWorkspaceMemberTargetsAndInit(
-    String workspaceId,
-    String teamId, {
-    required MemberTargetAssignments targets,
-    required bool markInitialized,
-  }) async {
-    final trimmedTeam = teamId.trim();
-    if (trimmedTeam.isEmpty) return;
-    final fs = await _fs();
-    final existing = await _readManifest(fs, workspaceId);
-    if (existing == null) return;
-    final now = DateTime.now().millisecondsSinceEpoch;
-    final nextByTeam = Map<String, MemberTargetAssignments>.from(
-      existing.memberTargetsByTeam,
-    );
-    final normalized = <String, String>{};
-    for (final entry in targets.entries) {
-      final memberId = entry.key.trim();
-      final targetId = entry.value.trim();
-      if (memberId.isEmpty || targetId.isEmpty) continue;
-      normalized[memberId] = targetId;
-    }
-    if (normalized.isEmpty) {
-      nextByTeam.remove(trimmedTeam);
-    } else {
-      nextByTeam[trimmedTeam] = normalized;
-    }
-    var nextInitialized = existing.memberPlacementInitializedByTeam;
-    if (markInitialized) {
-      nextInitialized = Map<String, bool>.from(nextInitialized)
-        ..[trimmedTeam] = true;
-    }
-    await _writeManifest(
-      fs,
-      existing.copyWith(
-        memberTargetsByTeam: nextByTeam,
-        memberPlacementInitializedByTeam: nextInitialized,
-        updatedAt: now,
-      ),
-    );
-  }
-
   Future<Workspace> remapWorkspaceTarget(
     String workspaceId, {
     required String fromTargetId,
@@ -666,98 +596,7 @@ class SessionRepository {
     if (workspace == null) {
       throw StateError('Unknown workspaceId: $workspaceId');
     }
-    final trimmedTeam = sessionTeam.trim();
-    var cliTeamName = '';
-    var members = const <SessionMemberBinding>[];
-    var sessionTargets = const <String, String>{};
-
-    if (trimmedTeam.isNotEmpty) {
-      final valid = rosterMembers.where((m) => m.isValid).toList();
-      if (valid.isEmpty) {
-        throw ArgumentError(
-          'Team session requires at least one valid roster member',
-        );
-      }
-      if (workspaceNeedsMixedPlacementInit(
-        folders: workspace.folders,
-        teamId: trimmedTeam,
-        initializedByTeam: workspace.memberPlacementInitializedByTeam,
-      )) {
-        throw StateError('mixed_workspace_member_placement_uninitialized');
-      }
-
-      final remembered = rememberedMemberTargets(
-        workspace.memberTargetsByTeam,
-        trimmedTeam,
-      );
-      // Heal stale profile replicas when remembered pins imply more pods
-      // (placement used to write targets without roster.overrides.replicas).
-      final healed = healMemberReplicasFromTargets(
-        members: valid,
-        targets: remembered,
-      );
-      final instances = expandTeamRoster(healed);
-      final resolved = _resolveSessionMemberTargets(
-        workspace: workspace,
-        instances: instances,
-        remembered: remembered,
-      );
-
-      final included = [
-        for (final inst in instances)
-          if (resolved.targets.containsKey(inst.instanceId)) inst,
-      ];
-      if (!leadPlacementValid(
-            folders: workspace.folders,
-            members: healed,
-            targets: resolved.targets,
-          ) ||
-          !_includedLeadWhenRequired(healed, included)) {
-        throw StateError('lead_placement_invalid');
-      }
-      for (final inst in included) {
-        if (!memberClis.containsKey(inst.type.id)) {
-          throw ArgumentError('missing memberClis for ${inst.type.id}');
-        }
-      }
-
-      if (resolved.persistTargets) {
-        await updateWorkspaceMemberTargets(
-          workspaceId,
-          trimmedTeam,
-          targets: resolved.targets,
-        );
-        workspace =
-            await _readManifest(fs, workspaceId) ??
-            workspace.copyWith(
-              memberTargetsByTeam: {
-                ...workspace.memberTargetsByTeam,
-                trimmedTeam: resolved.targets,
-              },
-            );
-      }
-
-      final counterCtx = await _counterContext();
-      final counter = SessionTeamCounter(
-        fs: counterCtx.fs,
-        layout: counterCtx.layout,
-      );
-      cliTeamName = await counter.nextCliTeamName(trimmedTeam);
-      members = [
-        for (final inst in included)
-          SessionMemberBinding(
-            rosterMemberId: inst.instanceId,
-            typeId: inst.type.id,
-            taskId: const Uuid().v4(),
-            cli: memberClis[inst.type.id]!,
-          ),
-      ];
-      sessionTargets = {
-        for (final inst in included)
-          inst.instanceId: resolved.targets[inst.instanceId]!,
-      };
-    }
-
+    // Team launch removed: sessions are always personal (empty sessionTeam).
     final pinnedId = fixedSessionId?.trim() ?? '';
     final sessionId = pinnedId.isNotEmpty ? pinnedId : const Uuid().v4();
     final now = DateTime.now().millisecondsSinceEpoch;
@@ -770,16 +609,16 @@ class SessionRepository {
         workingDirectory ?? '',
       ),
       display: '',
-      sessionTeam: sessionTeam,
+      sessionTeam: '',
       profileId: '',
-      cliTeamName: cliTeamName,
-      cli: trimmedTeam.isEmpty ? cli : null,
-      provider: trimmedTeam.isEmpty ? (provider?.trim() ?? '') : '',
-      model: trimmedTeam.isEmpty ? (model?.trim() ?? '') : '',
-      effort: trimmedTeam.isEmpty ? (effort?.trim() ?? '') : '',
-      presetId: trimmedTeam.isEmpty ? (presetId?.trim() ?? '') : '',
-      members: members,
-      memberTargets: sessionTargets,
+      cliTeamName: '',
+      cli: cli,
+      provider: provider?.trim() ?? '',
+      model: model?.trim() ?? '',
+      effort: effort?.trim() ?? '',
+      presetId: presetId?.trim() ?? '',
+      members: const [],
+      memberTargets: const {},
       launchState: AppSessionLaunchState.created,
       createdAt: now,
       updatedAt: now,
@@ -793,60 +632,6 @@ class SessionRepository {
     );
     await _syncWorkspaceIndexEntry(fs, workspace);
     return session;
-  }
-
-  /// Resolves instance pins for session create.
-  ///
-  /// Single-host: fill every expanded instance to the sole host (persist when
-  /// empty/partial). Mixed: never invent pins; omit unresolvable instances.
-  ({MemberTargetAssignments targets, bool persistTargets})
-  _resolveSessionMemberTargets({
-    required Workspace workspace,
-    required List<MemberInstance> instances,
-    required MemberTargetAssignments remembered,
-  }) {
-    final folders = workspace.folders;
-    final hostIds = workspaceTargetIds(folders);
-    final topology = workspaceTopologyOf(folders);
-
-    if (topology != WorkspaceTopology.mixed) {
-      final host = hostIds.isEmpty
-          ? WorkspaceFolder.localTargetId
-          : hostIds.first;
-      final pinned = <String, String>{};
-      var filledGap = false;
-      for (final inst in instances) {
-        final existing = memberTargetForInstanceId(remembered, inst.instanceId);
-        if (existing != null &&
-            hostIds.contains(existing) &&
-            folderPathsForTarget(folders, existing).isNotEmpty) {
-          pinned[inst.instanceId] = existing;
-        } else {
-          pinned[inst.instanceId] = host;
-          filledGap = true;
-        }
-      }
-      return (targets: pinned, persistTargets: remembered.isEmpty || filledGap);
-    }
-
-    final pinned = <String, String>{};
-    for (final inst in instances) {
-      final existing = memberTargetForInstanceId(remembered, inst.instanceId);
-      if (existing == null) continue;
-      if (!hostIds.contains(existing)) continue;
-      if (folderPathsForTarget(folders, existing).isEmpty) continue;
-      pinned[inst.instanceId] = existing;
-    }
-    return (targets: pinned, persistTargets: false);
-  }
-
-  static bool _includedLeadWhenRequired(
-    List<TeamMemberConfig> valid,
-    List<MemberInstance> included,
-  ) {
-    final requiresLead = valid.any(TeamMemberNaming.isTeamLead);
-    if (!requiresLead) return true;
-    return included.any((inst) => TeamMemberNaming.isTeamLead(inst.type));
   }
 
   Future<AppSession?> _readSession(
@@ -891,47 +676,6 @@ class SessionRepository {
 
   Future<void> markSessionLaunched(String sessionId) {
     return markSessionStarted(sessionId);
-  }
-
-  Future<SessionMemberBinding> ensureMemberBinding(
-    String sessionId,
-    String rosterMemberId, {
-    required CliTool cli,
-    String? typeId,
-  }) {
-    return _withSessionFile(sessionId, () async {
-      final fs = await _fs();
-      final existing = await _findSession(fs, sessionId);
-      if (existing == null) {
-        throw StateError('Unknown sessionId: $sessionId');
-      }
-      final trimmedMemberId = rosterMemberId.trim();
-      if (trimmedMemberId.isEmpty) {
-        throw ArgumentError.value(
-          rosterMemberId,
-          'rosterMemberId',
-          'must not be empty',
-        );
-      }
-      final found = existing.bindingFor(trimmedMemberId);
-      if (found != null) return found;
-
-      final now = DateTime.now().millisecondsSinceEpoch;
-      final binding = SessionMemberBinding(
-        rosterMemberId: trimmedMemberId,
-        typeId: (typeId ?? trimmedMemberId).trim(),
-        taskId: const Uuid().v4(),
-        cli: cli,
-      );
-      await _writeSession(
-        fs,
-        existing.copyWith(
-          members: [...existing.members, binding],
-          updatedAt: now,
-        ),
-      );
-      return binding;
-    });
   }
 
   /// Records a CLI-native resume id for [sessionId]. Team sessions store it on
@@ -1029,19 +773,6 @@ class SessionRepository {
     });
   }
 
-  Future<void> updateSessionTeam(String sessionId, String sessionTeam) {
-    return _withSessionFile(sessionId, () async {
-      final fs = await _fs();
-      final existing = await _findSession(fs, sessionId);
-      if (existing == null) return;
-      final now = DateTime.now().millisecondsSinceEpoch;
-      await _writeSession(
-        fs,
-        existing.copyWith(sessionTeam: sessionTeam, updatedAt: now),
-      );
-    });
-  }
-
   Future<void> updateContinueOverrides(
     String sessionId,
     SessionContinueOverrides overrides,
@@ -1097,31 +828,6 @@ class SessionRepository {
         if (existing == null || existing.sortOrder == order) return;
         await _writeSession(fs, existing.copyWith(sortOrder: order));
       });
-    }
-  }
-
-  Future<void> clearAllSessionTeams() async {
-    final fs = await _fs();
-    for (final json in await fs.listAllSessionJsonMaps()) {
-      try {
-        final session = AppSession.fromJson(json);
-        await _withSessionFile(session.sessionId, () async {
-          final innerFs = await _fs();
-          final fresh = await _findSession(innerFs, session.sessionId);
-          if (fresh == null) return;
-          await _writeSession(
-            innerFs,
-            fresh.copyWith(
-              sessionTeam: '',
-              cliTeamName: '',
-              members: const [],
-              updatedAt: DateTime.now().millisecondsSinceEpoch,
-            ),
-          );
-        });
-      } on Object {
-        continue;
-      }
     }
   }
 
