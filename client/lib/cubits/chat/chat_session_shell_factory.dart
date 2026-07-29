@@ -4,6 +4,7 @@ import '../../models/ssh_profile.dart';
 import '../../models/cli_preset.dart';
 import '../../models/team_config.dart';
 import '../../services/cli/preset_resolver.dart';
+import '../../services/host/host_interactive_shell.dart';
 import '../../services/session/remote_flashskyai_command_builder.dart';
 import '../../services/ssh/ssh_client_factory.dart';
 import '../../services/terminal/ssh_pty_transport.dart';
@@ -53,6 +54,12 @@ class ChatSessionShellFactory {
 
   String executableFor(CliTool cli) => _resolveExecutableFor(cli);
 
+  /// Interactive shell a session tab spawns on [target].
+  String shellExecutableFor(rt.RuntimeTarget target) =>
+      _useSshFor(target) || target.kind == RuntimeKind.ssh
+      ? HostInteractiveShell.remotePosixExecutable
+      : HostInteractiveShell.defaultExecutable();
+
   SshProfile? profileById(String id) => _sshProfileById?.call(id);
 
   TerminalTransportFactory? get transportFactory => _transportFactory;
@@ -98,10 +105,10 @@ class ChatSessionShellFactory {
     return team.cli;
   }
 
-  TerminalSession newSession(CliTool cli, {rt.RuntimeTarget? workTarget}) {
-    final executable = _resolveExecutableFor(cli);
+  TerminalSession newSession({rt.RuntimeTarget? workTarget}) {
     final scrollback = _scrollbackLines;
     final target = _effectiveTarget(workTarget);
+    final executable = shellExecutableFor(target);
     if (_useSshFor(target)) {
       final profile = _profileFor(target);
       if (profile == null) {

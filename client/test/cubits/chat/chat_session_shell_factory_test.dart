@@ -6,11 +6,12 @@ import 'package:teampilot/models/team_config.dart';
 import 'package:teampilot/repositories/ssh_credential_store.dart';
 import 'package:teampilot/repositories/ssh_known_host_repository.dart';
 import 'package:teampilot/repositories/ssh_profile_repository.dart';
+import 'package:teampilot/services/host/host_interactive_shell.dart';
 import 'package:teampilot/services/terminal/terminal_session.dart';
 import 'package:teampilot/services/terminal/terminal_transport_factory.dart';
 
 void main() {
-  test('newSession uses local factory when target is local', () {
+  test('newSession spawns the host interactive shell on a local target', () {
     var seenExecutable = '';
     final factory = ChatSessionShellFactory(
       executableResolver: () => 'flashskyai',
@@ -22,13 +23,13 @@ void main() {
       defaultTargetResolver: RuntimeTarget.local,
     );
 
-    final session = factory.newSession(CliTool.claude);
+    final session = factory.newSession();
 
     expect(session, isA<TerminalSession>());
-    expect(seenExecutable, 'exec-claude');
+    expect(seenExecutable, HostInteractiveShell.defaultExecutable());
   });
 
-  test('newSession uses local factory when target is ssh but no profile', () {
+  test('newSession uses the remote shell when target is ssh but no profile', () {
     var seenExecutable = '';
     final factory = ChatSessionShellFactory(
       executableResolver: () => 'flashskyai',
@@ -42,10 +43,10 @@ void main() {
       defaultTargetResolver: () => RuntimeTarget.ssh('p1', label: 'box'),
     );
 
-    final session = factory.newSession(CliTool.claude);
+    final session = factory.newSession();
 
     expect(session, isA<TerminalSession>());
-    expect(seenExecutable, 'exec-claude');
+    expect(seenExecutable, HostInteractiveShell.remotePosixExecutable);
   });
 
   test('newSession uses ssh transport when workTarget is ssh with profile', () {
@@ -68,7 +69,6 @@ void main() {
     );
 
     final session = factory.newSession(
-      CliTool.claude,
       workTarget: RuntimeTarget.ssh('p1', label: 'box'),
     );
 

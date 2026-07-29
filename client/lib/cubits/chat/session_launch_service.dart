@@ -371,7 +371,7 @@ class SessionLaunchService implements SessionShellConnectorDelegate {
     );
     return tab.memberShells.putIfAbsent(
       shellKey,
-      () => _h.shellFactory.newSession(cli, workTarget: workTarget),
+      () => _h.shellFactory.newSession(workTarget: workTarget),
     );
   }
 
@@ -389,10 +389,8 @@ class SessionLaunchService implements SessionShellConnectorDelegate {
     final existing = tab.memberShells[shellKey];
     if (existing == null) return;
     if (existing.isRunning || existing.isConnecting) return;
-    final expectedExecutable = _h.shellFactory.executableFor(cli);
     final transportMismatch = needsRemoteLaunch != existing.usesRemoteTransport;
-    final cliMismatch = existing.executable != expectedExecutable;
-    if (!transportMismatch && !cliMismatch) return;
+    if (!transportMismatch) return;
     existing.disconnect();
     tab.memberShells.remove(shellKey);
     if (sessionId != null) {
@@ -442,10 +440,10 @@ class SessionLaunchService implements SessionShellConnectorDelegate {
       );
       return tab.memberShells.putIfAbsent(
         memberId,
-        () => _h.shellFactory.newSession(cli),
+        () => _h.shellFactory.newSession(),
       );
     }
-    return tab.resumeSession ??= _h.shellFactory.newSession(team.cli);
+    return tab.resumeSession ??= _h.shellFactory.newSession();
   }
 
   Future<void> connectWorkspaceSession(
