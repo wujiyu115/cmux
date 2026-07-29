@@ -175,7 +175,6 @@ class _ChatWorkbenchState extends State<ChatWorkbench> {
         toTargetId: to,
         liveness: liveness,
       );
-      chat.invalidateWorkspaceProvision(updated);
       await chat.loadWorkspaceData(repo);
       chat.clearLaunchError(sessionId);
     } on Object {

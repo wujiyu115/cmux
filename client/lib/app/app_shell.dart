@@ -18,7 +18,6 @@ import '../services/team_bus/mcp/teammate_bus_mcp_gateway.dart';
 import '../services/remote/local_credential_exporter.dart';
 import '../services/remote/remote_cli_readiness.dart';
 import '../services/editor_platform/editor_platform.dart';
-import '../services/launch/launch_factory.dart';
 import '../cubits/member_presence_cubit.dart';
 import '../cubits/notification_cubit.dart';
 import '../cubits/command_log_cubit.dart';
@@ -761,22 +760,6 @@ Future<AppShell> buildAppShell({
     defaultTargetResolver: defaultTargetResolver,
     terminalScrollbackLinesResolver: () =>
         sessionPreferencesCubit.state.preferences.terminalScrollbackLines,
-    sessionConnect: buildSessionConnectOrchestrator(
-      lifecycle: sessionLifecycleService,
-      registry: cliToolRegistry,
-      sshClientFactory: sshClientFactory,
-      profileById: sshProfileById,
-      contextForTarget: runtimeContextRegistry.forTarget,
-      homeContext: runtimeContextRegistry.home,
-      homeTarget: defaultTargetResolver,
-      isCredentialOptIn: targetsRepo.isCredentialOptIn,
-      cliPathOverride: targetsRepo.cliPathOverride,
-      setCliPathOverride: targetsRepo.setCliPathOverride,
-      loadLocalCredentials: (cli) => LocalCredentialExporter().export(cli),
-      localCliPath: (cli) async =>
-          sessionPreferencesCubit.resolveExecutable(cli),
-      runtimePlanBuilder: sessionRuntimePlanBuilder,
-    ),
     remoteCliReadiness: remoteCliReadiness,
   );
 

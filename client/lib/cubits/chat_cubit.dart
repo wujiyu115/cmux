@@ -26,9 +26,6 @@ import '../services/remote/remote_cli_readiness.dart';
 import '../services/team_bus/mcp/teammate_bus_mcp_gateway.dart';
 import '../services/agent_status/agent_status_seat_lookup.dart';
 import 'agent_attention_cubit.dart';
-import '../services/launch/launch_factory.dart';
-import '../services/launch/session_connect_orchestrator.dart';
-import '../services/launch/workspace_provision_coordinator.dart';
 import '../services/cli/registry/cli_tool_registry.dart';
 import '../services/terminal/terminal_session.dart';
 import '../services/terminal/member_turn_interrupt_service.dart';
@@ -84,7 +81,6 @@ class ChatCubit extends Cubit<ChatState>
     bool Function()? sshUseLoginShellResolver,
     RuntimeTarget Function()? defaultTargetResolver,
     int Function()? terminalScrollbackLinesResolver,
-    SessionConnectOrchestrator? sessionConnect,
     TeammateBusMcpGateway? teammateBusMcpGateway,
     AgentStatusSeatLookup? agentStatusSeatLookup,
     AgentAttentionCubit? agentAttentionCubit,
@@ -92,7 +88,6 @@ class ChatCubit extends Cubit<ChatState>
     LayoutCubit? layoutCubit,
     RemoteCliReadinessService? remoteCliReadiness,
   }) : _remoteCliReadiness = remoteCliReadiness,
-       _sessionConnect = sessionConnect,
        _teammateBusMcpGateway =
            teammateBusMcpGateway ?? TeammateBusMcpGateway(),
        _agentStatusSeatLookup = agentStatusSeatLookup,
@@ -130,7 +125,6 @@ class ChatCubit extends Cubit<ChatState>
   void Function(String sessionId)? onHistorySeatsDispose;
 
   final RemoteCliReadinessService? _remoteCliReadiness;
-  final SessionConnectOrchestrator? _sessionConnect;
 
   /// User-driven remote CLI locate/install (Machines panel + landing gate).
   RemoteCliReadinessService? get remoteCliReadiness => _remoteCliReadiness;
@@ -141,7 +135,6 @@ class ChatCubit extends Cubit<ChatState>
   final AutomationRepository _automationRepository;
   final LayoutCubit? _layoutCubit;
   VoidCallback? _onAutomationsChanged;
-  SessionConnectOrchestrator? _defaultSessionConnect;
 
   void bindAutomationsChangeNotifier(VoidCallback listener) {
     _onAutomationsChanged = listener;
@@ -304,20 +297,6 @@ class ChatCubit extends Cubit<ChatState>
   PostFrameScheduler get postFrameScheduler => _postFrameScheduler;
 
   @override
-  SessionConnectOrchestrator get sessionConnect =>
-      _sessionConnect ??
-      (_defaultSessionConnect ??= buildDefaultSessionConnectOrchestrator(
-        lifecycle: _lifecycle,
-        localCliPath: (cli) async => _shellFactory.executableFor(cli),
-        sshClientFactory: _shellFactory.sshClientFactory,
-        profileById: _shellFactory.profileById,
-      ));
-
-  @override
-  WorkspaceProvisionCoordinator get workspaceProvision =>
-      sessionConnect.workspaceProvision;
-
-  @override
   CliToolRegistry get cliRegistry => _lifecycle.cliToolRegistry;
 
   @override
@@ -339,11 +318,6 @@ class ChatCubit extends Cubit<ChatState>
       platformBrightness:
           SchedulerBinding.instance.platformDispatcher.platformBrightness,
     );
-  }
-
-  /// Drops cached Phase A provision for [workspace] (e.g. after folder/target edits).
-  void invalidateWorkspaceProvision(Workspace workspace) {
-    sessionConnect.invalidateWorkspaceProvision(workspace);
   }
 
   /// Wired by app_shell after both cubits are constructed.

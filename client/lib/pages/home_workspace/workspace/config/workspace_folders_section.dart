@@ -78,9 +78,6 @@ class _WorkspaceFoldersSectionState extends State<WorkspaceFoldersSection> {
     final chat = context.read<ChatCubit>();
     try {
       await repo.updateWorkspaceFolders(widget.workspace.workspaceId, valid);
-      chat.invalidateWorkspaceProvision(
-        widget.workspace.copyWith(folders: valid),
-      );
       await chat.loadWorkspaceData(repo);
       _invalidateDeadTargetCache();
     } finally {
@@ -113,7 +110,6 @@ class _WorkspaceFoldersSectionState extends State<WorkspaceFoldersSection> {
         toTargetId: to,
         liveness: liveness,
       );
-      chat.invalidateWorkspaceProvision(updated);
       await chat.loadWorkspaceData(repo);
       _invalidateDeadTargetCache();
     } on Object {

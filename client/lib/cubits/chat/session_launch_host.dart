@@ -6,8 +6,6 @@ import '../../models/team_config.dart';
 import '../../repositories/session_repository.dart';
 import '../../services/cli/registry/cli_tool_registry.dart';
 import '../../services/team/team_config_launch_validator.dart';
-import '../../services/launch/session_connect_orchestrator.dart';
-import '../../services/launch/workspace_provision_coordinator.dart';
 import '../../services/session/session_lifecycle_service.dart';
 import '../../services/agent_status/agent_status_seat_lookup.dart';
 import '../../cubits/agent_attention_cubit.dart';
@@ -85,8 +83,6 @@ abstract interface class SessionLaunchHost
   SessionRepository? get sessionRepository;
   PostFrameScheduler get postFrameScheduler;
 
-  SessionConnectOrchestrator get sessionConnect;
-
   TeammateBusMcpGateway get teammateBusMcpGateway;
 
   /// Seat CLI + skip-permissions map for `/agent-status` (null in tests).
@@ -94,9 +90,6 @@ abstract interface class SessionLaunchHost
 
   /// Permission-attention state; cleared on seat/tab dispose (null in tests).
   AgentAttentionCubit? get agentAttentionCubit;
-
-  /// Exposes workspace Phase A for team / mixed off-home paths.
-  WorkspaceProvisionCoordinator get workspaceProvision;
 
   /// CLI registry for lifecycle gating and tool capabilities at connect time.
   CliToolRegistry get cliRegistry;

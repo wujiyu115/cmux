@@ -210,7 +210,6 @@ class _MixedWorkspaceMemberPlacementPanelState
         toTargetId: to,
         liveness: liveness,
       );
-      chat.invalidateWorkspaceProvision(updated);
       await chat.loadWorkspaceData(repo);
       _invalidateDeadTargetCache();
       widget.onWorkspaceRemapped?.call(updated);
