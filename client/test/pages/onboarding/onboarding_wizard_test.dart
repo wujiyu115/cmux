@@ -15,20 +15,12 @@ import 'package:teampilot/services/app/onboarding_service.dart';
 import 'package:teampilot/services/plugin/profile_plugin_linker_service.dart';
 import '../../support/in_memory_filesystem.dart';
 
-class _NoopPluginLinker extends ProfilePluginLinkerService {
-  _NoopPluginLinker() : super(appPluginsRoot: '/tmp');
-}
-
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('onboardingStepsForPlatform', () {
-    test('desktop has four steps without SSH', () {
-      expect(onboardingStepsForPlatform(), hasLength(4));
-      expect(
-        onboardingStepsForPlatform(),
-        isNot(contains(OnboardingStepKind.ssh)),
-      );
+    test('desktop has the appearance step only', () {
+      expect(onboardingStepsForPlatform(), [OnboardingStepKind.appearance]);
     });
   });
 
@@ -66,51 +58,6 @@ void main() {
       final service = OnboardingService(appSettings: repo);
 
       expect(await service.shouldShowOnboarding(), isFalse);
-    });
-  });
-
-  group('OnboardingService.applyDefaultPreset', () {
-    test('selects the preset provider for its CLI', () async {
-      final dir = await Directory.systemTemp.createTemp('onboarding-preset_');
-      final presetsRepo = CliPresetsRepository(
-        fs: InMemoryFilesystem(),
-        presetsPath: p.join(dir.path, 'cli-presets.json'),
-      );
-      final presetsCubit = CliPresetsCubit(repository: presetsRepo);
-      await presetsCubit.addPreset(
-        name: 'Default',
-        cli: CliTool.claude,
-        provider: 'deepseek',
-        model: 'deepseek-chat',
-      );
-      final presetId = presetsCubit.state.presets.single.id;
-
-      final appProviderCubit = AppProviderCubit(basePath: dir.path);
-      await appProviderCubit.load();
-      await appProviderCubit.upsertProvider(
-        const AppProviderConfig(
-          id: 'deepseek',
-          cli: CliTool.claude,
-          name: 'DeepSeek',
-          baseUrl: 'https://api.deepseek.com/anthropic',
-          defaultModel: 'deepseek-chat',
-        ),
-      );
-
-      await OnboardingService.applyDefaultPreset(
-        presetId: presetId,
-        cliPresetsCubit: presetsCubit,
-        appProviderCubit: appProviderCubit,
-      );
-
-      expect(
-        appProviderCubit.state.selectedProviderIdByCli[CliTool.claude],
-        'deepseek',
-      );
-
-      await appProviderCubit.close();
-      await presetsCubit.close();
-      await dir.delete(recursive: true);
     });
   });
 

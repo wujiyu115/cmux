@@ -7,29 +7,15 @@ import 'package:flutter/material.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../theme/workspace_surface_layers.dart';
 import 'steps/appearance_step.dart';
-import 'steps/cli_step.dart';
-import 'steps/default_preset_step.dart';
-import 'steps/provider_import_step.dart';
 import 'steps/ssh_step.dart';
 
-enum OnboardingStepKind { appearance, ssh, cli, providerImport, defaultPreset }
+enum OnboardingStepKind { appearance, ssh }
 
 List<OnboardingStepKind> onboardingStepsForPlatform() {
   if (Platform.isAndroid) {
-    return const [
-      OnboardingStepKind.appearance,
-      OnboardingStepKind.ssh,
-      OnboardingStepKind.cli,
-      OnboardingStepKind.providerImport,
-      OnboardingStepKind.defaultPreset,
-    ];
+    return const [OnboardingStepKind.appearance, OnboardingStepKind.ssh];
   }
-  return const [
-    OnboardingStepKind.appearance,
-    OnboardingStepKind.cli,
-    OnboardingStepKind.providerImport,
-    OnboardingStepKind.defaultPreset,
-  ];
+  return const [OnboardingStepKind.appearance];
 }
 
 class OnboardingWizard extends StatefulWidget {
@@ -51,7 +37,6 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
 
   late final List<OnboardingStepKind> _steps;
   late final PageController _pageController;
-  final _defaultPresetKey = GlobalKey<OnboardingDefaultPresetStepState>();
   var _pageIndex = 0;
   var _isAnimating = false;
 
@@ -79,8 +64,6 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
   Future<void> _goNext() async {
     if (_isAnimating) return;
     if (_isLastStep) {
-      await _defaultPresetKey.currentState?.commitSelection();
-      if (!mounted) return;
       widget.onComplete();
       return;
     }
@@ -205,14 +188,6 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
       OnboardingStepKind.ssh => OnboardingSshStep(
         isActive: isActive,
         onContinue: () => unawaited(_goNext()),
-      ),
-      OnboardingStepKind.cli => OnboardingCliStep(isActive: isActive),
-      OnboardingStepKind.providerImport => OnboardingProviderImportStep(
-        isActive: isActive,
-      ),
-      OnboardingStepKind.defaultPreset => OnboardingDefaultPresetStep(
-        key: _defaultPresetKey,
-        isActive: isActive,
       ),
     };
   }
