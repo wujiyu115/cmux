@@ -6,7 +6,6 @@ import '../extensions/extension_management_page.dart';
 import '../mcp/mcp_management_page.dart';
 import '../plugins/plugin_management_page.dart';
 import '../skills/skill_management_page.dart';
-import '../llm_config/llm_config_workspace.dart';
 
 /// Which global management view is shown in the workspace-home right pane.
 enum HomeGlobalView {
@@ -14,7 +13,6 @@ enum HomeGlobalView {
   plugins,
   mcp,
   extensions,
-  providers,
   automations;
 
   /// Query key on `/home-v2` for deep-linking a global management pane.
@@ -85,7 +83,6 @@ class _HomeGlobalSectionState extends State<HomeGlobalSection> {
         section: _extension,
         onSelectSection: (s) => setState(() => _extension = s),
       ),
-      HomeGlobalView.providers => const LlmConfigWorkspace(),
       HomeGlobalView.automations => const AutomationManagementPage(),
     };
     if (MediaQuery.disableAnimationsOf(context)) return content;

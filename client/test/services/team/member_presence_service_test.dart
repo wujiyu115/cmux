@@ -25,44 +25,6 @@ void main() {
     expect(presence['team-lead']!.availability, isNull);
   });
 
-  test(
-    'connected flashskyai shell uses activity tracker after boot frame',
-    () async {
-      final service = MemberPresenceService();
-      final shell = _ConnectedShell();
-      shell.activityTracker.reset();
-      expect(
-        shell.activityTracker.isBootFrameReady,
-        isFalse,
-        reason: 'no PTY bytes yet',
-      );
-
-      final booting = await service.compute(
-        teamCli: CliTool.flashskyai,
-        members: const [TeamMemberConfig(id: 'dev', name: 'developer')],
-        cliTeamName: 't-1',
-        memberToolConfigDir: null,
-        memberShells: {'dev': shell},
-        session: _session(cli: CliTool.flashskyai),
-      );
-      expect(booting['dev']!.availability, MemberAvailability.booting);
-
-      shell.activityTracker.latchBootFrameReadyForTest();
-      shell.activityTracker.markActive();
-      expect(shell.activityTracker.isWorking, isTrue);
-
-      final working = await service.compute(
-        teamCli: CliTool.flashskyai,
-        members: const [TeamMemberConfig(id: 'dev', name: 'developer')],
-        cliTeamName: 't-1',
-        memberToolConfigDir: null,
-        memberShells: {'dev': shell},
-        session: _session(cli: CliTool.flashskyai),
-      );
-      expect(working['dev']!.availability, MemberAvailability.working);
-    },
-  );
-
   test('session context only consulted for connected members', () async {
     final service = MemberPresenceService();
 

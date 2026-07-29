@@ -10,13 +10,11 @@ import 'package:uuid/uuid.dart';
 
 import '../../../cubits/ai_history_cubit.dart';
 import '../../../cubits/chat_cubit.dart';
-import '../../../cubits/cli_presets_cubit.dart';
 import '../../../cubits/session_preferences_cubit.dart';
 import '../../../cubits/workbench/workbench_cubit.dart';
 import '../../../cubits/workbench/workbench_tab.dart';
 import '../../../cubits/worktree_cubit.dart';
 import '../../../l10n/l10n_extensions.dart';
-import '../../../models/cli_preset.dart';
 import '../../../models/landing_launch_context.dart';
 import '../../../models/simple_launch_identity.dart';
 import '../../../models/workspace.dart';
@@ -24,7 +22,6 @@ import '../../../models/app_session.dart';
 import '../../../models/session_continue_overrides.dart';
 import '../../../models/team_config.dart';
 import '../../../repositories/session_repository.dart';
-import '../../../services/cli/preset_resolver.dart';
 import '../../../services/workbench/workbench_shell_actions.dart';
 import '../../../utils/workspace/landing_draft_resolver.dart';
 import '../../../utils/team/team_member_naming.dart';
@@ -585,17 +582,5 @@ SimpleLaunchIdentity _resolveSimpleLaunchIdentity(
   String? presetId,
   CliTool? cli,
 }) {
-  final presets = context.read<CliPresetsCubit>().state.presets;
-  final preset = _presetById(presetId, presets);
-  return SimpleLaunchIdentity.resolve(
-    cli: cli,
-    preset: preset,
-    presetId: presetId,
-  );
-}
-
-CliPreset? _presetById(String? id, List<CliPreset> presets) {
-  final trimmed = id?.trim() ?? '';
-  if (trimmed.isEmpty) return null;
-  return presetById(trimmed, presets);
+  return SimpleLaunchIdentity.resolve(cli: cli, presetId: presetId);
 }

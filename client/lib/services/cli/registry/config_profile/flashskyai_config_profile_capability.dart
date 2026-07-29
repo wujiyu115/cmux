@@ -102,10 +102,8 @@ final class FlashskyaiConfigProfileCapability
       effortLevel: _resolveFlashskyaiEffort(
         team: ctx.team,
         member: ctx.member,
-        model: presetModelId(ctx.preset).isNotEmpty
-            ? presetModelId(ctx.preset)
-            : (ctx.member?.model ?? ''),
-        profileEffort: ctx.preset?.effort ?? '',
+        model: ctx.member?.model ?? '',
+        profileEffort: '',
       ),
     );
 

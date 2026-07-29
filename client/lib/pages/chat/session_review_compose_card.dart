@@ -2,14 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 import '../../l10n/l10n_extensions.dart';
-import '../../models/cli_preset.dart';
 import '../../models/config_bundle.dart';
 import '../../models/plugin.dart';
 import '../../models/skill.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../utils/debounce/debounce.dart';
 import '../../widgets/compose/compose_focus_shell.dart';
-import '../../widgets/compose/compose_model_preset_chip.dart';
 import '../../widgets/compose/compose_permission_chip.dart';
 import '../../widgets/compose/compose_trigger_field.dart';
 import '../home_workspace/workspace/workspace_chat_landing_palette.dart';
@@ -52,11 +50,6 @@ class SessionReviewComposeCard extends StatelessWidget {
     this.floating = false,
     this.identityLabel,
     this.identityIcon,
-    this.sameCliPresets = const [],
-    this.selectedPresetId,
-    this.modelPresetLabel,
-    this.emptyPresetHintLabel,
-    this.onPresetSelected,
     this.dangerouslySkipPermissions = false,
     this.defaultPermissionsLabel,
     this.fullAccessPermissionsLabel,
@@ -105,11 +98,6 @@ class SessionReviewComposeCard extends StatelessWidget {
   final String? identityLabel;
   final IconData? identityIcon;
 
-  final List<CliPreset> sameCliPresets;
-  final String? selectedPresetId;
-  final String? modelPresetLabel;
-  final String? emptyPresetHintLabel;
-  final ValueChanged<String>? onPresetSelected;
 
   final bool dangerouslySkipPermissions;
   final String? defaultPermissionsLabel;
@@ -129,7 +117,6 @@ class SessionReviewComposeCard extends StatelessWidget {
 
   bool get _showContinueToolbar =>
       identityLabel != null ||
-      onPresetSelected != null ||
       onPermissionSelected != null ||
       onTeamSettings != null;
 
@@ -221,19 +208,6 @@ class SessionReviewComposeCard extends StatelessWidget {
                     palette: palette,
                     icon: identityIcon ?? Icons.psychology_outlined,
                     label: identityLabel!,
-                  ),
-                  SizedBox(width: spacing.sm),
-                ],
-                if (onPresetSelected != null &&
-                    modelPresetLabel != null &&
-                    emptyPresetHintLabel != null) ...[
-                  ComposeModelPresetChip(
-                    palette: palette,
-                    sameCliPresets: sameCliPresets,
-                    selectedPresetId: selectedPresetId,
-                    label: modelPresetLabel!,
-                    emptyHintLabel: emptyPresetHintLabel!,
-                    onPresetSelected: onPresetSelected!,
                   ),
                   SizedBox(width: spacing.sm),
                 ],

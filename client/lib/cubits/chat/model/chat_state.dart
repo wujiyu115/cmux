@@ -5,7 +5,6 @@ import '../../../models/workspace.dart';
 import '../../../models/app_session.dart';
 import '../../../models/ssh_profile.dart';
 import '../../../models/team_config.dart';
-import '../../../services/team/team_config_launch_validator.dart';
 import '../../../services/terminal/terminal_session.dart';
 import 'chat_tab_info.dart';
 
@@ -41,7 +40,6 @@ class ChatState extends Equatable {
     this.snackbarMessage,
     this.sessionConnectingId,
     this.sessionLaunchError,
-    this.teamConfigValidation,
     this.workingSessionIds = const {},
     this.newChatActive = true,
   });
@@ -62,10 +60,6 @@ class ChatState extends Equatable {
 
   /// Launch error when connect fails before a tab exists (empty workbench).
   final String? sessionLaunchError;
-
-  /// Set when a team session opens with incomplete provider/model/CLI config;
-  /// the workbench surfaces a "go configure" dialog. Launch is not blocked.
-  final TeamConfigValidation? teamConfigValidation;
 
   /// Session ids with at least one member currently in a turn (TeamBus truth).
   /// Drives the working spinner on session tabs and sidebar list items. Only
@@ -92,8 +86,6 @@ class ChatState extends Equatable {
     bool clearSessionConnectingId = false,
     String? sessionLaunchError,
     bool clearSessionLaunchError = false,
-    TeamConfigValidation? teamConfigValidation,
-    bool clearTeamConfigValidation = false,
     Set<String>? workingSessionIds,
     bool? newChatActive,
   }) {
@@ -118,9 +110,6 @@ class ChatState extends Equatable {
       sessionLaunchError: clearSessionLaunchError
           ? null
           : (sessionLaunchError ?? this.sessionLaunchError),
-      teamConfigValidation: clearTeamConfigValidation
-          ? null
-          : (teamConfigValidation ?? this.teamConfigValidation),
       workingSessionIds: workingSessionIds ?? this.workingSessionIds,
       newChatActive: newChatActive ?? this.newChatActive,
     );
@@ -160,7 +149,6 @@ class ChatState extends Equatable {
     snackbarMessage,
     sessionConnectingId,
     sessionLaunchError,
-    teamConfigValidation,
     workingSessionIds,
     newChatActive,
   ];

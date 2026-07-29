@@ -7,7 +7,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../cubits/app_bootstrap_cubit.dart';
 import 'app_data_bootstrap.dart';
-import '../cubits/app_provider_cubit.dart';
 import '../cubits/app_update_cubit.dart';
 import '../cubits/automation_cubit.dart';
 import '../cubits/agent_attention_cubit.dart';
@@ -34,13 +33,10 @@ import '../services/session/session_history_context_builder.dart';
 import '../cubits/config_cubit.dart';
 import '../cubits/layout_cubit.dart';
 import '../cubits/workspace_tools_cubit.dart';
-import '../cubits/llm_config_cubit.dart';
 import '../cubits/session_preferences_cubit.dart';
 import '../cubits/extension_cubit.dart';
 import '../cubits/mcp_cubit.dart';
 import '../cubits/plugin_cubit.dart';
-import '../cubits/cli_presets_cubit.dart';
-import '../repositories/cli_presets_repository.dart';
 import '../cubits/skill_cubit.dart';
 import '../repositories/mcp_repository.dart';
 import '../services/mcp/profile_mcp_linker_service.dart';
@@ -176,13 +172,10 @@ class AppShell {
     required this.sshProfileConnectionCoordinator,
     required this.connectionModeService,
     required this.configCubit,
-    required this.appProviderCubit,
-    required this.llmConfigCubit,
     required this.layoutCubit,
     required this.workspaceToolsCubit,
     required this.sessionPreferencesCubit,
     required this.pluginCubit,
-    required this.cliPresetsCubit,
     required this.skillCubit,
     required this.mcpCubit,
     required this.extensionCubit,
@@ -240,13 +233,10 @@ class AppShell {
   final SshProfileConnectionCoordinator sshProfileConnectionCoordinator;
   final ConnectionModeService connectionModeService;
   final ConfigCubit configCubit;
-  final AppProviderCubit appProviderCubit;
-  final LlmConfigCubit llmConfigCubit;
   final LayoutCubit layoutCubit;
   final WorkspaceToolsCubit workspaceToolsCubit;
   final SessionPreferencesCubit sessionPreferencesCubit;
   final PluginCubit pluginCubit;
-  final CliPresetsCubit cliPresetsCubit;
   final SkillCubit skillCubit;
   final McpCubit mcpCubit;
   final ExtensionCubit extensionCubit;
@@ -361,10 +351,7 @@ Future<AppShell> buildAppShell({
     }
   }
 
-  late final LlmConfigCubit llmConfigCubit;
-  late final AppProviderCubit appProviderCubit;
   late final PluginCubit pluginCubit;
-  late final CliPresetsCubit cliPresetsCubit;
   late final SkillCubit skillCubit;
   late final McpCubit mcpCubit;
   late final ExtensionCubit extensionCubit;
@@ -556,32 +543,6 @@ Future<AppShell> buildAppShell({
     repoCache: skillRepoCache,
   );
 
-  appProviderCubit = AppProviderCubit(
-    flashskyaiExecutablePath: sessionPreferencesCubit.resolveExecutable,
-    claudeExecutablePath: () =>
-        sessionPreferencesCubit.resolveExecutable(CliTool.claude),
-    cursorExecutablePath: () =>
-        sessionPreferencesCubit.resolveExecutable(CliTool.cursor),
-  );
-
-  llmConfigCubit = LlmConfigCubit(
-    appSettings: appSettings,
-    executableResolver: () => sessionPreferencesCubit.resolveExecutable(),
-    isSshMode: () => connectionModeService.isSshMode,
-    sshProfileResolver: () => sshProfileCubit.state.selectedProfile,
-    sshClientFactory: sshClientFactory,
-    sshWorkingDirectoryResolver: () =>
-        sessionPreferencesCubit.state.preferences.defaultSshWorkingDirectory,
-  );
-
-  String? llmConfigPathOverrideForLaunch() {
-    final s = llmConfigCubit.state;
-    final path = s.effectiveConfigPath.trim();
-    if (path.isEmpty) return null;
-    if (connectionModeService.isSshMode) return path;
-    return s.isUsingCustomPath ? path : null;
-  }
-
   final extensionRepository = ExtensionRepository(
     fs: AppStorage.fs,
     stateFilePath: AppStorage.paths.extensionsStateJson,
@@ -595,10 +556,6 @@ Future<AppShell> buildAppShell({
     ExtensionAcquisitionEngine(),
   );
 
-  final cliPresetsRepo = CliPresetsRepository(
-    fs: AppStorage.fs,
-    presetsPath: AppStorage.paths.cliPresetsJson,
-  );
   sessionLifecycleService = SessionLifecycleService(
     storageRootsResolver: () async => AppStorage.context,
     catalogContextResolver: () async => runtimeContextRegistry.home(),
@@ -628,8 +585,6 @@ Future<AppShell> buildAppShell({
     },
     cliToolRegistry: cliToolRegistry,
     loadInstalledSkills: () => skillRepo.loadInstalled(),
-    cliPresetsRepository: cliPresetsRepo,
-    loadPresets: () => cliPresetsCubit.state.presets,
   );
   sessionRepo = SessionRepository(lifecycleService: sessionLifecycleService);
   boot('prefetching home index snapshots');
@@ -649,7 +604,6 @@ Future<AppShell> buildAppShell({
     repoService: pluginRepository.repos,
     diskCache: PluginRepoDiskCacheService(),
   );
-  cliPresetsCubit = CliPresetsCubit(repository: cliPresetsRepo);
   mcpCubit = McpCubit(mcpRepository);
 
   final appUpdateCubit = AppUpdateCubit(settings: appSettings);
@@ -801,9 +755,6 @@ Future<AppShell> buildAppShell({
     workspaceById: (workspaceId) => chatCubit.state.workspaces
         .where((w) => w.workspaceId == workspaceId)
         .firstOrNull,
-    resolveCliPreset: (presetId) => cliPresetsCubit.state.presets
-        .where((preset) => preset.id == presetId.trim())
-        .firstOrNull,
     sessionById: (sessionId, workspaceId) => chatCubit.state.sessions
         .where((s) => s.sessionId == sessionId && s.workspaceId == workspaceId)
         .firstOrNull,
@@ -832,7 +783,6 @@ Future<AppShell> buildAppShell({
           memberId: memberId,
         ),
     registry: cliToolRegistry,
-    globalPresets: () => cliPresetsCubit.state.presets,
   );
   aiHistoryLoaderRef = aiHistoryLoader;
   final aiHistoryCubit = AiHistoryCubit(
@@ -879,8 +829,6 @@ Future<AppShell> buildAppShell({
   reloadAllAppData = () => AppDataBootstrap.reloadAll(
     boot: boot,
     sshProfileCubit: sshProfileCubit,
-    llmConfigCubit: llmConfigCubit,
-    appProviderCubit: appProviderCubit,
     pluginCubit: pluginCubit,
     skillCubit: skillCubit,
     mcpCubit: mcpCubit,
@@ -939,8 +887,6 @@ Future<AppShell> buildAppShell({
     bootstrapCubit?.beginWarmAuxiliary();
     await AppDataBootstrap.warmAuxiliaryData(
       boot: boot,
-      llmConfigCubit: llmConfigCubit,
-      appProviderCubit: appProviderCubit,
       pluginCubit: pluginCubit,
       skillCubit: skillCubit,
       mcpCubit: mcpCubit,
@@ -952,7 +898,6 @@ Future<AppShell> buildAppShell({
       boot: boot,
       appSettings: appSettings,
       sshProfileCubit: sshProfileCubit,
-      cliPresetsCubit: cliPresetsCubit,
       homeWorkspaceUiCache: homeWorkspaceUiCache,
       workspaces: chatCubit.state.workspaces,
     );
@@ -1046,13 +991,10 @@ Future<AppShell> buildAppShell({
     sshProfileConnectionCoordinator: sshProfileConnectionCoordinator,
     connectionModeService: connectionModeService,
     configCubit: configCubit,
-    appProviderCubit: appProviderCubit,
-    llmConfigCubit: llmConfigCubit,
     layoutCubit: layoutCubit,
     workspaceToolsCubit: workspaceToolsCubit,
     sessionPreferencesCubit: sessionPreferencesCubit,
     pluginCubit: pluginCubit,
-    cliPresetsCubit: cliPresetsCubit,
     skillCubit: skillCubit,
     mcpCubit: mcpCubit,
     extensionCubit: extensionCubit,

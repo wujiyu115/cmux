@@ -4,7 +4,6 @@ import '../../cubits/chat/session_launch_host.dart';
 import '../../models/team_config.dart';
 import '../../models/workspace.dart';
 import '../../repositories/session_repository.dart';
-import '../../services/session/session_member_cli_locks.dart';
 import '../../utils/logging/logger.dart';
 import 'session_launch_workspace_index.dart';
 
@@ -86,11 +85,10 @@ class SessionDefaultMaterializer {
       workspace.workspaceId,
       sessionTeam: team.id,
       rosterMembers: team.members,
-      memberClis: resolveSessionMemberCliLocks(
-        team: team,
-        rosterMembers: team.members,
-        globalPresets: _host.lifecycle.globalPresets,
-      ),
+      memberClis: {
+        for (final m in team.members.where((m) => m.isValid))
+          m.id: m.cli ?? team.cli,
+      },
     );
     if (_host.isClosed) return;
     await _host.loadWorkspaceData(repo);

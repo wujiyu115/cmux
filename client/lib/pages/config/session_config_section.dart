@@ -12,7 +12,6 @@ import '../../utils/ui/app_keys.dart';
 import '../../utils/debounce/debounce.dart';
 import 'runtime_target_picker.dart';
 import 'session_config_constants.dart';
-import 'session_llm_path_settings_row.dart';
 
 class SessionConfigWorkspace extends StatelessWidget {
   const SessionConfigWorkspace({this.showHeading = true, super.key});
@@ -210,8 +209,6 @@ class _SessionControlsState extends State<_SessionControls> {
                     showDividerBelow: true,
                   ),
                 ],
-                if (kShowLlmConfigPathSetting)
-                  const SessionLlmConfigPathSettingsRow(),
                 TpPreferenceRow(
                   title: l10n.terminalScrollbackLinesTitle,
                   subtitle: l10n.terminalScrollbackLinesDescription,

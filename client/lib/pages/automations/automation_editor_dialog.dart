@@ -7,7 +7,6 @@ import 'package:uuid/uuid.dart';
 
 import '../../cubits/automation_cubit.dart';
 import '../../cubits/chat_cubit.dart';
-import '../../cubits/cli_presets_cubit.dart';
 import '../../cubits/session_preferences_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../models/automation.dart';
@@ -172,13 +171,11 @@ class _AutomationEditorDialogState extends State<AutomationEditorDialog> {
       _dangerouslySkipPermissions = draft.dangerouslySkipPermissions;
     });
     _seedTeamMemberDefault();
-    _seedPresetDefault();
     _seedLocationDefaults();
   }
 
   void _seedLaunchDefaults() {
     if (widget.initial != null) return;
-    _seedPresetDefault();
     _seedTeamMemberDefault();
     _seedLocationDefaults();
   }
@@ -222,14 +219,6 @@ class _AutomationEditorDialogState extends State<AutomationEditorDialog> {
     return _resolvedProjectFolderPath(workspace);
   }
 
-  void _seedPresetDefault() {
-    if (!_isPersonal) return;
-    if (_presetId != null && _presetId!.trim().isNotEmpty) return;
-    final presets = context.read<CliPresetsCubit>().state.presets;
-    if (presets.isEmpty) return;
-    setState(() => _presetId = presets.first.id);
-  }
-
   void _seedTeamMemberDefault() {}
 
   void _onIsPersonalChanged(bool isPersonal) {
@@ -243,7 +232,6 @@ class _AutomationEditorDialogState extends State<AutomationEditorDialog> {
       }
     });
     if (isPersonal) {
-      _seedPresetDefault();
     } else {
       _seedTeamMemberDefault();
     }
@@ -394,14 +382,12 @@ class _AutomationEditorDialogState extends State<AutomationEditorDialog> {
             isPersonal: _isPersonal,
             projectFolderPath: _projectFolderPath,
             workingDirectoryPath: _workingDirectoryPath,
-            presetId: _presetId,
             teamId: _teamId,
             dangerouslySkipPermissions: _dangerouslySkipPermissions,
             targetMemberId: _targetMemberId,
             onIsPersonalChanged: _onIsPersonalChanged,
             onProjectChanged: (v) => setState(() => _projectFolderPath = v),
             onWorktreeChanged: (v) => setState(() => _workingDirectoryPath = v),
-            onPresetChanged: (v) => setState(() => _presetId = v),
             onTeamChanged: _onTeamChanged,
             onPermissionsChanged: (v) =>
                 setState(() => _dangerouslySkipPermissions = v),

@@ -75,10 +75,6 @@ void main() {
       );
     });
 
-    tearDown(() {
-      host.sessionRuntime.disposeIdleWatch();
-    });
-
     test(
       'connectImmediately defaults to Terminal workbench view',
       () {
@@ -169,10 +165,6 @@ void main() {
       );
     });
 
-    tearDown(() {
-      host.sessionRuntime.disposeIdleWatch();
-    });
-
     test(
       'connectImmediately defaults to Terminal workbench view',
       () {
@@ -219,8 +211,6 @@ class _FakeHost implements SessionLaunchHost {
   _FakeHost(this.state, {required ChatTabStore tabStore})
     : sessionRuntime = TabSessionRuntimeCoordinator(
         tabStore: tabStore,
-        shellFactory: ChatSessionShellFactory(executableResolver: () => 'true'),
-        globalPresets: () => const [],
         isClosed: () => false,
       );
 

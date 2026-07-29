@@ -7,9 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_ui/shared_ui.dart';
 import 'package:teampilot/widgets/app_toast/app_toast.dart';
 
-import '../../../cubits/app_provider_cubit.dart';
 import '../../../cubits/chat_cubit.dart';
-import '../../../cubits/cli_presets_cubit.dart';
 import '../../../cubits/plugin_cubit.dart';
 import '../../../cubits/session_preferences_cubit.dart';
 import '../../../cubits/skill_cubit.dart';
@@ -19,7 +17,6 @@ import '../../../utils/ui/app_keys.dart';
 import '../../../models/config_bundle.dart';
 import '../../../models/landing_launch_context.dart';
 import '../../../l10n/l10n_extensions.dart';
-import '../../../models/cli_preset.dart';
 import '../../../models/team_config.dart';
 import '../../../models/workspace.dart';
 import '../../../models/runtime_target.dart';
@@ -34,13 +31,8 @@ import '../../../pages/home_workspace/home_workspace_route.dart';
 import '../../../utils/workspace/landing_draft_resolver.dart';
 import '../../../utils/workspace/workspace_path_utils.dart';
 import '../../../services/storage/home_target_controller.dart';
-import '../../../widgets/cli/cli_brand_icon.dart';
-import '../../../widgets/compose/compose_model_preset_chip.dart';
-import '../../../services/launch/workspace_landing_launch_gate.dart';
 import '../../../repositories/workspace_project_config_repository.dart';
-import 'config/cli_presets_manage_dialog.dart';
 import 'workspace_chat_landing_compose_card.dart';
-import 'workspace_landing_launch_feedback.dart';
 import 'workspace_landing_selectors.dart';
 
 typedef LandingComposeSubmit =
@@ -88,10 +80,6 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
   String? _selectedWorktreePath;
   List<RuntimeTarget> _runtimeTargets = const [];
   Future<void>? _runtimeTargetsLoad;
-  final _launchGate = WorkspaceLandingLaunchGate();
-  var _teamConfigLaunchReady = true;
-  WorkspaceLandingLaunchBlock? _launchWarningBlock;
-  int _teamLaunchReadinessGeneration = 0;
   ConfigBundle _workspaceProjectBundle = const ConfigBundle();
   int _workspaceBundleGeneration = 0;
 
@@ -540,58 +528,11 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
     _persistDraft();
   }
 
-  void _openPresetsManageDialog() {
-    showDialog<void>(
-      context: context,
-      builder: (_) => const CliPresetsManageDialog(),
-    );
-  }
-
-  String _autoChipLabel(
-    AppLocalizations l10n, {
-    required List<CliPreset> presets,
-  }) {
-    final preset = presets.where((p) => p.id == _selectedPresetId).firstOrNull;
-    return preset?.name.trim().isNotEmpty == true
-        ? preset!.name.trim()
-        : l10n.workspaceChatLandingUsePreset;
-  }
-
-  Widget? _autoChipLeading(
-    BuildContext context, {
-    required List<CliPreset> presets,
-  }) {
-    final preset =
-        presets.where((p) => p.id == _selectedPresetId).firstOrNull ??
-        presets.firstOrNull;
-    if (preset == null) return null;
-    final icons = context.tpIconSizes;
-    return CliBrandIcon(
-      cli: preset.cli,
-      size: icons.sm,
-      borderRadius: 4,
-      showBorder: false,
-    );
-  }
-
-  List<TpActionMenuSpec> _autoChipSpecs(
-    AppLocalizations l10n, {
-    required List<CliPreset> presets,
-  }) {
-    return buildComposeModelPresetMenuSpecs(
-      sameCliPresets: presets,
-      selectedPresetId: _selectedPresetId,
-      emptyHintLabel: l10n.workspaceCliPresetsEmptyHint,
-      managePresetsLabel: l10n.workspaceCliAddPresetTitle,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final spacing = context.tpSpacing;
-    final presets = context.watch<CliPresetsCubit>().state.presets;
     final skills = context.watch<SkillCubit>().state.installed;
     final plugins = context.watch<PluginCubit>().state.installed;
     final slashBundle = _slashBundleForDraft(_currentDraft());
@@ -602,8 +543,6 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
     final worktreeResolver = _worktreeResolver(worktreeState);
     final selectedWorktreePath = worktreeResolver.resolveSelectedWorktreePath();
     final worktreeLabel = worktreeResolver.labelFor(selectedWorktreePath);
-    final launchWarningBlock = _launchWarningBlock;
-
     final composeCard = WorkspaceChatLandingComposeCard(
       controller: _controller,
       focusNode: _focusNode,
@@ -612,23 +551,9 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
       canSubmit: _canSubmit,
       onSubmit: _submit,
       onChanged: (_) => setState(() {}),
-      autoChipLabel: _autoChipLabel(l10n, presets: presets),
-      autoChipLeading: _autoChipLeading(
-        context,
-        presets: presets,
-      ),
       dangerouslySkipPermissions: _dangerouslySkipPermissions,
       defaultPermissionsLabel: l10n.workspaceChatLandingDefaultPermissions,
       fullAccessPermissionsLabel: l10n.workspaceChatLandingFullAccessPermissions,
-      autoChipSpecs: _autoChipSpecs(l10n, presets: presets),
-      onAutoChipSelected: (value) {
-        if (value == ComposeModelPresetChipAction.manage) {
-          _openPresetsManageDialog();
-          return;
-        }
-        if (value is! String || value.isEmpty) return;
-        _selectPreset(value);
-      },
       onPermissionSelected: _setDangerouslySkipPermissions,
       attachTooltip: l10n.workspaceChatLandingAttach,
       voiceTooltip: l10n.workspaceChatLandingVoice,
@@ -647,14 +572,6 @@ class _WorkspaceChatLandingState extends State<WorkspaceChatLanding> {
       skills: skills,
       plugins: plugins,
       slashBundle: slashBundle,
-      submitBlockedTooltip:
-          launchWarningBlock != null && _controller.text.trim().isNotEmpty
-          ? landingLaunchBlockMessage(
-              l10n,
-              launchWarningBlock,
-              registry: CliToolRegistryScope.of(context),
-            )
-          : null,
     );
 
     final body = widget.showLandingChrome

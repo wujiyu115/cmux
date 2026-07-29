@@ -12,7 +12,6 @@ import '../../widgets/settings/workspace_hub_shell.dart';
 import '../../widgets/settings/workspace_section_host.dart';
 import '../about_page.dart';
 import '../system/log_config_workspace.dart';
-import 'cli_config_section.dart';
 import 'github_config_section.dart';
 import 'layout_config_section.dart';
 import 'session_config_section.dart';
@@ -23,12 +22,11 @@ int _configSectionDialogIndex(ConfigSection section) {
   return switch (section) {
     ConfigSection.layout => 0,
     ConfigSection.session => 1,
-    ConfigSection.cli => 2,
-    ConfigSection.sshProfiles => 3,
-    ConfigSection.github => 4,
-    ConfigSection.shortcuts => 5,
-    ConfigSection.about => 6,
-    ConfigSection.logs => 6,
+    ConfigSection.sshProfiles => 2,
+    ConfigSection.github => 3,
+    ConfigSection.shortcuts => 4,
+    ConfigSection.about => 5,
+    ConfigSection.logs => 5,
   };
 }
 
@@ -71,13 +69,6 @@ Future<void> showWorkspaceSettingsDialog(
         title: (l10n) => l10n.session,
         subtitle: (l10n) => l10n.sessionPageSubtitle,
         bodyBuilder: (_) => const SessionConfigWorkspace(showHeading: false),
-      ),
-      SettingsDialogEntry(
-        icon: Icons.code_outlined,
-        navLabel: (l10n) => l10n.cliConfig,
-        title: (l10n) => l10n.cliConfig,
-        subtitle: (l10n) => l10n.cliConfigPageSubtitle,
-        bodyBuilder: (_) => const CliConfigWorkspace(showHeading: false),
       ),
       SettingsDialogEntry(
         icon: Icons.dns_outlined,
@@ -143,15 +134,6 @@ class ConfigSettingsHubPage extends StatelessWidget {
           onTap: throttledTap('config_hub_session', () {
             context.read<ConfigCubit>().selectSection(ConfigSection.session);
             context.push('/config/session');
-          }),
-        ),
-        WorkspaceHubEntry(
-          key: AppKeys.configCliSectionButton,
-          title: l10n.cliConfig,
-          icon: Icons.code_outlined,
-          onTap: throttledTap('config_hub_cli', () {
-            context.read<ConfigCubit>().selectSection(ConfigSection.cli);
-            context.push('/config/cli');
           }),
         ),
         WorkspaceHubEntry(
@@ -235,7 +217,6 @@ class ConfigWorkspace extends StatelessWidget {
         ConfigSection.session => SessionConfigWorkspace(
           showHeading: showHeading,
         ),
-        ConfigSection.cli => CliConfigWorkspace(showHeading: showHeading),
         ConfigSection.sshProfiles => SshProfilesConfigWorkspace(
           showHeading: showHeading,
         ),
@@ -285,16 +266,6 @@ class ConfigNavPanel extends StatelessWidget {
           onTap: throttledTap(
             'config_nav_session',
             () => onSelectSection(ConfigSection.session),
-          ),
-        ),
-        WorkspaceHubEntry(
-          key: AppKeys.configCliSectionButton,
-          title: l10n.cliConfig,
-          icon: Icons.code_outlined,
-          selected: section == ConfigSection.cli,
-          onTap: throttledTap(
-            'config_nav_cli',
-            () => onSelectSection(ConfigSection.cli),
           ),
         ),
         WorkspaceHubEntry(

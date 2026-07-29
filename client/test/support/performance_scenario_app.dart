@@ -6,19 +6,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:teampilot/cubits/app_bootstrap_cubit.dart';
-import 'package:teampilot/cubits/app_provider_cubit.dart';
 import 'package:teampilot/cubits/chat_cubit.dart';
-import 'package:teampilot/cubits/cli_presets_cubit.dart';
 import 'package:teampilot/cubits/mcp_cubit.dart';
 import 'package:teampilot/cubits/app_update_cubit.dart';
 import 'package:teampilot/cubits/ssh_profile_cubit.dart';
-import 'package:teampilot/repositories/cli_presets_repository.dart';
 import 'package:teampilot/repositories/mcp_repository.dart';
 import 'package:teampilot/cubits/config_cubit.dart';
 import 'package:teampilot/cubits/editor_cubit.dart';
 import 'package:teampilot/cubits/extension_cubit.dart';
 import 'package:teampilot/cubits/layout_cubit.dart';
-import 'package:teampilot/cubits/llm_config_cubit.dart';
 import 'package:teampilot/cubits/member_presence_cubit.dart';
 import 'package:teampilot/cubits/notification_cubit.dart';
 import 'package:teampilot/cubits/plugin_cubit.dart';
@@ -223,19 +219,6 @@ class PerformanceScenarioApp {
             BlocProvider.value(value: chat),
             BlocProvider.value(value: presence),
             BlocProvider(create: (_) => ConfigCubit()),
-            BlocProvider(
-              create: (_) => LlmConfigCubit(
-                appSettings: InMemoryAppSettingsRepository(),
-                initialConfig: const LlmConfig(),
-              ),
-            ),
-            BlocProvider(
-              create: (_) => AppProviderCubit(
-                repository: AppProviderRepository(
-                  basePath: Directory.systemTemp.path,
-                ),
-              ),
-            ),
             BlocProvider.value(value: layoutCubit ?? LayoutCubit()),
             BlocProvider.value(value: sessionPreferencesCubit),
             BlocProvider(create: (_) => EditorCubit(fs: LocalFilesystem())),
@@ -270,14 +253,6 @@ class PerformanceScenarioApp {
             BlocProvider(
               create: (_) => testAutomationCubit(
                 sessionRepository: sessionRepository,
-              ),
-            ),
-            BlocProvider(
-              create: (_) => CliPresetsCubit(
-                repository: CliPresetsRepository(
-                  fs: InMemoryFilesystem(),
-                  presetsPath: '/test/cli-presets.json',
-                ),
               ),
             ),
             BlocProvider(create: (_) => McpCubit(McpRepository())),

@@ -166,7 +166,6 @@ class SessionTabSurfaceCoordinator {
     final generation = tab.launchGeneration;
 
     _tabStore.append(tab);
-    _host.sessionRuntime.ensureIdleWatch();
     _host.applyState(
       _state().copyWith(
         activeTabIndex: _tabStore.activeTabCount - 1,

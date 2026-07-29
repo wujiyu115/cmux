@@ -77,15 +77,4 @@ void main() {
     expect(session.usesRemoteTransport, isTrue);
   });
 
-  test('cliForMember resolves member-specific cli', () {
-    final factory = ChatSessionShellFactory(
-      executableResolver: () => 'flashskyai',
-      terminalSessionFactory:
-          ({required executable, scrollbackLines = 10000}) =>
-              TerminalSession(executable: executable),
-    );
-    const team = TeamProfile(id: 't', name: 'T', members: []);
-
-    expect(factory.cliForMember(team, 'missing'), team.cli);
-  });
 }

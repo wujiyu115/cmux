@@ -1,12 +1,11 @@
 import 'package:flutter/foundation.dart';
 
-import 'cli_preset.dart';
 import 'team_config.dart';
 
 /// Denormalized Simple (unteamed) launch identity.
 ///
-/// Persisted on [AppSession]. Create resolves once; reconnect must not
-/// re-fetch a global [CliPreset] for provider/model/cli.
+/// Persisted on [AppSession]. Create resolves once; reconnect reuses the
+/// stored provider/model/cli.
 @immutable
 class SimpleLaunchIdentity {
   const SimpleLaunchIdentity({
@@ -34,43 +33,26 @@ class SimpleLaunchIdentity {
     CliTool.flashskyai => null,
   };
 
-  /// Create-time resolve: preset wins over explicit args; empty provider →
-  /// official catalog id for [cli].
+  /// Create-time resolve: empty provider → official catalog id for [cli].
   factory SimpleLaunchIdentity.resolve({
     CliTool? cli,
-    CliPreset? preset,
     String? provider,
     String? model,
     String? effort,
     String? presetId,
   }) {
-    final resolvedCli = preset?.cli ?? cli ?? CliTool.claude;
-    final fromPresetId = preset?.id.trim() ?? '';
-    final resolvedPresetId =
-        (presetId?.trim().isNotEmpty ?? false)
-            ? presetId!.trim()
-            : fromPresetId;
-
-    var resolvedProvider = (preset?.provider.trim().isNotEmpty ?? false)
-        ? preset!.provider.trim()
-        : (provider?.trim() ?? '');
+    final resolvedCli = cli ?? CliTool.claude;
+    var resolvedProvider = provider?.trim() ?? '';
     if (resolvedProvider.isEmpty) {
       resolvedProvider = officialProviderIdFor(resolvedCli) ?? '';
     }
 
-    final resolvedModel = (preset?.model.trim().isNotEmpty ?? false)
-        ? preset!.model.trim()
-        : (model?.trim() ?? '');
-    final resolvedEffort = (preset?.effort.trim().isNotEmpty ?? false)
-        ? preset!.effort.trim()
-        : (effort?.trim() ?? '');
-
     return SimpleLaunchIdentity(
       cli: resolvedCli,
       provider: resolvedProvider,
-      model: resolvedModel,
-      effort: resolvedEffort,
-      presetId: resolvedPresetId,
+      model: model?.trim() ?? '',
+      effort: effort?.trim() ?? '',
+      presetId: presetId?.trim() ?? '',
     );
   }
 

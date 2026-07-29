@@ -9,7 +9,6 @@ import 'package:teampilot/cubits/chat_cubit.dart';
 import 'package:teampilot/cubits/editor_cubit.dart';
 import 'package:teampilot/cubits/layout_cubit.dart';
 import 'package:teampilot/cubits/member_presence_cubit.dart';
-import 'package:teampilot/cubits/cli_presets_cubit.dart';
 import 'package:teampilot/cubits/plugin_cubit.dart';
 import 'package:teampilot/cubits/run_cubit.dart';
 import 'package:teampilot/cubits/shortcut_cubit.dart';
@@ -25,7 +24,6 @@ import 'package:teampilot/models/workspace.dart';
 import 'package:teampilot/models/workspace_folder.dart';
 import 'package:teampilot/pages/chat/chat_page_shell.dart';
 import 'package:teampilot/pages/chat/chat_page_shell_probe.dart';
-import 'package:teampilot/repositories/cli_presets_repository.dart';
 import 'package:teampilot/repositories/plugin_repository.dart';
 import 'package:teampilot/repositories/session_repository.dart';
 import 'package:teampilot/repositories/skill_repository.dart';
@@ -148,17 +146,6 @@ void main() {
       chatCubit.bindPresenceCubit(presenceCubit);
       addTearDown(() => presenceCubit.close());
 
-      final cliPresetsCubit = CliPresetsCubit(
-        repository: CliPresetsRepository(
-          fs: InMemoryFilesystem(),
-          presetsPath: '/cli-presets.json',
-        ),
-      );
-      cliPresetsCubit.emit(
-        const CliPresetsState(status: CliPresetsLoadStatus.ready),
-      );
-      addTearDown(() => cliPresetsCubit.close());
-
       final sessionPreferencesCubit =
           (await tester.runAsync(testSessionPreferencesCubit))!;
       addTearDown(() => sessionPreferencesCubit.close());
@@ -201,7 +188,6 @@ void main() {
                 BlocProvider.value(value: worktreeCubit),
                 BlocProvider.value(value: presenceCubit),
                 BlocProvider.value(value: WorkspaceToolsCubit()),
-                BlocProvider.value(value: cliPresetsCubit),
                 BlocProvider.value(value: sessionPreferencesCubit),
                 BlocProvider(create: (_) => ShortcutCubit()),
                 BlocProvider(
@@ -291,17 +277,6 @@ void main() {
       chatCubit.bindPresenceCubit(presenceCubit);
       addTearDown(() => presenceCubit.close());
 
-      final cliPresetsCubit = CliPresetsCubit(
-        repository: CliPresetsRepository(
-          fs: InMemoryFilesystem(),
-          presetsPath: '/cli-presets.json',
-        ),
-      );
-      cliPresetsCubit.emit(
-        const CliPresetsState(status: CliPresetsLoadStatus.ready),
-      );
-      addTearDown(() => cliPresetsCubit.close());
-
       final sessionPreferencesCubit =
           (await tester.runAsync(testSessionPreferencesCubit))!;
       addTearDown(() => sessionPreferencesCubit.close());
@@ -356,7 +331,6 @@ void main() {
                 BlocProvider.value(value: worktreeCubit),
                 BlocProvider.value(value: presenceCubit),
                 BlocProvider.value(value: WorkspaceToolsCubit()),
-                BlocProvider.value(value: cliPresetsCubit),
                 BlocProvider.value(value: sessionPreferencesCubit),
                 BlocProvider(create: (_) => ShortcutCubit()),
                 BlocProvider(
@@ -451,17 +425,6 @@ void main() {
     chatCubit.bindPresenceCubit(presenceCubit);
     addTearDown(() => presenceCubit.close());
 
-    final cliPresetsCubit = CliPresetsCubit(
-      repository: CliPresetsRepository(
-        fs: InMemoryFilesystem(),
-        presetsPath: '/cli-presets.json',
-      ),
-    );
-    cliPresetsCubit.emit(
-      const CliPresetsState(status: CliPresetsLoadStatus.ready),
-    );
-    addTearDown(() => cliPresetsCubit.close());
-
     final sessionPreferencesCubit =
         (await tester.runAsync(testSessionPreferencesCubit))!;
     addTearDown(() => sessionPreferencesCubit.close());
@@ -516,7 +479,6 @@ void main() {
               BlocProvider.value(value: worktreeCubit),
               BlocProvider.value(value: presenceCubit),
               BlocProvider.value(value: WorkspaceToolsCubit()),
-              BlocProvider.value(value: cliPresetsCubit),
               BlocProvider.value(value: sessionPreferencesCubit),
               BlocProvider(create: (_) => ShortcutCubit()),
               BlocProvider(
@@ -618,17 +580,6 @@ void main() {
       chatCubit.bindPresenceCubit(presenceCubit);
       addTearDown(() => presenceCubit.close());
 
-      final cliPresetsCubit = CliPresetsCubit(
-        repository: CliPresetsRepository(
-          fs: InMemoryFilesystem(),
-          presetsPath: '/cli-presets.json',
-        ),
-      );
-      cliPresetsCubit.emit(
-        const CliPresetsState(status: CliPresetsLoadStatus.ready),
-      );
-      addTearDown(() => cliPresetsCubit.close());
-
       final sessionPreferencesCubit =
           (await tester.runAsync(testSessionPreferencesCubit))!;
       addTearDown(() => sessionPreferencesCubit.close());
@@ -671,7 +622,6 @@ void main() {
                 BlocProvider.value(value: worktreeCubit),
                 BlocProvider.value(value: presenceCubit),
                 BlocProvider.value(value: WorkspaceToolsCubit()),
-                BlocProvider.value(value: cliPresetsCubit),
                 BlocProvider.value(value: sessionPreferencesCubit),
                 BlocProvider(create: (_) => ShortcutCubit()),
                 BlocProvider(

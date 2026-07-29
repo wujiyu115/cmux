@@ -7,7 +7,6 @@ import '../cubits/config_cubit.dart';
 import '../models/app_provider_config.dart';
 import '../pages/config/config_workspace.dart';
 import '../pages/home_workspace/home_workspace_shell.dart';
-import '../pages/llm_config/llm_config_workspace.dart';
 import '../pages/extensions/extension_management_page.dart';
 import '../pages/skills/skill_management_page.dart';
 import '../pages/plugins/plugin_management_page.dart';
@@ -143,105 +142,9 @@ final appRouter = GoRouter(
               ),
             ),
             GoRoute(
-              path: '/config/llm/:cli/provider/:providerName/models',
-              redirect: (context, state) =>
-                  '/providers/${state.pathParameters['cli']}/provider/${state.pathParameters['providerName']}/models',
-            ),
-            GoRoute(
-              path: '/config/llm/:cli/provider/:providerName/edit',
-              redirect: (context, state) =>
-                  '/providers/${state.pathParameters['cli']}/provider/${state.pathParameters['providerName']}/edit',
-            ),
-            GoRoute(
-              path: '/config/llm/:cli/provider/:providerName',
-              redirect: (context, state) =>
-                  '/providers/${state.pathParameters['cli']}/provider/${state.pathParameters['providerName']}',
-            ),
-            GoRoute(
-              path: '/config/llm/:cli/provider/add',
-              redirect: (context, state) =>
-                  '/providers/${state.pathParameters['cli']}/provider/add',
-            ),
-            GoRoute(
-              path: '/config/llm/:cli',
-              redirect: (context, state) =>
-                  '/providers/${state.pathParameters['cli']}',
-            ),
-            GoRoute(
-              path: '/config/llm',
-              redirect: (context, state) => '/providers/claude',
-            ),
-            GoRoute(
-              path: '/providers',
-              redirect: (context, state) {
-                if (Platform.isAndroid) return null;
-                return '/providers/claude';
-              },
-              pageBuilder: (context, state) =>
-                  const NoTransitionPage(child: LlmConfigWorkspace()),
-            ),
-            GoRoute(
-              path: '/providers/:cli',
-              pageBuilder: (context, state) => NoTransitionPage(
-                child: LlmConfigWorkspace(
-                  initialCli: _appProviderCliFromRoute(state),
-                ),
-              ),
-            ),
-            GoRoute(
-              path: '/providers/:cli/provider/add',
-              pageBuilder: (context, state) => NoTransitionPage(
-                child: Platform.isAndroid
-                    ? LlmProviderAddPage(cli: _appProviderCliFromRoute(state))
-                    : LlmConfigWorkspace(
-                        initialCli: _appProviderCliFromRoute(state),
-                        showAddProviderOnOpen: true,
-                      ),
-              ),
-            ),
-            GoRoute(
-              path: '/providers/:cli/provider/:providerName',
-              pageBuilder: (context, state) => NoTransitionPage(
-                child: LlmProviderConfigPage(
-                  cli: _appProviderCliFromRoute(state),
-                  providerName: Uri.decodeComponent(
-                    state.pathParameters['providerName']!,
-                  ),
-                ),
-              ),
-            ),
-            GoRoute(
-              path: '/providers/:cli/provider/:providerName/edit',
-              pageBuilder: (context, state) => NoTransitionPage(
-                child: LlmProviderEditPage(
-                  cli: _appProviderCliFromRoute(state),
-                  providerName: Uri.decodeComponent(
-                    state.pathParameters['providerName']!,
-                  ),
-                ),
-              ),
-            ),
-            GoRoute(
-              path: '/providers/:cli/provider/:providerName/models',
-              pageBuilder: (context, state) => NoTransitionPage(
-                child: LlmProviderModelsPage(
-                  cli: _appProviderCliFromRoute(state),
-                  providerName: Uri.decodeComponent(
-                    state.pathParameters['providerName']!,
-                  ),
-                ),
-              ),
-            ),
-            GoRoute(
               path: '/config/session',
               pageBuilder: (context, state) => const NoTransitionPage(
                 child: ConfigWorkspace(section: ConfigSection.session),
-              ),
-            ),
-            GoRoute(
-              path: '/config/cli',
-              pageBuilder: (context, state) => const NoTransitionPage(
-                child: ConfigWorkspace(section: ConfigSection.cli),
               ),
             ),
             GoRoute(
@@ -428,6 +331,3 @@ Widget _settingsChromeShell(
   );
 }
 
-CliTool _appProviderCliFromRoute(GoRouterState state) {
-  return CliTool.parse(state.pathParameters['cli']);
-}

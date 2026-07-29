@@ -1,16 +1,13 @@
 import 'package:ai_message_core/ai_message_core.dart';
 
 import '../../models/app_session.dart';
-import '../../models/cli_preset.dart';
 import '../../models/team_config.dart';
 import '../../models/workspace_launch_context.dart';
 import '../../utils/logging/logger.dart';
-import '../cli/preset_resolver.dart';
 import '../cli/registry/capabilities/ai_history_capability.dart';
 import '../cli/registry/capabilities/resume/pinned_transcript_probe.dart';
 import '../cli/registry/cli_tool_registry.dart';
 import '../storage/runtime_context.dart';
-import '../terminal/session_member_cli_resolver.dart';
 import 'ai_history_load_result.dart';
 import 'ai_history_locator.dart';
 import 'ai_history_watch_meta.dart';
@@ -60,22 +57,19 @@ final class AiHistoryLoader {
     CliToolRegistry? registry,
     AiHistoryLocator? locator,
     SessionHistoryCacheTokenResolver? resolveCacheToken,
-    List<CliPreset> Function()? globalPresets,
   }) : _contextBuilder = contextBuilder,
        _resolveWorkContext = resolveWorkContext,
        _registry = registry ?? CliToolRegistry.builtIn(),
        _locator =
            locator ??
            AiHistoryLocator(registry: registry ?? CliToolRegistry.builtIn()),
-       _resolveCacheToken = resolveCacheToken,
-       _globalPresets = globalPresets;
+       _resolveCacheToken = resolveCacheToken;
 
   final SessionHistoryContextBuilder _contextBuilder;
   final AiHistoryWorkContextResolver _resolveWorkContext;
   final CliToolRegistry _registry;
   final AiHistoryLocator _locator;
   final SessionHistoryCacheTokenResolver? _resolveCacheToken;
-  final List<CliPreset> Function()? _globalPresets;
 
   final _cache = <String, _AiHistoryCacheEntry>{};
 
@@ -253,24 +247,7 @@ final class AiHistoryLoader {
       effectiveMemberId = '';
     }
 
-    final cli = SessionMemberCliResolver.resolve(
-      persistedSession: session,
-      team: team,
-      memberId: effectiveMemberId,
-      globalPresets: _globalPresets?.call() ?? const [],
-      cliForMember: (t, id, {List<CliPreset> globalPresets = const []}) {
-        for (final m in t.members) {
-          if (m.id == id) {
-            return memberLaunchCli(
-              team: t,
-              member: m,
-              globalPresets: globalPresets,
-            );
-          }
-        }
-        return t.cli;
-      },
-    );
+    final cli = session.cli ?? CliTool.claude;
 
     final mid = effectiveMemberId.isEmpty ? null : effectiveMemberId;
     final roots = await _resolveWorkContext(launchContext, memberId: mid);

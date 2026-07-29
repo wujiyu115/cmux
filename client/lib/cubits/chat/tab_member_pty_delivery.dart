@@ -1,5 +1,4 @@
 
-import '../../models/cli_preset.dart';
 import '../../services/terminal/fullscreen_cr_ack_config.dart';
 import '../../services/terminal/fullscreen_pty_automation.dart';
 import '../../services/terminal/member_pty_inject_service.dart';
@@ -7,21 +6,17 @@ import '../../services/terminal/pty_automation_retry_queue.dart';
 import '../../services/terminal/terminal_input_controller.dart';
 import '../../services/terminal/terminal_session.dart';
 import '../../utils/logging/logger.dart';
-import 'chat_session_shell_factory.dart';
 import 'chat_tab_store.dart';
-import 'tab_member_coordination_factory.dart';
 
 /// Full-screen PTY inject + automation retry for the session terminal.
 final class TabMemberPtyDelivery {
   TabMemberPtyDelivery({
     required ChatTabStore tabStore,
     required bool Function() isClosed,
-    required TabMemberCoordinationFactory coordinationFactory,
     void Function(String sessionId, String memberId)? onAfterTurnLatched,
     MemberPtyInjectService? ptyInject,
   }) : _tabStore = tabStore,
        _isClosed = isClosed,
-       _coordinationFactory = coordinationFactory,
        _onAfterTurnLatched = onAfterTurnLatched {
     _ptyInject =
         ptyInject ??
@@ -32,7 +27,6 @@ final class TabMemberPtyDelivery {
 
   final ChatTabStore _tabStore;
   final bool Function() _isClosed;
-  final TabMemberCoordinationFactory _coordinationFactory;
   final void Function(String sessionId, String memberId)? _onAfterTurnLatched;
   late final MemberPtyInjectService _ptyInject;
 
@@ -320,7 +314,6 @@ final class TabMemberPtyDelivery {
     String sessionId,
     String memberId,
   ) {
-    _coordinationFactory.forMember(sessionId, memberId)?.latchTurnStarted();
     _onAfterTurnLatched?.call(sessionId, memberId);
   }
 

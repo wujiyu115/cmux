@@ -1,115 +1,50 @@
-import 'package:flutter/foundation.dart';
-
-import '../../models/cli_preset.dart';
-import '../../models/member_presence.dart';
-import '../../models/team_config.dart';
-import '../../services/team/session_working_resolver.dart';
-import 'chat_session_shell_factory.dart';
 import 'chat_tab_store.dart';
-import 'tab_member_coordination_factory.dart';
 import 'tab_member_pty_delivery.dart';
-import 'tab_session_idle_watch.dart';
-import 'tab_working_aggregator.dart';
 
-/// Per-tab PTY delivery, automation retry, cross-tab idle watch, and working aggregation.
+/// Per-tab PTY delivery for session shells.
 ///
-/// Shared by personal (no TeamBus) and mixed team sessions. TeamBus lifecycle
-/// lives in [TabTeamBusCoordinator].
+/// Plain shells have no agent turn model, so there is no idle watch and no
+/// working-session aggregation — a shell is either connected or it is not.
 class TabSessionRuntimeCoordinator {
   factory TabSessionRuntimeCoordinator({
     required ChatTabStore tabStore,
-    required ChatSessionShellFactory shellFactory,
-    required List<CliPreset> Function() globalPresets,
     required bool Function() isClosed,
-    TabMemberCoordinationFactory? coordinationFactory,
     TabMemberPtyDelivery? delivery,
-    TabSessionIdleWatch? idleWatch,
-    TabWorkingAggregator? workingAggregator,
-    VoidCallback? onAfterIdleWatchTick,
     void Function(String sessionId, String memberId)? onAfterTurnLatched,
-    String? Function()? activeSessionId,
-    Map<String, MemberPresence> Function()? presence,
-    bool Function(String sessionId)? sessionBusyFromAttention,
-    SessionWorkingResolver? sessionWorking,
   }) {
-    final working =
-        sessionWorking ?? coordinationFactory?.sessionWorking ??
-        SessionWorkingResolver();
-    final coordination =
-        coordinationFactory ??
-        TabMemberCoordinationFactory(
-          tabStore: tabStore,
-          globalPresets: globalPresets,
-          sessionWorking: working,
-        );
-    final ptyDelivery =
-        delivery ??
-        TabMemberPtyDelivery(
-          tabStore: tabStore,
-          isClosed: isClosed,
-          coordinationFactory: coordination,
-          onAfterTurnLatched: onAfterTurnLatched,
-        );
-    final idle =
-        idleWatch ??
-        TabSessionIdleWatch(
-          tabStore: tabStore,
-          coordinationFactory: coordination,
-          delivery: ptyDelivery,
-          isClosed: isClosed,
-          onAfterTick: onAfterIdleWatchTick,
-        );
-    final aggregator =
-        workingAggregator ??
-        TabWorkingAggregator(
-          tabStore: tabStore,
-          sessionWorking: working,
-          globalPresets: globalPresets,
-          activeSessionId: activeSessionId ?? () => null,
-          presence: presence ?? () => const {},
-          sessionBusyFromAttention: sessionBusyFromAttention,
-        );
     return TabSessionRuntimeCoordinator._(
-      coordinationFactory: coordination,
-      delivery: ptyDelivery,
-      idleWatch: idle,
-      workingAggregator: aggregator,
+      tabStore: tabStore,
+      delivery:
+          delivery ??
+          TabMemberPtyDelivery(
+            tabStore: tabStore,
+            isClosed: isClosed,
+            onAfterTurnLatched: onAfterTurnLatched,
+          ),
     );
   }
 
   TabSessionRuntimeCoordinator._({
-    required TabMemberCoordinationFactory coordinationFactory,
+    required ChatTabStore tabStore,
     required TabMemberPtyDelivery delivery,
-    required TabSessionIdleWatch idleWatch,
-    required TabWorkingAggregator workingAggregator,
-  }) : _coordinationFactory = coordinationFactory,
-       _delivery = delivery,
-       _idleWatch = idleWatch,
-       _workingAggregator = workingAggregator;
+  }) : _tabStore = tabStore,
+       _delivery = delivery;
 
-  final TabMemberCoordinationFactory _coordinationFactory;
+  final ChatTabStore _tabStore;
   final TabMemberPtyDelivery _delivery;
-  final TabSessionIdleWatch _idleWatch;
-  final TabWorkingAggregator _workingAggregator;
-
-  SessionWorkingResolver get sessionWorking =>
-      _coordinationFactory.sessionWorking;
 
   void abortMemberInject(String sessionId, String memberId) =>
       _delivery.abortMemberInject(sessionId, memberId);
 
+  /// A connected shell always accepts automation input.
   bool isMemberReadyForAutomationInput(
     String sessionId,
     String memberId, {
     bool directToPty = false,
   }) {
-    final coordination = _coordinationFactory.forMember(
-      sessionId,
-      memberId,
-      directToPty: directToPty,
-    );
-    if (coordination == null) return false;
-    return coordination.isReadyForAutomationInput(directToPty: directToPty);
+    final tab = _tabStore.openTabBySessionId(sessionId);
+    final shell = tab?.memberShells[memberId];
+    return shell != null && shell.isConnected;
   }
 
   Future<void> deliverMemberStdin(
@@ -145,14 +80,4 @@ class TabSessionRuntimeCoordinator {
         message,
         directToPty: directToPty,
       );
-
-  Set<String> recomputeWorkingSessions() => _workingAggregator.compute();
-
-  void ensureIdleWatch() => _idleWatch.ensureStarted();
-
-  void maybeStopIdleWatch() => _idleWatch.maybeStop();
-
-  void disposeIdleWatch() => _idleWatch.dispose();
-
-  void debugTickIdleWatch() => _idleWatch.tick();
 }

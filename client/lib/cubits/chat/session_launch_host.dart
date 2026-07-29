@@ -5,7 +5,6 @@ import '../../models/member_remote_provision_progress.dart';
 import '../../models/team_config.dart';
 import '../../repositories/session_repository.dart';
 import '../../services/cli/registry/cli_tool_registry.dart';
-import '../../services/team/team_config_launch_validator.dart';
 import '../../services/session/session_lifecycle_service.dart';
 import '../../services/agent_status/agent_status_seat_lookup.dart';
 import '../../cubits/agent_attention_cubit.dart';
@@ -57,7 +56,6 @@ abstract interface class SessionLaunchHost
   void applyState(ChatState next);
   void refreshActiveWorkspaceTabs();
   void closeSessionTab(String sessionId);
-  void emitTeamConfigValidation(TeamConfigValidation validation);
 
   // Cubit-owned facade methods the launch flow drives.
   void selectMember(String memberId);

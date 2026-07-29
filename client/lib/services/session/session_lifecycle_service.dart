@@ -2,11 +2,9 @@ import 'package:flutter/foundation.dart';
 
 import '../../models/workspace.dart';
 import '../../models/app_session.dart';
-import '../../models/cli_preset.dart';
 import '../../models/session_member_binding.dart';
 import '../../models/skill.dart';
 import '../../models/team_config.dart';
-import '../../repositories/cli_presets_repository.dart';
 import '../../repositories/workspace_project_config_repository.dart';
 import '../../utils/logging/logger.dart';
 import '../../models/workspace_topology.dart';
@@ -40,17 +38,13 @@ class SessionLifecycleService {
     loadEnabledExtensionIds,
     CliToolRegistry? cliToolRegistry,
     Future<List<Skill>> Function()? loadInstalledSkills,
-    CliPresetsRepository? cliPresetsRepository,
-    List<CliPreset> Function()? loadPresets,
   }) : _appDataBasePath = appDataBasePath,
        _storageRootsResolver = storageRootsResolver,
        _workContextResolver = workContextResolver,
        _catalogContextResolver = catalogContextResolver,
        _loadEnabledExtensionIds = loadEnabledExtensionIds,
        _cliToolRegistry = cliToolRegistry ?? _defaultCliRegistry,
-       _loadInstalledSkills = loadInstalledSkills,
-       _cliPresetsRepository = cliPresetsRepository,
-       _loadPresets = loadPresets;
+       _loadInstalledSkills = loadInstalledSkills;
 
   final String? _appDataBasePath;
   final StorageRootsResolver? _storageRootsResolver;
@@ -68,10 +62,7 @@ class SessionLifecycleService {
   _loadEnabledExtensionIds;
   final CliToolRegistry _cliToolRegistry;
   final Future<List<Skill>> Function()? _loadInstalledSkills;
-  final CliPresetsRepository? _cliPresetsRepository;
-  final List<CliPreset> Function()? _loadPresets;
 
-  List<CliPreset> get globalPresets => _loadPresets?.call() ?? const [];
 
   CliToolRegistry get cliToolRegistry => _cliToolRegistry;
 

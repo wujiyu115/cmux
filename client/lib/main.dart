@@ -664,8 +664,6 @@ void main() async {
                   RepositoryProvider.value(value: shell.workbenchEditorOpener),
                   RepositoryProvider.value(value: shell.workbenchShellLauncher),
                   BlocProvider.value(value: shell.configCubit),
-                  BlocProvider.value(value: shell.appProviderCubit),
-                  BlocProvider.value(value: shell.llmConfigCubit),
                   BlocProvider.value(value: shell.layoutCubit),
                   BlocProvider.value(value: shell.workspaceToolsCubit),
                   BlocProvider.value(value: shell.sessionPreferencesCubit),
@@ -681,7 +679,6 @@ void main() async {
                   RepositoryProvider.value(
                     value: shell.githubCredentialsStore,
                   ),
-                  BlocProvider.value(value: shell.cliPresetsCubit),
                   BlocProvider.value(value: shell.shortcutCubit),
                 ],
                 child: CliToolRegistryScope(

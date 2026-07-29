@@ -1,11 +1,8 @@
 import 'dart:async';
 
-import '../cubits/app_provider_cubit.dart';
 import '../cubits/chat_cubit.dart';
-import '../cubits/cli_presets_cubit.dart';
 import '../cubits/extension_cubit.dart';
 import '../cubits/layout_cubit.dart';
-import '../cubits/llm_config_cubit.dart';
 import '../cubits/mcp_cubit.dart';
 import '../cubits/plugin_cubit.dart';
 import '../cubits/skill_cubit.dart';
@@ -177,8 +174,6 @@ abstract final class AppDataBootstrap {
   /// Plugins, skills, extensions, default-workspace seed, team resource sync.
   static Future<void> warmAuxiliaryData({
     required BootLog boot,
-    required LlmConfigCubit llmConfigCubit,
-    required AppProviderCubit appProviderCubit,
     required PluginCubit pluginCubit,
     required SkillCubit skillCubit,
     required McpCubit mcpCubit,
@@ -189,14 +184,6 @@ abstract final class AppDataBootstrap {
     final phaseSw = Stopwatch()..start();
     boot('warmAuxiliaryData start');
 
-    await _timed(boot, 'llmConfig', llmConfigCubit.load);
-    await yieldUiFrame();
-    await _timed(
-      boot,
-      'appProvider',
-      () => appProviderCubit.load(reconcileCredentials: false),
-    );
-    await yieldUiFrame();
     await _timed(boot, 'plugins', pluginCubit.load);
     await yieldUiFrame();
     await _timed(boot, 'skills', skillCubit.loadAll);
@@ -205,13 +192,6 @@ abstract final class AppDataBootstrap {
     await yieldUiFrame();
 
     await _timed(boot, 'extensions', extensionCubit.loadForBootstrap);
-    await yieldUiFrame();
-
-    await _timed(
-      boot,
-      'appProviderCredentials',
-      () => appProviderCubit.reconcileCredentials(),
-    );
     await yieldUiFrame();
 
     boot('warmAuxiliaryData complete +${phaseSw.elapsedMilliseconds}ms');
@@ -231,13 +211,12 @@ abstract final class AppDataBootstrap {
     await yieldUiFrame();
   }
 
-  /// SSH profiles, CLI presets, feature flags, and onboarding gate — must
+  /// SSH profiles, feature flags, and onboarding gate — must
   /// finish before the router mounts so no second spinner appears on entry.
   static Future<bool> prepareInteractiveShell({
     required BootLog boot,
     required AppSettingsRepository appSettings,
     required SshProfileCubit sshProfileCubit,
-    required CliPresetsCubit cliPresetsCubit,
     required HomeWorkspaceUiCache homeWorkspaceUiCache,
     required List<Workspace> workspaces,
   }) async {
@@ -249,8 +228,6 @@ abstract final class AppDataBootstrap {
       'sshProfiles',
       () => sshProfileCubit.load(notifyActiveProfileChanged: false),
     );
-    await yieldUiFrame();
-    await _timed(boot, 'cliPresets', cliPresetsCubit.load);
     await yieldUiFrame();
     await _timed(boot, 'homeWorkspaceUi', homeWorkspaceUiCache.warm);
     await yieldUiFrame();
@@ -274,8 +251,6 @@ abstract final class AppDataBootstrap {
   static Future<void> reloadAll({
     required BootLog boot,
     required SshProfileCubit sshProfileCubit,
-    required LlmConfigCubit llmConfigCubit,
-    required AppProviderCubit appProviderCubit,
     required PluginCubit pluginCubit,
     required SkillCubit skillCubit,
     required McpCubit mcpCubit,
@@ -301,8 +276,6 @@ abstract final class AppDataBootstrap {
     );
     await warmAuxiliaryData(
       boot: boot,
-      llmConfigCubit: llmConfigCubit,
-      appProviderCubit: appProviderCubit,
       pluginCubit: pluginCubit,
       skillCubit: skillCubit,
       mcpCubit: mcpCubit,

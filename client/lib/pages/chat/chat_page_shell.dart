@@ -7,7 +7,6 @@ import 'package:teampilot/widgets/app_toast/app_toast.dart';
 
 import '../../cubits/chat_cubit.dart';
 import '../../cubits/chat/model/chat_tab.dart';
-import '../../cubits/cli_presets_cubit.dart';
 import '../../cubits/editor_cubit.dart';
 import '../../cubits/run_cubit.dart';
 import '../../cubits/workbench/workbench_cubit.dart';
@@ -228,13 +227,7 @@ class _ChatWorkspaceShell extends StatelessWidget {
                       return resolveSessionTabCli(
                         tab: runtimeTab,
                         sessions: state.sessions,
-                        isPersonal: isPersonalContext,
-                        team: teamConfig,
                         personalFallbackCli: personalFallbackCli,
-                        globalPresets: context
-                            .read<CliPresetsCubit>()
-                            .state
-                            .presets,
                       );
                     }(),
                 };

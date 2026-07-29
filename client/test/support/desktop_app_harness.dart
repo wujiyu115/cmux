@@ -7,14 +7,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:teampilot/app/ui_zoom_baseline.dart';
 import 'package:teampilot/cubits/agent_attention_cubit.dart';
 import 'package:teampilot/cubits/app_bootstrap_cubit.dart';
-import 'package:teampilot/cubits/app_provider_cubit.dart';
 import 'package:teampilot/cubits/chat_cubit.dart';
-import 'package:teampilot/cubits/cli_presets_cubit.dart';
 import 'package:teampilot/cubits/config_cubit.dart';
 import 'package:teampilot/cubits/editor_cubit.dart';
 import 'package:teampilot/cubits/extension_cubit.dart';
 import 'package:teampilot/cubits/layout_cubit.dart';
-import 'package:teampilot/cubits/llm_config_cubit.dart';
 import 'package:teampilot/cubits/member_presence_cubit.dart';
 import 'package:teampilot/cubits/notification_cubit.dart';
 import 'package:teampilot/cubits/plugin_cubit.dart';
@@ -30,7 +27,6 @@ import 'package:teampilot/models/runtime_target.dart';
 import 'package:teampilot/pages/home_workspace/workspace_chrome_commands.dart';
 import 'package:teampilot/repositories/app_provider_repository.dart';
 import 'package:teampilot/repositories/app_settings_repository.dart';
-import 'package:teampilot/repositories/cli_presets_repository.dart';
 import 'package:teampilot/repositories/extension_repository.dart';
 import 'package:teampilot/repositories/plugin_repository.dart';
 import 'package:teampilot/repositories/session_preferences_repository.dart';
@@ -120,8 +116,6 @@ Widget buildTestApp({
   ChatCubit? chatCubit,
   MemberPresenceCubit? memberPresenceCubit,
   LayoutCubit? layoutCubit,
-  LlmConfigCubit? llmConfigCubit,
-  AppProviderCubit? appProviderCubit,
   AppSettingsRepository? appSettings,
   ExtensionCubit? extensionCubit,
 }) {
@@ -249,8 +243,6 @@ Widget buildTestApp({
           create: (_) => AgentAttentionCubit(pruneInterval: null),
         ),
         BlocProvider(create: (_) => ConfigCubit()),
-        BlocProvider.value(value: llmConfigCubit ?? testLlmConfigCubit()),
-        BlocProvider.value(value: appProviderCubit!),
         BlocProvider.value(value: layoutCubit ?? LayoutCubit()),
         BlocProvider.value(value: sessionPreferencesCubit),
         BlocProvider(create: (_) => ShortcutCubit()),
@@ -269,14 +261,6 @@ Widget buildTestApp({
                       ProcessResult(0, 1, '', ''),
                 ),
               ),
-        ),
-        BlocProvider(
-          create: (_) => CliPresetsCubit(
-            repository: CliPresetsRepository(
-              fs: InMemoryFilesystem(),
-              presetsPath: '/cli-presets.json',
-            ),
-          ),
         ),
         BlocProvider(create: (_) => SkillCubit(SkillRepository())),
         BlocProvider(
@@ -315,8 +299,6 @@ Future<void> pumpDesktopApp(
   WidgetTester tester, {
   ChatCubit? chatCubit,
   LayoutCubit? layoutCubit,
-  LlmConfigCubit? llmConfigCubit,
-  AppProviderCubit? appProviderCubit,
   SessionPreferencesCubit? sessionPreferencesCubit,
 }) async {
   tester.view.physicalSize = const Size(1600, 900);
@@ -326,36 +308,17 @@ Future<void> pumpDesktopApp(
   final sessionCubit =
       sessionPreferencesCubit ??
       (await tester.runAsync(testSessionPreferencesCubit))!;
-  final providerCubit =
-      appProviderCubit ??
-      (await tester.runAsync(() async {
-        final dir = await Directory.systemTemp.createTemp('providers_widget_');
-        return AppProviderCubit(
-          repository: AppProviderRepository(basePath: dir.path),
-        );
-      }))!;
   await tester.pumpWidget(
     buildTestApp(
       sessionPreferencesCubit: sessionCubit,
       chatCubit: chatCubit,
       layoutCubit: layoutCubit,
-      llmConfigCubit: llmConfigCubit,
-      appProviderCubit: providerCubit,
     ),
   );
   // Avoid pumpAndSettle: router + split-view can schedule frames indefinitely in tests.
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 100));
   await tester.pump(const Duration(milliseconds: 100));
-}
-
-LlmConfigCubit testLlmConfigCubit({
-  LlmConfig initialConfig = const LlmConfig(),
-}) {
-  return LlmConfigCubit(
-    appSettings: InMemoryAppSettingsRepository(),
-    initialConfig: initialConfig,
-  );
 }
 
 Future<SessionPreferencesCubit> testSessionPreferencesCubit() async {
@@ -365,4 +328,3 @@ Future<SessionPreferencesCubit> testSessionPreferencesCubit() async {
     repository: SessionPreferencesRepository(prefs),
   );
 }
-

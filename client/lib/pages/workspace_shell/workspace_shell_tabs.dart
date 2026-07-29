@@ -14,7 +14,6 @@ import '../../theme/workspace_surface_layers.dart';
 import '../../utils/ui/app_keys.dart';
 import '../../utils/session/session_row_content.dart';
 import '../../widgets/tab_close_button.dart';
-import '../../widgets/cli/cli_brand_icon.dart';
 import '../../widgets/session_working_spinner.dart';
 import 'workspace_shell_models.dart';
 
@@ -524,15 +523,9 @@ class _TabLeadingIcon extends StatelessWidget {
     if (cliTool == null) {
       return Icon(icon, size: context.tpIconSizes.md, color: iconColor);
     }
-    final registry = CliToolRegistryScope.of(context);
     return Opacity(
       opacity: iconOpacity,
-      child: CliBrandIcon(
-        cli: cliTool,
-        definition: registry.tryGet(cliTool),
-        size: context.tpIconSizes.md,
-        borderRadius: 4,
-      ),
+      child: Icon(icon, size: context.tpIconSizes.md, color: iconColor),
     );
   }
 }

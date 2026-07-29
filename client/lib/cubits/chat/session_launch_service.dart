@@ -20,8 +20,6 @@ import '../../services/launch/session_prompt_metadata_sync.dart';
 import '../../services/launch/session_shell_connector.dart';
 import '../../services/launch/session_tab_connect_prep.dart';
 import '../../services/launch/session_launch_workspace_index.dart';
-import '../../services/cli/preset_resolver.dart';
-import '../../services/terminal/session_member_cli_resolver.dart';
 import 'session_launch_host.dart';
 
 export 'session_launch_host.dart';
@@ -247,16 +245,7 @@ class SessionLaunchService implements SessionShellConnectorDelegate {
     }
     final team = request.team!;
     final member = request.member!;
-    return (
-      team: team,
-      member: member,
-      cli: sessionMemberLaunchCli(
-        session: session,
-        team: team,
-        member: member,
-        globalPresets: _h.lifecycle.globalPresets,
-      ),
-    );
+    return (team: team, member: member, cli: member.cli ?? team.cli);
   }
 
   Future<void> _installTeamRuntimeIfNeeded({
@@ -410,19 +399,7 @@ class SessionLaunchService implements SessionShellConnectorDelegate {
     if (tab.selectedMemberId.isNotEmpty) {
       final memberId = tab.selectedMemberId;
       final session = tab.persistedSession;
-      final cli = session != null
-          ? SessionMemberCliResolver.resolve(
-              persistedSession: session,
-              team: team,
-              memberId: memberId,
-              globalPresets: _h.lifecycle.globalPresets,
-              cliForMember: _h.shellFactory.cliForMember,
-            )
-          : _h.shellFactory.cliForMember(
-              team,
-              memberId,
-              globalPresets: _h.lifecycle.globalPresets,
-            );
+      final cli = session?.cli ?? team.cli;
       if (session != null) {
         return _shellForLaunch(
           tab: tab,

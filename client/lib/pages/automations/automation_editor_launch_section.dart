@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../models/workspace.dart';
 import '../../pages/home_workspace/workspace/workspace_landing_location_fields.dart';
-import '../../widgets/cli/cli_preset_dropdown_field.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 /// Launch parameters for launch-prompt automations — mirrors landing compose.
@@ -14,12 +13,10 @@ class AutomationEditorLaunchSection extends StatelessWidget {
     required this.workspace,
     required this.projectFolderPath,
     required this.workingDirectoryPath,
-    required this.presetId,
     required this.dangerouslySkipPermissions,
     required this.labelWidth,
     required this.onProjectChanged,
     required this.onWorktreeChanged,
-    required this.onPresetChanged,
     required this.onPermissionsChanged,
     super.key,
   });
@@ -27,12 +24,10 @@ class AutomationEditorLaunchSection extends StatelessWidget {
   final Workspace workspace;
   final String? projectFolderPath;
   final String? workingDirectoryPath;
-  final String? presetId;
   final bool dangerouslySkipPermissions;
   final double labelWidth;
   final ValueChanged<String?> onProjectChanged;
   final ValueChanged<String?> onWorktreeChanged;
-  final ValueChanged<String?> onPresetChanged;
   final ValueChanged<bool> onPermissionsChanged;
 
   @override
@@ -49,26 +44,6 @@ class AutomationEditorLaunchSection extends StatelessWidget {
           labelWidth: labelWidth,
           onProjectChanged: onProjectChanged,
           onWorktreeChanged: onWorktreeChanged,
-        ),
-        TpFormField<String>(
-          key: ValueKey('preset-${presetId ?? ''}'),
-          id: 'presetId',
-          initialValue: presetId ?? '',
-          label: Text(l10n.presetPickerTitle),
-          layoutStyle: TpFormFieldLayoutStyle.inline,
-          labelWidth: labelWidth,
-          validator: (v) => (v == null || v.trim().isEmpty)
-              ? l10n.workspaceCliPresetsEmptyHint
-              : null,
-          builder: (state) {
-            return CliPresetDropdownField(
-              selectedPresetId: state.value,
-              onChanged: (value) {
-                state.didChange(value ?? '');
-                onPresetChanged(value);
-              },
-            );
-          },
         ),
         const SizedBox(height: 12),
         TpFormField<bool>(

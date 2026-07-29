@@ -1,6 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../services/team/team_config_launch_validator.dart';
 import '../../utils/logging/logger.dart';
 import '../../utils/session/session_launch_error.dart';
 import '../../models/member_remote_provision_progress.dart';
@@ -124,18 +123,6 @@ mixin ChatConnectStateMixin on Cubit<ChatState> {
     emit(state.copyWith(clearSnackbarMessage: true));
   }
 
-  /// Surfaces incomplete team config (provider/model/CLI) found at session open.
-  /// No-op when there are no issues — launch itself is never blocked.
-  void emitTeamConfigValidation(TeamConfigValidation validation) {
-    if (isClosed || !validation.hasIssues) return;
-    emit(
-      state.copyWith(
-        teamConfigValidation: validation,
-        stateVersion: state.stateVersion + 1,
-      ),
-    );
-  }
-
   void setMemberRemoteProvisionProgress(
     String sessionId,
     String memberId,
@@ -155,8 +142,4 @@ mixin ChatConnectStateMixin on Cubit<ChatState> {
     emit(state.copyWith(stateVersion: state.stateVersion + 1));
   }
 
-  void clearTeamConfigValidation() {
-    if (isClosed || state.teamConfigValidation == null) return;
-    emit(state.copyWith(clearTeamConfigValidation: true));
-  }
 }

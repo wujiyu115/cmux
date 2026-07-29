@@ -35,8 +35,6 @@ void main() {
       final materializer = TabMemberMaterializer(
         runtime: TabSessionRuntimeCoordinator(
           tabStore: store,
-          shellFactory: ChatSessionShellFactory(executableResolver: () => 'true'),
-          globalPresets: () => const [],
           isClosed: () => false,
         ),
         tabStore: store,

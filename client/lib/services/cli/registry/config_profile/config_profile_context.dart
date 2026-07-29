@@ -1,6 +1,5 @@
 import 'package:path/path.dart' as p;
 
-import '../../../../models/cli_preset.dart';
 import '../../../../models/team_config.dart';
 import '../../../io/filesystem.dart';
 import '../../../host/host_execution_environment.dart';
@@ -10,31 +9,6 @@ import '../../../agent_status/member_agent_status_endpoint.dart';
 import 'config_profile_scope.dart';
 
 export 'config_profile_scope.dart';
-
-/// Resolve CLI/provider/model/effort for a session from its active preset.
-/// Returns null if no preset is active, not found, or [activePresetId] is empty.
-CliPreset? resolveActivePreset(
-  String? activePresetId,
-  List<CliPreset> presets,
-) {
-  if (activePresetId == null || activePresetId.isEmpty) return null;
-  for (final p in presets) {
-    if (p.id == activePresetId) return p;
-  }
-  return null;
-}
-
-String presetProviderId(CliPreset? preset) {
-  return preset?.provider.trim() ?? '';
-}
-
-String presetModelId(CliPreset? preset) {
-  return preset?.model.trim() ?? '';
-}
-
-CliTool presetCli(CliPreset? preset, {CliTool fallback = CliTool.claude}) {
-  return preset?.cli ?? fallback;
-}
 
 /// Path facade for [ConfigProfileCapability] implementations.
 abstract interface class ConfigProfilePaths {
@@ -156,7 +130,6 @@ class ConfigProfileLaunchContext {
     required this.catalog,
     this.leadSessionId,
     this.agentStatus,
-    this.preset,
     this.memberId,
   });
 
@@ -180,7 +153,6 @@ class ConfigProfileLaunchContext {
   /// Permission / status HTTP hooks (`POST /agent-status`). Stamped at
   /// lifecycle (Task 7); null until then — writers install only when set.
   final MemberAgentStatusEndpoint? agentStatus;
-  final CliPreset? preset;
   final String? memberId;
 
   bool get crossMachine => configProfileCrossMachine(catalog, paths);

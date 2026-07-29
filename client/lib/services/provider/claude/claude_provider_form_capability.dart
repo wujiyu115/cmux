@@ -2,7 +2,6 @@ import 'package:flutter/widgets.dart';
 
 import '../../../models/app_provider_config.dart';
 import '../../../models/provider_presets/claude_provider_presets.dart';
-import '../../../widgets/app_provider/claude_provider_form_section.dart';
 import '../../cli/registry/capabilities/provider_form_capability.dart';
 
 const _apiKeyFields = ['ANTHROPIC_AUTH_TOKEN', 'ANTHROPIC_API_KEY'];
@@ -46,23 +45,12 @@ final class ClaudeProviderFormCapability implements ProviderFormCapability {
     return Map<String, Object?>.from(input.config);
   }
 
+  Map<String, Object?> _extraFromConfig(Map<String, Object?> config) =>
+      const {};
+
   @override
   Widget buildExtraSection(
     BuildContext context,
     ProviderFormSectionProps props,
-  ) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const SizedBox(height: 16),
-        ClaudeProviderFormSection(
-          apiKeyField: props.apiKeyField,
-          onApiKeyFieldChanged: props.onApiKeyFieldChanged,
-        ),
-      ],
-    );
-  }
-
-  Map<String, Object?> _extraFromConfig(Map<String, Object?> config) =>
-      const {};
+  ) => const SizedBox.shrink();
 }

@@ -7,9 +7,7 @@ import 'package:path/path.dart' as p;
 import 'package:shared_ui/shared_ui.dart';
 import 'package:teampilot/widgets/app_toast/app_toast.dart';
 
-import '../../cubits/cli_presets_cubit.dart';
 import '../../cubits/git_cubit.dart';
-import '../../cubits/app_provider_cubit.dart';
 import '../../cubits/workbench/workbench_tab.dart';
 import '../../services/cli/registry/cli_tool_registry_scope.dart';
 import '../../l10n/l10n_extensions.dart';

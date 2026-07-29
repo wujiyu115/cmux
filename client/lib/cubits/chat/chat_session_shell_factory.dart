@@ -1,9 +1,7 @@
 import '../../models/runtime_target.dart' as rt;
 import '../../models/runtime_target.dart' show RuntimeKind, sshProfileIdOfId;
 import '../../models/ssh_profile.dart';
-import '../../models/cli_preset.dart';
 import '../../models/team_config.dart';
-import '../../services/cli/preset_resolver.dart';
 import '../../services/host/host_interactive_shell.dart';
 import '../../services/session/remote_flashskyai_command_builder.dart';
 import '../../services/ssh/ssh_client_factory.dart';
@@ -87,23 +85,6 @@ class ChatSessionShellFactory {
 
   String _resolveExecutableFor(CliTool cli) =>
       _cliExecutableResolver?.call(cli) ?? _executableResolver();
-
-  CliTool cliForMember(
-    TeamProfile team,
-    String memberId, {
-    List<CliPreset> globalPresets = const [],
-  }) {
-    for (final m in team.members) {
-      if (m.id == memberId) {
-        return memberLaunchCli(
-          team: team,
-          member: m,
-          globalPresets: globalPresets,
-        );
-      }
-    }
-    return team.cli;
-  }
 
   TerminalSession newSession({rt.RuntimeTarget? workTarget}) {
     final scrollback = _scrollbackLines;

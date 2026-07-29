@@ -8,17 +8,14 @@ import 'package:teampilot/widgets/app_toast/app_toast.dart';
 
 import '../../cubits/ai_history_cubit.dart';
 import '../../cubits/agent_attention_cubit.dart';
-import '../../cubits/app_provider_cubit.dart';
 import '../../cubits/chat_cubit.dart';
 import '../../cubits/editor_cubit.dart';
-import '../../cubits/cli_presets_cubit.dart';
 import '../../cubits/layout_cubit.dart';
 import '../../cubits/member_presence_cubit.dart';
 import '../../cubits/plugin_cubit.dart';
 import '../../cubits/skill_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../models/app_session.dart';
-import '../../models/cli_preset.dart';
 import '../../models/config_bundle.dart';
 import '../../models/member_presence.dart';
 import '../../models/landing_launch_context.dart';
@@ -26,11 +23,9 @@ import '../../models/team_config.dart';
 import '../../models/workspace.dart';
 import '../../models/workspace_launch_context.dart';
 import '../../repositories/workspace_project_config_repository.dart';
-import '../../services/cli/preset_resolver.dart';
 import '../../services/cli/registry/capabilities/ai_history_capability.dart';
 import '../../services/cli/registry/capabilities/turn_interrupt_capability.dart';
 import '../../services/cli/registry/cli_tool_registry.dart';
-import '../../services/terminal/session_member_cli_resolver.dart';
 import '../../services/cli/registry/cli_tool_registry_scope.dart';
 import '../../services/compose/compose_file_attach.dart';
 import '../../services/compose/compose_landing_bundle.dart';
@@ -38,7 +33,6 @@ import '../../services/compose/compose_text_edit.dart';
 import '../../services/compose/compose_voice_input.dart';
 import '../../services/session/ai_history_live_refresh_controller.dart';
 import '../../services/session/history_seat_key.dart';
-import '../../services/session/session_continue_overrides_apply.dart';
 import '../../services/session/session_history_pagination.dart';
 import '../../services/storage/app_storage.dart';
 import '../../services/workbench/ai_tool_file_open_coordinator.dart';
@@ -487,91 +481,6 @@ class _SessionChatViewState extends State<SessionChatView> {
     return team.members.where((m) => m.id == mid).firstOrNull;
   }
 
-  CliTool _lockedCli({
-    required AppSession session,
-    required TeamProfile? team,
-    required List<CliPreset> presets,
-  }) {
-    if (session.isSimple) return session.cli ?? CliTool.claude;
-    if (team == null) return CliTool.claude;
-    final memberId = _effectiveMemberId(team);
-    final member = _selectedMember(team);
-    return SessionMemberCliResolver.resolve(
-      persistedSession: session,
-      team: team,
-      memberId: memberId.isNotEmpty ? memberId : (member?.id ?? ''),
-      globalPresets: presets,
-      cliForMember: (t, id, {List<CliPreset> globalPresets = const []}) {
-        final m = (member != null && member.id == id)
-            ? member
-            : () {
-                for (final x in t.members) {
-                  if (x.id == id) return x;
-                }
-                return null;
-              }();
-        if (m != null) {
-          return memberLaunchCli(
-            team: t,
-            member: m,
-            globalPresets: globalPresets,
-          );
-        }
-        return t.cli;
-      },
-    );
-  }
-
-  bool _effectivePermission({
-    required AppSession session,
-    required TeamProfile? team,
-  }) {
-    final overrides = session.continueOverrides;
-    if (session.isSimple) {
-      return resolveContinueSkipPermissions(
-        sessionLevel: overrides.dangerouslySkipPermissions,
-        memberLevel: null,
-        launchDefault: false,
-      );
-    }
-    final member = _selectedMember(team);
-    final memberId = _effectiveMemberId(team);
-    final memberOverride = overrides.memberOverrides[memberId];
-    return resolveContinueSkipPermissions(
-      sessionLevel: overrides.dangerouslySkipPermissions,
-      memberLevel: memberOverride?.dangerouslySkipPermissions,
-      launchDefault: member?.dangerouslySkipPermissions ?? true,
-    );
-  }
-
-  String? _selectedPresetId({
-    required AppSession session,
-    required TeamProfile? team,
-  }) {
-    if (session.isSimple) {
-      final id = session.presetId.trim();
-      return id.isEmpty ? null : id;
-    }
-    final memberId = _effectiveMemberId(team);
-    final fromOverride = session
-        .continueOverrides
-        .memberOverrides[memberId]
-        ?.presetId
-        ?.trim();
-    if (fromOverride != null && fromOverride.isNotEmpty) return fromOverride;
-    final member = _selectedMember(team);
-    if (member == null) return null;
-    if (member.inheritsTeamPreset) {
-      final teamPreset = team?.activePresetId?.trim() ?? '';
-      return teamPreset.isEmpty ? null : teamPreset;
-    }
-    if (member.hasExplicitPreset) {
-      final id = member.activePresetId?.trim() ?? '';
-      return id.isEmpty ? null : id;
-    }
-    return null;
-  }
-
   String? _identityLabel({
     required AppSession session,
     required TeamProfile? team,
@@ -587,57 +496,6 @@ class _SessionChatViewState extends State<SessionChatView> {
       message: context.l10n.sessionHistoryContinueSaveFailed,
       variant: TpToastVariant.warning,
     );
-  }
-
-  Future<void> _onPermissionSelected({
-    required bool value,
-    required TeamProfile? team,
-  }) async {
-    final session = _readCubitSession(context);
-    if (session == null) {
-      if (mounted) _toastContinueSaveFailed();
-      return;
-    }
-    final memberId = session.isSimple ? null : _effectiveMemberId(team);
-    if (!session.isSimple && (memberId == null || memberId.isEmpty)) return;
-    try {
-      final ok = await context.read<ChatCubit>().setSessionContinuePermission(
-        sessionId: session.sessionId,
-        dangerouslySkipPermissions: value,
-        memberId: memberId,
-      );
-      if (!ok && mounted) _toastContinueSaveFailed();
-    } on Object {
-      if (mounted) _toastContinueSaveFailed();
-    }
-  }
-
-  Future<void> _onPresetSelected({
-    required String presetId,
-    required TeamProfile? team,
-    required List<CliPreset> sameCliPresets,
-    required CliTool lockedCli,
-  }) async {
-    final session = _readCubitSession(context);
-    if (session == null) {
-      if (mounted) _toastContinueSaveFailed();
-      return;
-    }
-    final preset = sameCliPresets.where((p) => p.id == presetId).firstOrNull;
-    if (preset == null) return;
-    final memberId = session.isSimple ? null : _effectiveMemberId(team);
-    if (!session.isSimple && (memberId == null || memberId.isEmpty)) return;
-    try {
-      final ok = await context.read<ChatCubit>().setSessionContinuePreset(
-        sessionId: session.sessionId,
-        preset: preset,
-        memberId: memberId,
-        lockedCli: lockedCli,
-      );
-      if (!ok && mounted) _toastContinueSaveFailed();
-    } on Object {
-      if (mounted) _toastContinueSaveFailed();
-    }
   }
 
   Future<void> _attachFiles() async {
@@ -802,7 +660,6 @@ class _SessionChatViewState extends State<SessionChatView> {
     final cs = Theme.of(context).colorScheme;
     final skills = context.watch<SkillCubit>().state.installed;
     final plugins = context.watch<PluginCubit>().state.installed;
-    final presets = context.watch<CliPresetsCubit>().state.presets;
     final session = _displaySession(context);
     final team = _liveTeam(context);
     final selectedMemberId = widget.selectedMemberId;
@@ -823,19 +680,6 @@ class _SessionChatViewState extends State<SessionChatView> {
         _controller.text.trim().isNotEmpty &&
         !_isSubmitting;
 
-    final lockedCli = _lockedCli(
-      session: session,
-      team: team,
-      presets: presets,
-    );
-    final sameCliPresets = presetsForCli(presets, lockedCli);
-    final selectedPresetId = _selectedPresetId(session: session, team: team);
-    final selectedPreset = selectedPresetId == null
-        ? null
-        : sameCliPresets.where((p) => p.id == selectedPresetId).firstOrNull;
-    final modelLabel = selectedPreset?.name.trim().isNotEmpty == true
-        ? selectedPreset!.name.trim()
-        : l10n.workspaceChatLandingUsePreset;
     final identityLabel = _identityLabel(session: session, team: team);
     // Rebuild when session working or bus presence changes (seat-level stop).
     context.select<ChatCubit, (String?, Set<String>)>(
@@ -849,6 +693,7 @@ class _SessionChatViewState extends State<SessionChatView> {
       widget.session.sessionId,
       selectedMemberId,
     );
+    final lockedCli = session.cli ?? CliTool.claude;
     final registry =
         CliToolRegistryScope.maybeOf(context) ?? CliToolRegistry.builtIn();
     final supportsTurnInterrupt =
@@ -1170,34 +1015,6 @@ class _SessionChatViewState extends State<SessionChatView> {
                                   identityIcon: session.isSimple
                                       ? Icons.psychology_outlined
                                       : Icons.groups_outlined,
-                                  sameCliPresets: sameCliPresets,
-                                  selectedPresetId: selectedPresetId,
-                                  modelPresetLabel: modelLabel,
-                                  emptyPresetHintLabel:
-                                      l10n.workspaceCliPresetsEmptyHint,
-                                  onPresetSelected: (presetId) => unawaited(
-                                    _onPresetSelected(
-                                      presetId: presetId,
-                                      team: team,
-                                      sameCliPresets: sameCliPresets,
-                                      lockedCli: lockedCli,
-                                    ),
-                                  ),
-                                  dangerouslySkipPermissions:
-                                      _effectivePermission(
-                                        session: session,
-                                        team: team,
-                                      ),
-                                  defaultPermissionsLabel: l10n
-                                      .workspaceChatLandingDefaultPermissions,
-                                  fullAccessPermissionsLabel: l10n
-                                      .workspaceChatLandingFullAccessPermissions,
-                                  onPermissionSelected: (value) => unawaited(
-                                    _onPermissionSelected(
-                                      value: value,
-                                      team: team,
-                                    ),
-                                  ),
                                   showStop: showComposeStop,
                                   onStop: showComposeStop
                                       ? () => unawaited(

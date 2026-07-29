@@ -3,11 +3,9 @@ import 'package:equatable/equatable.dart';
 import '../../models/workspace_folder.dart';
 import '../../models/workspace.dart';
 import '../../models/app_session.dart';
-import '../../models/cli_preset.dart';
 import '../../models/workspace_icon_ref.dart';
 import '../../models/team_config.dart' show CliTool, TeamMemberConfig, TeamProfile;
 import '../../repositories/session_repository.dart';
-import '../../services/session/session_member_cli_locks.dart';
 import '../../utils/logging/logger.dart';
 import '../../utils/workspace/workspace_path_utils.dart';
 

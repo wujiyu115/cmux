@@ -14,7 +14,6 @@ import '../models/session_member_binding.dart';
 import '../models/team_config.dart';
 import '../services/storage/runtime_layout.dart';
 import '../services/io/filesystem.dart';
-import '../services/session/session_member_cli_locks.dart';
 import '../services/session/session_team_counter.dart';
 import '../services/storage/app_storage.dart';
 import '../models/workspace_icon_ref.dart';
@@ -923,7 +922,7 @@ class SessionRepository {
               rosterMemberId: inst.instanceId,
               typeId: inst.type.id,
               taskId: const Uuid().v4(),
-              cli: copyCliFromSourceBinding(
+              cli: _copyCliFromSourceBinding(
                 sourceMembers: source.members,
                 rosterMemberId: inst.instanceId,
                 typeId: inst.type.id,
@@ -973,4 +972,22 @@ class SessionRepository {
     _invalidateWorkspacesIndexCache();
     await WorkspaceIndexStore(fs).remove(workspaceId);
   }
+}
+
+/// Copies a locked CLI from [sourceMembers] for a cloned binding.
+///
+/// Prefer an exact [rosterMemberId] match; otherwise any binding with the same
+/// [typeId]. Returns null when there is no usable match.
+CliTool? _copyCliFromSourceBinding({
+  required List<SessionMemberBinding> sourceMembers,
+  required String rosterMemberId,
+  required String typeId,
+}) {
+  for (final m in sourceMembers) {
+    if (m.rosterMemberId == rosterMemberId) return m.cli;
+  }
+  for (final m in sourceMembers) {
+    if (m.typeId == typeId) return m.cli;
+  }
+  return null;
 }

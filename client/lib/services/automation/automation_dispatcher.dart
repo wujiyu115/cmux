@@ -8,7 +8,6 @@ import '../../cubits/chat/model/session_open_request.dart';
 import '../../cubits/chat/model/session_open_status.dart';
 import '../../models/app_session.dart';
 import '../../models/automation.dart';
-import '../../models/cli_preset.dart';
 import '../../models/session_continue_overrides.dart';
 import '../../models/simple_launch_identity.dart';
 import '../../models/team_config.dart';
@@ -39,7 +38,6 @@ class AutomationDispatcher {
     required Future<SessionOpenStatus> Function(SessionCreateRequest)
     requestCreateAndOpenSession,
     required AutomationWorkspaceResolver workspaceById,
-    CliPreset? Function(String id)? resolveCliPreset,
     AutomationSessionLookup? sessionById,
     int Function()? nowMs,
     Duration memberReadyTimeout = const Duration(seconds: 60),
@@ -50,7 +48,6 @@ class AutomationDispatcher {
        _requestOpenSession = requestOpenSession,
        _requestCreateAndOpenSession = requestCreateAndOpenSession,
        _workspaceById = workspaceById,
-       _resolveCliPreset = resolveCliPreset,
        _sessionById = sessionById,
        _nowMs = nowMs ?? _automationDefaultNowMs,
        _memberReadyTimeout = memberReadyTimeout;
@@ -67,7 +64,6 @@ class AutomationDispatcher {
   final Future<SessionOpenStatus> Function(SessionCreateRequest)
   _requestCreateAndOpenSession;
   final AutomationWorkspaceResolver _workspaceById;
-  final CliPreset? Function(String id)? _resolveCliPreset;
   final AutomationSessionLookup? _sessionById;
   final int Function() _nowMs;
   final Duration _memberReadyTimeout;
@@ -227,11 +223,7 @@ class AutomationDispatcher {
     );
     final plannedSessionId = _uuid.v4();
     final presetId = automation.presetId?.trim() ?? '';
-    final preset = presetId.isEmpty ? null : _resolveCliPreset?.call(presetId);
-    final simpleIdentity = SimpleLaunchIdentity.resolve(
-      preset: preset,
-      presetId: presetId,
-    );
+    final simpleIdentity = SimpleLaunchIdentity.resolve(presetId: presetId);
     final status = await _requestCreateAndOpenSession(
       SessionCreateRequest(
         workspace: workspace,

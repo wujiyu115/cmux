@@ -34,14 +34,10 @@ class WorkspaceChatLandingComposeCard extends StatelessWidget {
     required this.canSubmit,
     required this.onSubmit,
     required this.onChanged,
-    required this.autoChipLabel,
     required this.dangerouslySkipPermissions,
     required this.defaultPermissionsLabel,
     required this.fullAccessPermissionsLabel,
-    required this.autoChipSpecs,
-    required this.onAutoChipSelected,
     required this.onPermissionSelected,
-    this.autoChipLeading,
     required this.attachTooltip,
     required this.voiceTooltip,
     required this.voiceCancelTooltip,
@@ -73,14 +69,10 @@ class WorkspaceChatLandingComposeCard extends StatelessWidget {
   final bool canSubmit;
   final VoidCallback onSubmit;
   final ValueChanged<String> onChanged;
-  final String autoChipLabel;
   final bool dangerouslySkipPermissions;
   final String defaultPermissionsLabel;
   final String fullAccessPermissionsLabel;
-  final List<TpActionMenuSpec> autoChipSpecs;
-  final ValueChanged<Object?> onAutoChipSelected;
   final ValueChanged<bool> onPermissionSelected;
-  final Widget? autoChipLeading;
   final String attachTooltip;
   final String voiceTooltip;
   final String voiceCancelTooltip;
@@ -116,14 +108,6 @@ class WorkspaceChatLandingComposeCard extends StatelessWidget {
           scrollDirection: Axis.horizontal,
           child: Row(
             children: [
-              ComposeMenuChip(
-                palette: palette,
-                icon: Icons.autorenew,
-                leading: autoChipLeading,
-                label: autoChipLabel,
-                specs: autoChipSpecs,
-                onSelected: onAutoChipSelected,
-              ),
               if (onTeamSettings != null) ...[
                 SizedBox(width: spacing.xs),
                 _TeamSettingsButton(

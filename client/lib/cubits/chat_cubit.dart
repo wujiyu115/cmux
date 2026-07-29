@@ -21,7 +21,6 @@ import '../services/workspace/workspace_icon_service.dart';
 import '../services/workspace/workspace_icon_storage.dart';
 import '../services/storage/app_storage.dart';
 import '../services/session/session_lifecycle_service.dart';
-import '../services/session/session_member_cli_locks.dart';
 import '../services/remote/remote_cli_readiness.dart';
 import '../services/team_bus/mcp/teammate_bus_mcp_gateway.dart';
 import '../services/agent_status/agent_status_seat_lookup.dart';
@@ -29,7 +28,6 @@ import 'agent_attention_cubit.dart';
 import '../services/cli/registry/cli_tool_registry.dart';
 import '../services/terminal/terminal_session.dart';
 import '../services/terminal/member_turn_interrupt_service.dart';
-import '../services/terminal/session_member_cli_resolver.dart';
 import '../services/terminal/terminal_theme_for_launch.dart';
 import '../services/terminal/terminal_transport_factory.dart';
 import '../utils/session/workspace_sessions.dart';
@@ -53,8 +51,6 @@ import 'chat/model/session_create_request.dart';
 import 'chat/model/session_open_request.dart';
 import 'chat/model/session_open_status.dart';
 import 'chat/model/session_workbench_view.dart';
-import 'chat/session_continue_overrides_controller.dart';
-import '../models/cli_preset.dart';
 
 export 'chat/model/chat_state.dart';
 export 'chat/model/chat_tab_info.dart';
@@ -143,24 +139,12 @@ class ChatCubit extends Cubit<ChatState>
   void _notifyAutomationsChanged() => _onAutomationsChanged?.call();
   final ChatTabStore _tabStore = ChatTabStore();
   final SessionDataStore _dataStore = SessionDataStore();
-  static const _continueOverridesController =
-      SessionContinueOverridesController();
   final Map<String, Future<void>> _sessionHydrationByWorkspace = {};
   late final SessionLaunchService _launchService = SessionLaunchService(this);
   late final TabSessionRuntimeCoordinator _sessionRuntime =
       TabSessionRuntimeCoordinator(
         tabStore: _tabStore,
-        shellFactory: _shellFactory,
         isClosed: () => isClosed,
-        globalPresets: () => _lifecycle.globalPresets,
-        activeSessionId: () => state.activeSessionId,
-        presence: () => _presenceCubit?.state.presence ?? const {},
-        sessionBusyFromAttention: (sessionId) {
-          final attention = _agentAttentionCubit;
-          if (attention == null) return false;
-          return attention.state.sessionIsAgentActive(sessionId);
-        },
-        onAfterIdleWatchTick: () => unawaited(_onIdleWatchTick()),
         onAfterTurnLatched: _onOperatorTurnLatched,
       );
   late final MemberTurnInterruptService _turnInterrupt =
@@ -330,15 +314,8 @@ class ChatCubit extends Cubit<ChatState>
     emit(state.copyWith(workingSessionIds: ids));
   }
 
-  Future<void> _onIdleWatchTick() async {
-    await _presenceCubit?.tickFromIdleWatch();
-    if (isClosed) return;
-    _recomputeWorkingSessions();
-  }
-
-  void _recomputeWorkingSessions() {
-    _updateWorkingSessions(_sessionRuntime.recomputeWorkingSessions());
-  }
+  /// Plain shells report no agent activity, so nothing is ever "working".
+  void _recomputeWorkingSessions() => _updateWorkingSessions(const {});
 
   /// History / Terminal operator submit latched a seat turn — refresh session
   /// working and clear sticky permission waiting so the sidebar spinner can show.
@@ -359,32 +336,16 @@ class ChatCubit extends Cubit<ChatState>
       _updateWorkingSessions(ids);
 
   @visibleForTesting
-  void debugTickIdleWatch() => _sessionRuntime.debugTickIdleWatch();
-
-  @visibleForTesting
   void debugRecomputeWorkingSessions() => _recomputeWorkingSessions();
 
-  /// Seat-level working for compose stop button (mirrors members panel rules).
+  /// Seat-level working for the compose stop button.
+  ///
+  /// A plain shell is "working" while the operator's submitted line has not
+  /// been echoed back as an idle prompt.
   bool isMemberWorking(String sessionId, String memberId) {
     final tab = _tabStore.openTabBySessionId(sessionId);
-    if (tab == null) return false;
-
-    final presence = _presenceCubit?.state.presence ?? const {};
-    final sessionWorking = _sessionRuntime.sessionWorking;
-    final usesPresenceSnapshot = sessionWorking.usesPresenceSnapshotForTab(
-      tab: tab,
-      activeSessionId: state.activeSessionId,
-      presenceNonEmpty: presence.isNotEmpty,
-    );
-
-    return sessionWorking.isMemberWorking(
-      tab: tab,
-      memberId: memberId,
-      team: _teamForSessionTab(tab),
-      globalPresets: _lifecycle.globalPresets,
-      presence: presence,
-      usePresenceSnapshot: usesPresenceSnapshot,
-    );
+    final shell = tab?.memberShells[memberId];
+    return shell?.userTurnActive ?? false;
   }
 
   /// Cancels in-flight PTY inject and sends CLI turn-interrupt bytes to the seat.
@@ -399,13 +360,7 @@ class ChatCubit extends Cubit<ChatState>
     final mid = (memberId ?? tab.selectedMemberId).trim();
     if (mid.isEmpty) return;
 
-    final cli = SessionMemberCliResolver.resolve(
-      persistedSession: tab.persistedSession,
-      team: _teamForSessionTab(tab),
-      memberId: mid,
-      cliForMember: _shellFactory.cliForMember,
-      globalPresets: _lifecycle.globalPresets,
-    );
+    final cli = tab.persistedSession?.cli ?? CliTool.claude;
 
     await _turnInterrupt.interrupt(
       sessionId: sid,
@@ -713,17 +668,7 @@ class ChatCubit extends Cubit<ChatState>
     final trimmedTeam = sessionTeamId.trim();
     final resolvedClis = trimmedTeam.isEmpty
         ? const <String, CliTool>{}
-        : memberClis.isNotEmpty
-        ? memberClis
-        : team != null
-        ? resolveSessionMemberCliLocks(
-            team: team,
-            rosterMembers: rosterMembers,
-            globalPresets: _lifecycle.globalPresets,
-          )
-        : throw ArgumentError(
-            'Team session create requires memberClis or team',
-          );
+        : memberClis;
     final session = await _dataStore.createSession(
       workspaceId,
       repo,
@@ -902,7 +847,6 @@ class ChatCubit extends Cubit<ChatState>
   void closeTab(int index) {
     if (index < 0 || index >= _tabStore.activeTabCount) return;
     final tab = _tabStore.removeAt(index);
-    _sessionRuntime.maybeStopIdleWatch();
     // Emit tabs before tearDown so working→idle sees the tab already gone
     // (idle notify must not fire for user-closed sessions).
     if (_tabStore.activeTabsIsEmpty) {
@@ -913,7 +857,7 @@ class ChatCubit extends Cubit<ChatState>
           activeTabIndex: 0,
           clearActiveSessionId: true,
           newChatActive: true,
-          workingSessionIds: _sessionRuntime.recomputeWorkingSessions(),
+          workingSessionIds: const <String>{},
         ),
       );
     } else {
@@ -928,7 +872,7 @@ class ChatCubit extends Cubit<ChatState>
           activeSessionId: nextTab.info.id,
           selectedMemberId: nextTab.selectedMemberId,
           newChatActive: false,
-          workingSessionIds: _sessionRuntime.recomputeWorkingSessions(),
+          workingSessionIds: const <String>{},
         ),
       );
     }
@@ -946,7 +890,6 @@ class ChatCubit extends Cubit<ChatState>
   void closeTabsForWorkspace(String workspaceId) {
     final removed = _tabStore.removeWorkspace(workspaceId);
     if (removed.isEmpty) return;
-    _sessionRuntime.maybeStopIdleWatch();
     // Republish whenever the active bucket was affected: either it was the
     // named bucket for this workspace, or it is the legacy empty-string bucket
     // and tabs were removed from it (legacy path before setActiveWorkspace).
@@ -956,7 +899,7 @@ class ChatCubit extends Cubit<ChatState>
     if (activeIsAffected) {
       _publishActiveWorkspaceTabs(0);
     }
-    _updateWorkingSessions(_sessionRuntime.recomputeWorkingSessions());
+    _updateWorkingSessions(const <String>{});
     for (final tab in removed) {
       unawaited(_tearDownTab(tab));
     }
@@ -969,7 +912,6 @@ class ChatCubit extends Cubit<ChatState>
       if (i == index) continue;
       removed.add(_tabStore.removeAt(i));
     }
-    _sessionRuntime.maybeStopIdleWatch();
     final kept = _tabStore.activeTabs.single;
     _tabStore.setNewChatActive(_tabStore.activeWorkspaceId, false);
     emit(
@@ -979,7 +921,7 @@ class ChatCubit extends Cubit<ChatState>
         activeSessionId: kept.info.id,
         selectedMemberId: kept.selectedMemberId,
         newChatActive: false,
-        workingSessionIds: _sessionRuntime.recomputeWorkingSessions(),
+        workingSessionIds: const <String>{},
       ),
     );
     for (final tab in removed) {
@@ -994,7 +936,6 @@ class ChatCubit extends Cubit<ChatState>
     for (var i = _tabStore.activeTabCount - 1; i > index; i--) {
       removed.add(_tabStore.removeAt(i));
     }
-    _sessionRuntime.maybeStopIdleWatch();
     final active = _activeTab;
     _tabStore.setNewChatActive(_tabStore.activeWorkspaceId, false);
     emit(
@@ -1007,7 +948,7 @@ class ChatCubit extends Cubit<ChatState>
         activeSessionId: active?.info.id,
         selectedMemberId: active?.selectedMemberId ?? '',
         newChatActive: false,
-        workingSessionIds: _sessionRuntime.recomputeWorkingSessions(),
+        workingSessionIds: const <String>{},
       ),
     );
     for (final tab in removed) {
@@ -1219,70 +1160,6 @@ class ChatCubit extends Cubit<ChatState>
     _emitSnapshot(await _dataStore.loadWorkspaceData(repo));
   }
 
-  /// Persists session-level or per-member continue permission overrides.
-  ///
-  /// Returns false when the repo/session is missing or persistence fails.
-  Future<bool> setSessionContinuePermission({
-    required String sessionId,
-    required bool dangerouslySkipPermissions,
-    String? memberId,
-  }) async {
-    final repo = _sessionRepository;
-    if (repo == null) return false;
-    final session = _continueOverridesController.sessionIn(
-      state.sessions,
-      sessionId,
-    );
-    if (session == null) return false;
-    final patched = _continueOverridesController.patchPermission(
-      session: session,
-      dangerouslySkipPermissions: dangerouslySkipPermissions,
-      memberId: memberId,
-    );
-    try {
-      await _continueOverridesController.persistPermission(
-        repo: repo,
-        patched: patched,
-      );
-      replaceSessionSnapshot(patched);
-      return true;
-    } on Object {
-      return false;
-    }
-  }
-
-  /// Persists a same-CLI preset for Simple identity or a team member override.
-  ///
-  /// Returns false when [preset.cli] does not match [lockedCli] (no disk write).
-  Future<bool> setSessionContinuePreset({
-    required String sessionId,
-    required CliPreset preset,
-    String? memberId,
-    required CliTool lockedCli,
-  }) async {
-    final repo = _sessionRepository;
-    if (repo == null) return false;
-    final session = _continueOverridesController.sessionIn(
-      state.sessions,
-      sessionId,
-    );
-    if (session == null) return false;
-    final patched = _continueOverridesController.patchPreset(
-      session: session,
-      preset: preset,
-      memberId: memberId,
-      lockedCli: lockedCli,
-    );
-    if (patched == null) return false;
-    await _continueOverridesController.persistPreset(
-      repo: repo,
-      patched: patched,
-      memberId: memberId,
-    );
-    replaceSessionSnapshot(patched);
-    return true;
-  }
-
   /// Persists a manual session arrangement. [orderedSessionIds] is the new
   /// top-to-bottom order (used by [AppSessionSort.manual]).
   Future<void> reorderSessions(List<String> orderedSessionIds) async {
@@ -1331,10 +1208,9 @@ class ChatCubit extends Cubit<ChatState>
     final idx = _tabStore.activeIndexOfSession(sessionId);
     if (idx != -1) {
       removedTab = _tabStore.removeAt(idx);
-      _sessionRuntime.maybeStopIdleWatch();
     }
     final tabs = _tabStore.activeTabs.map((t) => t.info).toList();
-    final working = _sessionRuntime.recomputeWorkingSessions();
+    final working = const <String>{};
 
     if (wasActive && !_tabStore.activeTabsIsEmpty) {
       final newIdx = idx < _tabStore.activeTabCount
@@ -1439,7 +1315,6 @@ class ChatCubit extends Cubit<ChatState>
     if (isClosed) return;
     await _agentAttentionSub?.cancel();
     _agentAttentionSub = null;
-    _sessionRuntime.disposeIdleWatch();
     final busDisposals = <Future<void>>[];
     for (final tab in _tabStore.openTabs) {
       busDisposals.add(_tearDownTab(tab));
