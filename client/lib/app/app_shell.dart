@@ -57,7 +57,6 @@ import '../cubits/ssh_profile_cubit.dart';
 import '../cubits/github_account_cubit.dart';
 import '../config/github_oauth_config.dart';
 import '../cubits/launch_profile_cubit.dart';
-import '../cubits/team_hub_cubit.dart';
 import '../cubits/expert_hub_cubit.dart';
 import '../models/runtime_target.dart';
 import '../models/ssh_profile.dart';
@@ -92,10 +91,8 @@ import '../services/automation/automation_schedule_calculator.dart';
 import '../services/automation/automation_scheduler.dart';
 import '../services/launch/session_runtime_plan_builder.dart';
 import '../services/home_workspace/home_workspace_ui_cache.dart';
-import '../services/team/team_clone_service.dart';
 import '../services/team_hub/composite_team_hub_source.dart';
 import '../services/team_hub/git_registry_team_hub_source.dart';
-import '../services/team_hub/team_hub_favorites_store.dart';
 import '../services/expert_hub/composite_expert_hub_source.dart';
 import '../services/expert_hub/expert_capability_resolver.dart';
 import '../services/expert_hub/expert_hub_favorites_store.dart';
@@ -210,7 +207,6 @@ class AppShell {
     required this.cliPresetsCubit,
     required this.skillCubit,
     required this.mcpCubit,
-    required this.teamHubCubit,
     required this.expertHubCubit,
     required this.expertCapabilityResolver,
     required this.extensionCubit,
@@ -282,7 +278,6 @@ class AppShell {
   final CliPresetsCubit cliPresetsCubit;
   final SkillCubit skillCubit;
   final McpCubit mcpCubit;
-  final TeamHubCubit teamHubCubit;
   final ExpertHubCubit expertHubCubit;
   final ExpertCapabilityResolver expertCapabilityResolver;
   final ExtensionCubit extensionCubit;
@@ -410,7 +405,6 @@ Future<AppShell> buildAppShell({
   late final CliPresetsCubit cliPresetsCubit;
   late final SkillCubit skillCubit;
   late final McpCubit mcpCubit;
-  late final TeamHubCubit teamHubCubit;
   late final ExpertHubCubit expertHubCubit;
   late final ExtensionCubit extensionCubit;
   late final SessionRepository sessionRepo;
@@ -745,51 +739,6 @@ Future<AppShell> buildAppShell({
   final teamHubSource = CompositeTeamHubSource.withDefaults(
     GitRegistryTeamHubSource(),
   );
-  final teamHubFavorites = TeamHubFavoritesStore();
-  final teamCloneService = TeamCloneService(
-    installSkill: skillCubit.installTeamDependency,
-    installPlugin: pluginCubit.installTeamDependency,
-    installMcp: mcpCubit.installTeamDependency,
-    createTeam:
-        ({
-          required name,
-          required cli,
-          required teamMode,
-          required roster,
-          required skillIds,
-          required pluginIds,
-          required mcpServerIds,
-          required description,
-          required extraArgs,
-        }) => teamCubit.addClonedTeam(
-          name: name,
-          cli: cli,
-          teamMode: teamMode,
-          roster: roster,
-          skillIds: skillIds,
-          pluginIds: pluginIds,
-          mcpServerIds: mcpServerIds,
-          description: description,
-          extraArgs: extraArgs,
-        ),
-  );
-  teamHubCubit = TeamHubCubit(
-    source: teamHubSource,
-    loadFavorites: teamHubFavorites.load,
-    saveFavoriteToggle: teamHubFavorites.toggle,
-    cloneTeam: teamCloneService.clone,
-    loadInstalledDepIds: () async {
-      final skills = await skillRepo.loadInstalled();
-      final plugins = await pluginRepository.loadAll();
-      final mcps = await mcpRepository.loadAll();
-      return <String>{
-        ...skills.map((s) => s.id),
-        ...plugins.map((p) => p.id),
-        ...mcps.map((m) => m.id),
-      };
-    },
-  );
-
   final expertHubFavorites = ExpertHubFavoritesStore();
   final compositeExpertHubSource = CompositeExpertHubSource.withDefaults(
     registry: GitRegistryExpertHubSource(),
@@ -1278,7 +1227,6 @@ Future<AppShell> buildAppShell({
     cliPresetsCubit: cliPresetsCubit,
     skillCubit: skillCubit,
     mcpCubit: mcpCubit,
-    teamHubCubit: teamHubCubit,
     expertHubCubit: expertHubCubit,
     expertCapabilityResolver: expertCapabilityResolver,
     extensionCubit: extensionCubit,

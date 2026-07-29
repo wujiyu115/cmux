@@ -140,13 +140,6 @@ class _HomeSidebarNavScroll extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         _ShortcutRow(
-          icon: Icons.travel_explore_outlined,
-          label: l10n.teamHubNav,
-          active: activeGlobalView == HomeGlobalView.teamHub,
-          onTap: () => onGlobal?.call(HomeGlobalView.teamHub),
-        ),
-        const SizedBox(height: 4),
-        _ShortcutRow(
           icon: Icons.psychology_outlined,
           label: l10n.expertHubNav,
           active: activeGlobalView == HomeGlobalView.expertHub,

@@ -694,7 +694,6 @@ void main() async {
                   BlocProvider.value(value: shell.skillCubit),
                   BlocProvider.value(value: shell.automationCubit),
                   BlocProvider.value(value: shell.mcpCubit),
-                  BlocProvider.value(value: shell.teamHubCubit),
                   BlocProvider.value(value: shell.expertHubCubit),
                   BlocProvider.value(value: shell.extensionCubit),
                   BlocProvider.value(value: shell.appUpdateCubit),

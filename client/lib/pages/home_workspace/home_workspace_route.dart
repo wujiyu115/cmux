@@ -89,13 +89,6 @@ abstract final class HomeWorkspaceRoute {
     return raw.isEmpty ? null : raw;
   }
 
-  /// Team Hub team key when [homeGlobalView] is [HomeGlobalView.teamHub].
-  static String? teamHubTeamKey(String location) {
-    if (homeGlobalView(location) != HomeGlobalView.teamHub) return null;
-    final raw = parse(location).queryParameters['team']?.trim() ?? '';
-    return raw.isEmpty ? null : raw;
-  }
-
   /// My Teams team id when [homeGlobalView] is [HomeGlobalView.myTeams].
   static String? myTeamsTeamId(String location) {
     if (homeGlobalView(location) != HomeGlobalView.myTeams) return null;
@@ -109,15 +102,6 @@ abstract final class HomeWorkspaceRoute {
     queryParameters: {
       HomeGlobalView.globalQueryParam: HomeGlobalView.expertHub.routeSegment,
       'member': memberKey,
-    },
-  ).toString();
-
-  /// `/home-v2?global=teamHub&team=<key>` — opens Team Hub detail.
-  static String teamHubTeamLocation(String teamKey) => Uri(
-    path: '/home-v2',
-    queryParameters: {
-      HomeGlobalView.globalQueryParam: HomeGlobalView.teamHub.routeSegment,
-      'team': teamKey,
     },
   ).toString();
 
