@@ -69,63 +69,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get visibilityGitHint => '显示当前仓库的源代码管理面板。';
 
   @override
-  String get extensionsSettingsTitle => '扩展';
-
-  @override
-  String get extensionsSettingsDescription => '安装并启用增强 Agent 的外部工具。';
-
-  @override
-  String get extensionsNavInstalled => '已安装';
-
-  @override
-  String get extensionsEmptyTitle => '暂无可用扩展';
-
-  @override
-  String get extensionsEmptyHint => '扩展目录加载后会显示在这里。';
-
-  @override
-  String get extensionInstall => '安装';
-
-  @override
-  String get extensionUninstall => '卸载';
-
-  @override
-  String get extensionStatusNotInstalled => '未安装';
-
-  @override
-  String get extensionStatusReady => '就绪';
-
-  @override
-  String extensionStatusReadyVersion(String version) {
-    return '就绪（$version）';
-  }
-
-  @override
-  String get extensionStatusDependencyMissing => '缺少依赖';
-
-  @override
-  String extensionStatusDependencyMissingNamed(String deps) {
-    return '缺少：$deps';
-  }
-
-  @override
-  String extensionDependencyMissingHint(String deps) {
-    return '需要 PATH 中有 $deps。安装后点击重新检测。';
-  }
-
-  @override
-  String get extensionCopyCommand => '复制';
-
-  @override
-  String get extensionCommandCopied => '命令已复制到剪贴板';
-
-  @override
-  String get extensionRecheck => '重新检测';
-
-  @override
-  String get extensionStatusVersionTooOld => '已安装版本过旧';
-
-  @override
   String get themeModeTitle => '主题模式';
 
   @override
@@ -513,21 +456,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get workspaceCliNotConfigured => '未配置';
-
-  @override
-  String get homeWorkspaceWorkspaceExtensions => '扩展';
-
-  @override
-  String get workspaceExtensionsTitle => '本工作区的扩展';
-
-  @override
-  String get workspaceExtensionsSubtitle => '覆盖本工作区启用哪些扩展，默认跟随全局设置。';
-
-  @override
-  String get workspaceExtensionEffectiveOn => '本工作区已启用';
-
-  @override
-  String get workspaceExtensionEffectiveOff => '本工作区未启用';
 
   @override
   String get homeWorkspaceWorkspaceSettings => '工作区设置';
@@ -1701,24 +1629,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get teamPluginsNav => '插件';
-
-  @override
-  String get teamExtensionsNav => '扩展';
-
-  @override
-  String get teamExtensionFollowGlobal => '跟随全局';
-
-  @override
-  String get teamExtensionForceOn => '开启';
-
-  @override
-  String get teamExtensionForceOff => '关闭';
-
-  @override
-  String get teamExtensionEffectiveOn => '本团队已启用';
-
-  @override
-  String get teamExtensionEffectiveOff => '本团队未启用';
 
   @override
   String get teamMcpNav => 'MCP';

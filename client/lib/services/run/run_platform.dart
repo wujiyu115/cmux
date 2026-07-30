@@ -7,7 +7,6 @@ import 'launch_adapter_protocol.dart';
 import 'launch_config_store.dart';
 import 'launch_discover.dart';
 import 'launch_type_normalize.dart';
-import 'launch_type_registrar.dart';
 import 'launch_type_registry.dart';
 import 'launch_type_unavailable.dart';
 import 'launch_variable_expander.dart';
@@ -109,14 +108,13 @@ abstract class RunPlatformApi {
   List<LaunchTypeContribution> get launchTypes;
 }
 
-/// Facade wiring store, registry, session manager, adapter client, registrar.
+/// Facade wiring store, registry, session manager, adapter client.
 class RunPlatform implements RunPlatformApi {
   RunPlatform({
     required this.store,
     required this.registry,
     required this.sessionManager,
     required this.adapterClient,
-    required this.registrar,
   });
 
   final LaunchConfigStore store;
@@ -124,7 +122,6 @@ class RunPlatform implements RunPlatformApi {
   @override
   final RunSessionManager sessionManager;
   final LaunchAdapterClient adapterClient;
-  final LaunchTypeRegistrar registrar;
 
   @override
   Future<List<OwnedLaunchConfiguration>> listConfigurations(
@@ -288,7 +285,7 @@ class RunPlatform implements RunPlatformApi {
       LaunchConfigStore.launchConfigPath(folder);
 
   @override
-  Future<void> rebuildLaunchTypes() => registrar.rebuild(registry);
+  Future<void> rebuildLaunchTypes() => Future<void>.value();
 
   @override
   Future<List<OwnedLaunchConfiguration>> discoverRecommendations(

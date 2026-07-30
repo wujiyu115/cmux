@@ -10,7 +10,6 @@ import 'package:teampilot/cubits/app_bootstrap_cubit.dart';
 import 'package:teampilot/cubits/chat_cubit.dart';
 import 'package:teampilot/cubits/config_cubit.dart';
 import 'package:teampilot/cubits/editor_cubit.dart';
-import 'package:teampilot/cubits/extension_cubit.dart';
 import 'package:teampilot/cubits/layout_cubit.dart';
 import 'package:teampilot/cubits/notification_cubit.dart';
 import 'package:teampilot/cubits/session_preferences_cubit.dart';
@@ -23,22 +22,16 @@ import 'package:teampilot/main.dart';
 import 'package:teampilot/models/runtime_target.dart';
 import 'package:teampilot/pages/home_workspace/workspace_chrome_commands.dart';
 import 'package:teampilot/repositories/app_settings_repository.dart';
-import 'package:teampilot/repositories/extension_repository.dart';
 import 'package:teampilot/repositories/session_preferences_repository.dart';
 import 'package:teampilot/repositories/session_repository.dart';
 import 'package:teampilot/repositories/ssh_credential_store.dart';
 import 'package:teampilot/repositories/ssh_known_host_repository.dart';
 import 'package:teampilot/repositories/ssh_profile_repository.dart';
-import 'package:teampilot/repositories/workspace_project_config_repository.dart';
 import 'package:teampilot/router/app_router.dart';
 import 'package:teampilot/services/app/connection_mode_service.dart';
-import 'package:teampilot/services/cli/installer_types.dart';
 import 'package:teampilot/services/commands/command_bus.dart';
 import 'package:teampilot/services/commands/run_command_registrar.dart';
 import 'package:teampilot/services/commands/workspace_search_command_registrar.dart';
-import 'package:teampilot/services/extension/builtin_manifests.dart';
-import 'package:teampilot/services/extension/extension_acquisition_engine.dart';
-import 'package:teampilot/services/extension/extension_detector.dart';
 import 'package:teampilot/services/file_tree/workspace_file_tree_store.dart';
 import 'package:teampilot/services/git/git_command_runner.dart';
 import 'package:teampilot/services/git/git_repo_store.dart';
@@ -107,7 +100,6 @@ Widget buildTestApp({
   ChatCubit? chatCubit,
   LayoutCubit? layoutCubit,
   AppSettingsRepository? appSettings,
-  ExtensionCubit? extensionCubit,
 }) {
   final connectionModeService = ConnectionModeService(
     defaultTargetResolver: RuntimeTarget.local,
@@ -134,20 +126,9 @@ Widget buildTestApp({
     events: sshEvents,
     profileResolver: (_) => null,
   );
-  final extensionRepo = ExtensionRepository(
-    fs: InMemoryFilesystem(),
-    stateFilePath: '/test/extensions/state.json',
-    manifests: builtInExtensionManifests(),
-  );
   final workspaceRunRegistry = WorkspaceRunRegistry(
     platformFactory: WorkspaceRunPlatformFactory(
-      extensionRepository: extensionRepo,
-      projectConfigRepository: WorkspaceProjectConfigRepository(),
       fs: InMemoryFilesystem(),
-      detector: ExtensionDetector(
-        processRunner: (e, a, {environment}) async =>
-            ProcessResult(0, 1, '', ''),
-      ),
     ),
   );
 
@@ -234,20 +215,6 @@ Widget buildTestApp({
         BlocProvider(create: (_) => ShortcutCubit()),
         BlocProvider(create: (_) => EditorCubit(fs: LocalFilesystem())),
         BlocProvider(create: (_) => WorkbenchCubit()),
-        BlocProvider.value(
-          value: extensionCubit ??
-              ExtensionCubit(
-                extensionRepo,
-                ExtensionAcquisitionEngine(
-                  runner: (c) async =>
-                      const CliInstallerCommandResult(exitCode: 0),
-                ),
-                detector: ExtensionDetector(
-                  processRunner: (e, a, {environment}) async =>
-                      ProcessResult(0, 1, '', ''),
-                ),
-              ),
-        ),
         BlocProvider(create: (_) => WorkspaceToolsCubit()),
         BlocProvider(create: (_) => WorkspaceGroupsCubit()),
         BlocProvider(create: (_) => NotificationCubit()),

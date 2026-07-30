@@ -1,5 +1,4 @@
 import 'home_config_section.dart';
-import 'home_workspace_global_section.dart';
 import 'workspace/workspace_config_section.dart';
 
 /// Parses `/home-v2` and `/home-v2/workspace/:id` locations for [HomeShell].
@@ -69,11 +68,6 @@ abstract final class HomeWorkspaceRoute {
       queryParameters: params.isEmpty ? null : params,
     ).toString();
   }
-
-  static HomeGlobalView? homeGlobalView(String location) =>
-      HomeGlobalView.fromSegment(
-        parse(location).queryParameters[HomeGlobalView.globalQueryParam],
-      );
 
   static WorkspaceConfigSection? workspaceConfigSection(String location) =>
       WorkspaceConfigSection.fromSegment(

@@ -1,11 +1,7 @@
-import '../../models/extension_manifest.dart';
 import '../../models/run/run_ui_intent.dart';
 import '../../models/ssh_profile.dart';
 import '../../models/workspace_folder.dart';
-import '../../repositories/extension_repository.dart';
 import '../../repositories/ssh_profile_repository.dart';
-import '../../repositories/workspace_project_config_repository.dart';
-import '../extension/extension_detector.dart';
 import '../io/filesystem.dart';
 import '../ssh/ssh_client_factory.dart';
 import '../storage/app_storage.dart';
@@ -13,7 +9,6 @@ import '../storage/runtime_context.dart';
 import '../terminal/workspace_terminal_run_service.dart';
 import 'launch_adapter_client.dart';
 import 'launch_config_store.dart';
-import 'launch_type_registrar.dart';
 import 'launch_type_registry.dart';
 import 'process_run_executor.dart';
 import 'run_platform.dart';
@@ -33,37 +28,22 @@ class CreatedWorkspaceRunPlatform {
   final void Function(String entryId) onEntryClosed;
 }
 
-/// Builds a per-workspace [RunPlatform] with extension enablement injected.
-///
-/// Enablement reuses [ExtensionRepository] +
-/// [WorkspaceProjectConfig.effectiveExtensionEnabled] (same chain as
-/// [SessionLifecycleService.loadEnabledExtensionIds]).
+/// Builds a per-workspace [RunPlatform] (launch config store + built-in launch
+/// types + session manager) scoped to one workspace tab.
 class WorkspaceRunPlatformFactory {
   WorkspaceRunPlatformFactory({
-    required ExtensionRepository extensionRepository,
-    required WorkspaceProjectConfigRepository projectConfigRepository,
     Filesystem? fs,
-    ExtensionDetector? detector,
-    String Function(String extensionId)? extensionPathFor,
     Future<RuntimeContext> Function(String targetId)? resolveWorkContext,
     SshProfileRepository? sshProfileRepository,
     SshClientFactory? sshClientFactory,
     TerminalRunDepsResolver? terminalRunDeps,
-  }) : _extensionRepository = extensionRepository,
-       _projectConfigRepository = projectConfigRepository,
-       _fs = fs,
-       _detector = detector ?? ExtensionDetector(),
-       _extensionPathFor = extensionPathFor,
+  }) : _fs = fs,
        _resolveWorkContext = resolveWorkContext,
        _sshProfileRepository = sshProfileRepository,
        _sshClientFactory = sshClientFactory,
        terminalRunDeps = terminalRunDeps ?? TerminalRunDepsResolver();
 
-  final ExtensionRepository _extensionRepository;
-  final WorkspaceProjectConfigRepository _projectConfigRepository;
   final Filesystem? _fs;
-  final ExtensionDetector _detector;
-  final String Function(String extensionId)? _extensionPathFor;
   final Future<RuntimeContext> Function(String targetId)? _resolveWorkContext;
   final SshProfileRepository? _sshProfileRepository;
   final SshClientFactory? _sshClientFactory;
@@ -77,16 +57,9 @@ class WorkspaceRunPlatformFactory {
     required String workspaceId,
     void Function(RunUiIntent intent)? emitUiIntent,
   }) async {
-    final enabled = await _loadEnabledManifests(workspaceId);
-    final pathFor = _extensionPathFor ?? _resolveExtensionPath;
     final registry = LaunchTypeRegistry.withBuiltIns();
-    final registrar = LaunchTypeRegistrar.withExtensionDetector(
-      extensions: enabled,
-      detector: _detector,
-      extensionPathFor: pathFor,
-    );
     final adapterClient = LaunchAdapterClient(
-      extensionPathResolver: pathFor,
+      extensionPathResolver: (_) => '',
     );
     final store = LaunchConfigStore(
       io: TargetAwareLaunchConfigIo(resolveFilesystem: _filesystemForTarget),
@@ -121,9 +94,7 @@ class WorkspaceRunPlatformFactory {
       registry: registry,
       sessionManager: sessionManager,
       adapterClient: adapterClient,
-      registrar: registrar,
     );
-    await platform.rebuildLaunchTypes();
     return CreatedWorkspaceRunPlatform(
       platform: platform,
       onEntryClosed: onEntryClosed,
@@ -159,30 +130,4 @@ class WorkspaceRunPlatformFactory {
     return SshProcessRunHandle(session);
   }
 
-  String _resolveExtensionPath(String extensionId) {
-    final ctx = _filesystem.pathContext;
-    return ctx.join(AppStorage.paths.basePath, 'extensions', extensionId);
-  }
-
-  Future<List<ExtensionManifest>> _loadEnabledManifests(
-    String workspaceId,
-  ) async {
-    final trimmed = workspaceId.trim();
-    final global = (await _extensionRepository.load()).globalEnabled;
-    if (trimmed.isEmpty) {
-      return [
-        for (final manifest in _extensionRepository.manifests)
-          if (global.contains(manifest.id)) manifest,
-      ];
-    }
-    final config = await _projectConfigRepository.load(trimmed);
-    return [
-      for (final manifest in _extensionRepository.manifests)
-        if (config.effectiveExtensionEnabled(
-          extensionId: manifest.id,
-          globalEnabled: global,
-        ))
-          manifest,
-    ];
-  }
 }

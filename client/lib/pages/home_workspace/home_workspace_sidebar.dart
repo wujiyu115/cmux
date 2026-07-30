@@ -4,29 +4,22 @@ import 'package:shared_ui/shared_ui.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../models/layout_preferences.dart';
 import '../../theme/workspace_surface_layers.dart';
-import 'home_workspace_global_section.dart';
 import 'home_workspace_library_view.dart';
 
-/// Left rail of the workspace home: library shortcuts plus global management
-/// entries, mirroring the Apifox sidebar. Global shortcuts swap the right pane
-/// via [onSelectGlobalView] / [onSelectLibraryView].
+/// Left rail of the workspace home: library shortcuts mirroring the Apifox
+/// sidebar. Shortcuts swap the right pane via [onSelectLibraryView].
 class HomeSidebar extends StatelessWidget {
   const HomeSidebar({
-    this.activeGlobalView,
     this.activeLibraryView,
     this.allWorkspacesActive = false,
     this.onSelectAllWorkspaces,
-    this.onSelectGlobalView,
     this.onSelectLibraryView,
     super.key,
   });
 
-  /// Currently shown global section, or null when a workspace identity is shown.
-  final HomeGlobalView? activeGlobalView;
   final HomeLibraryView? activeLibraryView;
   final bool allWorkspacesActive;
   final VoidCallback? onSelectAllWorkspaces;
-  final ValueChanged<HomeGlobalView>? onSelectGlobalView;
   final ValueChanged<HomeLibraryView>? onSelectLibraryView;
 
   static const double width = LayoutPreferences.defaultHomeSidebarWidth;
@@ -36,7 +29,6 @@ class HomeSidebar extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final l10n = context.l10n;
     final onAllWorkspaces = onSelectAllWorkspaces;
-    final onGlobal = onSelectGlobalView;
     final onLibrary = onSelectLibraryView;
 
     return Container(
@@ -72,45 +64,9 @@ class HomeSidebar extends StatelessWidget {
             active: allWorkspacesActive,
             onTap: () => onAllWorkspaces?.call(),
           ),
-          const SizedBox(height: 12),
-          Divider(height: 1, color: cs.outlineVariant.withValues(alpha: 0.5)),
-          const SizedBox(height: 8),
-          Expanded(
-            child: _HomeSidebarNavScroll(
-              activeGlobalView: activeGlobalView,
-              onGlobal: onGlobal,
-            ),
-          ),
+          const Spacer(),
         ],
       ),
-    );
-  }
-}
-
-class _HomeSidebarNavScroll extends StatelessWidget {
-  const _HomeSidebarNavScroll({
-    required this.activeGlobalView,
-    required this.onGlobal,
-  });
-
-  final HomeGlobalView? activeGlobalView;
-  final ValueChanged<HomeGlobalView>? onGlobal;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final onGlobal = this.onGlobal;
-    final activeGlobalView = this.activeGlobalView;
-
-    return ListView(
-      children: [
-        _ShortcutRow(
-          icon: Icons.power_outlined,
-          label: l10n.teamExtensionsNav,
-          active: activeGlobalView == HomeGlobalView.extensions,
-          onTap: () => onGlobal?.call(HomeGlobalView.extensions),
-        ),
-      ],
     );
   }
 }

@@ -5,15 +5,15 @@ void main() {
   test('manage shows the project-scoped sections', () {
     expect(WorkspaceConfigSection.sections, [
       WorkspaceConfigSection.settings,
-      WorkspaceConfigSection.extensions,
     ]);
   });
 
   test('fromSegment resolves known segments only', () {
     expect(
-      WorkspaceConfigSection.fromSegment('extensions'),
-      WorkspaceConfigSection.extensions,
+      WorkspaceConfigSection.fromSegment('settings'),
+      WorkspaceConfigSection.settings,
     );
+    expect(WorkspaceConfigSection.fromSegment('extensions'), isNull);
     expect(WorkspaceConfigSection.fromSegment('skills'), isNull);
     expect(WorkspaceConfigSection.fromSegment('members'), isNull);
     expect(WorkspaceConfigSection.fromSegment('agent'), isNull);

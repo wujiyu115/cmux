@@ -74,65 +74,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Show the source control panel for the current repository.';
 
   @override
-  String get extensionsSettingsTitle => 'Extensions';
-
-  @override
-  String get extensionsSettingsDescription =>
-      'Install and enable external tools that augment your agents.';
-
-  @override
-  String get extensionsNavInstalled => 'Installed';
-
-  @override
-  String get extensionsEmptyTitle => 'No extensions available';
-
-  @override
-  String get extensionsEmptyHint =>
-      'Extensions will appear here once the catalog loads.';
-
-  @override
-  String get extensionInstall => 'Install';
-
-  @override
-  String get extensionUninstall => 'Uninstall';
-
-  @override
-  String get extensionStatusNotInstalled => 'Not installed';
-
-  @override
-  String get extensionStatusReady => 'Ready';
-
-  @override
-  String extensionStatusReadyVersion(String version) {
-    return 'Ready ($version)';
-  }
-
-  @override
-  String get extensionStatusDependencyMissing => 'Missing dependency';
-
-  @override
-  String extensionStatusDependencyMissingNamed(String deps) {
-    return 'Missing: $deps';
-  }
-
-  @override
-  String extensionDependencyMissingHint(String deps) {
-    return 'Needs $deps on your PATH. Install it, then re-check.';
-  }
-
-  @override
-  String get extensionCopyCommand => 'Copy';
-
-  @override
-  String get extensionCommandCopied => 'Command copied to clipboard';
-
-  @override
-  String get extensionRecheck => 'Re-check';
-
-  @override
-  String get extensionStatusVersionTooOld => 'Installed version is too old';
-
-  @override
   String get themeModeTitle => 'Theme mode';
 
   @override
@@ -537,22 +478,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get workspaceCliNotConfigured => 'Not configured';
-
-  @override
-  String get homeWorkspaceWorkspaceExtensions => 'Extensions';
-
-  @override
-  String get workspaceExtensionsTitle => 'Extensions for this workspace';
-
-  @override
-  String get workspaceExtensionsSubtitle =>
-      'Override which extensions run for this workspace. Default follows the global setting.';
-
-  @override
-  String get workspaceExtensionEffectiveOn => 'Enabled for this workspace';
-
-  @override
-  String get workspaceExtensionEffectiveOff => 'Disabled for this workspace';
 
   @override
   String get homeWorkspaceWorkspaceSettings => 'Workspace settings';
@@ -1768,24 +1693,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get teamPluginsNav => 'Plugins';
-
-  @override
-  String get teamExtensionsNav => 'Extensions';
-
-  @override
-  String get teamExtensionFollowGlobal => 'Follow global';
-
-  @override
-  String get teamExtensionForceOn => 'On';
-
-  @override
-  String get teamExtensionForceOff => 'Off';
-
-  @override
-  String get teamExtensionEffectiveOn => 'Active for this team';
-
-  @override
-  String get teamExtensionEffectiveOff => 'Inactive for this team';
 
   @override
   String get teamMcpNav => 'MCP';

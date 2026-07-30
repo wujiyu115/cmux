@@ -8,7 +8,6 @@ enum TeamConfigSection implements WorkspaceSectionDescriptor {
   skills,
   plugins,
   mcp,
-  extensions,
   members;
 
   @override
@@ -17,7 +16,6 @@ enum TeamConfigSection implements WorkspaceSectionDescriptor {
     TeamConfigSection.skills => 'skills',
     TeamConfigSection.plugins => 'plugins',
     TeamConfigSection.mcp => 'mcp',
-    TeamConfigSection.extensions => 'extensions',
     TeamConfigSection.members => 'members',
   };
 
@@ -33,7 +31,6 @@ enum TeamConfigSection implements WorkspaceSectionDescriptor {
     TeamConfigSection.skills => l10n.teamSkillsNav,
     TeamConfigSection.plugins => l10n.teamPluginsNav,
     TeamConfigSection.mcp => l10n.teamMcpNav,
-    TeamConfigSection.extensions => l10n.teamExtensionsNav,
     TeamConfigSection.members => l10n.members,
   };
 
@@ -57,7 +54,6 @@ IconData teamConfigSectionIcon(TeamConfigSection section) => switch (section) {
   TeamConfigSection.skills => Icons.extension_outlined,
   TeamConfigSection.plugins => Icons.widgets_outlined,
   TeamConfigSection.mcp => Icons.hub_outlined,
-  TeamConfigSection.extensions => Icons.power_outlined,
   TeamConfigSection.members => Icons.person_outline,
 };
 

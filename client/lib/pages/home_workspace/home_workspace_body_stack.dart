@@ -67,7 +67,6 @@ class _HomePageLayer extends StatelessWidget {
       key: const ValueKey('home-v2-body'),
       initialSection: HomeWorkspaceRoute.homeTeamSection(location),
       initialMemberId: HomeWorkspaceRoute.homeMemberId(location),
-      initialGlobalView: HomeWorkspaceRoute.homeGlobalView(location),
     );
   }
 }

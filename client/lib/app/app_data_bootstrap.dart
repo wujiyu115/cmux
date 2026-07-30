@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import '../cubits/chat_cubit.dart';
-import '../cubits/extension_cubit.dart';
 import '../cubits/layout_cubit.dart';
 import '../cubits/ssh_profile_cubit.dart';
 import '../models/layout_preferences.dart';
@@ -168,19 +167,15 @@ abstract final class AppDataBootstrap {
     );
   }
 
-  /// Extensions and default-workspace seed.
+  /// Auxiliary warm phase (post-index UI-frame yield point).
   static Future<void> warmAuxiliaryData({
     required BootLog boot,
-    required ExtensionCubit extensionCubit,
     required ChatCubit chatCubit,
     required SessionRepository sessionRepo,
   }) async {
     final phaseSw = Stopwatch()..start();
     boot('warmAuxiliaryData start');
-
-    await _timed(boot, 'extensions', extensionCubit.loadForBootstrap);
     await yieldUiFrame();
-
     boot('warmAuxiliaryData complete +${phaseSw.elapsedMilliseconds}ms');
     await yieldUiFrame();
   }
@@ -238,7 +233,6 @@ abstract final class AppDataBootstrap {
   static Future<void> reloadAll({
     required BootLog boot,
     required SshProfileCubit sshProfileCubit,
-    required ExtensionCubit extensionCubit,
     required ChatCubit chatCubit,
     required SessionRepository sessionRepo,
     required LayoutCubit layoutCubit,
@@ -260,7 +254,6 @@ abstract final class AppDataBootstrap {
     );
     await warmAuxiliaryData(
       boot: boot,
-      extensionCubit: extensionCubit,
       chatCubit: chatCubit,
       sessionRepo: sessionRepo,
     );

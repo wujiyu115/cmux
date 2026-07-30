@@ -218,108 +218,6 @@ abstract class AppLocalizations {
   /// **'Show the source control panel for the current repository.'**
   String get visibilityGitHint;
 
-  /// No description provided for @extensionsSettingsTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Extensions'**
-  String get extensionsSettingsTitle;
-
-  /// No description provided for @extensionsSettingsDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Install and enable external tools that augment your agents.'**
-  String get extensionsSettingsDescription;
-
-  /// No description provided for @extensionsNavInstalled.
-  ///
-  /// In en, this message translates to:
-  /// **'Installed'**
-  String get extensionsNavInstalled;
-
-  /// No description provided for @extensionsEmptyTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'No extensions available'**
-  String get extensionsEmptyTitle;
-
-  /// No description provided for @extensionsEmptyHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Extensions will appear here once the catalog loads.'**
-  String get extensionsEmptyHint;
-
-  /// No description provided for @extensionInstall.
-  ///
-  /// In en, this message translates to:
-  /// **'Install'**
-  String get extensionInstall;
-
-  /// No description provided for @extensionUninstall.
-  ///
-  /// In en, this message translates to:
-  /// **'Uninstall'**
-  String get extensionUninstall;
-
-  /// No description provided for @extensionStatusNotInstalled.
-  ///
-  /// In en, this message translates to:
-  /// **'Not installed'**
-  String get extensionStatusNotInstalled;
-
-  /// No description provided for @extensionStatusReady.
-  ///
-  /// In en, this message translates to:
-  /// **'Ready'**
-  String get extensionStatusReady;
-
-  /// No description provided for @extensionStatusReadyVersion.
-  ///
-  /// In en, this message translates to:
-  /// **'Ready ({version})'**
-  String extensionStatusReadyVersion(String version);
-
-  /// No description provided for @extensionStatusDependencyMissing.
-  ///
-  /// In en, this message translates to:
-  /// **'Missing dependency'**
-  String get extensionStatusDependencyMissing;
-
-  /// No description provided for @extensionStatusDependencyMissingNamed.
-  ///
-  /// In en, this message translates to:
-  /// **'Missing: {deps}'**
-  String extensionStatusDependencyMissingNamed(String deps);
-
-  /// No description provided for @extensionDependencyMissingHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Needs {deps} on your PATH. Install it, then re-check.'**
-  String extensionDependencyMissingHint(String deps);
-
-  /// No description provided for @extensionCopyCommand.
-  ///
-  /// In en, this message translates to:
-  /// **'Copy'**
-  String get extensionCopyCommand;
-
-  /// No description provided for @extensionCommandCopied.
-  ///
-  /// In en, this message translates to:
-  /// **'Command copied to clipboard'**
-  String get extensionCommandCopied;
-
-  /// No description provided for @extensionRecheck.
-  ///
-  /// In en, this message translates to:
-  /// **'Re-check'**
-  String get extensionRecheck;
-
-  /// No description provided for @extensionStatusVersionTooOld.
-  ///
-  /// In en, this message translates to:
-  /// **'Installed version is too old'**
-  String get extensionStatusVersionTooOld;
-
   /// No description provided for @themeModeTitle.
   ///
   /// In en, this message translates to:
@@ -1063,36 +961,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Not configured'**
   String get workspaceCliNotConfigured;
-
-  /// No description provided for @homeWorkspaceWorkspaceExtensions.
-  ///
-  /// In en, this message translates to:
-  /// **'Extensions'**
-  String get homeWorkspaceWorkspaceExtensions;
-
-  /// No description provided for @workspaceExtensionsTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Extensions for this workspace'**
-  String get workspaceExtensionsTitle;
-
-  /// No description provided for @workspaceExtensionsSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Override which extensions run for this workspace. Default follows the global setting.'**
-  String get workspaceExtensionsSubtitle;
-
-  /// No description provided for @workspaceExtensionEffectiveOn.
-  ///
-  /// In en, this message translates to:
-  /// **'Enabled for this workspace'**
-  String get workspaceExtensionEffectiveOn;
-
-  /// No description provided for @workspaceExtensionEffectiveOff.
-  ///
-  /// In en, this message translates to:
-  /// **'Disabled for this workspace'**
-  String get workspaceExtensionEffectiveOff;
 
   /// No description provided for @homeWorkspaceWorkspaceSettings.
   ///
@@ -3313,42 +3181,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Plugins'**
   String get teamPluginsNav;
-
-  /// No description provided for @teamExtensionsNav.
-  ///
-  /// In en, this message translates to:
-  /// **'Extensions'**
-  String get teamExtensionsNav;
-
-  /// No description provided for @teamExtensionFollowGlobal.
-  ///
-  /// In en, this message translates to:
-  /// **'Follow global'**
-  String get teamExtensionFollowGlobal;
-
-  /// No description provided for @teamExtensionForceOn.
-  ///
-  /// In en, this message translates to:
-  /// **'On'**
-  String get teamExtensionForceOn;
-
-  /// No description provided for @teamExtensionForceOff.
-  ///
-  /// In en, this message translates to:
-  /// **'Off'**
-  String get teamExtensionForceOff;
-
-  /// No description provided for @teamExtensionEffectiveOn.
-  ///
-  /// In en, this message translates to:
-  /// **'Active for this team'**
-  String get teamExtensionEffectiveOn;
-
-  /// No description provided for @teamExtensionEffectiveOff.
-  ///
-  /// In en, this message translates to:
-  /// **'Inactive for this team'**
-  String get teamExtensionEffectiveOff;
 
   /// No description provided for @teamMcpNav.
   ///

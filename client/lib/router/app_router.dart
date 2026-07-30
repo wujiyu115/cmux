@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import '../cubits/config_cubit.dart';
 import '../pages/config/config_workspace.dart';
 import '../pages/home_workspace/home_workspace_shell.dart';
-import '../pages/extensions/extension_management_page.dart';
 import '../pages/onboarding/onboarding_gate.dart';
 import '../pages/startup_gate.dart';
 import '../widgets/android_ssh_profile_selector.dart';
@@ -170,23 +169,6 @@ final appRouter = GoRouter(
               path: '/config/logs',
               pageBuilder: (context, state) => const NoTransitionPage(
                 child: ConfigWorkspace(section: ConfigSection.logs),
-              ),
-            ),
-            GoRoute(
-              path: '/extensions',
-              redirect: (context, state) {
-                if (Platform.isAndroid) return null;
-                return '/extensions/installed';
-              },
-              pageBuilder: (context, state) =>
-                  const NoTransitionPage(child: ExtensionManagementHubPage()),
-            ),
-            GoRoute(
-              path: '/extensions/installed',
-              pageBuilder: (context, state) => const NoTransitionPage(
-                child: ExtensionManagementPage(
-                  section: ExtensionSection.installed,
-                ),
               ),
             ),
             GoRoute(

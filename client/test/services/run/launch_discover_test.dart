@@ -8,7 +8,6 @@ import 'package:teampilot/models/workspace_folder.dart';
 import 'package:teampilot/services/run/launch_adapter_client.dart';
 import 'package:teampilot/services/run/launch_config_store.dart';
 import 'package:teampilot/services/run/launch_discover.dart';
-import 'package:teampilot/services/run/launch_type_registrar.dart';
 import 'package:teampilot/services/run/launch_type_registry.dart';
 import 'package:teampilot/services/run/process_run_executor.dart';
 import 'package:teampilot/services/run/run_platform.dart';
@@ -83,11 +82,6 @@ RunPlatform _platform({
       adapters: _FakeAdapterLauncher(),
     ),
     adapterClient: LaunchAdapterClient(extensionPathResolver: (_) => '/ext'),
-    registrar: LaunchTypeRegistrar(
-      extensions: const [],
-      detector: (_) async => true,
-      extensionPathFor: (_) => '/ext',
-    ),
   );
 }
 

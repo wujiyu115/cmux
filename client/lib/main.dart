@@ -25,7 +25,6 @@ import 'cubits/shortcut_cubit.dart';
 import 'l10n/l10n_extensions.dart';
 import 'repositories/app_settings_repository.dart';
 import 'repositories/session_repository.dart';
-import 'repositories/workspace_project_config_repository.dart';
 import 'repositories/ssh_credential_store.dart';
 import 'repositories/ssh_known_host_repository.dart';
 import 'repositories/ssh_profile_repository.dart';
@@ -564,9 +563,6 @@ void main() async {
                 RepositoryProvider<SessionRepository>.value(
                   value: shell.sessionRepo,
                 ),
-                RepositoryProvider<WorkspaceProjectConfigRepository>.value(
-                  value: shell.workspaceProjectConfigRepository,
-                ),
                 RepositoryProvider<SshProfileRepository>.value(
                   value: shell.sshProfileRepo,
                 ),
@@ -647,7 +643,6 @@ void main() async {
                   BlocProvider.value(value: shell.workspaceGroupsCubit),
                   BlocProvider.value(value: shell.workspaceToolsCubit),
                   BlocProvider.value(value: shell.sessionPreferencesCubit),
-                  BlocProvider.value(value: shell.extensionCubit),
                   BlocProvider.value(value: shell.appUpdateCubit),
                   BlocProvider.value(value: shell.sshProfileCubit),
                   BlocProvider.value(value: shell.sshConnectionCubit),

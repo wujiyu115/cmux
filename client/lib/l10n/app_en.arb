@@ -20,44 +20,6 @@
   "visibilityMembersHint": "Show the member list next to tools or terminals.",
   "visibilityFileTreeHint": "Show the workspace file tree for quick navigation.",
   "visibilityGitHint": "Show the source control panel for the current repository.",
-  "extensionsSettingsTitle": "Extensions",
-  "extensionsSettingsDescription": "Install and enable external tools that augment your agents.",
-  "extensionsNavInstalled": "Installed",
-  "extensionsEmptyTitle": "No extensions available",
-  "extensionsEmptyHint": "Extensions will appear here once the catalog loads.",
-  "extensionInstall": "Install",
-  "extensionUninstall": "Uninstall",
-  "extensionStatusNotInstalled": "Not installed",
-  "extensionStatusReady": "Ready",
-  "extensionStatusReadyVersion": "Ready ({version})",
-  "@extensionStatusReadyVersion": {
-    "placeholders": {
-      "version": {
-        "type": "String"
-      }
-    }
-  },
-  "extensionStatusDependencyMissing": "Missing dependency",
-  "extensionStatusDependencyMissingNamed": "Missing: {deps}",
-  "@extensionStatusDependencyMissingNamed": {
-    "placeholders": {
-      "deps": {
-        "type": "String"
-      }
-    }
-  },
-  "extensionDependencyMissingHint": "Needs {deps} on your PATH. Install it, then re-check.",
-  "@extensionDependencyMissingHint": {
-    "placeholders": {
-      "deps": {
-        "type": "String"
-      }
-    }
-  },
-  "extensionCopyCommand": "Copy",
-  "extensionCommandCopied": "Command copied to clipboard",
-  "extensionRecheck": "Re-check",
-  "extensionStatusVersionTooOld": "Installed version is too old",
   "themeModeTitle": "Theme mode",
   "themeModeDescription": "Light, dark, or match the operating system appearance.",
   "themeColorPresetTitle": "Theme colors",
@@ -223,11 +185,6 @@
   "workspaceRunningSessionsSection": "Running",
   "workspaceCliConfigured": "Configured",
   "workspaceCliNotConfigured": "Not configured",
-  "homeWorkspaceWorkspaceExtensions": "Extensions",
-  "workspaceExtensionsTitle": "Extensions for this workspace",
-  "workspaceExtensionsSubtitle": "Override which extensions run for this workspace. Default follows the global setting.",
-  "workspaceExtensionEffectiveOn": "Enabled for this workspace",
-  "workspaceExtensionEffectiveOff": "Disabled for this workspace",
   "homeWorkspaceWorkspaceSettings": "Workspace settings",
   "homeWorkspaceWorkspaceSettingsBasicInfo": "Basic information",
   "homeWorkspaceWorkspaceId": "Workspace ID",
@@ -761,12 +718,6 @@
   "teamSettings": "Team Settings",
   "teamSkillsNav": "Skills",
   "teamPluginsNav": "Plugins",
-  "teamExtensionsNav": "Extensions",
-  "teamExtensionFollowGlobal": "Follow global",
-  "teamExtensionForceOn": "On",
-  "teamExtensionForceOff": "Off",
-  "teamExtensionEffectiveOn": "Active for this team",
-  "teamExtensionEffectiveOff": "Inactive for this team",
   "teamMcpNav": "MCP",
   "githubSettingsTitle": "GitHub",
   "githubSettingsSubtitle": "Connect GitHub to publish experts and teams to Hub",

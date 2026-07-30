@@ -1,7 +1,5 @@
 import 'package:flutter/foundation.dart';
 
-import '../extension_manifest.dart';
-
 /// Adapter process lifecycle declared by a `launch-type` extension effect.
 enum LaunchAdapterLifecycle {
   sticky,
@@ -43,52 +41,6 @@ class LaunchTypeContribution {
       for (final item in raw)
         if (item != null) item.toString().trim(),
     ].where((pattern) => pattern.isNotEmpty).toList();
-  }
-
-  /// Parses a `launch-type` [ExtensionEffect] into a contribution.
-  ///
-  /// Returns null when the effect is not a launch type or uses an unsupported
-  /// adapter runtime (v1: only `workspace`).
-  static LaunchTypeContribution? fromEffect({
-    required String extensionId,
-    required ExtensionEffect effect,
-  }) {
-    if (effect.kind != 'launch-type') return null;
-
-    final type = effect.launchType?.trim();
-    if (type == null || type.isEmpty) return null;
-
-    final adapter = effect.launchAdapter;
-    if (adapter == null) return null;
-
-    final runtime = (adapter['runtime'] as String?)?.trim() ?? '';
-    if (runtime != 'workspace') return null;
-
-    final command = (adapter['command'] as String?)?.trim() ?? '';
-    if (command.isEmpty) return null;
-
-    final lifecycleRaw = (adapter['lifecycle'] as String?)?.trim() ?? 'sticky';
-    final lifecycle = switch (lifecycleRaw) {
-      'oneshot' => LaunchAdapterLifecycle.oneshot,
-      'sticky' => LaunchAdapterLifecycle.sticky,
-      _ => LaunchAdapterLifecycle.sticky,
-    };
-
-    final schema = effect.launchConfigurationSchema;
-    if (schema == null) return null;
-
-    return LaunchTypeContribution(
-      extensionId: extensionId,
-      type: type,
-      kinds: effect.launchKinds ?? const ['run'],
-      adapterCommand: command,
-      adapterRuntime: runtime,
-      lifecycle: lifecycle,
-      configurationSchema: Map<String, Object?>.from(schema),
-      discover: effect.launchDiscover == null
-          ? null
-          : Map<String, Object?>.from(effect.launchDiscover!),
-    );
   }
 
   @override

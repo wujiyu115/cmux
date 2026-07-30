@@ -7,7 +7,6 @@ import '../../theme/workspace_surface_layers.dart';
 import '../../widgets/split_layout.dart';
 import 'home_config_section.dart';
 import 'home_all_workspaces_pane.dart';
-import 'home_workspace_global_section.dart';
 import 'home_workspace_library_section.dart';
 import 'home_workspace_library_view.dart';
 import 'home_workspace_sidebar.dart';
@@ -20,7 +19,6 @@ class HomePage extends StatefulWidget {
   const HomePage({
     this.initialSection,
     this.initialMemberId,
-    this.initialGlobalView,
     super.key,
   });
 
@@ -31,10 +29,6 @@ class HomePage extends StatefulWidget {
   /// Member to focus when [initialSection] is [TeamConfigSection.members].
   final String? initialMemberId;
 
-  /// Global management sidebar entry to open on first build (deep-link from
-  /// workspace management "manage all" actions).
-  final HomeGlobalView? initialGlobalView;
-
   @override
   State<HomePage> createState() => _HomePageState();
 }
@@ -43,48 +37,27 @@ class _HomePageState extends State<HomePage> {
   var _allWorkspacesActive = true;
   String? _selectedIdentityId;
 
-  /// Null means the team view; otherwise a global management section.
-  late HomeGlobalView? _globalView = widget.initialGlobalView;
-
-  /// Favorites / recent library pane; mutually exclusive with [_globalView].
+  /// Favorites / recent library pane; mutually exclusive with all-workspaces.
   HomeLibraryView? _libraryView;
 
   @override
   void initState() {
     super.initState();
-    if (widget.initialGlobalView != null) {
-      _allWorkspacesActive = false;
-    }
     if (widget.initialSection != null) {
       _allWorkspacesActive = false;
     }
-  }
-
-  @override
-  void didUpdateWidget(covariant HomePage oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.initialGlobalView == oldWidget.initialGlobalView) return;
-    setState(() {
-      _globalView = widget.initialGlobalView;
-      if (widget.initialGlobalView != null) {
-        _allWorkspacesActive = false;
-        _libraryView = null;
-      }
-    });
   }
 
   void _selectIdentity(String profileId) {
     setState(() {
       _selectedIdentityId = profileId;
       _allWorkspacesActive = false;
-      _globalView = null;
       _libraryView = null;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final globalView = _globalView;
     final libraryView = _libraryView;
 
     return WorkspacePageCardShell(
@@ -95,43 +68,26 @@ class _HomePageState extends State<HomePage> {
           return TwoPaneSplitView(
             axis: Axis.horizontal,
             first: HomeSidebar(
-              activeGlobalView: globalView,
               activeLibraryView: libraryView,
-              allWorkspacesActive:
-                  _allWorkspacesActive &&
-                  globalView == null &&
-                  libraryView == null,
+              allWorkspacesActive: _allWorkspacesActive && libraryView == null,
               onSelectAllWorkspaces: () => setState(() {
                 _allWorkspacesActive = true;
-                _globalView = null;
                 _libraryView = null;
                 _selectedIdentityId = null;
-              }),
-              onSelectGlobalView: (view) => setState(() {
-                _allWorkspacesActive = false;
-                _globalView = view;
-                _libraryView = null;
               }),
               onSelectLibraryView: (view) => setState(() {
                 _allWorkspacesActive = false;
                 _libraryView = view;
-                _globalView = null;
               }),
             ),
             second: Padding(
               padding: const EdgeInsets.fromLTRB(44, 48, 42, 18),
               child: _HomeRightPane(
-                globalView: globalView,
                 libraryView: libraryView,
                 allWorkspacesActive: _allWorkspacesActive,
                 selectedIdentityId: _selectedIdentityId,
                 initialSection: widget.initialSection,
                 initialMemberId: widget.initialMemberId,
-                onSelectGlobalView: (view) => setState(() {
-                  _allWorkspacesActive = false;
-                  _globalView = view;
-                  _libraryView = null;
-                }),
                 onOpenTeam: _selectIdentity,
               ),
             ),
@@ -151,23 +107,19 @@ class _HomePageState extends State<HomePage> {
 
 class _HomeRightPane extends StatefulWidget {
   const _HomeRightPane({
-    required this.globalView,
     required this.libraryView,
     required this.allWorkspacesActive,
     required this.selectedIdentityId,
     required this.initialSection,
     required this.initialMemberId,
-    required this.onSelectGlobalView,
     required this.onOpenTeam,
   });
 
-  final HomeGlobalView? globalView;
   final HomeLibraryView? libraryView;
   final bool allWorkspacesActive;
   final String? selectedIdentityId;
   final TeamConfigSection? initialSection;
   final String? initialMemberId;
-  final ValueChanged<HomeGlobalView> onSelectGlobalView;
   final ValueChanged<String> onOpenTeam;
 
   @override
@@ -196,16 +148,9 @@ class _HomeRightPaneState extends State<_HomeRightPane> {
   }
 
   WorkspaceRightPaneDescriptor _resolveDescriptor(BuildContext context) {
-    if (widget.globalView != null) {
-      return WorkspaceRightPaneDescriptor.global(widget.globalView!);
-    }
     if (widget.libraryView != null) {
       return WorkspaceRightPaneDescriptor.library(widget.libraryView!);
     }
-    if (widget.allWorkspacesActive) {
-      return const WorkspaceRightPaneDescriptor.allWorkspaces();
-    }
-
     return const WorkspaceRightPaneDescriptor.allWorkspaces();
   }
 
@@ -215,10 +160,6 @@ class _HomeRightPaneState extends State<_HomeRightPane> {
   ) {
     return switch (descriptor.kind) {
       WorkspaceRightPaneKind.allWorkspaces => const HomeAllWorkspacesPane(),
-      WorkspaceRightPaneKind.global => HomeGlobalSection(
-        view: descriptor.globalView!,
-        onOpenTeam: widget.onOpenTeam,
-      ),
       WorkspaceRightPaneKind.library => HomeLibrarySection(
         view: descriptor.libraryView!,
       ),

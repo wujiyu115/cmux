@@ -80,9 +80,6 @@ class AppPaths {
 
   String get launchProfilesDir => _ctx.join(basePath, 'launch-profiles');
 
-  String get extensionsStateJson =>
-      _ctx.join(basePath, 'extensions', 'state.json');
-
   String get notificationsJson => notificationsJsonForTeampilotRoot(basePath);
 
   String get cliPresetsJson => _ctx.join(basePath, 'cli-presets.json');
@@ -169,9 +166,6 @@ class AppPaths {
 
   static String pluginsJsonForTeampilotRoot(String teampilotRoot) =>
       _pathUnderTeampilotRoot(teampilotRoot, 'plugins/plugins.json');
-
-  static String extensionsStateJsonForTeampilotRoot(String teampilotRoot) =>
-      _pathUnderTeampilotRoot(teampilotRoot, 'extensions/state.json');
 
   static String notificationsJsonForTeampilotRoot(String teampilotRoot) =>
       _pathUnderTeampilotRoot(teampilotRoot, 'notifications.json');

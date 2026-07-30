@@ -28,7 +28,6 @@ import '../cubits/layout_cubit.dart';
 import '../cubits/workspace_groups_cubit.dart';
 import '../cubits/workspace_tools_cubit.dart';
 import '../cubits/session_preferences_cubit.dart';
-import '../cubits/extension_cubit.dart';
 import '../cubits/ssh_connection_cubit.dart';
 import '../cubits/ssh_profile_cubit.dart';
 import '../cubits/github_account_cubit.dart';
@@ -46,12 +45,8 @@ import '../repositories/session_repository.dart';
 import '../repositories/ssh_credential_store.dart';
 import '../repositories/ssh_known_host_repository.dart';
 import '../repositories/ssh_profile_repository.dart';
-import '../repositories/extension_repository.dart';
 import '../repositories/user_terminal_theme_repository.dart';
-import '../repositories/workspace_project_config_repository.dart';
 import '../router/app_router.dart';
-import '../services/extension/builtin_manifests.dart';
-import '../services/extension/extension_acquisition_engine.dart';
 import '../services/storage/app_storage.dart';
 import '../services/perf/live_perf_driver.dart';
 import '../services/home_workspace/home_workspace_ui_cache.dart';
@@ -112,7 +107,6 @@ class AppShell {
     required this.workbenchEditorOpener,
     required this.workbenchShellLauncher,
     required this.sessionRepo,
-    required this.workspaceProjectConfigRepository,
     required this.sshProfileRepo,
     required this.sshCredentialStore,
     required this.sshKnownHostRepo,
@@ -134,7 +128,6 @@ class AppShell {
     required this.workspaceGroupsCubit,
     required this.workspaceToolsCubit,
     required this.sessionPreferencesCubit,
-    required this.extensionCubit,
     required this.appUpdateCubit,
     required this.sshProfileCubit,
     required this.sshConnectionCubit,
@@ -164,7 +157,6 @@ class AppShell {
   final WorkbenchEditorOpener workbenchEditorOpener;
   final WorkbenchShellLauncher workbenchShellLauncher;
   final SessionRepository sessionRepo;
-  final WorkspaceProjectConfigRepository workspaceProjectConfigRepository;
   final SshProfileRepository sshProfileRepo;
   final SshCredentialStore sshCredentialStore;
   final SshKnownHostRepository sshKnownHostRepo;
@@ -186,7 +178,6 @@ class AppShell {
   final WorkspaceGroupsCubit workspaceGroupsCubit;
   final WorkspaceToolsCubit workspaceToolsCubit;
   final SessionPreferencesCubit sessionPreferencesCubit;
-  final ExtensionCubit extensionCubit;
   final AppUpdateCubit appUpdateCubit;
   final SshProfileCubit sshProfileCubit;
   final SshConnectionCubit sshConnectionCubit;
@@ -272,7 +263,6 @@ Future<AppShell> buildAppShell({
   RuntimeTarget defaultTargetResolver() => homeTarget;
 
   final sshProfileRepo = SshProfileRepository();
-  late final ExtensionCubit extensionCubit;
   late final SessionRepository sessionRepo;
   late final ChatCubit chatCubit;
   late final EditorCubit editorCubit;
@@ -378,19 +368,6 @@ Future<AppShell> buildAppShell({
     AppStorage.bindHome(runtimeContextRegistry.home());
   };
 
-  final extensionRepository = ExtensionRepository(
-    fs: AppStorage.fs,
-    stateFilePath: AppStorage.paths.extensionsStateJson,
-    manifests: builtInExtensionManifests(),
-  );
-  final workspaceProjectConfigRepository = WorkspaceProjectConfigRepository(
-    fs: AppStorage.fs,
-  );
-  extensionCubit = ExtensionCubit(
-    extensionRepository,
-    ExtensionAcquisitionEngine(),
-  );
-
   sessionLifecycleService = SessionLifecycleService(
     storageRootsResolver: () async => AppStorage.context,
     // P2: launch resolves the work-plane on the workspace's target machine.
@@ -418,8 +395,6 @@ Future<AppShell> buildAppShell({
   final workspaceToolsScopeRegistry = WorkspaceToolsScopeRegistry();
   final workspaceRunRegistry = WorkspaceRunRegistry(
     platformFactory: WorkspaceRunPlatformFactory(
-      extensionRepository: extensionRepository,
-      projectConfigRepository: workspaceProjectConfigRepository,
       resolveWorkContext: sessionLifecycleService.resolveWorkContextForTargetId,
       sshProfileRepository: sshProfileRepo,
       sshClientFactory: sshClientFactory,
@@ -567,7 +542,6 @@ Future<AppShell> buildAppShell({
   reloadAllAppData = () => AppDataBootstrap.reloadAll(
     boot: boot,
     sshProfileCubit: sshProfileCubit,
-    extensionCubit: extensionCubit,
     chatCubit: chatCubit,
     sessionRepo: sessionRepo,
     layoutCubit: layoutCubit,
@@ -622,7 +596,6 @@ Future<AppShell> buildAppShell({
     bootstrapCubit?.beginWarmAuxiliary();
     await AppDataBootstrap.warmAuxiliaryData(
       boot: boot,
-      extensionCubit: extensionCubit,
       chatCubit: chatCubit,
       sessionRepo: sessionRepo,
     );
@@ -701,7 +674,6 @@ Future<AppShell> buildAppShell({
     workbenchEditorOpener: workbenchEditorOpener,
     workbenchShellLauncher: resolvedShellLauncher,
     sessionRepo: sessionRepo,
-    workspaceProjectConfigRepository: workspaceProjectConfigRepository,
     sshProfileRepo: sshProfileRepo,
     sshCredentialStore: sshCredentialStore,
     sshKnownHostRepo: sshKnownHostRepo,
@@ -723,7 +695,6 @@ Future<AppShell> buildAppShell({
     workspaceGroupsCubit: workspaceGroupsCubit,
     workspaceToolsCubit: workspaceToolsCubit,
     sessionPreferencesCubit: sessionPreferencesCubit,
-    extensionCubit: extensionCubit,
     appUpdateCubit: appUpdateCubit,
     sshProfileCubit: sshProfileCubit,
     sshConnectionCubit: sshConnectionCubit,
