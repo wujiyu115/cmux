@@ -7,6 +7,7 @@ import 'package:shared_ui/shared_ui.dart';
 import '../../../cubits/chat_cubit.dart';
 import '../../../cubits/layout_cubit.dart';
 import '../../../cubits/run_cubit.dart';
+import '../../../cubits/workbench/workbench_cubit.dart';
 import '../../../cubits/worktree_cubit.dart';
 import '../../../models/workspace.dart';
 import '../../../services/commands/run_command_registrar.dart';
@@ -103,6 +104,23 @@ class _WorkspaceSplitPaneState extends State<WorkspaceSplitPane> {
       return; // No launcher in scope (test harness) — leave the landing shown.
     }
     _autoTerminalScheduled = true;
+
+    // Workspace already owns a live shell terminal → focus it instead of
+    // spawning a second PTY. Switching back to a workspace must reuse its open
+    // terminal, not open a new one on every activation.
+    final workbench = ctx.read<WorkbenchCubit>();
+    final existingShell = workbench.resolveMostRecentShell(
+      widget.workspace.workspaceId,
+    );
+    if (existingShell != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        workbench.select(widget.workspace.workspaceId, existingShell);
+        ctx.read<ChatCubit>().dismissNewChat();
+      });
+      return;
+    }
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       unawaited(

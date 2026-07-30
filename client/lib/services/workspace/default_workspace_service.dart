@@ -1,5 +1,3 @@
-import 'package:collection/collection.dart';
-
 import '../../models/workspace.dart';
 import '../../models/workspace_folder.dart';
 import '../../repositories/session_repository.dart';
@@ -23,30 +21,17 @@ abstract final class DefaultWorkspaceService {
     SessionRepository repository, {
     List<Workspace>? knownWorkspaces,
   }) async {
-    final primaryPath = await resolvePrimaryPath();
     final workspaces = knownWorkspaces ?? await repository.loadWorkspaces();
-    var workspace = workspaces
-        .where((w) => workspacePathsEqual(w.firstFolderPath, primaryPath))
-        .firstOrNull;
+    // Only seed on a truly empty first launch. Once the user owns any
+    // workspace, never recreate "Default" — that made it undeletable.
+    if (workspaces.isNotEmpty) return false;
 
-    var mutated = false;
-    if (workspace == null) {
-      workspace = await repository.createWorkspace([
-        WorkspaceFolder(path: primaryPath),
-      ], display: defaultDisplay);
-      mutated = true;
-    }
-
-    final workspaceSessions = await repository.loadSessionsForWorkspace(
-      workspace.workspaceId,
-    );
-
-    if (workspaceSessions.isEmpty) {
-      await repository.createSession(workspace.workspaceId);
-      mutated = true;
-    }
-
-    return mutated;
+    final primaryPath = await resolvePrimaryPath();
+    final workspace = await repository.createWorkspace([
+      WorkspaceFolder(path: primaryPath),
+    ], display: defaultDisplay);
+    await repository.createSession(workspace.workspaceId);
+    return true;
   }
 
   /// Idempotent — safe to call on every bootstrap.

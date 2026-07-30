@@ -423,8 +423,17 @@ class _HomeShellState extends State<HomeShell> {
                 child: BlocBuilder<LayoutCubit, LayoutState>(
                   buildWhen: (a, b) =>
                       a.preferences.workspaceNavWidth !=
-                      b.preferences.workspaceNavWidth,
+                          b.preferences.workspaceNavWidth ||
+                      a.preferences.sidebarVisible !=
+                          b.preferences.sidebarVisible,
                   builder: (context, layoutState) {
+                    final body = HomeWorkspaceBodyStack(
+                      location: widget.location,
+                      openTabs: _openTabs,
+                    );
+                    if (!layoutState.preferences.sidebarVisible) {
+                      return body;
+                    }
                     return TwoPaneSplitView(
                       axis: Axis.horizontal,
                       first: WorkspaceNavSidebar(
@@ -433,10 +442,7 @@ class _HomeShellState extends State<HomeShell> {
                         onHomeTap: _goHome,
                         onCloseTab: (tabKey) => unawaited(_closeTab(tabKey)),
                       ),
-                      second: HomeWorkspaceBodyStack(
-                        location: widget.location,
-                        openTabs: _openTabs,
-                      ),
+                      second: body,
                       initialSize:
                           layoutState.preferences.workspaceNavWidth,
                       minSize: LayoutPreferences.minWorkspaceNavWidth,

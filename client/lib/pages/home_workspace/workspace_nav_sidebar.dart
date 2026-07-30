@@ -11,14 +11,13 @@ import '../../models/workspace.dart';
 import '../../models/workspace_accent.dart';
 import '../../models/workspace_group.dart';
 import '../../models/workspace_tab_ref.dart';
-import '../../models/workspace_topology.dart';
 import '../../repositories/session_repository.dart';
 import '../../theme/workspace_accent_palette.dart';
 import '../../theme/workspace_surface_layers.dart';
 import '../../utils/workspace/workspace_display_name.dart';
+import '../../widgets/workspace_icon.dart';
 import 'home_new_workspace_dialog.dart';
 import 'home_workspace_tab_scope.dart';
-import 'home_workspace_title_bar.dart' show workspaceTabTopologyIconData;
 import 'workspace_accent_picker.dart';
 import 'workspace_nav_context_menu.dart';
 
@@ -311,7 +310,7 @@ class _GroupHeaderState extends State<_GroupHeader> {
                       : group.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: styles.xsSemiboldColored(cs.onSurfaceVariant),
+                  style: styles.smSemiboldColored(cs.onSurfaceVariant),
                 ),
               ),
               if (_hovered)
@@ -428,7 +427,7 @@ class _UngroupedHeader extends StatelessWidget {
           Expanded(
             child: Text(
               context.l10n.workspaceNavUngrouped,
-              style: styles.xsSemiboldColored(cs.onSurfaceVariant),
+              style: styles.smSemiboldColored(cs.onSurfaceVariant),
             ),
           ),
           Text(
@@ -441,8 +440,8 @@ class _UngroupedHeader extends StatelessWidget {
   }
 }
 
-/// One workspace entry: accent-tinted topology glyph + name, active highlight,
-/// hover close, right-click context menu.
+/// One workspace entry: workspace icon (accent ring when set) + name, active
+/// highlight, hover close, right-click context menu.
 class _WorkspaceNavRow extends StatefulWidget {
   const _WorkspaceNavRow({
     required this.workspace,
@@ -484,18 +483,34 @@ class _WorkspaceNavRowState extends State<_WorkspaceNavRow> {
     final styles = TpTextStyles.of(context);
     final l10n = context.l10n;
     final active = widget.active;
-    final topology = workspaceTopologyOf(widget.workspace.folders);
     final name = widget.workspace.localizedName(l10n);
     final WorkspaceAccentPreset? accent = widget.workspace.accent;
-    final Color iconColor = accent != null
-        ? workspaceAccentColor(context, accent)
-        : (active ? cs.primary : cs.onSurfaceVariant);
     final Color fg = active ? cs.onSurface : cs.onSurfaceVariant;
     final Color background = active
         ? cs.surfaceContainerHigh
         : _hovered
         ? cs.onSurface.withValues(alpha: 0.05)
         : Colors.transparent;
+
+    Widget leading = WorkspaceIcon.fromWorkspace(
+      widget.workspace,
+      size: 24,
+      borderRadius: 7,
+      padding: 4,
+    );
+    if (accent != null) {
+      leading = Container(
+        padding: const EdgeInsets.all(1.5),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(9),
+          border: Border.all(
+            color: workspaceAccentColor(context, accent),
+            width: 1.5,
+          ),
+        ),
+        child: leading,
+      );
+    }
 
     return RepaintBoundary(
       child: MouseRegion(
@@ -526,11 +541,7 @@ class _WorkspaceNavRowState extends State<_WorkspaceNavRow> {
             ),
             child: Row(
               children: [
-                Icon(
-                  workspaceTabTopologyIconData(topology),
-                  size: context.tpIconSizes.md,
-                  color: iconColor,
-                ),
+                leading,
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -542,18 +553,23 @@ class _WorkspaceNavRowState extends State<_WorkspaceNavRow> {
                         : styles.smColored(fg),
                   ),
                 ),
-                if (_showClose)
-                  TpIconButton(
-                    icon: Icons.close,
-                    tooltip: l10n.closeTab,
-                    size: TpIconButton.kCompactSize,
-                    compact: true,
-                    color: cs.onSurfaceVariant,
-                    backgroundColor: Colors.transparent,
-                    onTap: widget.onClose,
-                  )
-                else
-                  const SizedBox(width: 6),
+                // Constant-size trailing slot: reserving the close affordance's
+                // footprint keeps row height stable across hover.
+                SizedBox(
+                  width: TpIconButton.kCompactSize,
+                  height: TpIconButton.kCompactSize,
+                  child: _showClose
+                      ? TpIconButton(
+                          icon: Icons.close,
+                          tooltip: l10n.closeTab,
+                          size: TpIconButton.kCompactSize,
+                          compact: true,
+                          color: cs.onSurfaceVariant,
+                          backgroundColor: Colors.transparent,
+                          onTap: widget.onClose,
+                        )
+                      : null,
+                ),
               ],
             ),
           ),

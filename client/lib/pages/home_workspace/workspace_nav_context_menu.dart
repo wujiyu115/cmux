@@ -12,7 +12,8 @@ import 'workspace_accent_picker.dart';
 import 'workspace_actions.dart';
 
 /// Right-click / long-press menu for a workspace row in the nav sidebar
-/// (图 12): rename, icon, default terminal, move-to-group, accent, close.
+/// (图 12): rename, icon, default terminal, move-to-group, accent, close,
+/// delete.
 Future<void> showWorkspaceNavContextMenu({
   required BuildContext context,
   required Offset position,
@@ -52,14 +53,19 @@ Future<void> showWorkspaceNavContextMenu({
         icon: Icons.palette_outlined,
         label: l10n.workspaceAccentColor,
       ),
-      if (closable) ...[
-        const TpActionMenuSpec.divider(),
+      const TpActionMenuSpec.divider(),
+      if (closable)
         TpActionMenuSpec.item(
           value: 'close',
           icon: Icons.close_rounded,
           label: l10n.closeTab,
         ),
-      ],
+      TpActionMenuSpec.item(
+        value: 'delete',
+        icon: Icons.delete_outline_rounded,
+        label: l10n.deleteWorkspace,
+        destructive: true,
+      ),
     ],
   );
   if (selected == null || !context.mounted) return;
@@ -80,6 +86,8 @@ Future<void> showWorkspaceNavContextMenu({
       await _pickAccent(context, workspace);
     case 'close':
       onClose();
+    case 'delete':
+      await confirmDeleteWorkspace(context, workspace);
   }
 }
 
