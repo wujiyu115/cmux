@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:teampilot/models/workspace.dart';
+import 'package:teampilot/models/workspace_accent.dart';
 import 'package:teampilot/models/workspace_folder.dart';
 
 void main() {
@@ -147,5 +148,73 @@ void main() {
       'rootSandboxEnvOptIn': 'yes',
     });
     expect(restored.rootSandboxEnvOptIn, isFalse);
+  });
+
+  test('groupId / accent / defaultShell default empty and omit from toJson', () {
+    final ws = Workspace(
+      workspaceId: 'p1',
+      folders: const [WorkspaceFolder(path: '/tmp/repo')],
+      createdAt: 1,
+    );
+    expect(ws.groupId, '');
+    expect(ws.accent, isNull);
+    expect(ws.defaultShell, isNull);
+    final json = ws.toJson();
+    expect(json.containsKey('groupId'), isFalse);
+    expect(json.containsKey('accent'), isFalse);
+    expect(json.containsKey('defaultShell'), isFalse);
+  });
+
+  test('groupId / accent / defaultShell round-trip', () {
+    final ws = Workspace(
+      workspaceId: 'p1',
+      folders: const [WorkspaceFolder(path: '/tmp/repo')],
+      createdAt: 1,
+      groupId: 'g1',
+      accent: const WorkspaceAccentPreset(3),
+      defaultShell: r'C:\Program Files\Git\bin\bash.exe',
+    );
+    final json = ws.toJson();
+    expect(json['groupId'], 'g1');
+    expect(json['accent'], 3);
+    expect(json['defaultShell'], r'C:\Program Files\Git\bin\bash.exe');
+    final restored = Workspace.fromJson(json);
+    expect(restored.groupId, 'g1');
+    expect(restored.accent, const WorkspaceAccentPreset(3));
+    expect(restored.defaultShell, r'C:\Program Files\Git\bin\bash.exe');
+  });
+
+  test('copyWith clears accent / defaultShell explicitly', () {
+    final ws = Workspace(
+      workspaceId: 'p1',
+      folders: const [WorkspaceFolder(path: '/tmp/repo')],
+      createdAt: 1,
+      accent: const WorkspaceAccentPreset(2),
+      defaultShell: '/bin/zsh',
+    );
+    final cleared = ws.copyWith(clearAccent: true, clearDefaultShell: true);
+    expect(cleared.accent, isNull);
+    expect(cleared.defaultShell, isNull);
+    // Non-clearing copyWith keeps the values.
+    expect(ws.copyWith(groupId: 'g2').accent, const WorkspaceAccentPreset(2));
+  });
+
+  test('accent tolerates negative / malformed json as null', () {
+    expect(WorkspaceAccentPreset.fromJson(-1), isNull);
+    expect(WorkspaceAccentPreset.fromJson('x'), isNull);
+    expect(WorkspaceAccentPreset.fromJson(null), isNull);
+    expect(WorkspaceAccentPreset.fromJson(5), const WorkspaceAccentPreset(5));
+  });
+
+  test('blank defaultShell json string decodes to null', () {
+    final restored = Workspace.fromJson({
+      'workspaceId': 'p1',
+      'folders': const [
+        {'path': '/tmp/repo', 'targetId': 'local'},
+      ],
+      'createdAt': 1,
+      'defaultShell': '   ',
+    });
+    expect(restored.defaultShell, isNull);
   });
 }

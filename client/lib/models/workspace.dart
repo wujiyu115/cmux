@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../utils/workspace/workspace_path_utils.dart';
+import 'workspace_accent.dart';
 import 'workspace_folder.dart';
 import 'workspace_icon_ref.dart';
 import 'workspace_topology.dart';
@@ -17,6 +18,9 @@ class Workspace {
     this.updatedAt = 0,
     this.sessionIds = const [],
     this.rootSandboxEnvOptIn = false,
+    this.groupId = '',
+    this.accent,
+    this.defaultShell,
   });
 
   factory Workspace({
@@ -29,6 +33,9 @@ class Workspace {
     int updatedAt = 0,
     List<String> sessionIds = const [],
     bool rootSandboxEnvOptIn = false,
+    String groupId = '',
+    WorkspaceAccentPreset? accent,
+    String? defaultShell,
   }) {
     return Workspace._(
       workspaceId: workspaceId,
@@ -40,6 +47,9 @@ class Workspace {
       updatedAt: updatedAt,
       sessionIds: sessionIds,
       rootSandboxEnvOptIn: rootSandboxEnvOptIn,
+      groupId: groupId,
+      accent: accent,
+      defaultShell: defaultShell,
     );
   }
 
@@ -58,6 +68,11 @@ class Workspace {
       updatedAt: json['updatedAt'] as int? ?? 0,
       sessionIds: sessionIds,
       rootSandboxEnvOptIn: json['rootSandboxEnvOptIn'] == true,
+      groupId: json['groupId'] as String? ?? '',
+      accent: WorkspaceAccentPreset.fromJson(json['accent']),
+      defaultShell: (json['defaultShell'] as String?)?.trim().isNotEmpty == true
+          ? (json['defaultShell'] as String).trim()
+          : null,
     );
   }
 
@@ -71,6 +86,15 @@ class Workspace {
   final List<String> sessionIds;
 
   final bool rootSandboxEnvOptIn;
+
+  /// Id of the [WorkspaceGroup] this workspace belongs to; `''` = ungrouped.
+  final String groupId;
+
+  /// Accent color preset for the nav sidebar / surface tabs; null = theme default.
+  final WorkspaceAccentPreset? accent;
+
+  /// Default terminal shell (executable path or special id); null = global default.
+  final String? defaultShell;
 
   String get firstFolderPath => folders.isEmpty ? '' : folders.first.path;
   List<String> get extraFolderPaths => folders.length <= 1
@@ -139,6 +163,11 @@ class Workspace {
     int? updatedAt,
     List<String>? sessionIds,
     bool? rootSandboxEnvOptIn,
+    String? groupId,
+    WorkspaceAccentPreset? accent,
+    bool clearAccent = false,
+    String? defaultShell,
+    bool clearDefaultShell = false,
   }) {
     return Workspace(
       workspaceId: workspaceId ?? this.workspaceId,
@@ -150,6 +179,9 @@ class Workspace {
       updatedAt: updatedAt ?? this.updatedAt,
       sessionIds: sessionIds ?? this.sessionIds,
       rootSandboxEnvOptIn: rootSandboxEnvOptIn ?? this.rootSandboxEnvOptIn,
+      groupId: groupId ?? this.groupId,
+      accent: clearAccent ? null : (accent ?? this.accent),
+      defaultShell: clearDefaultShell ? null : (defaultShell ?? this.defaultShell),
     );
   }
 
@@ -164,6 +196,9 @@ class Workspace {
       'updatedAt': updatedAt,
       'sessionIds': sessionIds,
       if (rootSandboxEnvOptIn) 'rootSandboxEnvOptIn': true,
+      if (groupId.isNotEmpty) 'groupId': groupId,
+      if (accent case final a?) 'accent': a.toJson(),
+      if (defaultShell case final s?) 'defaultShell': s,
     };
   }
 
@@ -180,7 +215,10 @@ class Workspace {
             createdAt == other.createdAt &&
             updatedAt == other.updatedAt &&
             listEquals(sessionIds, other.sessionIds) &&
-            rootSandboxEnvOptIn == other.rootSandboxEnvOptIn;
+            rootSandboxEnvOptIn == other.rootSandboxEnvOptIn &&
+            groupId == other.groupId &&
+            accent == other.accent &&
+            defaultShell == other.defaultShell;
   }
 
   @override
@@ -194,6 +232,9 @@ class Workspace {
     updatedAt,
     Object.hashAll(sessionIds),
     rootSandboxEnvOptIn,
+    groupId,
+    accent,
+    defaultShell,
   );
 }
 
