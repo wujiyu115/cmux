@@ -440,7 +440,10 @@ void main() async {
       minimumSize: const Size(800, 500),
       center: false,
       title: 'TeamPilot',
-      backgroundColor: const Color(0xFFFFFFFF),
+      // Transparent client background: the frameless shell paints its own
+      // chrome edge-to-edge, so a solid (white) window bg only bled through as
+      // a bright rim around the app. Transparent removes that rim.
+      backgroundColor: const Color(0x00000000),
       // Frameless chrome is finalized in completeBootSplashTransition(). Linux
       // and Windows already start without a native caption for overlay splash.
     );

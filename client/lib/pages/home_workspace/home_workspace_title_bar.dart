@@ -119,7 +119,6 @@ class HomeTitleBar extends StatefulWidget {
     this.recentlyClosed = const [],
     this.workspaces = const [],
     this.trailingActions,
-    this.onHomeTap,
     this.onReopenClosedTab,
     super.key,
   });
@@ -139,7 +138,6 @@ class HomeTitleBar extends StatefulWidget {
   /// Compact actions on the right (e.g. Run toolbar), before pane toggles.
   final Widget? trailingActions;
 
-  final VoidCallback? onHomeTap;
   final ValueChanged<String>? onReopenClosedTab;
 
   @override
@@ -220,13 +218,8 @@ class _HomeTitleBarState extends State<HomeTitleBar> with WindowListener {
               _buildWindowControls(),
             SizedBox(width: useMacWindowChromeStyle ? 8 : 20),
             const _BrandMark(),
-            const SizedBox(width: 24),
-            _HomePill(
-              label: l10n.homeWorkspaceMainWindow,
-              active: widget.activeTabKey == null,
-              onTap: widget.onHomeTap,
-            ),
-            // Workspace tabs live in the left [WorkspaceNavSidebar] now; the
+            // Home entry lives in the left [WorkspaceNavSidebar] now — the pill
+            // here was redundant. Workspace tabs live in the sidebar too; the
             // title bar keeps only the recently-closed overflow and a draggable
             // spacer that absorbs the remaining width (window-move area).
             Expanded(
@@ -286,49 +279,6 @@ class _BrandMark extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [const TeamPilotBrandLogo()],
-    );
-  }
-}
-
-class _HomePill extends StatelessWidget {
-  const _HomePill({required this.label, this.active = true, this.onTap});
-
-  final String label;
-  final bool active;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final styles = TpTextStyles.of(context);
-    final Color fg = active ? cs.primary : cs.onSurfaceVariant;
-    return Material(
-      color: active
-          ? cs.primary.withValues(alpha: 0.16)
-          : Colors.transparent,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-        side: BorderSide(
-          color: active
-              ? cs.primary.withValues(alpha: 0.28)
-              : Colors.transparent,
-        ),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.home_filled, size: context.tpIconSizes.md, color: fg),
-              const SizedBox(width: 6),
-              Text(label, style: styles.smColored(fg)),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

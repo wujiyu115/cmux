@@ -410,7 +410,6 @@ class _HomeShellState extends State<HomeShell> {
             location: widget.location,
             openTabs: _openTabs,
             recentlyClosed: _recentlyClosed,
-            onHomeTap: _goHome,
             onReopenClosedTab: (tabKey) => unawaited(_reopenClosedTab(tabKey)),
           ),
           Expanded(
@@ -475,14 +474,12 @@ class _HomeShellTitleBar extends StatelessWidget {
     required this.location,
     required this.openTabs,
     required this.recentlyClosed,
-    required this.onHomeTap,
     required this.onReopenClosedTab,
   });
 
   final String location;
   final List<WorkspaceTabRef> openTabs;
   final List<HomeClosedWorkspaceEntry> recentlyClosed;
-  final VoidCallback onHomeTap;
   final ValueChanged<String> onReopenClosedTab;
 
   @override
@@ -499,9 +496,9 @@ class _HomeShellTitleBar extends StatelessWidget {
       for (final workspace in workspaces)
         if (openWorkspaceIds.contains(workspace.workspaceId)) workspace,
     ];
-    // Workspace tabs now live in the left [WorkspaceNavSidebar]; the title bar
-    // keeps only window chrome, the home pill, recently-closed, and the Run
-    // toolbar for the active tab.
+    // Workspace tabs + the home entry now live in the left
+    // [WorkspaceNavSidebar]; the title bar keeps only window chrome,
+    // recently-closed, and the Run toolbar for the active tab.
     return HomeTitleBar(
       activeTabKey: activeTab?.tabKey,
       pageChrome: pageChrome,
@@ -512,7 +509,6 @@ class _HomeShellTitleBar extends StatelessWidget {
         activeTab: activeTab,
         openWorkspaces: openWorkspaces,
       ),
-      onHomeTap: onHomeTap,
       onReopenClosedTab: onReopenClosedTab,
     );
   }

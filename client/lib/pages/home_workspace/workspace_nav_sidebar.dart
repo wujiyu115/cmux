@@ -544,9 +544,9 @@ class _WorkspaceNavRowState extends State<_WorkspaceNavRow> {
     final active = widget.active;
     final name = widget.workspace.localizedName(l10n);
     final WorkspaceAccentPreset? accent = widget.workspace.accent;
-    final Color fg = active ? cs.onSurface : cs.onSurfaceVariant;
+    final Color fg = active ? cs.primary : cs.onSurfaceVariant;
     final Color background = active
-        ? cs.surfaceContainerHigh
+        ? cs.primary.withValues(alpha: 0.14)
         : _hovered
         ? cs.onSurface.withValues(alpha: 0.05)
         : Colors.transparent;
@@ -584,7 +584,7 @@ class _WorkspaceNavRowState extends State<_WorkspaceNavRow> {
           child: Container(
             margin: const EdgeInsets.symmetric(vertical: 1),
             padding: const EdgeInsets.only(
-              left: 10,
+              left: 6,
               right: 6,
               top: 8,
               bottom: 8,
@@ -592,14 +592,20 @@ class _WorkspaceNavRowState extends State<_WorkspaceNavRow> {
             decoration: BoxDecoration(
               color: background,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: active
-                    ? cs.outlineVariant.withValues(alpha: 0.7)
-                    : Colors.transparent,
-              ),
             ),
             child: Row(
               children: [
+                // Active indicator bar: a solid primary rail flags the selected
+                // workspace far more legibly than the old grey tint alone.
+                Container(
+                  width: 3,
+                  height: 18,
+                  decoration: BoxDecoration(
+                    color: active ? cs.primary : Colors.transparent,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(width: 7),
                 leading,
                 const SizedBox(width: 8),
                 Expanded(
