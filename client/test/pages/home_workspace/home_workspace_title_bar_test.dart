@@ -25,7 +25,9 @@ void main() {
     tearDownTestAppStorage();
   });
 
-  testWidgets('title bar renders workspace tabs', (tester) async {
+  testWidgets('pane visibility toggles shown on workspace view', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(1600, 900);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
@@ -41,19 +43,11 @@ void main() {
             BlocProvider(create: (_) => NotificationCubit()),
             BlocProvider(create: (_) => LayoutCubit()),
           ],
-          child: const HomeTitleBar(
-            tabs: [
-              HomeWorkspaceTab(id: 'ws-a', name: 'Solo'),
-              HomeWorkspaceTab(id: 'ws-b', name: 'Shared'),
-            ],
-            activeTabKey: 'ws-a',
-          ),
+          child: const HomeTitleBar(activeTabKey: 'ws-a'),
         ),
       ),
     );
 
-    expect(find.text('Solo'), findsOneWidget);
-    expect(find.text('Shared'), findsOneWidget);
     expect(find.byType(HomeTitleBar), findsOneWidget);
     expect(find.byType(WorkspaceShellPaneVisibilityToggles), findsOneWidget);
     expect(find.byKey(AppKeys.sidebarVisibilityButton), findsOneWidget);
@@ -71,12 +65,7 @@ void main() {
             BlocProvider(create: (_) => NotificationCubit()),
             BlocProvider(create: (_) => LayoutCubit()),
           ],
-          child: const HomeTitleBar(
-            tabs: [
-              HomeWorkspaceTab(id: 'ws-a', name: 'Solo'),
-            ],
-            activeTabKey: null,
-          ),
+          child: const HomeTitleBar(activeTabKey: null),
         ),
       ),
     );

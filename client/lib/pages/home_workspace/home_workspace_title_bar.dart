@@ -14,7 +14,6 @@ import '../../services/app/desktop_window_actions.dart';
 import '../../services/app/platform_utils.dart';
 import '../../theme/workspace_surface_layers.dart';
 import '../../theme/workspace_topology_colors.dart';
-import '../../widgets/tab_close_button.dart';
 import '../../widgets/notification/notification_bell_button.dart';
 import '../../widgets/team_pilot_brand_logo.dart';
 import '../../widgets/window_chrome_controls.dart';
@@ -26,37 +25,12 @@ import '../workspace_shell/workspace_shell_tabs.dart';
 const double kHomeTitleBarHeight = 58;
 
 @visibleForTesting
-double homeWorkspaceTabBarAlpha({required bool active, required bool hovered}) {
-  if (active) return 1.0;
-  if (hovered) return 0.7;
-  return 0.4;
-}
-
-@visibleForTesting
 IconData workspaceTabTopologyIconData(WorkspaceTopology topology) {
   return switch (topology) {
     WorkspaceTopology.local => Icons.folder_outlined,
     WorkspaceTopology.remote => Icons.cloud_outlined,
     WorkspaceTopology.mixed => Icons.hub_outlined,
   };
-}
-
-@visibleForTesting
-Color homeWorkspaceTabBarColor({
-  required ColorScheme colorScheme,
-  required Brightness brightness,
-  WorkspaceTopology topology = WorkspaceTopology.local,
-  required bool active,
-  required bool hovered,
-}) {
-  final base = WorkspaceTopologyColors.of(
-    topology: topology,
-    colorScheme: colorScheme,
-    brightness: brightness,
-  );
-  return base.withValues(
-    alpha: homeWorkspaceTabBarAlpha(active: active, hovered: hovered),
-  );
 }
 
 @visibleForTesting
@@ -138,44 +112,17 @@ class WorkspaceTabTopologyIcon extends StatelessWidget {
   }
 }
 
-/// An open workspace tab in the title bar.
-class HomeWorkspaceTab {
-  const HomeWorkspaceTab({
-    required this.id,
-    required this.name,
-    this.topology = WorkspaceTopology.local,
-    this.tooltip,
-    this.closable = true,
-  });
-
-  final String id;
-  final String name;
-  final WorkspaceTopology topology;
-
-  /// Shown on hover; defaults to [name] when omitted.
-  final String? tooltip;
-
-  /// When false (the pinned personal workspace), no close button is shown.
-  final bool closable;
-}
-
 class HomeTitleBar extends StatefulWidget {
   const HomeTitleBar({
-    this.tabs = const [],
     this.activeTabKey,
     this.pageChrome = WorkspacePageChrome.home,
     this.recentlyClosed = const [],
     this.workspaces = const [],
     this.trailingActions,
     this.onHomeTap,
-    this.onSelectTab,
-    this.onCloseTab,
     this.onReopenClosedTab,
     super.key,
   });
-
-  /// Open workspace tabs, kept until explicitly closed.
-  final List<HomeWorkspaceTab> tabs;
 
   /// The workspace tab currently shown, or null when the Home view is shown.
   final String? activeTabKey;
@@ -193,8 +140,6 @@ class HomeTitleBar extends StatefulWidget {
   final Widget? trailingActions;
 
   final VoidCallback? onHomeTap;
-  final ValueChanged<String>? onSelectTab;
-  final ValueChanged<String>? onCloseTab;
   final ValueChanged<String>? onReopenClosedTab;
 
   @override
@@ -281,94 +226,26 @@ class _HomeTitleBarState extends State<HomeTitleBar> with WindowListener {
               active: widget.activeTabKey == null,
               onTap: widget.onHomeTap,
             ),
-            if (widget.tabs.isEmpty)
-              Expanded(
-                child: Row(
-                  children: [
-                    const SizedBox(width: 6),
-                    _RecentlyClosedOverflowButton(
-                      entries: widget.recentlyClosed,
-                      workspaces: widget.workspaces,
-                      onReopen: widget.onReopenClosedTab,
-                    ),
-                    Expanded(
-                      child: showWindowControls
-                          ? const WindowDragArea(child: SizedBox.expand())
-                          : const SizedBox.expand(),
-                    ),
-                  ],
-                ),
-              )
-            else
-              // The open workspace tabs share the remaining width with a single
-              // Expanded spacer that doubles as the window-move area, so the
-              // action buttons stay flush right with no dead band.
-              //
-              // The earlier layout paired a Flexible tab strip with a separate
-              // Expanded spacer; two flex siblings split the free width 50/50,
-              // and the greedy horizontal scroll view filled its half on the
-              // left while the right half sat empty. Here the tabs are instead
-              // sized to their content (a shrink-wrapping horizontal ListView,
-              // capped at the available width so they scroll only when they
-              // would overflow), which leaves the spacer as the *sole* flex
-              // child: it absorbs all leftover width and remains draggable.
-              Expanded(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    return Row(
-                      children: [
-                        ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxWidth: constraints.maxWidth,
-                          ),
-                          child: ListView(
-                            shrinkWrap: true,
-                            scrollDirection: Axis.horizontal,
-                            children: [
-                              for (final tab in widget.tabs) ...[
-                                const SizedBox(width: 6),
-                                // widthFactor keeps the tab at its content
-                                // width; the ListView otherwise stretches each
-                                // child to the full bar height.
-                                Align(
-                                  alignment: Alignment.center,
-                                  widthFactor: 1,
-                                  child: _WorkspaceTab(
-                                    label: tab.name,
-                                    tooltip: tab.tooltip ?? tab.name,
-                                    topology: tab.topology,
-                                    active: tab.id == widget.activeTabKey,
-                                    closable: tab.closable,
-                                    onTap: () =>
-                                        widget.onSelectTab?.call(tab.id),
-                                    onClose: () =>
-                                        widget.onCloseTab?.call(tab.id),
-                                  ),
-                                ),
-                              ],
-                              const SizedBox(width: 6),
-                              Align(
-                                alignment: Alignment.center,
-                                widthFactor: 1,
-                                child: _RecentlyClosedOverflowButton(
-                                  entries: widget.recentlyClosed,
-                                  workspaces: widget.workspaces,
-                                  onReopen: widget.onReopenClosedTab,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Expanded(
-                          child: showWindowControls
-                              ? const WindowDragArea(child: SizedBox.expand())
-                              : const SizedBox.expand(),
-                        ),
-                      ],
-                    );
-                  },
-                ),
+            // Workspace tabs live in the left [WorkspaceNavSidebar] now; the
+            // title bar keeps only the recently-closed overflow and a draggable
+            // spacer that absorbs the remaining width (window-move area).
+            Expanded(
+              child: Row(
+                children: [
+                  const SizedBox(width: 6),
+                  _RecentlyClosedOverflowButton(
+                    entries: widget.recentlyClosed,
+                    workspaces: widget.workspaces,
+                    onReopen: widget.onReopenClosedTab,
+                  ),
+                  Expanded(
+                    child: showWindowControls
+                        ? const WindowDragArea(child: SizedBox.expand())
+                        : const SizedBox.expand(),
+                  ),
+                ],
               ),
+            ),
             if (widget.trailingActions != null) ...[
               widget.trailingActions!,
               const SizedBox(width: 8),
@@ -450,213 +327,6 @@ class _HomePill extends StatelessWidget {
               Text(label, style: styles.smColored(fg)),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _WorkspaceTab extends StatefulWidget {
-  const _WorkspaceTab({
-    required this.label,
-    required this.tooltip,
-    this.topology = WorkspaceTopology.local,
-    this.active = false,
-    this.closable = true,
-    this.onTap,
-    this.onClose,
-  });
-
-  final String label;
-  final String tooltip;
-  final WorkspaceTopology topology;
-  final bool active;
-  final bool closable;
-  final VoidCallback? onTap;
-  final VoidCallback? onClose;
-
-  @override
-  State<_WorkspaceTab> createState() => _WorkspaceTabState();
-}
-
-class _WorkspaceTabState extends State<_WorkspaceTab> {
-  var _hovered = false;
-
-  /// Touch platforms have no hover; keep tab chrome visible on Android.
-  bool get _showChrome => widget.active || _hovered || Platform.isAndroid;
-
-  Future<void> _showTabContextMenuAtGlobal(Offset globalPosition) async {
-    if (!widget.closable || widget.onClose == null) return;
-    final l10n = context.l10n;
-    final selected = await showTpActionMenuFromSpecs<String>(
-      context: context,
-      globalPosition: globalPosition,
-      specs: [
-        TpActionMenuSpec.item(
-          value: 'close',
-          icon: Icons.close,
-          label: l10n.closeTab,
-        ),
-      ],
-    );
-    if (!mounted || selected == null) return;
-    if (selected == 'close') widget.onClose?.call();
-  }
-
-  Future<void> _showTabContextMenuAtTap(TapDownDetails details) async {
-    await _showTabContextMenuAtGlobal(
-      contextMenuGlobalPosition(context, details),
-    );
-  }
-
-  void _showTabContextMenuFromTap(TapDownDetails details) {
-    unawaited(_showTabContextMenuAtTap(details));
-  }
-
-  void _showTabContextMenuAtChipCenter() {
-    final box = context.findRenderObject();
-    if (box is! RenderBox || !box.hasSize) return;
-    final center = box.localToGlobal(
-      Offset(box.size.width / 2, box.size.height / 2),
-    );
-    unawaited(_showTabContextMenuAtGlobal(center));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final styles = TpTextStyles.of(context);
-    final active = widget.active;
-    final Color fg = active ? cs.onSurface : cs.onSurfaceVariant;
-    final brightness = Theme.of(context).brightness;
-    final barColor = homeWorkspaceTabBarColor(
-      colorScheme: cs,
-      brightness: brightness,
-      topology: widget.topology,
-      active: active,
-      hovered: _hovered,
-    );
-    return Tooltip(
-      message: widget.tooltip,
-      waitDuration: const Duration(milliseconds: 500),
-      child: MouseRegion(
-        onEnter: (_) => setState(() => _hovered = true),
-        onExit: (_) => setState(() => _hovered = false),
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: widget.onTap,
-          onSecondaryTapDown: widget.closable && widget.onClose != null
-              ? _showTabContextMenuFromTap
-              : null,
-          onLongPress:
-              widget.closable && widget.onClose != null && Platform.isAndroid
-              ? _showTabContextMenuAtChipCenter
-              : null,
-          // Material owns fill/border/clip so close-button hover cannot paint
-          // past the rounded outer chrome.
-          child: Material(
-            color: active
-                ? cs.surfaceContainerHigh
-                : _hovered
-                ? cs.onSurface.withValues(alpha: 0.05)
-                : Colors.transparent,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-              side: BorderSide(
-                color: active
-                    ? cs.outlineVariant.withValues(alpha: 0.7)
-                    : Colors.transparent,
-              ),
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              onTap: widget.onTap,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 200),
-                child: Padding(
-                  padding: const EdgeInsets.only(
-                    left: 10,
-                    right: 6,
-                    top: 6,
-                    bottom: 6,
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      // Fixed height: CrossAxisAlignment.stretch would expand
-                      // the row to the ListView viewport height (~full title bar).
-                      SizedBox(
-                        width: 3,
-                        height: context.tpIconSizes.md,
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: barColor,
-                            borderRadius: BorderRadius.circular(1.5),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      _TabChromeSlot(
-                        visible: _showChrome,
-                        child: WorkspaceTabTopologyIcon(
-                          topology: widget.topology,
-                          colorScheme: cs,
-                          brightness: brightness,
-                          size: context.tpIconSizes.md,
-                          active: active,
-                          hovered: _hovered,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Flexible(
-                        child: Text(
-                          widget.label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: styles.smColored(fg),
-                        ),
-                      ),
-                      if (widget.closable) ...[
-                        const SizedBox(width: 8),
-                        _TabChromeSlot(
-                          visible: _showChrome,
-                          child: TabCloseButton(
-                            active: active,
-                            onTap: widget.onClose,
-                          ),
-                        ),
-                      ] else
-                        const SizedBox(width: 6),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Keeps tab chrome in the layout while hiding it visually until hover/active.
-class _TabChromeSlot extends StatelessWidget {
-  const _TabChromeSlot({required this.visible, required this.child});
-
-  final bool visible;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return RepaintBoundary(
-      child: IgnorePointer(
-        ignoring: !visible,
-        child: AnimatedOpacity(
-          opacity: visible ? 1 : 0,
-          duration: const Duration(milliseconds: 120),
-          curve: Curves.easeOut,
-          child: child,
         ),
       ),
     );

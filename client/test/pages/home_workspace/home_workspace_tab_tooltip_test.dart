@@ -5,7 +5,6 @@ import 'package:teampilot/models/workspace_folder.dart';
 import 'package:teampilot/models/workspace_topology.dart';
 import 'package:teampilot/pages/home_workspace/home_workspace_title_bar.dart';
 import 'package:teampilot/pages/home_workspace/open_workspace_tab_actions.dart';
-import 'package:teampilot/theme/workspace_topology_colors.dart';
 
 Workspace _workspace({
   required String id,
@@ -88,22 +87,5 @@ void main() {
       ),
       '/home/user/app',
     );
-  });
-
-  test('homeWorkspaceTabBarColor uses topology accent for remote tabs', () {
-    final scheme = ThemeData.light().colorScheme;
-    final base = WorkspaceTopologyColors.of(
-      topology: WorkspaceTopology.remote,
-      colorScheme: scheme,
-      brightness: Brightness.light,
-    );
-    final bar = homeWorkspaceTabBarColor(
-      colorScheme: scheme,
-      brightness: Brightness.light,
-      topology: WorkspaceTopology.remote,
-      active: true,
-      hovered: false,
-    );
-    expect(bar, base.withValues(alpha: 1));
   });
 }

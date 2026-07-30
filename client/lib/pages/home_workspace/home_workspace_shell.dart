@@ -37,7 +37,6 @@ import '../../widgets/split_layout.dart';
 import 'home_workspace_body_stack.dart';
 import 'home_workspace_tab_scope.dart';
 import 'home_workspace_title_bar.dart';
-import 'open_workspace_tab_actions.dart';
 import 'workspace_chrome_commands.dart';
 import 'workspace_nav_sidebar.dart';
 
@@ -412,13 +411,6 @@ class _HomeShellState extends State<HomeShell> {
             openTabs: _openTabs,
             recentlyClosed: _recentlyClosed,
             onHomeTap: _goHome,
-            onSelectTab: (tabKey) {
-              final tab = _openTabs
-                  .where((t) => t.tabKey == tabKey)
-                  .firstOrNull;
-              if (tab != null) _selectTab(tab);
-            },
-            onCloseTab: (tabKey) => unawaited(_closeTab(tabKey)),
             onReopenClosedTab: (tabKey) => unawaited(_reopenClosedTab(tabKey)),
           ),
           Expanded(
@@ -478,8 +470,6 @@ class _HomeShellTitleBar extends StatelessWidget {
     required this.openTabs,
     required this.recentlyClosed,
     required this.onHomeTap,
-    required this.onSelectTab,
-    required this.onCloseTab,
     required this.onReopenClosedTab,
   });
 
@@ -487,8 +477,6 @@ class _HomeShellTitleBar extends StatelessWidget {
   final List<WorkspaceTabRef> openTabs;
   final List<HomeClosedWorkspaceEntry> recentlyClosed;
   final VoidCallback onHomeTap;
-  final ValueChanged<String> onSelectTab;
-  final ValueChanged<String> onCloseTab;
   final ValueChanged<String> onReopenClosedTab;
 
   @override
@@ -509,7 +497,6 @@ class _HomeShellTitleBar extends StatelessWidget {
     // keeps only window chrome, the home pill, recently-closed, and the Run
     // toolbar for the active tab.
     return HomeTitleBar(
-      tabs: const [],
       activeTabKey: activeTab?.tabKey,
       pageChrome: pageChrome,
       recentlyClosed: recentlyClosed,
@@ -520,8 +507,6 @@ class _HomeShellTitleBar extends StatelessWidget {
         openWorkspaces: openWorkspaces,
       ),
       onHomeTap: onHomeTap,
-      onSelectTab: onSelectTab,
-      onCloseTab: onCloseTab,
       onReopenClosedTab: onReopenClosedTab,
     );
   }

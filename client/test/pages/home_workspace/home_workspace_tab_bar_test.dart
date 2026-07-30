@@ -14,35 +14,6 @@ void main() {
     );
   });
 
-  test('local tab bar uses primary topology color when active', () {
-    final color = homeWorkspaceTabBarColor(
-      colorScheme: cs,
-      brightness: Brightness.light,
-      active: true,
-      hovered: false,
-    );
-    expect(color, cs.primary);
-  });
-
-  test('team and personal local tabs share the same topology bar color', () {
-    final personal = homeWorkspaceTabBarColor(
-      colorScheme: cs,
-      brightness: Brightness.light,
-      topology: WorkspaceTopology.local,
-      active: true,
-      hovered: false,
-    );
-    final teamBar = homeWorkspaceTabBarColor(
-      colorScheme: cs,
-      brightness: Brightness.light,
-      topology: WorkspaceTopology.local,
-      active: true,
-      hovered: false,
-    );
-    expect(personal, teamBar);
-    expect(personal, cs.primary);
-  });
-
   test('topology tab icons reflect workspace kind', () {
     expect(
       workspaceTabTopologyIconData(WorkspaceTopology.local),
@@ -56,40 +27,6 @@ void main() {
       workspaceTabTopologyIconData(WorkspaceTopology.mixed),
       Icons.hub_outlined,
     );
-  });
-
-  test('inactive tab bar alpha is lower than active', () {
-    final inactive = homeWorkspaceTabBarColor(
-      colorScheme: cs,
-      brightness: Brightness.light,
-      active: false,
-      hovered: false,
-    );
-    final active = homeWorkspaceTabBarColor(
-      colorScheme: cs,
-      brightness: Brightness.light,
-      active: true,
-      hovered: false,
-    );
-    expect(inactive.a, lessThan(active.a));
-    expect(inactive.a, closeTo(0.4, 0.01));
-  });
-
-  test('inactive hovered tab bar alpha is between inactive and active', () {
-    final hovered = homeWorkspaceTabBarColor(
-      colorScheme: cs,
-      brightness: Brightness.light,
-      active: false,
-      hovered: true,
-    );
-    final inactive = homeWorkspaceTabBarColor(
-      colorScheme: cs,
-      brightness: Brightness.light,
-      active: false,
-      hovered: false,
-    );
-    expect(hovered.a, greaterThan(inactive.a));
-    expect(hovered.a, closeTo(0.7, 0.01));
   });
 
   test('workspaceTabTopologyIconColor uses toned remote for remote', () {
