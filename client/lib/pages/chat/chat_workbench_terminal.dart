@@ -13,6 +13,7 @@ import '../../repositories/session_repository.dart';
 import '../../services/selection_ai/selection_ai_context.dart';
 import '../../services/selection_ai/selection_ask_ai.dart';
 import '../../services/selection_ai/selection_ask_ai_fab_host.dart';
+import '../../services/terminal/terminal_clipboard_image_paste.dart';
 import '../../services/terminal/terminal_session.dart';
 import '../../services/terminal/terminal_uri_opener.dart';
 import '../../services/workbench/workbench_editor_opener.dart';
@@ -204,6 +205,13 @@ class _ChatWorkbenchRunningTerminalState
                   engine: widget.session.engine,
                   controller: widget.terminalController,
                   theme: widget.terminalTheme,
+                  onPaste: () => TerminalClipboardImagePaste().paste(
+                    engine: widget.session.engine,
+                    controller: widget.terminalController,
+                    sink: widget.session.input,
+                    target: widget.session.runtimeTarget,
+                    behavior: widget.session.pathDropBehavior,
+                  ),
                   // Chat workbench keeps the wider inset (dock shell uses 8).
                   padding: const EdgeInsets.symmetric(
                     horizontal: 36,

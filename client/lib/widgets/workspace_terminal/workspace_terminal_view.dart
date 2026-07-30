@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_alacritty/flutter_alacritty.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../services/terminal/terminal_clipboard_image_paste.dart';
 import '../../services/terminal/terminal_uri_opener.dart';
 import '../../services/terminal/workspace_terminal_registry.dart';
 import '../../services/terminal/workspace_terminal_title_resolver.dart';
@@ -62,6 +63,13 @@ class WorkspaceTerminalView extends StatelessWidget {
           onSecondaryTapDown: (details, offset) {
             onContextMenu(details.globalPosition, offset);
           },
+          onPaste: () => TerminalClipboardImagePaste().paste(
+            engine: entry.session.engine,
+            controller: entry.controller,
+            sink: entry.session.input,
+            target: entry.session.runtimeTarget,
+            behavior: entry.session.pathDropBehavior,
+          ),
         ),
       ),
     );

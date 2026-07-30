@@ -28,6 +28,7 @@ class TeampilotAlacrittyTerminal extends StatelessWidget {
     this.autofocus = true,
     this.backgroundOpacity = 0.98,
     this.onTapDown,
+    this.onPaste,
     super.key,
   });
 
@@ -45,6 +46,11 @@ class TeampilotAlacrittyTerminal extends StatelessWidget {
   final double backgroundOpacity;
   final void Function(TapDownDetails details, CellOffset? cell)? onTapDown;
 
+  /// Overrides keyboard [PasteIntent] so the host can paste screenshots as file
+  /// paths (see `TerminalClipboardImagePaste`); null keeps alacritty's default
+  /// text-only clipboard paste.
+  final Future<void> Function()? onPaste;
+
   @override
   Widget build(BuildContext context) {
     final shortcutCubit = context.watch<ShortcutCubit>();
@@ -55,6 +61,14 @@ class TeampilotAlacrittyTerminal extends StatelessWidget {
         isMacOS: defaultIsMacOS(),
       ),
     };
+    final onPaste = this.onPaste;
+    final hostActions = onPaste == null
+        ? null
+        : <Type, Action<Intent>>{
+            PasteIntent: CallbackAction<PasteIntent>(
+              onInvoke: (_) => onPaste(),
+            ),
+          };
     return ShortcutFocus(
       kind: ShortcutFocusKind.terminal,
       child: TerminalWithHistoryScrollbar(
@@ -70,6 +84,7 @@ class TeampilotAlacrittyTerminal extends StatelessWidget {
           textStyle: appTerminalTextStyle(context),
           autofocus: autofocus,
           shortcuts: terminalShortcuts,
+          actions: hostActions,
           linkProviders: linkProviders,
           primaryTapActivatesLink: context
               .watch<SessionPreferencesCubit>()

@@ -4,7 +4,6 @@ import 'package:shared_ui/shared_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_alacritty/flutter_alacritty.dart';
-import 'package:flutter_alacritty/input/paste.dart' as alacritty_paste;
 import 'package:flutter_alacritty/input/term_mode.dart' show anyMouse;
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -25,6 +24,7 @@ import '../services/selection_ai/selection_ai_context.dart';
 import '../services/selection_ai/selection_ask_ai.dart';
 import '../services/selection_ai/selection_ask_ai_fab_host.dart';
 import '../services/ssh/ssh_profile_connection_coordinator.dart';
+import '../services/terminal/terminal_clipboard_image_paste.dart';
 import '../services/terminal/terminal_layout_coordinator.dart';
 // Prefixed so the host's `applyLayoutPreset` method does not shadow the
 // top-level `applyLayoutPreset` function this file also calls.
@@ -557,18 +557,13 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
           await TerminalUriOpener.open(linkUri, workingDirectory: entry.cwd);
         }
       case 'paste':
-        final data = await Clipboard.getData(Clipboard.kTextPlain);
-        final text = data?.text;
-        if (text != null && text.isNotEmpty) {
-          entry.controller.onTerminalInputStart();
-          entry.session.engine.write(
-            alacritty_paste.pasteBytes(
-              text,
-              modeFlags: entry.session.engine.grid.modeFlags,
-            ),
-          );
-          entry.controller.clearSelection();
-        }
+        await TerminalClipboardImagePaste().paste(
+          engine: entry.session.engine,
+          controller: entry.controller,
+          sink: entry.session.input,
+          target: entry.session.runtimeTarget,
+          behavior: entry.session.pathDropBehavior,
+        );
       case 'copy':
         final text = entry.controller.readSelectionText();
         if (text != null && text.isNotEmpty) {
