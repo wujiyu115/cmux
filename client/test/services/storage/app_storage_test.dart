@@ -55,22 +55,6 @@ void main() {
         AppPaths.launchProfilesDirForTeampilotRoot(root),
         '$root/launch-profiles',
       );
-      expect(
-        AppPaths.skillsDirForTeampilotRoot(root),
-        '$root/skills/installed',
-      );
-      expect(
-        AppPaths.skillBackupsDirForTeampilotRoot(root),
-        '$root/skills/backups',
-      );
-      expect(
-        AppPaths.skillReposConfigPathForTeampilotRoot(root),
-        '$root/skills/repos.json',
-      );
-      expect(
-        AppPaths.skillRepoCacheDirForTeampilotRoot(root),
-        '$root/skills/repo-cache',
-      );
       expect(AppPaths.workspaceDirForTeampilotRoot(root), '$root/workspace');
       expect(
         AppPaths.cliDefaultsDirForTeampilotRoot(root),
@@ -95,41 +79,5 @@ void main() {
         );
       },
     );
-
-    test('AppPaths exposes plugin paths under teampilotRoot', () {
-      final root = '/tmp/tp';
-      expect(
-        AppPaths.pluginsDirForTeampilotRoot(root),
-        '/tmp/tp/plugins/installed',
-      );
-      expect(
-        AppPaths.pluginBackupsDirForTeampilotRoot(root),
-        '/tmp/tp/plugins/backups',
-      );
-      expect(
-        AppPaths.pluginsJsonForTeampilotRoot(root),
-        '/tmp/tp/plugins/plugins.json',
-      );
-      expect(
-        AppPaths.pluginMarketplacesConfigPathForTeampilotRoot(root),
-        '/tmp/tp/plugins/marketplaces.json',
-      );
-      expect(
-        AppPaths.pluginMarketplaceCacheDirForTeampilotRoot(root),
-        '/tmp/tp/plugins/marketplace-cache',
-      );
-      expect(
-        AppPaths.pluginExternalCacheDirForTeampilotRoot(root),
-        '/tmp/tp/plugins/external-cache',
-      );
-      expect(
-        AppPaths.mcpServersJsonForTeampilotRoot(root),
-        '/tmp/tp/mcp/mcp_servers.json',
-      );
-      expect(
-        AppPaths.mcpBackupsDirForTeampilotRoot(root),
-        '/tmp/tp/mcp/backups',
-      );
-    });
   });
 }

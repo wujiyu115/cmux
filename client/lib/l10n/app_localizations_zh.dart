@@ -60,9 +60,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get regionVisibility => '区域可见性';
 
   @override
-  String get visibilityMembersHint => '在工具或终端旁显示成员列表。';
-
-  @override
   String get visibilityFileTreeHint => '显示工作区文件树以便快速浏览。';
 
   @override
@@ -434,15 +431,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeWorkspaceConversationsSection => '对话';
 
   @override
-  String get workspaceRunningSessionsSection => '正在运行';
-
-  @override
-  String get workspaceCliConfigured => '已配置';
-
-  @override
-  String get workspaceCliNotConfigured => '未配置';
-
-  @override
   String get homeWorkspaceWorkspaceSettings => '工作区设置';
 
   @override
@@ -459,9 +447,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get workbenchStripNewMenuTooltip => '新建';
-
-  @override
-  String get homeWorkspaceNoConversations => '该工作区还没有对话';
 
   @override
   String get workspaceSearchTitle => '搜索';
@@ -513,9 +498,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get create => '创建';
 
   @override
-  String get workspacePrimaryPathRequired => '请先选择主目录。';
-
-  @override
   String get workspacePrimaryPathNotSelected => '尚未选择主目录';
 
   @override
@@ -523,18 +505,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get sessionStarting => '正在启动会话…';
-
-  @override
-  String get agentPermissionAttentionBanner => '此智能体需要在终端中确认。';
-
-  @override
-  String get agentPermissionOpenTerminal => '打开终端';
-
-  @override
-  String get sessionWorkbenchShowChat => '显示聊天';
-
-  @override
-  String get sessionWorkbenchShowTerminal => '显示终端';
 
   @override
   String get workspaceChatLandingInputHint => '今天帮你做些什么？ @ 引用对话文件，/ 调用技能与指令';
@@ -584,9 +554,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get workspaceDetailsTitle => '工作区详情';
-
-  @override
   String get addWorkspaceDirectory => '添加目录';
 
   @override
@@ -627,9 +594,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get workspaceAccentColor => '主题色';
-
-  @override
-  String get workspaceAccentDefault => '默认色';
 
   @override
   String get workspaceMoveUp => '上移';
@@ -703,15 +667,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get unpinConversation => '取消置顶';
 
   @override
-  String get sessionSortRecentlyUpdated => '最近更新';
-
-  @override
-  String get sessionSortCreatedDesc => '创建时间';
-
-  @override
-  String get sessionSortTooltip => '排序对话';
-
-  @override
   String get renameConversationTitle => '重命名对话';
 
   @override
@@ -776,23 +731,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get sshProfileStatusAuthFailed => '认证失败';
-
-  @override
-  String sshHostsPillCount(int count) {
-    return '$count 台主机';
-  }
-
-  @override
-  String get sshHostsPillConnecting => '连接中…';
-
-  @override
-  String get sshHostsPanelTitle => '远程主机';
-
-  @override
-  String get sshHostsRowKind => 'SSH 主机';
-
-  @override
-  String get sshHostsManage => '管理远程主机';
 
   @override
   String get sshProfileTest => '测试';
@@ -949,28 +887,7 @@ class AppLocalizationsZh extends AppLocalizations {
       'SSH 启动没有工作区路径时使用的远端工作目录；留空则不切换目录。';
 
   @override
-  String get cliExecutablePathBrowse => '浏览…';
-
-  @override
   String get cliExecutablePathReset => '重置';
-
-  @override
-  String get cliExecutablePathUsing => '当前生效：';
-
-  @override
-  String get cliInstallButton => '安装';
-
-  @override
-  String get cliInstallInstalling => '安装中…';
-
-  @override
-  String get cliInstallProgressCheckingNpm => '正在检测 npm…';
-
-  @override
-  String get cliInstallProgressInstallingCli => '正在安装 CLI…';
-
-  @override
-  String get cliInstallProgressLocatingExecutable => '正在定位 CLI 可执行文件…';
 
   @override
   String get terminalFind => '在终端中查找';
@@ -1368,12 +1285,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mailbox => '信箱';
 
   @override
-  String get board => '看板';
-
-  @override
-  String get visibilityBoardHint => '显示混合模式团队的任务看板。';
-
-  @override
   String get openExistingSessionStartsTerminalTitle => '打开已有会话时直接启动终端';
 
   @override
@@ -1620,15 +1531,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get teamSettings => '团队设置';
 
   @override
-  String get teamSkillsNav => 'Skills';
-
-  @override
-  String get teamPluginsNav => '插件';
-
-  @override
-  String get teamMcpNav => 'MCP';
-
-  @override
   String get githubSettingsTitle => 'GitHub';
 
   @override
@@ -1774,82 +1676,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get appUpdateLatestVersion => '最新版本';
 
   @override
-  String get appUpdateUnknownVersion => '未知';
-
-  @override
   String get appUpdateChangelogTitle => '更新内容';
 
   @override
   String get appUpdateChangelogDefaultSection => '更新';
 
   @override
-  String get appUpdateReadyToDownload => '准备下载';
-
-  @override
   String get appUpdateLater => '以后更新';
 
   @override
-  String get appUpdateDownloadNow => '立即下载';
-
-  @override
   String get appUpdateDownloadInBackground => '后台下载';
-
-  @override
-  String get appUpdateInstallNow => '立即安装';
-
-  @override
-  String get appUpdateBrowserDownload => '浏览器下载';
-
-  @override
-  String get appUpdateInvalidPackagePath => '安装包路径无效';
-
-  @override
-  String get appUpdateReleaseBuildRequired => '请使用 Release 构建包进行应用内安装';
-
-  @override
-  String get appUpdatePackagePlatformMismatch => '安装包类型与当前系统不匹配';
-
-  @override
-  String appUpdateInstallFailed(String message) {
-    return '安装失败：$message';
-  }
-
-  @override
-  String get appUpdateInstallNoResult => '安装未返回结果';
-
-  @override
-  String get appUpdateInstallComplete => '安装完成';
-
-  @override
-  String get appUpdateRedirectBrowserOnly => '该链接需要在浏览器中下载';
-
-  @override
-  String get appUpdateDownloadStarting => '开始下载…';
-
-  @override
-  String get appUpdateDownloadComplete => '下载完成';
-
-  @override
-  String get appUpdateDownloadFailed => '下载失败';
-
-  @override
-  String appUpdateDownloadError(String error) {
-    return '下载过程中发生错误：$error';
-  }
-
-  @override
-  String get appUpdateResolvingDownloadUrl => '正在获取下载链接…';
-
-  @override
-  String get appUpdateBrowserOpened => '已在浏览器中打开下载链接';
-
-  @override
-  String get appUpdateCannotOpenDownloadLink => '无法打开下载链接';
-
-  @override
-  String appUpdateBrowserOpenFailed(String error) {
-    return '打开浏览器失败：$error';
-  }
 
   @override
   String get onboardingSkip => '跳过';
@@ -2098,64 +1934,10 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get worktreeDeleteTitle => '删除 worktree';
-
-  @override
-  String worktreeDeleteBody(Object branch) {
-    return '删除 $branch 的 worktree？';
-  }
-
-  @override
-  String get worktreeDeleteForce => '即使有未提交改动也强制删除';
-
-  @override
-  String get worktreeDeleteBranchToo => '同时删除分支';
-
-  @override
-  String worktreeDeleteSessionsToo(Object count) {
-    return '同时删除该 worktree 下的 $count 个会话';
-  }
-
-  @override
-  String get worktreeDeleteAction => '删除';
-
-  @override
-  String worktreeDeleteFailed(Object error) {
-    return '删除 worktree 失败：$error';
-  }
-
-  @override
-  String get worktreeOrphanGroup => '其他';
-
-  @override
   String get worktreeNewWorktreeTooltip => '新建 worktree';
 
   @override
   String get worktreeRefreshTooltip => '刷新 worktree 列表';
-
-  @override
-  String get worktreeNewConversationHere => '在此新建会话';
-
-  @override
-  String get worktreeMenuCopyPath => '复制路径';
-
-  @override
-  String get worktreeMenuRemove => '删除 worktree';
-
-  @override
-  String get worktreeMore => '更多';
-
-  @override
-  String get worktreeShowLess => '收起';
-
-  @override
-  String get worktreeDeleteBusyWarning => '请先停止该 worktree 下正在运行的会话，再删除。';
-
-  @override
-  String get automationsLaunchProject => '项目';
-
-  @override
-  String get automationsLaunchWorktree => 'Worktree';
 
   @override
   String get shortcutsWorkspaceNextTab => '下一个工作区标签';

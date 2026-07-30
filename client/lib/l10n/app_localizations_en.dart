@@ -62,10 +62,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get regionVisibility => 'Region Visibility';
 
   @override
-  String get visibilityMembersHint =>
-      'Show the member list next to tools or terminals.';
-
-  @override
   String get visibilityFileTreeHint =>
       'Show the workspace file tree for quick navigation.';
 
@@ -454,15 +450,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeWorkspaceConversationsSection => 'Conversations';
 
   @override
-  String get workspaceRunningSessionsSection => 'Running';
-
-  @override
-  String get workspaceCliConfigured => 'Configured';
-
-  @override
-  String get workspaceCliNotConfigured => 'Not configured';
-
-  @override
   String get homeWorkspaceWorkspaceSettings => 'Workspace settings';
 
   @override
@@ -480,10 +467,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get workbenchStripNewMenuTooltip => 'New';
-
-  @override
-  String get homeWorkspaceNoConversations =>
-      'No conversations in this workspace yet';
 
   @override
   String get workspaceSearchTitle => 'Search';
@@ -536,10 +519,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get create => 'Create';
 
   @override
-  String get workspacePrimaryPathRequired =>
-      'Select a primary directory first.';
-
-  @override
   String get workspacePrimaryPathNotSelected => 'No primary directory selected';
 
   @override
@@ -547,19 +526,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sessionStarting => 'Starting session…';
-
-  @override
-  String get agentPermissionAttentionBanner =>
-      'This agent needs confirmation in the Terminal.';
-
-  @override
-  String get agentPermissionOpenTerminal => 'Open Terminal';
-
-  @override
-  String get sessionWorkbenchShowChat => 'Show Chat';
-
-  @override
-  String get sessionWorkbenchShowTerminal => 'Show Terminal';
 
   @override
   String get workspaceChatLandingInputHint =>
@@ -613,9 +579,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get workspaceDetailsTitle => 'Workspace Details';
-
-  @override
   String get addWorkspaceDirectory => 'Add directory';
 
   @override
@@ -656,9 +619,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get workspaceAccentColor => 'Accent color';
-
-  @override
-  String get workspaceAccentDefault => 'Default';
 
   @override
   String get workspaceMoveUp => 'Move up';
@@ -734,15 +694,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get unpinConversation => 'Unpin conversation';
 
   @override
-  String get sessionSortRecentlyUpdated => 'Recently updated';
-
-  @override
-  String get sessionSortCreatedDesc => 'Date created';
-
-  @override
-  String get sessionSortTooltip => 'Sort conversations';
-
-  @override
   String get renameConversationTitle => 'Rename Conversation';
 
   @override
@@ -811,29 +762,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sshProfileStatusAuthFailed => 'Authentication failed';
-
-  @override
-  String sshHostsPillCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count hosts',
-      one: '1 host',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String get sshHostsPillConnecting => 'Connecting…';
-
-  @override
-  String get sshHostsPanelTitle => 'Remote Hosts';
-
-  @override
-  String get sshHostsRowKind => 'SSH Host';
-
-  @override
-  String get sshHostsManage => 'Manage Remote Hosts…';
 
   @override
   String get sshProfileTest => 'Test';
@@ -994,28 +922,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Remote working directory used when the SSH launch has no workspace path; leave empty to skip changing directory.';
 
   @override
-  String get cliExecutablePathBrowse => 'Browse…';
-
-  @override
   String get cliExecutablePathReset => 'Reset';
-
-  @override
-  String get cliExecutablePathUsing => 'Using: ';
-
-  @override
-  String get cliInstallButton => 'Install';
-
-  @override
-  String get cliInstallInstalling => 'Installing…';
-
-  @override
-  String get cliInstallProgressCheckingNpm => 'Checking for npm…';
-
-  @override
-  String get cliInstallProgressInstallingCli => 'Installing CLI…';
-
-  @override
-  String get cliInstallProgressLocatingExecutable => 'Locating CLI executable…';
 
   @override
   String get terminalFind => 'Find in terminal';
@@ -1423,12 +1330,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mailbox => 'Mailbox';
 
   @override
-  String get board => 'Board';
-
-  @override
-  String get visibilityBoardHint => 'Show the task board for mixed-mode teams.';
-
-  @override
   String get openExistingSessionStartsTerminalTitle =>
       'Open existing sessions in terminal';
 
@@ -1684,15 +1585,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get teamSettings => 'Team Settings';
 
   @override
-  String get teamSkillsNav => 'Skills';
-
-  @override
-  String get teamPluginsNav => 'Plugins';
-
-  @override
-  String get teamMcpNav => 'MCP';
-
-  @override
   String get githubSettingsTitle => 'GitHub';
 
   @override
@@ -1843,85 +1735,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appUpdateLatestVersion => 'Latest version';
 
   @override
-  String get appUpdateUnknownVersion => 'Unknown';
-
-  @override
   String get appUpdateChangelogTitle => 'What\'s new';
 
   @override
   String get appUpdateChangelogDefaultSection => 'Updates';
 
   @override
-  String get appUpdateReadyToDownload => 'Ready to download';
-
-  @override
   String get appUpdateLater => 'Later';
 
   @override
-  String get appUpdateDownloadNow => 'Download now';
-
-  @override
   String get appUpdateDownloadInBackground => 'Download in background';
-
-  @override
-  String get appUpdateInstallNow => 'Install now';
-
-  @override
-  String get appUpdateBrowserDownload => 'Download in browser';
-
-  @override
-  String get appUpdateInvalidPackagePath => 'Invalid package path';
-
-  @override
-  String get appUpdateReleaseBuildRequired =>
-      'Use a release build for in-app installation';
-
-  @override
-  String get appUpdatePackagePlatformMismatch =>
-      'Package type does not match this system';
-
-  @override
-  String appUpdateInstallFailed(String message) {
-    return 'Install failed: $message';
-  }
-
-  @override
-  String get appUpdateInstallNoResult => 'Install returned no result';
-
-  @override
-  String get appUpdateInstallComplete => 'Installation complete';
-
-  @override
-  String get appUpdateRedirectBrowserOnly =>
-      'This link must be downloaded in the browser';
-
-  @override
-  String get appUpdateDownloadStarting => 'Starting download…';
-
-  @override
-  String get appUpdateDownloadComplete => 'Download complete';
-
-  @override
-  String get appUpdateDownloadFailed => 'Download failed';
-
-  @override
-  String appUpdateDownloadError(String error) {
-    return 'Error while downloading: $error';
-  }
-
-  @override
-  String get appUpdateResolvingDownloadUrl => 'Resolving download link…';
-
-  @override
-  String get appUpdateBrowserOpened => 'Opened download link in the browser';
-
-  @override
-  String get appUpdateCannotOpenDownloadLink => 'Could not open download link';
-
-  @override
-  String appUpdateBrowserOpenFailed(String error) {
-    return 'Failed to open browser: $error';
-  }
 
   @override
   String get onboardingSkip => 'Skip';
@@ -2175,66 +1998,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get worktreeDeleteTitle => 'Remove worktree';
-
-  @override
-  String worktreeDeleteBody(Object branch) {
-    return 'Remove the worktree for $branch?';
-  }
-
-  @override
-  String get worktreeDeleteForce =>
-      'Force-remove even if it has uncommitted changes';
-
-  @override
-  String get worktreeDeleteBranchToo => 'Also delete the branch';
-
-  @override
-  String worktreeDeleteSessionsToo(Object count) {
-    return 'Also delete the $count conversations in this worktree';
-  }
-
-  @override
-  String get worktreeDeleteAction => 'Remove';
-
-  @override
-  String worktreeDeleteFailed(Object error) {
-    return 'Failed to remove worktree: $error';
-  }
-
-  @override
-  String get worktreeOrphanGroup => 'Other';
-
-  @override
   String get worktreeNewWorktreeTooltip => 'New worktree';
 
   @override
   String get worktreeRefreshTooltip => 'Refresh worktrees';
-
-  @override
-  String get worktreeNewConversationHere => 'New conversation here';
-
-  @override
-  String get worktreeMenuCopyPath => 'Copy path';
-
-  @override
-  String get worktreeMenuRemove => 'Remove worktree';
-
-  @override
-  String get worktreeMore => 'More';
-
-  @override
-  String get worktreeShowLess => 'Show less';
-
-  @override
-  String get worktreeDeleteBusyWarning =>
-      'Stop the running conversations in this worktree before removing it.';
-
-  @override
-  String get automationsLaunchProject => 'Project';
-
-  @override
-  String get automationsLaunchWorktree => 'Worktree';
 
   @override
   String get shortcutsWorkspaceNextTab => 'Next Workspace Tab';

@@ -54,15 +54,6 @@ class RuntimeLayout {
   String identitySessionCounterFile(String profileId) =>
       _pathContext.join(identityRuntimeDir(profileId), 'session-counter.json');
 
-  String identityPluginsDir(String profileId) =>
-      _pathContext.join(identityToolDir(profileId, 'flashskyai'), 'plugins');
-
-  String identityMcpDir(String profileId) =>
-      _pathContext.join(identityRuntimeDir(profileId), 'mcp');
-
-  String identityMcpServersFile(String profileId) =>
-      _pathContext.join(identityMcpDir(profileId), 'servers.json');
-
   String workspaceConfigToolDir(String workspaceId, String tool) =>
       workspace.workspaceConfigToolDir(workspaceId, tool);
 

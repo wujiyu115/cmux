@@ -1,4 +1,3 @@
-import 'home_config_section.dart';
 import 'workspace/workspace_config_section.dart';
 
 /// Parses `/home-v2` and `/home-v2/workspace/:id` locations for [HomeShell].
@@ -27,18 +26,6 @@ abstract final class HomeWorkspaceRoute {
   /// Manage / landing profile id (`personal` or team id).
   static String? profile(String location) {
     final raw = parse(location).queryParameters['profile']?.trim() ?? '';
-    return raw.isEmpty ? null : raw;
-  }
-
-  static TeamConfigSection? homeTeamSection(String location) =>
-      TeamConfigSection.fromSegment(parse(location).queryParameters['section']);
-
-  static String? homeMemberId(String location) =>
-      parse(location).queryParameters['member'];
-
-  /// Expert Hub member key for compose-landing summon (`?expert=`).
-  static String? expert(String location) {
-    final raw = parse(location).queryParameters['expert']?.trim() ?? '';
     return raw.isEmpty ? null : raw;
   }
 

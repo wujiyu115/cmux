@@ -17,7 +17,6 @@
   "stacked": "Stacked",
   "tabs": "Tabs",
   "regionVisibility": "Region Visibility",
-  "visibilityMembersHint": "Show the member list next to tools or terminals.",
   "visibilityFileTreeHint": "Show the workspace file tree for quick navigation.",
   "visibilityGitHint": "Show the source control panel for the current repository.",
   "themeModeTitle": "Theme mode",
@@ -177,16 +176,12 @@
   "homeWorkspaceCloseWorkspaceConfirm": "Close & end sessions",
   "homeWorkspaceWorkspaceManagement": "Workspace management",
   "homeWorkspaceConversationsSection": "Conversations",
-  "workspaceRunningSessionsSection": "Running",
-  "workspaceCliConfigured": "Configured",
-  "workspaceCliNotConfigured": "Not configured",
   "homeWorkspaceWorkspaceSettings": "Workspace settings",
   "homeWorkspaceWorkspaceSettingsBasicInfo": "Basic information",
   "homeWorkspaceWorkspaceId": "Workspace ID",
   "deleteWorkspaceSubtitle": "Deletes this workspace and all conversations in it. This cannot be undone.",
   "homeWorkspaceNewConversation": "New Conversation",
   "workbenchStripNewMenuTooltip": "New",
-  "homeWorkspaceNoConversations": "No conversations in this workspace yet",
   "workspaceSearchTitle": "Search",
   "workspaceSearchHint": "Search sessions and files",
   "workspaceSearchFilesSection": "Files",
@@ -212,14 +207,9 @@
   },
   "homeWorkspaceCloneWorkspaceFailed": "Could not clone workspace",
   "create": "Create",
-  "workspacePrimaryPathRequired": "Select a primary directory first.",
   "workspacePrimaryPathNotSelected": "No primary directory selected",
   "defaultNewChatSessionTitle": "New Chat",
   "sessionStarting": "Starting session…",
-  "agentPermissionAttentionBanner": "This agent needs confirmation in the Terminal.",
-  "agentPermissionOpenTerminal": "Open Terminal",
-  "sessionWorkbenchShowChat": "Show Chat",
-  "sessionWorkbenchShowTerminal": "Show Terminal",
   "workspaceChatLandingInputHint": "What can I help you with today? @ reference files, / invoke skills",
   "workspaceChatLandingBackToStart": "Back to start",
   "workspaceChatLandingSelectProject": "Select project >",
@@ -242,7 +232,6 @@
       }
     }
   },
-  "workspaceDetailsTitle": "Workspace Details",
   "addWorkspaceDirectory": "Add directory",
   "workspaceDisplayName": "Display name",
   "workspaceIcon": "Icon",
@@ -257,7 +246,6 @@
   "workspaceDefaultTerminal": "Default terminal",
   "workspaceDefaultTerminalGlobal": "Global default",
   "workspaceAccentColor": "Accent color",
-  "workspaceAccentDefault": "Default",
   "workspaceMoveUp": "Move up",
   "workspaceMoveDown": "Move down",
   "workspaceIconPickerTitle": "Choose workspace icon",
@@ -288,9 +276,6 @@
   "deleteConversation": "Delete conversation",
   "pinConversation": "Pin conversation",
   "unpinConversation": "Unpin conversation",
-  "sessionSortRecentlyUpdated": "Recently updated",
-  "sessionSortCreatedDesc": "Date created",
-  "sessionSortTooltip": "Sort conversations",
   "renameConversationTitle": "Rename Conversation",
   "conversationName": "Conversation name",
   "closeTab": "Close",
@@ -313,18 +298,6 @@
   "sshProfileStatusError": "Error",
   "sshProfileStatusReconnecting": "Reconnecting…",
   "sshProfileStatusAuthFailed": "Authentication failed",
-  "sshHostsPillCount": "{count, plural, =1{1 host} other{{count} hosts}}",
-  "@sshHostsPillCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "sshHostsPillConnecting": "Connecting…",
-  "sshHostsPanelTitle": "Remote Hosts",
-  "sshHostsRowKind": "SSH Host",
-  "sshHostsManage": "Manage Remote Hosts…",
   "sshProfileTest": "Test",
   "sshProfileConnect": "Connect",
   "sshProfileDisconnect": "Disconnect",
@@ -414,14 +387,7 @@
   "sshProfileSelectorManage": "Manage SSH servers…",
   "sshDefaultWorkingDirectoryTitle": "SSH default working directory",
   "sshDefaultWorkingDirectorySubtitle": "Remote working directory used when the SSH launch has no workspace path; leave empty to skip changing directory.",
-  "cliExecutablePathBrowse": "Browse…",
   "cliExecutablePathReset": "Reset",
-  "cliExecutablePathUsing": "Using: ",
-  "cliInstallButton": "Install",
-  "cliInstallInstalling": "Installing…",
-  "cliInstallProgressCheckingNpm": "Checking for npm…",
-  "cliInstallProgressInstallingCli": "Installing CLI…",
-  "cliInstallProgressLocatingExecutable": "Locating CLI executable…",
   "terminalFind": "Find in terminal",
   "terminalFindNoResults": "No results",
   "terminalDropCrossMachineRejected": "Can't drop a local file onto a remote terminal",
@@ -607,8 +573,6 @@
   },
   "terminalParkedSendDismiss": "Dismiss",
   "mailbox": "Mailbox",
-  "board": "Board",
-  "visibilityBoardHint": "Show the task board for mixed-mode teams.",
   "openExistingSessionStartsTerminalTitle": "Open existing sessions in terminal",
   "openExistingSessionStartsTerminalDescription": "When enabled, opening a saved session connects the terminal immediately. When off (default), open the Chat view first; send from Chat to start the terminal.",
   "simpleModeDefaultFullAccessTitle": "Simple mode default: full access",
@@ -715,9 +679,6 @@
   "configure": "Configure",
   "teamConfig": "Team Config",
   "teamSettings": "Team Settings",
-  "teamSkillsNav": "Skills",
-  "teamPluginsNav": "Plugins",
-  "teamMcpNav": "MCP",
   "githubSettingsTitle": "GitHub",
   "githubSettingsSubtitle": "Connect GitHub to publish experts and teams to Hub",
   "githubSignIn": "Sign in with GitHub",
@@ -777,51 +738,10 @@
   },
   "appUpdateDialogTitle": "New version available",
   "appUpdateLatestVersion": "Latest version",
-  "appUpdateUnknownVersion": "Unknown",
   "appUpdateChangelogTitle": "What's new",
   "appUpdateChangelogDefaultSection": "Updates",
-  "appUpdateReadyToDownload": "Ready to download",
   "appUpdateLater": "Later",
-  "appUpdateDownloadNow": "Download now",
   "appUpdateDownloadInBackground": "Download in background",
-  "appUpdateInstallNow": "Install now",
-  "appUpdateBrowserDownload": "Download in browser",
-  "appUpdateInvalidPackagePath": "Invalid package path",
-  "appUpdateReleaseBuildRequired": "Use a release build for in-app installation",
-  "appUpdatePackagePlatformMismatch": "Package type does not match this system",
-  "appUpdateInstallFailed": "Install failed: {message}",
-  "@appUpdateInstallFailed": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "appUpdateInstallNoResult": "Install returned no result",
-  "appUpdateInstallComplete": "Installation complete",
-  "appUpdateRedirectBrowserOnly": "This link must be downloaded in the browser",
-  "appUpdateDownloadStarting": "Starting download…",
-  "appUpdateDownloadComplete": "Download complete",
-  "appUpdateDownloadFailed": "Download failed",
-  "appUpdateDownloadError": "Error while downloading: {error}",
-  "@appUpdateDownloadError": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
-  "appUpdateResolvingDownloadUrl": "Resolving download link…",
-  "appUpdateBrowserOpened": "Opened download link in the browser",
-  "appUpdateCannotOpenDownloadLink": "Could not open download link",
-  "appUpdateBrowserOpenFailed": "Failed to open browser: {error}",
-  "@appUpdateBrowserOpenFailed": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
   "onboardingSkip": "Skip",
   "onboardingPrevious": "Previous",
   "onboardingNext": "Next",
@@ -984,45 +904,8 @@
       "error": {}
     }
   },
-  "worktreeDeleteTitle": "Remove worktree",
-  "worktreeDeleteBody": "Remove the worktree for {branch}?",
-  "@worktreeDeleteBody": {
-    "placeholders": {
-      "branch": {}
-    }
-  },
-  "worktreeDeleteForce": "Force-remove even if it has uncommitted changes",
-  "worktreeDeleteBranchToo": "Also delete the branch",
-  "worktreeDeleteSessionsToo": "Also delete the {count} conversations in this worktree",
-  "@worktreeDeleteSessionsToo": {
-    "placeholders": {
-      "count": {}
-    }
-  },
-  "worktreeDeleteAction": "Remove",
-  "worktreeDeleteFailed": "Failed to remove worktree: {error}",
-  "@worktreeDeleteFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "worktreeOrphanGroup": "Other",
   "worktreeNewWorktreeTooltip": "New worktree",
   "worktreeRefreshTooltip": "Refresh worktrees",
-  "worktreeNewConversationHere": "New conversation here",
-  "worktreeMenuCopyPath": "Copy path",
-  "worktreeMenuRemove": "Remove worktree",
-  "worktreeMore": "More",
-  "worktreeShowLess": "Show less",
-  "worktreeDeleteBusyWarning": "Stop the running conversations in this worktree before removing it.",
-  "automationsLaunchProject": "Project",
-  "@automationsLaunchProject": {
-    "description": "Workspace project folder for launch-prompt automations"
-  },
-  "automationsLaunchWorktree": "Worktree",
-  "@automationsLaunchWorktree": {
-    "description": "Git worktree cwd for launch-prompt automations"
-  },
   "shortcutsWorkspaceNextTab": "Next Workspace Tab",
   "shortcutsWorkspacePrevTab": "Previous Workspace Tab",
   "shortcutsWorkspaceCloseTab": "Close Workspace Tab",

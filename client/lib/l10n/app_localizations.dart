@@ -200,12 +200,6 @@ abstract class AppLocalizations {
   /// **'Region Visibility'**
   String get regionVisibility;
 
-  /// No description provided for @visibilityMembersHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Show the member list next to tools or terminals.'**
-  String get visibilityMembersHint;
-
   /// No description provided for @visibilityFileTreeHint.
   ///
   /// In en, this message translates to:
@@ -914,24 +908,6 @@ abstract class AppLocalizations {
   /// **'Conversations'**
   String get homeWorkspaceConversationsSection;
 
-  /// No description provided for @workspaceRunningSessionsSection.
-  ///
-  /// In en, this message translates to:
-  /// **'Running'**
-  String get workspaceRunningSessionsSection;
-
-  /// No description provided for @workspaceCliConfigured.
-  ///
-  /// In en, this message translates to:
-  /// **'Configured'**
-  String get workspaceCliConfigured;
-
-  /// No description provided for @workspaceCliNotConfigured.
-  ///
-  /// In en, this message translates to:
-  /// **'Not configured'**
-  String get workspaceCliNotConfigured;
-
   /// No description provided for @homeWorkspaceWorkspaceSettings.
   ///
   /// In en, this message translates to:
@@ -967,12 +943,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'New'**
   String get workbenchStripNewMenuTooltip;
-
-  /// No description provided for @homeWorkspaceNoConversations.
-  ///
-  /// In en, this message translates to:
-  /// **'No conversations in this workspace yet'**
-  String get homeWorkspaceNoConversations;
 
   /// No description provided for @workspaceSearchTitle.
   ///
@@ -1064,12 +1034,6 @@ abstract class AppLocalizations {
   /// **'Create'**
   String get create;
 
-  /// No description provided for @workspacePrimaryPathRequired.
-  ///
-  /// In en, this message translates to:
-  /// **'Select a primary directory first.'**
-  String get workspacePrimaryPathRequired;
-
   /// No description provided for @workspacePrimaryPathNotSelected.
   ///
   /// In en, this message translates to:
@@ -1087,30 +1051,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Starting session…'**
   String get sessionStarting;
-
-  /// No description provided for @agentPermissionAttentionBanner.
-  ///
-  /// In en, this message translates to:
-  /// **'This agent needs confirmation in the Terminal.'**
-  String get agentPermissionAttentionBanner;
-
-  /// No description provided for @agentPermissionOpenTerminal.
-  ///
-  /// In en, this message translates to:
-  /// **'Open Terminal'**
-  String get agentPermissionOpenTerminal;
-
-  /// No description provided for @sessionWorkbenchShowChat.
-  ///
-  /// In en, this message translates to:
-  /// **'Show Chat'**
-  String get sessionWorkbenchShowChat;
-
-  /// No description provided for @sessionWorkbenchShowTerminal.
-  ///
-  /// In en, this message translates to:
-  /// **'Show Terminal'**
-  String get sessionWorkbenchShowTerminal;
 
   /// No description provided for @workspaceChatLandingInputHint.
   ///
@@ -1202,12 +1142,6 @@ abstract class AppLocalizations {
   /// **'Path copied: {path}'**
   String pathCopied(String path);
 
-  /// No description provided for @workspaceDetailsTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Workspace Details'**
-  String get workspaceDetailsTitle;
-
   /// No description provided for @addWorkspaceDirectory.
   ///
   /// In en, this message translates to:
@@ -1291,12 +1225,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Accent color'**
   String get workspaceAccentColor;
-
-  /// No description provided for @workspaceAccentDefault.
-  ///
-  /// In en, this message translates to:
-  /// **'Default'**
-  String get workspaceAccentDefault;
 
   /// No description provided for @workspaceMoveUp.
   ///
@@ -1436,24 +1364,6 @@ abstract class AppLocalizations {
   /// **'Unpin conversation'**
   String get unpinConversation;
 
-  /// No description provided for @sessionSortRecentlyUpdated.
-  ///
-  /// In en, this message translates to:
-  /// **'Recently updated'**
-  String get sessionSortRecentlyUpdated;
-
-  /// No description provided for @sessionSortCreatedDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'Date created'**
-  String get sessionSortCreatedDesc;
-
-  /// No description provided for @sessionSortTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'Sort conversations'**
-  String get sessionSortTooltip;
-
   /// No description provided for @renameConversationTitle.
   ///
   /// In en, this message translates to:
@@ -1585,36 +1495,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Authentication failed'**
   String get sshProfileStatusAuthFailed;
-
-  /// No description provided for @sshHostsPillCount.
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =1{1 host} other{{count} hosts}}'**
-  String sshHostsPillCount(int count);
-
-  /// No description provided for @sshHostsPillConnecting.
-  ///
-  /// In en, this message translates to:
-  /// **'Connecting…'**
-  String get sshHostsPillConnecting;
-
-  /// No description provided for @sshHostsPanelTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Remote Hosts'**
-  String get sshHostsPanelTitle;
-
-  /// No description provided for @sshHostsRowKind.
-  ///
-  /// In en, this message translates to:
-  /// **'SSH Host'**
-  String get sshHostsRowKind;
-
-  /// No description provided for @sshHostsManage.
-  ///
-  /// In en, this message translates to:
-  /// **'Manage Remote Hosts…'**
-  String get sshHostsManage;
 
   /// No description provided for @sshProfileTest.
   ///
@@ -1898,53 +1778,11 @@ abstract class AppLocalizations {
   /// **'Remote working directory used when the SSH launch has no workspace path; leave empty to skip changing directory.'**
   String get sshDefaultWorkingDirectorySubtitle;
 
-  /// No description provided for @cliExecutablePathBrowse.
-  ///
-  /// In en, this message translates to:
-  /// **'Browse…'**
-  String get cliExecutablePathBrowse;
-
   /// No description provided for @cliExecutablePathReset.
   ///
   /// In en, this message translates to:
   /// **'Reset'**
   String get cliExecutablePathReset;
-
-  /// No description provided for @cliExecutablePathUsing.
-  ///
-  /// In en, this message translates to:
-  /// **'Using: '**
-  String get cliExecutablePathUsing;
-
-  /// No description provided for @cliInstallButton.
-  ///
-  /// In en, this message translates to:
-  /// **'Install'**
-  String get cliInstallButton;
-
-  /// No description provided for @cliInstallInstalling.
-  ///
-  /// In en, this message translates to:
-  /// **'Installing…'**
-  String get cliInstallInstalling;
-
-  /// No description provided for @cliInstallProgressCheckingNpm.
-  ///
-  /// In en, this message translates to:
-  /// **'Checking for npm…'**
-  String get cliInstallProgressCheckingNpm;
-
-  /// No description provided for @cliInstallProgressInstallingCli.
-  ///
-  /// In en, this message translates to:
-  /// **'Installing CLI…'**
-  String get cliInstallProgressInstallingCli;
-
-  /// No description provided for @cliInstallProgressLocatingExecutable.
-  ///
-  /// In en, this message translates to:
-  /// **'Locating CLI executable…'**
-  String get cliInstallProgressLocatingExecutable;
 
   /// No description provided for @terminalFind.
   ///
@@ -2702,18 +2540,6 @@ abstract class AppLocalizations {
   /// **'Mailbox'**
   String get mailbox;
 
-  /// No description provided for @board.
-  ///
-  /// In en, this message translates to:
-  /// **'Board'**
-  String get board;
-
-  /// No description provided for @visibilityBoardHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Show the task board for mixed-mode teams.'**
-  String get visibilityBoardHint;
-
   /// No description provided for @openExistingSessionStartsTerminalTitle.
   ///
   /// In en, this message translates to:
@@ -3164,24 +2990,6 @@ abstract class AppLocalizations {
   /// **'Team Settings'**
   String get teamSettings;
 
-  /// No description provided for @teamSkillsNav.
-  ///
-  /// In en, this message translates to:
-  /// **'Skills'**
-  String get teamSkillsNav;
-
-  /// No description provided for @teamPluginsNav.
-  ///
-  /// In en, this message translates to:
-  /// **'Plugins'**
-  String get teamPluginsNav;
-
-  /// No description provided for @teamMcpNav.
-  ///
-  /// In en, this message translates to:
-  /// **'MCP'**
-  String get teamMcpNav;
-
   /// No description provided for @githubSettingsTitle.
   ///
   /// In en, this message translates to:
@@ -3464,12 +3272,6 @@ abstract class AppLocalizations {
   /// **'Latest version'**
   String get appUpdateLatestVersion;
 
-  /// No description provided for @appUpdateUnknownVersion.
-  ///
-  /// In en, this message translates to:
-  /// **'Unknown'**
-  String get appUpdateUnknownVersion;
-
   /// No description provided for @appUpdateChangelogTitle.
   ///
   /// In en, this message translates to:
@@ -3482,131 +3284,17 @@ abstract class AppLocalizations {
   /// **'Updates'**
   String get appUpdateChangelogDefaultSection;
 
-  /// No description provided for @appUpdateReadyToDownload.
-  ///
-  /// In en, this message translates to:
-  /// **'Ready to download'**
-  String get appUpdateReadyToDownload;
-
   /// No description provided for @appUpdateLater.
   ///
   /// In en, this message translates to:
   /// **'Later'**
   String get appUpdateLater;
 
-  /// No description provided for @appUpdateDownloadNow.
-  ///
-  /// In en, this message translates to:
-  /// **'Download now'**
-  String get appUpdateDownloadNow;
-
   /// No description provided for @appUpdateDownloadInBackground.
   ///
   /// In en, this message translates to:
   /// **'Download in background'**
   String get appUpdateDownloadInBackground;
-
-  /// No description provided for @appUpdateInstallNow.
-  ///
-  /// In en, this message translates to:
-  /// **'Install now'**
-  String get appUpdateInstallNow;
-
-  /// No description provided for @appUpdateBrowserDownload.
-  ///
-  /// In en, this message translates to:
-  /// **'Download in browser'**
-  String get appUpdateBrowserDownload;
-
-  /// No description provided for @appUpdateInvalidPackagePath.
-  ///
-  /// In en, this message translates to:
-  /// **'Invalid package path'**
-  String get appUpdateInvalidPackagePath;
-
-  /// No description provided for @appUpdateReleaseBuildRequired.
-  ///
-  /// In en, this message translates to:
-  /// **'Use a release build for in-app installation'**
-  String get appUpdateReleaseBuildRequired;
-
-  /// No description provided for @appUpdatePackagePlatformMismatch.
-  ///
-  /// In en, this message translates to:
-  /// **'Package type does not match this system'**
-  String get appUpdatePackagePlatformMismatch;
-
-  /// No description provided for @appUpdateInstallFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Install failed: {message}'**
-  String appUpdateInstallFailed(String message);
-
-  /// No description provided for @appUpdateInstallNoResult.
-  ///
-  /// In en, this message translates to:
-  /// **'Install returned no result'**
-  String get appUpdateInstallNoResult;
-
-  /// No description provided for @appUpdateInstallComplete.
-  ///
-  /// In en, this message translates to:
-  /// **'Installation complete'**
-  String get appUpdateInstallComplete;
-
-  /// No description provided for @appUpdateRedirectBrowserOnly.
-  ///
-  /// In en, this message translates to:
-  /// **'This link must be downloaded in the browser'**
-  String get appUpdateRedirectBrowserOnly;
-
-  /// No description provided for @appUpdateDownloadStarting.
-  ///
-  /// In en, this message translates to:
-  /// **'Starting download…'**
-  String get appUpdateDownloadStarting;
-
-  /// No description provided for @appUpdateDownloadComplete.
-  ///
-  /// In en, this message translates to:
-  /// **'Download complete'**
-  String get appUpdateDownloadComplete;
-
-  /// No description provided for @appUpdateDownloadFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Download failed'**
-  String get appUpdateDownloadFailed;
-
-  /// No description provided for @appUpdateDownloadError.
-  ///
-  /// In en, this message translates to:
-  /// **'Error while downloading: {error}'**
-  String appUpdateDownloadError(String error);
-
-  /// No description provided for @appUpdateResolvingDownloadUrl.
-  ///
-  /// In en, this message translates to:
-  /// **'Resolving download link…'**
-  String get appUpdateResolvingDownloadUrl;
-
-  /// No description provided for @appUpdateBrowserOpened.
-  ///
-  /// In en, this message translates to:
-  /// **'Opened download link in the browser'**
-  String get appUpdateBrowserOpened;
-
-  /// No description provided for @appUpdateCannotOpenDownloadLink.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not open download link'**
-  String get appUpdateCannotOpenDownloadLink;
-
-  /// No description provided for @appUpdateBrowserOpenFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Failed to open browser: {error}'**
-  String appUpdateBrowserOpenFailed(String error);
 
   /// No description provided for @onboardingSkip.
   ///
@@ -4052,54 +3740,6 @@ abstract class AppLocalizations {
   /// **'Failed to create worktree: {error}'**
   String worktreeCreateFailed(Object error);
 
-  /// No description provided for @worktreeDeleteTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Remove worktree'**
-  String get worktreeDeleteTitle;
-
-  /// No description provided for @worktreeDeleteBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Remove the worktree for {branch}?'**
-  String worktreeDeleteBody(Object branch);
-
-  /// No description provided for @worktreeDeleteForce.
-  ///
-  /// In en, this message translates to:
-  /// **'Force-remove even if it has uncommitted changes'**
-  String get worktreeDeleteForce;
-
-  /// No description provided for @worktreeDeleteBranchToo.
-  ///
-  /// In en, this message translates to:
-  /// **'Also delete the branch'**
-  String get worktreeDeleteBranchToo;
-
-  /// No description provided for @worktreeDeleteSessionsToo.
-  ///
-  /// In en, this message translates to:
-  /// **'Also delete the {count} conversations in this worktree'**
-  String worktreeDeleteSessionsToo(Object count);
-
-  /// No description provided for @worktreeDeleteAction.
-  ///
-  /// In en, this message translates to:
-  /// **'Remove'**
-  String get worktreeDeleteAction;
-
-  /// No description provided for @worktreeDeleteFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Failed to remove worktree: {error}'**
-  String worktreeDeleteFailed(Object error);
-
-  /// No description provided for @worktreeOrphanGroup.
-  ///
-  /// In en, this message translates to:
-  /// **'Other'**
-  String get worktreeOrphanGroup;
-
   /// No description provided for @worktreeNewWorktreeTooltip.
   ///
   /// In en, this message translates to:
@@ -4111,54 +3751,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Refresh worktrees'**
   String get worktreeRefreshTooltip;
-
-  /// No description provided for @worktreeNewConversationHere.
-  ///
-  /// In en, this message translates to:
-  /// **'New conversation here'**
-  String get worktreeNewConversationHere;
-
-  /// No description provided for @worktreeMenuCopyPath.
-  ///
-  /// In en, this message translates to:
-  /// **'Copy path'**
-  String get worktreeMenuCopyPath;
-
-  /// No description provided for @worktreeMenuRemove.
-  ///
-  /// In en, this message translates to:
-  /// **'Remove worktree'**
-  String get worktreeMenuRemove;
-
-  /// No description provided for @worktreeMore.
-  ///
-  /// In en, this message translates to:
-  /// **'More'**
-  String get worktreeMore;
-
-  /// No description provided for @worktreeShowLess.
-  ///
-  /// In en, this message translates to:
-  /// **'Show less'**
-  String get worktreeShowLess;
-
-  /// No description provided for @worktreeDeleteBusyWarning.
-  ///
-  /// In en, this message translates to:
-  /// **'Stop the running conversations in this worktree before removing it.'**
-  String get worktreeDeleteBusyWarning;
-
-  /// Workspace project folder for launch-prompt automations
-  ///
-  /// In en, this message translates to:
-  /// **'Project'**
-  String get automationsLaunchProject;
-
-  /// Git worktree cwd for launch-prompt automations
-  ///
-  /// In en, this message translates to:
-  /// **'Worktree'**
-  String get automationsLaunchWorktree;
 
   /// No description provided for @shortcutsWorkspaceNextTab.
   ///

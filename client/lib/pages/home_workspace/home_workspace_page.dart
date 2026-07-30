@@ -5,7 +5,6 @@ import '../../cubits/layout_cubit.dart';
 import '../../models/layout_preferences.dart';
 import '../../theme/workspace_surface_layers.dart';
 import '../../widgets/split_layout.dart';
-import 'home_config_section.dart';
 import 'home_all_workspaces_pane.dart';
 import 'home_workspace_library_section.dart';
 import 'home_workspace_library_view.dart';
@@ -16,18 +15,7 @@ import 'workspace_pane_animations.dart';
 /// window chrome (title bar + open workspace tabs) is provided by
 /// [HomeShell].
 class HomePage extends StatefulWidget {
-  const HomePage({
-    this.initialSection,
-    this.initialMemberId,
-    super.key,
-  });
-
-  /// Team-config tab to open on first build (deep-link from e.g. the launch
-  /// config-incomplete dialog).
-  final TeamConfigSection? initialSection;
-
-  /// Member to focus when [initialSection] is [TeamConfigSection.members].
-  final String? initialMemberId;
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -35,26 +23,9 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   var _allWorkspacesActive = true;
-  String? _selectedIdentityId;
 
   /// Favorites / recent library pane; mutually exclusive with all-workspaces.
   HomeLibraryView? _libraryView;
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.initialSection != null) {
-      _allWorkspacesActive = false;
-    }
-  }
-
-  void _selectIdentity(String profileId) {
-    setState(() {
-      _selectedIdentityId = profileId;
-      _allWorkspacesActive = false;
-      _libraryView = null;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,7 +44,6 @@ class _HomePageState extends State<HomePage> {
               onSelectAllWorkspaces: () => setState(() {
                 _allWorkspacesActive = true;
                 _libraryView = null;
-                _selectedIdentityId = null;
               }),
               onSelectLibraryView: (view) => setState(() {
                 _allWorkspacesActive = false;
@@ -82,14 +52,7 @@ class _HomePageState extends State<HomePage> {
             ),
             second: Padding(
               padding: const EdgeInsets.fromLTRB(44, 48, 42, 18),
-              child: _HomeRightPane(
-                libraryView: libraryView,
-                allWorkspacesActive: _allWorkspacesActive,
-                selectedIdentityId: _selectedIdentityId,
-                initialSection: widget.initialSection,
-                initialMemberId: widget.initialMemberId,
-                onOpenTeam: _selectIdentity,
-              ),
+              child: _HomeRightPane(libraryView: libraryView),
             ),
             initialSize: layoutState.preferences.homeSidebarWidth,
             minSize: LayoutPreferences.minHomeSidebarWidth,
@@ -106,21 +69,9 @@ class _HomePageState extends State<HomePage> {
 }
 
 class _HomeRightPane extends StatefulWidget {
-  const _HomeRightPane({
-    required this.libraryView,
-    required this.allWorkspacesActive,
-    required this.selectedIdentityId,
-    required this.initialSection,
-    required this.initialMemberId,
-    required this.onOpenTeam,
-  });
+  const _HomeRightPane({required this.libraryView});
 
   final HomeLibraryView? libraryView;
-  final bool allWorkspacesActive;
-  final String? selectedIdentityId;
-  final TeamConfigSection? initialSection;
-  final String? initialMemberId;
-  final ValueChanged<String> onOpenTeam;
 
   @override
   State<_HomeRightPane> createState() => _HomeRightPaneState();

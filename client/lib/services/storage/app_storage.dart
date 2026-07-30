@@ -132,103 +132,14 @@ class AppPaths {
   static String launchProfilesDirForTeampilotRoot(String teampilotRoot) =>
       _pathUnderTeampilotRoot(teampilotRoot, 'launch-profiles');
 
-  /// Installed skill packages (`manifest.json` + per-skill dirs).
-  static String skillsDirForTeampilotRoot(String teampilotRoot) =>
-      _pathUnderTeampilotRoot(teampilotRoot, 'skills/installed');
-
-  static String skillBackupsDirForTeampilotRoot(String teampilotRoot) =>
-      _pathUnderTeampilotRoot(teampilotRoot, 'skills/backups');
-
   static String workspaceDirForTeampilotRoot(String teampilotRoot) =>
       _pathUnderTeampilotRoot(teampilotRoot, 'workspace');
 
   static String cliDefaultsDirForTeampilotRoot(String teampilotRoot) =>
       _pathUnderTeampilotRoot(teampilotRoot, 'cli-defaults');
 
-  /// Skill marketplace repo list.
-  static String skillReposConfigPathForTeampilotRoot(String teampilotRoot) =>
-      _pathUnderTeampilotRoot(teampilotRoot, 'skills/repos.json');
-
-  /// Local disk cache for GitHub skill repos (tarball files + discovered skills).
-  static String skillRepoCacheDirForTeampilotRoot(String teampilotRoot) =>
-      _pathUnderTeampilotRoot(teampilotRoot, 'skills/repo-cache');
-
-  /// Installed skill pack runtimes (bin links + install.json exports).
-  static String skillPacksInstallDirForTeampilotRoot(String teampilotRoot) =>
-      _pathUnderTeampilotRoot(teampilotRoot, 'skills/packs');
-
-  /// Installed plugin bundles.
-  static String pluginsDirForTeampilotRoot(String teampilotRoot) =>
-      _pathUnderTeampilotRoot(teampilotRoot, 'plugins/installed');
-
-  static String pluginBackupsDirForTeampilotRoot(String teampilotRoot) =>
-      _pathUnderTeampilotRoot(teampilotRoot, 'plugins/backups');
-
-  static String pluginsJsonForTeampilotRoot(String teampilotRoot) =>
-      _pathUnderTeampilotRoot(teampilotRoot, 'plugins/plugins.json');
-
   static String notificationsJsonForTeampilotRoot(String teampilotRoot) =>
       _pathUnderTeampilotRoot(teampilotRoot, 'notifications.json');
-
-  static String pluginMarketplacesConfigPathForTeampilotRoot(
-    String teampilotRoot,
-  ) => _pathUnderTeampilotRoot(teampilotRoot, 'plugins/marketplaces.json');
-
-  static String pluginMarketplaceCacheDirForTeampilotRoot(
-    String teampilotRoot,
-  ) => _pathUnderTeampilotRoot(teampilotRoot, 'plugins/marketplace-cache');
-
-  static String pluginExternalCacheDirForTeampilotRoot(String teampilotRoot) =>
-      _pathUnderTeampilotRoot(teampilotRoot, 'plugins/external-cache');
-
-  /// Global MCP server catalog (`mcp/mcp_servers.json`).
-  static String mcpServersJsonForTeampilotRoot(String teampilotRoot) =>
-      _pathUnderTeampilotRoot(teampilotRoot, 'mcp/mcp_servers.json');
-
-  static String mcpRegistrySourcesConfigPathForTeampilotRoot(
-    String teampilotRoot,
-  ) => _pathUnderTeampilotRoot(teampilotRoot, 'mcp/registry_sources.json');
-
-  static String mcpBackupsDirForTeampilotRoot(String teampilotRoot) =>
-      _pathUnderTeampilotRoot(teampilotRoot, 'mcp/backups');
-
-  /// Cached MCP discovery listings from remote catalogs (Smithery / official).
-  static String mcpDiscoveryCacheDirForTeampilotRoot(String teampilotRoot) =>
-      _pathUnderTeampilotRoot(teampilotRoot, 'mcp/discovery-cache');
-
-  static String teamHubDirForTeampilotRoot(String teampilotRoot) =>
-      _pathUnderTeampilotRoot(teampilotRoot, 'team-hub');
-
-  static String teamHubCacheDirForTeampilotRoot(String teampilotRoot) =>
-      _pathUnderTeampilotRoot(teampilotRoot, 'team-hub/cache');
-
-  static String teamHubRegistriesJsonForTeampilotRoot(String teampilotRoot) =>
-      _pathUnderTeampilotRoot(teampilotRoot, 'team-hub/registries.json');
-
-  static String teamHubFavoritesJsonForTeampilotRoot(String teampilotRoot) =>
-      _pathUnderTeampilotRoot(teampilotRoot, 'team-hub/favorites.json');
-
-  static String memberHubDirForTeampilotRoot(String teampilotRoot) =>
-      _pathUnderTeampilotRoot(teampilotRoot, 'member-hub');
-
-  static String memberHubFavoritesJsonForTeampilotRoot(String teampilotRoot) =>
-      _pathUnderTeampilotRoot(teampilotRoot, 'member-hub/favorites.json');
-
-  static String memberHubRecentJsonForTeampilotRoot(String teampilotRoot) =>
-      _pathUnderTeampilotRoot(teampilotRoot, 'member-hub/recent.json');
-
-  static String memberHubLocalTemplatesDirForTeampilotRoot(
-    String teampilotRoot,
-  ) => _pathUnderTeampilotRoot(teampilotRoot, 'member-hub/local-templates');
-
-  static String memberHubCacheDirForTeampilotRoot(String teampilotRoot) =>
-      _pathUnderTeampilotRoot(teampilotRoot, 'member-hub/cache');
-
-  static String hubPublishDirForTeampilotRoot(String teampilotRoot) =>
-      _pathUnderTeampilotRoot(teampilotRoot, 'hub-publish');
-
-  static String hubPublishRecordsJsonForTeampilotRoot(String teampilotRoot) =>
-      _pathUnderTeampilotRoot(teampilotRoot, 'hub-publish/records.json');
 
   static String homeWorkspaceWorkspaceFavoritesJsonForTeampilotRoot(
     String teampilotRoot,
@@ -259,55 +170,11 @@ class AppPaths {
     String teampilotRoot,
   ) => _pathUnderTeampilotRoot(teampilotRoot, 'ui/workspace-groups.json');
 
-  String get skillRepoCacheDir => skillRepoCacheDirForTeampilotRoot(basePath);
-
-  String get skillPacksInstallDir =>
-      skillPacksInstallDirForTeampilotRoot(basePath);
-
-  String get pluginMarketplaceCacheDir =>
-      pluginMarketplaceCacheDirForTeampilotRoot(basePath);
-
-  String get pluginExternalCacheDir =>
-      pluginExternalCacheDirForTeampilotRoot(basePath);
-
-  String get pluginsJson => pluginsJsonForTeampilotRoot(basePath);
-  String get mcpServersJson => mcpServersJsonForTeampilotRoot(basePath);
-
-  String get mcpRegistrySourcesConfigPath =>
-      mcpRegistrySourcesConfigPathForTeampilotRoot(basePath);
-  String get mcpBackupsDir => mcpBackupsDirForTeampilotRoot(basePath);
-  String get mcpDiscoveryCacheDir =>
-      mcpDiscoveryCacheDirForTeampilotRoot(basePath);
-  String get pluginMarketplacesConfigPath =>
-      pluginMarketplacesConfigPathForTeampilotRoot(basePath);
-
   /// Workbench entities: `workspace/workspaces/{id}/manifest.json`, sessions, bus.
   String get workspaceDir => _ctx.join(basePath, 'workspace');
 
   /// App-wide CLI default trees (`cli-defaults/{tool}/`).
   String get cliDefaultsDir => _ctx.join(basePath, 'cli-defaults');
-
-  String get skillReposConfigPath =>
-      skillReposConfigPathForTeampilotRoot(basePath);
-
-  String get teamHubDir => teamHubDirForTeampilotRoot(basePath);
-  String get teamHubCacheDir => teamHubCacheDirForTeampilotRoot(basePath);
-  String get teamHubRegistriesJson =>
-      teamHubRegistriesJsonForTeampilotRoot(basePath);
-  String get teamHubFavoritesJson =>
-      teamHubFavoritesJsonForTeampilotRoot(basePath);
-
-  String get memberHubDir => memberHubDirForTeampilotRoot(basePath);
-  String get memberHubFavoritesJson =>
-      memberHubFavoritesJsonForTeampilotRoot(basePath);
-  String get memberHubRecentJson =>
-      memberHubRecentJsonForTeampilotRoot(basePath);
-  String get memberHubLocalTemplatesDir =>
-      memberHubLocalTemplatesDirForTeampilotRoot(basePath);
-  String get memberHubCacheDir => memberHubCacheDirForTeampilotRoot(basePath);
-  String get hubPublishDir => hubPublishDirForTeampilotRoot(basePath);
-  String get hubPublishRecordsJson =>
-      hubPublishRecordsJsonForTeampilotRoot(basePath);
 
   String get homeWorkspaceWorkspaceFavoritesJson =>
       homeWorkspaceWorkspaceFavoritesJsonForTeampilotRoot(basePath);

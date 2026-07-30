@@ -39,7 +39,7 @@ class HomeWorkspaceBodyStack extends StatelessWidget {
             children: [
               _HomeBodyLayer(
                 active: activeTab == null,
-                child: _HomePageLayer(location: location),
+                child: const _HomePageLayer(),
               ),
               for (final tab in openTabs)
                 _WorkspaceTabSlot(
@@ -57,17 +57,11 @@ class HomeWorkspaceBodyStack extends StatelessWidget {
 }
 
 class _HomePageLayer extends StatelessWidget {
-  const _HomePageLayer({required this.location});
-
-  final String location;
+  const _HomePageLayer();
 
   @override
   Widget build(BuildContext context) {
-    return HomePage(
-      key: const ValueKey('home-v2-body'),
-      initialSection: HomeWorkspaceRoute.homeTeamSection(location),
-      initialMemberId: HomeWorkspaceRoute.homeMemberId(location),
-    );
+    return const HomePage(key: ValueKey('home-v2-body'));
   }
 }
 

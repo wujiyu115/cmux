@@ -72,27 +72,5 @@ class RuntimeContext {
 
   String get launchProfilesDir =>
       AppPaths.launchProfilesDirForTeampilotRoot(appDataRoot);
-  String get skillsRoot => AppPaths.skillsDirForTeampilotRoot(appDataRoot);
-  String get skillBackupsDir =>
-      AppPaths.skillBackupsDirForTeampilotRoot(appDataRoot);
   String get workspaceDir => AppPaths.workspaceDirForTeampilotRoot(appDataRoot);
-  String get skillReposConfigPath =>
-      AppPaths.skillReposConfigPathForTeampilotRoot(appDataRoot);
-  String get pluginsRoot => AppPaths.pluginsDirForTeampilotRoot(appDataRoot);
-  String get pluginBackupsDir =>
-      AppPaths.pluginBackupsDirForTeampilotRoot(appDataRoot);
-  String get pluginsJsonPath =>
-      AppPaths.pluginsJsonForTeampilotRoot(appDataRoot);
-  String get pluginMarketplacesConfigPath =>
-      AppPaths.pluginMarketplacesConfigPathForTeampilotRoot(appDataRoot);
-  String get pluginMarketplaceCacheDir =>
-      AppPaths.pluginMarketplaceCacheDirForTeampilotRoot(appDataRoot);
-  String get pluginExternalCacheDir =>
-      AppPaths.pluginExternalCacheDirForTeampilotRoot(appDataRoot);
-  String get mcpServersJsonPath =>
-      AppPaths.mcpServersJsonForTeampilotRoot(appDataRoot);
-  String get mcpRegistrySourcesConfigPath =>
-      AppPaths.mcpRegistrySourcesConfigPathForTeampilotRoot(appDataRoot);
-  String get mcpDiscoveryCacheDir =>
-      AppPaths.mcpDiscoveryCacheDirForTeampilotRoot(appDataRoot);
 }
