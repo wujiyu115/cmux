@@ -15,6 +15,7 @@ import '../../../services/workspace/workspace_run_registry.dart';
 import '../../../services/workspace/workspace_tools_scope.dart';
 import '../../../services/workspace/workspace_tools_scope_registry.dart';
 import '../../../services/workspace/workspace_worktree_registry.dart';
+import '../../../services/workbench/workbench_shell_launcher.dart';
 import '../../../utils/ui/app_keys.dart';
 import '../../../utils/workspace/workspace_new_chat_active.dart';
 import '../../../widgets/right_tools/right_tools_panel.dart';
@@ -24,6 +25,7 @@ import '../../workspace_ide/workspace_ide_shell.dart';
 import 'workspace_ide_center.dart';
 import 'workspace_route_active_scope.dart';
 import 'workspace_search_dialog.dart';
+import 'workspace_session_actions.dart';
 import 'workspace_sidebar.dart';
 import 'workspace_tools_scope_sync.dart';
 
@@ -49,6 +51,10 @@ class _WorkspaceSplitPaneState extends State<WorkspaceSplitPane> {
   RunCommandHost? _runCommandHost;
   WorkspaceSearchHost? _workspaceSearchHost;
   late final void Function() _openWorkspaceSearch = _openSearch;
+
+  /// Guards the empty-workspace auto-terminal so it fires once per empty
+  /// episode (not on every rebuild while the shell is still connecting).
+  bool _autoTerminalScheduled = false;
 
   @override
   void didChangeDependencies() {
@@ -76,6 +82,39 @@ class _WorkspaceSplitPaneState extends State<WorkspaceSplitPane> {
     unawaited(
       showWorkspaceSearchDialog(context, workspace: widget.workspace),
     );
+  }
+
+  /// Empty workspaces auto-launch their default terminal — cmux keeps a live
+  /// terminal per workspace in place of the compose landing. Fires only for the
+  /// visible (route-active) workspace, once per empty episode, and only when a
+  /// [WorkbenchShellLauncher] is in scope (absent in lightweight widget tests
+  /// that assert the landing empty-state — those skip cleanly). [ctx] is the
+  /// builder context (owns worktree / launcher / chat providers).
+  void _maybeAutoOpenTerminal(BuildContext ctx, bool composeLanding, String cwd) {
+    if (!composeLanding) {
+      _autoTerminalScheduled = false;
+      return;
+    }
+    if (_autoTerminalScheduled) return;
+    if (!WorkspaceRouteActiveScope.routeActiveOf(ctx)) return;
+    if (cwd.trim().isEmpty) return;
+    try {
+      ctx.read<WorkbenchShellLauncher>();
+    } on ProviderNotFoundException {
+      return; // No launcher in scope (test harness) — leave the landing shown.
+    }
+    _autoTerminalScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(
+        openWorkspaceDefaultTerminal(
+          ctx,
+          widget.workspace,
+          tabScopeId: widget.tabScopeId,
+          worktreePath: cwd,
+        ),
+      );
+    });
   }
 
   void _syncWorkspaceSearchHost() {
@@ -138,6 +177,7 @@ class _WorkspaceSplitPaneState extends State<WorkspaceSplitPane> {
           final composeLanding = context.select<ChatCubit, bool>(
             (c) => workspaceNewChatActive(c, widget.tabScopeId),
           );
+          _maybeAutoOpenTerminal(context, composeLanding, cwd);
           return WorkspaceToolsScopeSync(
             workspace: widget.workspace,
             cwd: cwd,

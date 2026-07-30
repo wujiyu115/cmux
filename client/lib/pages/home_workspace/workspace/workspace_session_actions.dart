@@ -271,6 +271,10 @@ Future<void> openWorkspaceDefaultTerminal(
     onStateChanged: () {},
     mounted: () => context.mounted,
   );
+  // Leaving compose-landing so the freshly opened shell tab (not the retired
+  // landing) becomes the visible center. Unconditional clear — the shell tab
+  // is not a chat session, so `exitNewChat` would re-arm the landing.
+  if (context.mounted) context.read<ChatCubit>().dismissNewChat();
 }
 
 /// Creates a conversation from Chat, connects like automation dispatch, and

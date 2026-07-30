@@ -17,6 +17,7 @@ import 'package:teampilot/cubits/session_preferences_cubit.dart';
 import 'package:teampilot/cubits/shortcut_cubit.dart';
 import 'package:teampilot/cubits/ssh_connection_cubit.dart';
 import 'package:teampilot/cubits/workbench/workbench_cubit.dart';
+import 'package:teampilot/cubits/workspace_groups_cubit.dart';
 import 'package:teampilot/cubits/workspace_tools_cubit.dart';
 import 'package:teampilot/main.dart';
 import 'package:teampilot/models/runtime_target.dart';
@@ -248,6 +249,7 @@ Widget buildTestApp({
               ),
         ),
         BlocProvider(create: (_) => WorkspaceToolsCubit()),
+        BlocProvider(create: (_) => WorkspaceGroupsCubit()),
         BlocProvider(create: (_) => NotificationCubit()),
         BlocProvider(
           create: (_) => SshConnectionCubit(
