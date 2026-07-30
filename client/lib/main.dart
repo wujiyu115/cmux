@@ -191,16 +191,34 @@ class _CleanupWindowListener extends WindowListener {
   }
 
   Future<void> _shutdownAndDestroy() async {
+    // Do not gate window destruction on session teardown. chatCubit.close()
+    // serially awaits each session's remote bus / SSH tunnel close (which waits
+    // on the remote to ack), and that blocked the visible window close by 6-7s.
+    // Give teardown a short bounded budget, then destroy regardless; the OS
+    // reclaims PTY handles, SSH sockets and file handles on process exit, and
+    // nothing here persists state that would otherwise be lost.
+    final sw = Stopwatch()..start();
+    final teardown = _teardown();
+    await Future.any([
+      teardown,
+      Future<void>.delayed(const Duration(milliseconds: 400)),
+    ]);
+    AppLogger.instance.i(
+      'window shutdown: teardown waited ${sw.elapsedMilliseconds}ms before destroy',
+    );
+    await windowManager.destroy();
+  }
+
+  Future<void> _teardown() async {
     try {
       await chatCubit.close();
+    } finally {
       workspaceTerminalRegistry.disposeAll();
       gitRepoStore.dispose();
       workspaceFileTreeStore.dispose();
       workspaceWorktreeRegistry.dispose();
       workspaceToolsScopeRegistry.dispose();
       workspaceRunRegistry.dispose();
-    } finally {
-      await windowManager.destroy();
     }
   }
 }
