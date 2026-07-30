@@ -6,7 +6,7 @@ Guidance for Claude Code and other AI assistants working in this repository.
 
 | Docs | Purpose |
 |------|---------|
-| [README.md](README.md) (English) / [README.zh.md](README.zh.md) (简体中文) | User-facing |
+| [README.md](README.md) (简体中文) | User-facing |
 | [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | Clone, commands, tests, packaging, CI |
 | [docs/CODE_QUALITY.md](docs/CODE_QUALITY.md) | File size, layering, tests, Extension conventions |
 | [docs/DEBUGGING.md](docs/DEBUGGING.md) | Systematic debugging process |
