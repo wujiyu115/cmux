@@ -11,6 +11,7 @@ class AgentStatusEvent {
     this.toolAgentId,
     this.toolAgentType,
     this.hasExplicitPrompt = false,
+    this.interrupted = false,
   });
 
   final AgentSeatAttention state;
@@ -34,6 +35,12 @@ class AgentStatusEvent {
   /// True for UserPromptSubmit-style events that must clear sticky waiting.
   final bool hasExplicitPrompt;
 
+  /// True when this `done` was reached via interrupt/cancel (Claude `Stop` with
+  /// `is_interrupt`), not normal completion. Always false for non-done states.
+  /// CLI-neutral downstream: the per-CLI normalizer is the only place that knows
+  /// how to derive it (codex later reads its own cancel signal).
+  final bool interrupted;
+
   AgentStatusEvent copyWith({
     AgentSeatAttention? state,
     String? toolName,
@@ -43,6 +50,7 @@ class AgentStatusEvent {
     String? toolAgentId,
     String? toolAgentType,
     bool? hasExplicitPrompt,
+    bool? interrupted,
   }) => AgentStatusEvent(
     state: state ?? this.state,
     toolName: toolName ?? this.toolName,
@@ -52,6 +60,7 @@ class AgentStatusEvent {
     toolAgentId: toolAgentId ?? this.toolAgentId,
     toolAgentType: toolAgentType ?? this.toolAgentType,
     hasExplicitPrompt: hasExplicitPrompt ?? this.hasExplicitPrompt,
+    interrupted: interrupted ?? this.interrupted,
   );
 
   @override
@@ -65,7 +74,8 @@ class AgentStatusEvent {
           toolUseId == other.toolUseId &&
           toolAgentId == other.toolAgentId &&
           toolAgentType == other.toolAgentType &&
-          hasExplicitPrompt == other.hasExplicitPrompt;
+          hasExplicitPrompt == other.hasExplicitPrompt &&
+          interrupted == other.interrupted;
 
   @override
   int get hashCode => Object.hash(
@@ -77,5 +87,6 @@ class AgentStatusEvent {
     toolAgentId,
     toolAgentType,
     hasExplicitPrompt,
+    interrupted,
   );
 }

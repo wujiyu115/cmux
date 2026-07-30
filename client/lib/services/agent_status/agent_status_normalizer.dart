@@ -48,17 +48,26 @@ class AgentStatusNormalizer {
     final toolAgentId = _readString(body, const ['agent_id', 'agentId']);
     final toolAgentType = _readString(body, const ['agent_type', 'agentType']);
 
-    AgentStatusEvent build(AgentSeatAttention state, {bool explicit = false}) =>
-        AgentStatusEvent(
-          state: state,
-          toolName: toolName,
-          toolInput: toolInput,
-          hookEventName: eventName,
-          toolUseId: toolUseId,
-          toolAgentId: toolAgentId,
-          toolAgentType: toolAgentType,
-          hasExplicitPrompt: explicit,
-        );
+    AgentStatusEvent build(
+      AgentSeatAttention state, {
+      bool explicit = false,
+      bool interrupted = false,
+    }) => AgentStatusEvent(
+      state: state,
+      toolName: toolName,
+      toolInput: toolInput,
+      hookEventName: eventName,
+      toolUseId: toolUseId,
+      toolAgentId: toolAgentId,
+      toolAgentType: toolAgentType,
+      hasExplicitPrompt: explicit,
+      interrupted: interrupted,
+    );
+
+    // Claude reports a cancelled turn as a Stop hook carrying `is_interrupt`
+    // (same signal Orca reads at agent-hook-listener.ts:2666). Distinguishes
+    // "interrupted" from "finished" for downstream notifications.
+    final isInterrupt = body['is_interrupt'] == true;
 
     return switch (eventName) {
       'PermissionRequest' => build(AgentSeatAttention.waiting),
@@ -70,7 +79,10 @@ class AgentStatusNormalizer {
         AgentSeatAttention.working,
         explicit: true,
       ),
-      'Stop' || 'StopFailure' => build(AgentSeatAttention.done),
+      'Stop' || 'StopFailure' => build(
+        AgentSeatAttention.done,
+        interrupted: isInterrupt,
+      ),
       _ => null,
     };
   }

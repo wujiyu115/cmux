@@ -1401,6 +1401,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sessionIdleNotificationSubtitle => '可以继续对话了';
 
   @override
+  String get agentDoneNotificationTitle => 'Agent 已完成';
+
+  @override
+  String get agentDoneNotificationBody => 'Agent 完成了本轮，等待你的下一步。';
+
+  @override
+  String get agentInterruptedNotificationTitle => 'Agent 已中断';
+
+  @override
+  String get agentInterruptedNotificationBody => 'Agent 本轮被取消。';
+
+  @override
+  String get agentWaitingNotificationTitle => 'Agent 需要授权';
+
+  @override
+  String get agentWaitingNotificationBody => 'Agent 正在等待你的授权以继续。';
+
+  @override
   String get credentialPushOptInTitle => '把凭证推送到此机器';
 
   @override

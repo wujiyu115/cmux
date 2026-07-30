@@ -2762,6 +2762,42 @@ abstract class AppLocalizations {
   /// **'Ready for your next message'**
   String get sessionIdleNotificationSubtitle;
 
+  /// No description provided for @agentDoneNotificationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Agent finished'**
+  String get agentDoneNotificationTitle;
+
+  /// No description provided for @agentDoneNotificationBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The agent completed its turn and is ready for you.'**
+  String get agentDoneNotificationBody;
+
+  /// No description provided for @agentInterruptedNotificationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Agent interrupted'**
+  String get agentInterruptedNotificationTitle;
+
+  /// No description provided for @agentInterruptedNotificationBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The agent\'s turn was cancelled.'**
+  String get agentInterruptedNotificationBody;
+
+  /// No description provided for @agentWaitingNotificationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Agent needs approval'**
+  String get agentWaitingNotificationTitle;
+
+  /// No description provided for @agentWaitingNotificationBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The agent is waiting for your authorization to continue.'**
+  String get agentWaitingNotificationBody;
+
   /// No description provided for @credentialPushOptInTitle.
   ///
   /// In en, this message translates to:

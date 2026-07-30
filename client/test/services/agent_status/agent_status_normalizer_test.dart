@@ -72,6 +72,24 @@ void main() {
       expect(e?.state, AgentSeatAttention.done);
     });
 
+    test('Claude Stop is_interrupt → done + interrupted', () {
+      final e = AgentStatusNormalizer.normalize(
+        cli: CliTool.claude,
+        body: {'hook_event_name': 'Stop', 'is_interrupt': true},
+      );
+      expect(e?.state, AgentSeatAttention.done);
+      expect(e?.interrupted, isTrue);
+    });
+
+    test('Claude Stop without is_interrupt → done, not interrupted', () {
+      final e = AgentStatusNormalizer.normalize(
+        cli: CliTool.claude,
+        body: {'hook_event_name': 'Stop'},
+      );
+      expect(e?.state, AgentSeatAttention.done);
+      expect(e?.interrupted, isFalse);
+    });
+
     test('ask_user_question PreToolUse → waiting (casing variants)', () {
       final e = AgentStatusNormalizer.normalize(
         cli: CliTool.claude,

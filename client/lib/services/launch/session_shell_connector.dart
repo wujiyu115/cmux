@@ -4,7 +4,10 @@ import '../../cubits/chat/chat_tab_store.dart';
 import '../../cubits/chat/model/chat_tab.dart';
 import '../../cubits/chat/session_launch_host.dart';
 import '../../models/app_session.dart';
+import '../../models/cli_tool.dart';
 import '../../models/runtime_target.dart';
+import '../agent_status/claude_hook_installer.dart';
+import '../agent_status/member_agent_status_endpoint.dart';
 import '../../services/host/host_interactive_shell.dart';
 import '../../services/host/host_interactive_shell_kind.dart';
 import '../../models/workspace.dart';
@@ -154,9 +157,31 @@ class SessionShellConnector {
       if (launchTheme != null) {
         applyShellTerminalThemeForLaunch(shell, launchTheme);
       }
+      // Revive the agent-status pipeline for local panes: register the gateway
+      // session + seat and stamp the identity env the shared Claude hook reads
+      // at run time (see claude_hook_installer.dart). The pane runs a plain
+      // shell, so the CLI is unknown until a hook fires — assume `claude`, the
+      // only wired family. SSH panes need a remote tunnel + remote script and
+      // are deferred; skip stamping there so the hook stays a no-op.
+      final agentStatusEnv = <String, String>{};
+      if (launchTarget.kind != RuntimeKind.ssh) {
+        final seatId = activeSession.sessionId;
+        _host.agentStatusGateway.registerAgentStatusSession(sessionId: seatId);
+        _host.agentStatusSeatLookup?.registerSeat(
+          sessionId: seatId,
+          memberId: seatId,
+          cli: CliTool.claude,
+          skipPermissions: false,
+        );
+        agentStatusEnv[agentStatusUrlEnvKey] =
+            _host.agentStatusGateway.agentStatusEndpoint.toString();
+        agentStatusEnv[agentStatusSessionEnvKey] = seatId;
+        agentStatusEnv[agentStatusMemberEnvKey] = seatId;
+      }
       shell.connect(
         workingDirectory: memberWork.workingDirectory,
         arguments: shellArguments,
+        extraEnvironment: agentStatusEnv.isEmpty ? null : agentStatusEnv,
         onFirstUserLineSubmitted: _delegate.autoRenameOnFirstPrompt(
           activeSession.sessionId,
         ),
@@ -173,6 +198,9 @@ class SessionShellConnector {
           _host.clearAgentStatusSeat(
             sessionId: activeSession.sessionId,
             memberId: activeSession.sessionId,
+          );
+          _host.agentStatusGateway.unregisterAgentStatusSession(
+            activeSession.sessionId,
           );
           _host.updateTabRunning(tab.info.id);
         },

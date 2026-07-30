@@ -13,6 +13,8 @@ import '../cubits/chat_cubit.dart';
 import '../services/agent_status/agent_status_http_handler.dart';
 import '../services/agent_status/agent_status_seat_lookup.dart';
 import '../services/agent_status/agent_status_gateway.dart';
+import '../services/agent_status/claude_hook_installer.dart';
+import '../services/notification/agent_attention_notification_service.dart';
 import '../services/editor_platform/editor_platform.dart';
 import '../cubits/notification_cubit.dart';
 import '../cubits/command_log_cubit.dart';
@@ -441,6 +443,18 @@ Future<AppShell> buildAppShell({
   final agentStatusGateway = AgentStatusGateway();
   await agentStatusGateway.ensureStarted();
 
+  // Install the shared Claude lifecycle hook once (idempotent, best-effort):
+  // additively merges gateway-forwarding entries into the user's
+  // ~/.claude/settings.json and drops the global forwarder script under
+  // <teampilotRoot>/agent-hooks/. Panes stamp seat identity env at connect;
+  // the hook reads it at run time (see claude_hook_installer.dart).
+  unawaited(
+    ClaudeHookInstaller.forEnvironment(
+      appDataRoot: AppStorage.appDataRoot,
+    )?.install() ??
+        Future<void>.value(),
+  );
+
   final agentAttentionCubit = AgentAttentionCubit();
   final agentStatusSeatLookup = AgentStatusSeatLookup();
   agentStatusGateway.attachAgentStatusHandler(
@@ -528,8 +542,40 @@ Future<AppShell> buildAppShell({
 
   // Poll embedded terminals for working → idle edges (agent turn finished) and
   // raise OS + in-app notifications, gated by the notifyOnSessionIdle setting.
+  // Covers plain workspace/IDE shells; chat agent panes are covered by the
+  // status-hook driven service below (disjoint surfaces — no double-fire).
   TerminalIdleNotificationService(
     registry: workspaceTerminalRegistry,
+  ).start();
+
+  // Turn agent lifecycle edges (done / interrupted / waiting) reported by the
+  // Claude status hook into OS + in-app notifications. Foreground the active
+  // chat tab is watching is suppressed; attribution names its workspace.
+  AgentAttentionNotificationService(
+    attention: agentAttentionCubit,
+    isForegroundSeat: (sessionId, memberId) {
+      final s = chatCubit.state;
+      return !s.newChatActive && s.activeSessionId == sessionId;
+    },
+    resolveAttribution: (sessionId, memberId) {
+      final s = chatCubit.state;
+      final session = s.sessions
+          .where((e) => e.sessionId == sessionId)
+          .firstOrNull;
+      if (session == null) return null;
+      final label = s.workspaces
+          .where((w) => w.workspaceId == session.workspaceId)
+          .firstOrNull
+          ?.effectiveDisplay ??
+          '';
+      final sessionTitle = session.display.trim();
+      return AgentNoticeAttribution(
+        // Headline the session (task); fall back to the workspace name.
+        title: sessionTitle.isNotEmpty ? sessionTitle : label,
+        workspaceId: session.workspaceId,
+        workspaceLabel: label,
+      );
+    },
   ).start();
 
   boot('loading layout');

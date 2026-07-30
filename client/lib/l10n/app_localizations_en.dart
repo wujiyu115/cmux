@@ -1458,6 +1458,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sessionIdleNotificationSubtitle => 'Ready for your next message';
 
   @override
+  String get agentDoneNotificationTitle => 'Agent finished';
+
+  @override
+  String get agentDoneNotificationBody =>
+      'The agent completed its turn and is ready for you.';
+
+  @override
+  String get agentInterruptedNotificationTitle => 'Agent interrupted';
+
+  @override
+  String get agentInterruptedNotificationBody =>
+      'The agent\'s turn was cancelled.';
+
+  @override
+  String get agentWaitingNotificationTitle => 'Agent needs approval';
+
+  @override
+  String get agentWaitingNotificationBody =>
+      'The agent is waiting for your authorization to continue.';
+
+  @override
   String get credentialPushOptInTitle => 'Push credentials to this machine';
 
   @override
