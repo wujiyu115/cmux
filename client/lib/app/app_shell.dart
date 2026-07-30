@@ -67,6 +67,7 @@ import '../services/storage/home_target_store.dart';
 import '../services/storage/runtime_target_registry.dart';
 import '../services/storage/targets_repository.dart';
 import '../services/notification/notification_recorder.dart';
+import '../services/notification/terminal_idle_notification_service.dart';
 import '../services/terminal/command_log_sink.dart';
 import '../services/session/session_lifecycle_service.dart';
 import '../services/github/github_credentials_store.dart';
@@ -524,6 +525,12 @@ Future<AppShell> buildAppShell({
           .firstOrNull
           ?.effectiveDisplay ??
       '';
+
+  // Poll embedded terminals for working → idle edges (agent turn finished) and
+  // raise OS + in-app notifications, gated by the notifyOnSessionIdle setting.
+  TerminalIdleNotificationService(
+    registry: workspaceTerminalRegistry,
+  ).start();
 
   boot('loading layout');
   await layoutCubit.load();

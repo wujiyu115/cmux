@@ -439,7 +439,6 @@ class WorkspaceTerminalGroup extends ChangeNotifier {
 
   /// `workspace · pane` label for notifications raised by [paneId]. Falls back
   /// to whichever half is known; empty when neither is.
-  @visibleForTesting
   String paneAttribution(String paneId) {
     final surface = surfaceForPane(paneId);
     final paneName =
@@ -480,6 +479,10 @@ class WorkspaceTerminalRegistry {
   final Map<String, WorkspaceTerminalGroup> _groups = {};
   final TerminalNotificationBridgeFactory? _bridgeFactory;
   final ShellCommandTrackerFactory? _trackerFactory;
+
+  /// Live view of all currently-tracked workspace groups. Used by the
+  /// terminal-idle notifier to poll pane activity across every workspace.
+  Iterable<WorkspaceTerminalGroup> get groups => _groups.values;
 
   /// Resolves a workspace's display name for notification attribution. Set once
   /// the workspace store exists; until then notifications carry the pane label

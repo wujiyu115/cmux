@@ -1445,6 +1445,19 @@ class AppLocalizationsEn extends AppLocalizations {
       'When enabled (default), new Simple-mode compose landing starts with full access permissions. Workspace chip choices still override and persist per workspace.';
 
   @override
+  String get notifyOnSessionIdleTitle => 'Agent idle system notification';
+
+  @override
+  String get notifyOnSessionIdleDescription =>
+      'When a terminal finishes a burst of output and goes idle (agent turn done), show an OS notification in addition to the in-app notification center.';
+
+  @override
+  String get sessionIdleNotificationTitle => 'Agent ready';
+
+  @override
+  String get sessionIdleNotificationSubtitle => 'Ready for your next message';
+
+  @override
   String get credentialPushOptInTitle => 'Push credentials to this machine';
 
   @override

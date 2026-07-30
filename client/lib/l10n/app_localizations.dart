@@ -2738,6 +2738,30 @@ abstract class AppLocalizations {
   /// **'When enabled (default), new Simple-mode compose landing starts with full access permissions. Workspace chip choices still override and persist per workspace.'**
   String get simpleModeDefaultFullAccessDescription;
 
+  /// No description provided for @notifyOnSessionIdleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Agent idle system notification'**
+  String get notifyOnSessionIdleTitle;
+
+  /// No description provided for @notifyOnSessionIdleDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'When a terminal finishes a burst of output and goes idle (agent turn done), show an OS notification in addition to the in-app notification center.'**
+  String get notifyOnSessionIdleDescription;
+
+  /// No description provided for @sessionIdleNotificationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Agent ready'**
+  String get sessionIdleNotificationTitle;
+
+  /// No description provided for @sessionIdleNotificationSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready for your next message'**
+  String get sessionIdleNotificationSubtitle;
+
   /// No description provided for @credentialPushOptInTitle.
   ///
   /// In en, this message translates to:

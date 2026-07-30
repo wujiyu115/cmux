@@ -8,6 +8,7 @@ class SessionPreferences {
     this.terminalLinkClickOpensInApp = true,
     this.openExistingSessionStartsTerminal = false,
     this.simpleModeDefaultFullAccess = true,
+    this.notifyOnSessionIdle = true,
   }) : cliExecutablePaths = Map.unmodifiable(
          _normalizeCliExecutablePaths(cliExecutablePaths),
        ),
@@ -36,6 +37,7 @@ class SessionPreferences {
           json['openExistingSessionStartsTerminal'] as bool? ?? false,
       simpleModeDefaultFullAccess:
           json['simpleModeDefaultFullAccess'] as bool? ?? true,
+      notifyOnSessionIdle: json['notifyOnSessionIdle'] as bool? ?? true,
     );
   }
 
@@ -74,6 +76,11 @@ class SessionPreferences {
   /// unless a workspace has already persisted a different chip choice.
   final bool simpleModeDefaultFullAccess;
 
+  /// When true (default), fire an OS notification when an embedded terminal
+  /// finishes a burst of output and goes idle (agent turn done). The in-app
+  /// notification center records it regardless.
+  final bool notifyOnSessionIdle;
+
   String cliExecutablePathFor(String toolId) =>
       cliExecutablePaths[toolId]?.trim() ?? '';
 
@@ -86,6 +93,7 @@ class SessionPreferences {
     bool? terminalLinkClickOpensInApp,
     bool? openExistingSessionStartsTerminal,
     bool? simpleModeDefaultFullAccess,
+    bool? notifyOnSessionIdle,
   }) {
     return SessionPreferences(
       cliExecutablePaths: cliExecutablePaths ?? this.cliExecutablePaths,
@@ -102,6 +110,7 @@ class SessionPreferences {
           this.openExistingSessionStartsTerminal,
       simpleModeDefaultFullAccess:
           simpleModeDefaultFullAccess ?? this.simpleModeDefaultFullAccess,
+      notifyOnSessionIdle: notifyOnSessionIdle ?? this.notifyOnSessionIdle,
     );
   }
 
@@ -115,6 +124,7 @@ class SessionPreferences {
       'terminalLinkClickOpensInApp': terminalLinkClickOpensInApp,
       'openExistingSessionStartsTerminal': openExistingSessionStartsTerminal,
       'simpleModeDefaultFullAccess': simpleModeDefaultFullAccess,
+      'notifyOnSessionIdle': notifyOnSessionIdle,
     };
   }
 

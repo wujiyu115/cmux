@@ -1388,6 +1388,19 @@ class AppLocalizationsZh extends AppLocalizations {
       '开启（默认）时，简单模式落地页默认使用完全访问权限。工作区里权限芯片的选择仍会覆盖并按工作区持久化。';
 
   @override
+  String get notifyOnSessionIdleTitle => 'Agent 空闲系统通知';
+
+  @override
+  String get notifyOnSessionIdleDescription =>
+      '终端输出结束一轮并进入空闲（agent 完成一轮）时，除应用内通知中心外，同时发送操作系统通知。';
+
+  @override
+  String get sessionIdleNotificationTitle => 'Agent 已就绪';
+
+  @override
+  String get sessionIdleNotificationSubtitle => '可以继续对话了';
+
+  @override
   String get credentialPushOptInTitle => '把凭证推送到此机器';
 
   @override
