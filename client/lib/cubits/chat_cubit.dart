@@ -8,6 +8,7 @@ import 'package:flutter_alacritty/flutter_alacritty.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../models/workspace.dart';
+import '../models/workspace_accent.dart';
 import '../models/workspace_folder.dart';
 import '../models/app_session.dart';
 import '../models/workspace_icon_picker_result.dart';
@@ -619,6 +620,11 @@ class ChatCubit extends Cubit<ChatState>
     String? display,
     String? defaultProfileId,
     bool? rootSandboxEnvOptIn,
+    String? groupId,
+    WorkspaceAccentPreset? accent,
+    bool clearAccent = false,
+    String? defaultShell,
+    bool clearDefaultShell = false,
   }) async {
     _emitSnapshot(
       await _dataStore.updateWorkspaceMetadata(
@@ -627,6 +633,11 @@ class ChatCubit extends Cubit<ChatState>
         display: display,
         defaultProfileId: defaultProfileId,
         rootSandboxEnvOptIn: rootSandboxEnvOptIn,
+        groupId: groupId,
+        accent: accent,
+        clearAccent: clearAccent,
+        defaultShell: defaultShell,
+        clearDefaultShell: clearDefaultShell,
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 import '../../models/workspace_folder.dart';
 import '../../models/workspace.dart';
+import '../../models/workspace_accent.dart';
 import '../../models/app_session.dart';
 import '../../models/workspace_icon_ref.dart';
 import '../../models/cli_tool.dart';
@@ -221,12 +222,22 @@ class SessionDataStore {
     String? display,
     String? defaultProfileId,
     bool? rootSandboxEnvOptIn,
+    String? groupId,
+    WorkspaceAccentPreset? accent,
+    bool clearAccent = false,
+    String? defaultShell,
+    bool clearDefaultShell = false,
   }) async {
     await repo.updateWorkspaceMetadata(
       workspaceId,
       display: display,
       defaultProfileId: defaultProfileId,
       rootSandboxEnvOptIn: rootSandboxEnvOptIn,
+      groupId: groupId,
+      accent: accent,
+      clearAccent: clearAccent,
+      defaultShell: defaultShell,
+      clearDefaultShell: clearDefaultShell,
     );
     return loadWorkspaceData(repo);
   }

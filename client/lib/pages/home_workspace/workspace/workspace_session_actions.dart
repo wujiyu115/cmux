@@ -17,6 +17,7 @@ import '../../../l10n/l10n_extensions.dart';
 import '../../../models/landing_launch_context.dart';
 import '../../../models/simple_launch_identity.dart';
 import '../../../models/workspace.dart';
+import '../../../models/workspace_folder.dart';
 import '../../../models/app_session.dart';
 import '../../../models/session_continue_overrides.dart';
 import '../../../models/cli_tool.dart';
@@ -208,6 +209,32 @@ Future<void> showWorkspaceComposeLandingWithWorktree(
   );
 }
 
+/// Resolves the terminal spec for [workspace]'s configured default terminal.
+///
+/// [Workspace.defaultShell] encodes the choice: empty / null follows the
+/// work-plane default (`defaultSessionSpecFor`); a `local` / `ssh:*` / `wsl:*`
+/// value selects that folder target; any other value is a local shell
+/// executable path.
+WorkspaceTerminalSessionSpec workspaceDefaultTerminalSpec({
+  required Workspace workspace,
+  required String cwd,
+}) {
+  final defaultShell = workspace.defaultShell?.trim() ?? '';
+  if (defaultShell.isNotEmpty) {
+    if (defaultShell == WorkspaceFolder.localTargetId ||
+        defaultShell.startsWith('ssh:') ||
+        defaultShell.startsWith('wsl:')) {
+      return WorkspaceTerminalWorkspaceTargetSpec(defaultShell);
+    }
+    return WorkspaceTerminalLocalSpec(defaultShell);
+  }
+  return defaultSessionSpecFor(
+    cwd: cwd,
+    folders: workspace.folders,
+    fallbackLocalShell: HostInteractiveShell.defaultExecutable(),
+  );
+}
+
 /// Opens a new shell terminal for [workspace] using its default terminal.
 ///
 /// This is the "新建终端" action: clicking "new" launches a PTY tab directly
@@ -233,11 +260,7 @@ Future<void> openWorkspaceDefaultTerminal(
   if (cwd.isEmpty) cwd = workspace.firstFolderPath.trim();
   if (cwd.isEmpty) return;
 
-  final spec = defaultSessionSpecFor(
-    cwd: cwd,
-    folders: workspace.folders,
-    fallbackLocalShell: HostInteractiveShell.defaultExecutable(),
-  );
+  final spec = workspaceDefaultTerminalSpec(workspace: workspace, cwd: cwd);
 
   await launcher.openAndSelect(
     workspaceId: workspace.workspaceId,

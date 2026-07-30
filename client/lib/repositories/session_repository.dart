@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart' show listEquals;
 import 'package:uuid/uuid.dart';
 
 import '../models/workspace.dart';
+import '../models/workspace_accent.dart';
 import '../models/workspace_folder.dart';
 import '../models/app_session.dart';
 import '../models/session_continue_overrides.dart';
@@ -304,6 +305,11 @@ class SessionRepository {
     String? display,
     String? defaultProfileId,
     bool? rootSandboxEnvOptIn,
+    String? groupId,
+    WorkspaceAccentPreset? accent,
+    bool clearAccent = false,
+    String? defaultShell,
+    bool clearDefaultShell = false,
   }) async {
     final fs = await _fs();
     final existing = await _readManifest(fs, workspaceId);
@@ -316,6 +322,11 @@ class SessionRepository {
           : existing.defaultProfileId,
       folders: existing.folders,
       rootSandboxEnvOptIn: rootSandboxEnvOptIn ?? existing.rootSandboxEnvOptIn,
+      groupId: groupId ?? existing.groupId,
+      accent: accent,
+      clearAccent: clearAccent,
+      defaultShell: defaultShell,
+      clearDefaultShell: clearDefaultShell,
       updatedAt: now,
     );
     await _writeManifest(fs, updated);

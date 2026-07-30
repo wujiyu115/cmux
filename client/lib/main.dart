@@ -644,6 +644,7 @@ void main() async {
                   RepositoryProvider.value(value: shell.workbenchShellLauncher),
                   BlocProvider.value(value: shell.configCubit),
                   BlocProvider.value(value: shell.layoutCubit),
+                  BlocProvider.value(value: shell.workspaceGroupsCubit),
                   BlocProvider.value(value: shell.workspaceToolsCubit),
                   BlocProvider.value(value: shell.sessionPreferencesCubit),
                   BlocProvider.value(value: shell.extensionCubit),

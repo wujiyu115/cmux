@@ -25,6 +25,7 @@ import '../services/workbench/workbench_strip_navigator.dart';
 import '../services/editor/markdown_view_mode_store.dart';
 import '../cubits/config_cubit.dart';
 import '../cubits/layout_cubit.dart';
+import '../cubits/workspace_groups_cubit.dart';
 import '../cubits/workspace_tools_cubit.dart';
 import '../cubits/session_preferences_cubit.dart';
 import '../cubits/extension_cubit.dart';
@@ -130,6 +131,7 @@ class AppShell {
     required this.connectionModeService,
     required this.configCubit,
     required this.layoutCubit,
+    required this.workspaceGroupsCubit,
     required this.workspaceToolsCubit,
     required this.sessionPreferencesCubit,
     required this.extensionCubit,
@@ -181,6 +183,7 @@ class AppShell {
   final ConnectionModeService connectionModeService;
   final ConfigCubit configCubit;
   final LayoutCubit layoutCubit;
+  final WorkspaceGroupsCubit workspaceGroupsCubit;
   final WorkspaceToolsCubit workspaceToolsCubit;
   final SessionPreferencesCubit sessionPreferencesCubit;
   final ExtensionCubit extensionCubit;
@@ -401,6 +404,8 @@ Future<AppShell> buildAppShell({
       Future.wait([sessionRepo.loadWorkspacesIndex()]);
   final appUpdateCubit = AppUpdateCubit(settings: appSettings);
   final layoutCubit = LayoutCubit(repository: LayoutRepository(preferences));
+  final workspaceGroupsCubit = WorkspaceGroupsCubit();
+  unawaited(workspaceGroupsCubit.load());
   // User-imported terminal themes must be in memory before the first terminal
   // paints: `teampilotTerminalTheme` is synchronous and resolves imported ids
   // through this registry.
@@ -715,6 +720,7 @@ Future<AppShell> buildAppShell({
     connectionModeService: connectionModeService,
     configCubit: configCubit,
     layoutCubit: layoutCubit,
+    workspaceGroupsCubit: workspaceGroupsCubit,
     workspaceToolsCubit: workspaceToolsCubit,
     sessionPreferencesCubit: sessionPreferencesCubit,
     extensionCubit: extensionCubit,
