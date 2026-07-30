@@ -32,7 +32,7 @@ flutter run -d linux --dart-define=PERF_DRIVER=true
 dart run tool/run_live_workspace_open_perf.dart --no-launch --workspace <id>
 ```
 
-Writes `build/perf_live_workspace_open.json` by default and prints a summary. See [live-workspace-open-perf design](superpowers/specs/2026-07-18-live-workspace-open-perf-design.md).
+Writes `build/perf_live_workspace_open.json` by default and prints a summary.
 
 ### Automated capture (integration test)
 

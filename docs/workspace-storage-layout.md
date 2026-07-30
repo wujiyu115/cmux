@@ -1,6 +1,6 @@
 # Workspace storage layout
 
-Canonical on-disk layout under **`<teampilotRoot>`** (`AppPaths.basePath` / `AppStorage.appDataRoot`). Code: `WorkspaceLayout`, `RuntimeLayout`, `AppPaths`.
+Canonical on-disk layout under **`<teampilotRoot>`** (`AppPaths.basePath` / `AppStorage.appDataRoot`). Code: `WorkspaceLayout` (`client/lib/services/storage/workspace_layout.dart`) and `AppPaths` (`client/lib/services/storage/app_storage.dart`).
 
 Typical `<teampilotRoot>` paths:
 
@@ -15,178 +15,63 @@ Typical `<teampilotRoot>` paths:
 
 ```
 <teampilotRoot>/
-  cli-defaults/{tool}/           # app-level CLI runtime templates
-  identities-runtime/{profileId}/  # per **team** launch-identity inherited CLI trees
-    session-counter.json         # monotonic cliTeamName allocator
-    {tool}/
-    mcp/servers.json
-  launch-profiles/{id}/profile.json  # TeamProfile documents only
-  launch-profiles-index.json     # derived snapshot for fast startup
   workspace/
-    workspaces-index.json
-    workspaces/{workspaceId}/      # see below
-  providers/{tool}/providers.json  # per-CLI provider catalog
-  skills/installed/              # global skill library (git-dir or script acquire)
-  plugins/installed/             # global plugin library
-  mcp/mcp_servers.json           # global MCP catalog
-  extensions/state.json
-  automations/catalog.json       # global automation sidebar index
-  cli-presets.json
-  ssh_profiles/
-  targets.json                   # runtime targets registry (local / WSL / SSH)
-  team-hub/                      # Team Hub template registry + cache
-  member-hub/                    # Expert Hub catalog UX state + local templates
-  hub-publish/                   # Hub publish credentials metadata + PR badge records
-  worktrees/{repoName}/{branch}/ # app-managed git worktrees
-  ui/                            # home workspace UI prefs (tabs, favorites, …)
-  notifications.json
+    workspaces-index.json          # derived startup snapshot (manifest + session dir ids)
+    workspaces/{workspaceId}/       # see below
+  worktrees/{repoName}/{branch}/    # app-managed git worktrees
+  ssh_profiles/                     # saved SSH connection profiles
+  targets.json                      # runtime targets registry (local / WSL / SSH), default target
+  notifications.json                # notification center history
+  ui/                               # home workspace UI prefs
+    open-workspace-tabs.json
+    workspace-groups.json
+    workspace-favorites.json
+    worktree-ui-prefs.json
+    ...
 ```
 
 ## Workspace directory
 
-Each workspace is self-contained; deleting `workspace/workspaces/{workspaceId}/` removes manifest, bindings, sessions (metadata + bus + CLI runtime).
+Each workspace is self-contained; deleting `workspace/workspaces/{workspaceId}/` removes its manifest, assets, and sessions.
 
 ```
 workspace/workspaces/{workspaceId}/
-  manifest.json                  # Workspace (folders, defaultProfileId, session ids, …)
-  project-config.json            # workspace-scoped skill/plugin/mcp/extension bindings
-  assets/icon.*                  # custom workspace icon
-  config/                        # workspace-level CLI overrides (inherits app → identity)
-    mcp/servers.json
-    {tool}/plugins/
-  automations/
-    simple.json                  # Simple (unteamed) automation rules + run history
-    {teamProfileId}.json         # team-scoped automation rules + run history
+  manifest.json                    # Workspace (folders, session ids, icon ref, …)
+  assets/icon.*                    # custom workspace icon (optional)
   sessions/{sessionId}/
-    session.json
-    bus/mail/{memberId}.jsonl
-    bus/tasks/tasks.jsonl
-    runtime/{tool}/                # Simple / native single-agent CONFIG_DIR
-    runtime/{memberId}/{tool}/     # mixed-mode per-member CONFIG_DIR
-    runtime/_shared/{tool}/        # session-level shared CLI state (e.g. cursor warm tier)
+    session.json                   # AppSession
 ```
-
-## CLI config inheritance
-
-At launch, `RuntimeLayout` links each layer into the session runtime tree (PTY `CONFIG_DIR`):
-
-1. **App** — `cli-defaults/{tool}/`
-2. **Identity** — `identities-runtime/{profileId}/{tool}/` (**team** profiles only; Simple skips)
-3. **Workspace** — `workspace/workspaces/{workspaceId}/config/{tool}/`
-4. **Session** — `workspace/workspaces/{workspaceId}/sessions/{sessionId}/runtime/…`
-
-For `opencode`, `cli-defaults/opencode/{package.json,node_modules}` holds a shared `@opencode-ai/plugin` install (seeded on the home/control plane). Session `runtime/…/opencode/` inherits those two names (symlink preferred). Remote work machines receive the tree via `WorkMachineMaterializer`’s `cli-defaults` copy, then inherit in-root.
-
-Session skills/plugins/MCP ids merge as `team > expert > workspace` via `LayeredConfigBundle` / `SessionRuntimePlan` (see [2026-07-10 expert capability pack](superpowers/specs/2026-07-10-expert-capability-pack-design.md)).
-
-Persona prompt/playbook is **not** stored at layers 1–3; it is resolved from the expert catalog at connect and written into layer 4 via `MemberRoleProvision`.
-
-## Team Hub (`team-hub/`)
-
-Team **templates** — same roster shape as user teams (`roster[]` of expert keys, not embedded prompts).
-
-**Git registry (app repo):** public templates are fetched from
-`https://github.com/hhoao/teampilot` under the `team-hub/` subdirectory
-(`index.json` + `teams/<slug>/team.json`). Catalog keys:
-`hhoao/teampilot/team-hub/<slug>`.
-
-**Local app-data cache** (under `<teampilotRoot>`):
-
-```
-team-hub/cache/{owner}-{repo}/
-  teams.json                     # fetched index
-```
-
-## Expert Hub (`member-hub/`)
-
-Catalog UX and user-authored experts. Persona source-of-truth for shared experts. Spec: [Expert Hub design](superpowers/specs/2026-07-05-expert-hub-design.md).
-
-**Git registry (app repo):** public experts are fetched from the same
-`hhoao/teampilot` repo under `member-hub/` (`index.json` +
-`members/<slug>/member.json`). Catalog keys:
-`hhoao/teampilot/member-hub/<slug>`.
-
-**Local app-data** (under `<teampilotRoot>`):
-
-```
-member-hub/
-  favorites.json                 # { "keys": ["teampilot/builtin/developer", ...] }
-  recent.json                    # landing picker recents
-  local-templates/{id}.json      # DiscoverableMember (user-owned experts)
-  cache/{owner}-{repo}/
-    members.json                 # git registry cache
-```
-
-## Hub publish (`hub-publish/`)
-
-Local metadata for Hub upload badges (fork PR history). Spec: [My Teams / My Experts + Hub Publish](superpowers/specs/2026-07-09-my-teams-experts-and-hub-publish-design.md).
-
-```
-hub-publish/
-  records.json                   # HubPublishRecord[] keyed by kind+slug (+ localId)
-```
-
-## Launch profiles
-
-```
-launch-profiles/{profileId}/profile.json
-```
-
-`LaunchProfileRepository` is source of truth; `launch-profiles-index.json` is a derived startup snapshot.
-
-### Team profile (`TeamProfile`)
-
-Teams persist **references** to catalog experts:
-
-```json
-{
-  "kind": "team",
-  "id": "my-squad",
-  "name": "My Squad",
-  "teamMode": "native",
-  "cli": "claude",
-  "skillIds": ["..."],
-  "roster": [
-    {
-      "id": "team-lead",
-      "expertKey": "teampilot/builtin/lead",
-      "overrides": { "model": "opus" },
-      "joinedAt": 1710000000000
-    },
-    {
-      "id": "developer",
-      "expertKey": "hhoao/teampilot/member-hub/developer",
-      "joinedAt": 1710000001000
-    }
-  ]
-}
-```
-
-- `expertKey` is **required** on every slot.
-- `overrides` may set provider/model/cli/effort/replicas/capabilities — **not** prompt/playbook.
-- `TeamMemberConfig` exists only in memory after `materializeRosterSlot()` at connect.
-
-### Simple launch (unteamed)
-
-Simple mode is **not** a `PersonalProfile` / launch-identity document. Optional session-level `expertKey` selects a catalog expert capability pack; CLI preset is a dial only. Automations for Simple use fixed file `automations/simple.json`.
 
 ## Session (`session.json`)
 
-Simple launch with expert:
+An `AppSession` records the session's workspace, its folder(s), a display title, launch
+state, and a few denormalized launch-metadata fields (`cli`, `provider`, `model`,
+`effort`, `presetId`). Sessions are **plain interactive shells** — there is no per-member
+runtime tree, CLI `CONFIG_DIR` materialization, or message bus on disk.
 
 ```json
 {
+  "schemaVersion": 2,
   "sessionId": "...",
-  "sessionTeam": "",
-  "expertKey": "teampilot/builtin/developer"
+  "workspaceId": "...",
+  "folders": [{ "path": "/path/to/repo", "targetId": "local" }],
+  "display": "My session",
+  "cli": "claude",
+  "launchState": "started",
+  "createdAt": 1710000000000
 }
 ```
 
-No persisted overlay blob — persona + pack deps are live-resolved from catalog at connect (same as team roster slots).
+## Runtime targets (`targets.json`)
+
+The control-plane runtime targets registry holds the authoritative `defaultTargetId`,
+persisted SSH targets, and the chosen WSL distro. `RuntimeContextRegistry` resolves a
+`RuntimeContext` (filesystem + roots) per target: `local` (`LocalFilesystem`),
+`wsl` (`WslFilesystem`), or `ssh` (`SftpFilesystem`). Workspace folders carry a `targetId`
+that selects the machine a session's shell runs on.
 
 ## Related docs
 
-- [Expert capability pack design](superpowers/specs/2026-07-10-expert-capability-pack-design.md) — Simple = unteamed + expert pack; merge `team > expert > workspace`
-- [Expert Hub design spec](superpowers/specs/2026-07-05-expert-hub-design.md) — teams as expert collections
 - [AGENTS.md](../AGENTS.md) — architecture overview for AI assistants
 - [README.md](../README.md) — user-facing feature descriptions
+</content>

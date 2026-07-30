@@ -8,7 +8,7 @@ For contributors and maintainers. End-user overview: [README.md](../README.md). 
 |------|--------|
 | [Flutter](https://docs.flutter.dev/get-started/install) | **stable** channel; SDK `^3.8.1` in `client` |
 | Git submodules | Required on first clone for vendored `client/packages/` |
-| An agent CLI | At least one of `claude` / `codex` / `opencode` / `cursor` / `flashskyai` on **PATH** (or set in app settings) when exercising team terminals locally |
+| A shell / CLI (optional) | Any CLI you want to run inside a session terminal (e.g. `claude`, `codex`, `opencode`, `cursor`, `flashskyai`) on **PATH**; only needed when exercising terminal sessions locally |
 | Targets | **Linux / macOS / Windows / Android** (same as CI) |
 
 ## First clone
@@ -94,83 +94,24 @@ LD_LIBRARY_PATH=build/linux/x64/debug/bundle/lib flutter test --tags "integratio
 
 Declared in `client/dart_test.yaml`. Every integration test has the `integration` tag plus one or more secondary tags for CI filtering.
 
-| Secondary tag | Tests | Needs |
-|---------------|-------|--------|
-| `cross-platform` | L1 bus ping/pong | Nothing (HTTP loopback only) |
-| `linux-pty` | L2 CLI matrix + Claude mixed PTY; L3 also carries this tag | `flutter build linux`, `libflutter_pty_new.so` on loader path, matching CLIs on PATH |
-| `docker` | L3 mixed SSH worker; remote CLI install | Docker daemon (+ outbound network for install test) |
+| Secondary tag | Purpose | Needs |
+|---------------|---------|--------|
+| `cross-platform` | No PTY / Docker (HTTP loopback only) | Nothing |
+| `linux-pty` | Real local PTY — terminal delivery / fullscreen-input probes (`codex_deliver`, `opencode_deliver`, `cursor_agent_grid_probe`, `fullscreen_input_probe_pty`) | `flutter build linux`, `libflutter_pty_new.so` on the loader path, and (for the CLI probes) the matching CLI on PATH |
+| `docker` | Tests needing a Docker daemon (SSH transport) | Docker daemon (+ outbound network) |
 
 Examples:
 
 ```bash
 cd client
-flutter test --tags "integration && cross-platform"   # L1 only
-flutter test --tags "integration && linux-pty"        # L2 + L3 (CI)
-flutter test --tags "integration && docker"           # L3 + remote CLI install
+flutter test --tags "integration && cross-platform"
+flutter test --tags "integration && linux-pty"
+flutter test --tags "integration && docker"
 ```
 
-### Mock model gateway + CLI message matrix
-
-All mock model traffic for matrix / mixed-bus integration goes through
-`tools/mock_model_gateway` (Anthropic Messages, OpenAI Chat, Codex Responses).
-Package `dart test` covers L0 + L1 HTTP — no separate client L1 is required for
-the gateway itself.
-
-**L0 + L1 (gateway package, no vendor CLI):**
-
-```bash
-cd tools/mock_model_gateway && dart test
-```
-
-**L1 (client bus / cross-platform, no PTY):**
-
-```bash
-cd client && flutter test --tags "integration && cross-platform"
-```
-
-**L2 (CLI message matrix — real CLI + ChatCubit + PTY + gateway, Linux):**
-
-```bash
-cd client
-flutter build linux --debug
-LD_LIBRARY_PATH=build/linux/x64/debug/bundle/lib \
-  flutter test --tags "integration && linux-pty" \
-  test/integration/cli_message_matrix_*.dart
-```
-
-Also under `linux-pty`: legacy Claude mixed TeamBus L2
-(`mixed_team_claude_bus_integration_test.dart`). L2 cells need the matching CLI
-on PATH (`claude`, `flashskyai`, `codex`, `opencode`, …). TeamPilot pre-approves
-third-party provider API keys in `.claude.json` (`customApiKeyResponses`) so
-Claude Code skips the interactive "use this API key?" gate on first launch.
-
-**Cursor L2:** blocked — public `cursor-agent` has no loopback model redirect
-(auth is Cursor cloud only). Do not expect green Cursor matrix cells until a
-public redirect exists; spike notes live on `CliTestProfile` for `CliTool.cursor`.
-
-**Completion status (2026-07-22, `feat/mock-model-gateway-cli-matrix`):** see
-[MATRIX.md](MATRIX.md) — claude/flashskyai all green; codex/opencode
-simple+mixed green (native N/A); cursor simple+mixed BLOCKED.
-
-**L3 (local lead + Docker SSH worker, full ChatCubit + remote preflight):**
-
-```bash
-cd client
-flutter build linux --debug
-LD_LIBRARY_PATH=build/linux/x64/debug/bundle/lib \
-  flutter test test/integration/mixed_team_claude_docker_integration_test.dart --tags "integration && docker"
-```
-
-L3 uses `Dockerfile.mixed` (`teampilot-it-ssh-mixed:latest`) with Node + `claude` baked in. Most wall time is **cold start** (Docker + two Claude PTYs + remote preflight locate); once both members are idle, bus ping/pong should complete in **seconds** (`kickoffAndWaitForPingPong` allows 30s per attempt). Bare-image install coverage remains `remote_cli_install_docker_test.dart`.
-
-Remote CLI install over Docker SSH (needs Docker daemon + outbound network):
-
-```bash
-cd client
-flutter test test/integration/remote_cli_install_docker_test.dart --tags "integration && docker"
-```
-
-Skips automatically when Docker is unavailable. First run builds `teampilot-it-ssh:latest` from `test/integration/docker/Dockerfile` (Debian + OpenSSH + socat, no Node/npm preinstalled).
+The PTY probe tests boot a real shell over `LocalPtyTransport` and assert terminal
+input/output behavior (delivery, fullscreen-input reinjection). They need the matching
+CLI (`codex`, `opencode`, `cursor-agent`, …) on PATH; skip cleanly when it is absent.
 
 ### Test helpers (cubit / AppStorage)
 
@@ -197,7 +138,7 @@ flutter test --exclude-tags integration --coverage
 
 ## Code quality guidelines
 
-Layering, soft file-size limits, Extension rules, and pre-release checklists: **[CODE_QUALITY.md](CODE_QUALITY.md)**. Read before editing large pages (`team_config_page`, `llm_config_workspace`) or `app_shell.dart`.
+Layering, soft file-size limits, and pre-release checklists: **[CODE_QUALITY.md](CODE_QUALITY.md)**. Read before editing large pages or `app_shell.dart`.
 
 ## Packaging & releases
 
@@ -217,7 +158,7 @@ You can still run `git tag vX.Y.Z && git push origin vX.Y.Z` (a local push trigg
 Changes under `client/` trigger [Client Build Verify](../.github/workflows/client-verify.yml):
 
 - **Four platforms** (Linux, Windows, macOS, Android): `flutter analyze` and `flutter test --exclude-tags integration`.
-- **Linux integration** (`integration-linux` job): L2 + L3 via `flutter test --tags "integration && linux-pty"` after `flutter build linux --debug`, global `claude` CLI, and a cached `Dockerfile.mixed` image.
+- **Linux integration** (`integration-linux` job): PTY probes via `flutter test --tags "integration && linux-pty"` after `flutter build linux --debug`, with the required CLIs available on PATH.
 
 ### Local packaging examples
 
@@ -254,6 +195,5 @@ OS-specific tooling matches the CI workflows. See [`client/linux/packaging/READM
 | [AGENTS.md](../AGENTS.md) | AI guide: architecture, key paths, change conventions |
 | [CODE_QUALITY.md](CODE_QUALITY.md) | File size, tests, Extension, tech-debt norms |
 | [DEBUGGING.md](DEBUGGING.md) | Debugging process (search-first, root cause) |
-| [TEAM_BUS_MEMBER_STATE.md](TEAM_BUS_MEMBER_STATE.md) | Mixed-team bus presence & member state |
 | [CLAUDE.md](../CLAUDE.md) | Claude Code entry point (links to AGENTS.md) |
 | [Linux packaging](../client/linux/packaging/README.md) | fastforge / deb / AppImage |
