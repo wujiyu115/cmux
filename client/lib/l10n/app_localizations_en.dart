@@ -723,6 +723,48 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workspaceIcon => 'Icon';
 
   @override
+  String get workspaceNavUngrouped => 'Ungrouped';
+
+  @override
+  String get workspaceNavNewGroup => 'New group';
+
+  @override
+  String get workspaceNavGroupNameHint => 'Group name';
+
+  @override
+  String get workspaceGroupRename => 'Rename group';
+
+  @override
+  String get workspaceGroupDelete => 'Delete group';
+
+  @override
+  String get workspaceGroupAccentColor => 'Group color';
+
+  @override
+  String get workspaceMoveToGroup => 'Move to group';
+
+  @override
+  String get workspaceRemoveFromGroup => 'Remove from group';
+
+  @override
+  String get workspaceDefaultTerminal => 'Default terminal';
+
+  @override
+  String get workspaceDefaultTerminalGlobal => 'Global default';
+
+  @override
+  String get workspaceAccentColor => 'Accent color';
+
+  @override
+  String get workspaceAccentDefault => 'Default';
+
+  @override
+  String get workspaceMoveUp => 'Move up';
+
+  @override
+  String get workspaceMoveDown => 'Move down';
+
+  @override
   String get workspaceIconPickerTitle => 'Choose workspace icon';
 
   @override

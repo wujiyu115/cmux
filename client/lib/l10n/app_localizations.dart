@@ -1400,6 +1400,90 @@ abstract class AppLocalizations {
   /// **'Icon'**
   String get workspaceIcon;
 
+  /// No description provided for @workspaceNavUngrouped.
+  ///
+  /// In en, this message translates to:
+  /// **'Ungrouped'**
+  String get workspaceNavUngrouped;
+
+  /// No description provided for @workspaceNavNewGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'New group'**
+  String get workspaceNavNewGroup;
+
+  /// No description provided for @workspaceNavGroupNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Group name'**
+  String get workspaceNavGroupNameHint;
+
+  /// No description provided for @workspaceGroupRename.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename group'**
+  String get workspaceGroupRename;
+
+  /// No description provided for @workspaceGroupDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete group'**
+  String get workspaceGroupDelete;
+
+  /// No description provided for @workspaceGroupAccentColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Group color'**
+  String get workspaceGroupAccentColor;
+
+  /// No description provided for @workspaceMoveToGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to group'**
+  String get workspaceMoveToGroup;
+
+  /// No description provided for @workspaceRemoveFromGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from group'**
+  String get workspaceRemoveFromGroup;
+
+  /// No description provided for @workspaceDefaultTerminal.
+  ///
+  /// In en, this message translates to:
+  /// **'Default terminal'**
+  String get workspaceDefaultTerminal;
+
+  /// No description provided for @workspaceDefaultTerminalGlobal.
+  ///
+  /// In en, this message translates to:
+  /// **'Global default'**
+  String get workspaceDefaultTerminalGlobal;
+
+  /// No description provided for @workspaceAccentColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Accent color'**
+  String get workspaceAccentColor;
+
+  /// No description provided for @workspaceAccentDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get workspaceAccentDefault;
+
+  /// No description provided for @workspaceMoveUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Move up'**
+  String get workspaceMoveUp;
+
+  /// No description provided for @workspaceMoveDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Move down'**
+  String get workspaceMoveDown;
+
   /// No description provided for @workspaceIconPickerTitle.
   ///
   /// In en, this message translates to:

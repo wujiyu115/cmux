@@ -10,6 +10,19 @@ import '../terminal/workspace_shell_connector.dart';
 
 enum WorkspaceTerminalLaunchAction { openSession, newSshProfile, settings }
 
+/// One choice in a workspace "default terminal" picker: a label plus the
+/// encoded [Workspace.defaultShell] value it selects (`null` = global default).
+@immutable
+class WorkspaceDefaultTerminalOption {
+  const WorkspaceDefaultTerminalOption({required this.label, this.value});
+
+  final String label;
+
+  /// Encoded shell: a local executable path, or a `wsl:*` / `ssh:*` / `local`
+  /// target id. `null` means "follow the global default".
+  final String? value;
+}
+
 @immutable
 class WorkspaceTerminalLaunchMenuItem {
   const WorkspaceTerminalLaunchMenuItem.session({
@@ -45,6 +58,31 @@ class WorkspaceTerminalLaunchMenuItem {
 /// IDEA-style “+ ▾” menu: local shells, workspace targets, SSH profiles.
 abstract final class WorkspaceTerminalLaunchCatalog {
   WorkspaceTerminalLaunchCatalog._();
+
+  /// Candidates for a workspace "default terminal" setting (图 12c / 图 09):
+  /// a "global default" sentinel, every discovered local shell, and each WSL
+  /// distro. [globalDefaultLabel] localizes the sentinel row.
+  static Future<List<WorkspaceDefaultTerminalOption>> buildDefaultTerminalOptions({
+    required String globalDefaultLabel,
+  }) async {
+    final options = <WorkspaceDefaultTerminalOption>[
+      WorkspaceDefaultTerminalOption(label: globalDefaultLabel),
+    ];
+    for (final shell in HostInteractiveShell.discoverSpecs()) {
+      options.add(
+        WorkspaceDefaultTerminalOption(
+          label: shell.menuLabel,
+          value: shell.executable,
+        ),
+      );
+    }
+    for (final distro in await WslDistroLookup.list()) {
+      options.add(
+        WorkspaceDefaultTerminalOption(label: 'WSL · $distro', value: 'wsl:$distro'),
+      );
+    }
+    return options;
+  }
 
   static List<WorkspaceTerminalLaunchMenuItem> buildLocalShells() {
     final items = <WorkspaceTerminalLaunchMenuItem>[];

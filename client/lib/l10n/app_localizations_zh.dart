@@ -689,6 +689,48 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workspaceIcon => '图标';
 
   @override
+  String get workspaceNavUngrouped => '未分组';
+
+  @override
+  String get workspaceNavNewGroup => '新建分组';
+
+  @override
+  String get workspaceNavGroupNameHint => '分组名称';
+
+  @override
+  String get workspaceGroupRename => '重命名分组';
+
+  @override
+  String get workspaceGroupDelete => '删除分组';
+
+  @override
+  String get workspaceGroupAccentColor => '分组颜色';
+
+  @override
+  String get workspaceMoveToGroup => '移动到分组';
+
+  @override
+  String get workspaceRemoveFromGroup => '移出分组';
+
+  @override
+  String get workspaceDefaultTerminal => '默认终端';
+
+  @override
+  String get workspaceDefaultTerminalGlobal => '全局默认';
+
+  @override
+  String get workspaceAccentColor => '主题色';
+
+  @override
+  String get workspaceAccentDefault => '默认色';
+
+  @override
+  String get workspaceMoveUp => '上移';
+
+  @override
+  String get workspaceMoveDown => '下移';
+
+  @override
   String get workspaceIconPickerTitle => '选择工作区图标';
 
   @override
