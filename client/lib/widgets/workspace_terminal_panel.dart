@@ -579,10 +579,8 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
         _group.toggleZoom();
         if (mounted) setState(() {});
       },
-      onClosePane: _closeActivePane,
       onShowCommandLog: showCommandLog,
       isZoomed: surface.zoomedPaneId != null,
-      canClosePane: _group.canCloseActivePane,
     );
   }
 
