@@ -31,7 +31,7 @@ void main() {
         storageMode: StorageBackendMode.native,
       ),
     );
-    expect(runner.hookFileName('rtk-rewrite'), 'rtk-rewrite.ps1');
+    expect(runner.hookFileName('my-hook'), 'my-hook.ps1');
   });
 
   test('installerCommandForInline', () {
