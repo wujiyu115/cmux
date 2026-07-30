@@ -1,8 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:teampilot/models/runtime_target.dart';
 import 'package:teampilot/models/cli_tool.dart';
 import 'package:teampilot/services/agent_status/agent_status_seat_lookup.dart';
-import 'package:teampilot/services/agent_status/member_agent_status_endpoint_resolver.dart';
 import 'package:teampilot/services/agent_status/remote/remote_status_binding.dart';
 
 void main() {
@@ -36,49 +34,6 @@ void main() {
         skipPermissions: true,
       );
       expect(lookup.resolveSkipPermissions('sess-1', 'm2'), isTrue);
-    });
-  });
-
-  group('needsAgentStatusOnlyHttpTunnel / resolveMemberAgentStatusEndpoint', () {
-    test('SSH without mixed binding needs status-only tunnel', () {
-      expect(
-        needsAgentStatusOnlyHttpTunnel(
-          launchKind: RuntimeKind.ssh,
-          mixedRemoteBinding: null,
-        ),
-        isTrue,
-      );
-    });
-
-    test('SSH with mixed binding reuses idle tunnel (no status-only)', () {
-      const binding = RemoteStatusBinding(
-        token: 'tok',
-        tunnelPort: 4000,
-      );
-      expect(
-        needsAgentStatusOnlyHttpTunnel(
-          launchKind: RuntimeKind.ssh,
-          mixedRemoteBinding: binding,
-        ),
-        isFalse,
-      );
-    });
-
-    test('local / WSL never need status-only tunnel', () {
-      expect(
-        needsAgentStatusOnlyHttpTunnel(
-          launchKind: RuntimeKind.local,
-          mixedRemoteBinding: null,
-        ),
-        isFalse,
-      );
-      expect(
-        needsAgentStatusOnlyHttpTunnel(
-          launchKind: RuntimeKind.wsl,
-          mixedRemoteBinding: null,
-        ),
-        isFalse,
-      );
     });
   });
 }

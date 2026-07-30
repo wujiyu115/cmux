@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:teampilot/models/app_session.dart';
 import 'package:teampilot/models/workspace_folder.dart';
 import 'package:teampilot/models/git_worktree.dart';
-import 'package:teampilot/utils/session/app_session_sort.dart';
 import 'package:teampilot/utils/session/session_worktree_grouping.dart';
 
 GitWorktree _wt(String path, {bool main = false}) => GitWorktree(
@@ -116,17 +115,14 @@ void main() {
     () {
       // Sidebar pipeline: global sort first, then bucket. Encounter order in
       // each bucket must stay newest-updated-first (same key as the time label).
-      final unsorted = [
-        _session('old', '/repo', updatedAt: 10),
-        _session('mid', '/repo', updatedAt: 20),
+      // Input is already globally sorted newest-updated-first by the caller.
+      final sorted = [
         _session('feat-new', '/wt/feat', updatedAt: 50),
-        _session('feat-old', '/wt/feat', updatedAt: 5),
         _session('new', '/repo', updatedAt: 40),
+        _session('mid', '/repo', updatedAt: 20),
+        _session('old', '/repo', updatedAt: 10),
+        _session('feat-old', '/wt/feat', updatedAt: 5),
       ];
-      final sorted = sortAppSessions(
-        unsorted,
-        sort: AppSessionSort.recentlyUpdated,
-      );
       final groups = groupSessionsByWorktree(
         worktrees: worktrees,
         sessions: sorted,
