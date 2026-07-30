@@ -154,21 +154,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get markdownOpenModeRemember => '记住上次';
 
   @override
-  String get thinkingProcessSectionTitle => '思考过程';
-
-  @override
-  String get cotExpandReasoningOnOpenTitle => '打开时展开推理';
-
-  @override
-  String get cotExpandReasoningOnOpenDescription => '展开「思考过程」时，自动展开内部推理步骤。';
-
-  @override
-  String get cotExpandToolsOnOpenTitle => '打开时展开工具';
-
-  @override
-  String get cotExpandToolsOnOpenDescription => '展开「思考过程」时，自动展开内部工具调用详情。';
-
-  @override
   String get markdownViewToggleSource => '源码';
 
   @override
@@ -1389,25 +1374,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get visibilityBoardHint => '显示混合模式团队的任务看板。';
 
   @override
-  String get autoLaunchAllMembersTitle => '连接时启动全部成员';
-
-  @override
-  String get autoLaunchAllMembersDescription =>
-      '开启后，点击连接或重启会为每个有效成员启动终端；关闭则仅启动当前选中的成员。';
-
-  @override
   String get openExistingSessionStartsTerminalTitle => '打开已有会话时直接启动终端';
 
   @override
   String get openExistingSessionStartsTerminalDescription =>
       '开启后，从侧边栏打开对话会立即连接终端。关闭（默认）时先显示聊天视图，发送消息后才启动终端。';
-
-  @override
-  String get chatSubmitSwitchesToTerminalTitle => '发送后切换到终端';
-
-  @override
-  String get chatSubmitSwitchesToTerminalDescription =>
-      '关闭（默认）时，在聊天页发送（新建或继续）后仍留在聊天视图，终端在后台运行。开启后，发送后切换到终端。';
 
   @override
   String get simpleModeDefaultFullAccessTitle => '简单模式默认：完全访问';

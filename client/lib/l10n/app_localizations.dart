@@ -386,36 +386,6 @@ abstract class AppLocalizations {
   /// **'Remember last'**
   String get markdownOpenModeRemember;
 
-  /// No description provided for @thinkingProcessSectionTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Thinking process'**
-  String get thinkingProcessSectionTitle;
-
-  /// No description provided for @cotExpandReasoningOnOpenTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Expand reasoning when opening'**
-  String get cotExpandReasoningOnOpenTitle;
-
-  /// No description provided for @cotExpandReasoningOnOpenDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'When you open a thinking-process block, expand nested reasoning steps automatically.'**
-  String get cotExpandReasoningOnOpenDescription;
-
-  /// No description provided for @cotExpandToolsOnOpenTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Expand tools when opening'**
-  String get cotExpandToolsOnOpenTitle;
-
-  /// No description provided for @cotExpandToolsOnOpenDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'When you open a thinking-process block, expand nested tool call details automatically.'**
-  String get cotExpandToolsOnOpenDescription;
-
   /// No description provided for @markdownViewToggleSource.
   ///
   /// In en, this message translates to:
@@ -2744,18 +2714,6 @@ abstract class AppLocalizations {
   /// **'Show the task board for mixed-mode teams.'**
   String get visibilityBoardHint;
 
-  /// No description provided for @autoLaunchAllMembersTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Start all members on connect'**
-  String get autoLaunchAllMembersTitle;
-
-  /// No description provided for @autoLaunchAllMembersDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'When enabled, Connect and Restart launch every valid member shell; otherwise only the selected member starts.'**
-  String get autoLaunchAllMembersDescription;
-
   /// No description provided for @openExistingSessionStartsTerminalTitle.
   ///
   /// In en, this message translates to:
@@ -2767,18 +2725,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'When enabled, opening a conversation from the sidebar connects the terminal immediately. When off (default), open the Chat view first; send from Chat to start the terminal.'**
   String get openExistingSessionStartsTerminalDescription;
-
-  /// No description provided for @chatSubmitSwitchesToTerminalTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Switch to Terminal after Chat send'**
-  String get chatSubmitSwitchesToTerminalTitle;
-
-  /// No description provided for @chatSubmitSwitchesToTerminalDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'When off (default), sending from Chat (new conversation or continue) stays on the Chat view while the terminal runs in the background. When on, switch to the Terminal after send.'**
-  String get chatSubmitSwitchesToTerminalDescription;
 
   /// No description provided for @simpleModeDefaultFullAccessTitle.
   ///

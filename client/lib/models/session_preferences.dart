@@ -4,12 +4,10 @@ class SessionPreferences {
     Map<String, String> toolchainPaths = const {},
     this.defaultSshWorkingDirectory = '',
     this.sshUseLoginShell = false,
-    this.autoLaunchAllMembersOnConnect = true,
     this.terminalScrollbackLines = 10000,
     this.terminalLinkClickOpensInApp = true,
     this.notifyOnSessionIdle = true,
     this.openExistingSessionStartsTerminal = false,
-    this.chatSubmitSwitchesToTerminal = false,
     this.simpleModeDefaultFullAccess = true,
   }) : cliExecutablePaths = Map.unmodifiable(
          _normalizeCliExecutablePaths(cliExecutablePaths),
@@ -31,8 +29,6 @@ class SessionPreferences {
       defaultSshWorkingDirectory:
           json['defaultSshWorkingDirectory'] as String? ?? '',
       sshUseLoginShell: json['sshUseLoginShell'] as bool? ?? false,
-      autoLaunchAllMembersOnConnect:
-          json['autoLaunchAllMembersOnConnect'] as bool? ?? true,
       terminalScrollbackLines:
           (json['terminalScrollbackLines'] as num?)?.toInt() ?? 10000,
       terminalLinkClickOpensInApp:
@@ -40,8 +36,6 @@ class SessionPreferences {
       notifyOnSessionIdle: json['notifyOnSessionIdle'] as bool? ?? true,
       openExistingSessionStartsTerminal:
           json['openExistingSessionStartsTerminal'] as bool? ?? false,
-      chatSubmitSwitchesToTerminal:
-          json['chatSubmitSwitchesToTerminal'] as bool? ?? false,
       simpleModeDefaultFullAccess:
           json['simpleModeDefaultFullAccess'] as bool? ?? true,
     );
@@ -64,13 +58,6 @@ class SessionPreferences {
   /// files can populate PATH and related environment.
   final bool sshUseLoginShell;
 
-  /// When true, connecting or restarting the shell session starts every valid
-  /// team member instead of only the selected one.
-  final bool autoLaunchAllMembersOnConnect;
-
-  /// When true, the sidebar lists only sessions whose [AppSession.sessionTeam]
-  /// matches the selected team id.
-
   /// Maximum scrollback lines retained per embedded terminal session.
   final int terminalScrollbackLines;
 
@@ -88,11 +75,6 @@ class SessionPreferences {
   /// in history-review mode until the user submits from slim compose.
   final bool openExistingSessionStartsTerminal;
 
-  /// When true, submitting from Chat switches to the terminal view.
-  /// When false (default), stay on Chat while the terminal runs in the
-  /// background.
-  final bool chatSubmitSwitchesToTerminal;
-
   /// When true (default), Simple-mode compose landing starts with full access
   /// unless a workspace has already persisted a different chip choice.
   final bool simpleModeDefaultFullAccess;
@@ -105,12 +87,10 @@ class SessionPreferences {
     Map<String, String>? toolchainPaths,
     String? defaultSshWorkingDirectory,
     bool? sshUseLoginShell,
-    bool? autoLaunchAllMembersOnConnect,
     int? terminalScrollbackLines,
     bool? terminalLinkClickOpensInApp,
     bool? notifyOnSessionIdle,
     bool? openExistingSessionStartsTerminal,
-    bool? chatSubmitSwitchesToTerminal,
     bool? simpleModeDefaultFullAccess,
   }) {
     return SessionPreferences(
@@ -119,8 +99,6 @@ class SessionPreferences {
       defaultSshWorkingDirectory:
           defaultSshWorkingDirectory ?? this.defaultSshWorkingDirectory,
       sshUseLoginShell: sshUseLoginShell ?? this.sshUseLoginShell,
-      autoLaunchAllMembersOnConnect:
-          autoLaunchAllMembersOnConnect ?? this.autoLaunchAllMembersOnConnect,
       terminalScrollbackLines:
           terminalScrollbackLines ?? this.terminalScrollbackLines,
       terminalLinkClickOpensInApp:
@@ -129,8 +107,6 @@ class SessionPreferences {
       openExistingSessionStartsTerminal:
           openExistingSessionStartsTerminal ??
           this.openExistingSessionStartsTerminal,
-      chatSubmitSwitchesToTerminal:
-          chatSubmitSwitchesToTerminal ?? this.chatSubmitSwitchesToTerminal,
       simpleModeDefaultFullAccess:
           simpleModeDefaultFullAccess ?? this.simpleModeDefaultFullAccess,
     );
@@ -142,12 +118,10 @@ class SessionPreferences {
       'toolchainPaths': toolchainPaths,
       'defaultSshWorkingDirectory': defaultSshWorkingDirectory,
       'sshUseLoginShell': sshUseLoginShell,
-      'autoLaunchAllMembersOnConnect': autoLaunchAllMembersOnConnect,
       'terminalScrollbackLines': terminalScrollbackLines,
       'terminalLinkClickOpensInApp': terminalLinkClickOpensInApp,
       'notifyOnSessionIdle': notifyOnSessionIdle,
       'openExistingSessionStartsTerminal': openExistingSessionStartsTerminal,
-      'chatSubmitSwitchesToTerminal': chatSubmitSwitchesToTerminal,
       'simpleModeDefaultFullAccess': simpleModeDefaultFullAccess,
     };
   }

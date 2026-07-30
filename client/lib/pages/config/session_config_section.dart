@@ -239,17 +239,6 @@ class _SessionControlsState extends State<_SessionControls> {
                   showDividerBelow: true,
                 ),
                 TpPreferenceRow(
-                  title: l10n.autoLaunchAllMembersTitle,
-                  subtitle: l10n.autoLaunchAllMembersDescription,
-                  trailing: Switch(
-                    key: AppKeys.autoLaunchAllMembersOnConnectSwitch,
-                    value: snapshot.autoLaunchAllMembersOnConnect,
-                    onChanged: (value) =>
-                        cubit.setAutoLaunchAllMembersOnConnect(value),
-                  ),
-                  showDividerBelow: true,
-                ),
-                TpPreferenceRow(
                   title: l10n.openExistingSessionStartsTerminalTitle,
                   subtitle: l10n.openExistingSessionStartsTerminalDescription,
                   trailing: Switch(
@@ -257,17 +246,6 @@ class _SessionControlsState extends State<_SessionControls> {
                     value: snapshot.openExistingSessionStartsTerminal,
                     onChanged: (value) =>
                         cubit.setOpenExistingSessionStartsTerminal(value),
-                  ),
-                  showDividerBelow: true,
-                ),
-                TpPreferenceRow(
-                  title: l10n.chatSubmitSwitchesToTerminalTitle,
-                  subtitle: l10n.chatSubmitSwitchesToTerminalDescription,
-                  trailing: Switch(
-                    key: AppKeys.chatSubmitSwitchesToTerminalSwitch,
-                    value: snapshot.chatSubmitSwitchesToTerminal,
-                    onChanged: (value) =>
-                        cubit.setChatSubmitSwitchesToTerminal(value),
                   ),
                   showDividerBelow: true,
                 ),
@@ -306,9 +284,7 @@ class _SessionControlsSnapshot {
     required this.sshUseLoginShell,
     required this.terminalScrollbackLines,
     required this.terminalLinkClickOpensInApp,
-    required this.autoLaunchAllMembersOnConnect,
     required this.openExistingSessionStartsTerminal,
-    required this.chatSubmitSwitchesToTerminal,
     required this.simpleModeDefaultFullAccess,
     required this.notifyOnSessionIdle,
   });
@@ -317,9 +293,7 @@ class _SessionControlsSnapshot {
   final bool sshUseLoginShell;
   final int terminalScrollbackLines;
   final bool terminalLinkClickOpensInApp;
-  final bool autoLaunchAllMembersOnConnect;
   final bool openExistingSessionStartsTerminal;
-  final bool chatSubmitSwitchesToTerminal;
   final bool simpleModeDefaultFullAccess;
   final bool notifyOnSessionIdle;
 
@@ -329,10 +303,8 @@ class _SessionControlsSnapshot {
       sshUseLoginShell: preferences.sshUseLoginShell,
       terminalScrollbackLines: preferences.terminalScrollbackLines,
       terminalLinkClickOpensInApp: preferences.terminalLinkClickOpensInApp,
-      autoLaunchAllMembersOnConnect: preferences.autoLaunchAllMembersOnConnect,
       openExistingSessionStartsTerminal:
           preferences.openExistingSessionStartsTerminal,
-      chatSubmitSwitchesToTerminal: preferences.chatSubmitSwitchesToTerminal,
       simpleModeDefaultFullAccess: preferences.simpleModeDefaultFullAccess,
       notifyOnSessionIdle: preferences.notifyOnSessionIdle,
     );
@@ -345,10 +317,8 @@ class _SessionControlsSnapshot {
         other.sshUseLoginShell == sshUseLoginShell &&
         other.terminalScrollbackLines == terminalScrollbackLines &&
         other.terminalLinkClickOpensInApp == terminalLinkClickOpensInApp &&
-        other.autoLaunchAllMembersOnConnect == autoLaunchAllMembersOnConnect &&
         other.openExistingSessionStartsTerminal ==
             openExistingSessionStartsTerminal &&
-        other.chatSubmitSwitchesToTerminal == chatSubmitSwitchesToTerminal &&
         other.simpleModeDefaultFullAccess == simpleModeDefaultFullAccess &&
         other.notifyOnSessionIdle == notifyOnSessionIdle;
   }
@@ -359,9 +329,7 @@ class _SessionControlsSnapshot {
     sshUseLoginShell,
     terminalScrollbackLines,
     terminalLinkClickOpensInApp,
-    autoLaunchAllMembersOnConnect,
     openExistingSessionStartsTerminal,
-    chatSubmitSwitchesToTerminal,
     simpleModeDefaultFullAccess,
     notifyOnSessionIdle,
   );

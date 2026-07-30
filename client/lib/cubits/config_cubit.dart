@@ -22,11 +22,9 @@ extension ConfigSectionRoute on ConfigSection {
 class ConfigState extends Equatable {
   const ConfigState({
     this.section = ConfigSection.layout,
-    this.selectedMemberId = '',
   });
 
   final ConfigSection section;
-  final String selectedMemberId;
 
   String get title => switch (section) {
     ConfigSection.layout => 'Layout Configuration',
@@ -48,15 +46,14 @@ class ConfigState extends Equatable {
     ConfigSection.logs => 'Config / Logs',
   };
 
-  ConfigState copyWith({ConfigSection? section, String? selectedMemberId}) {
+  ConfigState copyWith({ConfigSection? section}) {
     return ConfigState(
       section: section ?? this.section,
-      selectedMemberId: selectedMemberId ?? this.selectedMemberId,
     );
   }
 
   @override
-  List<Object?> get props => [section, selectedMemberId];
+  List<Object?> get props => [section];
 }
 
 class ConfigCubit extends Cubit<ConfigState> {
@@ -65,11 +62,5 @@ class ConfigCubit extends Cubit<ConfigState> {
   void selectSection(ConfigSection section) {
     if (state.section == section) return;
     emit(state.copyWith(section: section));
-  }
-
-
-  void selectMember(String memberId) {
-    if (state.selectedMemberId == memberId) return;
-    emit(state.copyWith(selectedMemberId: memberId));
   }
 }

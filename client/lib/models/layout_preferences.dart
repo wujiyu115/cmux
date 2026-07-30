@@ -66,8 +66,6 @@ class LayoutPreferences {
     this.workspaceTerminalVisible = false,
     this.workspaceTerminalHeight = defaultWorkspaceTerminalHeight,
     this.markdownOpenMode = MarkdownOpenMode.preview,
-    this.cotExpandReasoningOnOpen = false,
-    this.cotExpandToolsOnOpen = false,
   });
 
   factory LayoutPreferences.fromJson(Map<String, Object?> json) {
@@ -138,9 +136,6 @@ class LayoutPreferences {
       markdownOpenMode:
           _enumValue(MarkdownOpenMode.values, json['markdownOpenMode']) ??
           MarkdownOpenMode.preview,
-      cotExpandReasoningOnOpen:
-          json['cotExpandReasoningOnOpen'] as bool? ?? false,
-      cotExpandToolsOnOpen: json['cotExpandToolsOnOpen'] as bool? ?? false,
     ).withAtLeastOneToolVisible();
   }
 
@@ -207,8 +202,6 @@ class LayoutPreferences {
   final bool workspaceTerminalVisible;
   final double workspaceTerminalHeight;
   final MarkdownOpenMode markdownOpenMode;
-  final bool cotExpandReasoningOnOpen;
-  final bool cotExpandToolsOnOpen;
 
   LayoutPreferences copyWith({
     LayoutPreset? preset,
@@ -238,8 +231,6 @@ class LayoutPreferences {
     bool? workspaceTerminalVisible,
     double? workspaceTerminalHeight,
     MarkdownOpenMode? markdownOpenMode,
-    bool? cotExpandReasoningOnOpen,
-    bool? cotExpandToolsOnOpen,
   }) {
     return LayoutPreferences(
       preset: preset ?? this.preset,
@@ -302,9 +293,6 @@ class LayoutPreferences {
             double.infinity,
           ),
       markdownOpenMode: markdownOpenMode ?? this.markdownOpenMode,
-      cotExpandReasoningOnOpen:
-          cotExpandReasoningOnOpen ?? this.cotExpandReasoningOnOpen,
-      cotExpandToolsOnOpen: cotExpandToolsOnOpen ?? this.cotExpandToolsOnOpen,
     ).withAtLeastOneToolVisible();
   }
 
@@ -338,8 +326,6 @@ class LayoutPreferences {
       workspaceTerminalVisible: workspaceTerminalVisible,
       workspaceTerminalHeight: workspaceTerminalHeight,
       markdownOpenMode: markdownOpenMode,
-      cotExpandReasoningOnOpen: cotExpandReasoningOnOpen,
-      cotExpandToolsOnOpen: cotExpandToolsOnOpen,
     );
   }
 
@@ -372,8 +358,6 @@ class LayoutPreferences {
       'workspaceTerminalVisible': workspaceTerminalVisible,
       'workspaceTerminalHeight': workspaceTerminalHeight,
       'markdownOpenMode': markdownOpenMode.name,
-      'cotExpandReasoningOnOpen': cotExpandReasoningOnOpen,
-      'cotExpandToolsOnOpen': cotExpandToolsOnOpen,
     };
   }
 }

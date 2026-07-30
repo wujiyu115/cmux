@@ -181,12 +181,6 @@ class SessionPreferencesCubit extends Cubit<SessionPreferencesState> {
     return _save(state.preferences.copyWith(sshUseLoginShell: value));
   }
 
-  Future<void> setAutoLaunchAllMembersOnConnect(bool value) {
-    return _save(
-      state.preferences.copyWith(autoLaunchAllMembersOnConnect: value),
-    );
-  }
-
   Future<void> setTerminalScrollbackLines(int value) {
     final clamped = value.clamp(1000, 200000);
     return _save(state.preferences.copyWith(terminalScrollbackLines: clamped));
@@ -205,12 +199,6 @@ class SessionPreferencesCubit extends Cubit<SessionPreferencesState> {
   Future<void> setOpenExistingSessionStartsTerminal(bool value) {
     return _save(
       state.preferences.copyWith(openExistingSessionStartsTerminal: value),
-    );
-  }
-
-  Future<void> setChatSubmitSwitchesToTerminal(bool value) {
-    return _save(
-      state.preferences.copyWith(chatSubmitSwitchesToTerminal: value),
     );
   }
 

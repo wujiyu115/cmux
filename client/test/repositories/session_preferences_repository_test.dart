@@ -17,7 +17,6 @@ void main() {
     final loaded = await repo.load();
 
     expect(loaded.cliExecutablePathFor('flashskyai'), '');
-    expect(loaded.autoLaunchAllMembersOnConnect, true);
   });
 
   test('round-trips through SharedPreferences', () async {
@@ -27,7 +26,6 @@ void main() {
     await repo.save(
       SessionPreferences(
         cliExecutablePaths: const {'flashskyai': '/usr/local/bin/flashskyai'},
-        autoLaunchAllMembersOnConnect: true,
       ),
     );
 
@@ -37,7 +35,6 @@ void main() {
       loaded.cliExecutablePathFor('flashskyai'),
       '/usr/local/bin/flashskyai',
     );
-    expect(loaded.autoLaunchAllMembersOnConnect, true);
   });
 
   test('falls back to defaults on malformed JSON', () async {
@@ -50,7 +47,6 @@ void main() {
     final loaded = await repo.load();
 
     expect(loaded.cliExecutablePathFor('flashskyai'), '');
-    expect(loaded.autoLaunchAllMembersOnConnect, true);
   });
 
   test('stores JSON under the documented key', () async {

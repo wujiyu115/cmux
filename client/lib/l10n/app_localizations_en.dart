@@ -166,23 +166,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get markdownOpenModeRemember => 'Remember last';
 
   @override
-  String get thinkingProcessSectionTitle => 'Thinking process';
-
-  @override
-  String get cotExpandReasoningOnOpenTitle => 'Expand reasoning when opening';
-
-  @override
-  String get cotExpandReasoningOnOpenDescription =>
-      'When you open a thinking-process block, expand nested reasoning steps automatically.';
-
-  @override
-  String get cotExpandToolsOnOpenTitle => 'Expand tools when opening';
-
-  @override
-  String get cotExpandToolsOnOpenDescription =>
-      'When you open a thinking-process block, expand nested tool call details automatically.';
-
-  @override
   String get markdownViewToggleSource => 'Source';
 
   @override
@@ -1446,27 +1429,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get visibilityBoardHint => 'Show the task board for mixed-mode teams.';
 
   @override
-  String get autoLaunchAllMembersTitle => 'Start all members on connect';
-
-  @override
-  String get autoLaunchAllMembersDescription =>
-      'When enabled, Connect and Restart launch every valid member shell; otherwise only the selected member starts.';
-
-  @override
   String get openExistingSessionStartsTerminalTitle =>
       'Open existing sessions in terminal';
 
   @override
   String get openExistingSessionStartsTerminalDescription =>
       'When enabled, opening a conversation from the sidebar connects the terminal immediately. When off (default), open the Chat view first; send from Chat to start the terminal.';
-
-  @override
-  String get chatSubmitSwitchesToTerminalTitle =>
-      'Switch to Terminal after Chat send';
-
-  @override
-  String get chatSubmitSwitchesToTerminalDescription =>
-      'When off (default), sending from Chat (new conversation or continue) stays on the Chat view while the terminal runs in the background. When on, switch to the Terminal after send.';
 
   @override
   String get simpleModeDefaultFullAccessTitle =>

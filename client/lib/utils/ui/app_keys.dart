@@ -37,14 +37,8 @@ class AppKeys {
     'context-sidebar-visibility-switch',
   );
   static const fileTreeVisibilitySwitch = Key('file-tree-visibility-switch');
-  static const autoLaunchAllMembersOnConnectSwitch = Key(
-    'auto-launch-all-members-on-connect-switch',
-  );
   static const openExistingSessionStartsTerminalSwitch = Key(
     'open-existing-session-starts-terminal-switch',
-  );
-  static const chatSubmitSwitchesToTerminalSwitch = Key(
-    'chat-submit-switches-to-terminal-switch',
   );
   static const simpleModeDefaultFullAccessSwitch = Key(
     'simple-mode-default-full-access-switch',

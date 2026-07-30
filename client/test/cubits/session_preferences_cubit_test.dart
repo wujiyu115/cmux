@@ -91,23 +91,6 @@ void main() {
     },
   );
 
-  test('setAutoLaunchAllMembersOnConnect persists the flag', () async {
-    final cubit = await makeCubit();
-    await cubit.load();
-    await cubit.setAutoLaunchAllMembersOnConnect(true);
-
-    expect(cubit.state.preferences.autoLaunchAllMembersOnConnect, true);
-  });
-
-  test('setScopeSessionsToSelectedTeam persists the flag', () async {
-    final cubit = await makeCubit();
-    await cubit.load();
-
-
-    final cubit2 = await makeCubit();
-    await cubit2.load();
-  });
-
   test(
     'terminalLinkClickOpensInApp defaults to true and persists toggle',
     () async {

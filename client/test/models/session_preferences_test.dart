@@ -8,7 +8,6 @@ void main() {
       expect(prefs.cliExecutablePathFor('flashskyai'), '');
       expect(prefs.defaultSshWorkingDirectory, '');
       expect(prefs.sshUseLoginShell, false);
-      expect(prefs.autoLaunchAllMembersOnConnect, true);
       expect(prefs.notifyOnSessionIdle, true);
       expect(prefs.openExistingSessionStartsTerminal, false);
       expect(prefs.simpleModeDefaultFullAccess, true);
@@ -23,7 +22,6 @@ void main() {
         },
         defaultSshWorkingDirectory: '~/work',
         sshUseLoginShell: true,
-        autoLaunchAllMembersOnConnect: true,
         notifyOnSessionIdle: false,
         openExistingSessionStartsTerminal: true,
         simpleModeDefaultFullAccess: false,
@@ -36,7 +34,6 @@ void main() {
       });
       expect(restored.defaultSshWorkingDirectory, '~/work');
       expect(restored.sshUseLoginShell, true);
-      expect(restored.autoLaunchAllMembersOnConnect, true);
       expect(restored.notifyOnSessionIdle, false);
       expect(restored.openExistingSessionStartsTerminal, true);
       expect(restored.simpleModeDefaultFullAccess, false);
@@ -53,7 +50,6 @@ void main() {
       expect(restored.cliExecutablePaths, isEmpty);
       expect(restored.defaultSshWorkingDirectory, '');
       expect(restored.sshUseLoginShell, false);
-      expect(restored.autoLaunchAllMembersOnConnect, true);
       expect(restored.openExistingSessionStartsTerminal, false);
       expect(restored.simpleModeDefaultFullAccess, true);
     });
@@ -69,13 +65,8 @@ void main() {
       expect(next.cliExecutablePaths, {'flashskyai': '/a/b', 'claude': '/c/d'});
       expect(next.defaultSshWorkingDirectory, '');
       expect(next.sshUseLoginShell, false);
-      expect(next.autoLaunchAllMembersOnConnect, true);
       expect(next.openExistingSessionStartsTerminal, true);
       expect(next.simpleModeDefaultFullAccess, false);
-    });
-
-    test('chatSubmitSwitchesToTerminal defaults false', () {
-      expect(SessionPreferences().chatSubmitSwitchesToTerminal, isFalse);
     });
 
     test('simpleModeDefaultFullAccess defaults true', () {
@@ -91,19 +82,6 @@ void main() {
     test('fromJson defaults simpleModeDefaultFullAccess when key missing', () {
       final restored = SessionPreferences.fromJson(const <String, Object?>{});
       expect(restored.simpleModeDefaultFullAccess, isTrue);
-    });
-
-    test('chatSubmitSwitchesToTerminal JSON round-trip', () {
-      final prefs = SessionPreferences(chatSubmitSwitchesToTerminal: true);
-      final again = SessionPreferences.fromJson(prefs.toJson());
-      expect(again.chatSubmitSwitchesToTerminal, isTrue);
-    });
-
-    test('absent chatSubmitSwitchesToTerminal key defaults false', () {
-      expect(
-        SessionPreferences.fromJson(const {}).chatSubmitSwitchesToTerminal,
-        isFalse,
-      );
     });
 
     test('fromJson ignores non-string cli executable path entries', () {
