@@ -22,6 +22,7 @@ import '../../services/workbench/workbench_shell_actions.dart';
 import '../../services/workbench/workbench_shell_launcher.dart';
 import '../../services/workbench/workbench_tab_projection.dart';
 import '../../services/workspace/workspace_tools_scope.dart';
+import '../../theme/workspace_accent_palette.dart';
 import '../../cubits/workspace_landing_context_cubit.dart';
 import '../../widgets/workbench/workbench_session_sync.dart';
 import '../../widgets/workbench/workbench_shell_run_sync.dart';
@@ -260,7 +261,10 @@ class _ChatWorkspaceShell extends StatelessWidget {
                   shellTitles: shellTitles,
                   runTitles: runTitles,
                   runWorking: runWorking,
-                  sessionAccent: Theme.of(context).colorScheme.primary,
+                  sessionAccent: workspaceAccentColor(
+                    context,
+                    workspace.accent,
+                  ),
                 );
                 final activeTabIndex = activeId == null
                     ? -1
