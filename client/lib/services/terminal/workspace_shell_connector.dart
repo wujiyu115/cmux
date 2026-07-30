@@ -32,16 +32,6 @@ class WorkspaceShellConnector {
 
   static final _remoteShell = HostInteractiveShell.remotePosixExecutable;
 
-  /// WSL runs a POSIX login shell *inside* the distro — never the Windows
-  /// COMSPEC that [HostInteractiveShell.defaultSpec] would return on Windows.
-  static final _wslShellSpec = HostInteractiveShellSpec(
-    executable: HostInteractiveShell.remotePosixExecutable,
-    kind: HostInteractiveShellKind.bash,
-    launchArguments: HostInteractiveShell.launchArgumentsFor(
-      HostInteractiveShellKind.bash,
-    ),
-  );
-
   RuntimeTarget runtimeTargetFor(WorkspaceTerminalSessionSpec spec) =>
       switch (spec) {
         WorkspaceTerminalLocalSpec() => RuntimeTarget.local(),
@@ -75,7 +65,6 @@ class WorkspaceShellConnector {
       RuntimeKind.ssh => _sshLaunchPlan(workingDirectory: workingDirectory),
       RuntimeKind.wsl => _wslLaunchPlan(
         distro: target.wslDistro ?? '',
-        shell: _wslShellSpec,
         workingDirectory: workingDirectory,
         runtimeTarget: target,
       ),
@@ -205,7 +194,6 @@ class WorkspaceShellConnector {
 
   WorkspaceShellLaunchPlan _wslLaunchPlan({
     required String distro,
-    required HostInteractiveShellSpec shell,
     required String workingDirectory,
     required RuntimeTarget runtimeTarget,
   }) {
@@ -214,7 +202,10 @@ class WorkspaceShellConnector {
     final trimmedDistro = distro.trim();
     if (trimmedDistro.isNotEmpty) wslArgs.addAll(['-d', trimmedDistro]);
     if (cwd.isNotEmpty) wslArgs.addAll(['--cd', cwd]);
-    wslArgs.addAll(HostInteractiveShell.wslArgumentsFor(shell));
+    // No shell executable appended: `wsl.exe [-d …] [--cd …]` starts the
+    // distro's *default* login shell (zsh, fish, …) as configured by chsh —
+    // rather than forcing bash, which sources the wrong rc files and ignores
+    // the user's chosen shell.
 
     return WorkspaceShellLaunchPlan(
       executable: 'wsl.exe',

@@ -22,7 +22,15 @@ class WslFilesystem implements Filesystem {
   p.Context get pathContext => p.Context(style: p.Style.posix);
 
   List<String> _args(List<String> command) {
-    return HostWslArgv.prefixDistro(distro: _distro, command: command);
+    // `--exec` runs the command directly via execvp instead of through the
+    // distro's default login shell. Without it `wsl.exe -d <distro> <cmd>`
+    // hands the whole line to the user's login shell (e.g. zsh), which both
+    // emits rc noise and parses shell metacharacters in our argv — notably the
+    // `|` in stat's `%F|%s|%Y` format, which it splits into a pipe and breaks.
+    return HostWslArgv.prefixDistro(
+      distro: _distro,
+      command: ['--exec', ...command],
+    );
   }
 
   Future<ProcessResult> _run(List<String> command) {

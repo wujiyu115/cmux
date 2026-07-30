@@ -1,21 +1,26 @@
 import '../../models/runtime_target.dart';
 import '../../repositories/ssh_profile_repository.dart';
+import '../host/wsl_distro_lookup.dart';
 import 'targets_repository.dart';
 
 /// The list of runtime targets the user can pick a home / workspace target
-/// from. `targets.json` persists ssh targets; implicit `local` (and `wsl:*` on
-/// Windows) are injected; ssh targets are reconciled against live ssh_profiles.
+/// from. `targets.json` persists ssh targets; implicit `local` (and one
+/// `wsl:*` per installed distro on Windows) are injected; ssh targets are
+/// reconciled against live ssh_profiles.
 class RuntimeTargetRegistry {
   RuntimeTargetRegistry({
     required TargetsRepository repo,
     required SshProfileRepository sshProfileRepo,
     required this.isWindows,
     required this.isAndroid,
+    Future<List<String>> Function() listWslDistros = WslDistroLookup.list,
   }) : _repo = repo,
-       _sshProfileRepo = sshProfileRepo;
+       _sshProfileRepo = sshProfileRepo,
+       _listWslDistros = listWslDistros;
 
   final TargetsRepository _repo;
   final SshProfileRepository _sshProfileRepo;
+  final Future<List<String>> Function() _listWslDistros;
   final bool isWindows;
   final bool isAndroid;
 
@@ -52,9 +57,25 @@ class RuntimeTargetRegistry {
 
     return [
       RuntimeTarget.local(),
-      if (isWindows && wslDistro.trim().isNotEmpty)
-        RuntimeTarget.wsl(wslDistro.trim()),
+      ...await _wslTargets(wslDistro),
       ...reconciled,
     ];
+  }
+
+  /// One `wsl:<distro>` target per installed distro on Windows. The explicit
+  /// [wslDistro] (the currently-selected home distro, if any) is merged in so a
+  /// selected-but-unlisted distro still appears; order is enumeration order.
+  Future<List<RuntimeTarget>> _wslTargets(String wslDistro) async {
+    if (!isWindows) return const [];
+    final names = <String>[];
+    for (final d in await _listWslDistros()) {
+      final t = d.trim();
+      if (t.isNotEmpty && !names.contains(t)) names.add(t);
+    }
+    final selected = wslDistro.trim();
+    if (selected.isNotEmpty && !names.contains(selected)) {
+      names.add(selected);
+    }
+    return [for (final d in names) RuntimeTarget.wsl(d)];
   }
 }

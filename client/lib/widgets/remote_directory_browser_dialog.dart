@@ -63,7 +63,11 @@ class _RemoteDirectoryBrowserDialogState
     try {
       final fs = await picker.filesystemFor(widget.targetId);
       final browser = RemoteDirectoryBrowser(fs);
-      final initial = await browser.resolveInitial(widget.initialPath);
+      // Prefer the target's home ($HOME on WSL, remote home on SSH) over the
+      // backend's `.` — for WSL `.` is the Windows cwd translated to /mnt/*.
+      final start =
+          widget.initialPath ?? await picker.homeFor(widget.targetId);
+      final initial = await browser.resolveInitial(start);
       final listing = await browser.list(initial);
       if (!mounted) return;
       setState(() {

@@ -203,10 +203,19 @@ class _CleanupWindowListener extends WindowListener {
       teardown,
       Future<void>.delayed(const Duration(milliseconds: 400)),
     ]);
+    await Future.any([
+      windowManager.destroy(),
+      Future<void>.delayed(const Duration(milliseconds: 300)),
+    ]);
     AppLogger.instance.i(
-      'window shutdown: teardown waited ${sw.elapsedMilliseconds}ms before destroy',
+      'window shutdown: waited ${sw.elapsedMilliseconds}ms before exit',
     );
-    await windowManager.destroy();
+    // Background listeners (TeamBus gateway sockets, reverse SSH tunnels, PTY
+    // child processes, file watchers) keep the Dart VM alive after the window
+    // is destroyed, delaying process exit by several seconds. Teardown is
+    // best-effort and nothing here persists state, so force-exit; the OS
+    // reclaims every PTY/socket/file handle on process termination.
+    exit(0);
   }
 
   Future<void> _teardown() async {

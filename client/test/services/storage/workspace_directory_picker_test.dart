@@ -23,10 +23,10 @@ void main() {
       listTargets: () async => const [],
     );
 
-    test('only ssh ids are remote', () {
+    test('non-local ids (ssh and wsl) are remote', () {
       expect(picker.isRemote('ssh:host1'), isTrue);
+      expect(picker.isRemote('wsl:Ubuntu'), isTrue);
       expect(picker.isRemote(RuntimeTarget.localId), isFalse);
-      expect(picker.isRemote('wsl:Ubuntu'), isFalse);
     });
   });
 

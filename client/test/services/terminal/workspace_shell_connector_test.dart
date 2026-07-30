@@ -38,6 +38,19 @@ void main() {
       expect(plan.runtimeTarget.kind.name, 'local');
     });
 
+    test('wsl spec launches distro default login shell (no forced bash)', () {
+      final plan = connector.resolveLaunchPlan(
+        spec: const WorkspaceTerminalWorkspaceTargetSpec('wsl:Ubuntu'),
+        workingDirectory: '/home/user/proj',
+      );
+      expect(plan.executable, 'wsl.exe');
+      expect(plan.arguments, ['-d', 'Ubuntu', '--cd', '/home/user/proj']);
+      // No shell binary appended — wsl.exe starts the chsh default shell.
+      expect(plan.arguments, isNot(contains('bash')));
+      expect(plan.arguments, isNot(contains('-l')));
+      expect(plan.runtimeTarget.kind.name, 'wsl');
+    });
+
     test('ssh profile spec uses remote transport', () {
       final plan = connector.resolveLaunchPlan(
         spec: const WorkspaceTerminalSshProfileSpec('profile-1'),

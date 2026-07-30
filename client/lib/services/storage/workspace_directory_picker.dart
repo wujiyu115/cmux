@@ -17,10 +17,11 @@ class WorkspaceDirectoryPicker {
   final Future<RuntimeContext> Function(RuntimeTarget) _resolveContext;
   final Future<List<RuntimeTarget>> Function() _listTargets;
 
-  /// Whether [targetId] resolves to an SSH (remote) machine — the only kind
-  /// that needs the SFTP remote browser instead of the native picker.
+  /// Whether [targetId] resolves to a non-local machine (SSH or WSL) — the
+  /// kinds that need the filesystem-backed remote browser instead of the
+  /// native picker.
   bool isRemote(String targetId) =>
-      runtimeKindOfId(targetId) == RuntimeKind.ssh;
+      runtimeKindOfId(targetId) != RuntimeKind.local;
 
   /// The target matching [id] from the live catalog, falling back to local.
   Future<RuntimeTarget> targetById(String id) async {
@@ -36,5 +37,15 @@ class WorkspaceDirectoryPicker {
   Future<Filesystem> filesystemFor(String targetId) async {
     final ctx = await _resolveContext(await targetById(targetId));
     return ctx.fs;
+  }
+
+  /// The home directory for [targetId] — the sensible place to open the browser
+  /// at. For WSL this is the distro's `$HOME` (not the Windows cwd that `.`
+  /// resolves to); for SSH it is the remote home. Resolution is cached by the
+  /// context registry, so this is cheap after [filesystemFor].
+  Future<String?> homeFor(String targetId) async {
+    final ctx = await _resolveContext(await targetById(targetId));
+    final home = ctx.home.trim();
+    return home.isEmpty ? null : home;
   }
 }

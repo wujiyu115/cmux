@@ -23,7 +23,14 @@ void main() {
 
       final stat = await fs.stat('/tmp/partial.bin');
 
-      expect(capturedArgs, ['stat', '-c', '%F|%s|%Y', '--', '/tmp/partial.bin']);
+      expect(capturedArgs, [
+        '--exec',
+        'stat',
+        '-c',
+        '%F|%s|%Y',
+        '--',
+        '/tmp/partial.bin',
+      ]);
       expect(stat.kind, FsEntityKind.file);
       expect(stat.size, 42);
       expect(
