@@ -72,6 +72,10 @@ class _HomeNewWorkspaceDialogState extends State<HomeNewWorkspaceDialog> {
 
   List<WorkspaceDefaultTerminalOption> _terminalOptions = const [];
   WorkspaceDefaultTerminalOption? _terminal;
+
+  /// Set once the user picks a terminal by hand — suppresses auto-matching so a
+  /// later directory change never clobbers their explicit choice.
+  bool _terminalTouched = false;
   String _groupId = '';
   WorkspaceAccentPreset? _accent;
   bool _optionsRequested = false;
@@ -99,7 +103,25 @@ class _HomeNewWorkspaceDialogState extends State<HomeNewWorkspaceDialog> {
     setState(() {
       _terminalOptions = options;
       _terminal = options.isEmpty ? null : options.first;
+      _autoMatchTerminal();
     });
+  }
+
+  /// Aligns the default terminal to the primary folder's machine: a WSL folder
+  /// (`wsl:<distro>` targetId) selects that distro's WSL terminal, matching the
+  /// option whose [WorkspaceDefaultTerminalOption.value] equals the targetId.
+  /// No-op once the user has chosen a terminal manually. Local folders keep the
+  /// global default (there is no `local` option value to match).
+  void _autoMatchTerminal() {
+    if (_terminalTouched || _terminalOptions.isEmpty) return;
+    final targetId = _folders.isEmpty ? '' : _folders.first.targetId.trim();
+    if (targetId.isEmpty) return;
+    for (final option in _terminalOptions) {
+      if (option.value == targetId) {
+        _terminal = option;
+        return;
+      }
+    }
   }
 
   @override
@@ -161,7 +183,10 @@ class _HomeNewWorkspaceDialogState extends State<HomeNewWorkspaceDialog> {
             targetId: _targetId,
             onTargetChanged: _onTargetChanged,
             folders: _folders,
-            onFoldersChanged: (next) => setState(() => _folders = next),
+            onFoldersChanged: (next) => setState(() {
+              _folders = next;
+              _autoMatchTerminal();
+            }),
           ),
           const SizedBox(height: 16),
           WorkspaceCreateNameField(
@@ -182,7 +207,10 @@ class _HomeNewWorkspaceDialogState extends State<HomeNewWorkspaceDialog> {
                     initialItem: _terminal,
                     itemLabel: (o) => o.label,
                     searchable: false,
-                    onChanged: (o) => setState(() => _terminal = o),
+                    onChanged: (o) => setState(() {
+                      _terminal = o;
+                      _terminalTouched = true;
+                    }),
                   ),
                 ),
               ),

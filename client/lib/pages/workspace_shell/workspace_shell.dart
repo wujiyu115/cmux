@@ -30,6 +30,7 @@ class WorkspaceShell extends StatelessWidget {
     this.newTerminalLabel = '',
     this.onNewConversation,
     this.onNewTerminal,
+    this.onNewTerminalDefault,
     this.tabBarTrailing,
     super.key,
   });
@@ -55,6 +56,10 @@ class WorkspaceShell extends StatelessWidget {
   final String newTerminalLabel;
   final VoidCallback? onNewConversation;
   final void Function(Offset anchor)? onNewTerminal;
+
+  /// When set, the "+" opens the workspace default terminal directly and a
+  /// caret beside it opens the [onNewTerminal] launch menu.
+  final VoidCallback? onNewTerminalDefault;
 
   /// Extra controls on the right of the tab row (e.g. Chat/Terminal toggle).
   final Widget? tabBarTrailing;
@@ -135,6 +140,7 @@ class WorkspaceShell extends StatelessWidget {
                     newTerminalLabel: newTerminalLabel,
                     onNewConversation: onNewConversation,
                     onNewTerminal: onNewTerminal,
+                    onNewTerminalDefault: onNewTerminalDefault,
                   )
                 : null,
             trailing: tabBarTrailing ??

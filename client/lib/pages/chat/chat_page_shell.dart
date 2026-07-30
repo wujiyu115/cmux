@@ -316,6 +316,18 @@ class _ChatWorkspaceShell extends StatelessWidget {
                           ),
                         )
                       : null,
+                  // "+" opens the workspace's configured default terminal
+                  // directly; the caret beside it opens the launch menu above.
+                  onNewTerminalDefault: routeActive
+                      ? () => unawaited(
+                          openWorkspaceDefaultTerminal(
+                            context,
+                            workspace,
+                            tabScopeId: tabScopeId,
+                            worktreePath: cwd,
+                          ),
+                        )
+                      : null,
                   tabs: tabs,
                   activeTabIndex: activeTabIndex,
                   onTabSelected: routeActive

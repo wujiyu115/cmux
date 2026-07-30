@@ -180,6 +180,7 @@ class WorkspaceShellNewChatButton extends StatefulWidget {
     required this.newTerminalLabel,
     this.onNewConversation,
     this.onNewTerminal,
+    this.onNewTerminalDefault,
     super.key,
   });
 
@@ -190,6 +191,11 @@ class WorkspaceShellNewChatButton extends StatefulWidget {
 
   /// Called with the `+` button anchor when "New terminal" is chosen.
   final void Function(Offset anchor)? onNewTerminal;
+
+  /// When set, the primary `+` opens the workspace's default terminal directly
+  /// and a separate caret button carries the full launch menu ([onNewTerminal]).
+  /// Null keeps the legacy single-button behavior.
+  final VoidCallback? onNewTerminalDefault;
 
   @override
   State<WorkspaceShellNewChatButton> createState() =>
@@ -238,7 +244,40 @@ class _WorkspaceShellNewChatButtonState
   @override
   Widget build(BuildContext context) {
     final enabled =
-        widget.onNewConversation != null || widget.onNewTerminal != null;
+        widget.onNewConversation != null ||
+        widget.onNewTerminal != null ||
+        widget.onNewTerminalDefault != null;
+
+    // Split mode: "+" opens the default terminal, a caret opens the full menu.
+    final onDefault = widget.onNewTerminalDefault;
+    if (onDefault != null) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TpIconButton(
+            key: AppKeys.workspaceTabRowNewChatButton,
+            icon: Icons.add_rounded,
+            tooltip: widget.newTerminalLabel.isEmpty
+                ? widget.tooltip
+                : widget.newTerminalLabel,
+            compact: true,
+            enabled: enabled,
+            onTap: enabled ? onDefault : null,
+          ),
+          KeyedSubtree(
+            key: _anchorKey,
+            child: TpIconButton(
+              icon: Icons.arrow_drop_down_rounded,
+              tooltip: widget.tooltip,
+              compact: true,
+              enabled: enabled,
+              onTap: enabled ? () => unawaited(_showMenu()) : null,
+            ),
+          ),
+        ],
+      );
+    }
+
     return KeyedSubtree(
       key: _anchorKey,
       child: TpIconButton(
