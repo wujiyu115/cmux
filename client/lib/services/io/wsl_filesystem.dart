@@ -91,9 +91,13 @@ class WslFilesystem implements Filesystem {
 
   @override
   Future<String?> readString(String path) async {
-    final result = await _run(['cat', path]);
-    if (result.exitCode != 0) return null;
-    return result.stdout as String;
+    // Decode as UTF-8, not the Windows console codepage. `Process.run`'s
+    // default systemEncoding (e.g. GBK) mangles non-ASCII file content — a
+    // UTF-8 README shows as 乱码. `readBytes` already transfers raw bytes via
+    // base64, so decode those.
+    final bytes = await readBytes(path);
+    if (bytes == null) return null;
+    return utf8.decode(bytes, allowMalformed: true);
   }
 
   @override

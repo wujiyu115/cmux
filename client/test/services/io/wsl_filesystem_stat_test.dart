@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -5,6 +6,22 @@ import 'package:teampilot/services/io/filesystem.dart';
 import 'package:teampilot/services/io/wsl_filesystem.dart';
 
 void main() {
+  group('WslFilesystem.readString', () {
+    test('decodes UTF-8 content regardless of Windows codepage', () async {
+      const text = '# 标题\n中文内容 🚀';
+      final b64 = base64.encode(utf8.encode(text));
+      final fs = WslFilesystem(
+        processRunner: (executable, arguments) async {
+          expect(executable, 'wsl.exe');
+          // readBytes issues a base64 pipeline via `sh -lc`.
+          expect(arguments, contains('sh'));
+          return ProcessResult(0, 0, b64, '');
+        },
+      );
+      expect(await fs.readString('/home/ejoy/README.md'), text);
+    });
+  });
+
   group('WslFilesystem.stat', () {
     test('parses size and mtime from stat -c output', () async {
       List<String>? capturedArgs;
