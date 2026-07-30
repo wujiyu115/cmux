@@ -83,12 +83,23 @@ abstract final class HostInteractiveShell {
     final systemRoot =
         Platform.environment['SystemRoot']?.trim() ?? r'C:\Windows';
     final sys32 = p.join(systemRoot, 'System32');
+    final programFiles =
+        Platform.environment['ProgramFiles']?.trim() ?? r'C:\Program Files';
+    final programFilesX86 =
+        Platform.environment['ProgramFiles(x86)']?.trim() ??
+        r'C:\Program Files (x86)';
+    final localAppData = Platform.environment['LocalAppData']?.trim() ?? '';
     return [
       Platform.environment['COMSPEC'] ?? '',
       p.join(sys32, 'cmd.exe'),
       p.join(sys32, 'WindowsPowerShell', 'v1.0', 'powershell.exe'),
       r'C:\Program Files\PowerShell\7\pwsh.exe',
       r'C:\Program Files (x86)\PowerShell\7\pwsh.exe',
+      // Git for Windows Bash.
+      p.join(programFiles, 'Git', 'bin', 'bash.exe'),
+      p.join(programFilesX86, 'Git', 'bin', 'bash.exe'),
+      if (localAppData.isNotEmpty)
+        p.join(localAppData, 'Programs', 'Git', 'bin', 'bash.exe'),
     ].where((path) => path.trim().isNotEmpty).toList(growable: false);
   }
 
@@ -127,6 +138,7 @@ abstract final class HostInteractiveShell {
       HostInteractiveShellKind.pwsh => 'PowerShell 7',
       HostInteractiveShellKind.cmd => 'Command Prompt',
       HostInteractiveShellKind.bash => 'bash',
+      HostInteractiveShellKind.gitbash => 'Git Bash',
       HostInteractiveShellKind.zsh => 'zsh',
       HostInteractiveShellKind.fish => 'fish',
       HostInteractiveShellKind.unknown => p.basename(trimmed),
@@ -137,6 +149,7 @@ abstract final class HostInteractiveShell {
   static List<String> launchArgumentsFor(HostInteractiveShellKind kind) {
     return switch (kind) {
       HostInteractiveShellKind.bash ||
+      HostInteractiveShellKind.gitbash ||
       HostInteractiveShellKind.zsh ||
       HostInteractiveShellKind.fish => const ['-l'],
       HostInteractiveShellKind.powershell ||

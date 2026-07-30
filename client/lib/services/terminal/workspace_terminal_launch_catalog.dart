@@ -5,6 +5,7 @@ import '../../models/workspace_terminal_session_spec.dart';
 import '../../models/workspace_topology.dart';
 import '../../repositories/ssh_profile_repository.dart';
 import '../host/host_interactive_shell.dart';
+import '../host/wsl_distro_lookup.dart';
 import '../terminal/workspace_shell_connector.dart';
 
 enum WorkspaceTerminalLaunchAction { openSession, newSshProfile, settings }
@@ -64,6 +65,20 @@ abstract final class WorkspaceTerminalLaunchCatalog {
     required WorkspaceShellConnector connector,
   }) async {
     final items = buildLocalShells();
+
+    final distros = await WslDistroLookup.list();
+    if (distros.isNotEmpty) {
+      items.add(const WorkspaceTerminalLaunchMenuItem.divider());
+      for (final distro in distros) {
+        items.add(
+          WorkspaceTerminalLaunchMenuItem.session(
+            spec: WorkspaceTerminalWorkspaceTargetSpec('wsl:$distro'),
+            label: 'WSL · $distro',
+          ),
+        );
+      }
+    }
+
     final remoteTargets = workspaceTargetIds(folders)
         .where((id) => id != WorkspaceFolder.localTargetId)
         .toList(growable: false);

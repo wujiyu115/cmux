@@ -79,7 +79,12 @@ class WorktreeGroupSection extends StatelessWidget {
     BuildContext context,
     String worktreePath,
   ) async {
-    await showWorkspaceComposeLandingWithWorktree(
+    try {
+      context.read<WorktreeCubit>().setCurrentWorktree(worktreePath);
+    } on ProviderNotFoundException {
+      // Outside the workspace split pane — pass the path explicitly below.
+    }
+    await openWorkspaceDefaultTerminal(
       context,
       workspace,
       tabScopeId: tabScopeId,

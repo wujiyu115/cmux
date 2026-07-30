@@ -32,6 +32,16 @@ class WorkspaceShellConnector {
 
   static final _remoteShell = HostInteractiveShell.remotePosixExecutable;
 
+  /// WSL runs a POSIX login shell *inside* the distro — never the Windows
+  /// COMSPEC that [HostInteractiveShell.defaultSpec] would return on Windows.
+  static final _wslShellSpec = HostInteractiveShellSpec(
+    executable: HostInteractiveShell.remotePosixExecutable,
+    kind: HostInteractiveShellKind.bash,
+    launchArguments: HostInteractiveShell.launchArgumentsFor(
+      HostInteractiveShellKind.bash,
+    ),
+  );
+
   RuntimeTarget runtimeTargetFor(WorkspaceTerminalSessionSpec spec) =>
       switch (spec) {
         WorkspaceTerminalLocalSpec() => RuntimeTarget.local(),
@@ -65,7 +75,7 @@ class WorkspaceShellConnector {
       RuntimeKind.ssh => _sshLaunchPlan(workingDirectory: workingDirectory),
       RuntimeKind.wsl => _wslLaunchPlan(
         distro: target.wslDistro ?? '',
-        shell: _posixShellSpec(spec),
+        shell: _wslShellSpec,
         workingDirectory: workingDirectory,
         runtimeTarget: target,
       ),

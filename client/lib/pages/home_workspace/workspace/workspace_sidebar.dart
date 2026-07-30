@@ -75,8 +75,8 @@ class _WorkspaceSidebarState extends State<WorkspaceSidebar> {
         children: [
           _SidebarActionTile(
             key: AppKeys.newChatSidebarTile,
-            icon: Icons.edit_outlined,
-            label: l10n.homeWorkspaceNewConversation,
+            icon: Icons.terminal_rounded,
+            label: l10n.workspaceTerminalNewSession,
             enabled: true,
             onTap: throttledAsync(
               'workspace_sidebar_new_chat',
@@ -210,7 +210,7 @@ class _WorkspaceSidebarState extends State<WorkspaceSidebar> {
   }
 
   Future<void> _startNewConversation(BuildContext context) async {
-    await showWorkspaceComposeLanding(
+    await openWorkspaceDefaultTerminal(
       context,
       widget.workspace,
       tabScopeId: widget.tabScopeId,
@@ -247,7 +247,7 @@ class _WorkspaceSidebarState extends State<WorkspaceSidebar> {
       await cubit.load(repoPath);
       cubit.setCurrentWorktree(result.worktreePath);
       if (result.startConversation && context.mounted) {
-        await showWorkspaceComposeLandingWithWorktree(
+        await openWorkspaceDefaultTerminal(
           context,
           widget.workspace,
           tabScopeId: widget.tabScopeId,

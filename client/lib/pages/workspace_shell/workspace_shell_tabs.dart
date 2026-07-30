@@ -204,6 +204,12 @@ class _WorkspaceShellNewChatButtonState
     final box = _anchorKey.currentContext?.findRenderObject() as RenderBox?;
     if (box == null || !box.hasSize) return;
     final anchor = box.localToGlobal(box.size.bottomLeft(Offset.zero));
+    // New-terminal-only ("新建即终端"): skip the two-item menu and open the
+    // shell target picker directly.
+    if (widget.onNewConversation == null && widget.onNewTerminal != null) {
+      widget.onNewTerminal!.call(anchor + const Offset(0, 4));
+      return;
+    }
     final selected = await showTpActionMenuFromSpecs<String>(
       context: context,
       globalPosition: anchor + const Offset(0, 4),

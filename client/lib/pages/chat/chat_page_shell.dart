@@ -275,17 +275,10 @@ class _ChatWorkspaceShell extends StatelessWidget {
                   subtitle: 'personal workspace / shell wrapper mode',
                   showNewChatButton: tabs.isNotEmpty,
                   newChatTooltip: context.l10n.workbenchStripNewMenuTooltip,
-                  newConversationLabel:
-                      context.l10n.homeWorkspaceNewConversation,
                   newTerminalLabel: context.l10n.workspaceTerminalNewSession,
-                  onNewConversation: routeActive
-                      ? () {
-                          context.read<WorkbenchCubit>().clearActive(
-                            workspaceId,
-                          );
-                          cubit.enterNewChat(tabScopeId);
-                        }
-                      : null,
+                  // "新建即终端": the + button opens a terminal only (compose
+                  // landing is being retired — see Phase 5).
+                  onNewConversation: null,
                   onNewTerminal: routeActive
                       ? (anchor) => unawaited(
                           _showStripNewTerminalMenu(

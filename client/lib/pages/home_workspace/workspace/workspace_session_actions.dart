@@ -20,8 +20,11 @@ import '../../../models/workspace.dart';
 import '../../../models/app_session.dart';
 import '../../../models/session_continue_overrides.dart';
 import '../../../models/cli_tool.dart';
+import '../../../models/workspace_terminal_session_spec.dart';
 import '../../../repositories/session_repository.dart';
+import '../../../services/host/host_interactive_shell.dart';
 import '../../../services/workbench/workbench_shell_actions.dart';
+import '../../../services/workbench/workbench_shell_launcher.dart';
 import '../../../utils/workspace/landing_draft_resolver.dart';
 import '../../../utils/logging/logger.dart';
 import '../../../utils/workspace/workspace_path_utils.dart';
@@ -202,6 +205,48 @@ Future<void> showWorkspaceComposeLandingWithWorktree(
     context,
     workspace,
     tabScopeId: tabScopeId,
+  );
+}
+
+/// Opens a new shell terminal for [workspace] using its default terminal.
+///
+/// This is the "新建终端" action: clicking "new" launches a PTY tab directly
+/// (no compose landing). cwd resolves [worktreePath] → current worktree →
+/// first workspace folder; the shell spec follows that cwd's work-plane.
+Future<void> openWorkspaceDefaultTerminal(
+  BuildContext context,
+  Workspace workspace, {
+  required String tabScopeId,
+  String? worktreePath,
+}) async {
+  final launcher = context.read<WorkbenchShellLauncher>();
+  final l10n = context.l10n;
+
+  var cwd = worktreePath?.trim() ?? '';
+  if (cwd.isEmpty) {
+    try {
+      cwd = context.read<WorktreeCubit>().state.pathForNewSession ?? '';
+    } on ProviderNotFoundException {
+      // Outside the workspace split pane — no worktree scope.
+    }
+  }
+  if (cwd.isEmpty) cwd = workspace.firstFolderPath.trim();
+  if (cwd.isEmpty) return;
+
+  final spec = defaultSessionSpecFor(
+    cwd: cwd,
+    folders: workspace.folders,
+    fallbackLocalShell: HostInteractiveShell.defaultExecutable(),
+  );
+
+  await launcher.openAndSelect(
+    workspaceId: workspace.workspaceId,
+    tabScopeId: tabScopeId,
+    cwd: cwd,
+    spec: spec,
+    sshConnectFailedMessage: l10n.workspaceTerminalSshConnectFailed,
+    onStateChanged: () {},
+    mounted: () => context.mounted,
   );
 }
 
