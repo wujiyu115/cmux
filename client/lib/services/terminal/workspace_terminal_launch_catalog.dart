@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 
 import '../../models/workspace_folder.dart';
@@ -104,7 +106,11 @@ abstract final class WorkspaceTerminalLaunchCatalog {
 
   static List<WorkspaceTerminalLaunchMenuItem> buildLocalShells() {
     final items = <WorkspaceTerminalLaunchMenuItem>[];
+    final seen = <String>{};
     for (final shell in HostInteractiveShell.discoverSpecs()) {
+      // COMSPEC and the hard-coded System32 path resolve to the same cmd.exe
+      // with different casing; canonicalize so it appears once.
+      if (!seen.add(_normalizedPath(shell.executable))) continue;
       items.add(
         WorkspaceTerminalLaunchMenuItem.session(
           spec: WorkspaceTerminalLocalSpec(shell.executable),
@@ -115,54 +121,56 @@ abstract final class WorkspaceTerminalLaunchCatalog {
     return items;
   }
 
+  /// Shell-launch entries only (local shells, WSL distros, workspace remote
+  /// targets, SSH profiles), deduped. Tools (new worktree / new SSH / settings)
+  /// are composed separately by the "+" menu so shells and tools stay grouped.
   static Future<List<WorkspaceTerminalLaunchMenuItem>> build({
     required List<WorkspaceFolder> folders,
     required SshProfileRepository sshProfiles,
     required WorkspaceShellConnector connector,
   }) async {
-    final items = buildLocalShells();
+    final items = <WorkspaceTerminalLaunchMenuItem>[];
+    final seen = <String>{};
 
-    final distros = await WslDistroLookup.list();
-    if (distros.isNotEmpty) {
-      items.add(const WorkspaceTerminalLaunchMenuItem.divider());
-      for (final distro in distros) {
-        items.add(
-          WorkspaceTerminalLaunchMenuItem.session(
-            spec: WorkspaceTerminalWorkspaceTargetSpec('wsl:$distro'),
-            label: 'WSL · $distro',
-          ),
-        );
-      }
-    }
-
-    final remoteTargets = workspaceTargetIds(folders)
-        .where((id) => id != WorkspaceFolder.localTargetId)
-        .toList(growable: false);
-    if (remoteTargets.isNotEmpty) {
-      items.add(const WorkspaceTerminalLaunchMenuItem.divider());
-      for (final targetId in remoteTargets) {
-        final spec = WorkspaceTerminalWorkspaceTargetSpec(targetId);
-        final label = await connector.labelForSpec(spec);
-        items.add(
-          WorkspaceTerminalLaunchMenuItem.session(spec: spec, label: label),
-        );
-      }
-    }
-
-    final profiles = await sshProfiles.loadAll();
-    items.add(const WorkspaceTerminalLaunchMenuItem.divider());
-    items.add(WorkspaceTerminalLaunchMenuItem.newSsh());
-    for (final profile in profiles) {
+    void addSession(WorkspaceTerminalSessionSpec spec, String label) {
+      if (!seen.add(spec.titleBaseKey)) return;
       items.add(
-        WorkspaceTerminalLaunchMenuItem.session(
-          spec: WorkspaceTerminalSshProfileSpec(profile.id),
-          label: profile.hostIdentifier,
-        ),
+        WorkspaceTerminalLaunchMenuItem.session(spec: spec, label: label),
       );
     }
 
-    items.add(const WorkspaceTerminalLaunchMenuItem.divider());
-    items.add(WorkspaceTerminalLaunchMenuItem.settings());
+    for (final shell in buildLocalShells()) {
+      addSession(shell.spec!, shell.label);
+    }
+
+    for (final distro in await WslDistroLookup.list()) {
+      addSession(
+        WorkspaceTerminalWorkspaceTargetSpec('wsl:$distro'),
+        'WSL · $distro',
+      );
+    }
+
+    final remoteTargets = workspaceTargetIds(folders)
+        .where((id) => id != WorkspaceFolder.localTargetId);
+    for (final targetId in remoteTargets) {
+      final spec = WorkspaceTerminalWorkspaceTargetSpec(targetId);
+      // A WSL folder target overlaps the enumerated distro above; addSession
+      // dedupes on titleBaseKey so it is not listed twice.
+      addSession(spec, await connector.labelForSpec(spec));
+    }
+
+    for (final profile in await sshProfiles.loadAll()) {
+      addSession(
+        WorkspaceTerminalSshProfileSpec(profile.id),
+        profile.hostIdentifier,
+      );
+    }
+
     return items;
+  }
+
+  static String _normalizedPath(String path) {
+    final trimmed = path.trim();
+    return Platform.isWindows ? trimmed.toLowerCase() : trimmed;
   }
 }

@@ -11,11 +11,11 @@ void main() {
         liveRunSessionIds: const ['r1'],
       );
       expect(plan.mountShell, isFalse);
-      expect(plan.shellActiveEntryId, isNull);
+      expect(plan.shellActiveSurfaceId, isNull);
       expect(plan.runSessionIds, isEmpty);
     });
 
-    test('shell ids from tabOrder; active shell drives activeEntryId', () {
+    test('shell ids from tabOrder; active shell drives activeSurfaceId', () {
       final plan = resolveWorkbenchBodyKeepAlive(
         tabOrder: [
           WorkbenchTabId.session('s1'),
@@ -26,8 +26,8 @@ void main() {
         liveRunSessionIds: const [],
       );
       expect(plan.mountShell, isTrue);
-      expect(plan.shellEntryIds, ['e1', 'e2']);
-      expect(plan.shellActiveEntryId, 'e1');
+      expect(plan.shellSurfaceIds, ['e1', 'e2']);
+      expect(plan.shellActiveSurfaceId, 'e1');
       expect(plan.shellOffstage, isFalse);
     });
 
@@ -42,7 +42,7 @@ void main() {
         liveRunSessionIds: const [],
       );
       expect(plan.mountShell, isTrue);
-      expect(plan.shellActiveEntryId, 'e2');
+      expect(plan.shellActiveSurfaceId, 'e2');
       expect(plan.shellOffstage, isTrue);
     });
 

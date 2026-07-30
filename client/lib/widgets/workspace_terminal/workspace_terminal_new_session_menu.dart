@@ -35,16 +35,18 @@ Future<void> showWorkspaceTerminalLaunchMenu({
   );
   if (!context.mounted) return;
 
-  // Worktree management (create / refresh) leads the menu when in scope, so the
-  // shell "+" doubles as the worktree entry point retired from the old sidebar.
+  // Two isolated groups: every shell-launch entry first, then a divider, then
+  // the tools (worktree management, new SSH profile, settings). Keeping shells
+  // and tools apart matches the requested grouping.
   final items = <WorkspaceTerminalLaunchMenuItem>[
+    ...catalog,
+    const WorkspaceTerminalLaunchMenuItem.divider(),
     if (onNewWorktree != null)
       const WorkspaceTerminalLaunchMenuItem.newWorktree(),
     if (onRefreshWorktrees != null)
       const WorkspaceTerminalLaunchMenuItem.refreshWorktrees(),
-    if (onNewWorktree != null || onRefreshWorktrees != null)
-      const WorkspaceTerminalLaunchMenuItem.divider(),
-    ...catalog,
+    const WorkspaceTerminalLaunchMenuItem.newSsh(),
+    const WorkspaceTerminalLaunchMenuItem.settings(),
   ];
 
   final selected =
@@ -143,59 +145,56 @@ Future<void> _handleLaunchMenuSelection({
   }
 }
 
-/// Theme sheet for workspace shell (also reachable from the + catalog).
+/// Centered theme dialog for workspace shell (also reachable from the + catalog).
 Future<void> showWorkspaceTerminalSettingsSheet(BuildContext context) async {
   final l10n = context.l10n;
-  await showModalBottomSheet<void>(
+  await showDialog<void>(
     context: context,
-    showDragHandle: true,
     builder: (ctx) {
       return BlocBuilder<LayoutCubit, LayoutState>(
         builder: (context, state) {
-          // This quick sheet only exposes the three legacy presets; a catalog
+          // This quick dialog only exposes the three legacy presets; a catalog
           // id (chosen in the full settings section) shows as "adaptive" here.
           final rawMode = state.preferences.terminalThemeMode;
           final mode =
               (rawMode == 'classicDark' || rawMode == 'highContrast')
               ? rawMode
               : 'adaptive';
-          return SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    context.l10n.workspaceTerminalSettings,
-                    style: TpTextStyles.of(context).mdSemiboldTightSnug,
-                  ),
-                  const SizedBox(height: 12),
-                  SegmentedButton<String>(
-                    segments: [
-                      ButtonSegment(
-                        value: 'adaptive',
-                        label: Text(l10n.workspaceTerminalThemeAdaptive),
-                      ),
-                      ButtonSegment(
-                        value: 'classicDark',
-                        label: Text(l10n.workspaceTerminalThemeClassicDark),
-                      ),
-                      ButtonSegment(
-                        value: 'highContrast',
-                        label: Text(l10n.workspaceTerminalThemeHighContrast),
-                      ),
-                    ],
-                    selected: {mode},
-                    onSelectionChanged: (selection) {
-                      final value = selection.firstOrNull;
-                      if (value == null) return;
-                      context.read<LayoutCubit>().setTerminalThemeMode(value);
-                      Navigator.pop(ctx);
-                    },
-                  ),
-                ],
-              ),
+          return TpDialog(
+            maxWidth: 420,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TpDialogHeader(
+                  title: l10n.workspaceTerminalSettings,
+                  onClose: () => Navigator.of(ctx).pop(),
+                ),
+                SizedBox(height: context.tpSpacing.lg),
+                SegmentedButton<String>(
+                  segments: [
+                    ButtonSegment(
+                      value: 'adaptive',
+                      label: Text(l10n.workspaceTerminalThemeAdaptive),
+                    ),
+                    ButtonSegment(
+                      value: 'classicDark',
+                      label: Text(l10n.workspaceTerminalThemeClassicDark),
+                    ),
+                    ButtonSegment(
+                      value: 'highContrast',
+                      label: Text(l10n.workspaceTerminalThemeHighContrast),
+                    ),
+                  ],
+                  selected: {mode},
+                  onSelectionChanged: (selection) {
+                    final value = selection.firstOrNull;
+                    if (value == null) return;
+                    context.read<LayoutCubit>().setTerminalThemeMode(value);
+                    Navigator.pop(ctx);
+                  },
+                ),
+              ],
             ),
           );
         },

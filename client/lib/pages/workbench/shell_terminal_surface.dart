@@ -12,7 +12,7 @@ class ShellTerminalSurface extends StatelessWidget {
     required this.tabScopeId,
     required this.workingDirectory,
     this.holdHandle,
-    this.activeEntryId,
+    this.activeSurfaceId,
     super.key,
   });
 
@@ -20,7 +20,7 @@ class ShellTerminalSurface extends StatelessWidget {
   final String tabScopeId;
   final String workingDirectory;
   final WorkspaceTerminalHoldHandle? holdHandle;
-  final String? activeEntryId;
+  final String? activeSurfaceId;
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +31,7 @@ class ShellTerminalSurface extends StatelessWidget {
       workingDirectory: workingDirectory,
       holdHandle: holdHandle,
       showChrome: false,
-      activeEntryId: activeEntryId,
+      activeSurfaceId: activeSurfaceId,
     );
   }
 }

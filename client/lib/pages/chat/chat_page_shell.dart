@@ -248,15 +248,13 @@ class _ChatWorkspaceShell extends StatelessWidget {
                 final shellGroup = context
                     .read<WorkspaceTerminalRegistry>()
                     .groupFor(tabScopeId);
-                final shellEntries = shellGroup.entries;
+                final shellSurfaces = shellGroup.surfaces;
                 final shellTitles = {
-                  for (final entry in shellEntries)
-                    entry.id: WorkspaceTerminalTitleResolver.tabTitle(
-                      entry: entry,
-                      siblings: shellEntries,
-                      baseLabel: entry.titleLabel.isEmpty
-                          ? '…'
-                          : entry.titleLabel,
+                  for (final surface in shellSurfaces)
+                    surface.id: WorkspaceTerminalTitleResolver.surfaceTabTitle(
+                      surface: surface,
+                      siblings: shellSurfaces,
+                      entryFor: shellGroup.entryById,
                     ),
                 };
                 final runSessions = context.watch<RunCubit>().state.sessions;

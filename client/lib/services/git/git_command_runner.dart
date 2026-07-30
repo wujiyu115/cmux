@@ -129,7 +129,11 @@ class WslGitCommandRunner implements GitCommandRunner {
     final result = await _host.run(
       const HostRunRequest(
         executable: 'sh',
-        arguments: ['-lc', 'command -v git >/dev/null 2>&1 || which git'],
+        // Must print the path on stdout: the check below requires non-empty
+        // output. Redirecting `command -v` to /dev/null (and only running
+        // `which` on the not-found branch) left stdout empty when git *was*
+        // installed, so WSL git was always reported missing.
+        arguments: ['-lc', 'command -v git || which git 2>/dev/null'],
       ),
     );
     return result.succeeded && result.stdout.trim().isNotEmpty;
@@ -177,7 +181,8 @@ class RemoteGitCommandRunner implements GitCommandRunner {
 
   Future<bool> _probeAvailability() async {
     final result = await _execShell(
-      'command -v git >/dev/null 2>&1 || which git 2>/dev/null',
+      // Print the path on stdout; the check below requires non-empty output.
+      'command -v git || which git 2>/dev/null',
     );
     if (sshRunFailed(result)) return false;
     return utf8.decode(result.stdout, allowMalformed: true).trim().isNotEmpty;

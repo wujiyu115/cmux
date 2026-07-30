@@ -182,7 +182,10 @@ class WorkbenchShellLauncher {
       mounted: mounted,
     );
 
-    final tab = WorkbenchTabId.shell(entry.id);
+    // Strip tabs are keyed by surface; `openEntry` (addEntry) wraps the new pane
+    // in a fresh single-pane surface, so resolve that surface's id.
+    final surfaceId = group.surfaceForPane(entry.id)?.id ?? entry.id;
+    final tab = WorkbenchTabId.shell(surfaceId);
     _workbench.ensureTab(workspaceId, tab);
     _workbench.select(workspaceId, tab);
     return entry;

@@ -63,6 +63,22 @@ void main() {
   });
 
   group('WslGitCommandRunner', () {
+    test('isAvailable is true when the probe prints a git path', () async {
+      String? probeCmd;
+      final runner = WslGitCommandRunner(
+        distro: 'Ubuntu',
+        wslRunner: (exe, args, {stdoutEncoding, stderrEncoding}) async {
+          probeCmd = args.last;
+          return ProcessResult(0, 0, '/usr/bin/git\n', '');
+        },
+      );
+
+      expect(await runner.isAvailable, isTrue);
+      // Path must reach stdout — the probe must not swallow it via /dev/null.
+      expect(probeCmd, contains('command -v git'));
+      expect(probeCmd, isNot(contains('command -v git >/dev/null')));
+    });
+
     test('runInDirectory invokes wsl.exe git -C', () async {
       final calls = <List<String>>[];
       final runner = WslGitCommandRunner(

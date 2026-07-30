@@ -34,7 +34,6 @@ class GitRepoStore {
   final GitCubit Function(String root, RuntimeContext workContext)
   _cubitFactory;
   final int _maxRetained;
-  final p.Context _ctx = p.Context();
 
   /// Normalized `targetId:root` → cubit. Insertion order is the LRU order.
   final Map<String, GitCubit> _cubits = <String, GitCubit>{};
@@ -53,7 +52,14 @@ class GitRepoStore {
       _cubits[key] = existing;
       return existing;
     }
-    final cubit = _cubitFactory(_ctx.normalize(root), workContext);
+    // Normalize with the target's own path style, not the host platform's.
+    // A WSL/SSH root like `/home/ejoy/git/Nexterm` must stay posix; the default
+    // `p.Context()` on Windows rewrites it to `\home\ejoy\…`, so `git -C` then
+    // fails and the repo reads as "not a Git repository".
+    final cubit = _cubitFactory(
+      workContext.filesystem.pathContext.normalize(root),
+      workContext,
+    );
     _cubits[key] = cubit;
     _evict();
     return cubit;

@@ -111,7 +111,7 @@ class WorkbenchBody extends StatelessWidget {
                 tabScopeId: tabScopeId,
                 workingDirectory: cwd,
                 holdHandle: holdHandle,
-                activeEntryId: plan.shellActiveEntryId,
+                activeSurfaceId: plan.shellActiveSurfaceId,
               ),
             ),
           ),

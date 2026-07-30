@@ -22,7 +22,6 @@ import '../pages/command_log/command_log_dialog.dart';
 import '../services/commands/command_bus.dart';
 import '../services/commands/terminal_split_command_registrar.dart';
 import '../services/selection_ai/selection_ai_context.dart';
-import '../services/selection_ai/selection_ai_menu_specs.dart';
 import '../services/selection_ai/selection_ask_ai.dart';
 import '../services/selection_ai/selection_ask_ai_fab_host.dart';
 import '../services/ssh/ssh_profile_connection_coordinator.dart';
@@ -43,6 +42,7 @@ import '../utils/ui/app_keys.dart';
 import 'terminal/terminal_layout_toolbar.dart';
 import 'terminal/terminal_pane_keys.dart';
 import 'terminal/terminal_split_view.dart';
+import 'terminal_find_bar.dart';
 import 'workspace_terminal/workspace_terminal_body_kind.dart';
 import 'workspace_terminal/workspace_terminal_empty_pane.dart';
 import 'workspace_terminal/workspace_terminal_view.dart';
@@ -91,7 +91,7 @@ class WorkspaceTerminalPanel extends StatefulWidget {
     this.holdHandle,
     this.showChrome = true,
     this.onRequestNewTerminal,
-    this.activeEntryId,
+    this.activeSurfaceId,
     super.key,
   });
 
@@ -108,8 +108,9 @@ class WorkspaceTerminalPanel extends StatefulWidget {
   /// Empty-launcher CTA; defaults to starting a local shell when null.
   final VoidCallback? onRequestNewTerminal;
 
-  /// When set (unified dock), body follows this entry instead of [group.activeId].
-  final String? activeEntryId;
+  /// When set (unified dock), body follows this surface (split tab) instead of
+  /// [group.activeSurface].
+  final String? activeSurfaceId;
 
   @override
   State<WorkspaceTerminalPanel> createState() => _WorkspaceTerminalPanelState();
@@ -137,6 +138,10 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
   var _registrationScheduled = false;
   final Map<String, int> _lastTerminalThemeFingerprintByEntry = {};
   final _menuOpen = ValueNotifier(false);
+
+  /// Whether the scrollback find bar is shown over the active pane. Search
+  /// targets the focused pane's engine/controller.
+  bool _findVisible = false;
 
   /// Split/focus/layout commands are claimed while this panel's subtree holds
   /// focus (several panels are alive offstage; only the focused one wins the
@@ -171,6 +176,7 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
     // Lazy start (Orca-style): never spawn a default shell on mount. Only
     // re-attach engines for sessions that already exist in the registry.
     _reattachExistingEngines();
+    _syncActiveSurface();
   }
 
   @override
@@ -184,6 +190,24 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
         oldWidget.workspaceId != widget.workspaceId) {
       _syncActiveEntryCwd();
     }
+    if (oldWidget.activeSurfaceId != widget.activeSurfaceId) {
+      _syncActiveSurface();
+    }
+  }
+
+  /// Points the group's active surface at the strip-selected surface, so that
+  /// split / preset / focus commands act on the visible tab. Deferred to a
+  /// post-frame so we never mutate the notifier during build. The setter is a
+  /// no-op when already equal.
+  void _syncActiveSurface() {
+    final forced = widget.activeSurfaceId?.trim();
+    if (forced == null || forced.isEmpty) return;
+    if (_group.activeSurfaceId == forced) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (_group.surfaceById(forced) == null) return;
+      _group.activeSurfaceId = forced;
+    });
   }
 
   /// Drag-start hook from an outer split host: hold PTY resizes for this panel's
@@ -209,10 +233,22 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
     super.dispose();
   }
 
-  WorkspaceTerminalEntry? get _activeEntry {
-    final forced = widget.activeEntryId?.trim();
+  /// The surface (split tab) the body should render: the forced one from the
+  /// strip when set, else the group's own active surface.
+  TerminalSurface? get _activeSurface {
+    final forced = widget.activeSurfaceId?.trim();
     if (forced != null && forced.isNotEmpty) {
-      return _group.entryById(forced);
+      final surface = _group.surfaceById(forced);
+      if (surface != null) return surface;
+    }
+    return _group.activeSurface;
+  }
+
+  WorkspaceTerminalEntry? get _activeEntry {
+    final surface = _activeSurface;
+    if (surface != null) {
+      final entry = _group.entryById(surface.focusedPaneId);
+      if (entry != null) return entry;
     }
     return _group.activeEntry;
   }
@@ -428,16 +464,15 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
   ) async {
     final mloc = MaterialLocalizations.of(menuContext);
     final hasSelection = entry.controller.selectionActive;
-    final selectionText = entry.controller.readSelectionText() ?? '';
-    final aiContext = buildTerminalAiContextClipboardText(
-      surfaceLabel: 'workspace-shell',
-      text: selectionText,
-    );
-    final hasAi = aiContext.isNotEmpty;
     final mouseReporting = anyMouse(entry.session.engine.grid.modeFlags);
     final linkUri = cellOffset != null
         ? entry.session.engine.hyperlinkAt(cellOffset.row, cellOffset.column)
         : null;
+    // Only offer per-pane close when this pane shares a split surface with
+    // siblings; the last pane of a surface is closed by closing the tab.
+    final paneSurface = _group.surfaceForPane(entry.id);
+    final canClosePane = (paneSurface?.paneIds.length ?? 0) > 1;
+    final isZoomed = _group.activeSurface?.zoomedPaneId != null;
     final specs = <TpActionMenuSpec>[
       if (linkUri != null)
         TpActionMenuSpec.item(
@@ -447,11 +482,6 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
         ),
       if (linkUri != null) const TpActionMenuSpec.divider(),
       TpActionMenuSpec.item(
-        value: 'paste',
-        icon: Icons.content_paste,
-        label: mloc.pasteButtonLabel,
-      ),
-      TpActionMenuSpec.item(
         value: 'copy',
         icon: Icons.content_copy,
         label: (!hasSelection && mouseReporting)
@@ -459,21 +489,51 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
             : mloc.copyButtonLabel,
         enabled: hasSelection,
       ),
-      ...selectionAiMenuSpecs(
-        l10n: menuContext.l10n,
-        copyEnabled: hasAi,
-        askAiEnabled: hasAi,
-        onCopyAsAiContext: () {
-          unawaited(Clipboard.setData(ClipboardData(text: aiContext)));
-        },
-        onAskAi: () {
-          unawaited(_openAskAi(aiContext));
-        },
+      TpActionMenuSpec.item(
+        value: 'paste',
+        icon: Icons.content_paste,
+        label: mloc.pasteButtonLabel,
       ),
       TpActionMenuSpec.item(
         value: 'selectAll',
         icon: Icons.select_all,
         label: mloc.selectAllButtonLabel,
+      ),
+      const TpActionMenuSpec.divider(),
+      TpActionMenuSpec.item(
+        value: 'splitRight',
+        icon: Icons.splitscreen_outlined,
+        label: menuContext.l10n.workspaceTerminalSplitRight,
+      ),
+      TpActionMenuSpec.item(
+        value: 'splitDown',
+        icon: Icons.horizontal_split_outlined,
+        label: menuContext.l10n.workspaceTerminalSplitDown,
+      ),
+      const TpActionMenuSpec.divider(),
+      TpActionMenuSpec.item(
+        value: 'zoom',
+        icon: isZoomed ? Icons.zoom_in_map : Icons.zoom_out_map,
+        label: isZoomed
+            ? menuContext.l10n.workspaceTerminalUnzoomPane
+            : menuContext.l10n.workspaceTerminalZoomPane,
+      ),
+      if (canClosePane)
+        TpActionMenuSpec.item(
+          value: 'closePane',
+          icon: Icons.close,
+          label: menuContext.l10n.workspaceTerminalClosePane,
+        ),
+      const TpActionMenuSpec.divider(),
+      TpActionMenuSpec.item(
+        value: 'clear',
+        icon: Icons.clear_all,
+        label: menuContext.l10n.workspaceTerminalClearScreen,
+      ),
+      TpActionMenuSpec.item(
+        value: 'search',
+        icon: Icons.search,
+        label: menuContext.l10n.workspaceTerminalSearch,
       ),
     ];
 
@@ -524,6 +584,22 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
             false,
           );
         }
+      case 'splitRight':
+        await _splitActiveSurface(SplitAxis.vertical);
+      case 'splitDown':
+        await _splitActiveSurface(SplitAxis.horizontal);
+      case 'zoom':
+        _group.toggleZoom();
+        if (mounted) setState(() {});
+      case 'clear':
+        entry.session.engine.clearHistory();
+      case 'search':
+        _openFind();
+      case 'closePane':
+        // Removes just this pane; its sibling collapses to fill the freed
+        // space (see removePane in terminal_split.dart).
+        _group.removeEntry(entry.id);
+        if (mounted) setState(() {});
       default:
         break;
     }
@@ -675,6 +751,19 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
     if (mounted) setState(() {});
   }
 
+  /// Shows the scrollback find bar over the active pane.
+  void _openFind() {
+    if (_findVisible) return;
+    setState(() => _findVisible = true);
+  }
+
+  /// Hides the find bar and clears any active search highlight.
+  void _closeFind() {
+    _activeEntry?.controller.searchClear();
+    if (!_findVisible) return;
+    setState(() => _findVisible = false);
+  }
+
   /// Closes the focused pane via the group's single removal path. No-op when
   /// the group holds its last pane.
   void _closeActivePane() {
@@ -813,9 +902,12 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
           onNewTerminal: _onEmptyNewTerminal,
         );
       case WorkspaceTerminalBodyKind.activeSession:
+        final activeEntry = active!;
         _paneKeys.prune(_group.entries.map((e) => e.id).toSet());
         final surface =
-            _group.surfaceForPane(active!.id) ?? _group.activeSurface;
+            _activeSurface ??
+            _group.surfaceForPane(activeEntry.id) ??
+            _group.activeSurface;
         if (surface == null) {
           terminalBody = const SizedBox.shrink();
           break;
@@ -851,11 +943,11 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
           child: splitView,
           builder: (context, menuOpen, child) {
             return SelectionAskAiFabHost(
-              listenable: active.controller,
-              selectionActive: () => active.controller.selectionActive,
+              listenable: activeEntry.controller,
+              selectionActive: () => activeEntry.controller.selectionActive,
               readAiContext: () => buildTerminalAiContextClipboardText(
                 surfaceLabel: 'workspace-shell',
-                text: active.controller.readSelectionText() ?? '',
+                text: activeEntry.controller.readSelectionText() ?? '',
               ),
               onAskAi: _openAskAi,
               menuOpen: menuOpen,
@@ -863,12 +955,40 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
             );
           },
         );
-        terminalBody = Column(
+        final paneArea = Stack(
           children: [
-            _buildLayoutToolbar(surface),
-            const TpSeparator(),
-            Expanded(child: fabWrappedSplitView),
+            Positioned.fill(child: fabWrappedSplitView),
+            if (_findVisible)
+              Positioned(
+                left: 8,
+                right: 8,
+                top: 8,
+                child: TerminalFindBar(
+                  // Keyed to the active pane so switching panes rebuilds the
+                  // bar against the new engine/controller.
+                  key: ValueKey('find-${activeEntry.id}'),
+                  engine: activeEntry.session.engine,
+                  controller: activeEntry.controller,
+                  searchLabel: l10n.terminalFind,
+                  noResultsLabel: l10n.terminalFindNoResults,
+                  onClose: _closeFind,
+                ),
+              ),
           ],
+        );
+        terminalBody = TerminalFindShortcuts(
+          findVisible: _findVisible,
+          onToggleFind: _openFind,
+          onFindNext: () => activeEntry.controller.searchNext(),
+          onFindPrevious: () => activeEntry.controller.searchPrev(),
+          onCloseFind: _closeFind,
+          child: Column(
+            children: [
+              _buildLayoutToolbar(surface),
+              const TpSeparator(),
+              Expanded(child: paneArea),
+            ],
+          ),
         );
     }
 

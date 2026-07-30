@@ -72,6 +72,26 @@ LRESULT
 FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                               WPARAM const wparam,
                               LPARAM const lparam) noexcept {
+  // The native caption is stripped in OnCreate, so a maximized borderless
+  // window would fill the whole monitor rect and cover the taskbar. Clamp the
+  // maximized size/position to the monitor work area. window_manager also
+  // handles WM_GETMINMAXINFO (returns 0) but only sets track sizes, leaving
+  // ptMaxSize/ptMaxPosition untouched, so set them here before forwarding.
+  if (message == WM_GETMINMAXINFO) {
+    auto info = reinterpret_cast<MINMAXINFO*>(lparam);
+    HMONITOR monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+    MONITORINFO mi{};
+    mi.cbSize = sizeof(mi);
+    if (GetMonitorInfo(monitor, &mi)) {
+      const RECT work = mi.rcWork;
+      const RECT mon = mi.rcMonitor;
+      info->ptMaxPosition.x = work.left - mon.left;
+      info->ptMaxPosition.y = work.top - mon.top;
+      info->ptMaxSize.x = work.right - work.left;
+      info->ptMaxSize.y = work.bottom - work.top;
+    }
+  }
+
   // Give Flutter, including plugins, an opportunity to handle window messages.
   if (flutter_controller_) {
     std::optional<LRESULT> result =

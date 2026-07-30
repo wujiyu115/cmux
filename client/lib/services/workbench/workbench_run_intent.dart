@@ -6,13 +6,17 @@ import '../../models/run/run_ui_intent.dart';
 WorkbenchTabId? resolveWorkbenchTabForRunIntent(
   RunUiIntent intent, {
   required String? latestRunSessionId,
+  String? Function(String paneId)? terminalSurfaceForPane,
 }) {
   if (!intent.activateToolWindow) return null;
   switch (intent.surface) {
     case RunToolSurface.terminal:
       final id = intent.terminalEntryId?.trim();
       if (id == null || id.isEmpty) return null;
-      return WorkbenchTabId.shell(id);
+      // Strip tabs are keyed by surface; map the injected pane to its owning
+      // surface (falls back to the pane id when unmapped, e.g. in unit tests).
+      final surfaceId = terminalSurfaceForPane?.call(id) ?? id;
+      return WorkbenchTabId.shell(surfaceId);
     case RunToolSurface.run:
       final id = latestRunSessionId?.trim();
       if (id == null || id.isEmpty) return null;

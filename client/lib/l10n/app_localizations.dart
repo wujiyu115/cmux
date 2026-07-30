@@ -2420,6 +2420,18 @@ abstract class AppLocalizations {
   /// **'Close pane'**
   String get workspaceTerminalClosePane;
 
+  /// No description provided for @workspaceTerminalClearScreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear screen'**
+  String get workspaceTerminalClearScreen;
+
+  /// No description provided for @workspaceTerminalSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get workspaceTerminalSearch;
+
   /// No description provided for @workspaceTerminalCommandLog.
   ///
   /// In en, this message translates to:

@@ -294,6 +294,36 @@ class WorkspaceTerminalGroup extends ChangeNotifier {
     return false;
   }
 
+  /// Closes an entire surface (tab): disposes every pane it holds, removes the
+  /// surface, and migrates [_activeSurfaceId] to a neighbour. Unknown id → the
+  /// current emptiness state. Returns whether the group is now empty.
+  bool removeSurface(String surfaceId) {
+    final surfaceIndex = _surfaces.indexWhere((s) => s.id == surfaceId);
+    if (surfaceIndex < 0) return _surfaces.isEmpty;
+    final surface = _surfaces[surfaceIndex];
+    final wasActive = surface.id == _activeSurfaceId;
+    for (final paneId in surface.paneIds) {
+      final index = _entries.indexWhere((e) => e.id == paneId);
+      if (index < 0) continue;
+      _entries[index].dispose();
+      _entries.removeAt(index);
+    }
+    _surfaces.removeAt(surfaceIndex);
+    if (_surfaces.isEmpty) {
+      _activeSurfaceId = null;
+      notifyListeners();
+      return true;
+    }
+    if (wasActive) {
+      final next = surfaceIndex >= _surfaces.length
+          ? _surfaces.length - 1
+          : surfaceIndex;
+      _activeSurfaceId = _surfaces[next].id;
+    }
+    notifyListeners();
+    return false;
+  }
+
   // --- Focus / zoom / rename -------------------------------------------------
 
   /// Moves focus to the next pane in the active surface (wrap-around).

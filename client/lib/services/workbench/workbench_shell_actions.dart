@@ -30,15 +30,22 @@ bool shouldRemoveRunWorkbenchTab({
   required bool dismissSucceeded,
 }) => !sessionFound || dismissSucceeded;
 
-/// Clears run-service binds then removes the shell entry from its group.
+/// Clears run-service binds for every pane in the surface then removes the whole
+/// surface (split tab) from its group. Closing a strip tab closes the entire
+/// split tree it represents.
 @visibleForTesting
 void disposeWorkbenchShellDomain({
   required WorkspaceTerminalRunService runService,
   required WorkspaceTerminalGroup group,
-  required String entryId,
+  required String surfaceId,
 }) {
-  runService.handleEntryClosed(entryId);
-  group.removeEntry(entryId);
+  final surface = group.surfaceById(surfaceId);
+  if (surface != null) {
+    for (final paneId in surface.paneIds) {
+      runService.handleEntryClosed(paneId);
+    }
+  }
+  group.removeSurface(surfaceId);
 }
 
 /// Tab-bar actions for the unified workbench (session / file / diff / shell / run).
@@ -110,7 +117,7 @@ abstract final class WorkbenchShellActions {
         disposeWorkbenchShellDomain(
           runService: context.read<WorkspaceTerminalRunService>(),
           group: context.read<WorkspaceTerminalRegistry>().groupFor(tabScopeId),
-          entryId: tab.id,
+          surfaceId: tab.id,
         );
         workbench.removeTab(workspaceId, tab);
       case WorkbenchTabKind.run:
@@ -215,7 +222,7 @@ abstract final class WorkbenchShellActions {
         disposeWorkbenchShellDomain(
           runService: context.read<WorkspaceTerminalRunService>(),
           group: context.read<WorkspaceTerminalRegistry>().groupFor(tabScopeId),
-          entryId: tab.id,
+          surfaceId: tab.id,
         );
       case WorkbenchTabKind.run:
         await context.read<RunCubit>().dismissSession(tab.id);

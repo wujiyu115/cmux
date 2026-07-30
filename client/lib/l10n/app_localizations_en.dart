@@ -1268,6 +1268,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workspaceTerminalClosePane => 'Close pane';
 
   @override
+  String get workspaceTerminalClearScreen => 'Clear screen';
+
+  @override
+  String get workspaceTerminalSearch => 'Search';
+
+  @override
   String get workspaceTerminalCommandLog => 'Command log';
 
   @override

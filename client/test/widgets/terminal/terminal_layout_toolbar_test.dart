@@ -12,10 +12,8 @@ void main() {
     ValueChanged<TerminalLayoutPreset>? onApplyPreset,
     VoidCallback? onEqualize,
     VoidCallback? onToggleZoom,
-    VoidCallback? onClosePane,
     VoidCallback? onShowCommandLog,
     bool isZoomed = false,
-    bool canClosePane = true,
   }) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -28,10 +26,8 @@ void main() {
             onApplyPreset: onApplyPreset ?? (_) {},
             onEqualize: onEqualize ?? () {},
             onToggleZoom: onToggleZoom ?? () {},
-            onClosePane: onClosePane ?? () {},
             onShowCommandLog: onShowCommandLog ?? () {},
             isZoomed: isZoomed,
-            canClosePane: canClosePane,
           ),
         ),
       ),
@@ -80,34 +76,6 @@ void main() {
     await pumpToolbar(tester, isZoomed: true);
     expect(find.byIcon(Icons.zoom_in_map), findsOneWidget);
     expect(find.byIcon(Icons.zoom_out_map), findsNothing);
-  });
-
-  testWidgets('close pane is disabled and inert when canClosePane is false',
-      (tester) async {
-    var close = 0;
-    final l10n = await pumpToolbar(
-      tester,
-      onClosePane: () => close++,
-      canClosePane: false,
-    );
-
-    await tester.tap(
-      find.byTooltip(l10n.workspaceTerminalClosePane),
-      warnIfMissed: false,
-    );
-    expect(close, 0);
-  });
-
-  testWidgets('close pane invokes callback when enabled', (tester) async {
-    var close = 0;
-    final l10n = await pumpToolbar(
-      tester,
-      onClosePane: () => close++,
-      canClosePane: true,
-    );
-
-    await tester.tap(find.byTooltip(l10n.workspaceTerminalClosePane));
-    expect(close, 1);
   });
 
   testWidgets('command log button invokes its callback', (tester) async {

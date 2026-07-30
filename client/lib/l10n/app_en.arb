@@ -525,6 +525,8 @@
   "workspaceTerminalZoomPane": "Zoom pane",
   "workspaceTerminalUnzoomPane": "Unzoom pane",
   "workspaceTerminalClosePane": "Close pane",
+  "workspaceTerminalClearScreen": "Clear screen",
+  "workspaceTerminalSearch": "Search",
   "workspaceTerminalCommandLog": "Command log",
   "commandLogTitle": "Command log",
   "commandLogRefresh": "Refresh",

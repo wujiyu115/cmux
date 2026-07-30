@@ -112,6 +112,7 @@ class _WorkbenchShellRunSyncState extends State<WorkbenchShellRunSync> {
     final tab = resolveWorkbenchTabForRunIntent(
       intent,
       latestRunSessionId: latestRunId,
+      terminalSurfaceForPane: (paneId) => _group?.surfaceForPane(paneId)?.id,
     );
     if (tab != null) {
       workbench.ensureTab(widget.workspaceId, tab);
@@ -144,7 +145,7 @@ class _WorkbenchShellRunSyncState extends State<WorkbenchShellRunSync> {
     final tabOrder = workbench.tabOrder(widget.workspaceId);
     final plan = planWorkbenchShellRunSync(
       tabOrder: tabOrder,
-      registryEntryIds: group.entries.map((e) => e.id),
+      registryEntryIds: group.surfaces.map((s) => s.id),
       runPanelSessionIds: runPanelIds,
     );
     if (plan.isEmpty) return;

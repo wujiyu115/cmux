@@ -3,19 +3,19 @@ import '../../cubits/workbench/workbench_tab.dart';
 /// Which shell/run surfaces [WorkbenchBody] should keep mounted.
 class WorkbenchBodyKeepAlivePlan {
   const WorkbenchBodyKeepAlivePlan({
-    required this.shellEntryIds,
-    required this.shellActiveEntryId,
+    required this.shellSurfaceIds,
+    required this.shellActiveSurfaceId,
     required this.shellOffstage,
     required this.runSessionIds,
     required this.active,
   });
 
-  /// Shell entry ids in strip order (tabOrder filtered by kind).
-  final List<String> shellEntryIds;
+  /// Shell surface (split tab) ids in strip order (tabOrder filtered by kind).
+  final List<String> shellSurfaceIds;
 
-  /// Entry id passed to the single [WorkspaceTerminalPanel] (needs a valid id
+  /// Surface id passed to the single [WorkspaceTerminalPanel] (needs a valid id
   /// even when offstage).
-  final String? shellActiveEntryId;
+  final String? shellActiveSurfaceId;
 
   /// True when the shell surface is mounted but not the active tab.
   final bool shellOffstage;
@@ -25,7 +25,7 @@ class WorkbenchBodyKeepAlivePlan {
 
   final WorkbenchTabId? active;
 
-  bool get mountShell => shellEntryIds.isNotEmpty;
+  bool get mountShell => shellSurfaceIds.isNotEmpty;
 
   bool runOffstage(String sessionId) {
     final a = active;
@@ -41,7 +41,7 @@ WorkbenchBodyKeepAlivePlan resolveWorkbenchBodyKeepAlive({
   required WorkbenchTabId? active,
   required Iterable<String> liveRunSessionIds,
 }) {
-  final shellEntryIds = [
+  final shellSurfaceIds = [
     for (final tab in tabOrder)
       if (tab.kind == WorkbenchTabKind.shell) tab.id,
   ];
@@ -53,22 +53,22 @@ WorkbenchBodyKeepAlivePlan resolveWorkbenchBodyKeepAlive({
         tab.id,
   ];
 
-  String? shellActiveEntryId;
+  String? shellActiveSurfaceId;
   var shellOffstage = true;
-  if (shellEntryIds.isNotEmpty) {
+  if (shellSurfaceIds.isNotEmpty) {
     if (active?.kind == WorkbenchTabKind.shell) {
-      shellActiveEntryId = active!.id;
+      shellActiveSurfaceId = active!.id;
       shellOffstage = false;
     } else {
       // Panel needs a valid id while offstage; prefer last shell in strip order.
-      shellActiveEntryId = shellEntryIds.last;
+      shellActiveSurfaceId = shellSurfaceIds.last;
       shellOffstage = true;
     }
   }
 
   return WorkbenchBodyKeepAlivePlan(
-    shellEntryIds: shellEntryIds,
-    shellActiveEntryId: shellActiveEntryId,
+    shellSurfaceIds: shellSurfaceIds,
+    shellActiveSurfaceId: shellActiveSurfaceId,
     shellOffstage: shellOffstage,
     runSessionIds: runSessionIds,
     active: active,

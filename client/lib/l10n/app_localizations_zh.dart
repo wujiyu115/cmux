@@ -1216,6 +1216,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workspaceTerminalClosePane => '关闭窗格';
 
   @override
+  String get workspaceTerminalClearScreen => '清屏';
+
+  @override
+  String get workspaceTerminalSearch => '搜索';
+
+  @override
   String get workspaceTerminalCommandLog => '命令日志';
 
   @override

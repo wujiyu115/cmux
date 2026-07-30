@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:teampilot/cubits/workbench/workbench_tab.dart';
+import 'package:teampilot/models/terminal_split.dart';
 import 'package:teampilot/models/workspace_terminal_session_spec.dart';
 import 'package:teampilot/services/terminal/terminal_session.dart';
 import 'package:teampilot/services/terminal/workspace_terminal_registry.dart';
@@ -57,7 +58,7 @@ void main() {
   });
 
   group('disposeWorkbenchShellDomain', () {
-    test('notifies run service then removes registry entry', () {
+    test('notifies run service for every pane then removes the surface', () {
       final closed = <String>[];
       final runService = WorkspaceTerminalRunService(onEntryClosed: closed.add);
       final registry = WorkspaceTerminalRegistry();
@@ -70,16 +71,51 @@ void main() {
         session: _testSession(),
         select: true,
       );
+      final surfaceId = group.surfaceForPane(entry.id)!.id;
 
       disposeWorkbenchShellDomain(
         runService: runService,
         group: group,
-        entryId: entry.id,
+        surfaceId: surfaceId,
       );
 
       expect(closed, [entry.id]);
       expect(group.entries, isEmpty);
+      expect(group.surfaces, isEmpty);
       expect(group.activeId, isNull);
+    });
+
+    test('closes every pane in a multi-pane surface', () {
+      final closed = <String>[];
+      final runService = WorkspaceTerminalRunService(onEntryClosed: closed.add);
+      final registry = WorkspaceTerminalRegistry();
+      addTearDown(registry.disposeAll);
+
+      final group = registry.groupFor('tab-scope');
+      final first = group.addEntry(
+        cwd: '/tmp',
+        spec: const WorkspaceTerminalLocalSpec('/bin/bash'),
+        session: _testSession(),
+        select: true,
+      );
+      final surfaceId = group.surfaceForPane(first.id)!.id;
+      final second = group.addPaneToSurface(
+        surfaceId: surfaceId,
+        axis: SplitAxis.horizontal,
+        cwd: '/tmp',
+        spec: const WorkspaceTerminalLocalSpec('/bin/bash'),
+        session: _testSession(),
+      );
+
+      disposeWorkbenchShellDomain(
+        runService: runService,
+        group: group,
+        surfaceId: surfaceId,
+      );
+
+      expect(closed, containsAll([first.id, second.id]));
+      expect(group.entries, isEmpty);
+      expect(group.surfaces, isEmpty);
     });
   });
 }

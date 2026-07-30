@@ -160,6 +160,60 @@ void main() {
       g.dispose();
     });
 
+    test('removeSurface disposes every pane and activates the neighbour', () {
+      final g = WorkspaceTerminalGroup();
+      final e1 = _add(g);
+      final first = g.activeSurfaceId!;
+      final e2 = g.addPaneToSurface(
+        surfaceId: first,
+        axis: SplitAxis.vertical,
+        cwd: '/tmp',
+        spec: const WorkspaceTerminalLocalSpec('/bin/bash'),
+        session: _testSession(),
+      );
+      final e3 = _add(g); // second surface, now active
+      expect(g.surfaces.length, 2);
+      expect(g.activeSurfaceId, g.surfaceForPane(e3.id)!.id);
+
+      // Close the non-active multi-pane surface: both its panes go, active stays.
+      final empty = g.removeSurface(first);
+      expect(empty, isFalse);
+      expect(g.surfaces.length, 1);
+      expect(g.entries.map((e) => e.id), [e3.id]);
+      expect(g.entryById(e1.id), isNull);
+      expect(g.entryById(e2.id), isNull);
+      expect(e1.session.isRunning, isFalse);
+      expect(e2.session.isRunning, isFalse);
+      expect(g.activeSurfaceId, g.surfaceForPane(e3.id)!.id);
+
+      // Closing the last surface empties the group.
+      final last = g.removeSurface(g.activeSurfaceId!);
+      expect(last, isTrue);
+      expect(g.surfaces, isEmpty);
+      expect(g.entries, isEmpty);
+      expect(g.activeSurfaceId, isNull);
+      g.dispose();
+    });
+
+    test('removeSurface migrates active when the active surface closes', () {
+      final g = WorkspaceTerminalGroup();
+      final e1 = _add(g);
+      final e2 = _add(g); // active
+      expect(g.activeSurfaceId, g.surfaceForPane(e2.id)!.id);
+      final closed = g.removeSurface(g.surfaceForPane(e2.id)!.id);
+      expect(closed, isFalse);
+      expect(g.activeSurfaceId, g.surfaceForPane(e1.id)!.id);
+      g.dispose();
+    });
+
+    test('removeSurface on unknown id returns emptiness of surface list', () {
+      final g = WorkspaceTerminalGroup();
+      expect(g.removeSurface('nope'), isTrue);
+      _add(g);
+      expect(g.removeSurface('nope'), isFalse);
+      g.dispose();
+    });
+
     test('addPaneToSurface builds a 2-leaf tree with the new pane focused', () {
       final g = WorkspaceTerminalGroup();
       final e1 = _add(g);

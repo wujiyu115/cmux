@@ -491,6 +491,8 @@
   "workspaceTerminalZoomPane": "缩放窗格",
   "workspaceTerminalUnzoomPane": "取消缩放",
   "workspaceTerminalClosePane": "关闭窗格",
+  "workspaceTerminalClearScreen": "清屏",
+  "workspaceTerminalSearch": "搜索",
   "workspaceTerminalCommandLog": "命令日志",
   "commandLogTitle": "命令日志",
   "commandLogRefresh": "刷新",
