@@ -14,6 +14,7 @@ import '../../cubits/workbench/workbench_cubit.dart';
 import '../../cubits/workspace_tools_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../models/home_closed_workspace_entry.dart';
+import '../../models/layout_preferences.dart';
 import '../../models/workspace.dart';
 import '../../models/workspace_tab_ref.dart';
 import '../../models/workspace_topology.dart';
@@ -30,14 +31,15 @@ import '../../services/workspace/workspace_run_registry.dart';
 import '../../services/workspace/workspace_tools_scope_registry.dart';
 import '../../services/workspace/workspace_worktree_registry.dart';
 import '../../theme/workspace_surface_layers.dart';
-import '../../utils/workspace/workspace_display_name.dart';
 import 'package:shared_ui/shared_ui.dart';
 import '../../widgets/run/run_toolbar.dart';
+import '../../widgets/split_layout.dart';
 import 'home_workspace_body_stack.dart';
 import 'home_workspace_tab_scope.dart';
 import 'home_workspace_title_bar.dart';
 import 'open_workspace_tab_actions.dart';
 import 'workspace_chrome_commands.dart';
+import 'workspace_nav_sidebar.dart';
 
 /// Persistent chrome for the workspace-home route family.
 class HomeShell extends StatefulWidget {
@@ -426,9 +428,33 @@ class _HomeShellState extends State<HomeShell> {
               child: HomeTabScope(
                 openWorkspace: (id, {activate = true}) =>
                     _openWorkspace(id, activate: activate),
-                child: HomeWorkspaceBodyStack(
-                  location: widget.location,
-                  openTabs: _openTabs,
+                child: BlocBuilder<LayoutCubit, LayoutState>(
+                  buildWhen: (a, b) =>
+                      a.preferences.workspaceNavWidth !=
+                      b.preferences.workspaceNavWidth,
+                  builder: (context, layoutState) {
+                    return TwoPaneSplitView(
+                      axis: Axis.horizontal,
+                      first: WorkspaceNavSidebar(
+                        location: widget.location,
+                        openTabs: _openTabs,
+                        onHomeTap: _goHome,
+                        onCloseTab: (tabKey) => unawaited(_closeTab(tabKey)),
+                      ),
+                      second: HomeWorkspaceBodyStack(
+                        location: widget.location,
+                        openTabs: _openTabs,
+                      ),
+                      initialSize:
+                          layoutState.preferences.workspaceNavWidth,
+                      minSize: LayoutPreferences.minWorkspaceNavWidth,
+                      maxSize: LayoutPreferences.maxWorkspaceNavWidth,
+                      minSecondarySize: 480,
+                      onSizeChanged: (width) => context
+                          .read<LayoutCubit>()
+                          .setWorkspaceNavWidth(width),
+                    );
+                  },
                 ),
               ),
             ),
@@ -479,16 +505,11 @@ class _HomeShellTitleBar extends StatelessWidget {
       for (final workspace in workspaces)
         if (openWorkspaceIds.contains(workspace.workspaceId)) workspace,
     ];
-    final l10n = context.l10n;
-    final tabs = <HomeWorkspaceTab>[
-      for (final tab in openTabs)
-        if (_HomeShellState._resolve(openWorkspaces, tab.workspaceId)
-            case final workspace?)
-          _workspaceTab(tab: tab, workspace: workspace, l10n: l10n),
-    ];
-
+    // Workspace tabs now live in the left [WorkspaceNavSidebar]; the title bar
+    // keeps only window chrome, the home pill, recently-closed, and the Run
+    // toolbar for the active tab.
     return HomeTitleBar(
-      tabs: tabs,
+      tabs: const [],
       activeTabKey: activeTab?.tabKey,
       pageChrome: pageChrome,
       recentlyClosed: recentlyClosed,
@@ -531,26 +552,6 @@ class _HomeShellTitleBar extends StatelessWidget {
     );
   }
 
-  HomeWorkspaceTab _workspaceTab({
-    required WorkspaceTabRef tab,
-    required Workspace workspace,
-    required AppLocalizations l10n,
-  }) {
-    final workspaceName = workspace.localizedName(l10n);
-    final topology = workspaceTopologyOf(workspace.folders);
-    return HomeWorkspaceTab(
-      id: tab.tabKey,
-      name: workspaceName,
-      topology: topology,
-      tooltip: formatWorkspaceTabTooltip(
-        workspace: workspace,
-        displayName: workspaceName,
-        topology: topology,
-        topologyLabel: workspaceTopologyLabel(l10n, topology),
-      ),
-      closable: true,
-    );
-  }
 }
 
 Future<Map<String, Object?>?> _pickRunActionResult(
