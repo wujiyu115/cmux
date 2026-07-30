@@ -36,14 +36,6 @@ void main() {
     expect(identical(center, chat), isTrue);
   });
 
-  test('sidebar list body is deferred with session skeleton', () {
-    final source = File(
-      'lib/pages/home_workspace/workspace/workspace_sidebar.dart',
-    ).readAsStringSync();
-    expect(source.contains('TpDeferredMountShell('), isTrue);
-    expect(source.contains('placeholder: const _SessionListSkeleton()'), isTrue);
-  });
-
   test('chat pane body defers one frame after sidebar list', () {
     final source = File(
       'lib/pages/home_workspace/workspace/workspace_chat_pane.dart',

@@ -165,12 +165,8 @@ class AppKeys {
   static const llmConfigOpenSessionSettingsButton = Key(
     'llm-config-open-session-settings-button',
   );
-  static const newChatSidebarTile = Key('new-chat-sidebar-tile');
   static const workspaceTabRowNewChatButton = Key('workspace-tab-row-new-chat');
   static const newChatCliMenuButton = Key('new-chat-cli-menu-button');
-  static const homeWorkspaceWorkspaceManagementTile = Key(
-    'home-workspace-workspace-management-tile',
-  );
   static const workspaceConfigWorkspace = Key('workspace-config-workspace');
   static const teamConfigHub = Key('team-config-hub');
   static const teamConfigWorkspace = Key('team-config-workspace');

@@ -26,7 +26,6 @@ import 'workspace_ide_center.dart';
 import 'workspace_route_active_scope.dart';
 import 'workspace_search_dialog.dart';
 import 'workspace_session_actions.dart';
-import 'workspace_sidebar.dart';
 import 'workspace_tools_scope_sync.dart';
 
 class WorkspaceSplitPane extends StatefulWidget {
@@ -185,10 +184,8 @@ class _WorkspaceSplitPaneState extends State<WorkspaceSplitPane> {
             child: WorkspaceIdeShell(
               composeLanding: composeLanding,
               terminalHold: _terminalHold,
-              left: WorkspaceSidebar(
-                workspace: widget.workspace,
-                tabScopeId: widget.tabScopeId,
-              ),
+              // Left pane retired: the global workspace nav owns switching now,
+              // and worktree/session actions moved to the shell "+" menu.
               // Unbound Chat pane skips ChatPageShell / workbench projection.
               center: buildWorkspaceIdeCenter(
                 newChat: composeLanding,

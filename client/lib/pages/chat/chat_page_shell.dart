@@ -28,6 +28,7 @@ import '../../widgets/workbench/workbench_session_sync.dart';
 import '../../widgets/workbench/workbench_shell_run_sync.dart';
 import '../../widgets/workspace_terminal/workspace_terminal_new_session_menu.dart';
 import '../../widgets/workspace_terminal_panel.dart';
+import '../home_workspace/workspace/workspace_session_actions.dart';
 import '../workbench/workbench_body.dart';
 import '../workspace_shell/workspace_shell.dart';
 import 'chat_page_structural_signal.dart';
@@ -44,11 +45,22 @@ Future<void> _showStripNewTerminalMenu({
 }) async {
   final trimmedCwd = cwd.trim();
   if (trimmedCwd.isEmpty || !context.mounted) return;
-  final folders =
-      WorkspaceToolsScope.maybeOf(context)?.effectiveFolders ?? const [];
+  final scope = WorkspaceToolsScope.maybeOf(context);
+  final folders = scope?.effectiveFolders ?? const [];
   final connector = context.read<WorkspaceShellConnector>();
   final launcher = context.read<WorkbenchShellLauncher>();
   final sshFailed = context.l10n.workspaceTerminalSshConnectFailed;
+  final workspace = context
+      .read<ChatCubit>()
+      .state
+      .workspaces
+      .where((w) => w.workspaceId == workspaceId)
+      .firstOrNull;
+  final toolsContext = scope?.tools?.context;
+  final worktreeReady =
+      workspace != null &&
+      toolsContext != null &&
+      worktreeManagementEnabled(toolsContext);
   await showWorkspaceTerminalLaunchMenu(
     context: context,
     globalPosition: anchor,
@@ -67,6 +79,18 @@ Future<void> _showStripNewTerminalMenu({
         ),
       );
     },
+    onNewWorktree: worktreeReady
+        ? () => unawaited(
+            openWorkspaceNewWorktree(
+              context,
+              workspace,
+              tabScopeId: tabScopeId,
+            ),
+          )
+        : null,
+    onRefreshWorktrees: worktreeReady
+        ? () => refreshWorkspaceWorktrees(context, workspace)
+        : null,
   );
 }
 

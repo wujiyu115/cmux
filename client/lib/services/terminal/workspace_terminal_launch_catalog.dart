@@ -8,7 +8,13 @@ import '../host/host_interactive_shell.dart';
 import '../host/wsl_distro_lookup.dart';
 import '../terminal/workspace_shell_connector.dart';
 
-enum WorkspaceTerminalLaunchAction { openSession, newSshProfile, settings }
+enum WorkspaceTerminalLaunchAction {
+  openSession,
+  newSshProfile,
+  settings,
+  newWorktree,
+  refreshWorktrees,
+}
 
 /// One choice in a workspace "default terminal" picker: a label plus the
 /// encoded [Workspace.defaultShell] value it selects (`null` = global default).
@@ -47,6 +53,18 @@ class WorkspaceTerminalLaunchMenuItem {
     : spec = null,
       label = '',
       action = WorkspaceTerminalLaunchAction.settings,
+      isDivider = false;
+
+  const WorkspaceTerminalLaunchMenuItem.newWorktree()
+    : spec = null,
+      label = '',
+      action = WorkspaceTerminalLaunchAction.newWorktree,
+      isDivider = false;
+
+  const WorkspaceTerminalLaunchMenuItem.refreshWorktrees()
+    : spec = null,
+      label = '',
+      action = WorkspaceTerminalLaunchAction.refreshWorktrees,
       isDivider = false;
 
   final WorkspaceTerminalSessionSpec? spec;

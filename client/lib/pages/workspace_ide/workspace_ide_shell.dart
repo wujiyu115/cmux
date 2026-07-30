@@ -23,15 +23,18 @@ import 'workspace_ide_pane_sync.dart';
 /// toggles.
 class WorkspaceIdeShell extends StatefulWidget {
   const WorkspaceIdeShell({
-    required this.left,
     required this.center,
     required this.right,
+    this.left,
     this.composeLanding = false,
     this.terminalHold,
     super.key,
   });
 
-  final Widget left;
+  /// Optional left pane. Null (the default) removes the left region entirely:
+  /// the workspace nav now lives globally and session/worktree actions moved to
+  /// the shell "+" menu, so the docked shell is a two-pane center | right.
+  final Widget? left;
   final Widget center;
   final Widget right;
 
@@ -85,6 +88,22 @@ class _WorkspaceIdeShellState extends State<WorkspaceIdeShell> {
   /// through dozens of layouts on the landing critical path.
   var _paneAnimationEnabled = false;
 
+  bool get _hasLeft => widget.left != null;
+
+  /// Forces the left region off when no [left] pane is supplied, so every
+  /// downstream consumer (snapshot dock flags, bounds, chrome insets, overlay)
+  /// sees a consistent "no left" policy regardless of `sidebarVisible` intent.
+  WorkspacePaneEffective _suppressLeft(WorkspacePaneEffective e) {
+    if (_hasLeft) return e;
+    return WorkspacePaneEffective(
+      isNarrow: e.isNarrow,
+      dockLeft: false,
+      dockRight: e.dockRight,
+      overlayLeft: false,
+      overlayRight: e.overlayRight,
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -93,11 +112,13 @@ class _WorkspaceIdeShellState extends State<WorkspaceIdeShell> {
     // short-circuit while controllers still show persisted right-tools intent.
     final layoutState = context.read<LayoutCubit>().state;
     final prefs = layoutState.preferences;
-    final effective = WorkspacePanePolicy.effective(
-      preferences: prefs,
-      viewportWidth: WorkspacePanePolicy.narrowBreakpointWidth,
-      composeLanding: widget.composeLanding,
-      landingRightToolsOverride: layoutState.landingRightToolsOverride,
+    final effective = _suppressLeft(
+      WorkspacePanePolicy.effective(
+        preferences: prefs,
+        viewportWidth: WorkspacePanePolicy.narrowBreakpointWidth,
+        composeLanding: widget.composeLanding,
+        landingRightToolsOverride: layoutState.landingRightToolsOverride,
+      ),
     );
     _rowController = PaneController(
       entries: [
@@ -177,11 +198,13 @@ class _WorkspaceIdeShellState extends State<WorkspaceIdeShell> {
     final layoutState = context.read<LayoutCubit>().state;
     return WorkspaceIdePaneSnapshot.from(
       preferences: preferences,
-      effective: WorkspacePanePolicy.effective(
-        preferences: preferences,
-        viewportWidth: _viewportWidth,
-        composeLanding: widget.composeLanding,
-        landingRightToolsOverride: layoutState.landingRightToolsOverride,
+      effective: _suppressLeft(
+        WorkspacePanePolicy.effective(
+          preferences: preferences,
+          viewportWidth: _viewportWidth,
+          composeLanding: widget.composeLanding,
+          landingRightToolsOverride: layoutState.landingRightToolsOverride,
+        ),
       ),
     );
   }
@@ -207,19 +230,23 @@ class _WorkspaceIdeShellState extends State<WorkspaceIdeShell> {
       return;
     }
     final layoutState = context.read<LayoutCubit>().state;
-    final was = WorkspacePanePolicy.effective(
-      preferences: layoutState.preferences,
-      viewportWidth: _viewportWidth,
-      composeLanding: widget.composeLanding,
-      landingRightToolsOverride: layoutState.landingRightToolsOverride,
+    final was = _suppressLeft(
+      WorkspacePanePolicy.effective(
+        preferences: layoutState.preferences,
+        viewportWidth: _viewportWidth,
+        composeLanding: widget.composeLanding,
+        landingRightToolsOverride: layoutState.landingRightToolsOverride,
+      ),
     );
     _viewportWidth = size.width;
     _viewportHeight = size.height;
-    final now = WorkspacePanePolicy.effective(
-      preferences: layoutState.preferences,
-      viewportWidth: _viewportWidth,
-      composeLanding: widget.composeLanding,
-      landingRightToolsOverride: layoutState.landingRightToolsOverride,
+    final now = _suppressLeft(
+      WorkspacePanePolicy.effective(
+        preferences: layoutState.preferences,
+        viewportWidth: _viewportWidth,
+        composeLanding: widget.composeLanding,
+        landingRightToolsOverride: layoutState.landingRightToolsOverride,
+      ),
     );
     final snapshot = WorkspaceIdePaneSnapshot.from(
       preferences: layoutState.preferences,
@@ -413,7 +440,7 @@ class _WorkspaceIdeShellState extends State<WorkspaceIdeShell> {
 
   // --- Build ----------------------------------------------------------------
 
-  bool get _leftDocked => _layoutSnapshot?.dockLeft ?? false;
+  bool get _leftDocked => _hasLeft && (_layoutSnapshot?.dockLeft ?? false);
 
   bool get _rightDocked => _layoutSnapshot?.dockRight ?? false;
 
@@ -476,12 +503,12 @@ class _WorkspaceIdeShellState extends State<WorkspaceIdeShell> {
 
   Widget _rowPaneBuilder(BuildContext context, String id, double progress) {
     return switch (id) {
-      _leftId => _narrow
+      _leftId => !_hasLeft || _narrow
           ? const SizedBox.shrink()
           : !_leftDocked
-          ? widget.left
+          ? widget.left!
           : _sideChrome(
-              child: widget.left,
+              child: widget.left!,
               leadingOuter: true,
               trailingOuter: false,
             ),
@@ -515,11 +542,13 @@ class _WorkspaceIdeShellState extends State<WorkspaceIdeShell> {
             _relevantPrefsChanged(a.preferences, b.preferences) ||
             a.landingRightToolsOverride != b.landingRightToolsOverride,
         builder: (context, layoutState) {
-          final effective = WorkspacePanePolicy.effective(
-            preferences: layoutState.preferences,
-            viewportWidth: _viewportWidth,
-            composeLanding: widget.composeLanding,
-            landingRightToolsOverride: layoutState.landingRightToolsOverride,
+          final effective = _suppressLeft(
+            WorkspacePanePolicy.effective(
+              preferences: layoutState.preferences,
+              viewportWidth: _viewportWidth,
+              composeLanding: widget.composeLanding,
+              landingRightToolsOverride: layoutState.landingRightToolsOverride,
+            ),
           );
           final snapshot = WorkspaceIdePaneSnapshot.from(
             preferences: layoutState.preferences,
@@ -543,7 +572,9 @@ class _WorkspaceIdeShellState extends State<WorkspaceIdeShell> {
                 showRight: effective.overlayRight,
                 leftWidth: prefs.sidebarWidth,
                 rightWidth: prefs.rightToolsWidth,
-                left: WorkspaceIdePaneChrome(child: widget.left),
+                left: _hasLeft
+                    ? WorkspaceIdePaneChrome(child: widget.left!)
+                    : null,
                 right: WorkspaceIdePaneChrome(child: widget.right),
                 onDismissLeft: () =>
                     context.read<LayoutCubit>().setSidebarVisible(false),

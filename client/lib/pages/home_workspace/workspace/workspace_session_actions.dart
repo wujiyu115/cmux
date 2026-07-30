@@ -23,12 +23,18 @@ import '../../../models/session_continue_overrides.dart';
 import '../../../models/cli_tool.dart';
 import '../../../models/workspace_terminal_session_spec.dart';
 import '../../../repositories/session_repository.dart';
+import '../../../services/git/git_worktree_service.dart';
 import '../../../services/host/host_interactive_shell.dart';
+import '../../../services/storage/app_storage.dart';
+import '../../../services/storage/runtime_context.dart';
+import '../../../services/storage/workspace_layout.dart';
 import '../../../services/workbench/workbench_shell_actions.dart';
 import '../../../services/workbench/workbench_shell_launcher.dart';
+import '../../../services/workspace/workspace_tools_scope.dart';
 import '../../../utils/workspace/landing_draft_resolver.dart';
 import '../../../utils/logging/logger.dart';
 import '../../../utils/workspace/workspace_path_utils.dart';
+import 'worktree_create_dialog.dart';
 
 const _uuid = Uuid();
 
@@ -275,6 +281,82 @@ Future<void> openWorkspaceDefaultTerminal(
   // landing) becomes the visible center. Unconditional clear — the shell tab
   // is not a chat session, so `exitNewChat` would re-arm the landing.
   if (context.mounted) context.read<ChatCubit>().dismissNewChat();
+}
+
+/// Whether worktree create/refresh applies to [workContext]'s work-plane
+/// (native, WSL, or SSH git). Drives the worktree entries in the shell "+" menu.
+bool worktreeManagementEnabled(RuntimeContext workContext) =>
+    workContext.mode == StorageBackendMode.native ||
+    workContext.mode == StorageBackendMode.wsl ||
+    workContext.mode == StorageBackendMode.ssh;
+
+/// Reloads the worktree list for [workspace]'s current repo. Wired to the shell
+/// "+" menu "refresh worktrees" entry (retired from the old sidebar header).
+void refreshWorkspaceWorktrees(BuildContext context, Workspace workspace) {
+  final cubit = context.read<WorktreeCubit>();
+  final repoPath = cubit.state.repoPath.trim().isNotEmpty
+      ? cubit.state.repoPath
+      : workspace.firstFolderPath;
+  unawaited(cubit.load(repoPath));
+}
+
+/// Opens the worktree-create dialog for [workspace], adds the worktree on its
+/// work-plane, then optionally launches a terminal in the new worktree. Wired to
+/// the shell "+" menu "new worktree" entry (retired from the old sidebar header).
+Future<void> openWorkspaceNewWorktree(
+  BuildContext context,
+  Workspace workspace, {
+  required String tabScopeId,
+}) async {
+  final cubit = context.read<WorktreeCubit>();
+  final l10n = context.l10n;
+  final tools = WorkspaceToolsScope.of(context).tools;
+  if (tools == null) return;
+  final repoPath = cubit.state.repoPath.trim().isNotEmpty
+      ? cubit.state.repoPath
+      : workspace.firstFolderPath;
+  final layout = WorkspaceLayout(teampilotRoot: AppStorage.paths.basePath);
+  final result = await showWorktreeCreateDialog(
+    context,
+    repoName: _repoBasename(repoPath),
+    repoPath: repoPath,
+    layout: layout.worktreePathFor,
+    branchLoader: branchListLoaderFor(tools.context),
+    showStartConversationOption: true,
+  );
+  if (result == null) return;
+  try {
+    await GitWorktreeService.forContext(tools.context).add(
+      repoPath,
+      result.worktreePath,
+      branch: result.branch,
+      baseRef: result.baseRef,
+      existingBranch: result.existingBranch,
+    );
+    await cubit.load(repoPath);
+    cubit.setCurrentWorktree(result.worktreePath);
+    if (result.startConversation && context.mounted) {
+      await openWorkspaceDefaultTerminal(
+        context,
+        workspace,
+        tabScopeId: tabScopeId,
+        worktreePath: result.worktreePath,
+      );
+    }
+  } on Object catch (error) {
+    if (!context.mounted) return;
+    AppToast.show(
+      context,
+      message: l10n.worktreeCreateFailed(error.toString()),
+      variant: TpToastVariant.error,
+    );
+  }
+}
+
+String _repoBasename(String path) {
+  final parts = path.replaceAll(r'\', '/').split('/')
+    ..removeWhere((e) => e.isEmpty);
+  return parts.isEmpty ? path : parts.last;
 }
 
 /// Creates a conversation from Chat, connects like automation dispatch, and

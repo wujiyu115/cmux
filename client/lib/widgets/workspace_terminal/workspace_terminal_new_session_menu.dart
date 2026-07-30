@@ -25,13 +25,27 @@ Future<void> showWorkspaceTerminalLaunchMenu({
   required List<WorkspaceFolder> folders,
   required WorkspaceShellConnector connector,
   required WorkspaceTerminalSessionSelected onSessionSelected,
+  VoidCallback? onNewWorktree,
+  VoidCallback? onRefreshWorktrees,
 }) async {
-  final items = await WorkspaceTerminalLaunchCatalog.build(
+  final catalog = await WorkspaceTerminalLaunchCatalog.build(
     folders: folders,
     sshProfiles: context.read<SshProfileRepository>(),
     connector: connector,
   );
   if (!context.mounted) return;
+
+  // Worktree management (create / refresh) leads the menu when in scope, so the
+  // shell "+" doubles as the worktree entry point retired from the old sidebar.
+  final items = <WorkspaceTerminalLaunchMenuItem>[
+    if (onNewWorktree != null)
+      const WorkspaceTerminalLaunchMenuItem.newWorktree(),
+    if (onRefreshWorktrees != null)
+      const WorkspaceTerminalLaunchMenuItem.refreshWorktrees(),
+    if (onNewWorktree != null || onRefreshWorktrees != null)
+      const WorkspaceTerminalLaunchMenuItem.divider(),
+    ...catalog,
+  ];
 
   final selected =
       await showTpActionMenuFromSpecs<WorkspaceTerminalLaunchMenuItem>(
@@ -44,6 +58,8 @@ Future<void> showWorkspaceTerminalLaunchMenu({
     context: context,
     selected: selected,
     onSessionSelected: onSessionSelected,
+    onNewWorktree: onNewWorktree,
+    onRefreshWorktrees: onRefreshWorktrees,
   );
 }
 
@@ -83,6 +99,22 @@ List<TpActionMenuSpec> _launchMenuSpecs(
             icon: Icons.settings_outlined,
           ),
         );
+      case WorkspaceTerminalLaunchAction.newWorktree:
+        specs.add(
+          TpActionMenuSpec.item(
+            value: item,
+            label: l10n.worktreeNewWorktreeTooltip,
+            icon: Icons.account_tree_outlined,
+          ),
+        );
+      case WorkspaceTerminalLaunchAction.refreshWorktrees:
+        specs.add(
+          TpActionMenuSpec.item(
+            value: item,
+            label: l10n.worktreeRefreshTooltip,
+            icon: Icons.refresh_rounded,
+          ),
+        );
     }
   }
   return specs;
@@ -92,6 +124,8 @@ Future<void> _handleLaunchMenuSelection({
   required BuildContext context,
   required WorkspaceTerminalLaunchMenuItem selected,
   required WorkspaceTerminalSessionSelected onSessionSelected,
+  VoidCallback? onNewWorktree,
+  VoidCallback? onRefreshWorktrees,
 }) async {
   switch (selected.action) {
     case WorkspaceTerminalLaunchAction.openSession:
@@ -102,6 +136,10 @@ Future<void> _handleLaunchMenuSelection({
     case WorkspaceTerminalLaunchAction.settings:
       if (!context.mounted) return;
       await showWorkspaceTerminalSettingsSheet(context);
+    case WorkspaceTerminalLaunchAction.newWorktree:
+      onNewWorktree?.call();
+    case WorkspaceTerminalLaunchAction.refreshWorktrees:
+      onRefreshWorktrees?.call();
   }
 }
 

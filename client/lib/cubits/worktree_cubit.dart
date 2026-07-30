@@ -62,7 +62,7 @@ class WorktreeState {
   );
 }
 
-/// How [WorkspaceSidebar] lays out the conversation list for the current repo.
+/// How the workbench lays out the conversation list for the current repo.
 enum WorktreeSessionListLayout {
   /// Worktree list not loaded yet — show a placeholder, not a flat list.
   indeterminate,
@@ -74,7 +74,7 @@ enum WorktreeSessionListLayout {
   grouped,
 }
 
-/// Snapshot of [WorktreeState] fields that drive [WorkspaceSidebar] grouping.
+/// Snapshot of [WorktreeState] fields that drive worktree grouping.
 class WorktreeSidebarView {
   const WorktreeSidebarView({
     required this.worktrees,
