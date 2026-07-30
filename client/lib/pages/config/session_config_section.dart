@@ -258,15 +258,6 @@ class _SessionControlsState extends State<_SessionControls> {
                     onChanged: (value) =>
                         cubit.setSimpleModeDefaultFullAccess(value),
                   ),
-                  showDividerBelow: true,
-                ),
-                TpPreferenceRow(
-                  title: l10n.notifyOnSessionIdleTitle,
-                  subtitle: l10n.notifyOnSessionIdleDescription,
-                  trailing: Switch(
-                    value: snapshot.notifyOnSessionIdle,
-                    onChanged: (value) => cubit.setNotifyOnSessionIdle(value),
-                  ),
                   showDividerBelow: false,
                 ),
               ],
@@ -286,7 +277,6 @@ class _SessionControlsSnapshot {
     required this.terminalLinkClickOpensInApp,
     required this.openExistingSessionStartsTerminal,
     required this.simpleModeDefaultFullAccess,
-    required this.notifyOnSessionIdle,
   });
 
   final String defaultSshWorkingDirectory;
@@ -295,7 +285,6 @@ class _SessionControlsSnapshot {
   final bool terminalLinkClickOpensInApp;
   final bool openExistingSessionStartsTerminal;
   final bool simpleModeDefaultFullAccess;
-  final bool notifyOnSessionIdle;
 
   static _SessionControlsSnapshot from(SessionPreferences preferences) {
     return _SessionControlsSnapshot(
@@ -306,7 +295,6 @@ class _SessionControlsSnapshot {
       openExistingSessionStartsTerminal:
           preferences.openExistingSessionStartsTerminal,
       simpleModeDefaultFullAccess: preferences.simpleModeDefaultFullAccess,
-      notifyOnSessionIdle: preferences.notifyOnSessionIdle,
     );
   }
 
@@ -319,8 +307,7 @@ class _SessionControlsSnapshot {
         other.terminalLinkClickOpensInApp == terminalLinkClickOpensInApp &&
         other.openExistingSessionStartsTerminal ==
             openExistingSessionStartsTerminal &&
-        other.simpleModeDefaultFullAccess == simpleModeDefaultFullAccess &&
-        other.notifyOnSessionIdle == notifyOnSessionIdle;
+        other.simpleModeDefaultFullAccess == simpleModeDefaultFullAccess;
   }
 
   @override
@@ -331,6 +318,5 @@ class _SessionControlsSnapshot {
     terminalLinkClickOpensInApp,
     openExistingSessionStartsTerminal,
     simpleModeDefaultFullAccess,
-    notifyOnSessionIdle,
   );
 }

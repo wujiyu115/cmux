@@ -8,7 +8,6 @@ void main() {
       expect(prefs.cliExecutablePathFor('flashskyai'), '');
       expect(prefs.defaultSshWorkingDirectory, '');
       expect(prefs.sshUseLoginShell, false);
-      expect(prefs.notifyOnSessionIdle, true);
       expect(prefs.openExistingSessionStartsTerminal, false);
       expect(prefs.simpleModeDefaultFullAccess, true);
     });
@@ -22,7 +21,6 @@ void main() {
         },
         defaultSshWorkingDirectory: '~/work',
         sshUseLoginShell: true,
-        notifyOnSessionIdle: false,
         openExistingSessionStartsTerminal: true,
         simpleModeDefaultFullAccess: false,
       );
@@ -34,7 +32,6 @@ void main() {
       });
       expect(restored.defaultSshWorkingDirectory, '~/work');
       expect(restored.sshUseLoginShell, true);
-      expect(restored.notifyOnSessionIdle, false);
       expect(restored.openExistingSessionStartsTerminal, true);
       expect(restored.simpleModeDefaultFullAccess, false);
     });

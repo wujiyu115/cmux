@@ -1082,18 +1082,6 @@ abstract class AppLocalizations {
   /// **'New Chat'**
   String get defaultNewChatSessionTitle;
 
-  /// No description provided for @sessionIdleNotificationTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Agent ready'**
-  String get sessionIdleNotificationTitle;
-
-  /// No description provided for @sessionIdleNotificationSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Ready for your next message'**
-  String get sessionIdleNotificationSubtitle;
-
   /// No description provided for @sessionStarting.
   ///
   /// In en, this message translates to:
@@ -2723,7 +2711,7 @@ abstract class AppLocalizations {
   /// No description provided for @openExistingSessionStartsTerminalDescription.
   ///
   /// In en, this message translates to:
-  /// **'When enabled, opening a conversation from the sidebar connects the terminal immediately. When off (default), open the Chat view first; send from Chat to start the terminal.'**
+  /// **'When enabled, opening a saved session connects the terminal immediately. When off (default), open the Chat view first; send from Chat to start the terminal.'**
   String get openExistingSessionStartsTerminalDescription;
 
   /// No description provided for @simpleModeDefaultFullAccessTitle.
@@ -2737,18 +2725,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'When enabled (default), new Simple-mode compose landing starts with full access permissions. Workspace chip choices still override and persist per workspace.'**
   String get simpleModeDefaultFullAccessDescription;
-
-  /// No description provided for @notifyOnSessionIdleTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Agent idle system notification'**
-  String get notifyOnSessionIdleTitle;
-
-  /// No description provided for @notifyOnSessionIdleDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'When a session finishes a turn and becomes idle, show an OS notification in addition to the in-app notification center.'**
-  String get notifyOnSessionIdleDescription;
 
   /// No description provided for @credentialPushOptInTitle.
   ///

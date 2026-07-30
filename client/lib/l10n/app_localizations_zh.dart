@@ -522,12 +522,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get defaultNewChatSessionTitle => '新对话';
 
   @override
-  String get sessionIdleNotificationTitle => 'Agent 已就绪';
-
-  @override
-  String get sessionIdleNotificationSubtitle => '可以继续对话了';
-
-  @override
   String get sessionStarting => '正在启动会话…';
 
   @override
@@ -1378,7 +1372,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get openExistingSessionStartsTerminalDescription =>
-      '开启后，从侧边栏打开对话会立即连接终端。关闭（默认）时先显示聊天视图，发送消息后才启动终端。';
+      '开启后，打开已保存会话会立即连接终端。关闭（默认）时先显示聊天视图，发送消息后才启动终端。';
 
   @override
   String get simpleModeDefaultFullAccessTitle => '简单模式默认：完全访问';
@@ -1386,13 +1380,6 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get simpleModeDefaultFullAccessDescription =>
       '开启（默认）时，简单模式落地页默认使用完全访问权限。工作区里权限芯片的选择仍会覆盖并按工作区持久化。';
-
-  @override
-  String get notifyOnSessionIdleTitle => 'Agent 空闲系统通知';
-
-  @override
-  String get notifyOnSessionIdleDescription =>
-      '会话结束一轮工作并进入空闲时，除应用内通知中心外，同时发送操作系统通知。';
 
   @override
   String get credentialPushOptInTitle => '把凭证推送到此机器';

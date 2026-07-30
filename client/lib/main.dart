@@ -63,7 +63,6 @@ import 'services/notification/desktop_system_notifier.dart';
 import 'services/notification/notification_recorder.dart';
 import 'services/terminal/command_log_sink.dart';
 import 'services/notification/session_idle_notification_tap.dart';
-import 'widgets/notification/session_idle_notification_listener.dart';
 import 'widgets/ssh/ssh_connection_binder.dart';
 import 'repositories/layout_repository.dart';
 import 'theme/app_font_prepare.dart';
@@ -653,9 +652,7 @@ void main() async {
                   BlocProvider.value(value: shell.shortcutCubit),
                 ],
                 child: SshConnectionBinder(
-                  child: const SessionIdleNotificationListener(
-                    child: ShortcutDispatcherHost(child: TeamPilotApp()),
-                  ),
+                  child: const ShortcutDispatcherHost(child: TeamPilotApp()),
                 ),
               ),
             ),

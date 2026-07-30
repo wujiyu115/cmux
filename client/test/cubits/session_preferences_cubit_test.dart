@@ -107,19 +107,6 @@ void main() {
     },
   );
 
-  test('notifyOnSessionIdle defaults to true and persists toggle', () async {
-    final cubit = await makeCubit();
-    await cubit.load();
-    expect(cubit.state.preferences.notifyOnSessionIdle, true);
-
-    await cubit.setNotifyOnSessionIdle(false);
-    expect(cubit.state.preferences.notifyOnSessionIdle, false);
-
-    final cubit2 = await makeCubit();
-    await cubit2.load();
-    expect(cubit2.state.preferences.notifyOnSessionIdle, false);
-  });
-
   test(
     'simpleModeDefaultFullAccess defaults to true and persists toggle',
     () async {

@@ -546,12 +546,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get defaultNewChatSessionTitle => 'New Chat';
 
   @override
-  String get sessionIdleNotificationTitle => 'Agent ready';
-
-  @override
-  String get sessionIdleNotificationSubtitle => 'Ready for your next message';
-
-  @override
   String get sessionStarting => 'Starting session…';
 
   @override
@@ -1434,7 +1428,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get openExistingSessionStartsTerminalDescription =>
-      'When enabled, opening a conversation from the sidebar connects the terminal immediately. When off (default), open the Chat view first; send from Chat to start the terminal.';
+      'When enabled, opening a saved session connects the terminal immediately. When off (default), open the Chat view first; send from Chat to start the terminal.';
 
   @override
   String get simpleModeDefaultFullAccessTitle =>
@@ -1443,13 +1437,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get simpleModeDefaultFullAccessDescription =>
       'When enabled (default), new Simple-mode compose landing starts with full access permissions. Workspace chip choices still override and persist per workspace.';
-
-  @override
-  String get notifyOnSessionIdleTitle => 'Agent idle system notification';
-
-  @override
-  String get notifyOnSessionIdleDescription =>
-      'When a session finishes a turn and becomes idle, show an OS notification in addition to the in-app notification center.';
 
   @override
   String get credentialPushOptInTitle => 'Push credentials to this machine';

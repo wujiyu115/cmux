@@ -6,7 +6,6 @@ class SessionPreferences {
     this.sshUseLoginShell = false,
     this.terminalScrollbackLines = 10000,
     this.terminalLinkClickOpensInApp = true,
-    this.notifyOnSessionIdle = true,
     this.openExistingSessionStartsTerminal = false,
     this.simpleModeDefaultFullAccess = true,
   }) : cliExecutablePaths = Map.unmodifiable(
@@ -33,7 +32,6 @@ class SessionPreferences {
           (json['terminalScrollbackLines'] as num?)?.toInt() ?? 10000,
       terminalLinkClickOpensInApp:
           json['terminalLinkClickOpensInApp'] as bool? ?? true,
-      notifyOnSessionIdle: json['notifyOnSessionIdle'] as bool? ?? true,
       openExistingSessionStartsTerminal:
           json['openExistingSessionStartsTerminal'] as bool? ?? false,
       simpleModeDefaultFullAccess:
@@ -67,11 +65,8 @@ class SessionPreferences {
   /// Ctrl/Cmd-click always opens in-app regardless of this setting.
   final bool terminalLinkClickOpensInApp;
 
-  /// When true, show an OS notification when a session leaves the working state.
-  final bool notifyOnSessionIdle;
-
-  /// When true, opening an existing conversation from the sidebar/search/deep
-  /// link connects the PTY immediately. When false (default), the session opens
+  /// When true, opening an existing conversation from search / deep link
+  /// connects the PTY immediately. When false (default), the session opens
   /// in history-review mode until the user submits from slim compose.
   final bool openExistingSessionStartsTerminal;
 
@@ -89,7 +84,6 @@ class SessionPreferences {
     bool? sshUseLoginShell,
     int? terminalScrollbackLines,
     bool? terminalLinkClickOpensInApp,
-    bool? notifyOnSessionIdle,
     bool? openExistingSessionStartsTerminal,
     bool? simpleModeDefaultFullAccess,
   }) {
@@ -103,7 +97,6 @@ class SessionPreferences {
           terminalScrollbackLines ?? this.terminalScrollbackLines,
       terminalLinkClickOpensInApp:
           terminalLinkClickOpensInApp ?? this.terminalLinkClickOpensInApp,
-      notifyOnSessionIdle: notifyOnSessionIdle ?? this.notifyOnSessionIdle,
       openExistingSessionStartsTerminal:
           openExistingSessionStartsTerminal ??
           this.openExistingSessionStartsTerminal,
@@ -120,7 +113,6 @@ class SessionPreferences {
       'sshUseLoginShell': sshUseLoginShell,
       'terminalScrollbackLines': terminalScrollbackLines,
       'terminalLinkClickOpensInApp': terminalLinkClickOpensInApp,
-      'notifyOnSessionIdle': notifyOnSessionIdle,
       'openExistingSessionStartsTerminal': openExistingSessionStartsTerminal,
       'simpleModeDefaultFullAccess': simpleModeDefaultFullAccess,
     };

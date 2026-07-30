@@ -192,10 +192,6 @@ class SessionPreferencesCubit extends Cubit<SessionPreferencesState> {
     );
   }
 
-  Future<void> setNotifyOnSessionIdle(bool value) {
-    return _save(state.preferences.copyWith(notifyOnSessionIdle: value));
-  }
-
   Future<void> setOpenExistingSessionStartsTerminal(bool value) {
     return _save(
       state.preferences.copyWith(openExistingSessionStartsTerminal: value),
