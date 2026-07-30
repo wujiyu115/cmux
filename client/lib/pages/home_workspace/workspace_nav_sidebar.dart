@@ -24,7 +24,7 @@ import 'workspace_nav_context_menu.dart';
 /// Global workspace navigation sidebar (cmux-style): lists every workspace,
 /// grouped by [WorkspaceGroup], click to open/activate the matching keep-alive
 /// tab. Replaces the title-bar tab strip.
-class WorkspaceNavSidebar extends StatelessWidget {
+class WorkspaceNavSidebar extends StatefulWidget {
   const WorkspaceNavSidebar({
     required this.location,
     required this.openTabs,
@@ -39,18 +39,52 @@ class WorkspaceNavSidebar extends StatelessWidget {
   final ValueChanged<String> onCloseTab;
 
   @override
+  State<WorkspaceNavSidebar> createState() => _WorkspaceNavSidebarState();
+}
+
+class _WorkspaceNavSidebarState extends State<WorkspaceNavSidebar> {
+  final _searchController = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final l10n = context.l10n;
     final activeWorkspaceId =
-        WorkspaceTabRef.fromLocation(location)?.workspaceId;
-    final openIds = openTabs.map((t) => t.workspaceId).toSet();
+        WorkspaceTabRef.fromLocation(widget.location)?.workspaceId;
+    final openIds = widget.openTabs.map((t) => t.workspaceId).toSet();
     final workspaces = context.select<ChatCubit, List<Workspace>>(
       (c) => c.state.workspaces,
     );
     final groups = context.select<WorkspaceGroupsCubit, List<WorkspaceGroup>>(
       (c) => c.state.groups,
     );
+
+    final query = _query.trim().toLowerCase();
+    final filtered = query.isEmpty
+        ? workspaces
+        : [
+            for (final w in workspaces)
+              if (w.localizedName(l10n).toLowerCase().contains(query)) w,
+          ];
+
+    // While searching, groups collapse into a flat matching-rows list — group
+    // headers only make sense against the full roster.
+    final sections = query.isEmpty
+        ? _buildSections(
+            context: context,
+            workspaces: filtered,
+            groups: groups,
+            activeWorkspaceId: activeWorkspaceId,
+            openIds: openIds,
+          )
+        : [for (final w in filtered) _row(context, w, activeWorkspaceId, openIds)];
 
     return Container(
       decoration: BoxDecoration(
@@ -64,12 +98,47 @@ class WorkspaceNavSidebar extends StatelessWidget {
         children: [
           const SizedBox(height: 8),
           Padding(
+            padding: const EdgeInsets.fromLTRB(8, 0, 8, 6),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TpInput(
+                    controller: _searchController,
+                    onChanged: (value) => setState(() => _query = value),
+                    decoration: InputDecoration(
+                      hintText: l10n.shortcutsWorkspaceSearch,
+                      prefixIcon: Icon(
+                        Icons.search_rounded,
+                        size: context.tpIconSizes.sm,
+                        color: cs.onSurfaceVariant,
+                      ),
+                      prefixIconConstraints: const BoxConstraints(
+                        minWidth: 34,
+                        minHeight: 34,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                TpIconButton(
+                  icon: Icons.add_rounded,
+                  tooltip: l10n.newWorkspace,
+                  onTap: () => showHomeNewWorkspaceDialog(
+                    context,
+                    chatCubit: context.read<ChatCubit>(),
+                    repository: context.read<SessionRepository>(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: _NavRow(
               icon: Icons.home_filled,
               label: l10n.homeWorkspaceMainWindow,
               active: activeWorkspaceId == null,
-              onTap: onHomeTap,
+              onTap: widget.onHomeTap,
             ),
           ),
           const SizedBox(height: 6),
@@ -77,40 +146,35 @@ class WorkspaceNavSidebar extends StatelessWidget {
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              children: _buildSections(
-                context: context,
-                workspaces: workspaces,
-                groups: groups,
-                activeWorkspaceId: activeWorkspaceId,
-                openIds: openIds,
-              ),
+              children: sections,
             ),
           ),
           Divider(height: 1, color: cs.outlineVariant.withValues(alpha: 0.5)),
           Padding(
-            padding: const EdgeInsets.fromLTRB(8, 6, 8, 2),
+            padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
             child: _NavRow(
               icon: Icons.create_new_folder_outlined,
               label: l10n.workspaceNavNewGroup,
               onTap: () => _createGroup(context),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(8, 2, 8, 8),
-            child: _NavRow(
-              icon: Icons.add_rounded,
-              label: l10n.newWorkspace,
-              onTap: () => showHomeNewWorkspaceDialog(
-                context,
-                chatCubit: context.read<ChatCubit>(),
-                repository: context.read<SessionRepository>(),
-              ),
-            ),
-          ),
         ],
       ),
     );
   }
+
+  _WorkspaceNavRow _row(
+    BuildContext context,
+    Workspace workspace,
+    String? activeWorkspaceId,
+    Set<String> openIds,
+  ) => _WorkspaceNavRow(
+    workspace: workspace,
+    active: workspace.workspaceId == activeWorkspaceId,
+    closable: openIds.contains(workspace.workspaceId),
+    onTap: () => HomeTabScope.openInTab(context, workspace.workspaceId),
+    onClose: () => widget.onCloseTab(workspace.workspaceId),
+  );
 
   List<Widget> _buildSections({
     required BuildContext context,
@@ -130,13 +194,8 @@ class WorkspaceNavSidebar extends StatelessWidget {
       }
     }
 
-    Widget row(Workspace workspace) => _WorkspaceNavRow(
-      workspace: workspace,
-      active: workspace.workspaceId == activeWorkspaceId,
-      closable: openIds.contains(workspace.workspaceId),
-      onTap: () => HomeTabScope.openInTab(context, workspace.workspaceId),
-      onClose: () => onCloseTab(workspace.workspaceId),
-    );
+    Widget row(Workspace workspace) =>
+        _row(context, workspace, activeWorkspaceId, openIds);
 
     final sections = <Widget>[];
     for (final group in groups) {
