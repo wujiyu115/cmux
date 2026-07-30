@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:teampilot/cubits/agent_attention_cubit.dart';
-import 'package:teampilot/cubits/automation_cubit.dart';
 import 'package:teampilot/cubits/chat_cubit.dart';
 import 'package:teampilot/cubits/worktree_cubit.dart';
 import 'package:teampilot/l10n/app_localizations.dart';
@@ -44,7 +43,6 @@ SidebarRebuildProbeState _probeState(WidgetTester tester, Key key) {
 
 void main() {
   late ChatCubit chatCubit;
-  late AutomationCubit automationCubit;
   late WorktreeCubit worktreeCubit;
   late AgentAttentionCubit attentionCubit;
   late SessionRepository sessionRepository;
@@ -56,14 +54,12 @@ void main() {
       executableResolver: () => 'claude',
       sessionRepository: sessionRepository,
     );
-    automationCubit = testAutomationCubit();
     worktreeCubit = WorktreeCubit();
     attentionCubit = AgentAttentionCubit(pruneInterval: null);
   });
 
   tearDown(() async {
     if (!chatCubit.isClosed) await chatCubit.close();
-    if (!automationCubit.isClosed) await automationCubit.close();
     if (!worktreeCubit.isClosed) await worktreeCubit.close();
     if (!attentionCubit.isClosed) await attentionCubit.close();
     tearDownTestAppStorage();
@@ -92,7 +88,6 @@ void main() {
                   lazy: false,
                   create: (_) => chatCubit,
                 ),
-                BlocProvider<AutomationCubit>.value(value: automationCubit),
                 BlocProvider<WorktreeCubit>.value(value: worktreeCubit),
                 BlocProvider<AgentAttentionCubit>.value(value: attentionCubit),
               ],

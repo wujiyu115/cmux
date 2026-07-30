@@ -52,7 +52,6 @@ class _SpyTerminalSession extends TerminalSession {
 class _RecordingChatCubit extends ChatCubit {
   _RecordingChatCubit({
     required super.executableResolver,
-    required super.automationRepository,
     required super.sessionRepository,
     required super.postFrameScheduler,
     required super.terminalSessionFactory,
@@ -126,7 +125,6 @@ void main() {
       shells.clear();
       chatCubit = _RecordingChatCubit(
         executableResolver: () => 'true',
-        automationRepository: testAutomationRepository(),
         sessionRepository: repo,
         postFrameScheduler: postFrame.scheduler,
         forwardOpen: forwardOpen,

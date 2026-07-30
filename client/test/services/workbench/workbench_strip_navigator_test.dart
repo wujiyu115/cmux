@@ -86,7 +86,6 @@ void main() {
       sessionIds.clear();
       chat = ChatCubit(
         executableResolver: () => 'true',
-        automationRepository: testAutomationRepository(),
         sessionRepository: repo,
         postFrameScheduler: postFrame.scheduler,
         terminalSessionFactory:

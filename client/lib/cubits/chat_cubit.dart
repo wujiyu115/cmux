@@ -14,7 +14,6 @@ import '../models/workspace_icon_picker_result.dart';
 import '../models/workspace_icon_ref.dart';
 import '../models/cli_tool.dart';
 import '../models/runtime_target.dart';
-import '../repositories/automation_repository.dart';
 import '../repositories/session_repository.dart';
 import '../services/workspace/workspace_icon_service.dart';
 import '../services/workspace/workspace_icon_storage.dart';
@@ -72,13 +71,11 @@ class ChatCubit extends Cubit<ChatState>
     AgentStatusGateway? agentStatusGateway,
     AgentStatusSeatLookup? agentStatusSeatLookup,
     AgentAttentionCubit? agentAttentionCubit,
-    required AutomationRepository automationRepository,
     LayoutCubit? layoutCubit,
   }) : _teammateBusMcpGateway =
            agentStatusGateway ?? AgentStatusGateway(),
        _agentStatusSeatLookup = agentStatusSeatLookup,
        _agentAttentionCubit = agentAttentionCubit,
-       _automationRepository = automationRepository,
        _layoutCubit = layoutCubit,
        _shellFactory = ChatSessionShellFactory(
          executableResolver: executableResolver,
@@ -115,15 +112,7 @@ class ChatCubit extends Cubit<ChatState>
   final AgentStatusSeatLookup? _agentStatusSeatLookup;
   final AgentAttentionCubit? _agentAttentionCubit;
   StreamSubscription<AgentAttentionState>? _agentAttentionSub;
-  final AutomationRepository _automationRepository;
   final LayoutCubit? _layoutCubit;
-  VoidCallback? _onAutomationsChanged;
-
-  void bindAutomationsChangeNotifier(VoidCallback listener) {
-    _onAutomationsChanged = listener;
-  }
-
-  void _notifyAutomationsChanged() => _onAutomationsChanged?.call();
   final ChatTabStore _tabStore = ChatTabStore();
   final SessionDataStore _dataStore = SessionDataStore();
   final Map<String, Future<void>> _sessionHydrationByWorkspace = {};
@@ -1063,9 +1052,6 @@ class ChatCubit extends Cubit<ChatState>
   }
 
   Future<void> deleteSession(SessionRepository repo, String sessionId) async {
-    final session = state.sessions
-        .where((s) => s.sessionId == sessionId)
-        .firstOrNull;
     final wasActive = state.activeSessionId == sessionId;
     final sessions = state.sessions
         .where((s) => s.sessionId != sessionId)
@@ -1126,13 +1112,6 @@ class ChatCubit extends Cubit<ChatState>
     }
 
     _emitSnapshot(await _dataStore.deleteSessionRecord(repo, sessionId));
-    if (session != null) {
-      await _automationRepository.disableForSession(
-        session.workspaceId,
-        sessionId,
-      );
-      _notifyAutomationsChanged();
-    }
   }
 
   Future<Workspace> cloneWorkspace(
@@ -1164,8 +1143,6 @@ class ChatCubit extends Cubit<ChatState>
     for (final sid in workspace.sessionIds.toList()) {
       await deleteSession(repo, sid);
     }
-    await _automationRepository.removeWorkspace(workspaceId);
-    _notifyAutomationsChanged();
     _emitSnapshot(await _dataStore.deleteWorkspaceRecord(repo, workspaceId));
   }
 

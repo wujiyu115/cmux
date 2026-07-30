@@ -43,7 +43,6 @@ void main() {
       );
       final chat = ChatCubit(
         executableResolver: () => 'flashskyai',
-        automationRepository: testAutomationRepository(),
       );
       addTearDown(chat.close);
       final ws = Workspace(

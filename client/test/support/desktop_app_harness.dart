@@ -119,7 +119,6 @@ Widget buildTestApp({
       chatCubit ??
       ChatCubit(
         executableResolver: desktopHarnessExecutable,
-        automationRepository: testAutomationRepository(),
       );
   final sshEvents = SshConnectionEvents();
   final sshCredentialStore = InMemorySshCredentialStore();
@@ -254,11 +253,6 @@ Widget buildTestApp({
           create: (_) => SshConnectionCubit(
             factory: sshClientFactory,
             coordinator: sshCoordinator,
-          ),
-        ),
-        BlocProvider(
-          create: (_) => testAutomationCubit(
-            sessionRepository: desktopHarnessSessionRepo,
           ),
         ),
       ],

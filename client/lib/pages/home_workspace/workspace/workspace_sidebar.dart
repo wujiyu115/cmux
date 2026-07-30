@@ -33,7 +33,6 @@ import '../../../utils/session/workspace_sessions.dart';
 import '../../../utils/session/workspace_tab_session_scope.dart';
 import 'workspace_sidebar_probe.dart';
 import '../../../widgets/sidebar_session_tile.dart';
-import 'workspace_automations_section.dart';
 import 'workspace_search_dialog.dart';
 import 'workspace_session_actions.dart';
 
@@ -74,8 +73,6 @@ class _WorkspaceSidebarState extends State<WorkspaceSidebar> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          WorkspaceAutomationsSection(workspace: widget.workspace),
-          const SizedBox(height: 12),
           _SidebarActionTile(
             key: AppKeys.newChatSidebarTile,
             icon: Icons.edit_outlined,

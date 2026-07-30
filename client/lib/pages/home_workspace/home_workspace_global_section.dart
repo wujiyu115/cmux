@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../automations/automation_management_page.dart';
 import '../extensions/extension_management_page.dart';
 
 /// Which global management view is shown in the workspace-home right pane.
 enum HomeGlobalView {
-  extensions,
-  automations;
+  extensions;
 
   /// Query key on `/home-v2` for deep-linking a global management pane.
   static const globalQueryParam = 'global';
@@ -62,7 +60,6 @@ class _HomeGlobalSectionState extends State<HomeGlobalSection> {
         section: _extension,
         onSelectSection: (s) => setState(() => _extension = s),
       ),
-      HomeGlobalView.automations => const AutomationManagementPage(),
     };
     if (MediaQuery.disableAnimationsOf(context)) return content;
     return content

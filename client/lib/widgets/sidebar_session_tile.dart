@@ -5,14 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../cubits/agent_attention_cubit.dart';
-import '../cubits/automation_cubit.dart';
-import '../cubits/automation_state.dart';
 import '../cubits/chat_cubit.dart';
 import '../l10n/l10n_extensions.dart';
 import '../models/app_session.dart';
-import '../models/automation_list_scope.dart';
-import '../pages/automations/automation_editor_dialog.dart';
-import '../pages/automations/automations_dialog.dart';
 import '../pages/home_workspace/workspace/workspace_sidebar_row_metrics.dart';
 import '../repositories/session_repository.dart';
 import '../utils/session/session_row_content.dart';
@@ -72,7 +67,6 @@ class _SidebarSessionTileState extends State<SidebarSessionTile> {
 
   SessionRepository? _repo;
   ChatCubit? _chatCubit;
-  var _sessionAutomationCount = 0;
 
   static const _deleteArmTimeout = Duration(seconds: 4);
 
@@ -81,21 +75,6 @@ class _SidebarSessionTileState extends State<SidebarSessionTile> {
     super.didChangeDependencies();
     _repo = context.read<SessionRepository>();
     _chatCubit = context.read<ChatCubit>();
-    _refreshSessionAutomationCount(context.read<AutomationCubit>().state);
-  }
-
-  void _refreshSessionAutomationCount(AutomationState state) {
-    final session = widget.session;
-    final count = state.automations
-        .where(
-          (a) =>
-              a.workspaceId == session.workspaceId &&
-              a.sessionId == session.sessionId,
-        )
-        .length;
-    if (count != _sessionAutomationCount && mounted) {
-      setState(() => _sessionAutomationCount = count);
-    }
   }
 
   @override
@@ -153,21 +132,7 @@ class _SidebarSessionTileState extends State<SidebarSessionTile> {
         icon: session.pinned ? Icons.push_pin : Icons.push_pin_outlined,
         label: session.pinned ? l10n.unpinConversation : l10n.pinConversation,
       ),
-      TpActionMenuPopupItem(
-        value: 'schedule',
-        icon: Icons.schedule_rounded,
-        label: l10n.automationsSessionContextMenu,
-      ),
     ];
-    if (_sessionAutomationCount > 0) {
-      items.add(
-        TpActionMenuPopupItem(
-          value: 'manage_schedule',
-          icon: Icons.event_repeat_rounded,
-          label: l10n.automationsManageSessionContextMenu,
-        ),
-      );
-    }
     items.add(
       TpActionMenuPopupItem(
         value: 'delete',
@@ -186,31 +151,6 @@ class _SidebarSessionTileState extends State<SidebarSessionTile> {
         await _showRenameDialog(context, session, l10n);
       case 'pin':
         await _chatCubit?.toggleSessionPin(session.sessionId);
-      case 'schedule':
-        final title = session.resolveDisplayTitle(
-          l10n.defaultNewChatSessionTitle,
-        );
-        final saved = await AutomationEditorDialog.show(
-          context,
-          kind: AutomationEditorKind.scheduledMessage,
-          workspaceId: session.workspaceId,
-          sessionId: session.sessionId,
-          defaultName: l10n.automationsSessionDefaultName(title),
-        );
-        if (saved != null && mounted) {
-          _refreshSessionAutomationCount(context.read<AutomationCubit>().state);
-        }
-      case 'manage_schedule':
-        await showAutomationsPanelDialog(
-          context,
-          listScope: AutomationListScope.session(
-            session.workspaceId,
-            sessionId: session.sessionId,
-          ),
-        );
-        if (mounted) {
-          _refreshSessionAutomationCount(context.read<AutomationCubit>().state);
-        }
       case 'delete':
         _armDelete();
     }
@@ -461,13 +401,9 @@ class _SidebarSessionTileState extends State<SidebarSessionTile> {
     // and a live [RawTooltip]'s global pointer route then recreates its ticker
     // on a SingleTickerProviderStateMixin ("multiple tickers were created").
     // Tooltips stay enabled in every non-reorderable context.
-    final child = widget.index >= 0
+    return widget.index >= 0
         ? TooltipVisibility(visible: false, child: tile)
         : tile;
-    return BlocListener<AutomationCubit, AutomationState>(
-      listener: (context, state) => _refreshSessionAutomationCount(state),
-      child: child,
-    );
   }
 
   Future<void> _showRenameDialog(

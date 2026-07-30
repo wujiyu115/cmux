@@ -6,7 +6,6 @@ import '../support/post_frame_test_harness.dart';
 
 ChatCubit _cubit() => ChatCubit(
   executableResolver: () => '/bin/true',
-  automationRepository: testAutomationRepository(),
 );
 
 ChatTab _tab(String id) => ChatTab(

@@ -66,7 +66,6 @@ void main() {
       final postFrame = PostFrameTestHarness();
       final chat = ChatCubit(
         executableResolver: () => 'true',
-        automationRepository: testAutomationRepository(),
         sessionRepository: repo,
         terminalSessionFactory:
             ({required String executable, int scrollbackLines = 10000}) =>
@@ -146,7 +145,6 @@ void main() {
       final postFrame = PostFrameTestHarness();
       final chat = ChatCubit(
         executableResolver: () => 'true',
-        automationRepository: testAutomationRepository(),
         sessionRepository: repo,
         terminalSessionFactory:
             ({required String executable, int scrollbackLines = 10000}) =>

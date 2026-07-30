@@ -16,7 +16,6 @@ import 'app/ui_zoom_baseline.dart';
 import 'app/home_index_prefetch.dart';
 import 'cubits/app_bootstrap_cubit.dart';
 import 'cubits/app_update_cubit.dart';
-import 'cubits/automation_cubit.dart';
 import 'cubits/ssh_connection_cubit.dart';
 import 'cubits/chat_cubit.dart';
 import 'cubits/layout_cubit.dart';
@@ -77,7 +76,6 @@ import 'theme/terminal_derived_scheme.dart';
 import 'theme/workspace_surface_layers.dart';
 import 'theme/app_typography_scale.dart';
 import 'pages/system/error_page.dart';
-import 'services/automation/automation_scheduler.dart';
 import 'utils/logging/logger.dart';
 import 'widgets/app_text_scale_boundary.dart';
 import 'widgets/app_update_available_dialog.dart';
@@ -174,7 +172,6 @@ class _ShortcutDispatcherHostState extends State<ShortcutDispatcherHost> {
 class _CleanupWindowListener extends WindowListener {
   _CleanupWindowListener(
     this.chatCubit,
-    this.automationScheduler,
     this.workspaceTerminalRegistry,
     this.gitRepoStore,
     this.workspaceFileTreeStore,
@@ -183,7 +180,6 @@ class _CleanupWindowListener extends WindowListener {
     this.workspaceRunRegistry,
   );
   final ChatCubit chatCubit;
-  final AutomationScheduler automationScheduler;
   final WorkspaceTerminalRegistry workspaceTerminalRegistry;
   final GitRepoStore gitRepoStore;
   final WorkspaceFileTreeStore workspaceFileTreeStore;
@@ -198,7 +194,6 @@ class _CleanupWindowListener extends WindowListener {
 
   Future<void> _shutdownAndDestroy() async {
     try {
-      automationScheduler.stop();
       await chatCubit.close();
       workspaceTerminalRegistry.disposeAll();
       gitRepoStore.dispose();
@@ -217,8 +212,6 @@ class _CleanupWindowListener extends WindowListener {
 class _AppShutdownScope extends StatefulWidget {
   const _AppShutdownScope({
     required this.chatCubit,
-    required this.automationScheduler,
-    required this.automationCubit,
     required this.notificationCubit,
     required this.commandLogCubit,
     required this.sshConnectionCubit,
@@ -232,8 +225,6 @@ class _AppShutdownScope extends StatefulWidget {
   });
 
   final ChatCubit chatCubit;
-  final AutomationScheduler automationScheduler;
-  final AutomationCubit automationCubit;
   final NotificationCubit notificationCubit;
   final CommandLogCubit commandLogCubit;
   final SshConnectionCubit sshConnectionCubit;
@@ -252,9 +243,7 @@ class _AppShutdownScope extends StatefulWidget {
 class _AppShutdownScopeState extends State<_AppShutdownScope> {
   @override
   void dispose() {
-    widget.automationScheduler.stop();
     unawaited(widget.chatCubit.close());
-    unawaited(widget.automationCubit.close());
     unawaited(widget.notificationCubit.close());
     unawaited(widget.commandLogCubit.close());
     unawaited(widget.sshConnectionCubit.close());
@@ -307,7 +296,8 @@ class _AppUpdateAutoCheckState extends State<_AppUpdateAutoCheck> {
       if (!mounted || _started) return;
       _started = true;
       // Fire-and-forget: never blocks startup or surfaces errors.
-      unawaited(_cubitOrNull(context)?.autoCheckOnStartup());
+      // 已屏蔽启动自动检查更新（保留代码，如需恢复取消注释即可）
+      // unawaited(_cubitOrNull(context)?.autoCheckOnStartup());
     });
   }
 
@@ -542,7 +532,6 @@ void main() async {
             windowManager.addListener(
               _CleanupWindowListener(
                 shell.chatCubit,
-                shell.automationScheduler,
                 shell.workspaceTerminalRegistry,
                 shell.gitRepoStore,
                 shell.workspaceFileTreeStore,
@@ -554,8 +543,6 @@ void main() async {
           }
           return _AppShutdownScope(
             chatCubit: shell.chatCubit,
-            automationScheduler: shell.automationScheduler,
-            automationCubit: shell.automationCubit,
             notificationCubit: shell.notificationCubit,
             commandLogCubit: shell.commandLogCubit,
             sshConnectionCubit: shell.sshConnectionCubit,
@@ -659,7 +646,6 @@ void main() async {
                   BlocProvider.value(value: shell.layoutCubit),
                   BlocProvider.value(value: shell.workspaceToolsCubit),
                   BlocProvider.value(value: shell.sessionPreferencesCubit),
-                  BlocProvider.value(value: shell.automationCubit),
                   BlocProvider.value(value: shell.extensionCubit),
                   BlocProvider.value(value: shell.appUpdateCubit),
                   BlocProvider.value(value: shell.sshProfileCubit),

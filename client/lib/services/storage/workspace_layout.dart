@@ -70,12 +70,6 @@ class WorkspaceLayout {
   String workspaceConfigToolDir(String workspaceId, String tool) =>
       _ctx.join(workspaceConfigDir(workspaceId), tool.trim());
 
-  String workspaceAutomationsDir(String workspaceId) =>
-      _ctx.join(workspaceDir(workspaceId), 'automations');
-
-  String workspaceAutomationsFile(String workspaceId) =>
-      _ctx.join(workspaceAutomationsDir(workspaceId), 'automations.json');
-
   String sessionsDir(String workspaceId) =>
       _ctx.join(workspaceDir(workspaceId), 'sessions');
 

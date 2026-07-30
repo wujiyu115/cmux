@@ -94,7 +94,6 @@ void main() {
       final sessionRepo = SessionRepository(rootDir: appData.path);
       final chatCubit = ChatCubit(
         executableResolver: _executable,
-        automationRepository: testAutomationRepository(),
         sessionRepository: sessionRepo,
       );
       addTearDown(() => chatCubit.close());
@@ -208,7 +207,6 @@ void main() {
       final sessionRepo = SessionRepository(rootDir: appData.path);
       final chatCubit = ChatCubit(
         executableResolver: _executable,
-        automationRepository: testAutomationRepository(),
         sessionRepository: sessionRepo,
       );
       addTearDown(() => chatCubit.close());
@@ -339,7 +337,6 @@ void main() {
     final sessionRepo = SessionRepository(rootDir: appData.path);
     final chatCubit = ChatCubit(
       executableResolver: _executable,
-      automationRepository: testAutomationRepository(),
       sessionRepository: sessionRepo,
     );
     addTearDown(() => chatCubit.close());
@@ -477,7 +474,6 @@ void main() {
       final sessionRepo = SessionRepository(rootDir: appData.path);
       final chatCubit = ChatCubit(
         executableResolver: _executable,
-        automationRepository: testAutomationRepository(),
         sessionRepository: sessionRepo,
       );
       addTearDown(() => chatCubit.close());

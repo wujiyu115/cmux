@@ -12,7 +12,6 @@ class _RecordingChatCubit extends ChatCubit {
   _RecordingChatCubit()
     : super(
         executableResolver: () => 'true',
-        automationRepository: testAutomationRepository(),
       );
 
   final connects = <SessionConnectRequest>[];

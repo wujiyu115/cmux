@@ -8,7 +8,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../cubits/app_bootstrap_cubit.dart';
 import 'app_data_bootstrap.dart';
 import '../cubits/app_update_cubit.dart';
-import '../cubits/automation_cubit.dart';
 import '../cubits/agent_attention_cubit.dart';
 import '../cubits/chat_cubit.dart';
 import '../services/agent_status/agent_status_http_handler.dart';
@@ -43,7 +42,6 @@ import '../repositories/app_settings_repository.dart';
 import '../repositories/layout_repository.dart';
 import '../repositories/session_preferences_repository.dart';
 import '../repositories/session_repository.dart';
-import '../repositories/automation_repository.dart';
 import '../repositories/ssh_credential_store.dart';
 import '../repositories/ssh_known_host_repository.dart';
 import '../repositories/ssh_profile_repository.dart';
@@ -55,11 +53,6 @@ import '../services/extension/builtin_manifests.dart';
 import '../services/extension/extension_acquisition_engine.dart';
 import '../services/storage/app_storage.dart';
 import '../services/perf/live_perf_driver.dart';
-import '../services/storage/workspace_layout.dart';
-import '../services/automation/automation_delivery_gateway.dart';
-import '../services/automation/automation_dispatcher.dart';
-import '../services/automation/automation_schedule_calculator.dart';
-import '../services/automation/automation_scheduler.dart';
 import '../services/home_workspace/home_workspace_ui_cache.dart';
 import '../services/cli/toolchain_executable_discovery.dart';
 import '../services/commands/command_bus.dart';
@@ -149,8 +142,6 @@ class AppShell {
     required this.reinstallStorageContext,
     required this.bootstrapAppData,
     required this.homeWorkspaceUiCache,
-    required this.automationCubit,
-    required this.automationScheduler,
     required this.commandBus,
     required this.shortcutCubit,
     required this.workspaceChromeCommands,
@@ -201,8 +192,6 @@ class AppShell {
   final AppSettingsRepository appSettings;
   final Future<void> Function() reinstallStorageContext;
   final Future<void> Function() bootstrapAppData;
-  final AutomationCubit automationCubit;
-  final AutomationScheduler automationScheduler;
   final CommandBus commandBus;
   final ShortcutCubit shortcutCubit;
   final WorkspaceChromeCommands workspaceChromeCommands;
@@ -283,8 +272,6 @@ Future<AppShell> buildAppShell({
   late final ExtensionCubit extensionCubit;
   late final SessionRepository sessionRepo;
   late final ChatCubit chatCubit;
-  late final AutomationCubit automationCubit;
-  late final AutomationScheduler automationScheduler;
   late final EditorCubit editorCubit;
   late final SessionLifecycleService sessionLifecycleService;
   late final ConnectionModeService connectionModeService;
@@ -470,10 +457,6 @@ Future<AppShell> buildAppShell({
     ),
   );
 
-  final automationRepo = AutomationRepository(
-    fs: AppStorage.fs,
-    layout: WorkspaceLayout(teampilotRoot: AppStorage.paths.basePath),
-  );
   final agentStatusGateway = AgentStatusGateway();
   await agentStatusGateway.ensureStarted();
 
@@ -493,7 +476,6 @@ Future<AppShell> buildAppShell({
     agentAttentionCubit: agentAttentionCubit,
     sessionRepository: sessionRepo,
     lifecycleService: sessionLifecycleService,
-    automationRepository: automationRepo,
     layoutCubit: layoutCubit,
     executableResolver: () => sessionPreferencesCubit.resolveExecutable(),
     cliExecutableResolver: sessionPreferencesCubit.resolveExecutable,
@@ -543,40 +525,6 @@ Future<AppShell> buildAppShell({
         ? (id) => sshProfileCubit.selectProfile(id)
         : null,
   );
-
-  final scheduleCalculator = AutomationScheduleCalculator();
-  final automationDispatcher = AutomationDispatcher(
-    repository: automationRepo,
-    scheduleCalculator: scheduleCalculator,
-    sessionRepository: sessionRepo,
-    deliveryGateway: AutomationPtyGateway(
-      memberMaterializer: chatCubit.memberMaterializer,
-      sessionRuntime: chatCubit.sessionRuntime,
-    ),
-    requestOpenSession: chatCubit.requestOpenSession,
-    requestCreateAndOpenSession: chatCubit.requestCreateAndOpenSession,
-    workspaceById: (workspaceId) => chatCubit.state.workspaces
-        .where((w) => w.workspaceId == workspaceId)
-        .firstOrNull,
-    sessionById: (sessionId, workspaceId) => chatCubit.state.sessions
-        .where((s) => s.sessionId == sessionId && s.workspaceId == workspaceId)
-        .firstOrNull,
-  );
-  automationScheduler = AutomationScheduler(
-    repository: automationRepo,
-    dispatcher: automationDispatcher,
-    scheduleCalculator: scheduleCalculator,
-  );
-  automationCubit = AutomationCubit(
-    repository: automationRepo,
-    scheduler: automationScheduler,
-    scheduleCalculator: scheduleCalculator,
-  );
-  chatCubit.bindAutomationsChangeNotifier(() {
-    if (!automationCubit.isClosed) {
-      unawaited(automationCubit.reloadPreservingScope());
-    }
-  });
 
   final notificationCubit = NotificationCubit();
   final notificationBootstrap = notificationCubit.load();
@@ -683,7 +631,6 @@ Future<AppShell> buildAppShell({
     bootstrapCubit?.markAppReady(showOnboardingWizard: showOnboarding);
     LivePerfDriver.instance?.markAppReady();
     boot('bootstrapAppData complete');
-    automationScheduler.start();
   }
 
   editorCubit = EditorCubit();
@@ -780,8 +727,6 @@ Future<AppShell> buildAppShell({
     reinstallStorageContext: reinstallStorageContext,
     bootstrapAppData: bootstrapAppData,
     homeWorkspaceUiCache: homeWorkspaceUiCache,
-    automationCubit: automationCubit,
-    automationScheduler: automationScheduler,
     commandBus: commandBus,
     shortcutCubit: shortcutCubit,
     workspaceChromeCommands: workspaceChromeCommands,

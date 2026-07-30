@@ -22,7 +22,6 @@ void main() {
   test('chat tabs do not leak across workspaces', () {
     final cubit = ChatCubit(
       executableResolver: () => '/bin/true',
-      automationRepository: testAutomationRepository(),
     );
     cubit.setActiveWorkspace('personal-A');
     cubit.tabStore.append(_tab('a-sess'));

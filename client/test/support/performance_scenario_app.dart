@@ -97,7 +97,6 @@ class PerformanceScenarioApp {
         chatCubit ??
         ChatCubit(
           executableResolver: () => performanceTestExecutable,
-          automationRepository: testAutomationRepository(),
         );
     final sshEvents = SshConnectionEvents();
     final sshCredentialStore = InMemorySshCredentialStore();
@@ -224,11 +223,6 @@ class PerformanceScenarioApp {
             BlocProvider(create: (_) => WorkspaceToolsCubit()),
             BlocProvider(create: (_) => NotificationCubit()),
             BlocProvider(create: (_) => ShortcutCubit()),
-            BlocProvider(
-              create: (_) => testAutomationCubit(
-                sessionRepository: sessionRepository,
-              ),
-            ),
             BlocProvider(create: (_) => AppUpdateCubit(settings: settings)),
             BlocProvider(
               create: (_) => SshProfileCubit(

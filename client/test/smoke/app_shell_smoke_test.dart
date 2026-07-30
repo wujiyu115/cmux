@@ -40,7 +40,6 @@ void main() {
     final postFrame = PostFrameTestHarness();
     final chatCubit = ChatCubit(
       executableResolver: desktopHarnessExecutable,
-      automationRepository: testAutomationRepository(),
       terminalSessionFactory:
           ({required String executable, int scrollbackLines = 10000}) =>
               FakeTerminalSession(
