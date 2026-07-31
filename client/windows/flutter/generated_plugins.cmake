@@ -10,7 +10,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
   native_splash_screen_windows
   pasteboard
   screen_retriever_windows
-  speech_to_text_windows
   url_launcher_windows
   window_manager
 )
