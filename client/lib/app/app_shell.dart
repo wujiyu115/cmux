@@ -754,6 +754,9 @@ Future<AppShell> buildAppShell({
       if (paneId != null &&
           sessionCatalog.resolve(PairedSessionRef.paneCatalogId(paneId)) !=
               null) {
+        // Surface the reused pane's workspace on the desktop too (no-op when
+        // its tab is already open, or when no HomeShell is mounted).
+        workspaceChromeCommands.openWorkspaceTab?.call(request.workspaceId);
         return PairingActivationResult(
           catalogId: PairedSessionRef.paneCatalogId(paneId),
         );
@@ -762,6 +765,10 @@ Future<AppShell> buildAppShell({
         request.workspaceId,
       );
       if (entry == null) return null;
+      // A phone can spin up a terminal in a workspace the desktop never opened;
+      // open (and activate) that tab so the desktop renders the fresh pane
+      // instead of silently running it headless.
+      workspaceChromeCommands.openWorkspaceTab?.call(request.workspaceId);
       return PairingActivationResult(
         catalogId: PairedSessionRef.paneCatalogId(entry.id),
         // The phone asked for a specific dead pane and got a fresh terminal.

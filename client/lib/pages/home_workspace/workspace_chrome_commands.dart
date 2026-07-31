@@ -27,6 +27,12 @@ class WorkspaceChromeCommands {
   /// no `HomeShell` is mounted.
   void Function()? reopenClosedWorkspaceTab;
 
+  /// Opens (and optionally activates) the workspace tab for [workspaceId],
+  /// adding it to the open-tab list if absent. Used by remote pairing
+  /// activation so a terminal a phone spins up in a not-yet-open workspace
+  /// still surfaces on the desktop. `null` while no `HomeShell` is mounted.
+  void Function(String workspaceId, {bool activate})? openWorkspaceTab;
+
   /// Number of open workspace title-bar tabs; `0` while no `HomeShell` is
   /// mounted.
   int openTabCount = 0;
@@ -38,6 +44,7 @@ class WorkspaceChromeCommands {
     prevWorkspaceTab = null;
     closeActiveWorkspaceTab = null;
     reopenClosedWorkspaceTab = null;
+    openWorkspaceTab = null;
     openTabCount = 0;
   }
 }

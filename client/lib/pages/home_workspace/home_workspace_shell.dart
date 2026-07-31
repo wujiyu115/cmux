@@ -156,7 +156,16 @@ class _HomeShellState extends State<HomeShell> {
       ..prevWorkspaceTab = _prevWorkspaceTab
       ..closeActiveWorkspaceTab = _closeActiveWorkspaceTab
       ..reopenClosedWorkspaceTab = _reopenClosedWorkspaceTab
+      ..openWorkspaceTab = _openWorkspaceExternally
       ..openTabCount = _openTabs.length;
+  }
+
+  /// Handler for [WorkspaceChromeCommands.openWorkspaceTab]. Invoked from
+  /// outside the widget tree (remote pairing activation), so it may fire while
+  /// the shell is detaching — guard on [mounted] before touching state.
+  void _openWorkspaceExternally(String workspaceId, {bool activate = true}) {
+    if (!mounted || workspaceId.trim().isEmpty) return;
+    _openWorkspace(workspaceId, activate: activate);
   }
 
   void _nextWorkspaceTab() {
