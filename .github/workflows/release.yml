@@ -374,7 +374,7 @@ jobs:
 
   release:
     name: Publish GitHub Release
-    needs: [build-linux, build-macos, build-windows, build-android]
+    needs: [build-linux, build-macos, build-windows, build-android, build-ios]
     if: >-
       startsWith(github.ref, 'refs/tags/') ||
       (github.event_name == 'workflow_dispatch' &&
@@ -402,10 +402,10 @@ jobs:
           artifacts = pathlib.Path("artifacts")
           out = pathlib.Path("release-files")
           out.mkdir(parents=True, exist_ok=True)
-          suffixes = (".deb", ".appimage", ".dmg", ".msix", ".exe", ".zip", ".apk")
+          suffixes = (".deb", ".appimage", ".dmg", ".msix", ".exe", ".zip", ".apk", ".ipa")
           # flutter_app_packager 临时目录：…/teampilot-*-windows-setup_exe/TeamPilot.exe 等，不是发布物
           staging_suffixes = ("_exe", "_msix", "_zip", "_deb", "_dmg", "_appimage", "_apk")
-          expected_release_files = 8  # linux×2 + macos×1 + windows×3 + android×2
+          expected_release_files = 9  # linux×2 + macos×1 + windows×3 + android×2 + ios×1
 
           def is_inside_packaging_staging(path: pathlib.Path) -> bool:
               return any(
