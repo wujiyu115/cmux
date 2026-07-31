@@ -1,23 +1,16 @@
 name: Client Build Verify
 
+# Manual only. Pushes to main and pull requests no longer trigger CI; run this
+# from the Actions tab (or `gh workflow run client-verify.yml`) when you want the
+# analyze + test sweep across platforms.
 on:
-  push:
-    branches: [main]
-    paths:
-      - "client/**"
-      - "tools/mock_model_gateway/**"
-      - ".gitmodules"
-      - ".github/workflows/client-verify.yml"
-      - ".github/workflows/release.yml"
-      - ".github/workflows/auto-tag.yml"
-  pull_request:
-    paths:
-      - "client/**"
-      - "tools/mock_model_gateway/**"
-      - ".gitmodules"
-      - ".github/workflows/client-verify.yml"
-      - ".github/workflows/release.yml"
-      - ".github/workflows/auto-tag.yml"
+  workflow_dispatch:
+    inputs:
+      run_integration:
+        description: "Also run the Linux integration suite (Claude PTY + Docker SSH)"
+        type: boolean
+        required: false
+        default: false
 
 concurrency:
   group: client-verify-${{ github.workflow }}-${{ github.ref }}
@@ -55,6 +48,11 @@ jobs:
             platform: android
             install_linux_deps: false
             package_deb: false
+          - os: macos-latest
+            label: iOS
+            platform: ios
+            install_linux_deps: false
+            package_deb: false
 
     steps:
       - uses: actions/checkout@v4
@@ -62,6 +60,11 @@ jobs:
           submodules: recursive
 
       - uses: dtolnay/rust-toolchain@stable
+
+      # rust_lib_flutter_alacritty builds through cargokit during pod install.
+      - name: Add Rust iOS target
+        if: matrix.platform == 'ios'
+        run: rustup target add aarch64-apple-ios
 
       - name: Install Linux build dependencies
         if: matrix.install_linux_deps
@@ -108,8 +111,18 @@ jobs:
       - name: Unit and widget tests
         run: flutter test --exclude-tags integration
 
+      # No Apple signing certs in CI, so this only proves the iOS target compiles.
+      - name: Generate native splash sources
+        if: matrix.platform == 'ios'
+        run: dart run native_splash_screen_cli gen
+
+      - name: Build iOS (unsigned)
+        if: matrix.platform == 'ios'
+        run: flutter build ios --release --no-codesign
+
   integration-linux:
     name: Linux integration (Claude PTY + Docker SSH)
+    if: inputs.run_integration
     runs-on: ubuntu-22.04
     timeout-minutes: 45
     defaults:
