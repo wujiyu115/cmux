@@ -1,27 +1,27 @@
 [submodule "client/packages/flutter_alacritty"]
 	path = client/packages/flutter_alacritty
-	url = https://github.com/hhoao/flutter_alacritty.git
+	url = git@github.com:wujiyu115/flutter_alacritty.git
 	branch = main
 
 [submodule "client/packages/dartssh2"]
 	path = client/packages/dartssh2
-	url = https://github.com/hhoao/dartssh2.git
+	url = git@github.com:wujiyu115/dartssh2.git
 
 [submodule "client/packages/re-editor"]
 	path = client/packages/re-editor
-	url = https://github.com/hhoao/re-editor.git
+	url = git@github.com:wujiyu115/re-editor.git
 
 [submodule "client/packages/native_splash_screen"]
 	path = client/packages/native_splash_screen
-	url = https://github.com/hhoao/native_splash_screen.git
+	url = git@github.com:wujiyu115/native_splash_screen.git
 	branch = main
 
 [submodule "client/packages/flutter_pty_new"]
 	path = client/packages/flutter_pty_new
-	url = https://github.com/hhoao/flutter_pty_new.git
+	url = git@github.com:wujiyu115/flutter_pty_new.git
 [submodule "client/packages/flutter_markdown_plus"]
 	path = client/packages/flutter_markdown_plus
-	url = https://github.com/hhoao/flutter_markdown_plus.git
+	url = git@github.com:wujiyu115/flutter_markdown_plus.git
 	branch = feat/continuous-selection
 [submodule "client/packages/shared_ui"]
 	path = client/packages/shared_ui
