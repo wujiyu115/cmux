@@ -323,9 +323,9 @@ class PairingClientCubit extends Cubit<PairingClientState> {
     }
   }
 
-  /// Activates [node] if dormant, then opens its live mirror. Live nodes go
-  /// straight to [openSession]. On failure clears the spinner and emits an error
-  /// without leaving the connected screen.
+  /// Opens [node]'s live mirror, asking the host to open a terminal first when
+  /// the pane is no longer alive. On failure clears the spinner and emits an
+  /// error without leaving the connected screen.
   Future<void> activateAndOpen(PairingSessionNode node) async {
     final client = _client;
     if (client == null) return;
@@ -338,9 +338,6 @@ class PairingClientCubit extends Cubit<PairingClientState> {
     try {
       final result = await client.activateSession(
         workspaceId: node.workspaceId,
-        kind: node.kind,
-        sessionId: node.sessionId,
-        memberId: node.memberId,
         paneId: node.paneId,
       );
       emit(

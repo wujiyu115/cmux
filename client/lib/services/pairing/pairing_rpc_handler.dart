@@ -105,7 +105,6 @@ class PairingRpcHandler {
     for (final entry in _catalog.list())
       {
         'catalogId': entry.ref.catalogId,
-        'kind': entry.ref.kind.name,
         'title': entry.ref.title,
         'subtitle': entry.ref.subtitle,
         'cols': entry.session.viewWidth,
@@ -113,9 +112,9 @@ class PairingRpcHandler {
       },
   ];
 
-  /// Full workspace tree: every workspace from disk, each with its persisted
-  /// chat sessions and its live workspace-terminal panes, with liveness /
-  /// catalogId / cols×rows merged in from the live [SessionCatalog].
+  /// Full workspace tree: every workspace from disk with its live terminal panes
+  /// merged in from the [SessionCatalog]. Workspaces with nothing running are
+  /// still listed — the phone can open a terminal in them via `session.activate`.
   Future<void> _workspaceList(Object? id) async {
     final provider = _workspaceIndex;
     if (provider == null) {
@@ -131,36 +130,15 @@ class PairingRpcHandler {
     }
     if (_disposed) return;
 
-    // Snapshot the live catalog once: catalogId → entry (liveness + geometry).
-    final live = <String, SessionCatalogEntry>{
-      for (final entry in _catalog.list()) entry.ref.catalogId: entry,
-    };
+    // Snapshot the live catalog once so every workspace reads the same view.
+    final live = _catalog.list();
 
     final out = <Map<String, Object?>>[];
     for (final ws in workspaces) {
-      final sessions = <Map<String, Object?>>[];
-      for (final s in ws.sessions) {
-        final catalogId = PairedSessionRef.chatId(s.sessionId, null);
-        final entry = live[catalogId];
-        sessions.add({
-          'kind': 'chat',
-          'sessionId': s.sessionId,
-          'title': s.title,
-          'subtitle': s.subtitle,
-          if (s.cli != null) 'cli': s.cli,
-          'started': s.started,
-          'live': entry != null,
-          if (entry != null) 'catalogId': catalogId,
-          if (entry != null) 'cols': entry.session.viewWidth,
-          if (entry != null) 'rows': entry.session.viewHeight,
-        });
-      }
       final panes = <Map<String, Object?>>[
-        for (final entry in live.values)
-          if (entry.ref.kind == PairedSessionKind.workspace &&
-              entry.ref.sessionId == ws.workspaceId)
+        for (final entry in live)
+          if (entry.ref.workspaceId == ws.workspaceId)
             {
-              'kind': 'workspace',
               'paneId': entry.ref.paneId,
               'title': entry.ref.title,
               'subtitle': entry.ref.subtitle,
@@ -173,16 +151,15 @@ class PairingRpcHandler {
       out.add({
         'workspaceId': ws.workspaceId,
         'title': ws.title,
-        'sessions': sessions,
         'panes': panes,
       });
     }
     _replyResult(id, {'workspaces': out});
   }
 
-  /// Activates a persisted session / dormant pane host-side, then waits (bounded)
-  /// for it to appear live in the catalog before returning its catalogId so the
-  /// client can immediately `terminal.subscribe`.
+  /// Opens/reuses a terminal host-side, then waits (bounded) for it to appear
+  /// live in the catalog before returning its catalogId so the client can
+  /// immediately `terminal.subscribe`.
   Future<void> _activate(Object? id, Map<String, Object?> params) async {
     final activator = _activator;
     if (activator == null) {
@@ -190,23 +167,12 @@ class PairingRpcHandler {
       return;
     }
     final workspaceId = params['workspaceId'];
-    final kindName = params['kind'];
-    if (workspaceId is! String || kindName is! String) {
-      _replyError(id, 'session.activate requires workspaceId + kind');
+    if (workspaceId is! String) {
+      _replyError(id, 'session.activate requires workspaceId');
       return;
     }
-    final kind = kindName == 'workspace'
-        ? PairingActivationKind.workspace
-        : PairingActivationKind.chat;
     final request = PairingActivationRequest(
       workspaceId: workspaceId,
-      kind: kind,
-      sessionId: params['sessionId'] is String
-          ? params['sessionId'] as String
-          : null,
-      memberId: params['memberId'] is String
-          ? params['memberId'] as String
-          : null,
       paneId: params['paneId'] is String ? params['paneId'] as String : null,
     );
 

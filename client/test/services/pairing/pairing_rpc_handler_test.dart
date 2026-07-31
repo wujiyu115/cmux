@@ -25,11 +25,11 @@ void main() {
 
   SessionCatalogEntry makeEntry() => SessionCatalogEntry(
     const PairedSessionRef(
-      catalogId: 'chat:s1:main',
-      kind: PairedSessionKind.chat,
+      catalogId: 'ws:p1',
       title: 'shell',
       subtitle: 'zsh',
-      sessionId: 's1',
+      workspaceId: 'wsA',
+      paneId: 'p1',
     ),
     session,
   );
@@ -66,8 +66,7 @@ void main() {
     final sessions = (frame.data['result'] as Map)['sessions'] as List;
     expect(sessions, hasLength(1));
     final s = sessions.single as Map;
-    expect(s['catalogId'], 'chat:s1:main');
-    expect(s['kind'], 'chat');
+    expect(s['catalogId'], 'ws:p1');
     expect(s['cols'], 100);
     expect(s['rows'], 30);
   });
@@ -80,7 +79,7 @@ void main() {
       PairingCodec.decode(_json({
         'id': 7,
         'method': 'terminal.subscribe',
-        'params': {'catalogId': 'chat:s1:main'},
+        'params': {'catalogId': 'ws:p1'},
       })),
     );
 
@@ -105,7 +104,7 @@ void main() {
       PairingCodec.decode(_json({
         'id': 1,
         'method': 'terminal.subscribe',
-        'params': {'catalogId': 'chat:s1:main'},
+        'params': {'catalogId': 'ws:p1'},
       })),
     );
     sent.clear();
@@ -139,7 +138,7 @@ void main() {
       PairingCodec.decode(_json({
         'id': 1,
         'method': 'terminal.subscribe',
-        'params': {'catalogId': 'chat:s1:main'},
+        'params': {'catalogId': 'ws:p1'},
       })),
     );
     handler.handle(
@@ -157,7 +156,7 @@ void main() {
       PairingCodec.decode(_json({
         'id': 1,
         'method': 'terminal.subscribe',
-        'params': {'catalogId': 'chat:s1:main'},
+        'params': {'catalogId': 'ws:p1'},
       })),
     );
     handler.handle(
@@ -175,7 +174,7 @@ void main() {
       PairingCodec.decode(_json({
         'id': 1,
         'method': 'terminal.subscribe',
-        'params': {'catalogId': 'chat:s1:main'},
+        'params': {'catalogId': 'ws:p1'},
       })),
     );
     sent.clear();
@@ -218,40 +217,24 @@ void main() {
       expect(frame.data['error'], contains('unsupported'));
     });
 
-    test('merges liveness/catalogId/geometry onto persisted sessions', () async {
-      // Live catalog: chat:s1:main (running) + a workspace pane in wsA.
-      final paneEntry = SessionCatalogEntry(
+    test('groups live panes under their owning workspace', () async {
+      final otherPane = SessionCatalogEntry(
         const PairedSessionRef(
-          catalogId: 'ws:p1',
-          kind: PairedSessionKind.workspace,
-          title: 'term',
-          subtitle: 'wsA',
-          sessionId: 'wsA',
-          paneId: 'p1',
+          catalogId: 'ws:p2',
+          title: 'other term',
+          subtitle: '/tmp',
+          workspaceId: 'wsB',
+          paneId: 'p2',
         ),
         session,
       );
-      catalog = SessionCatalog()..addSource(() => [makeEntry(), paneEntry]);
+      catalog = SessionCatalog()..addSource(() => [makeEntry(), otherPane]);
       handler = PairingRpcHandler(
         catalog: catalog,
         send: sent.add,
         workspaceIndex: () async => const [
-          PairingWorkspaceInfo(
-            workspaceId: 'wsA',
-            title: 'Workspace A',
-            sessions: [
-              PairingPersistedSession(
-                sessionId: 's1',
-                title: 'live one',
-                subtitle: 'zsh',
-              ),
-              PairingPersistedSession(
-                sessionId: 's2',
-                title: 'dead one',
-                subtitle: 'bash',
-              ),
-            ],
-          ),
+          PairingWorkspaceInfo(workspaceId: 'wsA', title: 'Workspace A'),
+          PairingWorkspaceInfo(workspaceId: 'wsC', title: 'Dormant'),
         ],
       );
 
@@ -262,24 +245,25 @@ void main() {
 
       final frame = decodeLast() as JsonFrame;
       final workspaces = (frame.data['result'] as Map)['workspaces'] as List;
-      expect(workspaces, hasLength(1));
-      final ws = workspaces.single as Map;
-      expect(ws['workspaceId'], 'wsA');
+      expect(workspaces, hasLength(2));
 
-      final sessions = ws['sessions'] as List;
-      final live = sessions[0] as Map;
-      expect(live['sessionId'], 's1');
-      expect(live['live'], true);
-      expect(live['catalogId'], 'chat:s1:main');
-      expect(live['cols'], 100);
-      final dead = sessions[1] as Map;
-      expect(dead['sessionId'], 's2');
-      expect(dead['live'], false);
-      expect(dead.containsKey('catalogId'), false);
-
-      final panes = ws['panes'] as List;
+      final wsA = workspaces[0] as Map;
+      expect(wsA['workspaceId'], 'wsA');
+      // Only wsA's own pane — wsB's pane belongs to a workspace not listed.
+      final panes = wsA['panes'] as List;
       expect(panes, hasLength(1));
-      expect((panes.single as Map)['catalogId'], 'ws:p1');
+      final pane = panes.single as Map;
+      expect(pane['catalogId'], 'ws:p1');
+      expect(pane['paneId'], 'p1');
+      expect(pane['live'], true);
+      expect(pane['cols'], 100);
+      expect(pane['rows'], 30);
+
+      // A workspace with nothing running still lists, so the phone can start one.
+      final wsC = workspaces[1] as Map;
+      expect(wsC['workspaceId'], 'wsC');
+      expect(wsC['panes'], isEmpty);
+      expect(wsC.containsKey('sessions'), false);
     });
   });
 
@@ -289,7 +273,7 @@ void main() {
         PairingCodec.decode(_json({
           'id': 1,
           'method': 'session.activate',
-          'params': {'workspaceId': 'wsA', 'kind': 'chat', 'sessionId': 's1'},
+          'params': {'workspaceId': 'wsA', 'paneId': 'p1'},
         })),
       );
       await Future<void>.delayed(Duration.zero);
@@ -308,7 +292,7 @@ void main() {
         activatePollInterval: const Duration(milliseconds: 5),
         activator: (req) async {
           isLive = true;
-          return const PairingActivationResult(catalogId: 'chat:s1:main');
+          return const PairingActivationResult(catalogId: 'ws:p1');
         },
       );
 
@@ -316,14 +300,14 @@ void main() {
         PairingCodec.decode(_json({
           'id': 4,
           'method': 'session.activate',
-          'params': {'workspaceId': 'wsA', 'kind': 'chat', 'sessionId': 's1'},
+          'params': {'workspaceId': 'wsA', 'paneId': 'p1'},
         })),
       );
       await Future<void>.delayed(const Duration(milliseconds: 30));
 
       final frame = decodeLast() as JsonFrame;
       final res = frame.data['result'] as Map;
-      expect(res['catalogId'], 'chat:s1:main');
+      expect(res['catalogId'], 'ws:p1');
       expect(res['cols'], 100);
       expect(res['fallback'], false);
     });
@@ -336,14 +320,14 @@ void main() {
         activateTimeout: const Duration(milliseconds: 20),
         activatePollInterval: const Duration(milliseconds: 5),
         activator: (req) async =>
-            const PairingActivationResult(catalogId: 'chat:s1:main'),
+            const PairingActivationResult(catalogId: 'ws:p1'),
       );
 
       handler.handle(
         PairingCodec.decode(_json({
           'id': 5,
           'method': 'session.activate',
-          'params': {'workspaceId': 'wsA', 'kind': 'chat', 'sessionId': 's1'},
+          'params': {'workspaceId': 'wsA', 'paneId': 'p1'},
         })),
       );
       await Future<void>.delayed(const Duration(milliseconds: 60));

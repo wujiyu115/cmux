@@ -2598,15 +2598,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pairingRefresh => '刷新';
 
   @override
-  String get pairingNoSessions => '此桌面上没有正在运行的会话。';
-
-  @override
-  String get pairingChatSessions => '聊天会话';
-
-  @override
-  String get pairingWorkspaceTerminals => '工作区终端';
-
-  @override
   String get pairingNoWorkspaces => '此桌面上没有工作区。';
 
   @override
@@ -2620,12 +2611,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get pairingActivating => '激活中…';
-
-  @override
-  String get pairingPersistedSessions => '会话';
-
-  @override
-  String get pairingLiveTerminals => '在线终端';
 
   @override
   String get pairingActivateFailed => '无法激活该会话。';
@@ -2705,6 +2690,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get pairingUndo => '撤销';
+
+  @override
+  String get pairingOpenTerminalHere => '在此打开终端';
 
   @override
   String get pairingSendCtrlC => '发送 Ctrl+C';

@@ -2686,15 +2686,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pairingRefresh => 'Refresh';
 
   @override
-  String get pairingNoSessions => 'No running sessions on this desktop.';
-
-  @override
-  String get pairingChatSessions => 'Chat sessions';
-
-  @override
-  String get pairingWorkspaceTerminals => 'Workspace terminals';
-
-  @override
   String get pairingNoWorkspaces => 'No workspaces on this desktop.';
 
   @override
@@ -2708,12 +2699,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pairingActivating => 'Activating…';
-
-  @override
-  String get pairingPersistedSessions => 'Sessions';
-
-  @override
-  String get pairingLiveTerminals => 'Live terminals';
 
   @override
   String get pairingActivateFailed => 'Could not activate that session.';
@@ -2802,6 +2787,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pairingUndo => 'Undo';
+
+  @override
+  String get pairingOpenTerminalHere => 'Open a terminal here';
 
   @override
   String get pairingSendCtrlC => 'Send Ctrl+C';

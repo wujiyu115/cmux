@@ -1219,16 +1219,11 @@
   "pairingReadyHint": "Ready to pair. Make sure this phone and the desktop are on the same network, then tap Connect.",
   "pairingDesktopFallback": "Desktop",
   "pairingRefresh": "Refresh",
-  "pairingNoSessions": "No running sessions on this desktop.",
-  "pairingChatSessions": "Chat sessions",
-  "pairingWorkspaceTerminals": "Workspace terminals",
   "pairingNoWorkspaces": "No workspaces on this desktop.",
   "pairingWorkspaces": "Workspaces",
   "pairingLiveBadge": "Live",
   "pairingOfflineBadge": "Offline",
   "pairingActivating": "Activating…",
-  "pairingPersistedSessions": "Sessions",
-  "pairingLiveTerminals": "Live terminals",
   "pairingActivateFailed": "Could not activate that session.",
   "pairingFallbackOpenedTerminal": "Chat session unavailable — opened a workspace terminal instead.",
   "pairingFromAlbum": "Pick from album",
@@ -1274,6 +1269,7 @@
     }
   },
   "pairingUndo": "Undo",
+  "pairingOpenTerminalHere": "Open a terminal here",
   "pairingSendCtrlC": "Send Ctrl+C",
   "pairingMirrorInputHint": "Tap the terminal to type"
 }

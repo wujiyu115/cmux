@@ -755,111 +755,47 @@ Future<AppShell> buildAppShell({
     }
     final deviceRegistry = DeviceRegistry(pairingKeyStore);
     final sessionCatalog = SessionCatalog()
-      ..addSource(() => _chatCatalogEntries(chatCubit))
-      ..addSource(
-        () => _workspaceCatalogEntries(workspaceTerminalRegistry),
-      );
-    // Push `session.changed` to mirrored phones whenever the catalog sources
-    // churn: terminal panes open/close (registry `changes` Listenable) or chat
-    // tabs change. Both singletons live for the app's lifetime, so these
-    // listeners are intentionally never detached.
+      ..addSource(() => _workspaceCatalogEntries(workspaceTerminalRegistry));
+    // Push `session.changed` to mirrored phones whenever terminal panes open or
+    // close. The registry lives for the app's lifetime, so this listener is
+    // intentionally never detached.
     workspaceTerminalRegistry.changes.addListener(sessionCatalog.notifyChanged);
-    chatCubit.stream.listen((_) => sessionCatalog.notifyChanged());
-    // Full workspace tree from disk (all workspaces + their persisted sessions),
-    // so the phone can list and activate even dormant workspaces/sessions.
+    // Every workspace on disk, so the phone can list (and open a terminal in)
+    // workspaces that currently have nothing running.
     Future<List<PairingWorkspaceInfo>> pairingWorkspaceIndex() async {
       final workspaces = await sessionRepo.loadWorkspacesIndex();
-      final sessionsPerWorkspace = await Future.wait(
-        workspaces.map((w) => sessionRepo.loadSessionsForWorkspace(w.workspaceId)),
-      );
       return [
-        for (var i = 0; i < workspaces.length; i++)
+        for (final workspace in workspaces)
           PairingWorkspaceInfo(
-            workspaceId: workspaces[i].workspaceId,
-            title: workspaces[i].effectiveDisplay,
-            sessions: [
-              for (final s in sessionsPerWorkspace[i])
-                PairingPersistedSession(
-                  sessionId: s.sessionId,
-                  title: s.display.isNotEmpty
-                      ? s.display
-                      : Workspace.directoryName(s.firstFolderPath),
-                  subtitle: Workspace.directoryName(s.firstFolderPath),
-                  cli: s.cli?.name,
-                  started: s.launchState == AppSessionLaunchState.started,
-                ),
-            ],
+            workspaceId: workspace.workspaceId,
+            title: workspace.effectiveDisplay,
           ),
       ];
     }
 
-    // Host-side activation: bring a dormant chat session / workspace pane live so
-    // the phone can mirror it. Chat resume runs the normal launch pipeline (which
-    // touches the desktop UI); if that fails we fall back to a plain workspace
-    // terminal so the phone always gets *something* mirrorable.
+    // Host-side activation: hand the phone a live pane to mirror. An already
+    // running pane is reused; anything else opens this workspace's default
+    // terminal, which is also how a workspace with nothing running becomes
+    // mirrorable.
     Future<PairingActivationResult?> pairingActivate(
       PairingActivationRequest request,
     ) async {
-      Future<PairingActivationResult?> openWorkspaceTerminal() async {
-        final entry = await resolvedShellLauncher.openDefaultShellForWorkspace(
-          request.workspaceId,
-        );
-        if (entry == null) return null;
+      final paneId = request.paneId;
+      if (paneId != null &&
+          sessionCatalog.resolve(PairedSessionRef.paneCatalogId(paneId)) !=
+              null) {
         return PairingActivationResult(
-          catalogId: PairedSessionRef.workspaceId(entry.id),
+          catalogId: PairedSessionRef.paneCatalogId(paneId),
         );
       }
-
-      if (request.kind == PairingActivationKind.workspace) {
-        // Already-live pane: reuse it directly.
-        final paneId = request.paneId;
-        if (paneId != null &&
-            sessionCatalog.resolve(PairedSessionRef.workspaceId(paneId)) !=
-                null) {
-          return PairingActivationResult(
-            catalogId: PairedSessionRef.workspaceId(paneId),
-          );
-        }
-        return openWorkspaceTerminal();
-      }
-
-      // Chat resume.
-      final sessionId = request.sessionId;
-      if (sessionId == null) return openWorkspaceTerminal();
-      final catalogId = PairedSessionRef.chatId(sessionId, null);
-      if (sessionCatalog.resolve(catalogId) != null) {
-        return PairingActivationResult(catalogId: catalogId);
-      }
-      try {
-        chatCubit.activateWorkspaceTab(workspaceTabKey: request.workspaceId);
-        await chatCubit.ensureSessionsForWorkspace(request.workspaceId);
-        final session = chatCubit.state.sessions
-            .where((s) => s.sessionId == sessionId)
-            .firstOrNull;
-        final workspace = chatCubit.state.workspaces
-            .where((w) => w.workspaceId == request.workspaceId)
-            .firstOrNull;
-        if (session == null) return openWorkspaceTerminal();
-        final status = await chatCubit.requestOpenSession(
-          SessionOpenRequest(
-            session: session,
-            workspace: workspace,
-            repo: sessionRepo,
-            connectImmediately: true,
-          ),
-        );
-        if (status == SessionOpenStatus.opened) {
-          return PairingActivationResult(catalogId: catalogId);
-        }
-      } on Object catch (e) {
-        appLogger.d('pairing chat activation failed: $e');
-      }
-      // Fallback: plain workspace terminal.
-      final fallback = await openWorkspaceTerminal();
-      if (fallback == null) return null;
+      final entry = await resolvedShellLauncher.openDefaultShellForWorkspace(
+        request.workspaceId,
+      );
+      if (entry == null) return null;
       return PairingActivationResult(
-        catalogId: fallback.catalogId,
-        fallback: true,
+        catalogId: PairedSessionRef.paneCatalogId(entry.id),
+        // The phone asked for a specific dead pane and got a fresh terminal.
+        fallback: paneId != null,
       );
     }
 
@@ -943,39 +879,6 @@ Future<AppShell> buildAppShell({
   );
 }
 
-/// Read-only projection of ChatCubit's tab store into pairing catalog entries.
-/// Only live (running) sessions are exposed for mirroring.
-List<SessionCatalogEntry> _chatCatalogEntries(ChatCubit chatCubit) {
-  final entries = <SessionCatalogEntry>[];
-  for (final tab in chatCubit.tabStore.openTabs) {
-    final sid = tab.info.id;
-    tab.memberShells.forEach((memberId, session) {
-      if (!session.isRunning) return;
-      // In cmux the primary shell is keyed by the session id itself. Expose it
-      // as the canonical `chat:<sid>:main` ref (memberId=null) that
-      // pairingActivate and workspace.list resolve against; otherwise the phone
-      // waits for an id the catalog never emits and activation times out. Extra
-      // members keep their own `chat:<sid>:<memberId>` ref.
-      final isPrimary = memberId == sid;
-      final refMemberId = isPrimary ? null : memberId;
-      entries.add(
-        SessionCatalogEntry(
-          PairedSessionRef(
-            catalogId: PairedSessionRef.chatId(sid, refMemberId),
-            kind: PairedSessionKind.chat,
-            title: isPrimary ? tab.info.title : '${tab.info.title} · $memberId',
-            subtitle: tab.info.subtitle,
-            sessionId: sid,
-            memberId: refMemberId,
-          ),
-          session,
-        ),
-      );
-    });
-  }
-  return entries;
-}
-
 /// Read-only projection of the workspace terminal registry into catalog entries.
 List<SessionCatalogEntry> _workspaceCatalogEntries(
   WorkspaceTerminalRegistry registry,
@@ -987,11 +890,10 @@ List<SessionCatalogEntry> _workspaceCatalogEntries(
       entries.add(
         SessionCatalogEntry(
           PairedSessionRef(
-            catalogId: PairedSessionRef.workspaceId(entry.id),
-            kind: PairedSessionKind.workspace,
+            catalogId: PairedSessionRef.paneCatalogId(entry.id),
             title: entry.titleLabel.isEmpty ? entry.cwd : entry.titleLabel,
-            subtitle: group.workspaceId,
-            sessionId: group.workspaceId,
+            subtitle: entry.cwd,
+            workspaceId: group.workspaceId,
             paneId: entry.id,
           ),
           entry.session,

@@ -35,8 +35,6 @@ class PairingNodeRow extends StatelessWidget {
       fontSize: 12,
       color: cs.onSurfaceVariant,
     );
-    final isChat = node.kind == 'chat';
-
     return InkWell(
       key: AppKeys.pairingSessionNode(node.nodeKey),
       onTap: busy ? null : onTap,
@@ -53,7 +51,7 @@ class PairingNodeRow extends StatelessWidget {
           child: Row(
             children: [
               Icon(
-                isChat ? Icons.chat_bubble_outline : Icons.terminal_outlined,
+                Icons.terminal_outlined,
                 size: 17,
                 color: node.live ? cs.tertiary : cs.onSurfaceVariant,
               ),

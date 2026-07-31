@@ -4,7 +4,7 @@ import '../../repositories/session_repository.dart';
 import '../storage/app_storage.dart';
 import '../../utils/workspace/workspace_path_utils.dart';
 
-/// First-launch bootstrap for the built-in workspace and its starter session.
+/// First-launch bootstrap for the built-in workspace.
 abstract final class DefaultWorkspaceService {
   DefaultWorkspaceService._();
 
@@ -14,9 +14,13 @@ abstract final class DefaultWorkspaceService {
   static Future<String> resolvePrimaryPath() =>
       DefaultWorkspaceDirectory.resolveDefaultWorkspacePath();
 
-  /// Ensures the default workspace exists with one starter session. Returns
-  /// whether storage was mutated. Pass [knownWorkspaces] when the index was
-  /// just loaded to avoid a second full scan.
+  /// Ensures the default workspace exists. Returns whether storage was mutated.
+  /// Pass [knownWorkspaces] when the index was just loaded to avoid a second
+  /// full scan.
+  ///
+  /// No starter session record is written: opening a workspace materialises its
+  /// terminals through [WorkspaceTerminalRegistry], so a seeded `session.json`
+  /// would only be an on-disk record nothing reads.
   static Future<bool> ensureDefault(
     SessionRepository repository, {
     List<Workspace>? knownWorkspaces,
@@ -27,10 +31,9 @@ abstract final class DefaultWorkspaceService {
     if (workspaces.isNotEmpty) return false;
 
     final primaryPath = await resolvePrimaryPath();
-    final workspace = await repository.createWorkspace([
+    await repository.createWorkspace([
       WorkspaceFolder(path: primaryPath),
     ], display: defaultDisplay);
-    await repository.createSession(workspace.workspaceId);
     return true;
   }
 

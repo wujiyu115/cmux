@@ -9,10 +9,10 @@ import '../../utils/ui/app_keys.dart';
 import 'pairing_nav_bar.dart';
 import 'pairing_workspace_group.dart';
 
-/// A paired desktop's full workspace tree: every workspace — including dormant
-/// ones with no live terminal — as a collapsible group listing its persisted chat
-/// sessions and its live workspace panes. Tapping any node activates it host-side
-/// (if needed) then opens its live mirror.
+/// A paired desktop's workspace tree: every workspace — including dormant ones
+/// with nothing running — as a collapsible group listing its live terminals.
+/// Tapping one opens its live mirror; a dormant workspace offers to open a
+/// terminal host-side first.
 class PairingSessionListPage extends StatelessWidget {
   const PairingSessionListPage({super.key});
 

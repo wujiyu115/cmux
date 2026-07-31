@@ -551,20 +551,23 @@ class ChatCubit extends Cubit<ChatState>
     return session;
   }
 
+  // TODO(cmux): `requestCreateAndOpenSession` has no live caller — it is the last
+  // path that writes an AppSession outside a clone. Removing it cascades into
+  // SessionCreateRequest / CreateSessionOperation / _runCreate / persistParams,
+  // so it is left for a dedicated pass.
   Future<SessionOpenStatus> requestCreateAndOpenSession(
     SessionCreateRequest request,
   ) => _launchService.requestCreateAndOpenSession(request);
 
-  /// Creates (or reuses) the workspace for [primaryPath], seeds a first session,
-  /// reloads workspace data, and returns the workspace id so callers can navigate
-  /// straight to the new workspace.
-  Future<String> createWorkspaceWithFirstSession(
+  /// Creates (or reuses) the workspace for [folders], reloads workspace data, and
+  /// returns the workspace id so callers can navigate straight to it.
+  Future<String> createWorkspace(
     List<WorkspaceFolder> folders,
     SessionRepository repo, {
     String display = '',
     bool allowDuplicate = false,
   }) async {
-    final result = await _dataStore.createWorkspaceWithFirstSession(
+    final result = await _dataStore.createWorkspace(
       folders,
       repo,
       display: display,

@@ -36,10 +36,7 @@ class _PairingWorkspaceGroupState extends State<PairingWorkspaceGroup> {
     final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final workspace = widget.workspace;
-    final liveCount = [
-      ...workspace.sessions,
-      ...workspace.panes,
-    ].where((n) => n.live).length;
+    final liveCount = workspace.panes.where((n) => n.live).length;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -62,7 +59,10 @@ class _PairingWorkspaceGroupState extends State<PairingWorkspaceGroup> {
               activatingKey: widget.activatingKey,
               onOpenNode: widget.onOpenNode,
             ),
-          if (workspace.sessions.isEmpty && workspace.panes.isEmpty && _expanded)
+          // Nothing running here — offer to start one rather than dead-ending,
+          // since this is the only way to get a mirrorable terminal in a
+          // dormant workspace from the phone.
+          if (workspace.panes.isEmpty && _expanded)
             Padding(
               padding: EdgeInsets.fromLTRB(
                 context.tpSpacing.xs,
@@ -70,9 +70,18 @@ class _PairingWorkspaceGroupState extends State<PairingWorkspaceGroup> {
                 context.tpSpacing.xs,
                 context.tpSpacing.md,
               ),
-              child: Text(
-                l10n.pairingNoSessions,
-                style: TpTextStyles.of(context).mutedSm,
+              child: TpButton(
+                key: AppKeys.pairingOpenTerminalButton(workspace.workspaceId),
+                variant: TpButtonVariant.outline,
+                onPressed: () => widget.onOpenNode(
+                  PairingSessionNode(
+                    workspaceId: workspace.workspaceId,
+                    title: workspace.title,
+                    subtitle: '',
+                    live: false,
+                  ),
+                ),
+                child: Text(l10n.pairingOpenTerminalHere),
               ),
             ),
         ],
@@ -100,7 +109,7 @@ class _Summary extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final styles = TpTextStyles.of(context);
     final spacing = context.tpSpacing;
-    final total = workspace.sessions.length + workspace.panes.length;
+    final total = workspace.panes.length;
 
     return InkWell(
       key: AppKeys.pairingWorkspaceHeader(workspace.workspaceId),
@@ -179,50 +188,19 @@ class _Body extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
+    // One flat list: everything mirrorable is a terminal, so a group header
+    // would separate rows that are the same kind of thing.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (workspace.sessions.isNotEmpty) ...[
-          _GroupHeader(l10n.pairingPersistedSessions),
-          for (final session in workspace.sessions)
-            PairingNodeRow(
-              node: session,
-              busy: activatingKey == session.nodeKey,
-              onTap: () => onOpenNode(session),
-            ),
-        ],
-        if (workspace.panes.isNotEmpty) ...[
-          _GroupHeader(l10n.pairingLiveTerminals),
-          for (final pane in workspace.panes)
-            PairingNodeRow(
-              node: pane,
-              busy: activatingKey == pane.nodeKey,
-              onTap: () => onOpenNode(pane),
-            ),
-        ],
+        for (final pane in workspace.panes)
+          PairingNodeRow(
+            node: pane,
+            busy: activatingKey == pane.nodeKey,
+            onTap: () => onOpenNode(pane),
+          ),
         SizedBox(height: context.tpSpacing.sm),
       ],
-    );
-  }
-}
-
-class _GroupHeader extends StatelessWidget {
-  const _GroupHeader(this.label);
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final spacing = context.tpSpacing;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(spacing.xs, spacing.sm, spacing.xs, spacing.xs),
-      child: Text(
-        label,
-        style: TpTextStyles.of(
-          context,
-        ).xsColored(Theme.of(context).colorScheme.onSurfaceVariant),
-      ),
     );
   }
 }

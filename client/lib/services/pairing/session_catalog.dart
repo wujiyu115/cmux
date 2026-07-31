@@ -2,43 +2,30 @@ import 'dart:async';
 
 import '../terminal/terminal_session.dart';
 
-/// Which registry a mirrored session came from. Chat tabs and workspace terminal
-/// panes are two disjoint registries; the catalog unifies them under one id space.
-enum PairedSessionKind { chat, workspace }
-
-/// Registry-neutral descriptor of one mirrorable terminal, safe to send over the
-/// wire. Carries a stable [catalogId] plus display metadata; the live
-/// [TerminalSession] is reached via [SessionCatalog.resolve], never serialized.
+/// Descriptor of one mirrorable terminal, safe to send over the wire. Carries a
+/// stable [catalogId] plus display metadata; the live [TerminalSession] is
+/// reached via [SessionCatalog.resolve], never serialized.
 class PairedSessionRef {
   const PairedSessionRef({
     required this.catalogId,
-    required this.kind,
     required this.title,
     required this.subtitle,
-    required this.sessionId,
-    this.memberId,
-    this.paneId,
+    required this.workspaceId,
+    required this.paneId,
   });
 
   final String catalogId;
-  final PairedSessionKind kind;
   final String title;
   final String subtitle;
 
-  /// Chat: `AppSession.sessionId`. Workspace: the owning group/workspace id.
-  final String sessionId;
+  /// Workspace this pane belongs to, so `workspace.list` can group it.
+  final String workspaceId;
 
-  /// Chat member-shell key (null for a chat tab's main shell).
-  final String? memberId;
+  /// Workspace terminal pane id.
+  final String paneId;
 
-  /// Workspace terminal pane id (null for chat).
-  final String? paneId;
-
-  /// Stable synthetic key: same live session yields the same id across reloads.
-  static String chatId(String sessionId, String? memberId) =>
-      'chat:$sessionId:${memberId ?? 'main'}';
-
-  static String workspaceId(String paneId) => 'ws:$paneId';
+  /// Stable synthetic key: the same live pane yields the same id across reloads.
+  static String paneCatalogId(String paneId) => 'ws:$paneId';
 }
 
 /// One catalog entry: its wire descriptor plus the live session behind it.
@@ -49,13 +36,13 @@ class SessionCatalogEntry {
 }
 
 /// Produces the current entries of one registry. Injected from bootstrap so the
-/// catalog stays ignorant of cubit internals (chat store / workspace registry).
+/// catalog stays ignorant of the workspace terminal registry's internals.
 typedef SessionCatalogSource = List<SessionCatalogEntry> Function();
 
-/// Read-only union of every mirrorable terminal across the app's disjoint
-/// session registries. Sources are registered at bootstrap; [list] flattens them
-/// on demand and [resolve] maps a wire [PairedSessionRef.catalogId] back to a
-/// live [TerminalSession]. Emits on [changes] when a registry signals churn.
+/// Read-only view of every mirrorable terminal. Sources are registered at
+/// bootstrap; [list] flattens them on demand and [resolve] maps a wire
+/// [PairedSessionRef.catalogId] back to a live [TerminalSession]. Emits on
+/// [changes] when a registry signals churn.
 class SessionCatalog {
   SessionCatalog();
 

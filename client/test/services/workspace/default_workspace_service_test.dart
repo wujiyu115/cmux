@@ -23,7 +23,7 @@ void main() {
     if (base.existsSync()) base.deleteSync(recursive: true);
   });
 
-  test('seed creates the Default workspace with one session', () async {
+  test('seed creates the Default workspace and no session record', () async {
     final repo = SessionRepository();
 
     final workspace = await DefaultWorkspaceService.seed(repo);
@@ -35,12 +35,13 @@ void main() {
     );
     expect(workspace.defaultProfileId, isEmpty);
 
+    // Terminals come from the workspace terminal registry on open, so a seeded
+    // session.json would just be an unread on-disk record.
     final sessions = await repo.loadSessions();
-    final workspaceSessions = sessions
-        .where((s) => s.workspaceId == workspace.workspaceId)
-        .toList();
-    expect(workspaceSessions, hasLength(1));
-    expect(workspaceSessions.single.profileId, isEmpty);
+    expect(
+      sessions.where((s) => s.workspaceId == workspace.workspaceId),
+      isEmpty,
+    );
   });
 
   test('seed is idempotent', () async {
@@ -51,11 +52,7 @@ void main() {
 
     final workspaces = await repo.loadWorkspaces();
     expect(workspaces, hasLength(1));
-    final sessions = await repo.loadSessions();
-    expect(
-      sessions.where((s) => s.workspaceId == workspaces.single.workspaceId),
-      hasLength(1),
-    );
+    expect(await repo.loadSessions(), isEmpty);
   });
 
   test('ensureDefault is idempotent and reports no mutation', () async {

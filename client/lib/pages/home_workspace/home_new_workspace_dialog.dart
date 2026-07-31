@@ -36,7 +36,7 @@ Future<void> showHomeNewWorkspaceDialog(
   );
   if (result == null || !context.mounted || result.folders.isEmpty) return;
 
-  final workspaceId = await chatCubit.createWorkspaceWithFirstSession(
+  final workspaceId = await chatCubit.createWorkspace(
     result.folders,
     repository,
     display: result.display,

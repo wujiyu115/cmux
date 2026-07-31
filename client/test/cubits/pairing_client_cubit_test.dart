@@ -20,7 +20,7 @@ class _FakePairingClient extends PairingClient {
     this.connectError,
     this.activateError,
     this.activateResult = const PairingActivateResult(
-      catalogId: 'chat:s1:main',
+      catalogId: 'ws:p1',
       cols: 80,
       rows: 24,
     ),
@@ -90,9 +90,6 @@ class _FakePairingClient extends PairingClient {
   @override
   Future<PairingActivateResult> activateSession({
     required String workspaceId,
-    required String kind,
-    String? sessionId,
-    String? memberId,
     String? paneId,
   }) async {
     if (activateError != null) throw activateError!;
@@ -127,12 +124,10 @@ class _FakePairingClient extends PairingClient {
 
 PairingWorkspaceNode _wsNode({
   String id = 'wsA',
-  List<PairingSessionNode> sessions = const [],
   List<PairingSessionNode> panes = const [],
 }) => PairingWorkspaceNode(
   workspaceId: id,
   title: 'Workspace A',
-  sessions: sessions,
   panes: panes,
 );
 
@@ -176,14 +171,14 @@ void main() {
         ),
         workspaces: [
           _wsNode(
-            sessions: const [
+            panes: const [
               PairingSessionNode(
                 workspaceId: 'wsA',
-                kind: 'chat',
                 title: 'shell',
                 subtitle: '',
-                live: false,
-                sessionId: 's1',
+                live: true,
+                paneId: 'p1',
+                catalogId: 'ws:p1',
               ),
             ],
           ),
@@ -208,7 +203,7 @@ void main() {
       expect(cubit.state.phase, PairingClientPhase.connected);
       expect(cubit.state.activeHostName, 'My Desktop');
       expect(cubit.state.workspaces, hasLength(1));
-      expect(cubit.state.workspaces.single.sessions, hasLength(1));
+      expect(cubit.state.workspaces.single.panes, hasLength(1));
       expect(cubit.state.pendingOffer, isNull);
 
       final saved = await settings.loadPairedDesktops();
@@ -360,10 +355,10 @@ void main() {
 
       cubit.beginPairing(_makeOffer());
       await cubit.confirmPairing();
-      await cubit.openSession('chat:s1:main');
+      await cubit.openSession('ws:p1');
 
       expect(cubit.state.phase, PairingClientPhase.mirroring);
-      expect(cubit.state.activeCatalogId, 'chat:s1:main');
+      expect(cubit.state.activeCatalogId, 'ws:p1');
       expect(cubit.activeSubscription, isNotNull);
 
       cubit.sendInput([104, 105]);
@@ -383,7 +378,7 @@ void main() {
 
       cubit.beginPairing(_makeOffer());
       await cubit.confirmPairing();
-      await cubit.openSession('chat:s1:main');
+      await cubit.openSession('ws:p1');
       cubit.leaveMirror();
 
       expect(cubit.state.phase, PairingClientPhase.connected);
@@ -422,24 +417,23 @@ void main() {
       await cubit.activateAndOpen(
         const PairingSessionNode(
           workspaceId: 'wsA',
-          kind: 'chat',
           title: 'shell',
           subtitle: '',
           live: true,
-          sessionId: 's1',
-          catalogId: 'chat:s1:main',
+          paneId: 'p1',
+          catalogId: 'ws:p1',
         ),
       );
 
       expect(cubit.state.phase, PairingClientPhase.mirroring);
-      expect(cubit.state.activeCatalogId, 'chat:s1:main');
+      expect(cubit.state.activeCatalogId, 'ws:p1');
       expect(cubit.state.activatingKey, isNull);
     });
 
     test('activateAndOpen: dormant node activates then mirrors', () async {
       final fake = _FakePairingClient(
         activateResult: const PairingActivateResult(
-          catalogId: 'chat:s2:main',
+          catalogId: 'ws:p2',
           cols: 80,
           rows: 24,
         ),
@@ -454,22 +448,21 @@ void main() {
 
       final keys = expectLater(
         cubit.stream.map((s) => s.activatingKey),
-        emitsThrough('chat:s2'),
+        emitsThrough('ws:p2'),
       );
       await cubit.activateAndOpen(
         const PairingSessionNode(
           workspaceId: 'wsA',
-          kind: 'chat',
           title: 'dead',
           subtitle: '',
           live: false,
-          sessionId: 's2',
+          paneId: 'p2',
         ),
       );
       await keys;
 
       expect(cubit.state.phase, PairingClientPhase.mirroring);
-      expect(cubit.state.activeCatalogId, 'chat:s2:main');
+      expect(cubit.state.activeCatalogId, 'ws:p2');
       expect(cubit.state.activatingKey, isNull);
     });
 
@@ -487,11 +480,10 @@ void main() {
       await cubit.activateAndOpen(
         const PairingSessionNode(
           workspaceId: 'wsA',
-          kind: 'chat',
           title: 'dead',
           subtitle: '',
           live: false,
-          sessionId: 's2',
+          paneId: 'p2',
         ),
       );
 
@@ -522,11 +514,10 @@ void main() {
       await cubit.activateAndOpen(
         const PairingSessionNode(
           workspaceId: 'wsA',
-          kind: 'chat',
           title: 'dead',
           subtitle: '',
           live: false,
-          sessionId: 's2',
+          paneId: 'p2',
         ),
       );
 

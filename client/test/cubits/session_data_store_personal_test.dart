@@ -31,20 +31,28 @@ void main() {
   });
 
   test(
-    'createWorkspaceWithFirstSession creates personal session without profile.json',
+    'createWorkspace writes the workspace and no session record',
     () async {
       const primaryPath = '/tmp/personal-workspace';
       final store = SessionDataStore();
 
-      final result = await store.createWorkspaceWithFirstSession(
+      final result = await store.createWorkspace(
         [WorkspaceFolder(path: primaryPath)],
         sessionRepo,
       );
 
+      // Terminals are materialised by the workspace terminal registry on open,
+      // so a fresh workspace carries no session.json.
       final sessions = result.snapshot.sessions
           .where((s) => s.workspaceId == result.workspaceId)
           .toList();
-      expect(sessions, hasLength(1));
+      expect(sessions, isEmpty);
+      expect(
+        Directory(
+          '${tmp.path}/workspace/workspaces/${result.workspaceId}/sessions',
+        ).existsSync(),
+        isFalse,
+      );
 
       final workspaces = result.snapshot.workspaces
           .where((p) => p.workspaceId == result.workspaceId)
@@ -60,11 +68,11 @@ void main() {
   );
 
   test(
-    'createWorkspaceWithFirstSession creates personal session on mixed workspace',
+    'createWorkspace keeps every folder of a mixed-target workspace',
     () async {
       final store = SessionDataStore();
 
-      final result = await store.createWorkspaceWithFirstSession(
+      final result = await store.createWorkspace(
         const [
           WorkspaceFolder(path: '/local'),
           WorkspaceFolder(path: '/remote', targetId: 'ssh:p1'),
@@ -81,7 +89,7 @@ void main() {
       final sessions = result.snapshot.sessions
           .where((s) => s.workspaceId == result.workspaceId)
           .toList();
-      expect(sessions, hasLength(1));
+      expect(sessions, isEmpty);
     },
   );
 }

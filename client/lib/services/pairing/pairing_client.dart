@@ -39,11 +39,10 @@ class PairingAuthResult {
   final String? deviceToken;
 }
 
-/// One mirrorable session as advertised by the host's `session.list`.
+/// One mirrorable terminal as advertised by the host's `session.list`.
 class PairingSessionSummary {
   const PairingSessionSummary({
     required this.catalogId,
-    required this.kind,
     required this.title,
     required this.subtitle,
     required this.cols,
@@ -51,73 +50,56 @@ class PairingSessionSummary {
   });
 
   final String catalogId;
-  final String kind;
   final String title;
   final String subtitle;
   final int cols;
   final int rows;
 }
 
-/// One node under a workspace in the `workspace.list` tree: either a persisted
-/// chat session (`kind == 'chat'`, keyed by [sessionId]) or a live workspace
-/// terminal pane (`kind == 'workspace'`, keyed by [paneId]). [live] is true when
-/// the host currently has it running; [catalogId] is only present when live and
-/// is what [subscribe] takes.
+/// One live terminal pane under a workspace in the `workspace.list` tree, keyed
+/// by [paneId]. [catalogId] is what [subscribe] takes.
 class PairingSessionNode {
   const PairingSessionNode({
     required this.workspaceId,
-    required this.kind,
     required this.title,
     required this.subtitle,
     required this.live,
-    this.sessionId,
     this.paneId,
-    this.memberId,
-    this.cli,
-    this.started = false,
     this.catalogId,
     this.cols = 0,
     this.rows = 0,
   });
 
   final String workspaceId;
-  final String kind; // 'chat' | 'workspace'
   final String title;
   final String subtitle;
   final bool live;
-  final String? sessionId;
   final String? paneId;
-  final String? memberId;
-  final String? cli;
-  final bool started;
   final String? catalogId;
   final int cols;
   final int rows;
 
-  /// Stable per-row identity: live catalogId if any, else kind-scoped local id.
-  String get nodeKey =>
-      catalogId ?? '$kind:${sessionId ?? paneId ?? ''}';
+  /// Stable per-row identity: live catalogId if any, else the pane id.
+  String get nodeKey => catalogId ?? 'ws:${paneId ?? ''}';
 }
 
-/// One workspace and its child nodes, as advertised by `workspace.list`. Covers
-/// dormant workspaces (no live terminals) too.
+/// One workspace and its live terminal panes, as advertised by `workspace.list`.
+/// Workspaces with nothing running are still listed.
 class PairingWorkspaceNode {
   const PairingWorkspaceNode({
     required this.workspaceId,
     required this.title,
-    this.sessions = const [],
     this.panes = const [],
   });
 
   final String workspaceId;
   final String title;
-  final List<PairingSessionNode> sessions;
   final List<PairingSessionNode> panes;
 }
 
 /// Outcome of [PairingClient.activateSession]: the catalogId to subscribe to,
-/// its live geometry, and whether the host fell back to opening a plain
-/// workspace terminal instead of resuming the requested chat session.
+/// its live geometry, and whether the requested pane was gone so the host opened
+/// a fresh terminal instead.
 class PairingActivateResult {
   const PairingActivateResult({
     required this.catalogId,
@@ -367,7 +349,6 @@ class PairingClient {
         if (item is Map)
           PairingSessionSummary(
             catalogId: item['catalogId'] as String? ?? '',
-            kind: item['kind'] as String? ?? 'chat',
             title: item['title'] as String? ?? '',
             subtitle: item['subtitle'] as String? ?? '',
             cols: item['cols'] is int ? item['cols'] as int : 80,
@@ -376,9 +357,9 @@ class PairingClient {
     ];
   }
 
-  /// Fetches the full workspace tree (every workspace, its persisted chat
-  /// sessions and its live panes). Defensive parse: unknown/missing fields fall
-  /// back to sane defaults so a protocol skew never throws in the UI.
+  /// Fetches the workspace tree (every workspace and its live terminal panes).
+  /// Defensive parse: unknown/missing fields fall back to sane defaults so a
+  /// protocol skew never throws in the UI.
   Future<List<PairingWorkspaceNode>> listWorkspaces() async {
     final result = await _rpc('workspace.list');
     final raw = result['workspaces'];
@@ -391,42 +372,25 @@ class PairingClient {
 
   PairingWorkspaceNode _parseWorkspace(Map<String, Object?> ws) {
     final workspaceId = ws['workspaceId'] as String? ?? '';
-    final rawSessions = ws['sessions'];
     final rawPanes = ws['panes'];
     return PairingWorkspaceNode(
       workspaceId: workspaceId,
       title: ws['title'] as String? ?? '',
-      sessions: [
-        if (rawSessions is List)
-          for (final s in rawSessions)
-            if (s is Map)
-              _parseNode(workspaceId, s.cast<String, Object?>(), 'chat'),
-      ],
       panes: [
         if (rawPanes is List)
           for (final p in rawPanes)
-            if (p is Map)
-              _parseNode(workspaceId, p.cast<String, Object?>(), 'workspace'),
+            if (p is Map) _parseNode(workspaceId, p.cast<String, Object?>()),
       ],
     );
   }
 
-  PairingSessionNode _parseNode(
-    String workspaceId,
-    Map<String, Object?> n,
-    String fallbackKind,
-  ) {
+  PairingSessionNode _parseNode(String workspaceId, Map<String, Object?> n) {
     return PairingSessionNode(
       workspaceId: workspaceId,
-      kind: n['kind'] as String? ?? fallbackKind,
       title: n['title'] as String? ?? '',
       subtitle: n['subtitle'] as String? ?? '',
       live: n['live'] == true,
-      sessionId: n['sessionId'] as String?,
       paneId: n['paneId'] as String?,
-      memberId: n['memberId'] as String?,
-      cli: n['cli'] as String?,
-      started: n['started'] == true,
       catalogId: n['catalogId'] as String?,
       cols: n['cols'] is int ? n['cols'] as int : 0,
       rows: n['rows'] is int ? n['rows'] as int : 0,
@@ -438,16 +402,10 @@ class PairingClient {
   /// because the host waits (bounded) for the session to come live.
   Future<PairingActivateResult> activateSession({
     required String workspaceId,
-    required String kind,
-    String? sessionId,
-    String? memberId,
     String? paneId,
   }) async {
     final result = await _rpc('session.activate', {
       'workspaceId': workspaceId,
-      'kind': kind,
-      if (sessionId != null) 'sessionId': sessionId,
-      if (memberId != null) 'memberId': memberId,
       if (paneId != null) 'paneId': paneId,
     });
     final catalogId = result['catalogId'] as String?;

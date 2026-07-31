@@ -19,42 +19,36 @@ class _TestCubit extends PairingClientCubit {
   }
 }
 
-const _liveChat = PairingSessionNode(
-  workspaceId: 'wsA',
-  kind: 'chat',
-  title: 'claude shell',
-  subtitle: 'zsh',
-  live: true,
-  sessionId: 's1',
-  catalogId: 'chat:s1:main',
-  cols: 80,
-  rows: 24,
-);
-const _deadChat = PairingSessionNode(
-  workspaceId: 'wsA',
-  kind: 'chat',
-  title: 'old shell',
-  subtitle: 'bash',
-  live: false,
-  sessionId: 's2',
-);
 const _pane = PairingSessionNode(
   workspaceId: 'wsA',
-  kind: 'workspace',
   title: 'build',
-  subtitle: '',
+  subtitle: '/home/dev/app',
   live: true,
   paneId: 'p1',
   catalogId: 'ws:p1',
   cols: 120,
   rows: 40,
 );
+const _secondPane = PairingSessionNode(
+  workspaceId: 'wsA',
+  title: 'zsh',
+  subtitle: '/home/dev/app',
+  live: true,
+  paneId: 'p2',
+  catalogId: 'ws:p2',
+  cols: 80,
+  rows: 24,
+);
 
 const _wsA = PairingWorkspaceNode(
   workspaceId: 'wsA',
   title: 'Workspace A',
-  sessions: [_liveChat, _deadChat],
-  panes: [_pane],
+  panes: [_pane, _secondPane],
+);
+
+const _dormant = PairingWorkspaceNode(
+  workspaceId: 'wsB',
+  title: 'Dormant',
 );
 
 void main() {
@@ -90,7 +84,7 @@ void main() {
     expect(find.text('No workspaces on this desktop.'), findsOneWidget);
   });
 
-  testWidgets('workspace renders sessions + panes with liveness badges',
+  testWidgets('workspace renders its live terminals with geometry badges',
       (tester) async {
     cubit.set(
       const PairingClientState(
@@ -103,22 +97,44 @@ void main() {
 
     expect(find.text('Studio'), findsOneWidget);
     expect(find.byKey(AppKeys.pairingWorkspaceHeader('wsA')), findsOneWidget);
-    // The group starts open because the workspace has live panes, so both the
-    // sessions and the live-terminals sections are on screen.
+    // The group starts open because the workspace has live panes.
     expect(find.text('build'), findsOneWidget);
     expect(find.text('120×40'), findsOneWidget);
+    expect(find.text('zsh'), findsOneWidget);
+    expect(find.text('80×24'), findsOneWidget);
     expect(find.text('Live'), findsWidgets);
-    expect(find.text('claude shell'), findsOneWidget);
-    expect(find.text('old shell'), findsOneWidget);
-    expect(find.text('Offline'), findsOneWidget);
-    expect(find.byKey(AppKeys.pairingSessionNode('chat:s2')), findsOneWidget);
+    expect(find.byKey(AppKeys.pairingSessionNode('ws:p2')), findsOneWidget);
 
     // Collapsing drops the node rows.
     await tester.tap(find.byKey(AppKeys.pairingWorkspaceHeader('wsA')));
     await tester.pumpAndSettle();
 
-    expect(find.text('claude shell'), findsNothing);
-    expect(find.byKey(AppKeys.pairingSessionNode('chat:s2')), findsNothing);
+    expect(find.text('build'), findsNothing);
+    expect(find.byKey(AppKeys.pairingSessionNode('ws:p2')), findsNothing);
+  });
+
+  testWidgets('a workspace with nothing running offers to open a terminal',
+      (tester) async {
+    cubit.set(
+      const PairingClientState(
+        phase: PairingClientPhase.connected,
+        activeHostName: 'Studio',
+        workspaces: [_dormant],
+      ),
+    );
+    await pump(tester);
+
+    // Dormant workspaces start collapsed; open it to reach the action.
+    await tester.tap(find.byKey(AppKeys.pairingWorkspaceHeader('wsB')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Open a terminal here'), findsOneWidget);
+    await tester.tap(find.byKey(AppKeys.pairingOpenTerminalButton('wsB')));
+    await tester.pump();
+
+    // No pane to reuse, so the host is asked to open one for this workspace.
+    expect(cubit.activated.single.workspaceId, 'wsB');
+    expect(cubit.activated.single.paneId, isNull);
   });
 
   testWidgets('the connection row shows the URL that actually connected',

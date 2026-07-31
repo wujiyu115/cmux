@@ -178,8 +178,10 @@ class SessionDataStore {
     );
   }
 
-  Future<({String workspaceId, ChatDataSnapshot snapshot})>
-  createWorkspaceWithFirstSession(
+  /// Creates the workspace record only. Its terminals are materialised by
+  /// [WorkspaceTerminalRegistry] when the workspace is opened, so no starter
+  /// `session.json` is written.
+  Future<({String workspaceId, ChatDataSnapshot snapshot})> createWorkspace(
     List<WorkspaceFolder> folders,
     SessionRepository repo, {
     String display = '',
@@ -190,7 +192,6 @@ class SessionDataStore {
       display: display,
       allowDuplicate: allowDuplicate,
     );
-    await repo.createSession(workspace.workspaceId);
     final snapshot = await loadWorkspaceData(repo);
     return (workspaceId: workspace.workspaceId, snapshot: snapshot);
   }

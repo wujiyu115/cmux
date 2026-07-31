@@ -5000,24 +5000,6 @@ abstract class AppLocalizations {
   /// **'Refresh'**
   String get pairingRefresh;
 
-  /// No description provided for @pairingNoSessions.
-  ///
-  /// In en, this message translates to:
-  /// **'No running sessions on this desktop.'**
-  String get pairingNoSessions;
-
-  /// No description provided for @pairingChatSessions.
-  ///
-  /// In en, this message translates to:
-  /// **'Chat sessions'**
-  String get pairingChatSessions;
-
-  /// No description provided for @pairingWorkspaceTerminals.
-  ///
-  /// In en, this message translates to:
-  /// **'Workspace terminals'**
-  String get pairingWorkspaceTerminals;
-
   /// No description provided for @pairingNoWorkspaces.
   ///
   /// In en, this message translates to:
@@ -5047,18 +5029,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Activating…'**
   String get pairingActivating;
-
-  /// No description provided for @pairingPersistedSessions.
-  ///
-  /// In en, this message translates to:
-  /// **'Sessions'**
-  String get pairingPersistedSessions;
-
-  /// No description provided for @pairingLiveTerminals.
-  ///
-  /// In en, this message translates to:
-  /// **'Live terminals'**
-  String get pairingLiveTerminals;
 
   /// No description provided for @pairingActivateFailed.
   ///
@@ -5203,6 +5173,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Undo'**
   String get pairingUndo;
+
+  /// No description provided for @pairingOpenTerminalHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Open a terminal here'**
+  String get pairingOpenTerminalHere;
 
   /// No description provided for @pairingSendCtrlC.
   ///

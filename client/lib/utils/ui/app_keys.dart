@@ -70,6 +70,8 @@ class AppKeys {
   static const pairingMirrorCtrlCButton = Key('pairing-mirror-ctrl-c');
   static Key pairingWorkspaceHeader(String workspaceId) =>
       Key('pairing-workspace-$workspaceId');
+  static Key pairingOpenTerminalButton(String workspaceId) =>
+      Key('pairing-open-terminal-$workspaceId');
   static Key pairingSessionNode(String nodeKey) =>
       Key('pairing-node-$nodeKey');
 
