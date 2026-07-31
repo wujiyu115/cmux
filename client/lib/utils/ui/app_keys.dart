@@ -43,6 +43,28 @@ class AppKeys {
   );
   static const configLogsSectionButton = Key('config-logs-section-button');
   static const configAboutSectionButton = Key('config-about-section-button');
+  static const configPairingSectionButton = Key(
+    'config-pairing-section-button',
+  );
+  // Pairing (desktop host config section).
+  static const pairingConfigWorkspace = Key('pairing-config-workspace');
+  static const pairingHostEnableSwitch = Key('pairing-host-enable-switch');
+  static const pairingRefreshOfferButton = Key('pairing-refresh-offer-button');
+  static const pairingQrImage = Key('pairing-qr-image');
+  // Pairing (mobile client UI).
+  static const pairedHostsPage = Key('paired-hosts-page');
+  static const pairingScanPage = Key('pairing-scan-page');
+  static const pairingScanManualButton = Key('pairing-scan-manual-button');
+  static const pairingScanAlbumButton = Key('pairing-scan-album-button');
+  static const pairingConfirmPage = Key('pairing-confirm-page');
+  static const pairingConfirmCancelButton = Key('pairing-confirm-cancel');
+  static const pairingConnectionLog = Key('pairing-connection-log');
+  static const pairingSessionListPage = Key('pairing-session-list-page');
+  static const pairingMirrorPage = Key('pairing-mirror-page');
+  static Key pairingWorkspaceHeader(String workspaceId) =>
+      Key('pairing-workspace-$workspaceId');
+  static Key pairingSessionNode(String nodeKey) =>
+      Key('pairing-node-$nodeKey');
   static const aboutCheckUpdatesButton = Key('about-check-updates-button');
   static const aboutViewReleasesButton = Key('about-view-releases-button');
   static const aboutGitHubButton = Key('about-github-button');

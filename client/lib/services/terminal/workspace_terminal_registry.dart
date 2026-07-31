@@ -479,6 +479,12 @@ class WorkspaceTerminalRegistry {
   final Map<String, WorkspaceTerminalGroup> _groups = {};
   final TerminalNotificationBridgeFactory? _bridgeFactory;
   final ShellCommandTrackerFactory? _trackerFactory;
+  final _RegistryChanges _changes = _RegistryChanges();
+
+  /// Fires whenever panes/surfaces churn in any group, or a group is added or
+  /// removed. Lets the pairing catalog re-emit `session.changed` when terminals
+  /// open or close. Registry outlives its listeners (app-lifetime singleton).
+  Listenable get changes => _changes;
 
   /// Live view of all currently-tracked workspace groups. Used by the
   /// terminal-idle notifier to poll pane activity across every workspace.
@@ -489,24 +495,39 @@ class WorkspaceTerminalRegistry {
   /// only.
   String Function(String workspaceId)? workspaceLabelResolver;
 
-  WorkspaceTerminalGroup groupFor(String workspaceId) => _groups.putIfAbsent(
-    workspaceId,
-    () => WorkspaceTerminalGroup(
-      workspaceId: workspaceId,
-      workspaceLabel: () => workspaceLabelResolver?.call(workspaceId) ?? '',
-      notificationBridgeFactory: _bridgeFactory,
-      commandTrackerFactory: _trackerFactory,
-    ),
-  );
+  WorkspaceTerminalGroup groupFor(String workspaceId) =>
+      _groups.putIfAbsent(workspaceId, () {
+        final group = WorkspaceTerminalGroup(
+          workspaceId: workspaceId,
+          workspaceLabel: () => workspaceLabelResolver?.call(workspaceId) ?? '',
+          notificationBridgeFactory: _bridgeFactory,
+          commandTrackerFactory: _trackerFactory,
+        );
+        group.addListener(_changes.notify);
+        _changes.notify();
+        return group;
+      });
 
   void disposeWorkspace(String workspaceId) {
-    _groups.remove(workspaceId)?.dispose();
+    final group = _groups.remove(workspaceId);
+    if (group == null) return;
+    group.removeListener(_changes.notify);
+    group.dispose();
+    _changes.notify();
   }
 
   void disposeAll() {
     for (final g in _groups.values) {
+      g.removeListener(_changes.notify);
       g.dispose();
     }
     _groups.clear();
+    _changes.notify();
   }
+}
+
+/// Public-notify wrapper: [ChangeNotifier.notifyListeners] is protected, so the
+/// registry forwards group churn through this instead of subclassing.
+class _RegistryChanges extends ChangeNotifier {
+  void notify() => notifyListeners();
 }

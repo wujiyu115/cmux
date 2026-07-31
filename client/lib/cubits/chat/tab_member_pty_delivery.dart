@@ -148,24 +148,6 @@ final class TabMemberPtyDelivery {
     );
   }
 
-  /// Injects [message] at the member prompt (compose landing, automation, first
-  /// prompt). Returns `null` unless [directToPty] is set (no bus routing).
-  Future<String?> deliverUserCommandToMember(
-    String sessionId,
-    String memberId,
-    String message, {
-    bool directToPty = false,
-  }) async {
-    if (!directToPty) return null;
-    await deliverMemberStdin(
-      sessionId,
-      memberId,
-      message,
-      automation: true,
-    );
-    return null;
-  }
-
   bool shouldSkipAutomationRetry(
     String sessionId,
     String memberId, {

@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 import '../../../cubits/chat_cubit.dart';
-import '../../../cubits/workspace_landing_context_cubit.dart';
 import '../../../models/workspace.dart';
 import '../../../models/workspace_tab_ref.dart';
 import 'home_workspace_route.dart';
@@ -135,14 +134,9 @@ class _WorkspaceTabSlot extends StatelessWidget {
                 ignoring: !isActive,
                 child: WorkspaceTabDeferredMount(
                   active: isActive,
-                  builder: (_) => BlocProvider(
-                    create: (_) => WorkspaceLandingContextCubit(
-                      workspaceId: tab.workspaceId,
-                    )..initialize(workspace),
-                    child: WorkspacePage(
-                      key: ValueKey('workspace-body-${tab.tabKey}'),
-                      workspaceId: tab.workspaceId,
-                    ),
+                  builder: (_) => WorkspacePage(
+                    key: ValueKey('workspace-body-${tab.tabKey}'),
+                    workspaceId: tab.workspaceId,
                   ),
                 ),
               ),

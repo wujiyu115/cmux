@@ -343,18 +343,15 @@ class WorkbenchCubit extends Cubit<WorkbenchState> {
 
   /// Keep session tabs in [tabOrder] aligned with [sessionIds] (create/close/hydrate).
   ///
-  /// When [newChatActive] is true, [activeTabId] stays null so the body shows
-  /// landing while session tabs may still appear in the bar.
   /// When [WorkbenchWorkspaceState.welcomeActive] is true, [activeTabId] stays
   /// null so the welcome page is not replaced by an auto-selected session.
-  /// When not in new-chat / welcome mode and active is unset/invalid, activates
+  /// When not in welcome mode and active is unset/invalid, activates
   /// [preferredActiveSessionId] (or the first session).
   /// Does not override an active file/diff/shell/run tab.
   void syncSessions(
     String workspaceId,
     List<String> sessionIds, {
     String? preferredActiveSessionId,
-    bool newChatActive = false,
   }) {
     final bucket = state.bucket(workspaceId);
     final sessionSet = sessionIds.toSet();
@@ -378,19 +375,15 @@ class WorkbenchCubit extends Cubit<WorkbenchState> {
       }
     }
 
-    var welcomeActive = bucket.welcomeActive;
+    final welcomeActive = bucket.welcomeActive;
     WorkbenchTabId? active = bucket.activeTabId;
-    if (newChatActive) {
-      active = null;
-      welcomeActive = false;
-    } else if (welcomeActive) {
+    if (welcomeActive) {
       active = null;
     } else if (active != null && !order.contains(active)) {
       active = null;
     }
 
-    if (!newChatActive &&
-        !welcomeActive &&
+    if (!welcomeActive &&
         (active == null || active.kind == WorkbenchTabKind.session)) {
       final preferred = preferredActiveSessionId == null
           ? null

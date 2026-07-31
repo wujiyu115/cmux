@@ -67,17 +67,4 @@ class TabSessionRuntimeCoordinator {
     String memberId,
     String notice,
   ) => _delivery.retryMemberDelivery(sessionId, memberId, notice);
-
-  Future<String?> deliverUserCommandToMember(
-    String sessionId,
-    String memberId,
-    String message, {
-    bool directToPty = false,
-  }) =>
-      _delivery.deliverUserCommandToMember(
-        sessionId,
-        memberId,
-        message,
-        directToPty: directToPty,
-      );
 }

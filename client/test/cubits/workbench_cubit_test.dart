@@ -116,7 +116,6 @@ void main() {
         ws,
         ['s1', 's2'],
         preferredActiveSessionId: 's1',
-        newChatActive: false,
       );
       expect(cubit.tabOrder(ws), [
         WorkbenchTabId.session('s1'),
@@ -133,27 +132,12 @@ void main() {
         ws,
         ['s1', 's2'],
         preferredActiveSessionId: 's2',
-        newChatActive: false,
       );
       expect(cubit.tabOrder(ws), [
         WorkbenchTabId.session('s1'),
         WorkbenchTabId.session('s2'),
       ]);
       expect(cubit.activeTabId(ws), WorkbenchTabId.session('s2'));
-    });
-
-    test('syncSessions keeps active null while composing', () {
-      const ws = 'ws-a';
-      cubit.ensureTab(ws, WorkbenchTabId.session('s1'));
-      cubit.clearActive(ws);
-      cubit.syncSessions(
-        ws,
-        ['s1'],
-        preferredActiveSessionId: 's1',
-        newChatActive: true,
-      );
-      expect(cubit.tabOrder(ws), [WorkbenchTabId.session('s1')]);
-      expect(cubit.activeTabId(ws), isNull);
     });
 
     test('syncSessions does not steal focus from file/diff tab', () {
@@ -165,7 +149,6 @@ void main() {
         ws,
         ['s1'],
         preferredActiveSessionId: 's1',
-        newChatActive: false,
       );
       expect(cubit.activeTabId(ws), file);
     });
@@ -180,7 +163,6 @@ void main() {
         ws,
         ['s-new'],
         preferredActiveSessionId: 's-new',
-        newChatActive: false,
       );
       expect(cubit.activeTabId(ws), run);
       expect(cubit.tabOrder(ws), contains(WorkbenchTabId.session('s-new')));

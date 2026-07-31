@@ -142,12 +142,6 @@ class ChatCubit extends Cubit<ChatState>
 
   @override
   void applyState(ChatState next) {
-    final workspaceId = _tabStore.activeWorkspaceId;
-    if (next.newChatActive) {
-      _tabStore.setNewChatActive(workspaceId, true);
-    } else {
-      _tabStore.setNewChatActive(workspaceId, false);
-    }
     emit(next);
   }
 
@@ -359,9 +353,7 @@ class ChatCubit extends Cubit<ChatState>
     int desiredIndex, {
     ChatDataSnapshot? snapshot,
   }) {
-    final workspaceId = _tabStore.activeWorkspaceId;
     if (_tabStore.activeTabsIsEmpty) {
-      _tabStore.setNewChatActive(workspaceId, true);
       final empty = snapshot;
       emit(
         state.copyWith(
@@ -370,7 +362,6 @@ class ChatCubit extends Cubit<ChatState>
           clearActiveSessionId: true,
           clearSessionConnectingId: true,
           selectedMemberId: '',
-          newChatActive: true,
           workspaces: empty?.workspaces,
           sessions: empty?.sessions,
           visibleWorkspaces: empty?.visibleWorkspaces,
@@ -380,23 +371,6 @@ class ChatCubit extends Cubit<ChatState>
       return;
     }
     final index = desiredIndex.clamp(0, _tabStore.activeTabCount - 1);
-    final newChatActive = _tabStore.isNewChatActive(workspaceId);
-    if (newChatActive) {
-      emit(
-        state.copyWith(
-          tabs: _tabStore.activeTabInfos(),
-          activeTabIndex: index,
-          clearActiveSessionId: true,
-          selectedMemberId: '',
-          newChatActive: true,
-          workspaces: snapshot?.workspaces,
-          sessions: snapshot?.sessions,
-          visibleWorkspaces: snapshot?.visibleWorkspaces,
-          visibleSessions: snapshot?.visibleSessions,
-        ),
-      );
-      return;
-    }
     final tab = _tabStore.activeTabs[index];
     emit(
       state.copyWith(
@@ -404,7 +378,6 @@ class ChatCubit extends Cubit<ChatState>
         activeTabIndex: index,
         activeSessionId: tab.info.id,
         selectedMemberId: tab.selectedMemberId,
-        newChatActive: false,
         workspaces: snapshot?.workspaces,
         sessions: snapshot?.sessions,
         visibleWorkspaces: snapshot?.visibleWorkspaces,
@@ -745,13 +718,11 @@ class ChatCubit extends Cubit<ChatState>
     // Emit tabs before tearDown so working→idle sees the tab already gone
     // (idle notify must not fire for user-closed sessions).
     if (_tabStore.activeTabsIsEmpty) {
-      _tabStore.setNewChatActive(_tabStore.activeWorkspaceId, true);
       emit(
         state.copyWith(
           tabs: [],
           activeTabIndex: 0,
           clearActiveSessionId: true,
-          newChatActive: true,
           workingSessionIds: const <String>{},
         ),
       );
@@ -766,7 +737,6 @@ class ChatCubit extends Cubit<ChatState>
           activeTabIndex: newIdx,
           activeSessionId: nextTab.info.id,
           selectedMemberId: nextTab.selectedMemberId,
-          newChatActive: false,
           workingSessionIds: const <String>{},
         ),
       );
@@ -807,14 +777,12 @@ class ChatCubit extends Cubit<ChatState>
       removed.add(_tabStore.removeAt(i));
     }
     final kept = _tabStore.activeTabs.single;
-    _tabStore.setNewChatActive(_tabStore.activeWorkspaceId, false);
     emit(
       state.copyWith(
         tabs: _tabStore.activeTabInfos(),
         activeTabIndex: 0,
         activeSessionId: kept.info.id,
         selectedMemberId: kept.selectedMemberId,
-        newChatActive: false,
         workingSessionIds: const <String>{},
       ),
     );
@@ -830,7 +798,6 @@ class ChatCubit extends Cubit<ChatState>
       removed.add(_tabStore.removeAt(i));
     }
     final active = _activeTab;
-    _tabStore.setNewChatActive(_tabStore.activeWorkspaceId, false);
     emit(
       state.copyWith(
         tabs: _tabStore.activeTabInfos(),
@@ -840,7 +807,6 @@ class ChatCubit extends Cubit<ChatState>
         ),
         activeSessionId: active?.info.id,
         selectedMemberId: active?.selectedMemberId ?? '',
-        newChatActive: false,
         workingSessionIds: const <String>{},
       ),
     );
@@ -852,71 +818,13 @@ class ChatCubit extends Cubit<ChatState>
   void selectTab(int index) {
     if (index < 0 || index >= _tabStore.activeTabCount) return;
     final tab = _tabStore.activeTabs[index];
-    _tabStore.setNewChatActive(_tabStore.activeWorkspaceId, false);
     emit(
       state.copyWith(
         activeTabIndex: index,
         activeSessionId: tab.info.id,
         selectedMemberId: tab.selectedMemberId,
-        newChatActive: false,
       ),
     );
-  }
-
-  /// Shows the new-chat landing for [workspaceId] without closing open tabs.
-  void enterNewChat(String workspaceId) {
-    final wasActive = _tabStore.activeWorkspaceId == workspaceId;
-    if (!wasActive) {
-      _tabStore.setNewChatActive(workspaceId, true);
-      return;
-    }
-    _tabStore.setNewChatActive(workspaceId, true);
-    final index = state.activeTabIndex.clamp(
-      0,
-      _tabStore.activeTabCount == 0 ? 0 : _tabStore.activeTabCount - 1,
-    );
-    emit(
-      state.copyWith(
-        activeTabIndex: index,
-        clearActiveSessionId: true,
-        selectedMemberId: '',
-        newChatActive: true,
-      ),
-    );
-  }
-
-  /// Leaves new-chat mode and selects the remembered session tab index.
-  void exitNewChat() {
-    final workspaceId = _tabStore.activeWorkspaceId;
-    if (!_tabStore.isNewChatActive(workspaceId)) return;
-    _tabStore.setNewChatActive(workspaceId, false);
-    if (_tabStore.activeTabsIsEmpty) {
-      _tabStore.setNewChatActive(workspaceId, true);
-      emit(state.copyWith(newChatActive: true));
-      return;
-    }
-    final index = state.activeTabIndex.clamp(0, _tabStore.activeTabCount - 1);
-    final tab = _tabStore.activeTabs[index];
-    emit(
-      state.copyWith(
-        activeTabIndex: index,
-        activeSessionId: tab.info.id,
-        selectedMemberId: tab.selectedMemberId,
-        newChatActive: false,
-      ),
-    );
-  }
-
-  /// Clears new-chat mode without selecting a session (e.g. opening a file/diff tab).
-  void dismissNewChat() {
-    final workspaceId = _tabStore.activeWorkspaceId;
-    if (!_tabStore.isNewChatActive(workspaceId) && !state.newChatActive) {
-      return;
-    }
-    _tabStore.setNewChatActive(workspaceId, false);
-    if (state.newChatActive) {
-      emit(state.copyWith(newChatActive: false));
-    }
   }
 
   @override
@@ -1094,7 +1002,6 @@ class ChatCubit extends Cubit<ChatState>
         ),
       );
     } else if (_tabStore.activeTabsIsEmpty) {
-      _tabStore.setNewChatActive(_tabStore.activeWorkspaceId, true);
       _emitSnapshot(
         _dataStore.deriveSnapshot(
           workspaces: state.workspaces,
@@ -1104,7 +1011,6 @@ class ChatCubit extends Cubit<ChatState>
           tabs: [],
           activeTabIndex: 0,
           clearActiveSessionId: true,
-          newChatActive: true,
           workingSessionIds: working,
         ),
       );

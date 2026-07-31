@@ -7,7 +7,6 @@ import 'package:flutter_alacritty/flutter_alacritty.dart';
 import 'package:flutter_alacritty/input/term_mode.dart' show anyMouse;
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../cubits/chat_cubit.dart';
 import '../cubits/command_log_cubit.dart';
 import '../cubits/layout_cubit.dart';
 import '../l10n/l10n_extensions.dart';
@@ -20,9 +19,6 @@ import '../pages/command_history/command_history_dialog.dart';
 import '../pages/command_log/command_log_dialog.dart';
 import '../services/commands/command_bus.dart';
 import '../services/commands/terminal_split_command_registrar.dart';
-import '../services/selection_ai/selection_ai_context.dart';
-import '../services/selection_ai/selection_ask_ai.dart';
-import '../services/selection_ai/selection_ask_ai_fab_host.dart';
 import '../services/ssh/ssh_profile_connection_coordinator.dart';
 import '../services/terminal/terminal_clipboard_image_paste.dart';
 import '../services/terminal/terminal_layout_coordinator.dart';
@@ -600,20 +596,6 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
     }
   }
 
-  Future<void> _openAskAi(String aiContext) {
-    if (aiContext.trim().isEmpty || !mounted) return Future.value();
-    for (final workspace in context.read<ChatCubit>().state.workspaces) {
-      if (workspace.workspaceId != widget.workspaceId) continue;
-      return SelectionAskAi.openComposeDialog(
-        context,
-        aiContext: aiContext,
-        workspace: workspace,
-        tabScopeId: widget.workspaceId,
-      );
-    }
-    return Future.value();
-  }
-
   void _startDefaultTerminal() {
     final dir = widget.workingDirectory.trim();
     if (dir.isEmpty) return;
@@ -933,26 +915,9 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
             _selectEntry(paneId);
           },
         );
-        final fabWrappedSplitView = ValueListenableBuilder<bool>(
-          valueListenable: _menuOpen,
-          child: splitView,
-          builder: (context, menuOpen, child) {
-            return SelectionAskAiFabHost(
-              listenable: activeEntry.controller,
-              selectionActive: () => activeEntry.controller.selectionActive,
-              readAiContext: () => buildTerminalAiContextClipboardText(
-                surfaceLabel: 'workspace-shell',
-                text: activeEntry.controller.readSelectionText() ?? '',
-              ),
-              onAskAi: _openAskAi,
-              menuOpen: menuOpen,
-              child: child!,
-            );
-          },
-        );
         final paneArea = Stack(
           children: [
-            Positioned.fill(child: fabWrappedSplitView),
+            Positioned.fill(child: splitView),
             if (_findVisible)
               Positioned(
                 left: 8,

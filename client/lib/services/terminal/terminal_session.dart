@@ -18,6 +18,7 @@ import 'pty_launch_environment.dart';
 import 'shell_command_tracker.dart';
 import 'terminal_input_controller.dart';
 import 'terminal_launch_controller.dart';
+import '../pairing/recent_pty_buffer.dart';
 import 'terminal_osc_notification_bridge.dart';
 import 'terminal_screen_probe_controller.dart';
 import 'terminal_session_link_providers.dart';
@@ -211,6 +212,15 @@ class TerminalSession {
 
   void onTerminalPtyResize(int columns, int rows) =>
       _launch.onTerminalPtyResize(columns, rows);
+
+  /// Raw screen-byte fan-out for pairing mirrors (zero cost when unsubscribed).
+  Stream<Uint8List> get mirrorOutput => _launch.mirrorOutput;
+
+  /// Recent screen bytes for snapshot-on-subscribe; null until [mirrorOutput].
+  RecentPtyBuffer? get recentBuffer => _launch.recentBuffer;
+
+  /// Writes raw bytes from a remote pairing client straight into the child PTY.
+  void writeRemoteInput(Uint8List data) => _launch.writeToPty(data);
 
   @visibleForTesting
   void onViewportResize(int columns, int rows) =>

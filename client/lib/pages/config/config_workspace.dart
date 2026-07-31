@@ -14,19 +14,24 @@ import '../about_page.dart';
 import '../system/log_config_workspace.dart';
 import 'github_config_section.dart';
 import 'layout_config_section.dart';
+import 'pairing_config_section.dart';
 import 'session_config_section.dart';
 import 'shortcuts_config_section.dart';
 import 'ssh_profiles_config_section.dart';
 
 int _configSectionDialogIndex(ConfigSection section) {
+  // The dialog inserts a Device Pairing entry after SSH on pairing hosts, so the
+  // indices past SSH shift by one there.
+  final host = isPairingHost;
   return switch (section) {
     ConfigSection.layout => 0,
     ConfigSection.session => 1,
     ConfigSection.sshProfiles => 2,
-    ConfigSection.github => 3,
-    ConfigSection.shortcuts => 4,
-    ConfigSection.about => 5,
-    ConfigSection.logs => 5,
+    ConfigSection.pairing => host ? 3 : 2,
+    ConfigSection.github => host ? 4 : 3,
+    ConfigSection.shortcuts => host ? 5 : 4,
+    ConfigSection.about => host ? 6 : 5,
+    ConfigSection.logs => host ? 6 : 5,
   };
 }
 
@@ -78,6 +83,14 @@ Future<void> showWorkspaceSettingsDialog(
         bodyBuilder: (_) =>
             const SshProfilesConfigWorkspace(showHeading: false),
       ),
+      if (isPairingHost)
+        SettingsDialogEntry(
+          icon: Icons.qr_code_2_outlined,
+          navLabel: (l10n) => l10n.pairingSettingsTitle,
+          title: (l10n) => l10n.pairingSettingsTitle,
+          subtitle: (l10n) => l10n.pairingPageSubtitle,
+          bodyBuilder: (_) => const PairingConfigWorkspace(showHeading: false),
+        ),
       SettingsDialogEntry(
         icon: Icons.hub_outlined,
         navLabel: (l10n) => l10n.githubSettingsTitle,
@@ -220,6 +233,9 @@ class ConfigWorkspace extends StatelessWidget {
         ConfigSection.sshProfiles => SshProfilesConfigWorkspace(
           showHeading: showHeading,
         ),
+        ConfigSection.pairing => PairingConfigWorkspace(
+          showHeading: showHeading,
+        ),
         ConfigSection.github => GithubConfigWorkspace(showHeading: showHeading),
         ConfigSection.shortcuts => ShortcutsConfigWorkspace(
           showHeading: showHeading,
@@ -278,6 +294,17 @@ class ConfigNavPanel extends StatelessWidget {
             () => onSelectSection(ConfigSection.sshProfiles),
           ),
         ),
+        if (isPairingHost)
+          WorkspaceHubEntry(
+            key: AppKeys.configPairingSectionButton,
+            title: l10n.pairingSettingsTitle,
+            icon: Icons.qr_code_2_outlined,
+            selected: section == ConfigSection.pairing,
+            onTap: throttledTap(
+              'config_nav_pairing',
+              () => onSelectSection(ConfigSection.pairing),
+            ),
+          ),
         WorkspaceHubEntry(
           key: AppKeys.configGithubSectionButton,
           title: l10n.githubSettingsTitle,

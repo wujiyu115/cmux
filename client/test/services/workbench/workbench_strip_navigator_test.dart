@@ -116,7 +116,6 @@ void main() {
       strip.next();
       strip.previous();
       expect(workbench.activeTabId(workspaceId), isNull);
-      expect(chat.state.newChatActive, isTrue);
     });
 
     test('next/prev wrap across mixed session and file tabs', () async {
@@ -165,21 +164,6 @@ void main() {
       expect(workbench.activeTabId(workspaceId), active);
     });
 
-    test('next clears new-chat landing', () async {
-      await openSession();
-      await openSession();
-      final s0 = WorkbenchTabId.session(sessionIds[0]);
-      final s1 = WorkbenchTabId.session(sessionIds[1]);
-      workbench.select(workspaceId, s0);
-      chat.selectTab(0);
-      chat.enterNewChat(workspaceId);
-      expect(chat.state.newChatActive, isTrue);
-
-      strip.next();
-      expect(chat.state.newChatActive, isFalse);
-      expect(workbench.activeTabId(workspaceId), s1);
-    });
-
     test('closeTab(activeTabIndex) is the session-close-tab command equivalent',
         () async {
       await openSession();
@@ -193,12 +177,5 @@ void main() {
       expect(chat.state.activeSessionId, isNot(closing));
     });
 
-    test('enterNewChat(activeWorkspaceId) is the session-new-tab command '
-        'equivalent', () async {
-      await openSession();
-      expect(chat.state.newChatActive, isFalse);
-      chat.enterNewChat(chat.tabStore.activeWorkspaceId);
-      expect(chat.state.newChatActive, isTrue);
-    });
   });
 }

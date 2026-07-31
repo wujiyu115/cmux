@@ -143,6 +143,34 @@ class WorkbenchShellLauncher {
     );
   }
 
+  /// Opens a fresh default shell for an arbitrary [workspaceId] (not necessarily
+  /// the active one) and returns its entry. Used by remote pairing activation to
+  /// bring a workspace terminal live headlessly. Returns null when the workspace
+  /// is unknown or has no primary directory.
+  Future<WorkspaceTerminalEntry?> openDefaultShellForWorkspace(
+    String workspaceId,
+  ) async {
+    final id = workspaceId.trim();
+    if (id.isEmpty) return null;
+    final workspace = _chat.state.workspaces
+        .where((w) => w.workspaceId == id)
+        .firstOrNull;
+    final cwd = workspace?.firstFolderPath.trim() ?? '';
+    if (cwd.isEmpty) return null;
+    final folders = workspace?.folders ?? const <WorkspaceFolder>[];
+    final spec = defaultSessionSpecFor(
+      cwd: cwd,
+      folders: folders,
+      fallbackLocalShell: _fallbackLocalShell(),
+    );
+    return openAndSelect(
+      workspaceId: id,
+      tabScopeId: id,
+      cwd: cwd,
+      spec: spec,
+    );
+  }
+
   /// Opens [spec] via [WorkspaceTerminalSessionOps.openEntry], then ensures and
   /// selects the matching workbench shell tab (snappy UX ahead of sync).
   Future<WorkspaceTerminalEntry?> openAndSelect({

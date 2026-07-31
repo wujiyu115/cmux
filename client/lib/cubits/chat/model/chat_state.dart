@@ -41,7 +41,6 @@ class ChatState extends Equatable {
     this.sessionConnectingId,
     this.sessionLaunchError,
     this.workingSessionIds = const {},
-    this.newChatActive = true,
   });
 
   final List<ChatTabInfo> tabs;
@@ -66,9 +65,6 @@ class ChatState extends Equatable {
   /// open, bus-backed (mixed) sessions appear here.
   final Set<String> workingSessionIds;
 
-  /// When true, the workbench shows new-chat landing instead of a session terminal.
-  final bool newChatActive;
-
   ChatState copyWith({
     List<ChatTabInfo>? tabs,
     int? activeTabIndex,
@@ -87,7 +83,6 @@ class ChatState extends Equatable {
     String? sessionLaunchError,
     bool clearSessionLaunchError = false,
     Set<String>? workingSessionIds,
-    bool? newChatActive,
   }) {
     return ChatState(
       tabs: tabs ?? this.tabs,
@@ -111,7 +106,6 @@ class ChatState extends Equatable {
           ? null
           : (sessionLaunchError ?? this.sessionLaunchError),
       workingSessionIds: workingSessionIds ?? this.workingSessionIds,
-      newChatActive: newChatActive ?? this.newChatActive,
     );
   }
 
@@ -150,6 +144,5 @@ class ChatState extends Equatable {
     sessionConnectingId,
     sessionLaunchError,
     workingSessionIds,
-    newChatActive,
   ];
 }

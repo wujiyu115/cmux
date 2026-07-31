@@ -12,6 +12,13 @@ ConnectionMode defaultConnectionMode() {
 /// Linux / Windows / macOS window chrome; false on Android.
 bool get useCustomDesktopWindowTitleBar => !Platform.isAndroid;
 
+/// Desktop hosts the pairing LAN server (shows QR, mirrors its own sessions).
+bool get isPairingHost =>
+    Platform.isWindows || Platform.isMacOS || Platform.isLinux;
+
+/// Mobile is a pure pairing/mirror client (scans QR, never binds a server).
+bool get isPairingClient => Platform.isAndroid || Platform.isIOS;
+
 /// macOS uses left-aligned traffic-light window controls instead of the
 /// Windows-style buttons on the right.
 bool get useMacWindowChromeStyle =>

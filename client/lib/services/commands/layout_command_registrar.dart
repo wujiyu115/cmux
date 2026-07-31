@@ -16,10 +16,8 @@ void registerLayoutCommands(
   CommandBus bus,
   LayoutCubit layout, {
   required double Function() uiZoomBaseline,
-  bool Function()? composeLanding,
   Future<void> Function()? onTogglePanel,
 }) {
-  final isCompose = composeLanding ?? () => false;
   bus.register(
     CommandIds.zoomIn,
     () => layout.zoomIn(baseline: uiZoomBaseline()),
@@ -38,6 +36,6 @@ void registerLayoutCommands(
   });
   bus.register(
     CommandIds.toggleSecondarySidebar,
-    () => layout.toggleRightTools(composeLanding: isCompose()),
+    () => layout.toggleRightTools(),
   );
 }

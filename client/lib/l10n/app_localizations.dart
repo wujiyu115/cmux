@@ -1052,78 +1052,6 @@ abstract class AppLocalizations {
   /// **'Starting session…'**
   String get sessionStarting;
 
-  /// No description provided for @workspaceChatLandingInputHint.
-  ///
-  /// In en, this message translates to:
-  /// **'What can I help you with today? @ reference files, / invoke skills'**
-  String get workspaceChatLandingInputHint;
-
-  /// No description provided for @workspaceChatLandingBackToStart.
-  ///
-  /// In en, this message translates to:
-  /// **'Back to start'**
-  String get workspaceChatLandingBackToStart;
-
-  /// No description provided for @workspaceChatLandingSelectProject.
-  ///
-  /// In en, this message translates to:
-  /// **'Select project >'**
-  String get workspaceChatLandingSelectProject;
-
-  /// No description provided for @workspaceChatLandingSelectWorktree.
-  ///
-  /// In en, this message translates to:
-  /// **'Select worktree >'**
-  String get workspaceChatLandingSelectWorktree;
-
-  /// No description provided for @workspaceChatLandingFullAccessPermissions.
-  ///
-  /// In en, this message translates to:
-  /// **'Full access permissions'**
-  String get workspaceChatLandingFullAccessPermissions;
-
-  /// No description provided for @workspaceChatLandingDefaultPermissions.
-  ///
-  /// In en, this message translates to:
-  /// **'Default permissions'**
-  String get workspaceChatLandingDefaultPermissions;
-
-  /// No description provided for @workspaceChatLandingAttach.
-  ///
-  /// In en, this message translates to:
-  /// **'Attach files'**
-  String get workspaceChatLandingAttach;
-
-  /// No description provided for @workspaceChatLandingVoice.
-  ///
-  /// In en, this message translates to:
-  /// **'Voice input'**
-  String get workspaceChatLandingVoice;
-
-  /// No description provided for @workspaceChatLandingVoiceCancel.
-  ///
-  /// In en, this message translates to:
-  /// **'Cancel recording'**
-  String get workspaceChatLandingVoiceCancel;
-
-  /// No description provided for @workspaceChatLandingVoiceStop.
-  ///
-  /// In en, this message translates to:
-  /// **'Stop recording'**
-  String get workspaceChatLandingVoiceStop;
-
-  /// No description provided for @workspaceChatLandingVoiceUnavailable.
-  ///
-  /// In en, this message translates to:
-  /// **'Voice input is not available on this device'**
-  String get workspaceChatLandingVoiceUnavailable;
-
-  /// No description provided for @workspaceChatLandingVoicePermissionDenied.
-  ///
-  /// In en, this message translates to:
-  /// **'Microphone permission denied'**
-  String get workspaceChatLandingVoicePermissionDenied;
-
   /// No description provided for @sessionRetryButton.
   ///
   /// In en, this message translates to:
@@ -1825,12 +1753,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Copy as AI context'**
   String get editorCopyAsAiContext;
-
-  /// No description provided for @selectionAskAi.
-  ///
-  /// In en, this message translates to:
-  /// **'Ask AI…'**
-  String get selectionAskAi;
 
   /// No description provided for @editorPaste.
   ///
@@ -3797,7 +3719,7 @@ abstract class AppLocalizations {
   /// No description provided for @shortcutsSessionNewTab.
   ///
   /// In en, this message translates to:
-  /// **'New Session Tab'**
+  /// **'New Terminal'**
   String get shortcutsSessionNewTab;
 
   /// No description provided for @shortcutsSessionCloseTab.
@@ -4873,6 +4795,318 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not delete that theme.'**
   String get terminalThemeDeleteFailed;
+
+  /// No description provided for @pairingSettingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Device Pairing'**
+  String get pairingSettingsTitle;
+
+  /// No description provided for @pairingPageSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pair a phone over your LAN to mirror and control this desktop\'s terminals.'**
+  String get pairingPageSubtitle;
+
+  /// No description provided for @pairingHostDesktopOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Device pairing host is available on desktop only.'**
+  String get pairingHostDesktopOnly;
+
+  /// No description provided for @pairingEnableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow phones to pair over LAN'**
+  String get pairingEnableTitle;
+
+  /// No description provided for @pairingEnableSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Phones on the same network can mirror and control this desktop\'s terminal sessions after scanning a QR code.'**
+  String get pairingEnableSubtitle;
+
+  /// No description provided for @pairingScanToPair.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan to pair'**
+  String get pairingScanToPair;
+
+  /// No description provided for @pairingNewCode.
+  ///
+  /// In en, this message translates to:
+  /// **'New code'**
+  String get pairingNewCode;
+
+  /// No description provided for @pairingGeneratingCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Generating pairing code…'**
+  String get pairingGeneratingCode;
+
+  /// No description provided for @pairingEnterAddressManually.
+  ///
+  /// In en, this message translates to:
+  /// **'Or enter one of these addresses manually:'**
+  String get pairingEnterAddressManually;
+
+  /// No description provided for @pairingNoLanAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'No LAN address detected.'**
+  String get pairingNoLanAddress;
+
+  /// No description provided for @pairingPairedDevices.
+  ///
+  /// In en, this message translates to:
+  /// **'Paired devices'**
+  String get pairingPairedDevices;
+
+  /// No description provided for @pairingNoDevicesYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No devices paired yet.'**
+  String get pairingNoDevicesYet;
+
+  /// No description provided for @pairingRevoke.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoke'**
+  String get pairingRevoke;
+
+  /// No description provided for @pairingDesktops.
+  ///
+  /// In en, this message translates to:
+  /// **'Desktops'**
+  String get pairingDesktops;
+
+  /// No description provided for @pairingScan.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan'**
+  String get pairingScan;
+
+  /// No description provided for @pairingRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get pairingRemove;
+
+  /// No description provided for @pairingNoPairedDesktops.
+  ///
+  /// In en, this message translates to:
+  /// **'No paired desktops yet.'**
+  String get pairingNoPairedDesktops;
+
+  /// No description provided for @pairingEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Open TeamPilot on your desktop, enable device pairing, and scan the QR code it shows.'**
+  String get pairingEmptyHint;
+
+  /// No description provided for @pairingScanQrCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan QR code'**
+  String get pairingScanQrCode;
+
+  /// No description provided for @pairingWaitingForConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for connection…'**
+  String get pairingWaitingForConnection;
+
+  /// No description provided for @pairingEnterManually.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter manually'**
+  String get pairingEnterManually;
+
+  /// No description provided for @pairingPointAtQr.
+  ///
+  /// In en, this message translates to:
+  /// **'Point at the QR code shown in TeamPilot on your desktop.'**
+  String get pairingPointAtQr;
+
+  /// No description provided for @pairingEnterPairingCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter pairing code'**
+  String get pairingEnterPairingCode;
+
+  /// No description provided for @pairingCodeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'teampilot://pair?code=… or the raw code'**
+  String get pairingCodeHint;
+
+  /// No description provided for @pairingInvalidCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Not a valid pairing code or link.'**
+  String get pairingInvalidCode;
+
+  /// No description provided for @pairingPair.
+  ///
+  /// In en, this message translates to:
+  /// **'Pair'**
+  String get pairingPair;
+
+  /// No description provided for @pairingConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pair with desktop'**
+  String get pairingConfirmTitle;
+
+  /// No description provided for @pairingRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get pairingRetry;
+
+  /// No description provided for @pairingConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect'**
+  String get pairingConnect;
+
+  /// No description provided for @pairingConnecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting…'**
+  String get pairingConnecting;
+
+  /// No description provided for @pairingFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Pairing failed.'**
+  String get pairingFailed;
+
+  /// No description provided for @pairingReadyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready to pair. Make sure this phone and the desktop are on the same network, then tap Connect.'**
+  String get pairingReadyHint;
+
+  /// No description provided for @pairingDesktopFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Desktop'**
+  String get pairingDesktopFallback;
+
+  /// No description provided for @pairingRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get pairingRefresh;
+
+  /// No description provided for @pairingNoSessions.
+  ///
+  /// In en, this message translates to:
+  /// **'No running sessions on this desktop.'**
+  String get pairingNoSessions;
+
+  /// No description provided for @pairingChatSessions.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat sessions'**
+  String get pairingChatSessions;
+
+  /// No description provided for @pairingWorkspaceTerminals.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace terminals'**
+  String get pairingWorkspaceTerminals;
+
+  /// No description provided for @pairingNoWorkspaces.
+  ///
+  /// In en, this message translates to:
+  /// **'No workspaces on this desktop.'**
+  String get pairingNoWorkspaces;
+
+  /// No description provided for @pairingWorkspaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspaces'**
+  String get pairingWorkspaces;
+
+  /// No description provided for @pairingLiveBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Live'**
+  String get pairingLiveBadge;
+
+  /// No description provided for @pairingOfflineBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline'**
+  String get pairingOfflineBadge;
+
+  /// No description provided for @pairingActivating.
+  ///
+  /// In en, this message translates to:
+  /// **'Activating…'**
+  String get pairingActivating;
+
+  /// No description provided for @pairingPersistedSessions.
+  ///
+  /// In en, this message translates to:
+  /// **'Sessions'**
+  String get pairingPersistedSessions;
+
+  /// No description provided for @pairingLiveTerminals.
+  ///
+  /// In en, this message translates to:
+  /// **'Live terminals'**
+  String get pairingLiveTerminals;
+
+  /// No description provided for @pairingActivateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not activate that session.'**
+  String get pairingActivateFailed;
+
+  /// No description provided for @pairingFallbackOpenedTerminal.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat session unavailable — opened a workspace terminal instead.'**
+  String get pairingFallbackOpenedTerminal;
+
+  /// No description provided for @pairingFromAlbum.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick from album'**
+  String get pairingFromAlbum;
+
+  /// No description provided for @pairingNoQrInImage.
+  ///
+  /// In en, this message translates to:
+  /// **'No pairing QR code found in that image.'**
+  String get pairingNoQrInImage;
+
+  /// No description provided for @pairingManualCodeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Or copy this pairing code into the phone:'**
+  String get pairingManualCodeLabel;
+
+  /// No description provided for @pairingCopyCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy code'**
+  String get pairingCopyCode;
+
+  /// No description provided for @pairingCodeCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Pairing code copied.'**
+  String get pairingCodeCopied;
+
+  /// No description provided for @pairingCodeTtlHint.
+  ///
+  /// In en, this message translates to:
+  /// **'This code stays valid for about 15 minutes. If pairing fails with an invalid-token error, tap New code and pair again.'**
+  String get pairingCodeTtlHint;
 }
 
 class _AppLocalizationsDelegate

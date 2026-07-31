@@ -8,10 +8,8 @@ import '../../cubits/chat/model/chat_tab.dart';
 String? scopedActiveSessionId(ChatCubit cubit, String tabScopeId) {
   final store = cubit.tabStore;
   if (store.activeWorkspaceId == tabScopeId) {
-    if (cubit.state.newChatActive) return null;
     return cubit.state.activeSessionId;
   }
-  if (store.isNewChatActive(tabScopeId)) return null;
   final bucket = store.tabsForWorkspace(tabScopeId);
   if (bucket.isEmpty) return null;
   final index = store.savedActiveIndexFor(tabScopeId);

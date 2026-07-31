@@ -76,9 +76,6 @@ abstract final class WorkbenchShellActions {
     required WorkbenchTabId tab,
   }) {
     workbench.select(workspaceId, tab);
-    if (chat.state.newChatActive) {
-      chat.exitNewChat();
-    }
     if (workbenchSelectSyncsChatTab(tab.kind)) {
       final tabs = chat.tabStore.tabsForWorkspace(tabScopeId);
       final index = tabs.indexWhere((t) => t.info.id == tab.id);

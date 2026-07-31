@@ -1,4 +1,5 @@
 import '../../cubits/chat_cubit.dart';
+import '../workbench/workbench_shell_launcher.dart';
 import '../workbench/workbench_strip_navigator.dart';
 import 'command_bus.dart';
 import 'command_ids.dart';
@@ -11,12 +12,15 @@ void registerSessionCommands(
   CommandBus bus,
   ChatCubit chat,
   WorkbenchStripNavigator strip,
+  WorkbenchShellLauncher launcher,
 ) {
   bus.register(CommandIds.stripNextTab, strip.next);
   bus.register(CommandIds.stripPrevTab, strip.previous);
+  // Ctrl+T opens a fresh terminal in the active workspace (cmux dropped the
+  // chat-landing "new session tab" — terminals only now).
   bus.register(
     CommandIds.sessionNewTab,
-    () => chat.enterNewChat(chat.tabStore.activeWorkspaceId),
+    () => launcher.openDefaultShellForWorkspace(chat.tabStore.activeWorkspaceId),
   );
   bus.register(
     CommandIds.sessionCloseTab,

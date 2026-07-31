@@ -1,0 +1,1084 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TeamPilot · 移动端配对连接</title>
+<style>
+  /* ── tokens · Tokyo Night (取自 client/lib/theme/terminal/terminal_theme_catalog.g.dart) ── */
+  :root {
+    --bg:      #1a1b26;
+    --surface: #1f2335;
+    --fg:      #c0caf5;
+    --muted:   #a9b1d6;
+    --dim:     #8b93b8;
+    --border:  #2c3149;
+    --accent:  #7aa2f7;
+    --ok:      #9ece6a;
+    --danger:  #f7768e;
+    --stage:   #101018;
+    --bezel:   #000000;   /* 设备外壳 / 遮罩，非配色 */
+    --lens:    #0b0c12;   /* 相机取景底色 */
+
+    --accent-soft: color-mix(in oklch, var(--accent) 16%, transparent);
+    --ok-soft:     color-mix(in oklch, var(--ok) 16%, transparent);
+    --danger-soft: color-mix(in oklch, var(--danger) 16%, transparent);
+    --fg-soft:     color-mix(in oklch, var(--fg) 8%, transparent);
+
+    /* Latin 走等宽（终端血统），CJK 落到 PingFang：mono 里的中文字形没有设计价值 */
+    --font-display: 'JetBrains Mono', 'SF Mono', Menlo, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    --font-body: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+    --gap-xs: 6px; --gap-sm: 10px; --gap-md: 16px; --gap-lg: 24px;
+    --radius-sm: 8px; --radius: 12px; --radius-lg: 18px;
+    --ease: cubic-bezier(.32,.72,0,1);
+  }
+
+  *,*::before,*::after { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh;
+    background: var(--stage);
+    color: var(--fg);
+    font-family: var(--font-body);
+    display: grid; place-items: center;
+    padding: 12px;
+    gap: 12px;
+    grid-auto-flow: row;
+    align-content: center;
+  }
+  /* 整机等比缩放：排版恒定在 390×844，不随面板宽度重排。--k 由脚本按视口算。 */
+  .fit { width: calc(390px * var(--k, 1)); height: calc(844px * var(--k, 1)); }
+  .fit > .phone { transform: scale(var(--k, 1)); transform-origin: top left; }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+  [hidden] { display: none !important; }  /* 类选择器的 display 会盖掉 UA 的 [hidden] */
+  svg { display: block; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+
+  /* ── device frame ───────────────────────────────────────────── */
+  .phone {
+    position: relative;
+    width: 390px; height: 844px;
+    background: var(--bg);
+    border-radius: 54px;
+    border: 1px solid var(--border);
+    box-shadow: 0 0 0 10px var(--bezel), 0 40px 90px -30px var(--bezel);
+    overflow: hidden;
+    flex: none;
+  }
+  .island {
+    position: absolute; top: 11px; left: 50%; transform: translateX(-50%);
+    width: 122px; height: 36px; border-radius: 20px; background: var(--bezel); z-index: 60;
+  }
+  .home-ind {
+    position: absolute; bottom: 9px; left: 50%; transform: translateX(-50%);
+    width: 138px; height: 5px; border-radius: 3px;
+    background: color-mix(in oklch, var(--fg) 55%, transparent); z-index: 60;
+  }
+  .screen { position: absolute; inset: 0; display: flex; flex-direction: column; }
+
+  /* ── status bar ─────────────────────────────────────────────── */
+  .statusbar {
+    height: 54px; flex: none; z-index: 50;
+    display: flex; align-items: flex-end; justify-content: space-between;
+    padding: 0 30px 4px; font-family: var(--font-mono); font-size: 14px;
+    letter-spacing: .02em; pointer-events: none;
+  }
+  .statusbar .sb-right { display: flex; align-items: center; gap: 6px; }
+
+  /* ── view switching ─────────────────────────────────────────── */
+  .views { position: relative; flex: 1; overflow: hidden; }
+  .view {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    transform: translateX(100%);
+    /* visibility 延迟到滑出结束，动画保留但非活动视图绝不露边 */
+    transition: transform .36s var(--ease), visibility 0s linear .36s;
+    visibility: hidden;
+    pointer-events: none;
+    background: var(--bg);
+  }
+  .view.is-left { transform: translateX(-26%); }
+  .view.is-active {
+    transform: translateX(0); pointer-events: auto;
+    visibility: visible;
+    transition: transform .36s var(--ease), visibility 0s;
+  }
+
+  .view-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 0 20px 34px; }
+  .view-foot { flex: none; padding: 12px 20px 30px; border-top: 1px solid var(--border); background: var(--surface); }
+
+  /* ── nav bar (secondary screens) ────────────────────────────── */
+  .navbar {
+    flex: none; height: 52px; display: grid;
+    grid-template-columns: 56px 1fr 56px; align-items: center;
+    padding: 0 8px; border-bottom: 1px solid var(--border);
+  }
+  .navbar .nav-title {
+    text-align: center; font-family: var(--font-display);
+    font-size: 16px; font-weight: 600; letter-spacing: -.01em;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .icon-btn {
+    width: 44px; height: 44px; border-radius: var(--radius);
+    display: grid; place-items: center; color: var(--muted);
+    transition: background .15s ease, color .15s ease;
+  }
+  .icon-btn:hover, .icon-btn:active { background: var(--fg-soft); color: var(--fg); }
+  .icon-btn.tight { width: 44px; height: 44px; }
+
+  /* ── type ───────────────────────────────────────────────────── */
+  .h-title { font-size: 19px; line-height: 1.25; letter-spacing: -.01em; margin: 0; font-weight: 600; }
+  .h-sec   { font-family: var(--font-display); font-size: 17px; line-height: 1.3; letter-spacing: -.01em; margin: 0; font-weight: 600; }
+  .grouphead { font-size: 11.5px; font-weight: 500; letter-spacing: .02em; color: var(--dim); margin: 0; }
+  .body-sm { font-size: 14px; line-height: 1.5; color: var(--muted); margin: 0; text-wrap: pretty; }
+  .mono { font-family: var(--font-mono); font-size: 12px; font-variant-numeric: tabular-nums; color: var(--dim); letter-spacing: .01em; }
+
+  /* ── buttons ────────────────────────────────────────────────── */
+  .btn {
+    width: 100%; min-height: 50px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 12px 18px; border-radius: var(--radius);
+    font-size: 16px; font-weight: 600; letter-spacing: -.01em;
+    border: 1px solid transparent;
+    transition: background .15s ease, border-color .15s ease, transform .06s ease;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+  .btn-primary:hover, .btn-primary:active {
+    background: color-mix(in oklch, var(--accent) 82%, white);
+    border-color: color-mix(in oklch, var(--accent) 82%, white);
+    color: var(--bg);
+  }
+  .btn-primary[disabled] { opacity: .55; cursor: default; transform: none; }
+  .btn-secondary { background: var(--surface); color: var(--fg); border-color: var(--border); }
+  .btn-secondary:hover, .btn-secondary:active { background: color-mix(in oklch, var(--surface) 84%, white); border-color: var(--muted); }
+  .btn-quiet { min-height: 44px; background: none; color: var(--muted); font-weight: 500; font-size: 15px; }
+  .btn-quiet:hover, .btn-quiet:active { background: var(--fg-soft); color: var(--fg); }
+  .btn-danger-quiet { color: var(--danger); }
+
+  /* ── cards ──────────────────────────────────────────────────── */
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 14px;
+  }
+  /* 状态标签：色相已经承载语义，不再叠色点 */
+  .pill {
+    display: inline-flex; align-items: center;
+    padding: 2px 8px; border-radius: 999px;
+    font-size: 11px; letter-spacing: .02em; white-space: nowrap;
+    background: var(--accent-soft); color: var(--accent);
+  }
+  .pill.ok  { background: var(--ok-soft); color: var(--ok); }
+  .pill.off { background: var(--fg-soft); color: var(--dim); }
+
+  /* ── hosts screen ───────────────────────────────────────────── */
+  .hosts-head {
+    padding: 14px 20px 2px;
+    display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+  }
+  .hosts-head .mono { font-size: 13px; color: var(--muted); }
+  .netstrip {
+    margin: 0 20px; padding: 10px 0 12px;
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    border-bottom: 1px solid var(--border);
+  }
+  .netstrip .sep { width: 1px; height: 12px; background: var(--border); }
+
+  /* 列表用发丝线分组，不用悬浮卡片：卡片堆叠是模板味的主要来源 */
+  .host-card {
+    display: grid; grid-template-columns: 1fr 44px; gap: 8px; align-items: center;
+    padding: 14px 0; border-bottom: 1px solid var(--border);
+  }
+  .host-card:last-child { border-bottom: 0; }
+  .host-tap {
+    display: grid; grid-template-columns: 40px 1fr; gap: 12px;
+    align-items: center; text-align: left; min-width: 0; padding: 0;
+    border-radius: var(--radius-sm);
+  }
+  .host-glyph {
+    width: 40px; height: 40px; border-radius: var(--radius-sm);
+    display: grid; place-items: center;
+    border: 1px solid var(--border); color: var(--muted);
+    background: color-mix(in oklch, var(--bg) 60%, var(--surface));
+  }
+  .host-main { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+  .host-title { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .host-title .h-sec { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .host-meta { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .host-meta .mono { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .empty { padding: 64px 4px 40px; display: flex; flex-direction: column; gap: 10px; }
+  .empty svg { color: var(--border); margin-bottom: 6px; }
+  .empty .body-sm { max-width: 30ch; }
+
+  /* ── scanner ────────────────────────────────────────────────── */
+  .scan-stage { position: relative; flex: 1; overflow: hidden; background: var(--lens); }
+  /* 传感器噪点 + 中性暗角，不用 accent 染色的“光晕” */
+  .scan-noise {
+    position: absolute; inset: 0;
+    background:
+      repeating-linear-gradient(0deg, color-mix(in oklch, var(--fg) 4%, transparent) 0 1px, transparent 1px 3px),
+      radial-gradient(115% 75% at 50% 42%, transparent 42%, var(--bezel) 100%);
+  }
+  .scan-frame {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-58%);
+    width: 232px; height: 232px;
+    transition: opacity .2s ease;
+  }
+  .scan-frame span {
+    position: absolute; width: 34px; height: 34px;
+    border: 2.5px solid var(--fg); border-radius: 4px;
+    animation: breathe 2.4s ease-in-out infinite;   /* 唯一动效：证明相机在取景 */
+  }
+  @keyframes breathe { 0%,100% { opacity: 1; } 50% { opacity: .45; } }
+  .scan-frame span:nth-child(1) { top: 0; left: 0; border-right: 0; border-bottom: 0; border-top-left-radius: 12px; }
+  .scan-frame span:nth-child(2) { top: 0; right: 0; border-left: 0; border-bottom: 0; border-top-right-radius: 12px; }
+  .scan-frame span:nth-child(3) { bottom: 0; left: 0; border-right: 0; border-top: 0; border-bottom-left-radius: 12px; }
+  .scan-frame span:nth-child(4) { bottom: 0; right: 0; border-left: 0; border-top: 0; border-bottom-right-radius: 12px; }
+  .scan-hit {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%,-58%) scale(.92);
+    opacity: 0; transition: opacity .2s ease, transform .3s var(--ease);
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+  }
+  .scan-hit.show { opacity: 1; transform: translate(-50%,-58%) scale(1); }
+  .scan-hit .hit-ring {
+    width: 232px; height: 232px; border: 2.5px solid var(--ok); border-radius: var(--radius-lg);
+    display: grid; place-items: center; color: var(--ok);
+    background: color-mix(in oklch, var(--ok) 10%, transparent);
+  }
+  .scan-sheet {
+    position: absolute; left: 12px; right: 12px; bottom: 12px;
+    background: color-mix(in oklch, var(--surface) 92%, transparent);
+    backdrop-filter: blur(14px);
+    border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 14px; display: flex; flex-direction: column; gap: 10px;
+  }
+
+  /* ── manual entry sheet ─────────────────────────────────────── */
+  .overlay {
+    position: absolute; inset: 0; z-index: 70;
+    background: color-mix(in oklch, var(--bezel) 62%, transparent);
+    opacity: 0; pointer-events: none; transition: opacity .22s ease;
+    display: flex; align-items: flex-end;
+  }
+  .overlay.show { opacity: 1; pointer-events: auto; }
+  .sheet {
+    width: 100%; background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0; padding: 18px 20px 30px;
+    display: flex; flex-direction: column; gap: 12px;
+    transform: translateY(18px); transition: transform .28s var(--ease);
+  }
+  .overlay.show .sheet { transform: translateY(0); }
+  .textarea {
+    width: 100%; min-height: 92px; resize: none;
+    padding: 12px; border-radius: var(--radius);
+    background: var(--bg); color: var(--fg);
+    border: 1px solid var(--border);
+    font-family: var(--font-mono); font-size: 13px; line-height: 1.5;
+  }
+  .textarea::placeholder { color: var(--dim); }
+  .textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .textarea.invalid { border-color: var(--danger); box-shadow: 0 0 0 3px var(--danger-soft); }
+  .err { font-size: 13px; color: var(--danger); margin: 0; min-height: 0; }
+
+  /* ── confirm / stepper ──────────────────────────────────────── */
+  .steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+  .step { position: relative; display: grid; grid-template-columns: 22px 1fr; gap: 12px; align-items: start; }
+  .step::before {
+    content: ''; position: absolute; left: 10px; top: 22px; bottom: 0;
+    width: 1.5px; background: var(--border);
+  }
+  .step:last-child::before { display: none; }
+  .step-rail { display: grid; place-items: center; }
+  .step-mark {
+    width: 20px; height: 20px; border-radius: 50%; flex: none;
+    border: 1.5px solid var(--border); background: var(--bg);
+    display: grid; place-items: center; color: var(--dim);
+    font-family: var(--font-mono); font-size: 10px; z-index: 1;
+  }
+  .step-body { padding-bottom: 18px; display: flex; flex-direction: column; gap: 2px; }
+  .step-label { font-size: 15px; font-weight: 500; color: var(--dim); }
+  .step-note { font-family: var(--font-mono); font-size: 11px; color: var(--dim); }
+
+  .step[data-state="active"] .step-mark {
+    border-color: var(--accent); color: var(--accent); background: var(--accent-soft);
+  }
+  .step[data-state="active"] .step-label { color: var(--fg); }
+  .step[data-state="done"] .step-mark { border-color: var(--ok); color: var(--ok); background: var(--ok-soft); }
+  .step[data-state="done"] .step-label { color: var(--muted); }
+  /* 已完成的步骤把连接线点亮，进度是确定的，不靠脉冲光晕暗示 */
+  .step[data-state="done"]::before { background: var(--ok); }
+  .step[data-state="fail"] .step-mark { border-color: var(--danger); color: var(--danger); background: var(--danger-soft); }
+  .step[data-state="fail"] .step-label { color: var(--danger); }
+  .step[data-state="fail"] .step-note { color: var(--danger); }
+
+  .log-box {
+    border: 1px solid var(--border); border-radius: var(--radius);
+    background: color-mix(in oklch, var(--bg) 55%, var(--bezel)); overflow: hidden;
+  }
+  .log-box > summary {
+    list-style: none; cursor: pointer; padding: 11px 12px;
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    min-height: 44px;
+  }
+  .log-box > summary::-webkit-details-marker { display: none; }
+  .log-box > summary:hover { background: var(--fg-soft); }
+  .log-lines {
+    max-height: 132px; overflow-y: auto; padding: 0 12px 12px;
+    display: flex; flex-direction: column-reverse; gap: 4px;
+  }
+  .log-lines p { margin: 0; font-family: var(--font-mono); font-size: 11.5px; line-height: 1.5; color: var(--muted); }
+  .log-lines p .ts { color: var(--dim); }
+  .log-lines p.is-err { color: var(--danger); }
+  .chev { transition: transform .2s ease; color: var(--dim); }
+  details[open] > summary .chev { transform: rotate(90deg); }
+
+  .spinner {
+    width: 16px; height: 16px; border-radius: 50%;
+    border: 2px solid color-mix(in oklch, var(--bg) 50%, transparent);
+    border-top-color: var(--bg); animation: spin .7s linear infinite;
+  }
+  .spinner.on-surface { border-color: var(--border); border-top-color: var(--accent); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── session tree ───────────────────────────────────────────── */
+  .ws { border-bottom: 1px solid var(--border); }
+  .ws > summary {
+    list-style: none; cursor: pointer; min-height: 56px;
+    display: grid; grid-template-columns: 20px 1fr auto; gap: 12px; align-items: center;
+    padding: 8px 4px;
+  }
+  .ws > summary::-webkit-details-marker { display: none; }
+  .ws > summary:hover { background: var(--fg-soft); }
+  .ws-title { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .node {
+    width: 100%; text-align: left; min-height: 56px;
+    display: grid; grid-template-columns: 18px 1fr auto; gap: 12px; align-items: center;
+    padding: 8px 4px 8px 26px; border-radius: var(--radius-sm);
+  }
+  .node:hover, .node:active { background: var(--fg-soft); }
+  .node-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .node-main .h-sec { font-size: 15px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .node-trail { display: flex; align-items: center; gap: 8px; }
+  .node[aria-busy="true"] { pointer-events: none; }
+  .node[aria-busy="true"] .node-main .h-sec { color: var(--muted); }
+
+  /* ── mirror ─────────────────────────────────────────────────── */
+  .term {
+    flex: 1; overflow-y: auto; padding: 14px 16px;
+    background: color-mix(in oklch, var(--bg) 60%, var(--bezel));
+    font-family: var(--font-mono); font-size: 12px; line-height: 1.65;
+  }
+  .term p { margin: 0; color: var(--muted); white-space: pre-wrap; word-break: break-word; }
+  .term p.u  { color: var(--fg); }
+  .term p.ok { color: var(--ok); }
+  .term p.ac { color: var(--accent); }
+  .term p.dm { color: var(--dim); }
+  .term .cursor {
+    display: inline-block; width: 7px; height: 14px; vertical-align: -2px;
+    background: var(--fg); animation: blink 1.1s step-end infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+  .term-bar {
+    flex: none; padding: 10px 16px 30px; border-top: 1px solid var(--border);
+    background: var(--surface); display: flex; align-items: center; gap: 10px;
+  }
+  .term-input {
+    flex: 1; min-height: 40px; border-radius: var(--radius);
+    border: 1px solid var(--border); background: var(--bg);
+    display: flex; align-items: center; padding: 0 12px;
+  }
+
+  /* ── toast ──────────────────────────────────────────────────── */
+  .toast {
+    position: absolute; left: 16px; right: 16px; bottom: 96px; z-index: 80;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 12px 14px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    transform: translateY(14px); opacity: 0; pointer-events: none;
+    transition: transform .24s var(--ease), opacity .2s ease;
+    box-shadow: 0 18px 40px -18px var(--bezel);
+  }
+  .toast.show { transform: translateY(0); opacity: 1; pointer-events: auto; }
+  .toast-link { min-height: 44px; padding: 0 6px; font-size: 15px; font-weight: 600; color: var(--accent); }
+  .toast-link:hover, .toast-link:active { color: color-mix(in oklch, var(--accent) 78%, white); }
+
+  /* 减弱动效：去掉位移与装饰性循环，保留 spinner（它是唯一的进行中反馈） */
+  @media (prefers-reduced-motion: reduce) {
+    .view, .sheet, .toast, .btn, .icon-btn { transition: none; }
+    .scan-frame span, .term .cursor { animation: none; }
+  }
+
+</style>
+</head>
+<body>
+
+<div class="fit">
+<div class="phone" data-od-id="device-frame">
+  <div class="island"></div>
+
+  <div class="screen">
+    <!-- ── status bar ─────────────────────────────────────────── -->
+    <div class="statusbar" data-od-id="statusbar">
+      <span>9:41</span>
+      <span class="sb-right">
+        <svg width="17" height="12" viewBox="0 0 17 12" fill="currentColor" aria-hidden="true"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="4.5" y="6" width="3" height="6" rx="1"/><rect x="9" y="3" width="3" height="9" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></svg>
+        <svg width="16" height="12" viewBox="0 0 16 12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M1 4.2a10 10 0 0 1 14 0"/><path d="M3.6 7a6.5 6.5 0 0 1 8.8 0"/><circle cx="8" cy="10.2" r="1.1" fill="currentColor" stroke="none"/></svg>
+        <svg width="25" height="12" viewBox="0 0 25 12" fill="none" aria-hidden="true"><rect x=".7" y=".7" width="20" height="10.6" rx="3" stroke="currentColor" stroke-opacity=".5"/><rect x="2.4" y="2.4" width="14" height="7.2" rx="1.8" fill="currentColor"/><path d="M22.4 4.2v3.6c1.1-.4 1.6-1 1.6-1.8s-.5-1.4-1.6-1.8Z" fill="currentColor" fill-opacity=".5"/></svg>
+      </span>
+    </div>
+
+    <div class="views">
+
+      <!-- ══ VIEW 1 · 已配对桌面 ═══════════════════════════════ -->
+      <section class="view is-active" data-view="hosts" data-od-id="view-hosts">
+        <header class="hosts-head" data-od-id="hosts-header">
+          <h1 class="h-title">已配对桌面</h1>
+          <span class="mono" id="host-count">2</span>
+        </header>
+
+        <div class="netstrip" data-od-id="network-strip">
+          <span class="pill ok">已联网</span>
+          <span class="mono">EJOY-5G</span>
+          <span class="sep"></span>
+          <span class="mono">本机 192.168.1.37</span>
+        </div>
+
+        <div class="view-scroll">
+          <div id="host-list" data-od-id="host-list">
+            <div class="host-card" data-host="mac" data-od-id="host-card-mac">
+              <button class="host-tap" data-act="pick-host" data-host="mac" aria-label="连接 MacBook Pro 16">
+                <span class="host-glyph">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3.5" width="16" height="10.5" rx="1.6"/><path d="M7 17h6"/><path d="M10 14v3"/></svg>
+                </span>
+                <span class="host-main">
+                  <span class="host-title">
+                    <span class="h-sec">MacBook Pro 16</span>
+                    <span class="pill ok">在线</span>
+                  </span>
+                  <span class="host-meta">
+                    <span class="mono">ws://192.168.1.12:47821</span>
+                  </span>
+                  <span class="mono">macOS 15.3 · 12 分钟前连接过</span>
+                </span>
+              </button>
+              <button class="icon-btn" data-act="remove-host" data-host="mac" aria-label="移除 MacBook Pro 16">
+                <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 6h13"/><path d="M8 3.5h4"/><path d="M5.5 6l.8 10a1.5 1.5 0 0 0 1.5 1.4h4.4a1.5 1.5 0 0 0 1.5-1.4l.8-10"/></svg>
+              </button>
+            </div>
+
+            <div class="host-card" data-host="win" data-od-id="host-card-win">
+              <button class="host-tap" data-act="pick-host" data-host="win" aria-label="连接 WIN-DEV">
+                <span class="host-glyph">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3.5" width="16" height="10.5" rx="1.6"/><path d="M7 17h6"/><path d="M10 14v3"/></svg>
+                </span>
+                <span class="host-main">
+                  <span class="host-title">
+                    <span class="h-sec">WIN-DEV</span>
+                    <span class="pill off">离线</span>
+                  </span>
+                  <span class="host-meta">
+                    <span class="mono">ws://192.168.1.31:47821</span>
+                  </span>
+                  <span class="mono">Windows 11 · 3 天前连接过</span>
+                </span>
+              </button>
+              <button class="icon-btn" data-act="remove-host" data-host="win" aria-label="移除 WIN-DEV">
+                <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 6h13"/><path d="M8 3.5h4"/><path d="M5.5 6l.8 10a1.5 1.5 0 0 0 1.5 1.4h4.4a1.5 1.5 0 0 0 1.5-1.4l.8-10"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="empty" id="host-empty" hidden data-od-id="hosts-empty">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.2"/><rect x="14" y="3" width="7" height="7" rx="1.2"/><rect x="3" y="14" width="7" height="7" rx="1.2"/><path d="M14 14h3v3h-3zM19 19h2v2h-2z"/></svg>
+            <h2 class="h-sec">暂无已配对的桌面</h2>
+            <p class="body-sm">在桌面端打开 TeamPilot，启用设备配对，然后扫描显示的二维码。</p>
+          </div>
+        </div>
+
+        <div class="view-foot" data-od-id="hosts-footer">
+          <button class="btn btn-primary" data-act="open-scan" data-od-id="cta-scan">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 8V5.5A2.5 2.5 0 0 1 5.5 3H8"/><path d="M16 3h2.5A2.5 2.5 0 0 1 21 5.5V8"/><path d="M21 16v2.5A2.5 2.5 0 0 1 18.5 21H16"/><path d="M8 21H5.5A2.5 2.5 0 0 1 3 18.5V16"/><path d="M3 12h18"/></svg>
+            扫码配对
+          </button>
+        </div>
+
+        <div class="toast" id="toast" data-od-id="undo-toast">
+          <span class="body-sm" id="toast-text">已移除该桌面</span>
+          <button class="toast-link" data-act="undo-remove">撤销</button>
+        </div>
+      </section>
+
+      <!-- ══ VIEW 2 · 扫码 ═════════════════════════════════════ -->
+      <section class="view" data-view="scan" data-od-id="view-scan">
+        <div class="navbar">
+          <button class="icon-btn" data-act="back" data-to="hosts" aria-label="返回">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 5 8 12l6.5 7"/></svg>
+          </button>
+          <span class="nav-title">扫码配对</span>
+          <button class="icon-btn" data-act="album" aria-label="从相册选择">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4.5" width="18" height="15" rx="2.2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M3.5 16.5 9 12l4 3.5 3-2.5 4.5 4"/></svg>
+          </button>
+        </div>
+
+        <div class="scan-stage" data-od-id="scan-viewfinder">
+          <div class="scan-noise"></div>
+          <div class="scan-frame" id="scan-frame">
+            <span></span><span></span><span></span><span></span>
+          </div>
+          <div class="scan-hit" id="scan-hit">
+            <div class="hit-ring">
+              <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12.5 9.5 17 19 7.5"/></svg>
+            </div>
+          </div>
+
+          <div class="scan-sheet" data-od-id="scan-sheet">
+            <p class="body-sm" id="scan-hint">对准桌面端 TeamPilot 显示的二维码。</p>
+            <button class="btn btn-secondary" data-act="open-manual">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="M7 10h2M11 10h2M15 10h2M7 14h10"/></svg>
+              手动输入配对码
+            </button>
+          </div>
+        </div>
+
+        <div class="overlay" id="manual-overlay" data-od-id="manual-entry-sheet">
+          <div class="sheet">
+            <h2 class="h-sec">输入配对码</h2>
+            <p class="body-sm">配对码约 15 分钟内有效。若报 invalid token，请在桌面端点“刷新配对码”后重试。</p>
+            <textarea class="textarea" id="manual-input" spellcheck="false" placeholder="teampilot://pair?code=… 或原始配对码"></textarea>
+            <p class="err" id="manual-err" role="alert"></p>
+            <button class="btn btn-primary" data-act="submit-manual">配对</button>
+            <button class="btn-quiet" data-act="close-manual">取消</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══ VIEW 3 · 配对确认 ═════════════════════════════════ -->
+      <section class="view" data-view="confirm" data-od-id="view-confirm">
+        <div class="navbar">
+          <button class="icon-btn" data-act="back" data-to="hosts" aria-label="返回">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 5 8 12l6.5 7"/></svg>
+          </button>
+          <span class="nav-title">与桌面配对</span>
+          <span></span>
+        </div>
+
+        <div class="view-scroll" style="padding-top:16px">
+          <div class="card" data-od-id="confirm-host-card">
+            <div class="host-card" style="grid-template-columns:40px 1fr">
+              <span class="host-glyph">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3.5" width="16" height="10.5" rx="1.6"/><path d="M7 17h6"/><path d="M10 14v3"/></svg>
+              </span>
+              <span class="host-main">
+                <span class="h-sec" id="cf-name">MacBook Pro 16</span>
+                <span class="mono" id="cf-url">ws://192.168.1.12:47821</span>
+              </span>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+              <span class="mono">配对码 15 分钟内有效</span>
+              <span class="pill off" id="cf-net">同网段</span>
+            </div>
+          </div>
+
+          <p class="grouphead" style="margin:20px 0 12px">连接进度</p>
+          <ol class="steps" id="steps" data-od-id="connect-steps">
+            <li class="step" data-state="idle" data-step="0">
+              <span class="step-rail"><span class="step-mark">1</span></span>
+              <span class="step-body">
+                <span class="step-label">发现主机</span>
+                <span class="step-note">在局域网内广播探测</span>
+              </span>
+            </li>
+            <li class="step" data-state="idle" data-step="1">
+              <span class="step-rail"><span class="step-mark">2</span></span>
+              <span class="step-body">
+                <span class="step-label">校验配对码</span>
+                <span class="step-note">交换设备公钥并签名</span>
+              </span>
+            </li>
+            <li class="step" data-state="idle" data-step="2">
+              <span class="step-rail"><span class="step-mark">3</span></span>
+              <span class="step-body">
+                <span class="step-label">建立通道</span>
+                <span class="step-note">WebSocket 双向流</span>
+              </span>
+            </li>
+            <li class="step" data-state="idle" data-step="3">
+              <span class="step-rail"><span class="step-mark">4</span></span>
+              <span class="step-body">
+                <span class="step-label">同步工作区</span>
+                <span class="step-note">拉取会话与在线终端</span>
+              </span>
+            </li>
+          </ol>
+
+          <details class="log-box" id="log-box" data-od-id="connection-log">
+            <summary>
+              <span class="grouphead">连接日志</span>
+              <span style="display:flex;align-items:center;gap:8px">
+                <span class="mono" id="log-count">0 行</span>
+                <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 5l7 7-7 7"/></svg>
+              </span>
+            </summary>
+            <div class="log-lines" id="log-lines">
+              <p class="dm" id="log-empty">等待连接…</p>
+            </div>
+          </details>
+        </div>
+
+        <div class="view-foot" data-od-id="confirm-footer">
+          <p class="body-sm" id="cf-status" style="margin-bottom:10px">准备配对。请确保此手机与桌面处于同一网络，然后点击“连接”。</p>
+          <button class="btn btn-primary" id="cf-primary" data-act="connect">连接</button>
+          <button class="btn-quiet" data-act="back" data-to="hosts" style="width:100%;margin-top:4px">取消</button>
+        </div>
+      </section>
+
+      <!-- ══ VIEW 4 · 工作区与会话 ═════════════════════════════ -->
+      <section class="view" data-view="sessions" data-od-id="view-sessions">
+        <div class="navbar">
+          <button class="icon-btn" data-act="back" data-to="hosts" aria-label="断开并返回">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 5 8 12l6.5 7"/></svg>
+          </button>
+          <span class="nav-title" id="ss-name">MacBook Pro 16</span>
+          <button class="icon-btn" data-act="refresh" aria-label="刷新">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 11a8 8 0 1 0-2.6 6"/><path d="M20 4.5V11h-6"/></svg>
+          </button>
+        </div>
+
+        <div class="view-scroll" style="padding-top:8px">
+          <div style="display:flex;align-items:center;gap:8px;padding:8px 0 12px">
+            <span class="pill ok">已连接</span>
+            <span class="mono" id="ss-url">ws://192.168.1.12:47821</span>
+          </div>
+
+          <details class="ws" open data-od-id="workspace-teampilot">
+            <summary>
+              <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 5l7 7-7 7"/></svg>
+              <span class="ws-title">
+                <span class="h-sec">teampilot</span>
+                <span class="mono">~/git/teampilot · 3 个节点</span>
+              </span>
+              <span class="pill ok">1 在线</span>
+            </summary>
+
+            <p class="grouphead" style="padding:10px 4px 6px">会话</p>
+            <button class="node" data-act="open-node" data-title="辩论队" data-geo="" data-od-id="node-chat-debate">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="color:var(--muted)"><path d="M4 5.5h16v10H12l-5 4v-4H4z"/></svg>
+              <span class="node-main">
+                <span class="h-sec">辩论队</span>
+                <span class="mono">deepseek-v4-pro[1m] · 4 个 Agent</span>
+              </span>
+              <span class="node-trail"><span class="pill off">离线</span></span>
+            </button>
+            <button class="node" data-act="open-node" data-title="这个项目怎么样" data-geo="" data-od-id="node-chat-review">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="color:var(--muted)"><path d="M4 5.5h16v10H12l-5 4v-4H4z"/></svg>
+              <span class="node-main">
+                <span class="h-sec">这个项目怎么样</span>
+                <span class="mono">Claude Code v2.1.156</span>
+              </span>
+              <span class="node-trail"><span class="pill off">离线</span></span>
+            </button>
+
+            <p class="grouphead" style="padding:14px 4px 6px">在线终端</p>
+            <button class="node" data-act="open-node" data-title="zsh · teampilot" data-geo="120×34" data-od-id="node-term-zsh">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="color:var(--ok)"><rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="M7 9.5l2.5 2.5L7 14.5M12 15h5"/></svg>
+              <span class="node-main">
+                <span class="h-sec">zsh · teampilot</span>
+                <span class="mono">flutter run -d ios</span>
+              </span>
+              <span class="node-trail">
+                <span class="mono">120×34</span>
+                <span class="pill ok">在线</span>
+              </span>
+            </button>
+          </details>
+
+          <details class="ws" data-od-id="workspace-open-design">
+            <summary>
+              <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 5l7 7-7 7"/></svg>
+              <span class="ws-title">
+                <span class="h-sec">open-design</span>
+                <span class="mono">~/git/open-design · 1 个节点</span>
+              </span>
+              <span class="pill ok">1 在线</span>
+            </summary>
+            <p class="grouphead" style="padding:10px 4px 6px">在线终端</p>
+            <button class="node" data-act="open-node" data-title="pnpm dev" data-geo="96×28" data-od-id="node-term-pnpm">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="color:var(--ok)"><rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="M7 9.5l2.5 2.5L7 14.5M12 15h5"/></svg>
+              <span class="node-main">
+                <span class="h-sec">pnpm dev</span>
+                <span class="mono">daemon :46041</span>
+              </span>
+              <span class="node-trail">
+                <span class="mono">96×28</span>
+                <span class="pill ok">在线</span>
+              </span>
+            </button>
+          </details>
+
+          <details class="ws" data-od-id="workspace-orca">
+            <summary>
+              <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 5l7 7-7 7"/></svg>
+              <span class="ws-title">
+                <span class="h-sec">orca</span>
+                <span class="mono">~/git/orca · 0 个节点</span>
+              </span>
+              <span class="pill off">休眠</span>
+            </summary>
+            <p class="body-sm" style="padding:12px 4px 16px">此工作区没有会话，下拉可刷新。</p>
+          </details>
+        </div>
+      </section>
+
+      <!-- ══ VIEW 5 · 终端镜像 ═════════════════════════════════ -->
+      <section class="view" data-view="mirror" data-od-id="view-mirror">
+        <div class="navbar">
+          <button class="icon-btn" data-act="back" data-to="sessions" aria-label="返回会话列表">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 5 8 12l6.5 7"/></svg>
+          </button>
+          <span class="nav-title" id="mr-title">zsh · teampilot</span>
+          <span class="mono" id="mr-geo" style="text-align:right;padding-right:6px">120×34</span>
+        </div>
+
+        <div class="term" data-od-id="mirror-terminal">
+          <p class="ac">╭─ teampilot ─ flutter run -d ios ─────────────</p>
+          <p class="dm">Launching lib/main.dart on iPhone 15 Pro…</p>
+          <p class="ok">✓ Built build/ios/iphonesimulator/Runner.app</p>
+          <p>Syncing files to device iPhone 15 Pro…</p>
+          <p class="dm">[pairing] lan server listening on 0.0.0.0:47821</p>
+          <p class="dm">[pairing] offer issued · ttl 900s</p>
+          <p class="ok">[pairing] device paired · iPhone 15 Pro</p>
+          <p class="dm">[pairing] workspaces synced · 3 nodes</p>
+          <p> </p>
+          <p class="u">flutter: mirror attached, cols=120 rows=34</p>
+          <p class="dm">Hot reload 🔥 in 412ms.</p>
+          <p class="u">❯ <span class="cursor"></span></p>
+        </div>
+
+        <div class="term-bar" data-od-id="mirror-input">
+          <span class="term-input"><span class="mono">键盘输入 · 只读预览</span></span>
+          <button class="icon-btn" aria-label="发送中断信号 Ctrl+C">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 4v9"/><path d="M6.5 7.5a7 7 0 1 0 11 0"/></svg>
+          </button>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <div class="home-ind"></div>
+</div>
+</div>
+
+
+<script>
+(function () {
+  'use strict';
+
+  /* 缩放系数：CSS 无法做 length/length，故此处算。414/868 = 390×844 + 外壳阴影余量 */
+  function fit() {
+    var k = Math.min(1, (window.innerWidth - 24) / 414, (window.innerHeight - 48) / 868);
+    document.documentElement.style.setProperty('--k', Math.max(k, 0.2));
+  }
+  window.addEventListener('resize', fit);
+  fit();
+
+  var views = {};
+  document.querySelectorAll('.view').forEach(function (v) { views[v.dataset.view] = v; });
+
+  var HOSTS = {
+    mac: { name: 'MacBook Pro 16', url: 'ws://192.168.1.12:47821', online: true },
+    win: { name: 'WIN-DEV', url: 'ws://192.168.1.31:47821', online: false }
+  };
+
+  var current = 'hosts';
+  var target = HOSTS.mac;
+  var scanTimers = [];
+  var removed = null;
+  var toastTimer = null;
+
+  /* ── navigation ─────────────────────────────────────────── */
+  function go(next, back) {
+    if (next === current || !views[next]) return;
+    var cur = views[current];
+    var nxt = views[next];
+    cur.classList.remove('is-active');
+    if (back) { cur.classList.remove('is-left'); } else { cur.classList.add('is-left'); }
+    nxt.classList.remove('is-left');
+    nxt.classList.add('is-active');
+    current = next;
+    try { localStorage.setItem('tp-pair-view', next); } catch (e) {}
+    if (next === 'scan') { startScan(); } else { stopScan(); }
+    if (next === 'confirm') { resetConfirm(); }
+  }
+
+  /* ── scanner ────────────────────────────────────────────── */
+  function stopScan() {
+    scanTimers.forEach(clearTimeout);
+    scanTimers = [];
+    document.getElementById('scan-hit').classList.remove('show');
+    document.getElementById('scan-frame').style.opacity = '';
+    document.getElementById('scan-hint').textContent = '对准桌面端 TeamPilot 显示的二维码。';
+  }
+
+  function startScan() {
+    stopScan();
+    scanTimers.push(setTimeout(function () {
+      document.getElementById('scan-frame').style.opacity = '0';
+      document.getElementById('scan-hit').classList.add('show');
+      document.getElementById('scan-hint').textContent = '已识别 MacBook Pro 16 的配对码。';
+    }, 2400));
+    scanTimers.push(setTimeout(function () {
+      target = HOSTS.mac;
+      go('confirm');
+    }, 3200));
+  }
+
+  /* ── manual entry ───────────────────────────────────────── */
+  var overlay = document.getElementById('manual-overlay');
+  var input = document.getElementById('manual-input');
+  var manualErr = document.getElementById('manual-err');
+
+  function openManual() {
+    stopScan();
+    manualErr.textContent = '';
+    input.classList.remove('invalid');
+    overlay.classList.add('show');
+    setTimeout(function () { input.focus(); }, 240);
+  }
+
+  function closeManual() {
+    overlay.classList.remove('show');
+    input.blur();
+    if (current === 'scan') startScan();
+  }
+
+  function submitManual() {
+    var raw = input.value.trim();
+    var deepLink = /^teampilot:\/\/pair\?code=[A-Za-z0-9._~-]{8,}$/.test(raw);
+    var rawCode = /^[A-Za-z0-9._~-]{20,}$/.test(raw);
+    if (!deepLink && !rawCode) {
+      manualErr.textContent = '不是有效的配对码或链接。';
+      input.classList.add('invalid');
+      return;
+    }
+    manualErr.textContent = '';
+    input.classList.remove('invalid');
+    overlay.classList.remove('show');
+    input.blur();
+    target = HOSTS.mac;
+    go('confirm');
+  }
+
+  /* ── confirm / stepper ──────────────────────────────────── */
+  var steps = Array.prototype.slice.call(document.querySelectorAll('#steps .step'));
+  steps.forEach(function (s) { s.dataset.note = s.querySelector('.step-note').textContent; });
+  var logLines = document.getElementById('log-lines');
+  var logEmpty = document.getElementById('log-empty');
+  var logCount = document.getElementById('log-count');
+  var cfPrimary = document.getElementById('cf-primary');
+  var cfStatus = document.getElementById('cf-status');
+  var connectTimers = [];
+  var clock = 0;
+
+  function resetConfirm() {
+    connectTimers.forEach(clearTimeout);
+    connectTimers = [];
+    clock = 0;
+    steps.forEach(function (s) {
+      s.dataset.state = 'idle';
+      s.querySelector('.step-note').textContent = s.dataset.note;
+    });
+    document.getElementById('cf-name').textContent = target.name;
+    document.getElementById('cf-url').textContent = target.url;
+    var net = document.getElementById('cf-net');
+    net.textContent = target.online ? '同网段 · 已探测到' : '同网段 · 未响应';
+    net.className = target.online ? 'pill ok' : 'pill off';
+    logLines.querySelectorAll('p:not(#log-empty)').forEach(function (p) { p.remove(); });
+    logEmpty.hidden = false;
+    logCount.textContent = '0 行';
+    cfPrimary.disabled = false;
+    cfPrimary.innerHTML = '连接';
+    cfStatus.textContent = '准备配对。请确保此手机与桌面处于同一网络，然后点击“连接”。';
+    cfStatus.style.color = '';
+  }
+
+  function stamp() {
+    clock += 0.3 + Math.random() * 0.5;
+    var s = clock.toFixed(2);
+    return (s.length < 5 ? '0' : '') + s;
+  }
+
+  function log(text, isErr) {
+    logEmpty.hidden = true;
+    var p = document.createElement('p');
+    if (isErr) p.className = 'is-err';
+    p.innerHTML = '<span class="ts">[' + stamp() + ']</span> ' + text;
+    logLines.insertBefore(p, logLines.firstChild);
+    var n = logLines.querySelectorAll('p:not(#log-empty)').length;
+    logCount.textContent = n + ' 行';
+  }
+
+  var SCRIPT = [
+    { step: 0, ms: 500, logs: ['mdns query _teampilot._tcp.local'] },
+    { step: 0, ms: 700, done: true, logs: ['host found · 192.168.1.12:47821'] },
+    { step: 1, ms: 650, logs: ['POST /pair · code ' + '9f2c…a71'] },
+    { step: 1, ms: 700, done: true, logs: ['token accepted · device key registered'] },
+    { step: 2, ms: 600, logs: ['ws upgrade → /mirror'] },
+    { step: 2, ms: 650, done: true, logs: ['channel open · rtt 8ms'] },
+    { step: 3, ms: 700, done: true, logs: ['workspaces 3 · sessions 2 · live panes 2'] }
+  ];
+
+  function connect() {
+    connectTimers.forEach(clearTimeout);
+    connectTimers = [];
+    clock = 0;
+    steps.forEach(function (s) { s.dataset.state = 'idle'; });
+    logLines.querySelectorAll('p:not(#log-empty)').forEach(function (p) { p.remove(); });
+    logCount.textContent = '0 行';
+    document.getElementById('log-box').open = true;
+
+    cfPrimary.disabled = true;
+    cfPrimary.innerHTML = '<span class="spinner"></span>连接中…';
+    cfStatus.textContent = '正在连接，约 25 秒后超时。';
+    cfStatus.style.color = '';
+
+    if (!target.online) {
+      steps[0].dataset.state = 'active';
+      log('mdns query _teampilot._tcp.local');
+      connectTimers.push(setTimeout(function () {
+        log('no response from 192.168.1.31:47821', true);
+        log('probe timeout after 25.0s', true);
+        steps[0].dataset.state = 'fail';
+        steps[0].querySelector('.step-note').textContent = '未在局域网内找到 ' + target.name;
+        cfStatus.textContent = '配对失败：主机未响应。确认桌面端 TeamPilot 已开启设备配对，且与手机处于同一 Wi-Fi。';
+        cfStatus.style.color = 'var(--danger)';
+        cfPrimary.disabled = false;
+        cfPrimary.innerHTML = '重试';
+      }, 1600));
+      return;
+    }
+
+    var acc = 0;
+    SCRIPT.forEach(function (frame) {
+      acc += frame.ms;
+      connectTimers.push(setTimeout(function () {
+        steps[frame.step].dataset.state = frame.done ? 'done' : 'active';
+        if (frame.done && steps[frame.step + 1]) steps[frame.step + 1].dataset.state = 'active';
+        frame.logs.forEach(function (l) { log(l); });
+      }, acc));
+    });
+
+    connectTimers.push(setTimeout(function () {
+      document.getElementById('ss-name').textContent = target.name;
+      document.getElementById('ss-url').textContent = target.url;
+      go('sessions');
+    }, acc + 520));
+  }
+
+  /* ── session nodes ──────────────────────────────────────── */
+  function openNode(btn) {
+    var trail = btn.querySelector('.node-trail');
+    var keep = trail.innerHTML;
+    btn.setAttribute('aria-busy', 'true');
+    trail.innerHTML = '<span class="mono">激活中…</span><span class="spinner on-surface"></span>';
+    setTimeout(function () {
+      trail.innerHTML = keep;
+      btn.removeAttribute('aria-busy');
+      document.getElementById('mr-title').textContent = btn.dataset.title;
+      document.getElementById('mr-geo').textContent = btn.dataset.geo;
+      go('mirror');
+    }, 900);
+  }
+
+  /* ── host list / remove + undo ──────────────────────────── */
+  var list = document.getElementById('host-list');
+  var emptyState = document.getElementById('host-empty');
+  var toast = document.getElementById('toast');
+  var toastText = document.getElementById('toast-text');
+
+  function syncEmpty() {
+    var n = list.querySelectorAll('.host-card').length;
+    emptyState.hidden = n > 0;
+    document.getElementById('host-count').textContent = n;
+  }
+
+  function removeHost(key) {
+    var card = list.querySelector('.host-card[data-host="' + key + '"]');
+    if (!card) return;
+    removed = { node: card, next: card.nextElementSibling };
+    card.remove();
+    syncEmpty();
+    toastText.textContent = '已移除 ' + HOSTS[key].name;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      toast.classList.remove('show');
+      removed = null;
+    }, 4200);
+  }
+
+  function undoRemove() {
+    if (!removed) return;
+    if (removed.next) { list.insertBefore(removed.node, removed.next); } else { list.appendChild(removed.node); }
+    removed = null;
+    clearTimeout(toastTimer);
+    toast.classList.remove('show');
+    syncEmpty();
+  }
+
+  /* ── event routing ──────────────────────────────────────── */
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest('[data-act]');
+    if (!el) return;
+    var act = el.dataset.act;
+
+    if (act === 'back') { go(el.dataset.to, true); return; }
+    if (act === 'open-scan') { go('scan'); return; }
+    if (act === 'open-manual') { openManual(); return; }
+    if (act === 'close-manual') { closeManual(); return; }
+    if (act === 'submit-manual') { submitManual(); return; }
+    if (act === 'album') { openManual(); return; }
+    if (act === 'connect') { connect(); return; }
+    if (act === 'remove-host') { removeHost(el.dataset.host); return; }
+    if (act === 'undo-remove') { undoRemove(); return; }
+    if (act === 'open-node') { openNode(el); return; }
+    if (act === 'refresh') {
+      var icon = el.querySelector('svg');
+      icon.style.transition = 'transform .7s var(--ease)';
+      icon.style.transform = 'rotate(360deg)';
+      setTimeout(function () { icon.style.transition = ''; icon.style.transform = ''; }, 720);
+      return;
+    }
+    if (act === 'pick-host') {
+      target = HOSTS[el.dataset.host];
+      go('confirm');
+      return;
+    }
+  });
+
+  overlay.addEventListener('click', function (e) { if (e.target === overlay) closeManual(); });
+  input.addEventListener('input', function () {
+    manualErr.textContent = '';
+    input.classList.remove('invalid');
+  });
+
+  syncEmpty();
+  try {
+    var saved = localStorage.getItem('tp-pair-view');
+    if (saved && views[saved] && saved !== 'hosts') {
+      views.hosts.classList.remove('is-active');
+      views.hosts.classList.add('is-left');
+      views[saved].classList.add('is-active');
+      current = saved;
+      if (saved === 'scan') startScan();
+      if (saved === 'confirm') resetConfirm();
+    }
+  } catch (e) {}
+})();
+</script>
+</body>
+</html>

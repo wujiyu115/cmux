@@ -12,7 +12,6 @@ import 'model/chat_tab_info.dart';
 class ChatTabStore {
   final Map<String, List<ChatTab>> _byWorkspace = {};
   final Map<String, int> _savedActiveIndex = {};
-  final Map<String, bool> _newChatActiveByWorkspace = {};
   String _activeWorkspaceId = '';
 
   List<ChatTab> get _active =>
@@ -60,24 +59,6 @@ class ChatTabStore {
   void clear() {
     _byWorkspace.clear();
     _savedActiveIndex.clear();
-    _newChatActiveByWorkspace.clear();
-  }
-
-  /// Whether the workspace shows the new-chat landing instead of a session tab.
-  ///
-  /// Defaults to `true` when the bucket has no open tabs.
-  bool isNewChatActive(String workspaceId) {
-    final bucket = _byWorkspace[workspaceId];
-    if (bucket == null || bucket.isEmpty) return true;
-    return _newChatActiveByWorkspace[workspaceId] ?? false;
-  }
-
-  void setNewChatActive(String workspaceId, bool active) {
-    if (active) {
-      _newChatActiveByWorkspace[workspaceId] = true;
-      return;
-    }
-    _newChatActiveByWorkspace.remove(workspaceId);
   }
 
   /// Removes and returns all tabs belonging to [workspaceId] (for disposal by the
@@ -85,7 +66,6 @@ class ChatTabStore {
   /// legacy empty-string bucket (tabs added before [setActiveWorkspace] was called).
   List<ChatTab> removeWorkspace(String workspaceId) {
     _savedActiveIndex.remove(workspaceId);
-    _newChatActiveByWorkspace.remove(workspaceId);
     final removed = <ChatTab>[];
     // Named bucket.
     final named = _byWorkspace.remove(workspaceId);

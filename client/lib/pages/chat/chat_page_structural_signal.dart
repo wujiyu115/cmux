@@ -11,7 +11,6 @@ class ChatPageStructuralSignal {
   const ChatPageStructuralSignal({
     required this.tabIds,
     required this.activeTabIndex,
-    required this.newChatActive,
     required this.selectedMemberId,
     required this.sessionConnectingId,
     required this.sessionLaunchError,
@@ -20,7 +19,6 @@ class ChatPageStructuralSignal {
 
   final List<String> tabIds;
   final int activeTabIndex;
-  final bool newChatActive;
   final String selectedMemberId;
   final String? sessionConnectingId;
   final String? sessionLaunchError;
@@ -31,7 +29,6 @@ class ChatPageStructuralSignal {
     return other is ChatPageStructuralSignal &&
         const ListEquality<String>().equals(tabIds, other.tabIds) &&
         activeTabIndex == other.activeTabIndex &&
-        newChatActive == other.newChatActive &&
         selectedMemberId == other.selectedMemberId &&
         sessionConnectingId == other.sessionConnectingId &&
         sessionLaunchError == other.sessionLaunchError &&
@@ -45,7 +42,6 @@ class ChatPageStructuralSignal {
   int get hashCode => Object.hash(
     const ListEquality<String>().hash(tabIds),
     activeTabIndex,
-    newChatActive,
     selectedMemberId,
     sessionConnectingId,
     sessionLaunchError,
@@ -64,7 +60,6 @@ ChatPageStructuralSignal chatPageStructuralSignal({
     return ChatPageStructuralSignal(
       tabIds: tabIds,
       activeTabIndex: state.activeTabIndex,
-      newChatActive: state.newChatActive,
       selectedMemberId: state.selectedMemberId,
       sessionConnectingId: _scopedConnectingId(state, state.activeSessionId),
       sessionLaunchError: state.sessionLaunchError,
@@ -74,8 +69,7 @@ ChatPageStructuralSignal chatPageStructuralSignal({
 
   final bucket = tabStore.tabsForWorkspace(tabScopeId);
   final index = tabStore.savedActiveIndexFor(tabScopeId);
-  final newChatActive = tabStore.isNewChatActive(tabScopeId);
-  final ChatTab? tab = bucket.isEmpty || newChatActive
+  final ChatTab? tab = bucket.isEmpty
       ? null
       : bucket[index.clamp(0, bucket.length - 1)];
   final tabIds = bucket.map((t) => t.info.id).toList(growable: false);
@@ -83,7 +77,6 @@ ChatPageStructuralSignal chatPageStructuralSignal({
   return ChatPageStructuralSignal(
     tabIds: tabIds,
     activeTabIndex: index,
-    newChatActive: newChatActive,
     selectedMemberId: tab?.selectedMemberId ?? '',
     sessionConnectingId:
         activeSessionId != null && state.sessionConnectingId == activeSessionId

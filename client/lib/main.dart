@@ -668,6 +668,10 @@ void main() async {
                   RepositoryProvider.value(value: shell.workbenchEditorOpener),
                   RepositoryProvider.value(value: shell.workbenchShellLauncher),
                   BlocProvider.value(value: shell.configCubit),
+                  if (shell.pairingHostCubit != null)
+                    BlocProvider.value(value: shell.pairingHostCubit!),
+                  if (shell.pairingClientCubit != null)
+                    BlocProvider.value(value: shell.pairingClientCubit!),
                   BlocProvider.value(value: shell.layoutCubit),
                   BlocProvider.value(value: shell.workspaceGroupsCubit),
                   BlocProvider.value(value: shell.workspaceToolsCubit),

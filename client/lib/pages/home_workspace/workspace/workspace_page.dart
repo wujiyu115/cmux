@@ -7,10 +7,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../cubits/chat_cubit.dart';
-import '../../../cubits/workspace_landing_context_cubit.dart';
 import '../../../l10n/l10n_extensions.dart';
 import '../../../models/app_session.dart';
-import '../../../models/landing_launch_context.dart';
 import '../../../models/workspace.dart';
 import '../../../pages/home_workspace/home_workspace_route.dart';
 import '../../../repositories/session_repository.dart';
@@ -77,19 +75,7 @@ class _WorkspacePageState extends State<WorkspacePage> {
       _lastScopeView = view;
     }
     _wasRouteActive = active;
-    _syncProfileFromRoute();
     _syncSessionFromRoute();
-  }
-
-  void _syncProfileFromRoute() {
-    final location = GoRouterState.of(context).uri.toString();
-    final routeProfile = HomeWorkspaceRoute.profile(location)?.trim() ?? '';
-    if (routeProfile.isEmpty) return;
-    final cubit = context.read<WorkspaceLandingContextCubit>();
-    final ctx = cubit.state.context;
-    final current = ctx.isPersonal ? '' : (ctx.teamId ?? '');
-    if (current == routeProfile) return;
-    cubit.update(const LandingLaunchContext(isPersonal: true));
   }
 
   void _syncSessionFromRoute() {

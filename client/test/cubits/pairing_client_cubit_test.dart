@@ -1,0 +1,447 @@
+import 'dart:async';
+import 'dart:typed_data';
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:teampilot/cubits/pairing_client_cubit.dart';
+import 'package:teampilot/repositories/pairing_settings_repository.dart';
+import 'package:teampilot/services/pairing/pairing_client.dart';
+import 'package:teampilot/services/pairing/pairing_offer.dart';
+
+/// Hand-rolled fake so the cubit runs its full flow without a real socket.
+class _FakePairingClient extends PairingClient {
+  _FakePairingClient({
+    this.result = const PairingAuthResult(
+      deviceId: 'device-1',
+      hostName: 'My Desktop',
+      deviceToken: 'token-1',
+    ),
+    this.sessions = const [],
+    this.workspaces = const [],
+    this.connectError,
+    this.activateError,
+    this.activateResult = const PairingActivateResult(
+      catalogId: 'chat:s1:main',
+      cols: 80,
+      rows: 24,
+    ),
+  });
+
+  final PairingAuthResult result;
+  final List<PairingSessionSummary> sessions;
+  List<PairingWorkspaceNode> workspaces;
+  final Object? connectError;
+  final Object? activateError;
+  final PairingActivateResult activateResult;
+
+  final _logCtrl = StreamController<String>.broadcast();
+  final _changedCtrl = StreamController<void>.broadcast();
+  final List<(int, Uint8List)> sentInput = [];
+  final List<(int, int, int)> sentResize = [];
+  final List<int> unsubscribed = [];
+  int listWorkspacesCalls = 0;
+  bool closed = false;
+
+  void pushSessionsChanged() => _changedCtrl.add(null);
+
+  @override
+  Stream<String> get log => _logCtrl.stream;
+
+  @override
+  Stream<void> get sessionsChanged => _changedCtrl.stream;
+
+  @override
+  Future<PairingAuthResult> connect({
+    required List<String> wsUrls,
+    required String token,
+    required String hostPublicKeyB64,
+    String? deviceId,
+    String deviceName = 'Mobile device',
+  }) async {
+    _logCtrl.add('Connecting…');
+    if (connectError != null) throw connectError!;
+    return result;
+  }
+
+  @override
+  Future<List<PairingSessionSummary>> listSessions() async => sessions;
+
+  @override
+  Future<List<PairingWorkspaceNode>> listWorkspaces() async {
+    listWorkspacesCalls++;
+    return workspaces;
+  }
+
+  @override
+  Future<PairingActivateResult> activateSession({
+    required String workspaceId,
+    required String kind,
+    String? sessionId,
+    String? memberId,
+    String? paneId,
+  }) async {
+    if (activateError != null) throw activateError!;
+    return activateResult;
+  }
+
+  @override
+  Future<PairingSubscription> subscribe(String catalogId) async {
+    final controller = StreamController<Uint8List>.broadcast();
+    addTearDown(controller.close);
+    return PairingSubscription(42, controller);
+  }
+
+  @override
+  void unsubscribe(int sub) => unsubscribed.add(sub);
+
+  @override
+  void sendInput(int sub, Uint8List data) => sentInput.add((sub, data));
+
+  @override
+  void sendResize(int sub, int cols, int rows) =>
+      sentResize.add((sub, cols, rows));
+
+  @override
+  Future<void> close() async {
+    closed = true;
+    if (!_logCtrl.isClosed) await _logCtrl.close();
+    if (!_changedCtrl.isClosed) await _changedCtrl.close();
+  }
+}
+
+PairingWorkspaceNode _wsNode({
+  String id = 'wsA',
+  List<PairingSessionNode> sessions = const [],
+  List<PairingSessionNode> panes = const [],
+}) => PairingWorkspaceNode(
+  workspaceId: id,
+  title: 'Workspace A',
+  sessions: sessions,
+  panes: panes,
+);
+
+PairingOffer _makeOffer() => const PairingOffer(
+  version: 1,
+  wsUrls: ['ws://192.168.1.9:5555/pair/ws'],
+  token: 'code',
+  hostPublicKeyB64: 'PK',
+  expiresAtMs: 0,
+);
+
+void main() {
+  group('PairingClientCubit', () {
+    test('loadPairedDesktops seeds the state list', () async {
+      final settings = InMemoryPairingSettingsRepository(
+        pairedDesktops: const [
+          PairedDesktop(
+            id: 'd1',
+            name: 'Home',
+            wsUrls: ['ws://x'],
+            hostPublicKeyB64: 'pk',
+            deviceToken: 't',
+          ),
+        ],
+      );
+      final cubit = PairingClientCubit(settings: settings);
+      addTearDown(cubit.close);
+      await cubit.loadPairedDesktops();
+      expect(cubit.state.pairedDesktops, hasLength(1));
+      expect(cubit.state.pairedDesktops.single.name, 'Home');
+    });
+
+    test('happy path: idle → confirming → connected, persists desktop',
+        () async {
+      final settings = InMemoryPairingSettingsRepository();
+      final fake = _FakePairingClient(
+        result: const PairingAuthResult(
+          deviceId: 'device-1',
+          hostName: 'My Desktop',
+          deviceToken: 'token-1',
+        ),
+        workspaces: [
+          _wsNode(
+            sessions: const [
+              PairingSessionNode(
+                workspaceId: 'wsA',
+                kind: 'chat',
+                title: 'shell',
+                subtitle: '',
+                live: false,
+                sessionId: 's1',
+              ),
+            ],
+          ),
+        ],
+      );
+      final cubit = PairingClientCubit(
+        settings: settings,
+        clientFactory: () => fake,
+      );
+      addTearDown(cubit.close);
+
+      cubit.beginPairing(_makeOffer());
+      expect(cubit.state.phase, PairingClientPhase.confirmAwaiting);
+
+      final phases = expectLater(
+        cubit.stream.map((s) => s.phase),
+        emitsThrough(PairingClientPhase.connected),
+      );
+      await cubit.confirmPairing();
+      await phases;
+
+      expect(cubit.state.phase, PairingClientPhase.connected);
+      expect(cubit.state.activeHostName, 'My Desktop');
+      expect(cubit.state.workspaces, hasLength(1));
+      expect(cubit.state.workspaces.single.sessions, hasLength(1));
+      expect(cubit.state.pendingOffer, isNull);
+
+      final saved = await settings.loadPairedDesktops();
+      expect(saved, hasLength(1));
+      expect(saved.single.id, 'device-1');
+      expect(saved.single.deviceToken, 'token-1');
+    });
+
+    test('connect failure moves to error phase and logs it', () async {
+      final settings = InMemoryPairingSettingsRepository();
+      final fake = _FakePairingClient(connectError: Exception('boom'));
+      final cubit = PairingClientCubit(
+        settings: settings,
+        clientFactory: () => fake,
+      );
+      addTearDown(cubit.close);
+
+      cubit.beginPairing(_makeOffer());
+      await cubit.confirmPairing();
+
+      expect(cubit.state.phase, PairingClientPhase.error);
+      expect(cubit.state.error, contains('boom'));
+      expect(cubit.state.logs.any((l) => l.contains('Error')), isTrue);
+      expect(fake.closed, isTrue);
+      expect(await settings.loadPairedDesktops(), isEmpty);
+    });
+
+    test('openSession enters mirroring; input/resize forward to the client',
+        () async {
+      final fake = _FakePairingClient();
+      final cubit = PairingClientCubit(
+        settings: InMemoryPairingSettingsRepository(),
+        clientFactory: () => fake,
+      );
+      addTearDown(cubit.close);
+
+      cubit.beginPairing(_makeOffer());
+      await cubit.confirmPairing();
+      await cubit.openSession('chat:s1:main');
+
+      expect(cubit.state.phase, PairingClientPhase.mirroring);
+      expect(cubit.state.activeCatalogId, 'chat:s1:main');
+      expect(cubit.activeSubscription, isNotNull);
+
+      cubit.sendInput([104, 105]);
+      cubit.sendResize(120, 40);
+      expect(fake.sentInput.single.$1, 42);
+      expect(fake.sentInput.single.$2, Uint8List.fromList([104, 105]));
+      expect(fake.sentResize.single, (42, 120, 40));
+    });
+
+    test('leaveMirror unsubscribes and returns to connected', () async {
+      final fake = _FakePairingClient();
+      final cubit = PairingClientCubit(
+        settings: InMemoryPairingSettingsRepository(),
+        clientFactory: () => fake,
+      );
+      addTearDown(cubit.close);
+
+      cubit.beginPairing(_makeOffer());
+      await cubit.confirmPairing();
+      await cubit.openSession('chat:s1:main');
+      cubit.leaveMirror();
+
+      expect(cubit.state.phase, PairingClientPhase.connected);
+      expect(cubit.state.activeCatalogId, isNull);
+      expect(cubit.activeSubscription, isNull);
+      expect(fake.unsubscribed, [42]);
+    });
+
+    test('cancel disposes the client and returns to idle', () async {
+      final fake = _FakePairingClient();
+      final cubit = PairingClientCubit(
+        settings: InMemoryPairingSettingsRepository(),
+        clientFactory: () => fake,
+      );
+      addTearDown(cubit.close);
+
+      cubit.beginPairing(_makeOffer());
+      await cubit.confirmPairing();
+      await cubit.cancel();
+
+      expect(cubit.state.phase, PairingClientPhase.idle);
+      expect(cubit.state.pendingOffer, isNull);
+      expect(fake.closed, isTrue);
+    });
+
+    test('activateAndOpen: live node mirrors directly (no activate)', () async {
+      final fake = _FakePairingClient();
+      final cubit = PairingClientCubit(
+        settings: InMemoryPairingSettingsRepository(),
+        clientFactory: () => fake,
+      );
+      addTearDown(cubit.close);
+      cubit.beginPairing(_makeOffer());
+      await cubit.confirmPairing();
+
+      await cubit.activateAndOpen(
+        const PairingSessionNode(
+          workspaceId: 'wsA',
+          kind: 'chat',
+          title: 'shell',
+          subtitle: '',
+          live: true,
+          sessionId: 's1',
+          catalogId: 'chat:s1:main',
+        ),
+      );
+
+      expect(cubit.state.phase, PairingClientPhase.mirroring);
+      expect(cubit.state.activeCatalogId, 'chat:s1:main');
+      expect(cubit.state.activatingKey, isNull);
+    });
+
+    test('activateAndOpen: dormant node activates then mirrors', () async {
+      final fake = _FakePairingClient(
+        activateResult: const PairingActivateResult(
+          catalogId: 'chat:s2:main',
+          cols: 80,
+          rows: 24,
+        ),
+      );
+      final cubit = PairingClientCubit(
+        settings: InMemoryPairingSettingsRepository(),
+        clientFactory: () => fake,
+      );
+      addTearDown(cubit.close);
+      cubit.beginPairing(_makeOffer());
+      await cubit.confirmPairing();
+
+      final keys = expectLater(
+        cubit.stream.map((s) => s.activatingKey),
+        emitsThrough('chat:s2'),
+      );
+      await cubit.activateAndOpen(
+        const PairingSessionNode(
+          workspaceId: 'wsA',
+          kind: 'chat',
+          title: 'dead',
+          subtitle: '',
+          live: false,
+          sessionId: 's2',
+        ),
+      );
+      await keys;
+
+      expect(cubit.state.phase, PairingClientPhase.mirroring);
+      expect(cubit.state.activeCatalogId, 'chat:s2:main');
+      expect(cubit.state.activatingKey, isNull);
+    });
+
+    test('activateAndOpen: failure clears the spinner and raises a notice',
+        () async {
+      final fake = _FakePairingClient(activateError: Exception('boom'));
+      final cubit = PairingClientCubit(
+        settings: InMemoryPairingSettingsRepository(),
+        clientFactory: () => fake,
+      );
+      addTearDown(cubit.close);
+      cubit.beginPairing(_makeOffer());
+      await cubit.confirmPairing();
+
+      await cubit.activateAndOpen(
+        const PairingSessionNode(
+          workspaceId: 'wsA',
+          kind: 'chat',
+          title: 'dead',
+          subtitle: '',
+          live: false,
+          sessionId: 's2',
+        ),
+      );
+
+      expect(cubit.state.phase, PairingClientPhase.connected);
+      expect(cubit.state.activatingKey, isNull);
+      expect(cubit.state.notice, PairingNotice.activateFailed);
+      cubit.clearNotice();
+      expect(cubit.state.notice, isNull);
+    });
+
+    test('activateAndOpen: host fallback raises a fallback notice', () async {
+      final fake = _FakePairingClient(
+        activateResult: const PairingActivateResult(
+          catalogId: 'ws:p9',
+          cols: 80,
+          rows: 24,
+          fallback: true,
+        ),
+      );
+      final cubit = PairingClientCubit(
+        settings: InMemoryPairingSettingsRepository(),
+        clientFactory: () => fake,
+      );
+      addTearDown(cubit.close);
+      cubit.beginPairing(_makeOffer());
+      await cubit.confirmPairing();
+
+      await cubit.activateAndOpen(
+        const PairingSessionNode(
+          workspaceId: 'wsA',
+          kind: 'chat',
+          title: 'dead',
+          subtitle: '',
+          live: false,
+          sessionId: 's2',
+        ),
+      );
+
+      expect(cubit.state.phase, PairingClientPhase.mirroring);
+      expect(cubit.state.notice, PairingNotice.fallbackOpenedTerminal);
+    });
+
+    test('sessionsChanged from the host refreshes the workspace tree',
+        () async {
+      final fake = _FakePairingClient();
+      final cubit = PairingClientCubit(
+        settings: InMemoryPairingSettingsRepository(),
+        clientFactory: () => fake,
+      );
+      addTearDown(cubit.close);
+      cubit.beginPairing(_makeOffer());
+      await cubit.confirmPairing();
+      expect(fake.listWorkspacesCalls, 1);
+
+      fake.workspaces = [_wsNode()];
+      fake.pushSessionsChanged();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(fake.listWorkspacesCalls, 2);
+      expect(cubit.state.workspaces, hasLength(1));
+    });
+
+    test('removeDesktop drops it from state and storage', () async {
+      final settings = InMemoryPairingSettingsRepository(
+        pairedDesktops: const [
+          PairedDesktop(
+            id: 'd1',
+            name: 'Home',
+            wsUrls: ['ws://x'],
+            hostPublicKeyB64: 'pk',
+            deviceToken: 't',
+          ),
+        ],
+      );
+      final cubit = PairingClientCubit(settings: settings);
+      addTearDown(cubit.close);
+      await cubit.loadPairedDesktops();
+      await cubit.removeDesktop('d1');
+      expect(cubit.state.pairedDesktops, isEmpty);
+      expect(await settings.loadPairedDesktops(), isEmpty);
+    });
+  });
+}

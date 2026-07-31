@@ -22,7 +22,6 @@ void main() {
       cubit.setActiveWorkspace('tab-A');
       cubit.tabStore.append(_tab('a1'));
       cubit.tabStore.append(_tab('a2'));
-      cubit.tabStore.setNewChatActive('tab-A', false);
       cubit.refreshActiveWorkspaceTabs();
 
       expect(scopedActiveSessionId(cubit, 'tab-A'), 'a1');
@@ -35,11 +34,9 @@ void main() {
       cubit.setActiveWorkspace('tab-A');
       cubit.tabStore.append(_tab('a1'));
       cubit.tabStore.append(_tab('a2'));
-      cubit.tabStore.setNewChatActive('tab-A', false);
       cubit.tabStore.setActiveWorkspace('tab-B', currentActiveIndex: 1);
 
       cubit.tabStore.append(_tab('b1'));
-      cubit.tabStore.setNewChatActive('tab-B', false);
       cubit.refreshActiveWorkspaceTabs();
 
       expect(scopedActiveSessionId(cubit, 'tab-A'), 'a2');
@@ -55,7 +52,6 @@ void main() {
       cubit.setActiveWorkspace('tab-A');
       cubit.tabStore.append(_tab('a1'));
       cubit.tabStore.append(_tab('a2'));
-      cubit.tabStore.setNewChatActive('tab-A', false);
       cubit.refreshActiveWorkspaceTabs();
 
       expect(scopedActiveChatTab(cubit, 'tab-A')?.info.id, 'a1');
@@ -68,10 +64,8 @@ void main() {
       cubit.setActiveWorkspace('tab-A');
       cubit.tabStore.append(_tab('a1'));
       cubit.tabStore.append(_tab('a2'));
-      cubit.tabStore.setNewChatActive('tab-A', false);
       cubit.tabStore.setActiveWorkspace('tab-B', currentActiveIndex: 1);
       cubit.tabStore.append(_tab('b1'));
-      cubit.tabStore.setNewChatActive('tab-B', false);
       cubit.refreshActiveWorkspaceTabs();
 
       expect(scopedActiveChatTab(cubit, 'tab-A')?.info.id, 'a2');

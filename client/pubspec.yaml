@@ -56,6 +56,11 @@ dependencies:
   pub_semver: ^2.2.0
   android_package_installer: ^0.0.3
   crypto: ^3.0.7
+  pinenacl: ^0.6.0
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^5.2.3
+  image_picker: ^1.1.2
+  app_links: ^6.3.2
   archive: ^4.0.9
   toggle_switch: ^2.3.0
   google_fonts: ^8.1.0

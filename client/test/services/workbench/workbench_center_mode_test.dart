@@ -4,23 +4,16 @@ import 'package:teampilot/services/workbench/workbench_center_mode.dart';
 
 void main() {
   group('resolveWorkbenchCenterMode', () {
-    test('compose wins even when activeTabId is set', () {
+    test('welcome when active is null', () {
       expect(
-        resolveWorkbenchCenterMode(newChatActive: true, activeTabId: 'x'),
-        WorkbenchCenterMode.compose,
-      );
-    });
-
-    test('welcome when not compose and active is null', () {
-      expect(
-        resolveWorkbenchCenterMode(newChatActive: false, activeTabId: null),
+        resolveWorkbenchCenterMode(activeTabId: null),
         WorkbenchCenterMode.welcome,
       );
     });
 
-    test('tab when not compose and active is set', () {
+    test('tab when active is set', () {
       expect(
-        resolveWorkbenchCenterMode(newChatActive: false, activeTabId: 's1'),
+        resolveWorkbenchCenterMode(activeTabId: 's1'),
         WorkbenchCenterMode.tab,
       );
     });

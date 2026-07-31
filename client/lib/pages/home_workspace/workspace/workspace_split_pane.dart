@@ -18,12 +18,10 @@ import '../../../services/workspace/workspace_tools_scope_registry.dart';
 import '../../../services/workspace/workspace_worktree_registry.dart';
 import '../../../services/workbench/workbench_shell_launcher.dart';
 import '../../../utils/ui/app_keys.dart';
-import '../../../utils/workspace/workspace_new_chat_active.dart';
 import '../../../widgets/right_tools/right_tools_panel.dart';
 import '../../../widgets/workspace_terminal_panel.dart';
 import '../../chat_page.dart';
 import '../../workspace_ide/workspace_ide_shell.dart';
-import 'workspace_ide_center.dart';
 import 'workspace_route_active_scope.dart';
 import 'workspace_search_dialog.dart';
 import 'workspace_session_actions.dart';
@@ -85,42 +83,38 @@ class _WorkspaceSplitPaneState extends State<WorkspaceSplitPane> {
   }
 
   /// Empty workspaces auto-launch their default terminal — cmux keeps a live
-  /// terminal per workspace in place of the compose landing. Fires only for the
-  /// visible (route-active) workspace, once per empty episode, and only when a
-  /// [WorkbenchShellLauncher] is in scope (absent in lightweight widget tests
-  /// that assert the landing empty-state — those skip cleanly). [ctx] is the
-  /// builder context (owns worktree / launcher / chat providers).
-  void _maybeAutoOpenTerminal(BuildContext ctx, bool composeLanding, String cwd) {
-    if (!composeLanding) {
-      _autoTerminalScheduled = false;
-      return;
-    }
-    if (_autoTerminalScheduled) return;
+  /// terminal per workspace (the chat-landing composer is gone; terminals only).
+  /// Fires only for the visible (route-active) workspace, once per empty episode,
+  /// and only when a [WorkbenchShellLauncher] is in scope (absent in lightweight
+  /// widget tests — those skip cleanly). [ctx] is the builder context (owns
+  /// worktree / launcher / chat providers).
+  void _maybeAutoOpenTerminal(BuildContext ctx, String cwd) {
     if (!WorkspaceRouteActiveScope.routeActiveOf(ctx)) return;
     if (cwd.trim().isEmpty) return;
     try {
       ctx.read<WorkbenchShellLauncher>();
     } on ProviderNotFoundException {
-      return; // No launcher in scope (test harness) — leave the landing shown.
+      return; // No launcher in scope (test harness).
     }
-    _autoTerminalScheduled = true;
 
     // Workspace already owns a live shell terminal → focus it instead of
-    // spawning a second PTY. Switching back to a workspace must reuse its open
-    // terminal, not open a new one on every activation.
+    // spawning a second PTY. Reset the guard so a later empty episode re-arms.
     final workbench = ctx.read<WorkbenchCubit>();
     final existingShell = workbench.resolveMostRecentShell(
       widget.workspace.workspaceId,
     );
     if (existingShell != null) {
+      _autoTerminalScheduled = false;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         workbench.select(widget.workspace.workspaceId, existingShell);
-        ctx.read<ChatCubit>().dismissNewChat();
       });
       return;
     }
 
+    // No live shell → open the default terminal once per empty episode.
+    if (_autoTerminalScheduled) return;
+    _autoTerminalScheduled = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       unawaited(
@@ -191,30 +185,21 @@ class _WorkspaceSplitPaneState extends State<WorkspaceSplitPane> {
           final cwd = wt.currentWorktreePath.isNotEmpty
               ? wt.currentWorktreePath
               : widget.workspace.firstFolderPath;
-          final composeLanding = context.select<ChatCubit, bool>(
-            (c) => workspaceNewChatActive(c, widget.tabScopeId),
-          );
-          _maybeAutoOpenTerminal(context, composeLanding, cwd);
+          _maybeAutoOpenTerminal(context, cwd);
           return WorkspaceToolsScopeSync(
             workspace: widget.workspace,
             cwd: cwd,
             tabScopeId: widget.tabScopeId,
             child: WorkspaceIdeShell(
-              composeLanding: composeLanding,
               terminalHold: _terminalHold,
               // Left pane retired: the global workspace nav owns switching now,
               // and worktree/session actions moved to the shell "+" menu.
-              // Unbound Chat pane skips ChatPageShell / workbench projection.
-              center: buildWorkspaceIdeCenter(
-                newChat: composeLanding,
-                workspace: widget.workspace,
-                chatPage: ChatPage(
-                  cwd: cwd,
-                  additionalPaths: widget.workspace.extraFolderPaths,
-                  workspaceId: widget.workspace.workspaceId,
-                  tabScopeId: widget.tabScopeId,
-                  holdHandle: _terminalHold,
-                ),
+              center: ChatPage(
+                cwd: cwd,
+                additionalPaths: widget.workspace.extraFolderPaths,
+                workspaceId: widget.workspace.workspaceId,
+                tabScopeId: widget.tabScopeId,
+                holdHandle: _terminalHold,
               ),
               // Side panes are off the first-open critical path: chrome +
               // landing paint first, then tools mount.
@@ -252,17 +237,12 @@ class _WorkspaceRightToolsPane extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final chat = context.watch<ChatCubit>();
-    final composeLanding = workspaceNewChatActive(chat, tabScopeId);
     final layoutState = context.watch<LayoutCubit>().state;
-    final effectiveRight = composeLanding
-        ? (layoutState.landingRightToolsOverride ?? false)
-        : layoutState.preferences.rightToolsVisible;
     return RightToolsPanel(
       cwd: cwd,
       additionalPaths: additionalPaths,
       preferences: layoutState.preferences.copyWith(
-        rightToolsVisible: effectiveRight,
+        rightToolsVisible: layoutState.preferences.rightToolsVisible,
       ),
       panelKey: AppKeys.rightToolsPanel,
       dismissDrawerOnAction: false,

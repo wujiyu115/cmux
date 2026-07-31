@@ -7,7 +7,9 @@ import '../cubits/config_cubit.dart';
 import '../pages/config/config_workspace.dart';
 import '../pages/home_workspace/home_workspace_shell.dart';
 import '../pages/onboarding/onboarding_gate.dart';
+import '../pages/pairing/pairing_mobile_shell.dart';
 import '../pages/startup_gate.dart';
+import '../services/app/platform_utils.dart';
 import '../widgets/android_ssh_profile_selector.dart';
 import 'android_shell_chrome.dart';
 import '../models/layout_preferences.dart';
@@ -81,9 +83,13 @@ final appRouter = GoRouter(
         // Apifox-style workspace home — title bar + open workspace tabs live in
         // [HomeShell]; [HomeWorkspaceBodyStack] owns the visible body.
         ShellRoute(
-          builder: (context, state, child) => SplashDeferredShell(
-            child: HomeShell(location: state.uri.toString()),
-          ),
+          builder: (context, state, child) => isPairingClient
+              // Mobile is a pure pairing/mirror client — its own slim shell
+              // replaces the desktop workspace tabs entirely.
+              ? const PairingMobileShell()
+              : SplashDeferredShell(
+                  child: HomeShell(location: state.uri.toString()),
+                ),
           routes: [
             GoRoute(
               path: '/home-v2',
@@ -145,6 +151,12 @@ final appRouter = GoRouter(
               path: '/config/ssh-profiles',
               pageBuilder: (context, state) => const NoTransitionPage(
                 child: ConfigWorkspace(section: ConfigSection.sshProfiles),
+              ),
+            ),
+            GoRoute(
+              path: '/config/pairing',
+              pageBuilder: (context, state) => const NoTransitionPage(
+                child: ConfigWorkspace(section: ConfigSection.pairing),
               ),
             ),
             GoRoute(

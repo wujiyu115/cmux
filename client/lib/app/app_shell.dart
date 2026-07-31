@@ -47,6 +47,18 @@ import '../repositories/session_repository.dart';
 import '../repositories/ssh_credential_store.dart';
 import '../repositories/ssh_known_host_repository.dart';
 import '../repositories/ssh_profile_repository.dart';
+import '../repositories/pairing_key_store.dart';
+import '../repositories/pairing_settings_repository.dart';
+import '../cubits/pairing_client_cubit.dart';
+import '../cubits/pairing_host_cubit.dart';
+import '../services/app/platform_utils.dart';
+import '../services/pairing/device_registry.dart';
+import '../services/pairing/lan_pairing_server.dart';
+import '../services/pairing/pairing_crypto.dart';
+import '../services/pairing/pairing_workspace_index.dart';
+import '../services/pairing/session_catalog.dart';
+import '../models/app_session.dart';
+import '../models/workspace.dart';
 import '../repositories/user_terminal_theme_repository.dart';
 import '../router/app_router.dart';
 import '../services/storage/app_storage.dart';
@@ -100,6 +112,8 @@ class AppShell {
   AppShell({
     required this.homeTargetController,
     required this.directoryPicker,
+    this.pairingHostCubit,
+    this.pairingClientCubit,
     required this.chatCubit,
     required this.agentAttentionCubit,
     required this.agentStatusSeatLookup,
@@ -150,6 +164,12 @@ class AppShell {
   final HomeWorkspaceUiCache homeWorkspaceUiCache;
   final HomeTargetController homeTargetController;
   final WorkspaceDirectoryPicker directoryPicker;
+
+  /// Desktop LAN pairing host; null on mobile (pure client) platforms.
+  final PairingHostCubit? pairingHostCubit;
+
+  /// Mobile pairing client; null on desktop (host) platforms.
+  final PairingClientCubit? pairingClientCubit;
   final ChatCubit chatCubit;
   final AgentAttentionCubit agentAttentionCubit;
   final AgentStatusSeatLookup agentStatusSeatLookup;
@@ -492,7 +512,6 @@ Future<AppShell> buildAppShell({
     commandBus,
     layoutCubit,
     uiZoomBaseline: () => uiZoomBaseline.value,
-    composeLanding: () => chatCubit.state.newChatActive,
     onTogglePanel: () async {
       await workbenchShellLauncher?.focusOrCreateDefaultShell();
     },
@@ -555,7 +574,7 @@ Future<AppShell> buildAppShell({
     attention: agentAttentionCubit,
     isForegroundSeat: (sessionId, memberId) {
       final s = chatCubit.state;
-      return !s.newChatActive && s.activeSessionId == sessionId;
+      return s.activeSessionId == sessionId;
     },
     resolveAttribution: (sessionId, memberId) {
       final s = chatCubit.state;
@@ -691,6 +710,7 @@ Future<AppShell> buildAppShell({
     commandBus,
     chatCubit,
     WorkbenchStripNavigator(workbench: workbenchCubit, chat: chatCubit),
+    resolvedShellLauncher,
   );
 
   // P1: switching the home target persists the id, rebinds the home context,
@@ -714,9 +734,165 @@ Future<AppShell> buildAppShell({
     listTargets: () => runtimeTargetRegistry.listTargets(),
   );
 
+  // --- Pairing host (desktop only) ------------------------------------------
+  // Builds the LAN pairing stack behind the config toggle. The mobile client
+  // never reaches here (isPairingHost is false on Android/iOS).
+  PairingHostCubit? pairingHostCubit;
+  if (isPairingHost) {
+    final pairingKeyStore = SecurePairingKeyStore(
+      const FlutterSecureKeyValueStore(),
+    );
+    final pairingSettings = SharedPrefsPairingSettingsRepository(preferences);
+    final storedKey = await pairingKeyStore.loadStaticPrivateKey();
+    final PairingKeyPair hostStaticKey;
+    if (storedKey == null) {
+      hostStaticKey = PairingKeyPair.generate();
+      await pairingKeyStore.saveStaticPrivateKey(hostStaticKey.privateKeyB64);
+    } else {
+      hostStaticKey = PairingKeyPair.fromPrivateBytes(
+        PairingCrypto.unb64u(storedKey),
+      );
+    }
+    final deviceRegistry = DeviceRegistry(pairingKeyStore);
+    final sessionCatalog = SessionCatalog()
+      ..addSource(() => _chatCatalogEntries(chatCubit))
+      ..addSource(
+        () => _workspaceCatalogEntries(workspaceTerminalRegistry),
+      );
+    // Push `session.changed` to mirrored phones whenever the catalog sources
+    // churn: terminal panes open/close (registry `changes` Listenable) or chat
+    // tabs change. Both singletons live for the app's lifetime, so these
+    // listeners are intentionally never detached.
+    workspaceTerminalRegistry.changes.addListener(sessionCatalog.notifyChanged);
+    chatCubit.stream.listen((_) => sessionCatalog.notifyChanged());
+    // Full workspace tree from disk (all workspaces + their persisted sessions),
+    // so the phone can list and activate even dormant workspaces/sessions.
+    Future<List<PairingWorkspaceInfo>> pairingWorkspaceIndex() async {
+      final workspaces = await sessionRepo.loadWorkspacesIndex();
+      final sessionsPerWorkspace = await Future.wait(
+        workspaces.map((w) => sessionRepo.loadSessionsForWorkspace(w.workspaceId)),
+      );
+      return [
+        for (var i = 0; i < workspaces.length; i++)
+          PairingWorkspaceInfo(
+            workspaceId: workspaces[i].workspaceId,
+            title: workspaces[i].effectiveDisplay,
+            sessions: [
+              for (final s in sessionsPerWorkspace[i])
+                PairingPersistedSession(
+                  sessionId: s.sessionId,
+                  title: s.display.isNotEmpty
+                      ? s.display
+                      : Workspace.directoryName(s.firstFolderPath),
+                  subtitle: Workspace.directoryName(s.firstFolderPath),
+                  cli: s.cli?.name,
+                  started: s.launchState == AppSessionLaunchState.started,
+                ),
+            ],
+          ),
+      ];
+    }
+
+    // Host-side activation: bring a dormant chat session / workspace pane live so
+    // the phone can mirror it. Chat resume runs the normal launch pipeline (which
+    // touches the desktop UI); if that fails we fall back to a plain workspace
+    // terminal so the phone always gets *something* mirrorable.
+    Future<PairingActivationResult?> pairingActivate(
+      PairingActivationRequest request,
+    ) async {
+      Future<PairingActivationResult?> openWorkspaceTerminal() async {
+        final entry = await resolvedShellLauncher.openDefaultShellForWorkspace(
+          request.workspaceId,
+        );
+        if (entry == null) return null;
+        return PairingActivationResult(
+          catalogId: PairedSessionRef.workspaceId(entry.id),
+        );
+      }
+
+      if (request.kind == PairingActivationKind.workspace) {
+        // Already-live pane: reuse it directly.
+        final paneId = request.paneId;
+        if (paneId != null &&
+            sessionCatalog.resolve(PairedSessionRef.workspaceId(paneId)) !=
+                null) {
+          return PairingActivationResult(
+            catalogId: PairedSessionRef.workspaceId(paneId),
+          );
+        }
+        return openWorkspaceTerminal();
+      }
+
+      // Chat resume.
+      final sessionId = request.sessionId;
+      if (sessionId == null) return openWorkspaceTerminal();
+      final catalogId = PairedSessionRef.chatId(sessionId, null);
+      if (sessionCatalog.resolve(catalogId) != null) {
+        return PairingActivationResult(catalogId: catalogId);
+      }
+      try {
+        chatCubit.activateWorkspaceTab(workspaceTabKey: request.workspaceId);
+        await chatCubit.ensureSessionsForWorkspace(request.workspaceId);
+        final session = chatCubit.state.sessions
+            .where((s) => s.sessionId == sessionId)
+            .firstOrNull;
+        final workspace = chatCubit.state.workspaces
+            .where((w) => w.workspaceId == request.workspaceId)
+            .firstOrNull;
+        if (session == null) return openWorkspaceTerminal();
+        final status = await chatCubit.requestOpenSession(
+          SessionOpenRequest(
+            session: session,
+            workspace: workspace,
+            repo: sessionRepo,
+            connectImmediately: true,
+          ),
+        );
+        if (status == SessionOpenStatus.opened) {
+          return PairingActivationResult(catalogId: catalogId);
+        }
+      } on Object catch (e) {
+        appLogger.d('pairing chat activation failed: $e');
+      }
+      // Fallback: plain workspace terminal.
+      final fallback = await openWorkspaceTerminal();
+      if (fallback == null) return null;
+      return PairingActivationResult(
+        catalogId: fallback.catalogId,
+        fallback: true,
+      );
+    }
+
+    LanPairingServer serverFactory() => LanPairingServer(
+      hostStaticKey: hostStaticKey,
+      registry: deviceRegistry,
+      catalog: sessionCatalog,
+      hostName: Platform.localHostname,
+      workspaceIndex: pairingWorkspaceIndex,
+      activator: pairingActivate,
+    );
+    pairingHostCubit = PairingHostCubit(
+      settings: pairingSettings,
+      registry: deviceRegistry,
+      serverFactory: serverFactory,
+    );
+    unawaited(pairingHostCubit.init());
+  }
+
+  // --- Pairing client (mobile only) -----------------------------------------
+  // Pure LAN mirror/control client; never binds a server. Desktop skips this.
+  PairingClientCubit? pairingClientCubit;
+  if (isPairingClient) {
+    final pairingSettings = SharedPrefsPairingSettingsRepository(preferences);
+    pairingClientCubit = PairingClientCubit(settings: pairingSettings);
+    unawaited(pairingClientCubit.loadPairedDesktops());
+  }
+
   return AppShell(
     homeTargetController: homeTargetController,
     directoryPicker: directoryPicker,
+    pairingHostCubit: pairingHostCubit,
+    pairingClientCubit: pairingClientCubit,
     chatCubit: chatCubit,
     agentAttentionCubit: agentAttentionCubit,
     agentStatusSeatLookup: agentStatusSeatLookup,
@@ -764,6 +940,65 @@ Future<AppShell> buildAppShell({
     workspaceSearchHost: workspaceSearchHost,
     uiZoomBaseline: uiZoomBaseline,
   );
+}
+
+/// Read-only projection of ChatCubit's tab store into pairing catalog entries.
+/// Only live (running) sessions are exposed for mirroring.
+List<SessionCatalogEntry> _chatCatalogEntries(ChatCubit chatCubit) {
+  final entries = <SessionCatalogEntry>[];
+  for (final tab in chatCubit.tabStore.openTabs) {
+    final sid = tab.info.id;
+    tab.memberShells.forEach((memberId, session) {
+      if (!session.isRunning) return;
+      // In cmux the primary shell is keyed by the session id itself. Expose it
+      // as the canonical `chat:<sid>:main` ref (memberId=null) that
+      // pairingActivate and workspace.list resolve against; otherwise the phone
+      // waits for an id the catalog never emits and activation times out. Extra
+      // members keep their own `chat:<sid>:<memberId>` ref.
+      final isPrimary = memberId == sid;
+      final refMemberId = isPrimary ? null : memberId;
+      entries.add(
+        SessionCatalogEntry(
+          PairedSessionRef(
+            catalogId: PairedSessionRef.chatId(sid, refMemberId),
+            kind: PairedSessionKind.chat,
+            title: isPrimary ? tab.info.title : '${tab.info.title} · $memberId',
+            subtitle: tab.info.subtitle,
+            sessionId: sid,
+            memberId: refMemberId,
+          ),
+          session,
+        ),
+      );
+    });
+  }
+  return entries;
+}
+
+/// Read-only projection of the workspace terminal registry into catalog entries.
+List<SessionCatalogEntry> _workspaceCatalogEntries(
+  WorkspaceTerminalRegistry registry,
+) {
+  final entries = <SessionCatalogEntry>[];
+  for (final group in registry.groups) {
+    for (final entry in group.entries) {
+      if (!entry.session.isRunning) continue;
+      entries.add(
+        SessionCatalogEntry(
+          PairedSessionRef(
+            catalogId: PairedSessionRef.workspaceId(entry.id),
+            kind: PairedSessionKind.workspace,
+            title: entry.titleLabel.isEmpty ? entry.cwd : entry.titleLabel,
+            subtitle: group.workspaceId,
+            sessionId: group.workspaceId,
+            paneId: entry.id,
+          ),
+          entry.session,
+        ),
+      );
+    }
+  }
+  return entries;
 }
 
 /// Loads user-imported terminal themes into [UserTerminalThemeRegistry].
