@@ -1,0 +1,65 @@
+name: Build iOS (unsigned IPA)
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Git ref to build (branch / tag / sha). Leave empty for current."
+        required: false
+        default: ""
+
+defaults:
+  run:
+    working-directory: client
+
+jobs:
+  # No Apple signing certs are configured, so this produces an UNSIGNED IPA:
+  # useful for sideloading (TrollStore / AltStore) and for proving the iOS target
+  # builds. Add the signing secrets and switch to
+  # `flutter build ipa --export-options-plist=…` when a certificate exists.
+  build-ios:
+    name: Build iOS (unsigned IPA)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref || github.ref }}
+          submodules: recursive
+
+      # rust_lib_flutter_alacritty builds through cargokit during pod install.
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Resolve Flutter packages
+        run: flutter pub get
+
+      - name: Sync bundled Google Fonts (Noto Sans SC)
+        run: dart run tool/sync_bundled_google_fonts.dart
+
+      - name: Generate native splash sources
+        run: dart run native_splash_screen_cli gen
+
+      # `flutter build ipa --no-codesign` stops at the .xcarchive (export needs a
+      # signing identity), so we build the .app and wrap it in Payload/ ourselves.
+      - name: Build iOS and wrap an unsigned IPA
+        run: |
+          set -euo pipefail
+          flutter build ios --release --no-codesign
+          version=$(grep -E '^version:' pubspec.yaml | head -1 | sed 's/version:[[:space:]]*//')
+          dist_dir="dist/${version}"
+          mkdir -p "${dist_dir}/Payload"
+          cp -R build/ios/iphoneos/Runner.app "${dist_dir}/Payload/"
+          (cd "${dist_dir}" && zip -qry "teampilot-${version}-unsigned.ipa" Payload && rm -rf Payload)
+          test -f "${dist_dir}/teampilot-${version}-unsigned.ipa"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-unsigned
+          path: client/dist/**/*.ipa
+          if-no-files-found: error
