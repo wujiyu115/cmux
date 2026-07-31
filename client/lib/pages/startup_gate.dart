@@ -1,12 +1,10 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../cubits/session_preferences_cubit.dart';
 import '../cubits/ssh_profile_cubit.dart';
 import '../services/app/connection_mode_service.dart';
-import '../services/storage/home_target_controller.dart';
+import '../services/app/platform_utils.dart';
 import '../repositories/ssh_credential_store.dart';
 import '../repositories/ssh_profile_repository.dart';
 import '../services/ssh/ssh_profile_connection_tester.dart';
@@ -21,11 +19,12 @@ class StartupGate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     context.watch<SessionPreferencesCubit>();
+    // Mobile is a pure LAN pairing client — no SSH home target, no gate.
+    if (isPairingClient) return child;
     final mode = context.read<ConnectionModeService>();
-    // Android can only run over SSH: it must have an ssh home target. Desktop
-    // with a local/wsl home needs no gate.
-    final androidNeedsSshHome = Platform.isAndroid && !mode.isSshMode;
-    if (!mode.isSshMode && !androidNeedsSshHome) return child;
+    // Desktop with a local/wsl home needs no gate; only an explicit ssh home
+    // (desktop optional SSH) requires profile setup.
+    if (!mode.isSshMode) return child;
 
     final sshState = context.watch<SshProfileCubit>().state;
 
@@ -33,7 +32,7 @@ class StartupGate extends StatelessWidget {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    if (mode.requiresSshProfileSetup || androidNeedsSshHome) {
+    if (mode.requiresSshProfileSetup) {
       return SshProfileSetupPage(
         profileRepository: context.read<SshProfileRepository>(),
         credentialStore: context.read<SshCredentialStore>(),
@@ -43,15 +42,7 @@ class StartupGate extends StatelessWidget {
               .sshClientFactory,
         ),
         onProfileSaved: () async {
-          final sshCubit = context.read<SshProfileCubit>();
-          final homeController = context.read<HomeTargetController>();
-          await sshCubit.load();
-          // On Android the freshly created profile becomes the home target.
-          if (Platform.isAndroid && sshCubit.state.profiles.isNotEmpty) {
-            await homeController.select(
-              'ssh:${sshCubit.state.profiles.first.id}',
-            );
-          }
+          await context.read<SshProfileCubit>().load();
         },
       );
     }

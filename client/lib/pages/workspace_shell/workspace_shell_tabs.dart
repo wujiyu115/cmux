@@ -40,17 +40,11 @@ class WorkspaceShellRightToolsVisibilityToggle extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
-    final composeLanding = context.select<ChatCubit, bool>(
-      (c) => c.state.newChatActive, // chrome is for the active workspace
-    );
     return BlocBuilder<LayoutCubit, LayoutState>(
       buildWhen: (a, b) =>
-          a.preferences.rightToolsVisible != b.preferences.rightToolsVisible ||
-          a.landingRightToolsOverride != b.landingRightToolsOverride,
+          a.preferences.rightToolsVisible != b.preferences.rightToolsVisible,
       builder: (context, state) {
-        final visible = composeLanding
-            ? (state.landingRightToolsOverride ?? false)
-            : state.preferences.rightToolsVisible;
+        final visible = state.preferences.rightToolsVisible;
         return TpIconButton(
           key: AppKeys.rightToolsVisibilityButton,
           icon: Icons.vertical_split_outlined,
@@ -59,9 +53,7 @@ class WorkspaceShellRightToolsVisibilityToggle extends StatelessWidget {
               : l10n.rightToolsPanelVisible,
           color: visible ? cs.primary : cs.onSurfaceVariant,
           backgroundColor: Colors.transparent,
-          onTap: () => context.read<LayoutCubit>().toggleRightTools(
-            composeLanding: composeLanding,
-          ),
+          onTap: () => context.read<LayoutCubit>().toggleRightTools(),
         );
       },
     );

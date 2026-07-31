@@ -37,13 +37,14 @@ class RuntimeContextResolver {
     RuntimeTarget target, {
     SshProfile? sshProfile,
   }) async {
+    // SSH is now desktop-only and always explicit (an ssh target). Mobile is a
+    // pure pairing client and never resolves a runtime context here.
     final useSsh =
-        Platform.isAndroid ||
-        (target.kind == RuntimeKind.ssh &&
-            sshProfile != null &&
-            sshClientFactory != null);
+        target.kind == RuntimeKind.ssh &&
+        sshProfile != null &&
+        sshClientFactory != null;
 
-    if (useSsh && sshProfile != null && sshClientFactory != null) {
+    if (useSsh) {
       return _resolveSsh(
         target,
         profile: sshProfile,

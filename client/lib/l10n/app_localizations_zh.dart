@@ -507,42 +507,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sessionStarting => '正在启动会话…';
 
   @override
-  String get workspaceChatLandingInputHint => '今天帮你做些什么？ @ 引用对话文件，/ 调用技能与指令';
-
-  @override
-  String get workspaceChatLandingBackToStart => '返回启动页';
-
-  @override
-  String get workspaceChatLandingSelectProject => '选择项目 >';
-
-  @override
-  String get workspaceChatLandingSelectWorktree => '选择 worktree >';
-
-  @override
-  String get workspaceChatLandingFullAccessPermissions => '完成访问权限';
-
-  @override
-  String get workspaceChatLandingDefaultPermissions => '默认权限';
-
-  @override
-  String get workspaceChatLandingAttach => '附加文件';
-
-  @override
-  String get workspaceChatLandingVoice => '语音输入';
-
-  @override
-  String get workspaceChatLandingVoiceCancel => '取消录音';
-
-  @override
-  String get workspaceChatLandingVoiceStop => '停止录音';
-
-  @override
-  String get workspaceChatLandingVoiceUnavailable => '此设备不支持语音输入';
-
-  @override
-  String get workspaceChatLandingVoicePermissionDenied => '未获得麦克风权限';
-
-  @override
   String get sessionRetryButton => '重试';
 
   @override
@@ -909,9 +873,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get editorCopyAsAiContext => '复制为 AI 上下文';
-
-  @override
-  String get selectionAskAi => '用 AI 提问…';
 
   @override
   String get editorPaste => '粘贴';
@@ -1961,7 +1922,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get shortcutsStripPrevTab => '上一个标签';
 
   @override
-  String get shortcutsSessionNewTab => '新建会话标签';
+  String get shortcutsSessionNewTab => '新建终端';
 
   @override
   String get shortcutsSessionCloseTab => '关闭会话标签';
@@ -2533,4 +2494,221 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get terminalThemeDeleteFailed => '无法删除该主题。';
+
+  @override
+  String get pairingSettingsTitle => '设备配对';
+
+  @override
+  String get pairingPageSubtitle => '在局域网内与手机配对，镜像并控制此桌面的终端。';
+
+  @override
+  String get pairingHostDesktopOnly => '设备配对主机仅在桌面端可用。';
+
+  @override
+  String get pairingEnableTitle => '允许手机通过局域网配对';
+
+  @override
+  String get pairingEnableSubtitle => '同一网络下的手机扫码后可镜像并控制此桌面的终端会话。';
+
+  @override
+  String get pairingScanToPair => '扫码配对';
+
+  @override
+  String get pairingNewCode => '刷新配对码';
+
+  @override
+  String get pairingGeneratingCode => '正在生成配对码…';
+
+  @override
+  String get pairingEnterAddressManually => '或手动输入以下任一地址：';
+
+  @override
+  String get pairingNoLanAddress => '未检测到局域网地址。';
+
+  @override
+  String get pairingPairedDevices => '已配对设备';
+
+  @override
+  String get pairingNoDevicesYet => '暂无已配对设备。';
+
+  @override
+  String get pairingRevoke => '撤销';
+
+  @override
+  String get pairingDesktops => '桌面';
+
+  @override
+  String get pairingScan => '扫码';
+
+  @override
+  String get pairingRemove => '移除';
+
+  @override
+  String get pairingNoPairedDesktops => '暂无已配对的桌面。';
+
+  @override
+  String get pairingEmptyHint => '在桌面端打开 TeamPilot，启用设备配对，然后扫描显示的二维码。';
+
+  @override
+  String get pairingScanQrCode => '扫描二维码';
+
+  @override
+  String get pairingWaitingForConnection => '等待连接…';
+
+  @override
+  String get pairingEnterManually => '手动输入';
+
+  @override
+  String get pairingPointAtQr => '对准桌面端 TeamPilot 显示的二维码。';
+
+  @override
+  String get pairingEnterPairingCode => '输入配对码';
+
+  @override
+  String get pairingCodeHint => 'teampilot://pair?code=… 或原始配对码';
+
+  @override
+  String get pairingInvalidCode => '不是有效的配对码或链接。';
+
+  @override
+  String get pairingPair => '配对';
+
+  @override
+  String get pairingConfirmTitle => '与桌面配对';
+
+  @override
+  String get pairingRetry => '重试';
+
+  @override
+  String get pairingConnect => '连接';
+
+  @override
+  String get pairingConnecting => '连接中…';
+
+  @override
+  String get pairingFailed => '配对失败。';
+
+  @override
+  String get pairingReadyHint => '准备配对。请确保此手机与桌面处于同一网络，然后点击“连接”。';
+
+  @override
+  String get pairingDesktopFallback => '桌面';
+
+  @override
+  String get pairingRefresh => '刷新';
+
+  @override
+  String get pairingNoSessions => '此桌面上没有正在运行的会话。';
+
+  @override
+  String get pairingChatSessions => '聊天会话';
+
+  @override
+  String get pairingWorkspaceTerminals => '工作区终端';
+
+  @override
+  String get pairingNoWorkspaces => '此桌面上没有工作区。';
+
+  @override
+  String get pairingWorkspaces => '工作区';
+
+  @override
+  String get pairingLiveBadge => '在线';
+
+  @override
+  String get pairingOfflineBadge => '离线';
+
+  @override
+  String get pairingActivating => '激活中…';
+
+  @override
+  String get pairingPersistedSessions => '会话';
+
+  @override
+  String get pairingLiveTerminals => '在线终端';
+
+  @override
+  String get pairingActivateFailed => '无法激活该会话。';
+
+  @override
+  String get pairingFallbackOpenedTerminal => '聊天会话不可用，已改为打开工作区终端。';
+
+  @override
+  String get pairingFromAlbum => '从相册选择';
+
+  @override
+  String get pairingNoQrInImage => '该图片中未找到配对二维码。';
+
+  @override
+  String get pairingManualCodeLabel => '或将此配对码复制到手机上：';
+
+  @override
+  String get pairingCopyCode => '复制配对码';
+
+  @override
+  String get pairingCodeCopied => '配对码已复制。';
+
+  @override
+  String get pairingCodeTtlHint =>
+      '配对码约 15 分钟内有效。若配对报 invalid token，请点“刷新配对码”后重新配对。';
+
+  @override
+  String pairingLastConnected(String time) {
+    return '上次连接 $time';
+  }
+
+  @override
+  String get pairingLanLabel => '局域网';
+
+  @override
+  String get pairingStepProgressTitle => '连接进度';
+
+  @override
+  String get pairingStageConnect => '连上桌面';
+
+  @override
+  String get pairingStageConnectNote => '拨号其局域网地址';
+
+  @override
+  String get pairingStageSecureChannel => '建立安全通道';
+
+  @override
+  String get pairingStageSecureChannelNote => '交换密钥并校验主机公钥';
+
+  @override
+  String get pairingStageAuthenticate => '校验配对码';
+
+  @override
+  String get pairingStageAuthenticateNote => '注册本设备';
+
+  @override
+  String get pairingStageLoadWorkspaces => '同步工作区';
+
+  @override
+  String get pairingStageLoadWorkspacesNote => '拉取会话与在线终端';
+
+  @override
+  String get pairingConnectionLogTitle => '连接日志';
+
+  @override
+  String pairingLogLineCount(int count) {
+    return '$count 行';
+  }
+
+  @override
+  String get pairingConnectedBadge => '已连接';
+
+  @override
+  String pairingRemovedUndo(String name) {
+    return '已移除 $name';
+  }
+
+  @override
+  String get pairingUndo => '撤销';
+
+  @override
+  String get pairingSendCtrlC => '发送 Ctrl+C';
+
+  @override
+  String get pairingMirrorInputHint => '点击终端即可输入';
 }

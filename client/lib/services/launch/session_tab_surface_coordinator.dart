@@ -81,7 +81,6 @@ class SessionTabSurfaceCoordinator {
         activeTabIndex: existingIdx,
         activeSessionId: session.sessionId,
         selectedMemberId: memberId.isNotEmpty ? memberId : null,
-        newChatActive: false,
       ),
     );
     _host.refreshActiveWorkspaceTabs();
@@ -145,7 +144,6 @@ class SessionTabSurfaceCoordinator {
         activeTabIndex: _tabStore.activeTabCount - 1,
         activeSessionId: session.sessionId,
         selectedMemberId: placeholderMemberId,
-        newChatActive: false,
       ),
     );
     _host.refreshActiveWorkspaceTabs();

@@ -58,11 +58,7 @@ class WorkbenchBody extends StatelessWidget {
       (c) => c.state.sessions.map((s) => s.id).toList(growable: false),
     );
 
-    // Compose mounts only via newChatActive IDE path; here we are never compose.
-    final centerMode = resolveWorkbenchCenterMode(
-      newChatActive: false,
-      activeTabId: active,
-    );
+    final centerMode = resolveWorkbenchCenterMode(activeTabId: active);
     if (centerMode == WorkbenchCenterMode.welcome) {
       return const WorkbenchWelcomePage();
     }

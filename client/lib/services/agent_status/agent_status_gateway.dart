@@ -37,6 +37,11 @@ class AgentStatusGateway {
     _http = null;
   }
 
+  /// True once [ensureStarted] has bound the loopback listener. Callers that
+  /// stamp [agentStatusEndpoint] into a launch env must gate on this: the
+  /// gateway is unstarted in tests and whenever agent-status is disabled.
+  bool get isStarted => _http != null;
+
   Uri get agentStatusEndpoint =>
       Uri.parse('http://127.0.0.1:${_http!.port}/agent-status');
 

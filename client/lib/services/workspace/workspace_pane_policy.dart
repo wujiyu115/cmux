@@ -23,12 +23,8 @@ abstract final class WorkspacePanePolicy {
   static WorkspacePaneEffective effective({
     required LayoutPreferences preferences,
     required double viewportWidth,
-    bool composeLanding = false,
-    bool? landingRightToolsOverride,
   }) {
-    final rightIntent = composeLanding
-        ? (landingRightToolsOverride ?? false)
-        : preferences.rightToolsVisible;
+    final rightIntent = preferences.rightToolsVisible;
     final narrow = viewportWidth < narrowBreakpointWidth;
     if (!narrow) {
       return WorkspacePaneEffective(

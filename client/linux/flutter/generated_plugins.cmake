@@ -4,7 +4,9 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   desktop_drop
+  file_selector_linux
   flutter_secure_storage_linux
+  gtk
   native_splash_screen_linux
   pasteboard
   screen_retriever_linux

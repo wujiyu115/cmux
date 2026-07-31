@@ -23,7 +23,6 @@ import '../../services/workbench/workbench_shell_launcher.dart';
 import '../../services/workbench/workbench_tab_projection.dart';
 import '../../services/workspace/workspace_tools_scope.dart';
 import '../../theme/workspace_accent_palette.dart';
-import '../../cubits/workspace_landing_context_cubit.dart';
 import '../../widgets/workbench/workbench_session_sync.dart';
 import '../../widgets/workbench/workbench_shell_run_sync.dart';
 import '../../widgets/workspace_terminal/workspace_terminal_new_session_menu.dart';
@@ -153,22 +152,16 @@ class _ChatWorkspaceShell extends StatelessWidget {
   final WorkspaceTerminalHoldHandle? holdHandle;
 
   String? _profileId(BuildContext context) {
-    try {
-      final ctx = context.read<WorkspaceLandingContextCubit>().state.context;
-      if (ctx.isPersonal) return kSimpleLaunchProfileId;
-      return ctx.teamId;
-    } on Object {
-      final workspace = context
-          .read<ChatCubit>()
-          .state
-          .workspaces
-          .where((w) => w.workspaceId == workspaceId)
-          .firstOrNull;
-      if (workspace == null) return null;
-      final defaultId = workspace.defaultProfileId.trim();
-      if (defaultId.isNotEmpty) return defaultId;
-      return kSimpleLaunchProfileId;
-    }
+    final workspace = context
+        .read<ChatCubit>()
+        .state
+        .workspaces
+        .where((w) => w.workspaceId == workspaceId)
+        .firstOrNull;
+    if (workspace == null) return null;
+    final defaultId = workspace.defaultProfileId.trim();
+    if (defaultId.isNotEmpty) return defaultId;
+    return kSimpleLaunchProfileId;
   }
 
   bool _scopedTabBuildWhen(
@@ -212,7 +205,6 @@ class _ChatWorkspaceShell extends StatelessWidget {
           workspaceId: workspaceId,
           sessionIds: sessionIds,
           activeSessionId: view.workbenchSlice.activeSessionId,
-          newChatActive: view.newChatActive,
           child: WorkbenchShellRunSync(
             workspaceId: workspaceId,
             tabScopeId: tabScopeId,

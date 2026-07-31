@@ -51,7 +51,6 @@ class WorkbenchEditorOpener {
       preview: preview,
     );
     _closeReplaced(workspaceId, replaced);
-    _chat?.dismissNewChat();
     await _editor.openFile(workspaceId, normalized, fs: fs);
   }
 
@@ -79,7 +78,6 @@ class WorkbenchEditorOpener {
       preview: preview,
     );
     _closeReplaced(workspaceId, replaced);
-    _chat?.dismissNewChat();
   }
 
   /// Opens HEAD-vs-working-tree diff for [absolutePath] (File↔Diff toggle).

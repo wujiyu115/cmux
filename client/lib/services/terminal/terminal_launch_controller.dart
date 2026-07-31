@@ -20,6 +20,7 @@ import 'terminal_startup_failure_detector.dart';
 import 'terminal_theme_mapper.dart';
 import 'terminal_transport.dart';
 import 'terminal_transport_starter.dart';
+import '../pairing/recent_pty_buffer.dart';
 
 /// PTY attach → confirm → running. See [onPtyOutput] and [_confirmProcessStarted].
 enum TerminalLaunchPhase { idle, spawning, confirming, running, failed }
@@ -88,6 +89,25 @@ final class TerminalLaunchController {
 
   /// OSC 133 command boundaries → command log (null until [bindCommandTracker]).
   ShellCommandTracker? _commandTracker;
+
+  /// Pairing-mirror fan-out (null until [mirrorOutput] first read). While no
+  /// listener is attached [feedPtyBytes] neither buffers nor broadcasts.
+  StreamController<Uint8List>? _mirrorOut;
+  RecentPtyBuffer? _recentBuffer;
+
+  /// Broadcast of raw screen bytes for pairing mirrors. Lazily created; same
+  /// zero-cost-when-idle guard style as [_observeOscConsumers].
+  Stream<Uint8List> get mirrorOutput {
+    final existing = _mirrorOut;
+    if (existing != null) return existing.stream;
+    final controller = StreamController<Uint8List>.broadcast();
+    _mirrorOut = controller;
+    _recentBuffer ??= RecentPtyBuffer();
+    return controller.stream;
+  }
+
+  /// Recent screen bytes for snapshot-on-subscribe; null until [mirrorOutput].
+  RecentPtyBuffer? get recentBuffer => _recentBuffer;
 
   /// Submitted-line capture feeding [_commandTracker] on shells with no OSC 133.
   EveryUserLineCapture? _commandInputLines;
@@ -249,6 +269,11 @@ final class TerminalLaunchController {
       activityTracker.notePtyBytes(data);
     }
     _observeOscConsumers(data);
+    final mirror = _mirrorOut;
+    if (mirror != null && mirror.hasListener) {
+      _recentBuffer!.append(data);
+      mirror.add(data);
+    }
     engine.feed(data);
   }
 
@@ -335,6 +360,9 @@ final class TerminalLaunchController {
   void dispose() {
     markDisposed();
     disconnect();
+    _mirrorOut?.close();
+    _mirrorOut = null;
+    _recentBuffer = null;
   }
 
   void _flushPendingPtyResize() {

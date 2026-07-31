@@ -10,33 +10,23 @@ class LayoutState extends Equatable {
   const LayoutState({
     this.preferences = const LayoutPreferences(),
     this.isLoading = true,
-    this.landingRightToolsOverride,
   });
 
   final LayoutPreferences preferences;
   final bool isLoading;
 
-  /// Compose-only temporary right-tools visibility; never persisted.
-  final bool? landingRightToolsOverride;
-
   LayoutState copyWith({
     LayoutPreferences? preferences,
     bool? isLoading,
-    bool? landingRightToolsOverride,
-    bool clearLandingRightToolsOverride = false,
   }) {
     return LayoutState(
       preferences: preferences ?? this.preferences,
       isLoading: isLoading ?? this.isLoading,
-      landingRightToolsOverride: clearLandingRightToolsOverride
-          ? null
-          : (landingRightToolsOverride ?? this.landingRightToolsOverride),
     );
   }
 
   @override
-  List<Object?> get props =>
-      [preferences, isLoading, landingRightToolsOverride];
+  List<Object?> get props => [preferences, isLoading];
 }
 
 class LayoutCubit extends Cubit<LayoutState> {
@@ -174,20 +164,7 @@ class LayoutCubit extends Cubit<LayoutState> {
   Future<void> toggleSidebar() =>
       setSidebarVisible(!state.preferences.sidebarVisible);
 
-  void setLandingRightToolsOverride(bool visible) {
-    emit(state.copyWith(landingRightToolsOverride: visible));
-  }
-
-  void clearLandingRightToolsOverride() {
-    emit(state.copyWith(clearLandingRightToolsOverride: true));
-  }
-
-  Future<void> toggleRightTools({bool composeLanding = false}) {
-    if (composeLanding) {
-      final effective = state.landingRightToolsOverride ?? false;
-      setLandingRightToolsOverride(!effective);
-      return Future.value();
-    }
+  Future<void> toggleRightTools() {
     return setRightToolsVisible(!state.preferences.rightToolsVisible);
   }
 

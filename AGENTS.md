@@ -147,6 +147,7 @@ Full guidelines: **[docs/CODE_QUALITY.md](docs/CODE_QUALITY.md)**. Summary:
 - **Logging:** user errors → l10n; diagnostics → `AppLogger`; no `print`.
 - Paths: `AppStorage` / `RuntimeContextRegistry` — never `Directory.current` for the default workspace directory.
 - **Tests:** mock subprocess/filesystem via constructor injection; cubit tests that touch `AppStorage` use `setUpTestAppStorage()` / `tearDownTestAppStorage()` in `client/test/support/post_frame_test_harness.dart`.
+- **All user-facing UI text MUST be internationalized** — never hardcode display strings (labels, titles, subtitles, tooltips, hints, snackbars, error text) in widgets. Add a key to both ARB files and reference it via `context.l10n.<key>`. Widget tests that render localized UI must wrap `MaterialApp` with `AppLocalizations.localizationsDelegates` + `supportedLocales` (+ `locale: const Locale('en')` to assert English literals).
 - l10n: edit `client/lib/l10n/app_en.arb` and `app_zh.arb` only; after ARB changes, re-run `dart run tool/gen_warmup_glyphs.dart` for `warmup_glyphs.g.dart`.
 - Terminal input hooks: filter ANSI CSI sequences (`FirstUserLineCapture`).
 - Do not commit `client/google_fonts/` (gitignored); run `dart run tool/sync_bundled_google_fonts.dart` when touching zh UI fonts.

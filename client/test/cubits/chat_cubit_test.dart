@@ -283,7 +283,6 @@ void main() {
         await postFrame.flush();
 
         expect(cubit.state.tabs, hasLength(1));
-        expect(cubit.state.newChatActive, isFalse);
         expect(cubit.state.activeSessionId, session.sessionId);
 
         await cubit.deleteSession(repo, session.sessionId);
@@ -291,7 +290,6 @@ void main() {
         await postFrame.flush();
 
         expect(cubit.state.tabs, isEmpty);
-        expect(cubit.state.newChatActive, isTrue);
         expect(cubit.state.activeSessionId, isNull);
         expect(
           cubit.state.sessions.any((s) => s.sessionId == session.sessionId),

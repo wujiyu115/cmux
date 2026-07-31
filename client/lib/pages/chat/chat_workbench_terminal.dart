@@ -8,11 +8,7 @@ import 'package:flutter_alacritty/flutter_alacritty.dart';
 import '../../cubits/chat_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../models/app_session.dart';
-import '../../models/workspace.dart';
 import '../../repositories/session_repository.dart';
-import '../../services/selection_ai/selection_ai_context.dart';
-import '../../services/selection_ai/selection_ask_ai.dart';
-import '../../services/selection_ai/selection_ask_ai_fab_host.dart';
 import '../../services/terminal/terminal_clipboard_image_paste.dart';
 import '../../services/terminal/terminal_session.dart';
 import '../../services/terminal/terminal_uri_opener.dart';
@@ -84,69 +80,11 @@ class _ChatWorkbenchRunningTerminalState
     }
   }
 
-  ({String surfaceLabel, Workspace? workspace, String tabScopeId})
-  _selectionAiTarget(BuildContext context) {
-    final chat = context.read<ChatCubit>();
-    final sessionId = chat.state.activeSessionId?.trim() ?? '';
-    AppSession? appSession;
-    for (final candidate in chat.state.sessions) {
-      if (candidate.sessionId == sessionId) {
-        appSession = candidate;
-        break;
-      }
-    }
-
-    final memberId = chat.state.selectedMemberId.trim();
-    const taskId = '';
-    const memberName = '';
-
-    final effectiveSessionId = appSession?.sessionId.trim().isNotEmpty == true
-        ? appSession!.sessionId.trim()
-        : sessionId;
-    final memberLabel = memberName.isNotEmpty
-        ? memberName
-        : taskId.isNotEmpty
-        ? taskId
-        : memberId.isNotEmpty
-        ? memberId
-        : effectiveSessionId;
-    final workspaceId = appSession?.workspaceId.trim().isNotEmpty == true
-        ? appSession!.workspaceId.trim()
-        : chat.tabStore.activeWorkspaceId.trim();
-    Workspace? workspace;
-    for (final candidate in chat.state.workspaces) {
-      if (candidate.workspaceId == workspaceId) {
-        workspace = candidate;
-        break;
-      }
-    }
-    return (
-      surfaceLabel: 'session/$effectiveSessionId/$memberLabel',
-      workspace: workspace,
-      tabScopeId: workspaceId,
-    );
-  }
-
-  Future<void> _openAskAi(BuildContext context, String aiContext) {
-    final target = _selectionAiTarget(context);
-    final workspace = target.workspace;
-    if (workspace == null || aiContext.trim().isEmpty || !mounted) {
-      return Future.value();
-    }
-    return SelectionAskAi.openComposeDialog(
-      context,
-      aiContext: aiContext,
-      workspace: workspace,
-      tabScopeId: target.tabScopeId,
-    );
-  }
-
   Future<void> _showContextMenu(
     BuildContext context,
     TapDownDetails details,
     CellOffset? offset,
   ) async {
-    final target = _selectionAiTarget(context);
     _menuOpen.value = true;
     try {
       await showChatWorkbenchTerminalContextMenu(
@@ -165,9 +103,6 @@ class _ChatWorkbenchRunningTerminalState
         ),
         onDisconnect: widget.onDisconnect,
         onRestart: widget.onRestart,
-        aiSurfaceLabel: target.surfaceLabel,
-        workspace: target.workspace,
-        tabScopeId: target.tabScopeId,
       );
     } finally {
       if (mounted) _menuOpen.value = false;
@@ -191,10 +126,8 @@ class _ChatWorkbenchRunningTerminalState
         widget.terminalController.searchClear();
         widget.onFindVisibleChanged(false);
       },
-      child: ValueListenableBuilder<bool>(
-        valueListenable: _menuOpen,
-        child: Stack(
-          children: [
+      child: Stack(
+        children: [
             ExternalFileDropRegion(
               target: _dropIngestor(),
               onOutcome: (outcome) => _showDropOutcome(context, outcome),
@@ -257,20 +190,6 @@ class _ChatWorkbenchRunningTerminalState
             ),
           ],
         ),
-        builder: (context, menuOpen, child) {
-          return SelectionAskAiFabHost(
-            listenable: widget.terminalController,
-            selectionActive: () => widget.terminalController.selectionActive,
-            readAiContext: () => buildTerminalAiContextClipboardText(
-              surfaceLabel: _selectionAiTarget(context).surfaceLabel,
-              text: widget.terminalController.readSelectionText() ?? '',
-            ),
-            onAskAi: (aiContext) => _openAskAi(context, aiContext),
-            menuOpen: menuOpen,
-            child: child!,
-          );
-        },
-      ),
     );
   }
 }

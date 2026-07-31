@@ -33,7 +33,6 @@ void main() {
         info: const ChatTabInfo(id: 'sess-1', title: 'Old title', subtitle: ''),
       ),
     );
-    cubit.tabStore.setNewChatActive('ws', false);
     cubit.refreshActiveWorkspaceTabs();
 
     final before = chatPageStructuralSignal(

@@ -6,12 +6,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:teampilot/cubits/chat_cubit.dart';
 import 'package:teampilot/cubits/layout_cubit.dart';
-import 'package:teampilot/l10n/app_localizations.dart';
 import 'package:teampilot/models/workspace.dart';
 import 'package:teampilot/models/workspace_folder.dart';
 import 'package:teampilot/cubits/chat/model/session_connect_request.dart';
 import 'package:teampilot/router/app_router.dart';
-import 'package:teampilot/services/workspace/workspace_pane_policy.dart';
 import 'package:teampilot/utils/ui/app_keys.dart';
 
 import '../support/desktop_app_harness.dart';
@@ -79,27 +77,12 @@ void main() {
     await tester.pump();
     await pumpPhaseTransitions(tester);
 
-    expect(find.byKey(AppKeys.chatWorkspace), findsOneWidget);
+    // Empty workspace (no sessions): the workbench center shows the welcome
+    // page, not the terminal shell — the legacy chat landing is gone.
+    expect(find.byKey(AppKeys.workbenchWelcomePage), findsOneWidget);
+    expect(find.byKey(AppKeys.chatWorkspace), findsNothing);
     expect(find.byKey(AppKeys.membersPanel), findsNothing);
     expect(chatCubit.state.tabs.length, 0);
-    final workbenchCtx = tester.element(find.byKey(AppKeys.chatWorkspace));
-    final l10n = AppLocalizations.of(workbenchCtx);
-    expect(find.text(l10n.workspaceChatLandingInputHint), findsOneWidget);
-    // Compose landing default-hides right tools (prefs stay visible).
-    expect(layoutCubit.state.preferences.rightToolsVisible, isTrue);
-    expect(
-      WorkspacePanePolicy.effective(
-        preferences: layoutCubit.state.preferences,
-        viewportWidth: 1400,
-        composeLanding: true,
-        landingRightToolsOverride: layoutCubit.state.landingRightToolsOverride,
-      ).dockRight,
-      isFalse,
-    );
-    expect(
-      find.byKey(AppKeys.rightToolsPanel).hitTestable(),
-      findsNothing,
-    );
 
     chatCubit.setActiveWorkspace(workspace.workspaceId);
     // Real repository I/O must run inside runAsync in widget tests.
@@ -125,18 +108,8 @@ void main() {
       isTrue,
     );
     await pumpPhaseTransitions(tester);
-    // Session exits compose: prefs dock restored. Prefer key mount over
-    // hitTestable — pane size sync can lag TpDeferredMountShell in smoke.
-    expect(chatCubit.state.newChatActive, isFalse);
-    expect(
-      WorkspacePanePolicy.effective(
-        preferences: layoutCubit.state.preferences,
-        viewportWidth: 1400,
-        composeLanding: false,
-        landingRightToolsOverride: layoutCubit.state.landingRightToolsOverride,
-      ).dockRight,
-      isTrue,
-    );
+    // With a live session the terminal shell now renders (welcome page gone).
+    expect(find.byKey(AppKeys.chatWorkspace), findsOneWidget);
     expect(find.byKey(AppKeys.rightToolsPanel), findsOneWidget);
     // Personal materialize schedules debounced persistence timers; let them
     // fire before the tree is disposed.

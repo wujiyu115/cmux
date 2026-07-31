@@ -14,6 +14,21 @@ String get _fakeAdapterScript {
   return '$testDir/test/fixtures/fake_launch_adapter/fake_launch_adapter.dart';
 }
 
+/// Resolves the Dart binary from the running Flutter SDK rather than bare `dart`
+/// on PATH: a stale standalone Dart earlier on PATH may be older than the SDK
+/// that generated `.dart_tool/package_config.json`, and would reject the
+/// project's language version ("specified language version is too high"). Falls
+/// back to `dart` when FLUTTER_ROOT is unset (e.g. `dart test`).
+String get _dartExecutable {
+  final flutterRoot = Platform.environment['FLUTTER_ROOT'];
+  if (flutterRoot != null && flutterRoot.isNotEmpty) {
+    final sdkDart =
+        '$flutterRoot/bin/cache/dart-sdk/bin/dart${Platform.isWindows ? '.exe' : ''}';
+    if (File(sdkDart).existsSync()) return sdkDart;
+  }
+  return 'dart';
+}
+
 Future<LaunchAdapterProcess> startFakeAdapter({
   required String command,
   required List<String> args,
@@ -21,7 +36,7 @@ Future<LaunchAdapterProcess> startFakeAdapter({
   // Use the Dart SDK binary — Platform.resolvedExecutable under flutter test
   // is flutter_tester and prints VM-service noise on stdout.
   final process = await Process.start(
-    'dart',
+    _dartExecutable,
     ['--disable-dart-dev', _fakeAdapterScript],
   );
   return LaunchAdapterProcess.fromIo(

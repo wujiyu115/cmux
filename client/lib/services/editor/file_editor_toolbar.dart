@@ -1,20 +1,14 @@
 import 'dart:async';
 
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:re_editor/re_editor.dart';
 import 'package:shared_ui/shared_ui.dart';
 
-import '../../cubits/chat_cubit.dart';
 import '../../cubits/editor_cubit.dart';
 import '../../cubits/workbench/workbench_cubit.dart';
 import '../../cubits/workbench/workbench_tab.dart';
 import '../../l10n/l10n_extensions.dart';
-import '../selection_ai/selection_ai_menu_specs.dart';
-import '../selection_ai/selection_ask_ai.dart';
-import 'file_editor_ai_context.dart';
 
 /// Desktop/mobile context menu for [CodeEditor] (right-click / long-press).
 class FileEditorContextMenuController implements SelectionToolbarController {
@@ -74,45 +68,6 @@ class FileEditorContextMenuController implements SelectionToolbarController {
         icon: Icons.content_copy,
         label: l10n.editorCopy,
         onAction: controller.copy,
-      ),
-      ...selectionAiMenuSpecs(
-        l10n: l10n,
-        copyEnabled: path != null,
-        askAiEnabled: path != null && workspaceId != null,
-        onCopyAsAiContext: () {
-          if (path != null) {
-            Clipboard.setData(
-              ClipboardData(
-                text: formatEditorAiContext(
-                  filePath: path,
-                  controller: controller,
-                ),
-              ),
-            );
-          }
-        },
-        onAskAi: () {
-          if (path == null || workspaceId == null) return;
-          final workspace = context
-              .read<ChatCubit>()
-              .state
-              .workspaces
-              .firstWhereOrNull(
-                (candidate) => candidate.workspaceId == workspaceId,
-              );
-          if (workspace == null) return;
-          unawaited(
-            SelectionAskAi.openComposeDialog(
-              context,
-              aiContext: formatEditorAiContext(
-                filePath: path,
-                controller: controller,
-              ),
-              workspace: workspace,
-              tabScopeId: workspaceId,
-            ),
-          );
-        },
       ),
       if (!readOnly)
         TpActionMenuSpec.item(

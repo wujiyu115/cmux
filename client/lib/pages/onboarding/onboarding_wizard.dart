@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -11,10 +10,9 @@ import 'steps/ssh_step.dart';
 
 enum OnboardingStepKind { appearance, ssh }
 
+/// Onboarding is appearance-only everywhere now: desktop never had an SSH step,
+/// and mobile pairs after launch via its own flow rather than at onboarding.
 List<OnboardingStepKind> onboardingStepsForPlatform() {
-  if (Platform.isAndroid) {
-    return const [OnboardingStepKind.appearance, OnboardingStepKind.ssh];
-  }
   return const [OnboardingStepKind.appearance];
 }
 
