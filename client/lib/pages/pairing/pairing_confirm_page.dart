@@ -103,7 +103,12 @@ class _HostCard extends StatelessWidget {
     final styles = TpTextStyles.of(context);
     final spacing = context.tpSpacing;
     final offer = state.pendingOffer;
-    final url = offer?.wsUrls.isNotEmpty ?? false ? offer!.wsUrls.first : null;
+    // Once a candidate wins, show the address that actually connected — the
+    // offer's first entry is often a dead route the dial already skipped. While
+    // still dialing there is no winner yet, so name the first candidate.
+    final url =
+        state.activeHostUrl ??
+        (offer?.wsUrls.isNotEmpty ?? false ? offer!.wsUrls.first : null);
     final mono = appMonoTextStyle(
       context,
       fontSize: 12,

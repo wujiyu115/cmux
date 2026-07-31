@@ -223,6 +223,7 @@ class PairingClientCubit extends Cubit<PairingClientState> {
         hostPublicKeyB64: offer.hostPublicKeyB64,
         deviceToken: result.deviceToken ?? '',
         lastConnectedAt: DateTime.now(),
+        lastConnectedUrl: client.connectedUrl,
       );
       await _persistDesktop(desktop);
       await _enterConnected(result.hostName);
@@ -259,7 +260,12 @@ class PairingClientCubit extends Cubit<PairingClientState> {
           )
           .timeout(connectTimeout);
       await _enterConnected(result.hostName);
-      await _persistDesktop(desktop.copyWith(lastConnectedAt: DateTime.now()));
+      await _persistDesktop(
+        desktop.copyWith(
+          lastConnectedAt: DateTime.now(),
+          lastConnectedUrl: client.connectedUrl,
+        ),
+      );
     } on Object catch (e) {
       _appendLog('Error: $e');
       _failActiveStage();

@@ -14,6 +14,7 @@ class PairedDesktop {
     required this.deviceToken,
     this.resumeSecret,
     this.lastConnectedAt,
+    this.lastConnectedUrl,
   });
 
   final String id;
@@ -27,11 +28,25 @@ class PairedDesktop {
   /// Null for desktops paired before this field existed.
   final DateTime? lastConnectedAt;
 
+  /// Which of [wsUrls] actually worked last time.
+  ///
+  /// The host advertises every local address it has and the client skips the
+  /// ones that time out, so `wsUrls.first` is regularly a dead VPN route rather
+  /// than the reachable address — surfacing it sends the user chasing the wrong
+  /// IP. Null for desktops paired before this field existed.
+  final String? lastConnectedUrl;
+
+  /// Address to show for this desktop: the one that last worked, else the first
+  /// advertised candidate, else the bare id.
+  String get displayUrl =>
+      lastConnectedUrl ?? (wsUrls.isEmpty ? id : wsUrls.first);
+
   PairedDesktop copyWith({
     String? name,
     List<String>? wsUrls,
     String? resumeSecret,
     DateTime? lastConnectedAt,
+    String? lastConnectedUrl,
   }) => PairedDesktop(
     id: id,
     name: name ?? this.name,
@@ -40,6 +55,7 @@ class PairedDesktop {
     deviceToken: deviceToken,
     resumeSecret: resumeSecret ?? this.resumeSecret,
     lastConnectedAt: lastConnectedAt ?? this.lastConnectedAt,
+    lastConnectedUrl: lastConnectedUrl ?? this.lastConnectedUrl,
   );
 
   Map<String, Object?> toJson() => {
@@ -51,6 +67,7 @@ class PairedDesktop {
     if (resumeSecret != null) 'resume': resumeSecret,
     if (lastConnectedAt != null)
       'lastConnectedAt': lastConnectedAt!.millisecondsSinceEpoch,
+    if (lastConnectedUrl != null) 'lastConnectedUrl': lastConnectedUrl,
   };
 
   static PairedDesktop? fromJson(Object? raw) {
@@ -67,6 +84,9 @@ class PairedDesktop {
       deviceToken: token,
       resumeSecret: raw['resume'] is String ? raw['resume'] as String : null,
       lastConnectedAt: _readTimestamp(raw['lastConnectedAt']),
+      lastConnectedUrl: raw['lastConnectedUrl'] is String
+          ? raw['lastConnectedUrl'] as String
+          : null,
     );
   }
 

@@ -62,9 +62,7 @@ class PairedHostRow extends StatelessWidget {
                         ),
                         SizedBox(height: spacing.xxs),
                         Text(
-                          desktop.wsUrls.isEmpty
-                              ? desktop.id
-                              : desktop.wsUrls.first,
+                          desktop.displayUrl,
                           style: mono,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
