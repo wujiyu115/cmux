@@ -1,5 +1,7 @@
 # TeamPilot
 
+> Fork 自 [hhoao/teampilot](https://github.com/hhoao/teampilot/)。
+
 [开发指南](docs/DEVELOPMENT.md) · 架构与 AI 约定见 [AGENTS.md](AGENTS.md)
 
 **TeamPilot** 是一个面向开发者的桌面客户端：以**工作区**为中心，把仓库目录、内嵌**终端会话**和一个轻量**内置 IDE**（文件树、编辑器、Git、worktree）整合到同一个窗口里。会话标签是**普通的交互式终端**——桌面端直接以本机 PTY 打开，或通过 **SSH** 连接远端主机（Android 端始终走 SSH）。你可以在终端里运行任何命令行工具，包括各类 AI Agent CLI（Claude Code、Codex、opencode、cursor、flashskyai 等）。
