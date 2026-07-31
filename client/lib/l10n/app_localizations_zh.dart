@@ -2651,4 +2651,64 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get pairingCodeTtlHint =>
       '配对码约 15 分钟内有效。若配对报 invalid token，请点“刷新配对码”后重新配对。';
+
+  @override
+  String pairingLastConnected(String time) {
+    return '上次连接 $time';
+  }
+
+  @override
+  String get pairingLanLabel => '局域网';
+
+  @override
+  String get pairingStepProgressTitle => '连接进度';
+
+  @override
+  String get pairingStageConnect => '连上桌面';
+
+  @override
+  String get pairingStageConnectNote => '拨号其局域网地址';
+
+  @override
+  String get pairingStageSecureChannel => '建立安全通道';
+
+  @override
+  String get pairingStageSecureChannelNote => '交换密钥并校验主机公钥';
+
+  @override
+  String get pairingStageAuthenticate => '校验配对码';
+
+  @override
+  String get pairingStageAuthenticateNote => '注册本设备';
+
+  @override
+  String get pairingStageLoadWorkspaces => '同步工作区';
+
+  @override
+  String get pairingStageLoadWorkspacesNote => '拉取会话与在线终端';
+
+  @override
+  String get pairingConnectionLogTitle => '连接日志';
+
+  @override
+  String pairingLogLineCount(int count) {
+    return '$count 行';
+  }
+
+  @override
+  String get pairingConnectedBadge => '已连接';
+
+  @override
+  String pairingRemovedUndo(String name) {
+    return '已移除 $name';
+  }
+
+  @override
+  String get pairingUndo => '撤销';
+
+  @override
+  String get pairingSendCtrlC => '发送 Ctrl+C';
+
+  @override
+  String get pairingMirrorInputHint => '点击终端即可输入';
 }

@@ -5,6 +5,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../repositories/pairing_settings_repository.dart';
+import '../services/pairing/local_lan_ip.dart';
 import '../services/pairing/pairing_client.dart';
 import '../services/pairing/pairing_offer.dart';
 
@@ -32,13 +33,24 @@ class PairingClientState extends Equatable {
     this.sessions = const [],
     this.workspaces = const [],
     this.logs = const [],
+    this.stageStatuses = idleStages,
     this.pendingOffer,
     this.activeHostName,
+    this.activeHostUrl,
     this.activeCatalogId,
     this.activatingKey,
+    this.localIp,
     this.notice,
     this.error,
   });
+
+  /// One [PairingStageStatus.idle] per [PairingStage], in enum order.
+  static const idleStages = <PairingStageStatus>[
+    PairingStageStatus.idle,
+    PairingStageStatus.idle,
+    PairingStageStatus.idle,
+    PairingStageStatus.idle,
+  ];
 
   final PairingClientPhase phase;
   final List<PairedDesktop> pairedDesktops;
@@ -47,12 +59,23 @@ class PairingClientState extends Equatable {
   /// Full workspace tree (all workspaces, persisted sessions + live panes).
   final List<PairingWorkspaceNode> workspaces;
   final List<String> logs;
+
+  /// Connect progress indexed by [PairingStage.index] — drives the step rail.
+  final List<PairingStageStatus> stageStatuses;
+
   final PairingOffer? pendingOffer;
   final String? activeHostName;
+
+  /// The LAN URL the active connection actually landed on.
+  final String? activeHostUrl;
+
   final String? activeCatalogId;
 
   /// [PairingSessionNode.nodeKey] currently being activated (row-level spinner).
   final String? activatingKey;
+
+  /// This phone's own LAN IPv4, or null while unresolved / unavailable.
+  final String? localIp;
 
   /// One-shot toast to surface then clear via [PairingClientCubit.clearNotice].
   final PairingNotice? notice;
@@ -64,13 +87,16 @@ class PairingClientState extends Equatable {
     List<PairingSessionSummary>? sessions,
     List<PairingWorkspaceNode>? workspaces,
     List<String>? logs,
+    List<PairingStageStatus>? stageStatuses,
     PairingOffer? pendingOffer,
     bool clearPendingOffer = false,
     String? activeHostName,
+    String? activeHostUrl,
     String? activeCatalogId,
     bool clearActiveCatalogId = false,
     String? activatingKey,
     bool clearActivatingKey = false,
+    String? localIp,
     PairingNotice? notice,
     bool clearNotice = false,
     String? error,
@@ -81,14 +107,17 @@ class PairingClientState extends Equatable {
     sessions: sessions ?? this.sessions,
     workspaces: workspaces ?? this.workspaces,
     logs: logs ?? this.logs,
+    stageStatuses: stageStatuses ?? this.stageStatuses,
     pendingOffer: clearPendingOffer ? null : (pendingOffer ?? this.pendingOffer),
     activeHostName: activeHostName ?? this.activeHostName,
+    activeHostUrl: activeHostUrl ?? this.activeHostUrl,
     activeCatalogId: clearActiveCatalogId
         ? null
         : (activeCatalogId ?? this.activeCatalogId),
     activatingKey: clearActivatingKey
         ? null
         : (activatingKey ?? this.activatingKey),
+    localIp: localIp ?? this.localIp,
     notice: clearNotice ? null : (notice ?? this.notice),
     error: clearError ? null : (error ?? this.error),
   );
@@ -100,10 +129,13 @@ class PairingClientState extends Equatable {
     sessions,
     workspaces,
     logs,
+    stageStatuses,
     pendingOffer,
     activeHostName,
+    activeHostUrl,
     activeCatalogId,
     activatingKey,
+    localIp,
     notice,
     error,
   ];
@@ -126,8 +158,13 @@ class PairingClientCubit extends Cubit<PairingClientState> {
 
   PairingClient? _client;
   StreamSubscription<String>? _logSub;
+  StreamSubscription<PairingStageEvent>? _stageSub;
   StreamSubscription<void>? _sessionsChangedSub;
   PairingSubscription? _activeSubscription;
+
+  /// Stage the client last reported as in-flight; a thrown connect fails *this*
+  /// one, which is what makes the rail's failure attribution correct.
+  int? _activeStageIndex;
 
   PairingSubscription? get activeSubscription => _activeSubscription;
   PairingClient? get client => _client;
@@ -137,13 +174,22 @@ class PairingClientCubit extends Cubit<PairingClientState> {
     emit(state.copyWith(pairedDesktops: desktops));
   }
 
+  /// Resolves this phone's LAN IPv4 for the hosts screen's network strip.
+  Future<void> loadNetworkInfo() async {
+    final ip = await readPrimaryLanIpv4();
+    if (ip == null || isClosed) return;
+    emit(state.copyWith(localIp: ip));
+  }
+
   /// A QR / deep link produced a valid offer — show the confirm screen.
   void beginPairing(PairingOffer offer) {
+    _activeStageIndex = null;
     emit(
       state.copyWith(
         phase: PairingClientPhase.confirmAwaiting,
         pendingOffer: offer,
         logs: const [],
+        stageStatuses: PairingClientState.idleStages,
         clearError: true,
       ),
     );
@@ -153,7 +199,14 @@ class PairingClientCubit extends Cubit<PairingClientState> {
   Future<void> confirmPairing() async {
     final offer = state.pendingOffer;
     if (offer == null) return;
-    emit(state.copyWith(phase: PairingClientPhase.confirmConnecting));
+    _activeStageIndex = null;
+    emit(
+      state.copyWith(
+        phase: PairingClientPhase.confirmConnecting,
+        stageStatuses: PairingClientState.idleStages,
+        clearError: true,
+      ),
+    );
     final client = _spawnClient();
     try {
       final result = await client
@@ -169,11 +222,13 @@ class PairingClientCubit extends Cubit<PairingClientState> {
         wsUrls: offer.wsUrls,
         hostPublicKeyB64: offer.hostPublicKeyB64,
         deviceToken: result.deviceToken ?? '',
+        lastConnectedAt: DateTime.now(),
       );
       await _persistDesktop(desktop);
       await _enterConnected(result.hostName);
     } on Object catch (e) {
       _appendLog('Error: $e');
+      _failActiveStage();
       emit(state.copyWith(phase: PairingClientPhase.error, error: '$e'));
       await _disposeClient();
     }
@@ -181,10 +236,15 @@ class PairingClientCubit extends Cubit<PairingClientState> {
 
   /// Reconnects to an already-paired desktop using its stored device token.
   Future<void> connectToDesktop(PairedDesktop desktop) async {
+    _activeStageIndex = null;
     emit(
       state.copyWith(
         phase: PairingClientPhase.confirmConnecting,
         logs: const [],
+        stageStatuses: PairingClientState.idleStages,
+        // Reconnects carry no offer, so the confirm card would otherwise have
+        // no host to name.
+        activeHostName: desktop.name,
         clearError: true,
       ),
     );
@@ -199,23 +259,49 @@ class PairingClientCubit extends Cubit<PairingClientState> {
           )
           .timeout(connectTimeout);
       await _enterConnected(result.hostName);
+      await _persistDesktop(desktop.copyWith(lastConnectedAt: DateTime.now()));
     } on Object catch (e) {
       _appendLog('Error: $e');
+      _failActiveStage();
       emit(state.copyWith(phase: PairingClientPhase.error, error: '$e'));
       await _disposeClient();
     }
   }
 
   Future<void> _enterConnected(String hostName) async {
+    // The workspace fetch is the rail's last step, and it lives here rather than
+    // in the client — so this stage is emitted by the cubit.
+    _setStage(PairingStage.loadWorkspaces, PairingStageStatus.active);
     final workspaces = await _client!.listWorkspaces();
+    _setStage(PairingStage.loadWorkspaces, PairingStageStatus.done);
     emit(
       state.copyWith(
         phase: PairingClientPhase.connected,
         activeHostName: hostName,
+        activeHostUrl: _client?.connectedUrl,
         workspaces: workspaces,
         clearPendingOffer: true,
       ),
     );
+  }
+
+  void _onStageEvent(PairingStageEvent event) =>
+      _setStage(event.stage, event.status);
+
+  void _setStage(PairingStage stage, PairingStageStatus status) {
+    if (isClosed) return;
+    if (status == PairingStageStatus.active) _activeStageIndex = stage.index;
+    final next = [...state.stageStatuses];
+    next[stage.index] = status;
+    emit(state.copyWith(stageStatuses: next));
+  }
+
+  void _failActiveStage() {
+    final index = _activeStageIndex;
+    if (index == null || isClosed) return;
+    final next = [...state.stageStatuses];
+    next[index] = PairingStageStatus.fail;
+    emit(state.copyWith(stageStatuses: next));
   }
 
   Future<void> refreshSessions() async {
@@ -338,6 +424,7 @@ class PairingClientCubit extends Cubit<PairingClientState> {
     final client = _clientFactory();
     _client = client;
     _logSub = client.log.listen(_appendLog);
+    _stageSub = client.stages.listen(_onStageEvent);
     _sessionsChangedSub = client.sessionsChanged.listen(
       (_) => unawaited(refreshWorkspaces()),
     );
@@ -363,9 +450,19 @@ class PairingClientCubit extends Cubit<PairingClientState> {
     emit(state.copyWith(pairedDesktops: updated));
   }
 
+  /// Puts back a desktop the user just removed (undo toast on the hosts screen).
+  Future<void> restoreDesktop(PairedDesktop desktop) async {
+    if (state.pairedDesktops.any((d) => d.id == desktop.id)) return;
+    final updated = [...state.pairedDesktops, desktop];
+    await _settings.savePairedDesktops(updated);
+    emit(state.copyWith(pairedDesktops: updated));
+  }
+
   void _disposeClientSync() {
     _logSub?.cancel();
     _logSub = null;
+    _stageSub?.cancel();
+    _stageSub = null;
     _sessionsChangedSub?.cancel();
     _sessionsChangedSub = null;
     final client = _client;
@@ -376,6 +473,8 @@ class PairingClientCubit extends Cubit<PairingClientState> {
   Future<void> _disposeClient() async {
     _logSub?.cancel();
     _logSub = null;
+    _stageSub?.cancel();
+    _stageSub = null;
     _sessionsChangedSub?.cancel();
     _sessionsChangedSub = null;
     final client = _client;

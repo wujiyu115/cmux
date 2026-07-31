@@ -1236,5 +1236,44 @@
   "pairingManualCodeLabel": "Or copy this pairing code into the phone:",
   "pairingCopyCode": "Copy code",
   "pairingCodeCopied": "Pairing code copied.",
-  "pairingCodeTtlHint": "This code stays valid for about 15 minutes. If pairing fails with an invalid-token error, tap New code and pair again."
+  "pairingCodeTtlHint": "This code stays valid for about 15 minutes. If pairing fails with an invalid-token error, tap New code and pair again.",
+  "pairingLastConnected": "Last connected {time}",
+  "@pairingLastConnected": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "pairingLanLabel": "LAN",
+  "pairingStepProgressTitle": "Connection progress",
+  "pairingStageConnect": "Reach the desktop",
+  "pairingStageConnectNote": "Dialing its LAN address",
+  "pairingStageSecureChannel": "Secure the channel",
+  "pairingStageSecureChannelNote": "Key exchange, host key pinned",
+  "pairingStageAuthenticate": "Check the pairing code",
+  "pairingStageAuthenticateNote": "Register this device",
+  "pairingStageLoadWorkspaces": "Sync workspaces",
+  "pairingStageLoadWorkspacesNote": "Fetch sessions and live terminals",
+  "pairingConnectionLogTitle": "Connection log",
+  "pairingLogLineCount": "{count, plural, =1{{count} line} other{{count} lines}}",
+  "@pairingLogLineCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pairingConnectedBadge": "Connected",
+  "pairingRemovedUndo": "Removed {name}",
+  "@pairingRemovedUndo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "pairingUndo": "Undo",
+  "pairingSendCtrlC": "Send Ctrl+C",
+  "pairingMirrorInputHint": "Tap the terminal to type"
 }

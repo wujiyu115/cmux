@@ -173,10 +173,15 @@ class SessionShellConnector {
           cli: CliTool.claude,
           skipPermissions: false,
         );
-        agentStatusEnv[agentStatusUrlEnvKey] =
-            _host.agentStatusGateway.agentStatusEndpoint.toString();
-        agentStatusEnv[agentStatusSessionEnvKey] = seatId;
-        agentStatusEnv[agentStatusMemberEnvKey] = seatId;
+        // Only stamp the endpoint when the loopback gateway is actually up;
+        // otherwise reading agentStatusEndpoint dereferences a null server
+        // (tests, or agent-status disabled). The hook stays a no-op without it.
+        if (_host.agentStatusGateway.isStarted) {
+          agentStatusEnv[agentStatusUrlEnvKey] =
+              _host.agentStatusGateway.agentStatusEndpoint.toString();
+          agentStatusEnv[agentStatusSessionEnvKey] = seatId;
+          agentStatusEnv[agentStatusMemberEnvKey] = seatId;
+        }
       }
       shell.connect(
         workingDirectory: memberWork.workingDirectory,

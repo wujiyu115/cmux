@@ -103,19 +103,37 @@ void main() {
 
     expect(find.text('Studio'), findsOneWidget);
     expect(find.byKey(AppKeys.pairingWorkspaceHeader('wsA')), findsOneWidget);
-    // Pane group starts expanded (panes non-empty).
+    // The group starts open because the workspace has live panes, so both the
+    // sessions and the live-terminals sections are on screen.
     expect(find.text('build'), findsOneWidget);
     expect(find.text('120×40'), findsOneWidget);
     expect(find.text('Live'), findsWidgets);
-
-    // Expand to reveal the persisted chat sessions.
-    await tester.tap(find.byKey(AppKeys.pairingWorkspaceHeader('wsA')));
-    await tester.pumpAndSettle();
-
     expect(find.text('claude shell'), findsOneWidget);
     expect(find.text('old shell'), findsOneWidget);
     expect(find.text('Offline'), findsOneWidget);
     expect(find.byKey(AppKeys.pairingSessionNode('chat:s2')), findsOneWidget);
+
+    // Collapsing drops the node rows.
+    await tester.tap(find.byKey(AppKeys.pairingWorkspaceHeader('wsA')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('claude shell'), findsNothing);
+    expect(find.byKey(AppKeys.pairingSessionNode('chat:s2')), findsNothing);
+  });
+
+  testWidgets('the connection row shows the URL that actually connected',
+      (tester) async {
+    cubit.set(
+      const PairingClientState(
+        phase: PairingClientPhase.connected,
+        activeHostName: 'Studio',
+        activeHostUrl: 'ws://192.168.1.9:47821/pair/ws',
+      ),
+    );
+    await pump(tester);
+
+    expect(find.text('Connected'), findsOneWidget);
+    expect(find.text('ws://192.168.1.9:47821/pair/ws'), findsOneWidget);
   });
 
   testWidgets('tapping a node calls activateAndOpen', (tester) async {

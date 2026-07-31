@@ -61,10 +61,20 @@ class AppKeys {
   static const pairingConnectionLog = Key('pairing-connection-log');
   static const pairingSessionListPage = Key('pairing-session-list-page');
   static const pairingMirrorPage = Key('pairing-mirror-page');
+  static const pairingScanCtaButton = Key('pairing-scan-cta');
+  static const pairingConnectButton = Key('pairing-connect-button');
+  static const pairingStepRail = Key('pairing-step-rail');
+  static const pairingManualEntrySheet = Key('pairing-manual-entry-sheet');
+  static const pairingManualEntryField = Key('pairing-manual-entry-field');
+  static const pairingNetworkStrip = Key('pairing-network-strip');
+  static const pairingMirrorCtrlCButton = Key('pairing-mirror-ctrl-c');
   static Key pairingWorkspaceHeader(String workspaceId) =>
       Key('pairing-workspace-$workspaceId');
   static Key pairingSessionNode(String nodeKey) =>
       Key('pairing-node-$nodeKey');
+
+  /// Row key on the paired-hosts list. Value predates [AppKeys] — kept verbatim.
+  static Key pairedHostRow(String id) => Key('paired-desktop-$id');
   static const aboutCheckUpdatesButton = Key('about-check-updates-button');
   static const aboutViewReleasesButton = Key('about-view-releases-button');
   static const aboutGitHubButton = Key('about-github-button');

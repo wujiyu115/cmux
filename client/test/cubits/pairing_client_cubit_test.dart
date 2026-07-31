@@ -34,6 +34,7 @@ class _FakePairingClient extends PairingClient {
   final PairingActivateResult activateResult;
 
   final _logCtrl = StreamController<String>.broadcast();
+  final _stageCtrl = StreamController<PairingStageEvent>.broadcast();
   final _changedCtrl = StreamController<void>.broadcast();
   final List<(int, Uint8List)> sentInput = [];
   final List<(int, int, int)> sentResize = [];
@@ -47,6 +48,9 @@ class _FakePairingClient extends PairingClient {
   Stream<String> get log => _logCtrl.stream;
 
   @override
+  Stream<PairingStageEvent> get stages => _stageCtrl.stream;
+
+  @override
   Stream<void> get sessionsChanged => _changedCtrl.stream;
 
   @override
@@ -58,9 +62,21 @@ class _FakePairingClient extends PairingClient {
     String deviceName = 'Mobile device',
   }) async {
     _logCtrl.add('Connecting…');
+    // Mirrors the real client's stage emissions so the cubit's rail state and
+    // failure attribution are exercised.
+    _stage(PairingStage.connect, PairingStageStatus.active);
     if (connectError != null) throw connectError!;
+    _stage(PairingStage.connect, PairingStageStatus.done);
+    _stage(PairingStage.secureChannel, PairingStageStatus.active);
+    _stage(PairingStage.secureChannel, PairingStageStatus.done);
+    _stage(PairingStage.authenticate, PairingStageStatus.active);
+    _stage(PairingStage.authenticate, PairingStageStatus.done);
+    connectedUrl = wsUrls.isEmpty ? null : wsUrls.first;
     return result;
   }
+
+  void _stage(PairingStage stage, PairingStageStatus status) =>
+      _stageCtrl.add(PairingStageEvent(stage, status));
 
   @override
   Future<List<PairingSessionSummary>> listSessions() async => sessions;
@@ -104,6 +120,7 @@ class _FakePairingClient extends PairingClient {
   Future<void> close() async {
     closed = true;
     if (!_logCtrl.isClosed) await _logCtrl.close();
+    if (!_stageCtrl.isClosed) await _stageCtrl.close();
     if (!_changedCtrl.isClosed) await _changedCtrl.close();
   }
 }
@@ -217,6 +234,119 @@ void main() {
       expect(cubit.state.logs.any((l) => l.contains('Error')), isTrue);
       expect(fake.closed, isTrue);
       expect(await settings.loadPairedDesktops(), isEmpty);
+    });
+
+    test('a successful connect walks every stage to done', () async {
+      final fake = _FakePairingClient();
+      final cubit = PairingClientCubit(
+        settings: InMemoryPairingSettingsRepository(),
+        clientFactory: () => fake,
+      );
+      addTearDown(cubit.close);
+
+      cubit.beginPairing(_makeOffer());
+      expect(cubit.state.stageStatuses, PairingClientState.idleStages);
+
+      await cubit.confirmPairing();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(
+        cubit.state.stageStatuses,
+        List.filled(PairingStage.values.length, PairingStageStatus.done),
+      );
+      expect(cubit.state.activeHostUrl, 'ws://192.168.1.9:5555/pair/ws');
+    });
+
+    test('a thrown connect fails the stage that was in flight', () async {
+      final fake = _FakePairingClient(connectError: Exception('no route'));
+      final cubit = PairingClientCubit(
+        settings: InMemoryPairingSettingsRepository(),
+        clientFactory: () => fake,
+      );
+      addTearDown(cubit.close);
+
+      cubit.beginPairing(_makeOffer());
+      await cubit.confirmPairing();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(
+        cubit.state.stageStatuses[PairingStage.connect.index],
+        PairingStageStatus.fail,
+      );
+      // Later stages never started, so they stay untouched.
+      expect(
+        cubit.state.stageStatuses[PairingStage.authenticate.index],
+        PairingStageStatus.idle,
+      );
+    });
+
+    test('both connect paths stamp lastConnectedAt', () async {
+      final settings = InMemoryPairingSettingsRepository();
+      final cubit = PairingClientCubit(
+        settings: settings,
+        clientFactory: _FakePairingClient.new,
+      );
+      addTearDown(cubit.close);
+
+      cubit.beginPairing(_makeOffer());
+      await cubit.confirmPairing();
+      final firstStamp = (await settings.loadPairedDesktops()).single
+          .lastConnectedAt;
+      expect(firstStamp, isNotNull);
+
+      final stored = cubit.state.pairedDesktops.single.copyWith(
+        lastConnectedAt: DateTime(2020),
+      );
+      await settings.savePairedDesktops([stored]);
+      await cubit.connectToDesktop(stored);
+
+      final reconnected = (await settings.loadPairedDesktops()).single;
+      expect(reconnected.lastConnectedAt!.isAfter(DateTime(2020)), isTrue);
+    });
+
+    test('reconnect names the host before the handshake finishes', () async {
+      final cubit = PairingClientCubit(
+        settings: InMemoryPairingSettingsRepository(),
+        clientFactory: () => _FakePairingClient(connectError: Exception('x')),
+      );
+      addTearDown(cubit.close);
+
+      await cubit.connectToDesktop(
+        const PairedDesktop(
+          id: 'd1',
+          name: 'Studio',
+          wsUrls: ['ws://x'],
+          hostPublicKeyB64: 'pk',
+          deviceToken: 't',
+        ),
+      );
+
+      expect(cubit.state.activeHostName, 'Studio');
+    });
+
+    test('restoreDesktop puts back a removed desktop once', () async {
+      const desktop = PairedDesktop(
+        id: 'd1',
+        name: 'Home',
+        wsUrls: ['ws://x'],
+        hostPublicKeyB64: 'pk',
+        deviceToken: 't',
+      );
+      final settings = InMemoryPairingSettingsRepository(
+        pairedDesktops: const [desktop],
+      );
+      final cubit = PairingClientCubit(settings: settings);
+      addTearDown(cubit.close);
+      await cubit.loadPairedDesktops();
+
+      await cubit.removeDesktop('d1');
+      expect(await settings.loadPairedDesktops(), isEmpty);
+
+      await cubit.restoreDesktop(desktop);
+      await cubit.restoreDesktop(desktop);
+
+      expect(cubit.state.pairedDesktops, hasLength(1));
+      expect((await settings.loadPairedDesktops()).single.id, 'd1');
     });
 
     test('openSession enters mirroring; input/resize forward to the client',

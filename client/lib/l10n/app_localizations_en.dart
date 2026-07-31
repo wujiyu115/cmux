@@ -2741,4 +2741,71 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get pairingCodeTtlHint =>
       'This code stays valid for about 15 minutes. If pairing fails with an invalid-token error, tap New code and pair again.';
+
+  @override
+  String pairingLastConnected(String time) {
+    return 'Last connected $time';
+  }
+
+  @override
+  String get pairingLanLabel => 'LAN';
+
+  @override
+  String get pairingStepProgressTitle => 'Connection progress';
+
+  @override
+  String get pairingStageConnect => 'Reach the desktop';
+
+  @override
+  String get pairingStageConnectNote => 'Dialing its LAN address';
+
+  @override
+  String get pairingStageSecureChannel => 'Secure the channel';
+
+  @override
+  String get pairingStageSecureChannelNote => 'Key exchange, host key pinned';
+
+  @override
+  String get pairingStageAuthenticate => 'Check the pairing code';
+
+  @override
+  String get pairingStageAuthenticateNote => 'Register this device';
+
+  @override
+  String get pairingStageLoadWorkspaces => 'Sync workspaces';
+
+  @override
+  String get pairingStageLoadWorkspacesNote =>
+      'Fetch sessions and live terminals';
+
+  @override
+  String get pairingConnectionLogTitle => 'Connection log';
+
+  @override
+  String pairingLogLineCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count lines',
+      one: '$count line',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pairingConnectedBadge => 'Connected';
+
+  @override
+  String pairingRemovedUndo(String name) {
+    return 'Removed $name';
+  }
+
+  @override
+  String get pairingUndo => 'Undo';
+
+  @override
+  String get pairingSendCtrlC => 'Send Ctrl+C';
+
+  @override
+  String get pairingMirrorInputHint => 'Tap the terminal to type';
 }

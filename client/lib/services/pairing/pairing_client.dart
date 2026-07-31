@@ -8,6 +8,23 @@ import 'pairing_crypto.dart';
 import 'pairing_frames.dart';
 import 'ws_transport.dart';
 
+/// The four observable phases of a pairing connect, in order. Emitted on
+/// [PairingClient.stages] so the confirm screen can render real progress instead
+/// of guessing from log text. [loadWorkspaces] is driven by the cubit — the
+/// workspace fetch happens above this client.
+enum PairingStage { connect, secureChannel, authenticate, loadWorkspaces }
+
+/// Per-stage state for the confirm screen's step rail.
+enum PairingStageStatus { idle, active, done, fail }
+
+/// One transition of one [PairingStage].
+class PairingStageEvent {
+  const PairingStageEvent(this.stage, this.status);
+
+  final PairingStage stage;
+  final PairingStageStatus status;
+}
+
 /// Result of a successful auth: the host's identity plus (first pairing only) a
 /// device token to persist for future reconnects.
 class PairingAuthResult {
@@ -140,8 +157,17 @@ class PairingClient {
   final _log = StreamController<String>.broadcast();
   Stream<String> get log => _log.stream;
 
+  final _stages = StreamController<PairingStageEvent>.broadcast();
+
+  /// Real connect progress, one event per [PairingStage] transition.
+  Stream<PairingStageEvent> get stages => _stages.stream;
+
   WsTransport? _transport;
   E2eeChannel? _channel;
+
+  /// The URL that actually connected — [connect] tries several, so the caller
+  /// can't assume it was the first one.
+  String? connectedUrl;
   StreamSubscription<Uint8List>? _inbound;
 
   var _nextId = 1;
@@ -154,6 +180,10 @@ class PairingClient {
   void _emit(String message, {bool error = false}) {
     appLogger.d('pairing client: $message');
     if (!_log.isClosed) _log.add(message);
+  }
+
+  void _stage(PairingStage stage, PairingStageStatus status) {
+    if (!_stages.isClosed) _stages.add(PairingStageEvent(stage, status));
   }
 
   /// Tries each URL in turn until one connects and authenticates. [token] is the
@@ -169,6 +199,9 @@ class PairingClient {
     Object? lastError;
     for (final url in wsUrls) {
       try {
+        // Re-armed per URL: a failed candidate is retried on the next one, so
+        // the rail shows "still dialing" rather than a premature failure.
+        _stage(PairingStage.connect, PairingStageStatus.active);
         _emit('Connecting to $url…');
         return await _connectOne(
           url: url,
@@ -194,6 +227,9 @@ class PairingClient {
     required String deviceName,
   }) async {
     final transport = await _connector(Uri.parse(url));
+    connectedUrl = url;
+    _stage(PairingStage.connect, PairingStageStatus.done);
+    _stage(PairingStage.secureChannel, PairingStageStatus.active);
     _transport = transport;
     _inbound = transport.inbound.listen(
       _onBytes,
@@ -221,6 +257,8 @@ class PairingClient {
       theirEphemeralPublic: hostEphemeral,
     );
     _emit('Secure channel established');
+    _stage(PairingStage.secureChannel, PairingStageStatus.done);
+    _stage(PairingStage.authenticate, PairingStageStatus.active);
 
     // Phase 2 — encrypted auth.
     _auth = Completer<PairingAuthResult>();
@@ -234,6 +272,7 @@ class PairingClient {
     });
     final result = await _auth!.future.timeout(const Duration(seconds: 10));
     _emit('Paired with ${result.hostName}');
+    _stage(PairingStage.authenticate, PairingStageStatus.done);
     return result;
   }
 
@@ -506,6 +545,7 @@ class PairingClient {
     _subs.clear();
     await _teardown();
     await _log.close();
+    await _stages.close();
     await _sessionsChanged.close();
   }
 }

@@ -886,6 +886,7 @@ Future<AppShell> buildAppShell({
     final pairingSettings = SharedPrefsPairingSettingsRepository(preferences);
     pairingClientCubit = PairingClientCubit(settings: pairingSettings);
     unawaited(pairingClientCubit.loadPairedDesktops());
+    unawaited(pairingClientCubit.loadNetworkInfo());
   }
 
   return AppShell(

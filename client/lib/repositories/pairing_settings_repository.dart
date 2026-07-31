@@ -13,6 +13,7 @@ class PairedDesktop {
     required this.hostPublicKeyB64,
     required this.deviceToken,
     this.resumeSecret,
+    this.lastConnectedAt,
   });
 
   final String id;
@@ -22,10 +23,15 @@ class PairedDesktop {
   final String deviceToken;
   final String? resumeSecret;
 
+  /// Last successful connect, stamped locally (the host reports nothing here).
+  /// Null for desktops paired before this field existed.
+  final DateTime? lastConnectedAt;
+
   PairedDesktop copyWith({
     String? name,
     List<String>? wsUrls,
     String? resumeSecret,
+    DateTime? lastConnectedAt,
   }) => PairedDesktop(
     id: id,
     name: name ?? this.name,
@@ -33,6 +39,7 @@ class PairedDesktop {
     hostPublicKeyB64: hostPublicKeyB64,
     deviceToken: deviceToken,
     resumeSecret: resumeSecret ?? this.resumeSecret,
+    lastConnectedAt: lastConnectedAt ?? this.lastConnectedAt,
   );
 
   Map<String, Object?> toJson() => {
@@ -42,6 +49,8 @@ class PairedDesktop {
     'pk': hostPublicKeyB64,
     'deviceToken': deviceToken,
     if (resumeSecret != null) 'resume': resumeSecret,
+    if (lastConnectedAt != null)
+      'lastConnectedAt': lastConnectedAt!.millisecondsSinceEpoch,
   };
 
   static PairedDesktop? fromJson(Object? raw) {
@@ -57,7 +66,16 @@ class PairedDesktop {
       hostPublicKeyB64: pk,
       deviceToken: token,
       resumeSecret: raw['resume'] is String ? raw['resume'] as String : null,
+      lastConnectedAt: _readTimestamp(raw['lastConnectedAt']),
     );
+  }
+
+  /// Tolerant read: epoch millis (what we write), an ISO string (hand-edited
+  /// blobs), missing key (pre-field pairings), or junk → null.
+  static DateTime? _readTimestamp(Object? raw) {
+    if (raw is int) return DateTime.fromMillisecondsSinceEpoch(raw);
+    if (raw is String) return DateTime.tryParse(raw);
+    return null;
   }
 }
 

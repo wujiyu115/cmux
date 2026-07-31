@@ -5107,6 +5107,114 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This code stays valid for about 15 minutes. If pairing fails with an invalid-token error, tap New code and pair again.'**
   String get pairingCodeTtlHint;
+
+  /// No description provided for @pairingLastConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Last connected {time}'**
+  String pairingLastConnected(String time);
+
+  /// No description provided for @pairingLanLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'LAN'**
+  String get pairingLanLabel;
+
+  /// No description provided for @pairingStepProgressTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection progress'**
+  String get pairingStepProgressTitle;
+
+  /// No description provided for @pairingStageConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Reach the desktop'**
+  String get pairingStageConnect;
+
+  /// No description provided for @pairingStageConnectNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Dialing its LAN address'**
+  String get pairingStageConnectNote;
+
+  /// No description provided for @pairingStageSecureChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Secure the channel'**
+  String get pairingStageSecureChannel;
+
+  /// No description provided for @pairingStageSecureChannelNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Key exchange, host key pinned'**
+  String get pairingStageSecureChannelNote;
+
+  /// No description provided for @pairingStageAuthenticate.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the pairing code'**
+  String get pairingStageAuthenticate;
+
+  /// No description provided for @pairingStageAuthenticateNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Register this device'**
+  String get pairingStageAuthenticateNote;
+
+  /// No description provided for @pairingStageLoadWorkspaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync workspaces'**
+  String get pairingStageLoadWorkspaces;
+
+  /// No description provided for @pairingStageLoadWorkspacesNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Fetch sessions and live terminals'**
+  String get pairingStageLoadWorkspacesNote;
+
+  /// No description provided for @pairingConnectionLogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection log'**
+  String get pairingConnectionLogTitle;
+
+  /// No description provided for @pairingLogLineCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{{count} line} other{{count} lines}}'**
+  String pairingLogLineCount(int count);
+
+  /// No description provided for @pairingConnectedBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected'**
+  String get pairingConnectedBadge;
+
+  /// No description provided for @pairingRemovedUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed {name}'**
+  String pairingRemovedUndo(String name);
+
+  /// No description provided for @pairingUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get pairingUndo;
+
+  /// No description provided for @pairingSendCtrlC.
+  ///
+  /// In en, this message translates to:
+  /// **'Send Ctrl+C'**
+  String get pairingSendCtrlC;
+
+  /// No description provided for @pairingMirrorInputHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the terminal to type'**
+  String get pairingMirrorInputHint;
 }
 
 class _AppLocalizationsDelegate

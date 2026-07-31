@@ -77,7 +77,10 @@ void main() {
     await tester.pump();
     await pumpPhaseTransitions(tester);
 
-    expect(find.byKey(AppKeys.chatWorkspace), findsOneWidget);
+    // Empty workspace (no sessions): the workbench center shows the welcome
+    // page, not the terminal shell — the legacy chat landing is gone.
+    expect(find.byKey(AppKeys.workbenchWelcomePage), findsOneWidget);
+    expect(find.byKey(AppKeys.chatWorkspace), findsNothing);
     expect(find.byKey(AppKeys.membersPanel), findsNothing);
     expect(chatCubit.state.tabs.length, 0);
 
@@ -105,6 +108,8 @@ void main() {
       isTrue,
     );
     await pumpPhaseTransitions(tester);
+    // With a live session the terminal shell now renders (welcome page gone).
+    expect(find.byKey(AppKeys.chatWorkspace), findsOneWidget);
     expect(find.byKey(AppKeys.rightToolsPanel), findsOneWidget);
     // Personal materialize schedules debounced persistence timers; let them
     // fire before the tree is disposed.

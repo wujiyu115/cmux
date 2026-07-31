@@ -3,11 +3,13 @@ import 'dart:async';
 import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 import '../../cubits/pairing_client_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../services/pairing/pairing_offer.dart';
 import '../../utils/logging/logger.dart';
+import '../../widgets/app_toast/app_toast.dart';
 import 'paired_hosts_page.dart';
 import 'pairing_confirm_page.dart';
 import 'pairing_mirror_page.dart';
@@ -97,9 +99,11 @@ class _PairingMobileShellState extends State<PairingMobileShell> {
       PairingNotice.activateFailed => l10n.pairingActivateFailed,
       PairingNotice.fallbackOpenedTerminal => l10n.pairingFallbackOpenedTerminal,
     };
-    ScaffoldMessenger.of(context)
-      ..clearSnackBars()
-      ..showSnackBar(SnackBar(content: Text(message)));
+    AppToast.show(
+      context,
+      message: message,
+      variant: TpToastVariant.warning,
+    );
     context.read<PairingClientCubit>().clearNotice();
   }
 
