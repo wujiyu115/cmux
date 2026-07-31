@@ -1284,6 +1284,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get terminalParkedSendDismiss => 'Dismiss';
 
   @override
+  String get terminalMirrorTakeoverTitle => 'A phone is using this terminal';
+
+  @override
+  String terminalMirrorTakeoverHint(int cols, int rows) {
+    return '$cols×$rows · this pane restores when the phone disconnects';
+  }
+
+  @override
   String get mailbox => 'Mailbox';
 
   @override

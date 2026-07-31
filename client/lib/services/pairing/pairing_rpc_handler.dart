@@ -234,6 +234,8 @@ class PairingRpcHandler {
     final sub = _nextSub++;
     final record = _Subscription(sub, catalogId, session);
     _subs[sub] = record;
+    // The desktop pane yields the grid while this phone mirrors it.
+    session.attachMirror();
 
     // Attach the tee listener BEFORE snapshotting so no bytes slip through the
     // gap; the client dedups by seq against the snapshot high-water mark.
@@ -285,6 +287,8 @@ class PairingRpcHandler {
     if (record == null) return;
     record.flushTimer?.cancel();
     record.listener?.cancel();
+    // Last phone off this terminal releases the desktop back to its own grid.
+    record.session.detachMirror();
     _send(PairingCodec.encodeJson({
       'method': 'terminal.closed',
       'params': {'sub': sub, 'reason': reason},
@@ -307,6 +311,9 @@ class PairingRpcHandler {
     for (final record in _subs.values) {
       record.flushTimer?.cancel();
       record.listener?.cancel();
+      // Covers dropped link / crash / auth failure / server shutdown — the
+      // desktop must never stay locked because a phone went away silently.
+      record.session.detachMirror();
     }
     _subs.clear();
   }

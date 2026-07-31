@@ -2456,6 +2456,18 @@ abstract class AppLocalizations {
   /// **'Dismiss'**
   String get terminalParkedSendDismiss;
 
+  /// No description provided for @terminalMirrorTakeoverTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'A phone is using this terminal'**
+  String get terminalMirrorTakeoverTitle;
+
+  /// No description provided for @terminalMirrorTakeoverHint.
+  ///
+  /// In en, this message translates to:
+  /// **'{cols}×{rows} · this pane restores when the phone disconnects'**
+  String terminalMirrorTakeoverHint(int cols, int rows);
+
   /// No description provided for @mailbox.
   ///
   /// In en, this message translates to:

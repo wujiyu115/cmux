@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_alacritty/flutter_alacritty.dart';
 
 import '../../cubits/chat_cubit.dart';
@@ -17,6 +16,7 @@ import '../../services/workspace_dnd/terminal_drop_ingestor.dart';
 import '../../services/workspace_dnd/workspace_drop_target.dart';
 import '../../widgets/terminal/parked_send_overlay.dart';
 import '../../widgets/terminal/teampilot_alacritty_terminal.dart';
+import '../../widgets/terminal/terminal_mirror_takeover_scope.dart';
 import '../../widgets/terminal_find_bar.dart';
 import '../../widgets/workspace_dnd/external_file_drop_region.dart';
 import '../../widgets/workspace_dnd/workspace_file_drop_region.dart';
@@ -57,6 +57,8 @@ class ChatWorkbenchRunningTerminal extends StatefulWidget {
 class _ChatWorkbenchRunningTerminalState
     extends State<ChatWorkbenchRunningTerminal> {
   final ValueNotifier<bool> _menuOpen = ValueNotifier(false);
+  final GlobalKey<TerminalViewState> _terminalViewKey =
+      GlobalKey<TerminalViewState>();
 
   @override
   void dispose() {
@@ -128,7 +130,10 @@ class _ChatWorkbenchRunningTerminalState
       },
       child: Stack(
         children: [
-            ExternalFileDropRegion(
+            TerminalMirrorTakeoverScope(
+              session: widget.session,
+              terminalViewKey: _terminalViewKey,
+              builder: (readOnly) => ExternalFileDropRegion(
               target: _dropIngestor(),
               onOutcome: (outcome) => _showDropOutcome(context, outcome),
               child: WorkspaceFileDropRegion(
@@ -138,6 +143,8 @@ class _ChatWorkbenchRunningTerminalState
                   engine: widget.session.engine,
                   controller: widget.terminalController,
                   theme: widget.terminalTheme,
+                  terminalViewKey: _terminalViewKey,
+                  readOnly: readOnly,
                   onPaste: () => TerminalClipboardImagePaste().paste(
                     engine: widget.session.engine,
                     controller: widget.terminalController,
@@ -150,7 +157,8 @@ class _ChatWorkbenchRunningTerminalState
                     horizontal: 36,
                     vertical: 16,
                   ),
-                  autofocus: widget.autofocus && !widget.findVisible,
+                  autofocus:
+                      widget.autofocus && !widget.findVisible && !readOnly,
                   linkProviders: widget.session.linkProviders,
                   onPtyResize: widget.session.onTerminalPtyResize,
                   onTapDown: (_, offset) {
@@ -167,6 +175,7 @@ class _ChatWorkbenchRunningTerminalState
                   },
                 ),
               ),
+            ),
             ),
             if (widget.findVisible)
               Positioned(

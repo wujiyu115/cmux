@@ -10,6 +10,7 @@ import '../../services/terminal/workspace_terminal_registry.dart';
 import '../../services/terminal/workspace_terminal_title_resolver.dart';
 import '../../services/workbench/workbench_editor_opener.dart';
 import '../terminal/teampilot_alacritty_terminal.dart';
+import '../terminal/terminal_mirror_takeover_scope.dart';
 
 class WorkspaceTerminalView extends StatelessWidget {
   const WorkspaceTerminalView({
@@ -41,34 +42,39 @@ class WorkspaceTerminalView extends StatelessWidget {
       color: background,
       child: Semantics(
         label: title,
-        child: TeampilotAlacrittyTerminal(
-          engine: entry.session.engine,
-          controller: entry.controller,
-          theme: theme,
+        child: TerminalMirrorTakeoverScope(
+          session: entry.session,
           terminalViewKey: terminalViewKey,
-          // Dock shell: tighter inset than the chat workbench terminal.
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          linkProviders: entry.session.linkProviders,
-          onPtyResize: entry.session.onTerminalPtyResize,
-          onLinkActivate: (uri) {
-            final opener = context.read<WorkbenchEditorOpener>();
-            unawaited(
-              TerminalUriOpener.open(
-                uri,
-                workingDirectory: entry.cwd,
-                openInEditor: (path) => opener.openFile(workspaceId, path),
-              ),
-            );
-          },
-          onSecondaryTapDown: (details, offset) {
-            onContextMenu(details.globalPosition, offset);
-          },
-          onPaste: () => TerminalClipboardImagePaste().paste(
+          builder: (readOnly) => TeampilotAlacrittyTerminal(
             engine: entry.session.engine,
             controller: entry.controller,
-            sink: entry.session.input,
-            target: entry.session.runtimeTarget,
-            behavior: entry.session.pathDropBehavior,
+            theme: theme,
+            terminalViewKey: terminalViewKey,
+            readOnly: readOnly,
+            // Dock shell: tighter inset than the chat workbench terminal.
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            linkProviders: entry.session.linkProviders,
+            onPtyResize: entry.session.onTerminalPtyResize,
+            onLinkActivate: (uri) {
+              final opener = context.read<WorkbenchEditorOpener>();
+              unawaited(
+                TerminalUriOpener.open(
+                  uri,
+                  workingDirectory: entry.cwd,
+                  openInEditor: (path) => opener.openFile(workspaceId, path),
+                ),
+              );
+            },
+            onSecondaryTapDown: (details, offset) {
+              onContextMenu(details.globalPosition, offset);
+            },
+            onPaste: () => TerminalClipboardImagePaste().paste(
+              engine: entry.session.engine,
+              controller: entry.controller,
+              sink: entry.session.input,
+              target: entry.session.runtimeTarget,
+              behavior: entry.session.pathDropBehavior,
+            ),
           ),
         ),
       ),

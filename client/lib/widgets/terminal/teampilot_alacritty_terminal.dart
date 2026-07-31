@@ -26,6 +26,7 @@ class TeampilotAlacrittyTerminal extends StatelessWidget {
     required this.onSecondaryTapDown,
     this.terminalViewKey,
     this.autofocus = true,
+    this.readOnly = false,
     this.backgroundOpacity = 0.98,
     this.onTapDown,
     this.onPaste,
@@ -43,6 +44,10 @@ class TeampilotAlacrittyTerminal extends StatelessWidget {
   onSecondaryTapDown;
   final Key? terminalViewKey;
   final bool autofocus;
+
+  /// Refuses all input at the engine boundary — set while a phone mirror has
+  /// taken the pane over (see `TerminalMirrorTakeoverScope`).
+  final bool readOnly;
   final double backgroundOpacity;
   final void Function(TapDownDetails details, CellOffset? cell)? onTapDown;
 
@@ -83,6 +88,7 @@ class TeampilotAlacrittyTerminal extends StatelessWidget {
           padding: padding,
           textStyle: appTerminalTextStyle(context),
           autofocus: autofocus,
+          readOnly: readOnly,
           shortcuts: terminalShortcuts,
           actions: hostActions,
           linkProviders: linkProviders,

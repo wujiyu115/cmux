@@ -43,6 +43,8 @@ void main() {
     when(() => session.recentBuffer).thenReturn(null);
     when(() => session.writeRemoteInput(any())).thenReturn(null);
     when(() => session.onTerminalPtyResize(any(), any())).thenReturn(null);
+    when(() => session.attachMirror()).thenReturn(null);
+    when(() => session.detachMirror()).thenReturn(null);
 
     catalog = SessionCatalog()..addSource(() => [makeEntry()]);
     sent = [];
@@ -189,6 +191,51 @@ void main() {
         .whereType<JsonFrame>()
         .firstWhere((f) => f.data['method'] == 'terminal.closed');
     expect((closed.data['params'] as Map)['sub'], 1);
+  });
+
+  test('subscribe attaches the desktop mirror takeover once', () {
+    when(() => session.recentBuffer).thenReturn(RecentPtyBuffer());
+    handler.handle(
+      PairingCodec.decode(_json({
+        'id': 1,
+        'method': 'terminal.subscribe',
+        'params': {'catalogId': 'ws:p1'},
+      })),
+    );
+    verify(() => session.attachMirror()).called(1);
+    verifyNever(() => session.detachMirror());
+  });
+
+  test('unsubscribe detaches the mirror takeover', () {
+    when(() => session.recentBuffer).thenReturn(RecentPtyBuffer());
+    handler.handle(
+      PairingCodec.decode(_json({
+        'id': 1,
+        'method': 'terminal.subscribe',
+        'params': {'catalogId': 'ws:p1'},
+      })),
+    );
+    handler.handle(
+      PairingCodec.decode(_json({
+        'method': 'terminal.unsubscribe',
+        'params': {'sub': 1},
+      })),
+    );
+    verify(() => session.detachMirror()).called(1);
+  });
+
+  test('dispose detaches every live mirror (dropped-link path)', () {
+    when(() => session.recentBuffer).thenReturn(RecentPtyBuffer());
+    handler.handle(
+      PairingCodec.decode(_json({
+        'id': 1,
+        'method': 'terminal.subscribe',
+        'params': {'catalogId': 'ws:p1'},
+      })),
+    );
+    handler.dispose();
+    // Never got an unsubscribe — the desktop still has to be released.
+    verify(() => session.detachMirror()).called(1);
   });
 
   test('unknown method replies with an error', () {

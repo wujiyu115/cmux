@@ -1243,6 +1243,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get terminalParkedSendDismiss => '关闭';
 
   @override
+  String get terminalMirrorTakeoverTitle => '手机正在使用此终端';
+
+  @override
+  String terminalMirrorTakeoverHint(int cols, int rows) {
+    return '$cols×$rows · 手机断开后本窗格自动恢复';
+  }
+
+  @override
   String get mailbox => '信箱';
 
   @override

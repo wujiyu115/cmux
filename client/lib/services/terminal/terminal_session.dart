@@ -18,6 +18,7 @@ import 'pty_launch_environment.dart';
 import 'shell_command_tracker.dart';
 import 'terminal_input_controller.dart';
 import 'terminal_launch_controller.dart';
+import 'terminal_mirror_takeover.dart';
 import '../pairing/recent_pty_buffer.dart';
 import 'terminal_osc_notification_bridge.dart';
 import 'terminal_screen_probe_controller.dart';
@@ -139,6 +140,39 @@ class TerminalSession {
   Map<String, String>? _ptyEnvironment;
   StreamSubscription<Uint8List>? _engineOutputSubscription;
 
+  final ValueNotifier<TerminalMirrorTakeover?> _mirrorTakeover =
+      ValueNotifier<TerminalMirrorTakeover?>(null);
+
+  /// Non-null while at least one phone mirrors this terminal; the desktop pane
+  /// listens to yield the grid (banner + read-only) until every phone leaves.
+  ValueListenable<TerminalMirrorTakeover?> get mirrorTakeover =>
+      _mirrorTakeover;
+
+  /// A phone began mirroring: bumps the viewer refcount. First viewer seeds the
+  /// takeover with the last known grid; [onTerminalPtyResize] keeps it current.
+  void attachMirror() {
+    final current = _mirrorTakeover.value;
+    if (current == null) {
+      _mirrorTakeover.value = TerminalMirrorTakeover(
+        viewers: 1,
+        cols: viewWidth,
+        rows: viewHeight,
+      );
+    } else {
+      _mirrorTakeover.value = current.copyWith(viewers: current.viewers + 1);
+    }
+  }
+
+  /// A phone stopped mirroring (unsubscribe, host PTY end, or dropped link).
+  /// Clears the takeover once the last viewer leaves so the desktop restores.
+  void detachMirror() {
+    final current = _mirrorTakeover.value;
+    if (current == null) return;
+    _mirrorTakeover.value = current.viewers <= 1
+        ? null
+        : current.copyWith(viewers: current.viewers - 1);
+  }
+
   String _launchCwd = '';
   RuntimeTarget? _runtimeTarget;
 
@@ -210,8 +244,16 @@ class TerminalSession {
     );
   }
 
-  void onTerminalPtyResize(int columns, int rows) =>
-      _launch.onTerminalPtyResize(columns, rows);
+  void onTerminalPtyResize(int columns, int rows) {
+    _launch.onTerminalPtyResize(columns, rows);
+    final takeover = _mirrorTakeover.value;
+    if (takeover != null &&
+        (takeover.cols != columns || takeover.rows != rows)) {
+      // Banner shows the phone-driven grid; viewWidth/Height is now the phone's
+      // size, so keep the takeover in sync straight from the resize event.
+      _mirrorTakeover.value = takeover.copyWith(cols: columns, rows: rows);
+    }
+  }
 
   /// Raw screen-byte fan-out for pairing mirrors (zero cost when unsubscribed).
   Stream<Uint8List> get mirrorOutput => _launch.mirrorOutput;
@@ -438,6 +480,7 @@ class TerminalSession {
     _invalidateLinkProviders();
     _engineOutputSubscription?.cancel();
     _engineOutputSubscription = null;
+    _mirrorTakeover.dispose();
     engine.dispose();
     unawaited(_inputPipeline.close());
   }

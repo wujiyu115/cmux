@@ -525,6 +525,18 @@
     }
   },
   "terminalParkedSendDismiss": "关闭",
+  "terminalMirrorTakeoverTitle": "手机正在使用此终端",
+  "terminalMirrorTakeoverHint": "{cols}×{rows} · 手机断开后本窗格自动恢复",
+  "@terminalMirrorTakeoverHint": {
+    "placeholders": {
+      "cols": {
+        "type": "int"
+      },
+      "rows": {
+        "type": "int"
+      }
+    }
+  },
   "mailbox": "信箱",
   "openExistingSessionStartsTerminalTitle": "打开已有会话时直接启动终端",
   "openExistingSessionStartsTerminalDescription": "开启后，打开已保存会话会立即连接终端。关闭（默认）时先显示聊天视图，发送消息后才启动终端。",

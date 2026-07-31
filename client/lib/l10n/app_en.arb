@@ -559,6 +559,18 @@
     }
   },
   "terminalParkedSendDismiss": "Dismiss",
+  "terminalMirrorTakeoverTitle": "A phone is using this terminal",
+  "terminalMirrorTakeoverHint": "{cols}×{rows} · this pane restores when the phone disconnects",
+  "@terminalMirrorTakeoverHint": {
+    "placeholders": {
+      "cols": {
+        "type": "int"
+      },
+      "rows": {
+        "type": "int"
+      }
+    }
+  },
   "mailbox": "Mailbox",
   "openExistingSessionStartsTerminalTitle": "Open existing sessions in terminal",
   "openExistingSessionStartsTerminalDescription": "When enabled, opening a saved session connects the terminal immediately. When off (default), open the Chat view first; send from Chat to start the terminal.",
