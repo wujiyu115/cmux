@@ -136,6 +136,16 @@ class PairingClient {
 
   final Future<WsTransport> Function(Uri) _connector;
 
+  /// Per-candidate dial budget.
+  ///
+  /// An address that is merely unreachable — a stale VPN route, a subnet the
+  /// phone is not on — blackholes the SYN rather than refusing it, so the dial
+  /// would otherwise hang until the cubit's 25s budget for the whole [connect]
+  /// expired, and the remaining candidates would never be tried at all. LAN
+  /// round trips are milliseconds, so 4s is generous and still leaves room for
+  /// every candidate the host is likely to advertise.
+  static const dialTimeout = Duration(seconds: 4);
+
   final _log = StreamController<String>.broadcast();
   Stream<String> get log => _log.stream;
 
@@ -208,7 +218,7 @@ class PairingClient {
     required String? deviceId,
     required String deviceName,
   }) async {
-    final transport = await _connector(Uri.parse(url));
+    final transport = await _dial(Uri.parse(url));
     connectedUrl = url;
     _stage(PairingStage.connect, PairingStageStatus.done);
     _stage(PairingStage.secureChannel, PairingStageStatus.active);
@@ -256,6 +266,27 @@ class PairingClient {
     _emit('Paired with ${result.hostName}');
     _stage(PairingStage.authenticate, PairingStageStatus.done);
     return result;
+  }
+
+  /// Dials [url], giving up after [dialTimeout] so [connect] can move on.
+  ///
+  /// The abandoned future is still drained and its socket closed: dropping it
+  /// would leak the descriptor for as long as the OS keeps retrying the
+  /// handshake behind our back.
+  Future<WsTransport> _dial(Uri url) {
+    final pending = _connector(url);
+    return pending.timeout(
+      dialTimeout,
+      onTimeout: () {
+        unawaited(
+          pending.then(
+            (transport) => transport.close(),
+            onError: (Object _) {},
+          ),
+        );
+        throw TimeoutException('No response from $url', dialTimeout);
+      },
+    );
   }
 
   Future<Map<String, Object?>> _awaitHelloAck() async {
