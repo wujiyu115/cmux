@@ -160,12 +160,6 @@ final appRouter = GoRouter(
               ),
             ),
             GoRoute(
-              path: '/config/github',
-              pageBuilder: (context, state) => const NoTransitionPage(
-                child: ConfigWorkspace(section: ConfigSection.github),
-              ),
-            ),
-            GoRoute(
               path: '/config/shortcuts',
               pageBuilder: (context, state) => const NoTransitionPage(
                 child: ConfigWorkspace(section: ConfigSection.shortcuts),

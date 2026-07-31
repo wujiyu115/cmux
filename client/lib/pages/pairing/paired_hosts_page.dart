@@ -8,6 +8,7 @@ import '../../repositories/pairing_settings_repository.dart';
 import '../../theme/app_fonts.dart';
 import '../../utils/ui/app_keys.dart';
 import '../../widgets/app_toast/app_toast.dart';
+import 'mobile_settings_sheet.dart';
 import 'paired_host_row.dart';
 import 'pairing_network_strip.dart';
 
@@ -92,6 +93,13 @@ class _Header extends StatelessWidget {
               fontSize: 13,
               color: cs.onSurfaceVariant,
             ),
+          ),
+          SizedBox(width: spacing.xs),
+          TpIconButton(
+            key: AppKeys.mobileSettingsButton,
+            icon: Icons.settings_outlined,
+            tooltip: context.l10n.settings,
+            onTap: () => showMobileSettingsSheet(context),
           ),
         ],
       ),

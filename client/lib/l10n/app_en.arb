@@ -60,6 +60,7 @@
   },
   "languageDescription": "Language used for menus, buttons, and labels.",
   "cancel": "Cancel",
+  "close": "Close",
   "add": "Add",
   "delete": "Delete",
   "appearance": "Appearance",
@@ -678,25 +679,6 @@
   "configure": "Configure",
   "teamConfig": "Team Config",
   "teamSettings": "Team Settings",
-  "githubSettingsTitle": "GitHub",
-  "githubSettingsSubtitle": "Connect GitHub to publish experts and teams to Hub",
-  "githubSignIn": "Sign in with GitHub",
-  "githubConnectedAs": "Connected as @{login}",
-  "@githubConnectedAs": {
-    "placeholders": {
-      "login": {}
-    }
-  },
-  "githubConnectedGeneric": "Connected to GitHub",
-  "githubDisconnect": "Disconnect",
-  "githubWaitingCodeHint": "Enter this code on GitHub if prompted",
-  "githubBrowserOpened": "Browser opened for authorization",
-  "githubReopenBrowser": "Reopen browser",
-  "githubDeviceFlowUnavailable": "GitHub sign-in is unavailable in this build. Use a personal access token.",
-  "githubAdvancedPat": "Use a personal access token",
-  "githubAdvancedPatSubtitle": "When GitHub sign-in is unavailable, or you prefer a token with repo scope.",
-  "hubPublishTokenLabel": "GitHub token",
-  "hubPublishTokenHint": "ghp_…",
   "confirm": "Confirm",
   "dangerZone": "Danger zone",
   "memberName": "Member name",

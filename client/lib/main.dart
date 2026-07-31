@@ -679,10 +679,6 @@ void main() async {
                   BlocProvider.value(value: shell.appUpdateCubit),
                   BlocProvider.value(value: shell.sshProfileCubit),
                   BlocProvider.value(value: shell.sshConnectionCubit),
-                  BlocProvider.value(value: shell.githubAccountCubit),
-                  RepositoryProvider.value(
-                    value: shell.githubCredentialsStore,
-                  ),
                   BlocProvider.value(value: shell.shortcutCubit),
                 ],
                 child: SshConnectionBinder(

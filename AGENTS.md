@@ -41,7 +41,7 @@ main.dart
       → AgentStatusGateway.ensureStarted()    # loopback HTTP for agent-status hooks
       → ChatCubit, AgentAttentionCubit, NotificationCubit, EditorCubit,
         WorkbenchCubit, LayoutCubit, ConfigCubit, SshProfileCubit,
-        SshConnectionCubit, GithubAccountCubit, WorkspaceTerminalRegistry,
+        SshConnectionCubit, WorkspaceTerminalRegistry,
         WorkspaceWorktreeRegistry, …
       → TerminalIdleNotificationService, AgentAttentionNotificationService
   → MaterialApp.router (GoRouter)
@@ -127,7 +127,7 @@ The one surviving AI-adjacent feature. A Claude Code hook (installed by `ClaudeH
 
 - `/home-v2` — workspace home (title bar + open-workspace tabs)
 - `/home-v2/workspace/:workspaceId` — workspace workbench (`?view=manage&section=…` for the manage view; `/…/manage` redirects here)
-- `/config/{layout,session,ssh-profiles,github,shortcuts,about,logs}` — app settings
+- `/config/{layout,session,ssh-profiles,shortcuts,about,logs}` — app settings
 - `/ssh-profiles` — redirects to `/config/ssh-profiles`
 
 ## Debugging

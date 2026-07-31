@@ -12,7 +12,6 @@ import '../../widgets/settings/workspace_hub_shell.dart';
 import '../../widgets/settings/workspace_section_host.dart';
 import '../about_page.dart';
 import '../system/log_config_workspace.dart';
-import 'github_config_section.dart';
 import 'layout_config_section.dart';
 import 'pairing_config_section.dart';
 import 'session_config_section.dart';
@@ -28,10 +27,9 @@ int _configSectionDialogIndex(ConfigSection section) {
     ConfigSection.session => 1,
     ConfigSection.sshProfiles => 2,
     ConfigSection.pairing => host ? 3 : 2,
-    ConfigSection.github => host ? 4 : 3,
-    ConfigSection.shortcuts => host ? 5 : 4,
-    ConfigSection.about => host ? 6 : 5,
-    ConfigSection.logs => host ? 6 : 5,
+    ConfigSection.shortcuts => host ? 4 : 3,
+    ConfigSection.about => host ? 5 : 4,
+    ConfigSection.logs => host ? 5 : 4,
   };
 }
 
@@ -92,13 +90,6 @@ Future<void> showWorkspaceSettingsDialog(
           bodyBuilder: (_) => const PairingConfigWorkspace(showHeading: false),
         ),
       SettingsDialogEntry(
-        icon: Icons.hub_outlined,
-        navLabel: (l10n) => l10n.githubSettingsTitle,
-        title: (l10n) => l10n.githubSettingsTitle,
-        subtitle: (l10n) => l10n.githubSettingsSubtitle,
-        bodyBuilder: (_) => const GithubConfigWorkspace(showHeading: false),
-      ),
-      SettingsDialogEntry(
         icon: Icons.keyboard_outlined,
         navLabel: (l10n) => l10n.shortcutsSettingsTitle,
         title: (l10n) => l10n.shortcutsSettingsTitle,
@@ -158,15 +149,6 @@ class ConfigSettingsHubPage extends StatelessWidget {
               ConfigSection.sshProfiles,
             );
             context.push('/config/${ConfigSection.sshProfiles.routeSegment}');
-          }),
-        ),
-        WorkspaceHubEntry(
-          key: AppKeys.configGithubSectionButton,
-          title: l10n.githubSettingsTitle,
-          icon: Icons.hub_outlined,
-          onTap: throttledTap('config_hub_github', () {
-            context.read<ConfigCubit>().selectSection(ConfigSection.github);
-            context.push('/config/${ConfigSection.github.routeSegment}');
           }),
         ),
         WorkspaceHubEntry(
@@ -236,7 +218,6 @@ class ConfigWorkspace extends StatelessWidget {
         ConfigSection.pairing => PairingConfigWorkspace(
           showHeading: showHeading,
         ),
-        ConfigSection.github => GithubConfigWorkspace(showHeading: showHeading),
         ConfigSection.shortcuts => ShortcutsConfigWorkspace(
           showHeading: showHeading,
         ),
@@ -305,16 +286,6 @@ class ConfigNavPanel extends StatelessWidget {
               () => onSelectSection(ConfigSection.pairing),
             ),
           ),
-        WorkspaceHubEntry(
-          key: AppKeys.configGithubSectionButton,
-          title: l10n.githubSettingsTitle,
-          icon: Icons.hub_outlined,
-          selected: section == ConfigSection.github,
-          onTap: throttledTap(
-            'config_nav_github',
-            () => onSelectSection(ConfigSection.github),
-          ),
-        ),
         WorkspaceHubEntry(
           key: AppKeys.configShortcutsSectionButton,
           title: l10n.shortcutsSettingsTitle,

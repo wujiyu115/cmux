@@ -181,6 +181,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cancel => '取消';
 
   @override
+  String get close => '关闭';
+
+  @override
   String get add => '添加';
 
   @override
@@ -1498,50 +1501,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get teamSettings => '团队设置';
-
-  @override
-  String get githubSettingsTitle => 'GitHub';
-
-  @override
-  String get githubSettingsSubtitle => '连接 GitHub，以便将专家和团队发布到 Hub';
-
-  @override
-  String get githubSignIn => '使用 GitHub 登录';
-
-  @override
-  String githubConnectedAs(Object login) {
-    return '已连接为 @$login';
-  }
-
-  @override
-  String get githubConnectedGeneric => '已连接到 GitHub';
-
-  @override
-  String get githubDisconnect => '断开连接';
-
-  @override
-  String get githubWaitingCodeHint => '如有提示，请在 GitHub 上输入此验证码';
-
-  @override
-  String get githubBrowserOpened => '已打开浏览器进行授权';
-
-  @override
-  String get githubReopenBrowser => '重新打开浏览器';
-
-  @override
-  String get githubDeviceFlowUnavailable => '此构建暂不支持 GitHub 登录。请使用个人访问令牌。';
-
-  @override
-  String get githubAdvancedPat => '使用个人访问令牌';
-
-  @override
-  String get githubAdvancedPatSubtitle => '无法使用 GitHub 登录时，或你更想用带 repo 权限的令牌时。';
-
-  @override
-  String get hubPublishTokenLabel => 'GitHub 令牌';
-
-  @override
-  String get hubPublishTokenHint => 'ghp_…';
 
   @override
   String get confirm => '确认';

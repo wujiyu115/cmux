@@ -37,7 +37,6 @@ class AppKeys {
   static const configSshProfilesSectionButton = Key(
     'config-ssh-profiles-section-button',
   );
-  static const configGithubSectionButton = Key('config-github-section-button');
   static const configShortcutsSectionButton = Key(
     'config-shortcuts-section-button',
   );
@@ -67,6 +66,9 @@ class AppKeys {
   static const pairingManualEntrySheet = Key('pairing-manual-entry-sheet');
   static const pairingManualEntryField = Key('pairing-manual-entry-field');
   static const pairingNetworkStrip = Key('pairing-network-strip');
+  static const mobileSettingsButton = Key('mobile-settings-button');
+  static const mobileSettingsSheet = Key('mobile-settings-sheet');
+  static const mobileSettingsCloseButton = Key('mobile-settings-close');
   static const pairingMirrorCtrlCButton = Key('pairing-mirror-ctrl-c');
   static Key pairingWorkspaceHeader(String workspaceId) =>
       Key('pairing-workspace-$workspaceId');

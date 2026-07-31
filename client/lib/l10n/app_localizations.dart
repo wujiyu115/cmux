@@ -440,6 +440,12 @@ abstract class AppLocalizations {
   /// **'Cancel'**
   String get cancel;
 
+  /// No description provided for @close.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get close;
+
   /// No description provided for @add.
   ///
   /// In en, this message translates to:
@@ -2923,90 +2929,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Team Settings'**
   String get teamSettings;
-
-  /// No description provided for @githubSettingsTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'GitHub'**
-  String get githubSettingsTitle;
-
-  /// No description provided for @githubSettingsSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Connect GitHub to publish experts and teams to Hub'**
-  String get githubSettingsSubtitle;
-
-  /// No description provided for @githubSignIn.
-  ///
-  /// In en, this message translates to:
-  /// **'Sign in with GitHub'**
-  String get githubSignIn;
-
-  /// No description provided for @githubConnectedAs.
-  ///
-  /// In en, this message translates to:
-  /// **'Connected as @{login}'**
-  String githubConnectedAs(Object login);
-
-  /// No description provided for @githubConnectedGeneric.
-  ///
-  /// In en, this message translates to:
-  /// **'Connected to GitHub'**
-  String get githubConnectedGeneric;
-
-  /// No description provided for @githubDisconnect.
-  ///
-  /// In en, this message translates to:
-  /// **'Disconnect'**
-  String get githubDisconnect;
-
-  /// No description provided for @githubWaitingCodeHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter this code on GitHub if prompted'**
-  String get githubWaitingCodeHint;
-
-  /// No description provided for @githubBrowserOpened.
-  ///
-  /// In en, this message translates to:
-  /// **'Browser opened for authorization'**
-  String get githubBrowserOpened;
-
-  /// No description provided for @githubReopenBrowser.
-  ///
-  /// In en, this message translates to:
-  /// **'Reopen browser'**
-  String get githubReopenBrowser;
-
-  /// No description provided for @githubDeviceFlowUnavailable.
-  ///
-  /// In en, this message translates to:
-  /// **'GitHub sign-in is unavailable in this build. Use a personal access token.'**
-  String get githubDeviceFlowUnavailable;
-
-  /// No description provided for @githubAdvancedPat.
-  ///
-  /// In en, this message translates to:
-  /// **'Use a personal access token'**
-  String get githubAdvancedPat;
-
-  /// No description provided for @githubAdvancedPatSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'When GitHub sign-in is unavailable, or you prefer a token with repo scope.'**
-  String get githubAdvancedPatSubtitle;
-
-  /// No description provided for @hubPublishTokenLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'GitHub token'**
-  String get hubPublishTokenLabel;
-
-  /// No description provided for @hubPublishTokenHint.
-  ///
-  /// In en, this message translates to:
-  /// **'ghp_…'**
-  String get hubPublishTokenHint;
 
   /// No description provided for @confirm.
   ///

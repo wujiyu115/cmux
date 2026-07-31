@@ -193,6 +193,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cancel => 'Cancel';
 
   @override
+  String get close => 'Close';
+
+  @override
   String get add => 'Add';
 
   @override
@@ -1548,53 +1551,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get teamSettings => 'Team Settings';
-
-  @override
-  String get githubSettingsTitle => 'GitHub';
-
-  @override
-  String get githubSettingsSubtitle =>
-      'Connect GitHub to publish experts and teams to Hub';
-
-  @override
-  String get githubSignIn => 'Sign in with GitHub';
-
-  @override
-  String githubConnectedAs(Object login) {
-    return 'Connected as @$login';
-  }
-
-  @override
-  String get githubConnectedGeneric => 'Connected to GitHub';
-
-  @override
-  String get githubDisconnect => 'Disconnect';
-
-  @override
-  String get githubWaitingCodeHint => 'Enter this code on GitHub if prompted';
-
-  @override
-  String get githubBrowserOpened => 'Browser opened for authorization';
-
-  @override
-  String get githubReopenBrowser => 'Reopen browser';
-
-  @override
-  String get githubDeviceFlowUnavailable =>
-      'GitHub sign-in is unavailable in this build. Use a personal access token.';
-
-  @override
-  String get githubAdvancedPat => 'Use a personal access token';
-
-  @override
-  String get githubAdvancedPatSubtitle =>
-      'When GitHub sign-in is unavailable, or you prefer a token with repo scope.';
-
-  @override
-  String get hubPublishTokenLabel => 'GitHub token';
-
-  @override
-  String get hubPublishTokenHint => 'ghp_…';
 
   @override
   String get confirm => 'Confirm';
