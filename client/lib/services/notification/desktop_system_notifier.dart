@@ -136,6 +136,7 @@ class DesktopSystemNotifier {
         android: Platform.isAndroid
             ? const AndroidInitializationSettings('@mipmap/ic_launcher')
             : null,
+        iOS: Platform.isIOS ? const DarwinInitializationSettings() : null,
         macOS: Platform.isMacOS ? const DarwinInitializationSettings() : null,
         linux: Platform.isLinux
             ? LinuxInitializationSettings(
@@ -164,6 +165,13 @@ class DesktopSystemNotifier {
           >()
           ?.requestNotificationsPermission();
       appLogger.d('[system-notifier] Android notification permission=$granted');
+    } else if (Platform.isIOS) {
+      final granted = await plugin
+          .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin
+          >()
+          ?.requestPermissions(alert: true, badge: false, sound: true);
+      appLogger.d('[system-notifier] iOS notification permission=$granted');
     } else if (Platform.isMacOS) {
       final granted = await plugin
           .resolvePlatformSpecificImplementation<
@@ -212,6 +220,13 @@ class DesktopSystemNotifier {
                 contentTitle: title,
                 summaryText: badge?.isNotEmpty == true ? badge : 'TeamPilot',
               ),
+            )
+          : null,
+      iOS: Platform.isIOS
+          ? DarwinNotificationDetails(
+              subtitle: badge?.isNotEmpty == true ? badge : 'TeamPilot',
+              presentAlert: true,
+              presentSound: true,
             )
           : null,
       macOS: Platform.isMacOS

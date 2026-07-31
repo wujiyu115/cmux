@@ -48,6 +48,7 @@ import 'services/app/connection_mode_service.dart';
 import 'services/storage/home_target_controller.dart';
 import 'services/storage/workspace_directory_picker.dart';
 import 'services/app/desktop_window_actions.dart';
+import 'services/app/platform_utils.dart';
 import 'services/ssh/ssh_client_factory.dart';
 import 'services/ssh/ssh_profile_connection_coordinator.dart';
 import 'services/terminal/terminal_transport_factory.dart';
@@ -455,7 +456,7 @@ void main() async {
   await RustLib.init();
   GoogleFonts.config.allowRuntimeFetching = false;
 
-  if (!Platform.isAndroid) {
+  if (hasDesktopWindow) {
     await windowManager.ensureInitialized();
     // Cold-start window size. Do not use [getBounds] here — native runners
     // already size the window before Dart runs, so getBounds() masked edits to
@@ -508,7 +509,7 @@ void main() async {
     nativeAppDataPath = AppPathsBootstrapper.current.basePath;
     await initAppLogging(nativeAppDataPath);
   } on Object catch (error, stackTrace) {
-    if (!Platform.isAndroid) {
+    if (hasDesktopWindow) {
       await completeBootSplashTransition();
     }
     await showInitErrorApp(error: error, stackTrace: stackTrace);
@@ -521,7 +522,7 @@ void main() async {
   final homeIndexPrefetchFuture = prefetchHomeIndexSnapshots(nativeAppDataPath);
   final bootstrapCubit = AppBootstrapCubit();
 
-  if (!Platform.isAndroid) {
+  if (hasDesktopWindow) {
     await windowManager.setPreventClose(true);
   }
   await DesktopSystemNotifier.ensureInitialized(
@@ -556,7 +557,7 @@ void main() async {
         homeIndexPrefetchFuture: homeIndexPrefetchFuture,
         bootstrapCubit: bootstrapCubit,
         childBuilder: (shell) {
-          if (!Platform.isAndroid) {
+          if (hasDesktopWindow) {
             windowManager.addListener(
               _CleanupWindowListener(
                 shell.chatCubit,
@@ -961,7 +962,7 @@ class _TeamPilotMaterialAppState extends State<_TeamPilotMaterialApp> {
               // Linux/GTK also strips the resize-border grips. DragToResizeArea
               // re-adds invisible resize handles on all edges/corners so the
               // frameless window can still be resized from its borders.
-              if (!Platform.isAndroid) {
+              if (hasDesktopWindow) {
                 content = _DragToResizeWrapper(child: content);
               }
               // TpTheme outside UiZoom. Spacing stays at design baseline;

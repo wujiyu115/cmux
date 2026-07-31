@@ -19,7 +19,15 @@ abstract class SecureKeyValueStore {
 
 class FlutterSecureKeyValueStore implements SecureKeyValueStore {
   const FlutterSecureKeyValueStore({
-    FlutterSecureStorage storage = const FlutterSecureStorage(),
+    // macOS: the desktop build is non-sandboxed and ad-hoc signed
+    // (CODE_SIGN_IDENTITY = "-", no DEVELOPMENT_TEAM), so it carries no
+    // team-scoped keychain entitlement. The data protection keychain requires
+    // one and fails every call with -34018 errSecMissingEntitlement, so use
+    // the legacy file keychain instead. mOptions is macOS-only — every other
+    // platform ignores it.
+    FlutterSecureStorage storage = const FlutterSecureStorage(
+      mOptions: MacOsOptions(usesDataProtectionKeychain: false),
+    ),
   }) : _storage = storage;
 
   final FlutterSecureStorage _storage;

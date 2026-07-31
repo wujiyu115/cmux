@@ -224,7 +224,9 @@ Future<AppShell> buildAppShell({
   final sessionPreferencesCubit = SessionPreferencesCubit(
     repository: SessionPreferencesRepository(preferences),
   );
-  if (!Platform.isAndroid) {
+  // Mobile never runs a local shell (Android/iOS are SSH-only), so probing the
+  // device filesystem for toolchains would only burn boot time.
+  if (hasDesktopWindow) {
     boot('scheduling toolchain discovery (background)');
     unawaited(() async {
       final toolchainPaths = await ToolchainExecutableDiscovery().locateLocal();
@@ -708,21 +710,13 @@ Future<AppShell> buildAppShell({
   // Builds the LAN pairing stack behind the config toggle. The mobile client
   // never reaches here (isPairingHost is false on Android/iOS).
   PairingHostCubit? pairingHostCubit;
-  if (isPairingHost) {
-    final pairingKeyStore = SecurePairingKeyStore(
-      const FlutterSecureKeyValueStore(),
-    );
+  final pairingHostIdentity = isPairingHost
+      ? await _loadPairingHostIdentity()
+      : null;
+  if (pairingHostIdentity != null) {
+    final pairingKeyStore = pairingHostIdentity.store;
+    final hostStaticKey = pairingHostIdentity.key;
     final pairingSettings = SharedPrefsPairingSettingsRepository(preferences);
-    final storedKey = await pairingKeyStore.loadStaticPrivateKey();
-    final PairingKeyPair hostStaticKey;
-    if (storedKey == null) {
-      hostStaticKey = PairingKeyPair.generate();
-      await pairingKeyStore.saveStaticPrivateKey(hostStaticKey.privateKeyB64);
-    } else {
-      hostStaticKey = PairingKeyPair.fromPrivateBytes(
-        PairingCrypto.unb64u(storedKey),
-      );
-    }
     final deviceRegistry = DeviceRegistry(pairingKeyStore);
     final sessionCatalog = SessionCatalog()
       ..addSource(() => _workspaceCatalogEntries(workspaceTerminalRegistry));
@@ -852,6 +846,41 @@ Future<AppShell> buildAppShell({
     workspaceSearchHost: workspaceSearchHost,
     uiZoomBaseline: uiZoomBaseline,
   );
+}
+
+/// The pairing host's keychain-backed store plus its static X25519 key.
+typedef _PairingHostIdentity = ({PairingKeyStore store, PairingKeyPair key});
+
+/// Loads the pairing host's static key, generating and persisting one on first
+/// run.
+///
+/// Returns null when the keychain is unreachable — it can be locked, the user
+/// can deny access, and on macOS the ad-hoc-signed build has no team-scoped
+/// keychain entitlement at all. Pairing is optional and behind a config toggle,
+/// so a keychain failure disables it rather than failing startup for the whole
+/// app. A corrupt stored key lands here too, which leaves pairing off until it
+/// is cleared by hand.
+Future<_PairingHostIdentity?> _loadPairingHostIdentity() async {
+  final store = SecurePairingKeyStore(const FlutterSecureKeyValueStore());
+  try {
+    final storedKey = await store.loadStaticPrivateKey();
+    if (storedKey != null) {
+      return (
+        store: store,
+        key: PairingKeyPair.fromPrivateBytes(PairingCrypto.unb64u(storedKey)),
+      );
+    }
+    final generated = PairingKeyPair.generate();
+    await store.saveStaticPrivateKey(generated.privateKeyB64);
+    return (store: store, key: generated);
+  } catch (error, stackTrace) {
+    appLogger.w(
+      '[pairing] keychain unavailable; LAN pairing host disabled',
+      error: error,
+      stackTrace: stackTrace,
+    );
+    return null;
+  }
 }
 
 /// Read-only projection of the workspace terminal registry into catalog entries.

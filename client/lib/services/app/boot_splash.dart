@@ -6,6 +6,8 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:native_splash_screen/native_splash_screen.dart' as nss;
 import 'package:window_manager/window_manager.dart';
 
+import 'platform_utils.dart';
+
 /// Android: [FlutterNativeSplash.preserve] + [FlutterNativeSplash.remove].
 /// Desktop: native splash dismissed after bootstrap.
 void preserveBootSplash(WidgetsBinding binding) {
@@ -50,7 +52,10 @@ Future<void> dismissBootSplash() async {
 /// Reveal the frameless Flutter shell, then fade the splash away. Callers should
 /// have already swapped in the app UI so the cross-fade lands on the real app.
 Future<void> completeBootSplashTransition() async {
-  if (Platform.isAndroid) {
+  // Mobile has no window to reveal: Android fades its own splash, iOS never
+  // shows one (`flutter_native_splash: ios: false`), so dismissBootSplash is a
+  // no-op there. Either way the window_manager calls below must not run.
+  if (!hasDesktopWindow) {
     await dismissBootSplash();
     return;
   }

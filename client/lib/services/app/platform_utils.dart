@@ -9,8 +9,14 @@ ConnectionMode defaultConnectionMode() {
   return ConnectionMode.localPty;
 }
 
-/// Linux / Windows / macOS window chrome; false on Android.
-bool get useCustomDesktopWindowTitleBar => !Platform.isAndroid;
+/// Hosts a real desktop window, so `window_manager` is available. False on
+/// Android and iOS, where the plugin is not registered and every call would
+/// throw [MissingPluginException].
+bool get hasDesktopWindow =>
+    Platform.isWindows || Platform.isMacOS || Platform.isLinux;
+
+/// Linux / Windows / macOS window chrome; false on Android and iOS.
+bool get useCustomDesktopWindowTitleBar => hasDesktopWindow;
 
 /// Desktop hosts the pairing LAN server (shows QR, mirrors its own sessions).
 bool get isPairingHost =>
