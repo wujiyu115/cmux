@@ -1,15 +1,27 @@
 PODS:
+  - app_links (6.4.1):
+    - FlutterMacOS
   - desktop_drop (0.0.1):
     - FlutterMacOS
   - file_picker (0.0.1):
     - FlutterMacOS
-  - flutter_pty (0.0.1):
+  - file_selector_macos (0.0.1):
+    - FlutterMacOS
+  - flutter_local_notifications (0.0.1):
+    - FlutterMacOS
+  - flutter_pty_new (0.0.1):
     - FlutterMacOS
   - flutter_secure_storage_darwin (10.0.0):
     - Flutter
     - FlutterMacOS
   - FlutterMacOS (1.0.0)
+  - mobile_scanner (5.2.3):
+    - FlutterMacOS
+  - native_splash_screen_macos (3.0.0):
+    - FlutterMacOS
   - package_info_plus (0.0.1):
+    - FlutterMacOS
+  - pasteboard (0.0.1):
     - FlutterMacOS
   - rust_lib_flutter_alacritty (0.1.0):
     - FlutterMacOS
@@ -24,12 +36,18 @@ PODS:
     - FlutterMacOS
 
 DEPENDENCIES:
+  - app_links (from `Flutter/ephemeral/.symlinks/plugins/app_links/macos`)
   - desktop_drop (from `Flutter/ephemeral/.symlinks/plugins/desktop_drop/macos`)
   - file_picker (from `Flutter/ephemeral/.symlinks/plugins/file_picker/macos`)
-  - flutter_pty (from `Flutter/ephemeral/.symlinks/plugins/flutter_pty/macos`)
+  - file_selector_macos (from `Flutter/ephemeral/.symlinks/plugins/file_selector_macos/macos`)
+  - flutter_local_notifications (from `Flutter/ephemeral/.symlinks/plugins/flutter_local_notifications/macos`)
+  - flutter_pty_new (from `Flutter/ephemeral/.symlinks/plugins/flutter_pty_new/macos`)
   - flutter_secure_storage_darwin (from `Flutter/ephemeral/.symlinks/plugins/flutter_secure_storage_darwin/darwin`)
   - FlutterMacOS (from `Flutter/ephemeral`)
+  - mobile_scanner (from `Flutter/ephemeral/.symlinks/plugins/mobile_scanner/macos`)
+  - native_splash_screen_macos (from `Flutter/ephemeral/.symlinks/plugins/native_splash_screen_macos/macos`)
   - package_info_plus (from `Flutter/ephemeral/.symlinks/plugins/package_info_plus/macos`)
+  - pasteboard (from `Flutter/ephemeral/.symlinks/plugins/pasteboard/macos`)
   - rust_lib_flutter_alacritty (from `Flutter/ephemeral/.symlinks/plugins/rust_lib_flutter_alacritty/macos`)
   - screen_retriever_macos (from `Flutter/ephemeral/.symlinks/plugins/screen_retriever_macos/macos`)
   - shared_preferences_foundation (from `Flutter/ephemeral/.symlinks/plugins/shared_preferences_foundation/darwin`)
@@ -37,18 +55,30 @@ DEPENDENCIES:
   - window_manager (from `Flutter/ephemeral/.symlinks/plugins/window_manager/macos`)
 
 EXTERNAL SOURCES:
+  app_links:
+    :path: Flutter/ephemeral/.symlinks/plugins/app_links/macos
   desktop_drop:
     :path: Flutter/ephemeral/.symlinks/plugins/desktop_drop/macos
   file_picker:
     :path: Flutter/ephemeral/.symlinks/plugins/file_picker/macos
-  flutter_pty:
-    :path: Flutter/ephemeral/.symlinks/plugins/flutter_pty/macos
+  file_selector_macos:
+    :path: Flutter/ephemeral/.symlinks/plugins/file_selector_macos/macos
+  flutter_local_notifications:
+    :path: Flutter/ephemeral/.symlinks/plugins/flutter_local_notifications/macos
+  flutter_pty_new:
+    :path: Flutter/ephemeral/.symlinks/plugins/flutter_pty_new/macos
   flutter_secure_storage_darwin:
     :path: Flutter/ephemeral/.symlinks/plugins/flutter_secure_storage_darwin/darwin
   FlutterMacOS:
     :path: Flutter/ephemeral
+  mobile_scanner:
+    :path: Flutter/ephemeral/.symlinks/plugins/mobile_scanner/macos
+  native_splash_screen_macos:
+    :path: Flutter/ephemeral/.symlinks/plugins/native_splash_screen_macos/macos
   package_info_plus:
     :path: Flutter/ephemeral/.symlinks/plugins/package_info_plus/macos
+  pasteboard:
+    :path: Flutter/ephemeral/.symlinks/plugins/pasteboard/macos
   rust_lib_flutter_alacritty:
     :path: Flutter/ephemeral/.symlinks/plugins/rust_lib_flutter_alacritty/macos
   screen_retriever_macos:
@@ -61,18 +91,24 @@ EXTERNAL SOURCES:
     :path: Flutter/ephemeral/.symlinks/plugins/window_manager/macos
 
 SPEC CHECKSUMS:
-  desktop_drop: 1eeeb9484299585770b6461e4f3d60950e99efa2
-  file_picker: e716a70a9fe5fd9e09ebc922d7541464289443af
-  flutter_pty: 41b6f848ade294be726a6b94cdd4a67c3bc52f59
-  flutter_secure_storage_darwin: 557817588b80e60213cbecb573c45c76b788018d
+  app_links: 05a6ec2341985eb05e9f97dc63f5837c39895c3f
+  desktop_drop: 10a3e6a7fa9dbe350541f2574092fecfa345a07b
+  file_picker: 7584aae6fa07a041af2b36a2655122d42f578c1a
+  file_selector_macos: 9e9e068e90ebee155097d00e89ae91edb2374db7
+  flutter_local_notifications: 4bf37a31afde695b56091b4ae3e4d9c7a7e6cda0
+  flutter_pty_new: 76ea3908c5d46eba13bb9254a48c5c201128b408
+  flutter_secure_storage_darwin: acdb3f316ed05a3e68f856e0353b133eec373a23
   FlutterMacOS: d0db08ddef1a9af05a5ec4b724367152bb0500b1
-  package_info_plus: 12f1c5c2cfe8727ca46cbd0b26677728972d9a5b
-  rust_lib_flutter_alacritty: e4fcb8b0170e665aa1eae60613876324cb3f0ebd
-  screen_retriever_macos: 038d3f7b34a779b06f536842003e41e8ec1fb4b7
-  shared_preferences_foundation: 5086985c1d43c5ba4d5e69a4e8083a389e2909e6
-  url_launcher_macos: 175a54c831f4375a6cf895875f716ee5af3888ce
-  window_manager: e25faf20d88283a0d46e7b1a759d07261ca27575
+  mobile_scanner: bd1e7cd9b67b442f4d903747f4778e040513f860
+  native_splash_screen_macos: b47f7f69c262cfb8439d81ee4d7e3ad19e4859a6
+  package_info_plus: f0052d280d17aa382b932f399edf32507174e870
+  pasteboard: b594eaf838d930b276d7a35a44a32b4f489170cb
+  rust_lib_flutter_alacritty: e1ca4d06ec31caa77ddea952b924c459d4f29b7f
+  screen_retriever_macos: c5508cc3c66ff0d4db650480cf0ab691e220d933
+  shared_preferences_foundation: 7036424c3d8ec98dfe75ff1667cb0cd531ec82bb
+  url_launcher_macos: f87a979182d112f911de6820aefddaf56ee9fbfd
+  window_manager: b729e31d38fb04905235df9ea896128991cad99e
 
 PODFILE CHECKSUM: 54d867c82ac51cbd61b565781b9fada492027009
 
-COCOAPODS: 1.11.2
+COCOAPODS: 1.16.2
