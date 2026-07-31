@@ -25,5 +25,5 @@
 	branch = feat/continuous-selection
 [submodule "client/packages/shared_ui"]
 	path = client/packages/shared_ui
-	url = https://github.com/hhoao/shared_ui.git
+	url = git@github.com:wujiyu115/shared_ui.git
 	branch = main
