@@ -4,15 +4,22 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/toolbar_key.dart';
+import '../utils/logging/logger_utils.dart';
 
 /// Persisted layout of the mobile terminal toolbar.
 @immutable
 class MobileToolbarPrefs {
-  const MobileToolbarPrefs({
-    required this.groupOrder,
+  /// Copies the collections into unmodifiable views so the `@immutable` claim
+  /// holds for real: a caller that kept the list/map it passed in and mutated it
+  /// later would otherwise rewrite an instance others already hold — including
+  /// [InMemoryMobileToolbarRepository.lastSaved], which tests read to prove the
+  /// usage debounce coalesced.
+  MobileToolbarPrefs({
+    required List<String> groupOrder,
     required this.visibleGroupCount,
-    required this.usage,
-  });
+    required Map<String, int> usage,
+  }) : groupOrder = List.unmodifiable(groupOrder),
+       usage = Map.unmodifiable(usage);
 
   /// Every known group id, in display order.
   final List<String> groupOrder;
@@ -69,12 +76,18 @@ MobileToolbarPrefs sanitizeToolbarPrefs({
   );
 }
 
+/// Loads and stores the toolbar layout. [load] never throws — missing or corrupt
+/// storage resolves to sanitized defaults — so callers need no fallback of their
+/// own, and [save] always receives an already-sanitized value.
 abstract class MobileToolbarRepository {
   Future<MobileToolbarPrefs> load();
   Future<void> save(MobileToolbarPrefs prefs);
 }
 
-/// One versioned JSON blob, matching [PairingSettingsRepository]'s shape.
+/// One versioned JSON blob, like PairingSettingsRepository — except that [save]
+/// overwrites [storageKey] outright instead of read-modify-writing it: this key
+/// holds nothing but the toolbar layout, so a merge would have no sibling field
+/// left to preserve.
 class SharedPrefsMobileToolbarRepository implements MobileToolbarRepository {
   const SharedPrefsMobileToolbarRepository(this._preferences);
 
@@ -113,12 +126,22 @@ class SharedPrefsMobileToolbarRepository implements MobileToolbarRepository {
       final decoded = jsonDecode(stored);
       if (decoded is! Map) return const <String, Object?>{};
       return Map<String, Object?>.from(decoded);
-    } on FormatException {
+    } on FormatException catch (e, st) {
+      // Silently defaulting hides the one case a user would report: a layout
+      // they customized coming back empty.
+      AppLogger.instance.w(
+        'Discarding unparseable mobile toolbar layout at $storageKey ($e)',
+        error: e,
+        stackTrace: st,
+      );
       return const <String, Object?>{};
     }
   }
 }
 
+/// Test double. Sharing the caller's instance is safe because
+/// [MobileToolbarPrefs] copies its collections, so [lastSaved] stays the snapshot
+/// as-saved even if the caller keeps mutating its own lists.
 class InMemoryMobileToolbarRepository implements MobileToolbarRepository {
   InMemoryMobileToolbarRepository({MobileToolbarPrefs? initial})
     : _prefs = initial ?? sanitizeToolbarPrefs();
