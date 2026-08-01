@@ -9,6 +9,7 @@ import '../../../cubits/mobile_toolbar_cubit.dart';
 import '../../../l10n/l10n_extensions.dart';
 import '../../../models/toolbar_key.dart';
 import '../../../utils/ui/app_keys.dart';
+import 'mobile_toolbar_customize_page.dart';
 
 /// Shortcut-key strip that sits between the mirrored terminal and the soft
 /// keyboard, giving a phone the keys iOS/Android simply do not have: Esc, Tab,
@@ -43,6 +44,17 @@ class MobileKeyboardToolbar extends StatelessWidget {
                     physics: const BouncingScrollPhysics(),
                     padding: const EdgeInsets.symmetric(horizontal: 4),
                     child: Row(children: _caps(context, state)),
+                  ),
+                ),
+              ),
+              TpIconButton(
+                key: AppKeys.mobileToolbarCustomizeButton,
+                icon: Icons.tune,
+                tooltip: context.l10n.mobileToolbarCustomize,
+                size: barHeight,
+                onTap: () => Navigator.of(context).push(
+                  MobileToolbarCustomizePage.route(
+                    context.read<MobileToolbarCubit>(),
                   ),
                 ),
               ),

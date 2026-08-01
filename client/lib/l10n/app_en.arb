@@ -1264,5 +1264,33 @@
   },
   "pairingUndo": "Undo",
   "pairingOpenTerminalHere": "Open a terminal here",
-  "mobileToolbarHideKeyboard": "Hide keyboard"
+  "mobileToolbarHideKeyboard": "Hide keyboard",
+  "mobileToolbarCustomize": "Customize keys",
+  "mobileToolbarVisibleGroups": "Visible groups: {count}",
+  "@mobileToolbarVisibleGroups": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mobileToolbarMostUsed": "Most used",
+  "mobileToolbarReorderHint": "Drag to reorder. The first groups appear first on the bar.",
+  "mobileToolbarReset": "Reset to default",
+  "mobileToolbarGroupArrows": "Arrows",
+  "mobileToolbarGroupClipboard": "Clipboard",
+  "mobileToolbarGroupTerminalCtrl": "Terminal control",
+  "mobileToolbarGroupSignals": "Signals",
+  "mobileToolbarGroupSymbols1": "Symbols 1",
+  "mobileToolbarGroupNavigation": "Navigation",
+  "mobileToolbarGroupEditing": "Editing",
+  "mobileToolbarGroupSearch": "Search",
+  "mobileToolbarGroupPunctuation": "Punctuation",
+  "mobileToolbarGroupSymbols2": "Symbols 2",
+  "mobileToolbarGroupBrackets1": "Brackets 1",
+  "mobileToolbarGroupBrackets2": "Brackets 2",
+  "mobileToolbarGroupFkeys1": "F1–F4",
+  "mobileToolbarGroupFkeys2": "F5–F8",
+  "mobileToolbarGroupFkeys3": "F9–F12",
+  "mobileToolbarGroupAdvanced": "Advanced control"
 }
