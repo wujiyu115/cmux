@@ -53,6 +53,7 @@ void sendText(String text, {required bool submit});
 - 文本非空：`utf8.encode(terminalizeNewlines(text))`，`submit` 为真再追加 `0x0d`。
 - 文本为空且 `submit`：只发 `[0x0d]`。
 - 文本为空且不 `submit`：不发送。
+- 「空」只指空字符串。纯空格/制表符照原样发送（用户可能确实要给上一条命令补一个参数分隔）。
 - **不受 `ctrl`/`alt` 影响、不消耗修饰位、不计入 usage** —— 与 `paste` 同一约定。
 - 发出的 list 与 `tapKey` 一样包 `List.unmodifiable`。
 
