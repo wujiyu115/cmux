@@ -5245,6 +5245,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Advanced control'**
   String get mobileToolbarGroupAdvanced;
+
+  /// No description provided for @mobileComposerHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Type a command'**
+  String get mobileComposerHint;
+
+  /// No description provided for @mobileComposerOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Compose text'**
+  String get mobileComposerOpen;
+
+  /// No description provided for @mobileComposerClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close composer'**
+  String get mobileComposerClose;
+
+  /// No description provided for @mobileComposerSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get mobileComposerSend;
+
+  /// No description provided for @mobileComposerSubmitOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Send with Return'**
+  String get mobileComposerSubmitOn;
+
+  /// No description provided for @mobileComposerSubmitOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Send without Return'**
+  String get mobileComposerSubmitOff;
 }
 
 class _AppLocalizationsDelegate

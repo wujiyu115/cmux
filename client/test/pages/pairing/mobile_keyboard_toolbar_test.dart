@@ -71,7 +71,13 @@ void main() {
 
   testWidgets('tapping ^C sends 0x03', (t) async {
     await pump(t);
-    await t.tap(find.byKey(AppKeys.mobileToolbarKey('ctrl_c')));
+    // ^C is the rightmost default cap; on the 800px test surface the composer
+    // and customize buttons leave it just past the strip's edge, so scroll it
+    // into the hit-testable region the way a user would before tapping.
+    final ctrlC = find.byKey(AppKeys.mobileToolbarKey('ctrl_c'));
+    await t.ensureVisible(ctrlC);
+    await t.pump();
+    await t.tap(ctrlC);
     await drainUsageFlush(t);
     expect(sent, [[0x03]]);
   });
@@ -106,5 +112,15 @@ void main() {
     await t.tap(find.byKey(AppKeys.mobileToolbarKey('tab')));
     await drainUsageFlush(t);
     expect(sent, [[0x09]]);
+  });
+
+  testWidgets('the bubble button switches the bottom slot to the composer', (
+    t,
+  ) async {
+    await pump(t);
+    expect(cubit.state.mode, MobileInputMode.keys);
+    await t.tap(find.byKey(AppKeys.mobileToolbarComposerButton));
+    await t.pump();
+    expect(cubit.state.mode, MobileInputMode.composer);
   });
 }

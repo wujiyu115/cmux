@@ -1152,5 +1152,11 @@
   "mobileToolbarGroupFkeys1": "F1–F4",
   "mobileToolbarGroupFkeys2": "F5–F8",
   "mobileToolbarGroupFkeys3": "F9–F12",
-  "mobileToolbarGroupAdvanced": "高级控制"
+  "mobileToolbarGroupAdvanced": "高级控制",
+  "mobileComposerHint": "输入命令",
+  "mobileComposerOpen": "文本输入",
+  "mobileComposerClose": "关闭输入面板",
+  "mobileComposerSend": "发送",
+  "mobileComposerSubmitOn": "发送时回车",
+  "mobileComposerSubmitOff": "发送不回车"
 }

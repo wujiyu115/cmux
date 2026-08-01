@@ -57,6 +57,13 @@ class MobileKeyboardToolbar extends StatelessWidget {
                 ),
               ),
               TpIconButton(
+                key: AppKeys.mobileToolbarComposerButton,
+                icon: Icons.chat_bubble_outline,
+                tooltip: context.l10n.mobileComposerOpen,
+                size: barHeight,
+                onTap: context.read<MobileToolbarCubit>().toggleComposer,
+              ),
+              TpIconButton(
                 key: AppKeys.mobileToolbarCustomizeButton,
                 icon: Icons.tune,
                 tooltip: context.l10n.mobileToolbarCustomize,

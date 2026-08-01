@@ -2728,4 +2728,22 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get mobileToolbarGroupAdvanced => '高级控制';
+
+  @override
+  String get mobileComposerHint => '输入命令';
+
+  @override
+  String get mobileComposerOpen => '文本输入';
+
+  @override
+  String get mobileComposerClose => '关闭输入面板';
+
+  @override
+  String get mobileComposerSend => '发送';
+
+  @override
+  String get mobileComposerSubmitOn => '发送时回车';
+
+  @override
+  String get mobileComposerSubmitOff => '发送不回车';
 }
