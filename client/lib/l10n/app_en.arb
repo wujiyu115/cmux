@@ -1292,5 +1292,11 @@
   "mobileToolbarGroupFkeys1": "F1–F4",
   "mobileToolbarGroupFkeys2": "F5–F8",
   "mobileToolbarGroupFkeys3": "F9–F12",
-  "mobileToolbarGroupAdvanced": "Advanced control"
+  "mobileToolbarGroupAdvanced": "Advanced control",
+  "mobileComposerHint": "Type a command",
+  "mobileComposerOpen": "Compose text",
+  "mobileComposerClose": "Close composer",
+  "mobileComposerSend": "Send",
+  "mobileComposerSubmitOn": "Send with Return",
+  "mobileComposerSubmitOff": "Send without Return"
 }

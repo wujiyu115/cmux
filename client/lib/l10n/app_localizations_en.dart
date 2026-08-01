@@ -2823,4 +2823,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mobileToolbarGroupAdvanced => 'Advanced control';
+
+  @override
+  String get mobileComposerHint => 'Type a command';
+
+  @override
+  String get mobileComposerOpen => 'Compose text';
+
+  @override
+  String get mobileComposerClose => 'Close composer';
+
+  @override
+  String get mobileComposerSend => 'Send';
+
+  @override
+  String get mobileComposerSubmitOn => 'Send with Return';
+
+  @override
+  String get mobileComposerSubmitOff => 'Send without Return';
 }

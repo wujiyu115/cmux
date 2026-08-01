@@ -79,6 +79,12 @@ class AppKeys {
   static const mobileToolbarResetButton = Key('mobile-toolbar-reset');
   static Key mobileToolbarGroupTile(String groupId) =>
       Key('mobile-toolbar-group-$groupId');
+  static const mobileToolbarComposerButton = Key('mobile-toolbar-composer');
+  static const mobileComposerPanel = Key('mobile-composer-panel');
+  static const mobileComposerField = Key('mobile-composer-field');
+  static const mobileComposerSendButton = Key('mobile-composer-send');
+  static const mobileComposerCloseButton = Key('mobile-composer-close');
+  static const mobileComposerSubmitToggle = Key('mobile-composer-submit');
   static Key pairingWorkspaceHeader(String workspaceId) =>
       Key('pairing-workspace-$workspaceId');
   static Key pairingOpenTerminalButton(String workspaceId) =>
