@@ -88,7 +88,7 @@ void main() {
     expect(find.byType(MobileKeyboardToolbar), findsNothing);
   });
 
-  testWidgets('a usage-bumping emit does not rebuild the mounted composer', (
+  testWidgets('a usage-bumping emit does not unmount the composer', (
     t,
   ) async {
     await pump(t);
@@ -101,13 +101,22 @@ void main() {
     await t.pump();
 
     // Tapping a key bumps the usage counter and re-emits with no value
-    // equality; without the slot's `buildWhen` this rebuilds the composer and
-    // drops both the field state and the soft keyboard mid-typing.
+    // equality. What is pinned here is the user-facing contract: the composer
+    // stays mounted with its text. It does NOT prove the slot's `buildWhen`
+    // fires — probing showed the composer's State survives an extra rebuild
+    // anyway (same widget type, caller-owned controller), so `buildWhen` is a
+    // rebuild-count and on-device IME optimization, not what saves the draft.
     await cubit.tapKey(toolbarKeyById('esc')!);
     await drainUsageFlush(t);
 
     expect(find.byType(MobileComposerPanel), findsOneWidget);
-    expect(controller.text, 'ls -la');
+    // Read the live field, not the controller the test itself owns: nothing on
+    // the usage path could clear the latter, so it would pass even unmounted.
+    expect(
+      t.widget<TextField>(find.byKey(AppKeys.mobileComposerField)).controller,
+      controller,
+    );
+    expect(find.text('ls -la'), findsOneWidget);
   });
 
   testWidgets('round trip through the real bar and composer buttons', (

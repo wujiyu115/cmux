@@ -8,11 +8,10 @@ import 'mobile_keyboard_toolbar.dart';
 /// The mirror page's bottom slot: either the shortcut-key bar or the composer,
 /// chosen by [MobileToolbarState.mode].
 ///
-/// A widget of its own so the mode switch — and, crucially, its `buildWhen`
-/// rebuild guard — can be mounted directly in a widget test. The mirror page
-/// itself is untestable in isolation (it needs a live [PairingClientCubit],
-/// `SharedPreferences`, and a terminal engine); pulling the switch out here lets
-/// the guard be exercised against a real [MobileToolbarCubit] alone.
+/// A widget of its own so the mode switch can be mounted in a widget test: the
+/// mirror page is untestable in isolation, needing a live `PairingClientCubit`,
+/// `SharedPreferences` and a terminal engine, while this needs nothing but a
+/// [MobileToolbarCubit].
 class MobileBottomSlot extends StatelessWidget {
   const MobileBottomSlot({
     super.key,
@@ -28,8 +27,10 @@ class MobileBottomSlot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<MobileToolbarCubit, MobileToolbarState>(
-      // The state re-emits on every key tap; only the mode decides
-      // which panel is mounted.
+      // The state re-emits on every key tap and has no value equality, so this
+      // guard keeps a keypress from rebuilding the whole panel. It is a
+      // rebuild-count and on-device IME optimization — not what preserves a
+      // half-typed draft, which the caller-owned controller does.
       buildWhen: (before, after) => before.mode != after.mode,
       builder: (context, state) => switch (state.mode) {
         MobileInputMode.keys => const MobileKeyboardToolbar(),
