@@ -15,6 +15,7 @@ class ToolbarKey {
     required this.label,
     this.bytes = const [],
     this.special,
+    this.repeatable = false,
   });
 
   final String id;
@@ -22,15 +23,19 @@ class ToolbarKey {
   final List<int> bytes;
   final ToolbarKeySpecial? special;
 
-  /// Arrow keys auto-repeat while held; nothing else does (Nexterm parity).
-  bool get repeatable => id.startsWith('arrow_');
+  /// Whether holding the key auto-repeats. Only arrows do (Nexterm parity),
+  /// but this is declared per key rather than inferred from [id].
+  final bool repeatable;
 }
 
 @immutable
 class ToolbarKeyGroup {
-  const ToolbarKeyGroup({required this.id, required this.keys});
+  ToolbarKeyGroup({required this.id, required List<ToolbarKey> keys})
+      : keys = List.unmodifiable(keys);
 
   final String id;
+
+  /// Unmodifiable — callers must not reorder or mutate a group in place.
   final List<ToolbarKey> keys;
 }
 
@@ -66,13 +71,29 @@ const _left = [0x1b, 0x5b, 0x44];
 /// How many groups the bar shows before customization.
 const int defaultVisibleToolbarGroupCount = 4;
 
-/// The 16 built-in groups, in default display order.
-final List<ToolbarKeyGroup> defaultToolbarGroups = [
+/// The 16 built-in groups, in default display order. Unmodifiable so the
+/// lazily-built lookup maps below can never disagree with the live list.
+final List<ToolbarKeyGroup> defaultToolbarGroups = List.unmodifiable([
   ToolbarKeyGroup(id: 'arrows', keys: [
-    const ToolbarKey(id: 'arrow_left', label: '←', bytes: _left),
-    const ToolbarKey(id: 'arrow_up', label: '↑', bytes: _up),
-    const ToolbarKey(id: 'arrow_down', label: '↓', bytes: _down),
-    const ToolbarKey(id: 'arrow_right', label: '→', bytes: _right),
+    const ToolbarKey(
+      id: 'arrow_left',
+      label: '←',
+      bytes: _left,
+      repeatable: true,
+    ),
+    const ToolbarKey(id: 'arrow_up', label: '↑', bytes: _up, repeatable: true),
+    const ToolbarKey(
+      id: 'arrow_down',
+      label: '↓',
+      bytes: _down,
+      repeatable: true,
+    ),
+    const ToolbarKey(
+      id: 'arrow_right',
+      label: '→',
+      bytes: _right,
+      repeatable: true,
+    ),
   ]),
   ToolbarKeyGroup(id: 'clipboard', keys: [
     const ToolbarKey(
@@ -172,7 +193,7 @@ final List<ToolbarKeyGroup> defaultToolbarGroups = [
     const ToolbarKey(id: 'alt_r', label: 'Alt-r', bytes: [0x1b, 0x72]),
     const ToolbarKey(id: 'ctrl_x_x', label: '^X^X', bytes: [0x18, 0x18]),
   ]),
-];
+]);
 
 List<String> get defaultToolbarGroupIds =>
     defaultToolbarGroups.map((g) => g.id).toList(growable: false);
