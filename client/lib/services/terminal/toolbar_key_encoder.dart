@@ -7,6 +7,10 @@
 ///
 /// [ctrl] takes precedence if both are set; the cubit keeps them mutually
 /// exclusive, so that only guards against a caller mistake.
+///
+/// The result must not be mutated: pass-through returns the caller's own list,
+/// which may be an unmodifiable `String.codeUnits` view or an entry of the
+/// shared global key table.
 List<int> encodeToolbarKey(
   List<int> bytes, {
   bool ctrl = false,
@@ -16,8 +20,15 @@ List<int> encodeToolbarKey(
   if (ctrl) {
     if (bytes.length == 1) {
       final code = bytes.first;
-      // Only the 0x40..0x7f band has a control-code equivalent; Tab / Esc and
-      // friends are already control codes and must pass through untouched.
+      // `/` and `?` are the two toolbar keys whose Ctrl form xterm defines
+      // outside the maskable band, so they need explicit mappings. The rest of
+      // the toolbar punctuation (- = : ; ! * $ % < > parens) has no standard
+      // Ctrl form and is deliberately left alone rather than invented.
+      if (code == 0x2f) return const [0x1f];
+      if (code == 0x3f) return const [0x7f];
+      // Masking only makes sense inside 0x40..0x7f — that band includes DEL,
+      // so Ctrl+DEL becomes 0x1f. Anything below it (Tab, Esc, …) is already a
+      // control code and passes through untouched.
       return (code >= 0x40 && code <= 0x7f) ? [code & 0x1f] : bytes;
     }
     return _applyEscModifier(bytes, 5);
@@ -45,7 +56,12 @@ List<int> _applyEscModifier(List<int> bytes, int modifier) {
     return [...csi, 0x31, 0x3b, ...m, bytes[2]];
   }
   if (bytes[1] != 0x5b) return bytes;
-  if (bytes.length == 3) return [...csi, 0x31, 0x3b, ...m, bytes[2]];
+  if (bytes.length == 3) {
+    // Only rewrite when the third byte really terminates the sequence,
+    // otherwise `CSI 5` would come out as the nonsense `CSI 1;<m> 5`.
+    final isFinal = bytes[2] >= 0x40 && bytes[2] <= 0x7e;
+    return isFinal ? [...csi, 0x31, 0x3b, ...m, bytes[2]] : bytes;
+  }
   if (bytes.last == 0x7e) {
     final params = bytes.sublist(2, bytes.length - 1);
     final numeric =

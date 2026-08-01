@@ -22,6 +22,15 @@ void main() {
       expect(encodeToolbarKey([0x1b], ctrl: true), [0x1b]); // Esc
     });
 
+    test('maps the two special-cased punctuation keys', () {
+      expect(encodeToolbarKey([0x2f], ctrl: true), [0x1f]); // Ctrl+/
+      expect(encodeToolbarKey([0x3f], ctrl: true), [0x7f]); // Ctrl+?
+    });
+
+    test('leaves punctuation with no standard ctrl form alone', () {
+      expect(encodeToolbarKey([0x2d], ctrl: true), [0x2d]); // -
+    });
+
     test('rewrites escape sequences with xterm modifier 5', () {
       expect(
         encodeToolbarKey([0x1b, 0x5b, 0x41], ctrl: true),
@@ -34,6 +43,11 @@ void main() {
       expect(
         encodeToolbarKey([0x1b, 0x5b, 0x35, 0x7e], ctrl: true),
         [0x1b, 0x5b, 0x35, 0x3b, 0x35, 0x7e], // CSI 5;5 ~
+      );
+      expect(
+        // F5 — two parameter digits, so an off-by-one slice would show up here.
+        encodeToolbarKey([0x1b, 0x5b, 0x31, 0x35, 0x7e], ctrl: true),
+        [0x1b, 0x5b, 0x31, 0x35, 0x3b, 0x35, 0x7e], // CSI 15;5 ~
       );
     });
 
@@ -56,6 +70,11 @@ void main() {
         encodeToolbarKey([0x1b, 0x5b, 0x35, 0x7e], alt: true),
         [0x1b, 0x5b, 0x35, 0x3b, 0x33, 0x7e],
       );
+      expect(
+        // F5 — two parameter digits, so an off-by-one slice would show up here.
+        encodeToolbarKey([0x1b, 0x5b, 0x31, 0x35, 0x7e], alt: true),
+        [0x1b, 0x5b, 0x31, 0x35, 0x3b, 0x33, 0x7e], // CSI 15;3 ~
+      );
     });
   });
 
@@ -66,6 +85,12 @@ void main() {
   test('unrecognised escape shapes are returned unchanged', () {
     // CSI 200 h — parameterised but not a "~"-terminated key.
     const raw = [0x1b, 0x5b, 0x32, 0x30, 0x30, 0x68];
+    expect(encodeToolbarKey(raw, ctrl: true), raw);
+  });
+
+  test('a 3-byte CSI without a final byte is returned unchanged', () {
+    // CSI 5 — truncated, so 0x35 must not be treated as the final byte.
+    const raw = [0x1b, 0x5b, 0x35];
     expect(encodeToolbarKey(raw, ctrl: true), raw);
   });
 
