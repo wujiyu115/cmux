@@ -11,8 +11,7 @@ import '../../cubits/pairing_client_cubit.dart';
 import '../../repositories/mobile_toolbar_repository.dart';
 import '../../theme/app_fonts.dart';
 import '../../utils/ui/app_keys.dart';
-import 'mobile_toolbar/mobile_composer_panel.dart';
-import 'mobile_toolbar/mobile_keyboard_toolbar.dart';
+import 'mobile_toolbar/mobile_bottom_slot.dart';
 import 'pairing_nav_bar.dart';
 
 /// Live, interactive mirror of a desktop session.
@@ -132,17 +131,9 @@ class _PairingMirrorPageState extends State<PairingMirrorPage> {
               ),
               BlocProvider.value(
                 value: _toolbar,
-                child: BlocBuilder<MobileToolbarCubit, MobileToolbarState>(
-                  // The state re-emits on every key tap; only the mode decides
-                  // which panel is mounted.
-                  buildWhen: (before, after) => before.mode != after.mode,
-                  builder: (context, state) => switch (state.mode) {
-                    MobileInputMode.keys => const MobileKeyboardToolbar(),
-                    MobileInputMode.composer => MobileComposerPanel(
-                      controller: _composerText,
-                      focusNode: _composerFocus,
-                    ),
-                  },
+                child: MobileBottomSlot(
+                  controller: _composerText,
+                  focusNode: _composerFocus,
                 ),
               ),
             ],
