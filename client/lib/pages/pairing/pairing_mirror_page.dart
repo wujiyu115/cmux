@@ -11,6 +11,7 @@ import '../../cubits/pairing_client_cubit.dart';
 import '../../repositories/mobile_toolbar_repository.dart';
 import '../../theme/app_fonts.dart';
 import '../../utils/ui/app_keys.dart';
+import 'mobile_toolbar/mobile_composer_panel.dart';
 import 'mobile_toolbar/mobile_keyboard_toolbar.dart';
 import 'pairing_nav_bar.dart';
 
@@ -31,6 +32,12 @@ class _PairingMirrorPageState extends State<PairingMirrorPage> {
   late final TerminalEngine _engine;
   late final TerminalController _controller;
   late final MobileToolbarCubit _toolbar;
+
+  /// The composer's draft outlives the panel: flipping to the key bar unmounts
+  /// the panel, and the half-typed command has to still be there on the way
+  /// back. It dies with the page, which is why it is not persisted.
+  final _composerText = TextEditingController();
+  final _composerFocus = FocusNode();
   StreamSubscription<Uint8List>? _hostOutput;
   StreamSubscription<Uint8List>? _localInput;
 
@@ -68,6 +75,8 @@ class _PairingMirrorPageState extends State<PairingMirrorPage> {
     _localInput?.cancel();
     _controller.dispose();
     _engine.dispose();
+    _composerText.dispose();
+    _composerFocus.dispose();
     _toolbar.close();
     super.dispose();
   }
@@ -123,7 +132,18 @@ class _PairingMirrorPageState extends State<PairingMirrorPage> {
               ),
               BlocProvider.value(
                 value: _toolbar,
-                child: const MobileKeyboardToolbar(),
+                child: BlocBuilder<MobileToolbarCubit, MobileToolbarState>(
+                  // The state re-emits on every key tap; only the mode decides
+                  // which panel is mounted.
+                  buildWhen: (before, after) => before.mode != after.mode,
+                  builder: (context, state) => switch (state.mode) {
+                    MobileInputMode.keys => const MobileKeyboardToolbar(),
+                    MobileInputMode.composer => MobileComposerPanel(
+                      controller: _composerText,
+                      focusNode: _composerFocus,
+                    ),
+                  },
+                ),
               ),
             ],
           ),
