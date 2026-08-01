@@ -2662,8 +2662,70 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pairingOpenTerminalHere => '在此打开终端';
 
   @override
-  String get pairingSendCtrlC => '发送 Ctrl+C';
+  String get mobileToolbarHideKeyboard => '收起键盘';
 
   @override
-  String get pairingMirrorInputHint => '点击终端即可输入';
+  String get mobileToolbarCustomize => '自定义按键';
+
+  @override
+  String mobileToolbarVisibleGroups(int count) {
+    return '显示组数：$count';
+  }
+
+  @override
+  String get mobileToolbarMostUsed => '高频按键';
+
+  @override
+  String get mobileToolbarReorderHint => '拖动排序，靠前的组显示在工具栏左侧。';
+
+  @override
+  String get mobileToolbarReset => '恢复默认';
+
+  @override
+  String get mobileToolbarGroupArrows => '方向键';
+
+  @override
+  String get mobileToolbarGroupClipboard => '剪贴板';
+
+  @override
+  String get mobileToolbarGroupTerminalCtrl => '终端控制';
+
+  @override
+  String get mobileToolbarGroupSignals => '信号';
+
+  @override
+  String get mobileToolbarGroupSymbols1 => '符号 1';
+
+  @override
+  String get mobileToolbarGroupNavigation => '导航';
+
+  @override
+  String get mobileToolbarGroupEditing => '编辑';
+
+  @override
+  String get mobileToolbarGroupSearch => '搜索';
+
+  @override
+  String get mobileToolbarGroupPunctuation => '标点';
+
+  @override
+  String get mobileToolbarGroupSymbols2 => '符号 2';
+
+  @override
+  String get mobileToolbarGroupBrackets1 => '括号 1';
+
+  @override
+  String get mobileToolbarGroupBrackets2 => '括号 2';
+
+  @override
+  String get mobileToolbarGroupFkeys1 => 'F1–F4';
+
+  @override
+  String get mobileToolbarGroupFkeys2 => 'F5–F8';
+
+  @override
+  String get mobileToolbarGroupFkeys3 => 'F9–F12';
+
+  @override
+  String get mobileToolbarGroupAdvanced => '高级控制';
 }

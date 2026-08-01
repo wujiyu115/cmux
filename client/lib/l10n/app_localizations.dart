@@ -5114,17 +5114,137 @@ abstract class AppLocalizations {
   /// **'Open a terminal here'**
   String get pairingOpenTerminalHere;
 
-  /// No description provided for @pairingSendCtrlC.
+  /// No description provided for @mobileToolbarHideKeyboard.
   ///
   /// In en, this message translates to:
-  /// **'Send Ctrl+C'**
-  String get pairingSendCtrlC;
+  /// **'Hide keyboard'**
+  String get mobileToolbarHideKeyboard;
 
-  /// No description provided for @pairingMirrorInputHint.
+  /// No description provided for @mobileToolbarCustomize.
   ///
   /// In en, this message translates to:
-  /// **'Tap the terminal to type'**
-  String get pairingMirrorInputHint;
+  /// **'Customize keys'**
+  String get mobileToolbarCustomize;
+
+  /// No description provided for @mobileToolbarVisibleGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'Visible groups: {count}'**
+  String mobileToolbarVisibleGroups(int count);
+
+  /// No description provided for @mobileToolbarMostUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Most used'**
+  String get mobileToolbarMostUsed;
+
+  /// No description provided for @mobileToolbarReorderHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag to reorder. The first groups appear first on the bar.'**
+  String get mobileToolbarReorderHint;
+
+  /// No description provided for @mobileToolbarReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to default'**
+  String get mobileToolbarReset;
+
+  /// No description provided for @mobileToolbarGroupArrows.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrows'**
+  String get mobileToolbarGroupArrows;
+
+  /// No description provided for @mobileToolbarGroupClipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Clipboard'**
+  String get mobileToolbarGroupClipboard;
+
+  /// No description provided for @mobileToolbarGroupTerminalCtrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Terminal control'**
+  String get mobileToolbarGroupTerminalCtrl;
+
+  /// No description provided for @mobileToolbarGroupSignals.
+  ///
+  /// In en, this message translates to:
+  /// **'Signals'**
+  String get mobileToolbarGroupSignals;
+
+  /// No description provided for @mobileToolbarGroupSymbols1.
+  ///
+  /// In en, this message translates to:
+  /// **'Symbols 1'**
+  String get mobileToolbarGroupSymbols1;
+
+  /// No description provided for @mobileToolbarGroupNavigation.
+  ///
+  /// In en, this message translates to:
+  /// **'Navigation'**
+  String get mobileToolbarGroupNavigation;
+
+  /// No description provided for @mobileToolbarGroupEditing.
+  ///
+  /// In en, this message translates to:
+  /// **'Editing'**
+  String get mobileToolbarGroupEditing;
+
+  /// No description provided for @mobileToolbarGroupSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get mobileToolbarGroupSearch;
+
+  /// No description provided for @mobileToolbarGroupPunctuation.
+  ///
+  /// In en, this message translates to:
+  /// **'Punctuation'**
+  String get mobileToolbarGroupPunctuation;
+
+  /// No description provided for @mobileToolbarGroupSymbols2.
+  ///
+  /// In en, this message translates to:
+  /// **'Symbols 2'**
+  String get mobileToolbarGroupSymbols2;
+
+  /// No description provided for @mobileToolbarGroupBrackets1.
+  ///
+  /// In en, this message translates to:
+  /// **'Brackets 1'**
+  String get mobileToolbarGroupBrackets1;
+
+  /// No description provided for @mobileToolbarGroupBrackets2.
+  ///
+  /// In en, this message translates to:
+  /// **'Brackets 2'**
+  String get mobileToolbarGroupBrackets2;
+
+  /// No description provided for @mobileToolbarGroupFkeys1.
+  ///
+  /// In en, this message translates to:
+  /// **'F1–F4'**
+  String get mobileToolbarGroupFkeys1;
+
+  /// No description provided for @mobileToolbarGroupFkeys2.
+  ///
+  /// In en, this message translates to:
+  /// **'F5–F8'**
+  String get mobileToolbarGroupFkeys2;
+
+  /// No description provided for @mobileToolbarGroupFkeys3.
+  ///
+  /// In en, this message translates to:
+  /// **'F9–F12'**
+  String get mobileToolbarGroupFkeys3;
+
+  /// No description provided for @mobileToolbarGroupAdvanced.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced control'**
+  String get mobileToolbarGroupAdvanced;
 }
 
 class _AppLocalizationsDelegate

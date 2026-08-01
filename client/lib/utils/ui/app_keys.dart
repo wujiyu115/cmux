@@ -69,7 +69,16 @@ class AppKeys {
   static const mobileSettingsButton = Key('mobile-settings-button');
   static const mobileSettingsSheet = Key('mobile-settings-sheet');
   static const mobileSettingsCloseButton = Key('mobile-settings-close');
-  static const pairingMirrorCtrlCButton = Key('pairing-mirror-ctrl-c');
+  static const mobileToolbar = Key('mobile-toolbar');
+  static const mobileToolbarHideKeyboardButton = Key('mobile-toolbar-hide-kb');
+  static Key mobileToolbarKey(String keyId) => Key('mobile-toolbar-key-$keyId');
+  static const mobileToolbarCustomizeButton = Key('mobile-toolbar-customize');
+  static const mobileToolbarCustomizePage = Key(
+    'mobile-toolbar-customize-page',
+  );
+  static const mobileToolbarResetButton = Key('mobile-toolbar-reset');
+  static Key mobileToolbarGroupTile(String groupId) =>
+      Key('mobile-toolbar-group-$groupId');
   static Key pairingWorkspaceHeader(String workspaceId) =>
       Key('pairing-workspace-$workspaceId');
   static Key pairingOpenTerminalButton(String workspaceId) =>

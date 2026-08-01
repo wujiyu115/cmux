@@ -4,12 +4,14 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_alacritty/flutter_alacritty.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../cubits/mobile_toolbar_cubit.dart';
 import '../../cubits/pairing_client_cubit.dart';
-import '../../l10n/l10n_extensions.dart';
+import '../../repositories/mobile_toolbar_repository.dart';
 import '../../theme/app_fonts.dart';
 import '../../utils/ui/app_keys.dart';
+import 'mobile_toolbar/mobile_keyboard_toolbar.dart';
 import 'pairing_nav_bar.dart';
 
 /// Live, interactive mirror of a desktop session.
@@ -28,6 +30,7 @@ class PairingMirrorPage extends StatefulWidget {
 class _PairingMirrorPageState extends State<PairingMirrorPage> {
   late final TerminalEngine _engine;
   late final TerminalController _controller;
+  late final MobileToolbarCubit _toolbar;
   StreamSubscription<Uint8List>? _hostOutput;
   StreamSubscription<Uint8List>? _localInput;
 
@@ -47,6 +50,16 @@ class _PairingMirrorPageState extends State<PairingMirrorPage> {
     _hostOutput = sub?.output.listen(_engine.feed);
     // Engine → host: keystrokes / paste / mouse reports become input frames.
     _localInput = _engine.output.listen(cubit.sendInput);
+
+    // Toolbar keys bypass the engine and go straight out as input frames, so
+    // they work whether or not the terminal holds focus.
+    _toolbar = MobileToolbarCubit(
+      repository: SharedPrefsMobileToolbarRepository(
+        context.read<SharedPreferences>(),
+      ),
+      sendInput: cubit.sendInput,
+    );
+    _toolbar.load();
   }
 
   @override
@@ -55,12 +68,12 @@ class _PairingMirrorPageState extends State<PairingMirrorPage> {
     _localInput?.cancel();
     _controller.dispose();
     _engine.dispose();
+    _toolbar.close();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final cubit = context.read<PairingClientCubit>();
     final geometry = _geometry;
@@ -108,69 +121,9 @@ class _PairingMirrorPageState extends State<PairingMirrorPage> {
                   },
                 ),
               ),
-              _MirrorBar(
-                hint: l10n.pairingMirrorInputHint,
-                ctrlCTooltip: l10n.pairingSendCtrlC,
-                onCtrlC: () => cubit.sendInput(const [0x03]),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _MirrorBar extends StatelessWidget {
-  const _MirrorBar({
-    required this.hint,
-    required this.ctrlCTooltip,
-    required this.onCtrlC,
-  });
-
-  final String hint;
-  final String ctrlCTooltip;
-  final VoidCallback onCtrlC;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final spacing = context.tpSpacing;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: cs.surface,
-        border: Border(top: BorderSide(color: cs.outlineVariant)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: spacing.lg,
-            vertical: spacing.sm,
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  hint,
-                  style: appMonoTextStyle(
-                    context,
-                    fontSize: 12,
-                    color: cs.onSurfaceVariant,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              SizedBox(width: spacing.sm),
-              // Interrupting a runaway process is the one control a phone
-              // keyboard makes awkward, so it gets a dedicated key.
-              TpIconButton(
-                key: AppKeys.pairingMirrorCtrlCButton,
-                icon: Icons.do_not_disturb_on_outlined,
-                tooltip: ctrlCTooltip,
-                size: 44,
-                onTap: onCtrlC,
+              BlocProvider.value(
+                value: _toolbar,
+                child: const MobileKeyboardToolbar(),
               ),
             ],
           ),

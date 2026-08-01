@@ -2756,8 +2756,71 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pairingOpenTerminalHere => 'Open a terminal here';
 
   @override
-  String get pairingSendCtrlC => 'Send Ctrl+C';
+  String get mobileToolbarHideKeyboard => 'Hide keyboard';
 
   @override
-  String get pairingMirrorInputHint => 'Tap the terminal to type';
+  String get mobileToolbarCustomize => 'Customize keys';
+
+  @override
+  String mobileToolbarVisibleGroups(int count) {
+    return 'Visible groups: $count';
+  }
+
+  @override
+  String get mobileToolbarMostUsed => 'Most used';
+
+  @override
+  String get mobileToolbarReorderHint =>
+      'Drag to reorder. The first groups appear first on the bar.';
+
+  @override
+  String get mobileToolbarReset => 'Reset to default';
+
+  @override
+  String get mobileToolbarGroupArrows => 'Arrows';
+
+  @override
+  String get mobileToolbarGroupClipboard => 'Clipboard';
+
+  @override
+  String get mobileToolbarGroupTerminalCtrl => 'Terminal control';
+
+  @override
+  String get mobileToolbarGroupSignals => 'Signals';
+
+  @override
+  String get mobileToolbarGroupSymbols1 => 'Symbols 1';
+
+  @override
+  String get mobileToolbarGroupNavigation => 'Navigation';
+
+  @override
+  String get mobileToolbarGroupEditing => 'Editing';
+
+  @override
+  String get mobileToolbarGroupSearch => 'Search';
+
+  @override
+  String get mobileToolbarGroupPunctuation => 'Punctuation';
+
+  @override
+  String get mobileToolbarGroupSymbols2 => 'Symbols 2';
+
+  @override
+  String get mobileToolbarGroupBrackets1 => 'Brackets 1';
+
+  @override
+  String get mobileToolbarGroupBrackets2 => 'Brackets 2';
+
+  @override
+  String get mobileToolbarGroupFkeys1 => 'F1–F4';
+
+  @override
+  String get mobileToolbarGroupFkeys2 => 'F5–F8';
+
+  @override
+  String get mobileToolbarGroupFkeys3 => 'F9–F12';
+
+  @override
+  String get mobileToolbarGroupAdvanced => 'Advanced control';
 }
