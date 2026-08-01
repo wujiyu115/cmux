@@ -1,18 +1,34 @@
+import 'dart:async';
+
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:teampilot/cubits/mobile_toolbar_cubit.dart';
 import 'package:teampilot/models/toolbar_key.dart';
 import 'package:teampilot/repositories/mobile_toolbar_repository.dart';
 
+/// Holds [load] open so a test can close the cubit while the read is still in
+/// flight — the race the `isClosed` guard exists for.
+class _BlockingLoadRepository implements MobileToolbarRepository {
+  final loadGate = Completer<MobileToolbarPrefs>();
+
+  @override
+  Future<MobileToolbarPrefs> load() => loadGate.future;
+
+  @override
+  Future<void> save(MobileToolbarPrefs prefs) async {}
+}
+
 void main() {
   late List<List<int>> sent;
   late InMemoryMobileToolbarRepository repo;
 
-  MobileToolbarCubit build({String? clipboard}) => MobileToolbarCubit(
-    repository: repo,
-    sendInput: sent.add,
-    readClipboard: () async => clipboard,
-  );
+  MobileToolbarCubit build({String? clipboard, Duration? usageFlushDelay}) =>
+      MobileToolbarCubit(
+        repository: repo,
+        sendInput: sent.add,
+        readClipboard: () async => clipboard,
+        usageFlushDelay: usageFlushDelay ?? const Duration(seconds: 1),
+      );
 
   ToolbarKey key(String id) => toolbarKeyById(id)!;
 
@@ -32,8 +48,24 @@ void main() {
     await cubit.load();
     expect(cubit.state.groupOrder.first, 'signals');
     expect(cubit.state.visibleGroupCount, 2);
-    expect(cubit.state.visibleGroups.map((g) => g.id).length, 2);
+    expect(cubit.state.visibleGroups.map((g) => g.id).toList(), [
+      'signals',
+      'arrows',
+    ]);
     await cubit.close();
+  });
+
+  test('load resolving after close does not emit', () async {
+    final blocking = _BlockingLoadRepository();
+    final cubit = MobileToolbarCubit(
+      repository: blocking,
+      sendInput: sent.add,
+      readClipboard: () async => null,
+    );
+    final pending = cubit.load();
+    await cubit.close();
+    blocking.loadGate.complete(sanitizeToolbarPrefs());
+    await expectLater(pending, completes);
   });
 
   test('a plain key sends its bytes and counts usage', () async {
@@ -41,6 +73,23 @@ void main() {
     await cubit.tapKey(key('ctrl_c'));
     expect(sent, [[0x03]]);
     expect(cubit.state.usage['ctrl_c'], 1);
+    await cubit.close();
+  });
+
+  test('sent bytes are unmodifiable, so the key table cannot be corrupted', () async {
+    final cubit = build();
+    await cubit.tapKey(key('ctrl_c'));
+    expect(() => sent.single.add(0x00), throwsUnsupportedError);
+    expect(key('ctrl_c').bytes, [0x03], reason: 'global key table intact');
+    await cubit.close();
+  });
+
+  test('state collections are unmodifiable', () async {
+    final cubit = build();
+    await cubit.load();
+    expect(() => cubit.state.groupOrder.removeAt(0), throwsUnsupportedError);
+    await cubit.tapKey(key('esc'));
+    expect(() => cubit.state.usage.clear(), throwsUnsupportedError);
     await cubit.close();
   });
 
@@ -108,6 +157,27 @@ void main() {
     await cubit.close();
   });
 
+  test('reorderGroups takes a post-removal newIndex', () async {
+    final cubit = build();
+    await cubit.load();
+    expect(cubit.state.groupOrder.take(4), [
+      'arrows',
+      'clipboard',
+      'terminal_ctrl',
+      'signals',
+    ]);
+    // Downward move: 'arrows' lands at index 3, the index it occupies once it has
+    // been removed. ReorderableListView would report 4 for the same gesture.
+    await cubit.reorderGroups(0, 3);
+    expect(cubit.state.groupOrder.take(4), [
+      'clipboard',
+      'terminal_ctrl',
+      'signals',
+      'arrows',
+    ]);
+    await cubit.close();
+  });
+
   test('resetLayout restores built-in order and count, keeps usage', () async {
     final cubit = build();
     await cubit.load();
@@ -117,6 +187,9 @@ void main() {
     expect(cubit.state.groupOrder, defaultToolbarGroupIds);
     expect(cubit.state.visibleGroupCount, defaultVisibleToolbarGroupCount);
     expect(cubit.state.usage['esc'], 1);
+    expect(repo.lastSaved!.groupOrder, defaultToolbarGroupIds);
+    expect(repo.lastSaved!.visibleGroupCount, defaultVisibleToolbarGroupCount);
+    expect(repo.lastSaved!.usage['esc'], 1);
     await cubit.close();
   });
 
@@ -137,10 +210,28 @@ void main() {
       cubit.tapKey(key('tab'));
       async.flushMicrotasks();
       expect(repo.saveCount, 0, reason: 'not written yet');
-      async.elapse(const Duration(seconds: 1));
+      async.elapse(const Duration(milliseconds: 999));
+      async.flushMicrotasks();
+      expect(repo.saveCount, 0, reason: 'still inside the 1s window');
+      async.elapse(const Duration(milliseconds: 1));
       async.flushMicrotasks();
       expect(repo.saveCount, 1);
       expect(repo.lastSaved!.usage, {'esc': 2, 'tab': 1});
+      cubit.close();
+      async.flushMicrotasks();
+    });
+  });
+
+  test('a custom usageFlushDelay is honored', () {
+    fakeAsync((async) {
+      final cubit = build(usageFlushDelay: const Duration(milliseconds: 50));
+      cubit.tapKey(key('esc'));
+      async.elapse(const Duration(milliseconds: 49));
+      async.flushMicrotasks();
+      expect(repo.saveCount, 0, reason: 'still inside the 50ms window');
+      async.elapse(const Duration(milliseconds: 1));
+      async.flushMicrotasks();
+      expect(repo.saveCount, 1);
       cubit.close();
       async.flushMicrotasks();
     });
@@ -153,5 +244,18 @@ void main() {
     await cubit.close();
     expect(repo.saveCount, 1);
     expect(repo.lastSaved!.usage, {'esc': 1});
+  });
+
+  test('close does not re-save an already flushed usage write', () {
+    fakeAsync((async) {
+      final cubit = build();
+      cubit.tapKey(key('esc'));
+      async.elapse(const Duration(seconds: 1));
+      async.flushMicrotasks();
+      expect(repo.saveCount, 1);
+      cubit.close();
+      async.flushMicrotasks();
+      expect(repo.saveCount, 1, reason: 'nothing pending, nothing to write');
+    });
   });
 }
