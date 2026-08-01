@@ -2756,8 +2756,5 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pairingOpenTerminalHere => 'Open a terminal here';
 
   @override
-  String get pairingSendCtrlC => 'Send Ctrl+C';
-
-  @override
-  String get pairingMirrorInputHint => 'Tap the terminal to type';
+  String get mobileToolbarHideKeyboard => 'Hide keyboard';
 }

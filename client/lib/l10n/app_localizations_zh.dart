@@ -2662,8 +2662,5 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pairingOpenTerminalHere => '在此打开终端';
 
   @override
-  String get pairingSendCtrlC => '发送 Ctrl+C';
-
-  @override
-  String get pairingMirrorInputHint => '点击终端即可输入';
+  String get mobileToolbarHideKeyboard => '收起键盘';
 }

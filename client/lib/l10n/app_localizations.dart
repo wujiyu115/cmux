@@ -5114,17 +5114,11 @@ abstract class AppLocalizations {
   /// **'Open a terminal here'**
   String get pairingOpenTerminalHere;
 
-  /// No description provided for @pairingSendCtrlC.
+  /// No description provided for @mobileToolbarHideKeyboard.
   ///
   /// In en, this message translates to:
-  /// **'Send Ctrl+C'**
-  String get pairingSendCtrlC;
-
-  /// No description provided for @pairingMirrorInputHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Tap the terminal to type'**
-  String get pairingMirrorInputHint;
+  /// **'Hide keyboard'**
+  String get mobileToolbarHideKeyboard;
 }
 
 class _AppLocalizationsDelegate

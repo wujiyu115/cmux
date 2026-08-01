@@ -1131,6 +1131,5 @@
   "pairingRemovedUndo": "已移除 {name}",
   "pairingUndo": "撤销",
   "pairingOpenTerminalHere": "在此打开终端",
-  "pairingSendCtrlC": "发送 Ctrl+C",
-  "pairingMirrorInputHint": "点击终端即可输入"
+  "mobileToolbarHideKeyboard": "收起键盘"
 }

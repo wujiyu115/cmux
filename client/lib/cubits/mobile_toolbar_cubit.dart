@@ -247,8 +247,14 @@ class MobileToolbarCubit extends Cubit<MobileToolbarState> {
   void _flushUsage() {
     _usageFlush = null;
     // A Timer callback has no caller to return the future to, so an unguarded
-    // rejection escapes as an uncaught async error. Keep the future so close()
-    // can wait for a write it just missed.
+    // rejection escapes as an uncaught async error.
+    //
+    // Deliberately NOT awaited by close(): this future is created in whatever
+    // zone drove the timer, and a widget test's fake clock stops advancing once
+    // the test body ends — awaiting it from tearDown deadlocks until the 10
+    // minute test timeout. Nothing can change the counts between this write
+    // firing and close(), so the in-flight write already carries the final
+    // state and losing the await costs no data.
     _pendingUsageSave = _repository.save(state.prefs).catchError(_reportFailure);
   }
 
@@ -266,10 +272,13 @@ class MobileToolbarCubit extends Cubit<MobileToolbarState> {
       final pending = _usageFlush;
       _usageFlush = null;
       if (pending != null) {
+        // Only a write this call issues is awaited — it is created in the
+        // caller's zone, so it can actually complete. See [_flushUsage] for why
+        // an already-airborne write is left alone.
         pending.cancel();
         _pendingUsageSave = _repository.save(state.prefs);
+        await _pendingUsageSave;
       }
-      await _pendingUsageSave;
     } on Object catch (error, stackTrace) {
       // A failed final write must not stop the cubit from closing: BlocProvider
       // disposal does not expect close() to throw, and skipping super.close()
