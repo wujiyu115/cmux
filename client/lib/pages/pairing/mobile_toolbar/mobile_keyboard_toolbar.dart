@@ -39,6 +39,15 @@ class MobileKeyboardToolbar extends StatelessWidget {
             children: [
               Expanded(
                 child: BlocBuilder<MobileToolbarCubit, MobileToolbarState>(
+                  // The state carries a tap counter that changes on every
+                  // keypress, and it has no value equality, so an unfiltered
+                  // builder would rebuild all sixty-odd caps per tap. Only the
+                  // four fields the strip actually draws matter here.
+                  buildWhen: (before, after) =>
+                      before.ctrl != after.ctrl ||
+                      before.alt != after.alt ||
+                      before.visibleGroupCount != after.visibleGroupCount ||
+                      !identical(before.groupOrder, after.groupOrder),
                   builder: (context, state) => SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     physics: const BouncingScrollPhysics(),

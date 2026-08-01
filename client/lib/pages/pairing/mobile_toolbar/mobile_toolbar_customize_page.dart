@@ -46,83 +46,89 @@ class MobileToolbarCustomizePage extends StatelessWidget {
         ],
       ),
       body: BlocBuilder<MobileToolbarCubit, MobileToolbarState>(
-        builder: (context, state) => Column(
-          children: [
-            Padding(
-              padding: EdgeInsets.all(spacing.lg),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      l10n.mobileToolbarVisibleGroups(state.visibleGroupCount),
-                      style: styles.mdMedium,
+        builder: (context, state) {
+          final groupCount = state.groupOrder.length;
+          return Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.all(spacing.lg),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        l10n.mobileToolbarVisibleGroups(
+                          state.visibleGroupCount,
+                        ),
+                        style: styles.mdMedium,
+                      ),
                     ),
-                  ),
-                  TpIconButton(
-                    icon: Icons.remove,
-                    tooltip: l10n.mobileToolbarVisibleGroups(
-                      state.visibleGroupCount - 1,
+                    // Tooltips preview the resulting count, so they must clamp the
+                    // same way the cubit does or the buttons promise "0" and "17".
+                    TpIconButton(
+                      icon: Icons.remove,
+                      tooltip: l10n.mobileToolbarVisibleGroups(
+                        (state.visibleGroupCount - 1).clamp(1, groupCount),
+                      ),
+                      onTap: () => cubit.setVisibleGroupCount(
+                        state.visibleGroupCount - 1,
+                      ),
                     ),
-                    onTap: () =>
-                        cubit.setVisibleGroupCount(state.visibleGroupCount - 1),
-                  ),
-                  SizedBox(width: spacing.sm),
-                  TpIconButton(
-                    icon: Icons.add,
-                    tooltip: l10n.mobileToolbarVisibleGroups(
-                      state.visibleGroupCount + 1,
+                    SizedBox(width: spacing.sm),
+                    TpIconButton(
+                      icon: Icons.add,
+                      tooltip: l10n.mobileToolbarVisibleGroups(
+                        (state.visibleGroupCount + 1).clamp(1, groupCount),
+                      ),
+                      onTap: () => cubit.setVisibleGroupCount(
+                        state.visibleGroupCount + 1,
+                      ),
                     ),
-                    onTap: () =>
-                        cubit.setVisibleGroupCount(state.visibleGroupCount + 1),
-                  ),
-                ],
-              ),
-            ),
-            if (state.mostUsedKeys.isNotEmpty)
-              _MostUsed(keys: state.mostUsedKeys.take(8).toList()),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: spacing.lg),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  l10n.mobileToolbarReorderHint,
-                  style: styles.sm,
+                  ],
                 ),
               ),
-            ),
-            Expanded(
-              child: ReorderableListView.builder(
-                padding: EdgeInsets.symmetric(vertical: spacing.md),
-                itemCount: state.groupOrder.length,
-                onReorder: (oldIndex, newIndex) => cubit.reorderGroups(
-                  oldIndex,
-                  // ReorderableListView reports the insertion index, which sits
-                  // one too high for a downward drag; the cubit wants a
-                  // post-removal index.
-                  newIndex > oldIndex ? newIndex - 1 : newIndex,
+              if (state.mostUsedKeys.isNotEmpty)
+                _MostUsed(keys: state.mostUsedKeys.take(8).toList()),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: spacing.lg),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(l10n.mobileToolbarReorderHint, style: styles.sm),
                 ),
-                itemBuilder: (context, index) {
-                  final id = state.groupOrder[index];
-                  final group = toolbarGroupById(id);
-                  final visible = index < state.visibleGroupCount;
-                  final cs = Theme.of(context).colorScheme;
-                  return ListTile(
-                    key: AppKeys.mobileToolbarGroupTile(id),
-                    leading: Icon(
-                      visible ? Icons.visibility : Icons.visibility_off,
-                      color: visible ? cs.primary : cs.onSurfaceVariant,
-                    ),
-                    title: Text(toolbarGroupLabel(id, l10n)),
-                    subtitle: group == null
-                        ? null
-                        : Text(group.keys.map((k) => k.label).join('  ')),
-                    trailing: const Icon(Icons.drag_handle),
-                  );
-                },
               ),
-            ),
-          ],
-        ),
+              Expanded(
+                child: ReorderableListView.builder(
+                  padding: EdgeInsets.symmetric(vertical: spacing.md),
+                  itemCount: state.groupOrder.length,
+                  onReorder: (oldIndex, newIndex) => cubit.reorderGroups(
+                    oldIndex,
+                    // ReorderableListView reports the insertion index, which sits
+                    // one too high for a downward drag; the cubit wants a
+                    // post-removal index.
+                    newIndex > oldIndex ? newIndex - 1 : newIndex,
+                  ),
+                  itemBuilder: (context, index) {
+                    final id = state.groupOrder[index];
+                    final group = toolbarGroupById(id);
+                    final visible = index < state.visibleGroupCount;
+                    final cs = Theme.of(context).colorScheme;
+                    return ListTile(
+                      key: AppKeys.mobileToolbarGroupTile(id),
+                      leading: Icon(
+                        visible ? Icons.visibility : Icons.visibility_off,
+                        color: visible ? cs.primary : cs.onSurfaceVariant,
+                      ),
+                      title: Text(toolbarGroupLabel(id, l10n)),
+                      subtitle: group == null
+                          ? null
+                          : Text(group.keys.map((k) => k.label).join('  ')),
+                      trailing: const Icon(Icons.drag_handle),
+                    );
+                  },
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
