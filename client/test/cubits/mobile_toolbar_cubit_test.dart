@@ -258,4 +258,96 @@ void main() {
       expect(repo.saveCount, 1, reason: 'nothing pending, nothing to write');
     });
   });
+
+  group('composer', () {
+    test('starts in key mode with Return-mode on', () async {
+      final cubit = build();
+      expect(cubit.state.mode, MobileInputMode.keys);
+      expect(cubit.state.chatMode, isTrue);
+      await cubit.close();
+    });
+
+    test('toggleComposer flips between the two panels', () async {
+      final cubit = build();
+      cubit.toggleComposer();
+      expect(cubit.state.mode, MobileInputMode.composer);
+      cubit.toggleComposer();
+      expect(cubit.state.mode, MobileInputMode.keys);
+      await cubit.close();
+    });
+
+    test('setMode to the current mode does not emit', () async {
+      final cubit = build();
+      final seen = <MobileInputMode>[];
+      final sub = cubit.stream.listen((s) => seen.add(s.mode));
+      cubit.setMode(MobileInputMode.keys);
+      await Future<void>.delayed(Duration.zero);
+      expect(seen, isEmpty);
+      cubit.setMode(MobileInputMode.composer);
+      await Future<void>.delayed(Duration.zero);
+      expect(seen, [MobileInputMode.composer]);
+      await sub.cancel();
+      await cubit.close();
+    });
+
+    test('toggleChatMode flips the flag', () async {
+      final cubit = build();
+      cubit.toggleChatMode();
+      expect(cubit.state.chatMode, isFalse);
+      cubit.toggleChatMode();
+      expect(cubit.state.chatMode, isTrue);
+      await cubit.close();
+    });
+
+    test('sendText appends CR only when submitting', () async {
+      final cubit = build();
+      cubit.sendText('ls', submit: true);
+      cubit.sendText('ls', submit: false);
+      expect(sent, [
+        [0x6c, 0x73, 0x0d],
+        [0x6c, 0x73],
+      ]);
+      await cubit.close();
+    });
+
+    test('sendText rewrites newlines to CR so each line runs', () async {
+      final cubit = build();
+      cubit.sendText('a\nb', submit: false);
+      expect(String.fromCharCodes(sent.single), 'a\rb');
+      await cubit.close();
+    });
+
+    test('empty text sends a bare CR when submitting, nothing otherwise', () async {
+      final cubit = build();
+      cubit.sendText('', submit: false);
+      expect(sent, isEmpty);
+      cubit.sendText('', submit: true);
+      expect(sent, [[0x0d]]);
+      await cubit.close();
+    });
+
+    test('whitespace is real input, not emptiness', () async {
+      final cubit = build();
+      cubit.sendText('  ', submit: false);
+      expect(sent, [[0x20, 0x20]]);
+      await cubit.close();
+    });
+
+    test('sendText ignores modifiers and does not consume them', () async {
+      final cubit = build();
+      await cubit.tapKey(key('ctrl'));
+      cubit.sendText('a', submit: false);
+      expect(sent, [[0x61]], reason: 'Ctrl must not mask composer text');
+      expect(cubit.state.ctrl, isTrue, reason: 'and must survive the send');
+      expect(cubit.state.usage, isEmpty, reason: 'text is not a key tap');
+      await cubit.close();
+    });
+
+    test('sent bytes are unmodifiable', () async {
+      final cubit = build();
+      cubit.sendText('a', submit: true);
+      expect(() => sent.single.add(0x00), throwsUnsupportedError);
+      await cubit.close();
+    });
+  });
 }

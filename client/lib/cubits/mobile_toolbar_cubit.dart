@@ -10,6 +10,9 @@ import '../repositories/mobile_toolbar_repository.dart';
 import '../services/terminal/toolbar_key_encoder.dart';
 import '../utils/logging/logger_utils.dart';
 
+/// Which panel occupies the mirror page's bottom slot.
+enum MobileInputMode { keys, composer }
+
 @immutable
 class MobileToolbarState {
   /// Copies the collections into unmodifiable views, matching
@@ -24,6 +27,8 @@ class MobileToolbarState {
     required Map<String, int> usage,
     this.ctrl = false,
     this.alt = false,
+    this.mode = MobileInputMode.keys,
+    this.chatMode = true,
   }) : groupOrder = List.unmodifiable(groupOrder),
        usage = Map.unmodifiable(usage);
 
@@ -41,6 +46,13 @@ class MobileToolbarState {
   /// One-shot modifiers: set by tapping Ctrl / Alt, cleared by the next key.
   final bool ctrl;
   final bool alt;
+
+  /// Which bottom panel is showing. Not persisted: a session starts on the keys.
+  final MobileInputMode mode;
+
+  /// Whether [MobileToolbarCubit.sendText] appends CR. Not persisted — every
+  /// launch returns to "Return submits", the behavior that matches the terminal.
+  final bool chatMode;
 
   List<ToolbarKeyGroup> get visibleGroups => groupOrder
       .take(visibleGroupCount)
@@ -71,12 +83,16 @@ class MobileToolbarState {
     Map<String, int>? usage,
     bool? ctrl,
     bool? alt,
+    MobileInputMode? mode,
+    bool? chatMode,
   }) => MobileToolbarState(
     groupOrder: groupOrder ?? this.groupOrder,
     visibleGroupCount: visibleGroupCount ?? this.visibleGroupCount,
     usage: usage ?? this.usage,
     ctrl: ctrl ?? this.ctrl,
     alt: alt ?? this.alt,
+    mode: mode ?? this.mode,
+    chatMode: chatMode ?? this.chatMode,
   );
 }
 
@@ -144,6 +160,39 @@ class MobileToolbarCubit extends Cubit<MobileToolbarState> {
   void toggleCtrl() => emit(state.copyWith(ctrl: !state.ctrl, alt: false));
 
   void toggleAlt() => emit(state.copyWith(alt: !state.alt, ctrl: false));
+
+  void setMode(MobileInputMode mode) {
+    // Re-emitting the same mode would rebuild the whole bottom slot, which
+    // rebuilds the composer and drops the soft keyboard mid-typing.
+    if (mode == state.mode) return;
+    emit(state.copyWith(mode: mode));
+  }
+
+  void toggleComposer() => setMode(
+    state.mode == MobileInputMode.composer
+        ? MobileInputMode.keys
+        : MobileInputMode.composer,
+  );
+
+  void toggleChatMode() => emit(state.copyWith(chatMode: !state.chatMode));
+
+  /// Sends composer text as PTY input.
+  ///
+  /// Like [_paste] and unlike [tapKey], this is raw text: modifiers neither
+  /// apply nor get consumed, and it earns no usage count. Newlines become CR so
+  /// every line actually runs.
+  ///
+  /// Empty text with [submit] sends a bare CR — the sixteen key groups contain
+  /// no Enter, so this is the only Enter the mobile UI has that does not depend
+  /// on the soft keyboard. Empty text without [submit] sends nothing.
+  void sendText(String text, {required bool submit}) {
+    if (text.isEmpty) {
+      if (submit) _sendInput(List.unmodifiable(const [0x0d]));
+      return;
+    }
+    final bytes = utf8.encode(terminalizeNewlines(text));
+    _sendInput(List.unmodifiable(submit ? [...bytes, 0x0d] : bytes));
+  }
 
   Future<void> tapKey(ToolbarKey key) async {
     switch (key.special) {
