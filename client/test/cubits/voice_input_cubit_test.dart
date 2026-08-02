@@ -219,8 +219,33 @@ void main() {
       await cubit.setProvider(SttProviderType.volcengine);
       expect(cubit.state.provider, SttProviderType.volcengine);
       expect(repository.lastSavedPrefs!.provider, SttProviderType.volcengine);
+      // The volcengine backend must be configured before startListening() will
+      // open a session — the guard is on `configured`, not `available`.
+      await cubit.setCredential(VoiceCredentialField.volcAppId, 'app');
+      await cubit.setCredential(VoiceCredentialField.volcAccessToken, 'token');
       await cubit.startListening();
       expect(builtFor.last, SttProviderType.volcengine);
+      await cubit.close();
+    });
+
+    test('does not start an unconfigured cloud backend', () async {
+      // A cloud backend selected with no credentials is `available` (the system
+      // recognizer works) but not `configured`. startListening() must refuse:
+      // opening a session would dial a socket with an empty app id and fail
+      // opaquely. Routing the tap to settings is the UI's job (Task 10).
+      final cubit = build();
+      await cubit.load();
+      await cubit.setProvider(SttProviderType.volcengine);
+      expect(cubit.state.available, isTrue);
+      expect(cubit.state.configured, isFalse);
+
+      await cubit.startListening();
+
+      expect(cubit.state.status, VoiceInputStatus.idle);
+      // Assert on the factory record, not only status: a status-only check
+      // would pass even if a provider had been built and immediately failed.
+      expect(builtFor, isNot(contains(SttProviderType.volcengine)));
+      expect(provider.startCalls, 0);
       await cubit.close();
     });
 

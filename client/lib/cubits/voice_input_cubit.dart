@@ -159,12 +159,14 @@ class VoiceInputCubit extends Cubit<VoiceInputState> {
     );
   }
 
-  /// Opens a recognition session. A no-op if one is already running or if no
-  /// backend can run at all. Routing an unconfigured backend to its settings
-  /// page is the UI's job — a cubit must not know about `Navigator`.
+  /// Opens a recognition session. A no-op if one is already running, or if the
+  /// selected backend is not [configured] — an unconfigured backend must not
+  /// open a session (a cloud backend with no credentials would dial a socket
+  /// with an empty app id and fail opaquely). Routing an unconfigured tap to the
+  /// settings page is the UI's job — a cubit must not know about `Navigator`.
   Future<void> startListening() async {
     if (state.status != VoiceInputStatus.idle) return;
-    if (!state.available) return;
+    if (!state.configured) return;
 
     emit(state.copyWith(status: VoiceInputStatus.starting));
 
