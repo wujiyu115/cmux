@@ -9,6 +9,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   gtk
   native_splash_screen_linux
   pasteboard
+  record_linux
   screen_retriever_linux
   url_launcher_linux
   window_manager
