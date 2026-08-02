@@ -13,13 +13,21 @@ void main() {
   late FakePcmAudioSource audio;
   late Uri connectedTo;
   late Map<String, String>? sentHeaders;
+  // Flips true the moment the provider invokes socketFactory, so a test can
+  // assert the metered session was never opened.
+  var connected = false;
 
-  VolcengineSttProvider build({bool permitted = true}) {
+  VolcengineSttProvider build({
+    bool permitted = true,
+    Duration testConnectionTimeout = const Duration(seconds: 10),
+  }) {
     audio = FakePcmAudioSource(permitted: permitted);
     socket = FakeSttSocket();
+    connected = false;
     return VolcengineSttProvider(
       audio: audio,
       socketFactory: (url, {headers}) async {
+        connected = true;
         connectedTo = url;
         sentHeaders = headers;
         return socket;
@@ -27,6 +35,10 @@ void main() {
       appId: 'app-id',
       accessToken: 'access-token',
       requestIdFactory: () => 'request-id',
+      // Zero grace so stop() never sits out a real wait; the Future.any race is
+      // still exercised, it just resolves on the (zero) timer or the socket.
+      serverGrace: Duration.zero,
+      testConnectionTimeout: testConnectionTimeout,
     );
   }
 
@@ -210,6 +222,7 @@ void main() {
       emitsError(isA<VoicePermissionDeniedException>()),
     );
     expect(audio.started, isFalse);
+    expect(connected, isFalse, reason: 'must refuse before opening the socket');
   });
 
   test('ready resolves true once the config frame is out', () async {
@@ -243,5 +256,41 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     await provider.stop();
     await expectLater(provider.stop(), completes);
+  });
+
+  test('testConnection returns elapsed ms and closes the socket on success',
+      () async {
+    final provider = build();
+    final probe = provider.testConnection();
+    await Future<void>.delayed(Duration.zero);
+
+    // A result frame (0x09) is the server's "handshake worked" reply.
+    socket.deliver(resultFrame(text: 'ok', definite: true));
+
+    final elapsed = await probe;
+    expect(elapsed, isA<int>());
+    expect(elapsed, greaterThanOrEqualTo(0));
+    expect(connected, isTrue);
+    expect(socket.closed, isTrue, reason: 'probe must not leak the session');
+  });
+
+  test('testConnection throws SttException on a server error frame', () async {
+    final provider = build();
+    final probe = provider.testConnection();
+    await Future<void>.delayed(Duration.zero);
+
+    socket.deliver(serverErrorFrame(code: 45000001, message: 'invalid token'));
+
+    await expectLater(probe, throwsA(isA<SttException>()));
+    expect(socket.closed, isTrue);
+  });
+
+  test('testConnection throws when the server never replies (timeout)',
+      () async {
+    // Zero timeout so the test does not spend the production 10 real seconds.
+    final provider = build(testConnectionTimeout: Duration.zero);
+    // Deliver nothing; the timeout must fire and the finally block must close.
+    await expectLater(provider.testConnection(), throwsA(anything));
+    expect(socket.closed, isTrue);
   });
 }

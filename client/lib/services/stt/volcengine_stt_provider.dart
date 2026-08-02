@@ -25,6 +25,8 @@ class VolcengineSttProvider implements SttProvider {
     required this.appId,
     required this.accessToken,
     required this.requestIdFactory,
+    this.serverGrace = const Duration(seconds: 3),
+    this.testConnectionTimeout = const Duration(seconds: 10),
   });
 
   final PcmAudioSource audio;
@@ -32,6 +34,15 @@ class VolcengineSttProvider implements SttProvider {
   final String appId;
   final String accessToken;
   final String Function() requestIdFactory;
+
+  /// How long [stop] waits for the server's trailing sentence before closing.
+  /// Injectable so tests do not sit out a real wait; production default 3s.
+  final Duration serverGrace;
+
+  /// How long [testConnection] waits for the probe reply before failing.
+  /// Injectable so the timeout test does not spend real seconds; production
+  /// default 10s.
+  final Duration testConnectionTimeout;
 
   StreamController<SttResult>? _results;
   SttSocket? _socket;
@@ -219,7 +230,7 @@ class VolcengineSttProvider implements SttProvider {
     // never makes us sit out the whole window.
     await Future.any([
       _socketDone.future,
-      Future<void>.delayed(const Duration(seconds: 3)),
+      Future<void>.delayed(serverGrace),
     ]);
 
     await _audioSub?.cancel();
@@ -290,7 +301,7 @@ class VolcengineSttProvider implements SttProvider {
     );
 
     try {
-      await completer.future.timeout(const Duration(seconds: 10));
+      await completer.future.timeout(testConnectionTimeout);
     } finally {
       await sub.cancel();
       await socket.close();
