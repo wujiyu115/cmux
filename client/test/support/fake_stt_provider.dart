@@ -10,8 +10,13 @@ class FakeSttProvider implements SttProvider {
   final bool availableValue;
   final bool readyValue;
 
-  final _results = StreamController<SttResult>.broadcast();
-  final _ready = Completer<bool>();
+  // Recreated per session in [start]. Session objects must belong to the zone
+  // that calls start() — under `testWidgets`, `pump()` only flushes microtasks
+  // from the test-body zone, not the setUp zone a setUp-built fake lives in, so
+  // a constructor-scoped `ready` future would never resolve through pumps. The
+  // real providers reset these in start() for the same session-scoping reason.
+  StreamController<SttResult> _results = StreamController<SttResult>.broadcast();
+  Completer<bool> _ready = Completer<bool>();
 
   int startCalls = 0;
   int stopCalls = 0;
@@ -27,6 +32,9 @@ class FakeSttProvider implements SttProvider {
   Stream<SttResult> start({String? localeId}) {
     startCalls++;
     startedLocaleId = localeId;
+    // Fresh session objects in the caller's zone (see the field comment).
+    _results = StreamController<SttResult>.broadcast();
+    _ready = Completer<bool>();
     if (readyValue) {
       openSession();
     } else {

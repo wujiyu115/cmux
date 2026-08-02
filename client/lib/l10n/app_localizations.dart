@@ -5281,6 +5281,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Send without Return'**
   String get mobileComposerSubmitOff;
+
+  /// No description provided for @voiceInputStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start dictation'**
+  String get voiceInputStart;
+
+  /// No description provided for @voiceInputStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop dictation'**
+  String get voiceInputStop;
+
+  /// No description provided for @voiceInputBadgeSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'SYS'**
+  String get voiceInputBadgeSystem;
+
+  /// No description provided for @voiceInputBadgeVolcengine.
+  ///
+  /// In en, this message translates to:
+  /// **'DOU'**
+  String get voiceInputBadgeVolcengine;
+
+  /// No description provided for @voiceInputBadgeAliyun.
+  ///
+  /// In en, this message translates to:
+  /// **'ALI'**
+  String get voiceInputBadgeAliyun;
+
+  /// No description provided for @voiceInputPermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone access denied. Enable it in system settings.'**
+  String get voiceInputPermissionDenied;
+
+  /// No description provided for @voiceInputFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice input failed'**
+  String get voiceInputFailed;
 }
 
 class _AppLocalizationsDelegate

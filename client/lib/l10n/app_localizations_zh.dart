@@ -2746,4 +2746,25 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get mobileComposerSubmitOff => '发送不回车';
+
+  @override
+  String get voiceInputStart => '开始语音输入';
+
+  @override
+  String get voiceInputStop => '停止语音输入';
+
+  @override
+  String get voiceInputBadgeSystem => '系统';
+
+  @override
+  String get voiceInputBadgeVolcengine => '豆包';
+
+  @override
+  String get voiceInputBadgeAliyun => '阿里';
+
+  @override
+  String get voiceInputPermissionDenied => '麦克风权限被拒绝，请在系统设置中开启';
+
+  @override
+  String get voiceInputFailed => '语音输入失败';
 }

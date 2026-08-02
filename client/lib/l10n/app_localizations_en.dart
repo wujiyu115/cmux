@@ -2841,4 +2841,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mobileComposerSubmitOff => 'Send without Return';
+
+  @override
+  String get voiceInputStart => 'Start dictation';
+
+  @override
+  String get voiceInputStop => 'Stop dictation';
+
+  @override
+  String get voiceInputBadgeSystem => 'SYS';
+
+  @override
+  String get voiceInputBadgeVolcengine => 'DOU';
+
+  @override
+  String get voiceInputBadgeAliyun => 'ALI';
+
+  @override
+  String get voiceInputPermissionDenied =>
+      'Microphone access denied. Enable it in system settings.';
+
+  @override
+  String get voiceInputFailed => 'Voice input failed';
 }

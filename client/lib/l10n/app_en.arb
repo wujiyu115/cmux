@@ -1298,5 +1298,12 @@
   "mobileComposerClose": "Close composer",
   "mobileComposerSend": "Send",
   "mobileComposerSubmitOn": "Send with Return",
-  "mobileComposerSubmitOff": "Send without Return"
+  "mobileComposerSubmitOff": "Send without Return",
+  "voiceInputStart": "Start dictation",
+  "voiceInputStop": "Stop dictation",
+  "voiceInputBadgeSystem": "SYS",
+  "voiceInputBadgeVolcengine": "DOU",
+  "voiceInputBadgeAliyun": "ALI",
+  "voiceInputPermissionDenied": "Microphone access denied. Enable it in system settings.",
+  "voiceInputFailed": "Voice input failed"
 }

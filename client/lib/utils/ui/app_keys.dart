@@ -85,6 +85,7 @@ class AppKeys {
   static const mobileComposerSendButton = Key('mobile-composer-send');
   static const mobileComposerCloseButton = Key('mobile-composer-close');
   static const mobileComposerSubmitToggle = Key('mobile-composer-submit');
+  static const mobileComposerMicButton = Key('mobile-composer-mic');
   static Key pairingWorkspaceHeader(String workspaceId) =>
       Key('pairing-workspace-$workspaceId');
   static Key pairingOpenTerminalButton(String workspaceId) =>

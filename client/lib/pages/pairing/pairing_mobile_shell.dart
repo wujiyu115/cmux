@@ -3,11 +3,16 @@ import 'dart:async';
 import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 import '../../cubits/pairing_client_cubit.dart';
+import '../../cubits/voice_input_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
+import '../../repositories/ssh_credential_store.dart';
+import '../../repositories/voice_input_repository.dart';
 import '../../services/pairing/pairing_offer.dart';
+import '../../services/stt/stt_provider_factory.dart';
 import '../../utils/logging/logger.dart';
 import '../../widgets/app_toast/app_toast.dart';
 import 'paired_hosts_page.dart';
@@ -80,13 +85,26 @@ class _PairingMobileShellState extends State<PairingMobileShell> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<PairingClientCubit, PairingClientState>(
-      listenWhen: (a, b) => a.notice != b.notice && b.notice != null,
-      listener: _showNotice,
-      child: BlocBuilder<PairingClientCubit, PairingClientState>(
-        buildWhen: (a, b) =>
-            a.phase != b.phase || a.activeCatalogId != b.activeCatalogId,
-        builder: _buildPhase,
+    // Voice-input settings are a cross-screen preference: the mirror page is
+    // rebuilt on every entry and would throw away the probed availability and
+    // loaded credentials, and Task 10's settings entry lives on the home
+    // screen where a mirror-owned cubit is out of scope. BlocProvider closes it.
+    return BlocProvider<VoiceInputCubit>(
+      create: (context) => VoiceInputCubit(
+        repository: DefaultVoiceInputRepository(
+          preferences: context.read<SharedPreferences>(),
+          secureStore: const FlutterSecureKeyValueStore(),
+        ),
+        providerFactory: buildSttProvider,
+      )..load(),
+      child: BlocListener<PairingClientCubit, PairingClientState>(
+        listenWhen: (a, b) => a.notice != b.notice && b.notice != null,
+        listener: _showNotice,
+        child: BlocBuilder<PairingClientCubit, PairingClientState>(
+          buildWhen: (a, b) =>
+              a.phase != b.phase || a.activeCatalogId != b.activeCatalogId,
+          builder: _buildPhase,
+        ),
       ),
     );
   }
