@@ -16,6 +16,7 @@ void main() {
   late FakePcmAudioSource audio;
   late Uri connectedTo;
   late int idCalls;
+  late int tokenCalls;
 
   AliyunSttProvider build({
     bool permitted = true,
@@ -29,6 +30,7 @@ void main() {
     audio = FakePcmAudioSource(permitted: permitted);
     socket = FakeSttSocket();
     idCalls = 0;
+    tokenCalls = 0;
     return AliyunSttProvider(
       audio: audio,
       socketFactory: (url, {headers}) async {
@@ -37,12 +39,15 @@ void main() {
       },
       tokenService: AliyunTokenService(
         client: MockClient(
-          (_) async => http.Response(
-            jsonEncode({
-              'Token': {'Id': 'the-token', 'ExpireTime': 4102444800},
-            }),
-            tokenStatus,
-          ),
+          (_) async {
+            tokenCalls++;
+            return http.Response(
+              jsonEncode({
+                'Token': {'Id': 'the-token', 'ExpireTime': 4102444800},
+              }),
+              tokenStatus,
+            );
+          },
         ),
         nonceFactory: () => 'nonce',
         now: () => DateTime.utc(2026, 8, 2, 12),
@@ -200,6 +205,7 @@ void main() {
       emitsError(isA<VoicePermissionDeniedException>()),
     );
     expect(audio.started, isFalse);
+    expect(tokenCalls, isZero, reason: 'no signed token call before mic check');
   });
 
   test('errors with SttException when the token call fails', () async {
@@ -283,8 +289,7 @@ void main() {
     expect(sent['header']['name'], 'StartTranscription');
 
     socket.deliver(event('TranscriptionStarted'));
-    final elapsed = await probe;
-    expect(elapsed, isA<int>());
+    await probe;
     expect(socket.closed, isTrue, reason: 'probe must not leak the session');
   });
 
