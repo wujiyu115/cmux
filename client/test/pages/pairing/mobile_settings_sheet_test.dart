@@ -40,6 +40,12 @@ void main() {
       (tester) async {
     final layout = LayoutCubit();
     addTearDown(layout.close);
+    final voice = VoiceInputCubit(
+      repository: InMemoryVoiceInputRepository(),
+      providerFactory: (_, _) => FakeSttProvider(),
+    );
+    addTearDown(voice.close);
+    await voice.load();
 
     late BuildContext ctx;
     await tester.pumpWidget(
@@ -56,7 +62,7 @@ void main() {
       ),
     );
 
-    unawaited(showMobileSettingsSheet(ctx));
+    unawaited(showMobileSettingsSheet(ctx, voiceCubit: voice));
     await tester.pumpAndSettle();
 
     // The sheet renders and reuses the language control from onboarding.

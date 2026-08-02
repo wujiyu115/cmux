@@ -326,6 +326,7 @@ class _MicButtonState extends State<_MicButton>
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
     final status = widget.state.status;
 
     // The tap action, or null while starting — that window shows a spinner and
@@ -366,7 +367,18 @@ class _MicButtonState extends State<_MicButton>
         children: [
           if (status == VoiceInputStatus.listening)
             _PulseRing(animation: _pulse, color: cs.primary),
-          control,
+          // The mic supplies its own accessibility label rather than borrowing
+          // [TpIconButton]'s tooltip: a tooltip's long-press recognizer would
+          // win the gesture arena and swallow the long-press-to-settings
+          // gesture the enclosing [GestureDetector] owns. Do not "simplify"
+          // this into a Tooltip — that silently breaks long-press.
+          Semantics(
+            button: true,
+            label: status == VoiceInputStatus.listening
+                ? l10n.voiceInputStop
+                : l10n.voiceInputStart,
+            child: control,
+          ),
           Positioned(
             right: 0,
             top: 0,

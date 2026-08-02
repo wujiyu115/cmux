@@ -217,4 +217,31 @@ void main() {
     await t.tap(find.byType(BackButton));
     await t.pumpAndSettle();
   });
+
+  testWidgets('the mic announces a label that tracks its state', (t) async {
+    // The mic cannot borrow TpIconButton's tooltip (its long-press recognizer
+    // would swallow long-press-to-settings), so the label is supplied by a
+    // Semantics node directly — assert it is present and flips with state.
+    Semantics micSemantics() => t.widget<Semantics>(
+      find
+          .descendant(
+            of: find.byKey(AppKeys.mobileComposerMicButton),
+            matching: find.byType(Semantics),
+          )
+          .first,
+    );
+
+    await voice.load();
+    await pump(t);
+
+    expect(micSemantics().properties.button, true);
+    expect(micSemantics().properties.label, 'Start dictation');
+
+    await t.tap(find.byKey(AppKeys.mobileComposerMicButton));
+    await t.pump();
+    await t.pump();
+
+    expect(voice.state.status, VoiceInputStatus.listening);
+    expect(micSemantics().properties.label, 'Stop dictation');
+  });
 }

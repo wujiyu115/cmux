@@ -21,17 +21,15 @@ import 'voice/voice_settings_page.dart';
 /// (under the shell) pass `context.read<VoiceInputCubit>()`.
 Future<void> showMobileSettingsSheet(
   BuildContext context, {
-  VoiceInputCubit? voiceCubit,
+  required VoiceInputCubit voiceCubit,
 }) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    builder: (_) => voiceCubit == null
-        ? const _MobileSettingsSheet()
-        : BlocProvider<VoiceInputCubit>.value(
-            value: voiceCubit,
-            child: const _MobileSettingsSheet(),
-          ),
+    builder: (_) => BlocProvider<VoiceInputCubit>.value(
+      value: voiceCubit,
+      child: const _MobileSettingsSheet(),
+    ),
   );
 }
 
