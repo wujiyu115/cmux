@@ -73,6 +73,16 @@ void main() {
       expect(input.bytes, bytes);
     });
 
+    test('varint handles large sub / seq values', () {
+      final decoded = PairingCodec.decode(
+        PairingCodec.encodeOutput(300, 1 << 40, Uint8List(0)),
+      );
+      final out = decoded as OutputFrame;
+      expect(out.sub, 300);
+      expect(out.seq, 1 << 40);
+      expect(out.bytes, isEmpty);
+    });
+
     test('throws FormatException on an unknown kind', () {
       expect(
         () => PairingCodec.decode(Uint8List.fromList(const [0x7f])),
@@ -84,6 +94,13 @@ void main() {
       // Kind byte present but the transferId varint is missing.
       expect(
         () => PairingCodec.decode(Uint8List.fromList(const [0x05])),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('decoding an empty frame throws', () {
+      expect(
+        () => PairingCodec.decode(Uint8List(0)),
         throwsA(isA<FormatException>()),
       );
     });
