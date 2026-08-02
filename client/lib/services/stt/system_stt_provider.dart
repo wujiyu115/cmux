@@ -69,6 +69,8 @@ class SystemSttProvider implements SttProvider {
   @override
   Future<void> stop() async {
     await _recognizer.stop();
+    // Never leave a caller awaiting a session that will never go live.
+    if (!_ready.isCompleted) _ready.complete(false);
     final controller = _controller;
     if (controller != null && !controller.isClosed) {
       await controller.close();

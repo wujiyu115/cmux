@@ -239,6 +239,8 @@ class VolcengineSttProvider implements SttProvider {
     _socketSub = null;
     await _socket?.close();
     _socket = null;
+    // Never leave a caller awaiting a session that will never go live.
+    if (!_ready.isCompleted) _ready.complete(false);
     final results = _results;
     if (results != null && !results.isClosed) await results.close();
   }

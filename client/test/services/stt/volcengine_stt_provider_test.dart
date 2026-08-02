@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -268,8 +269,10 @@ void main() {
     socket.deliver(resultFrame(text: 'ok', definite: true));
 
     final elapsed = await probe;
-    expect(elapsed, isA<int>());
-    expect(elapsed, greaterThanOrEqualTo(0));
+    // The probe replied well within the injected timeout; a hang would trip the
+    // 10s window instead. Asserting below it can actually fail, unlike a
+    // non-negative-int check that holds by construction.
+    expect(elapsed, lessThan(const Duration(seconds: 10).inMilliseconds));
     expect(connected, isTrue);
     expect(socket.closed, isTrue, reason: 'probe must not leak the session');
   });
@@ -290,7 +293,10 @@ void main() {
     // Zero timeout so the test does not spend the production 10 real seconds.
     final provider = build(testConnectionTimeout: Duration.zero);
     // Deliver nothing; the timeout must fire and the finally block must close.
-    await expectLater(provider.testConnection(), throwsA(anything));
+    await expectLater(
+      provider.testConnection(),
+      throwsA(isA<TimeoutException>()),
+    );
     expect(socket.closed, isTrue);
   });
 }

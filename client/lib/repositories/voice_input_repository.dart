@@ -35,12 +35,6 @@ class VoiceInputPrefs {
     localeId: '',
   );
 
-  VoiceInputPrefs copyWith({SttProviderType? provider, String? localeId}) =>
-      VoiceInputPrefs(
-        provider: provider ?? this.provider,
-        localeId: localeId ?? this.localeId,
-      );
-
   Map<String, Object?> toJson() => {
     'provider': provider.name,
     'localeId': localeId,
@@ -284,9 +278,6 @@ class InMemoryVoiceInputRepository implements VoiceInputRepository {
   /// The last value passed to [savePrefs], for tests to assert against.
   VoiceInputPrefs? lastSavedPrefs;
 
-  /// Number of [savePrefs] calls — lets tests assert a debounce coalesced.
-  int savePrefsCount = 0;
-
   @override
   Future<VoiceInputPrefs> loadPrefs() async => _prefs;
 
@@ -294,7 +285,6 @@ class InMemoryVoiceInputRepository implements VoiceInputRepository {
   Future<void> savePrefs(VoiceInputPrefs prefs) async {
     _prefs = prefs;
     lastSavedPrefs = prefs;
-    savePrefsCount++;
   }
 
   @override

@@ -195,6 +195,11 @@ class VoiceInputCubit extends Cubit<VoiceInputState> {
       _teardown();
       return;
     }
+    // The session may have been torn down (a stop or a provider switch) while
+    // the handshake was in flight — reachable on a poor mobile network. If so,
+    // a different provider (or none) is now current; do not let this stale
+    // session emit `listening` or arm the cap timer.
+    if (!identical(_provider, provider)) return;
     emit(state.copyWith(status: VoiceInputStatus.listening));
     _capTimer = Timer(_maxDuration, stopListening);
   }

@@ -46,7 +46,11 @@ class VoiceCredentialsSection extends StatelessWidget {
               spacing.lg,
               spacing.xs,
             ),
-            child: _CredentialField(field: field),
+            // Keyed by the field enum so flipping the provider radio builds a
+            // fresh state with the correct seed, rather than reusing the prior
+            // provider's `_CredentialFieldState` by position and persisting its
+            // stale text under this field's keychain slot.
+            child: _CredentialField(key: ValueKey(field), field: field),
           ),
         const _TestConnectionTile(),
         // The pairing channel is end-to-end encrypted, but voice audio goes
@@ -99,7 +103,7 @@ String _fieldLabel(AppLocalizations l10n, VoiceCredentialField field) =>
 /// through a debounce on change and immediately on submit — the established
 /// form idiom in `session_config_section.dart`.
 class _CredentialField extends StatefulWidget {
-  const _CredentialField({required this.field});
+  const _CredentialField({super.key, required this.field});
 
   final VoiceCredentialField field;
 

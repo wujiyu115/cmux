@@ -132,6 +132,70 @@ void main() {
     expect(cubit.state.credentials.volcAppId, 'the-app-id');
   });
 
+  testWidgets(
+      'switching provider does not carry one credential into another slot',
+      (t) async {
+    // Regression for the state-reuse defect: the credential fields reconcile by
+    // position and type, so before keying each field by its enum, flipping the
+    // provider radio reused the prior `_CredentialFieldState`. Slot 0 kept
+    // showing the Volcengine app id, and submitting persisted it under
+    // Alibaba's `aliyunAccessKeyId` — one provider's credential in another's
+    // keychain entry. Assert against the credential state, not only the screen:
+    // the mis-persist is invisible on-screen once the switch settled.
+    await repository.saveCredential(
+      VoiceCredentialField.volcAppId,
+      'volc-secret-id',
+    );
+    await cubit.load();
+    await pump(t);
+
+    await t.tap(
+      find.byKey(
+        AppKeys.voiceSettingsProviderTile(SttProviderType.volcengine.name),
+      ),
+    );
+    await t.pumpAndSettle();
+    expect(
+      t
+          .widget<TextField>(
+            find.byKey(AppKeys.voiceSettingsCredentialField('volcAppId')),
+          )
+          .controller!
+          .text,
+      'volc-secret-id',
+      reason: 'slot 0 seeds from the Volcengine app id',
+    );
+
+    await t.tap(
+      find.byKey(
+        AppKeys.voiceSettingsProviderTile(SttProviderType.aliyun.name),
+      ),
+    );
+    await t.pumpAndSettle();
+    expect(
+      t
+          .widget<TextField>(
+            find.byKey(
+              AppKeys.voiceSettingsCredentialField('aliyunAccessKeyId'),
+            ),
+          )
+          .controller!
+          .text,
+      isEmpty,
+      reason: 'the Alibaba field must not inherit the Volcengine seed',
+    );
+
+    // Submitting the field must not persist the stale Volcengine value under
+    // the Alibaba key.
+    await t.tap(
+      find.byKey(AppKeys.voiceSettingsCredentialField('aliyunAccessKeyId')),
+    );
+    await t.testTextInput.receiveAction(TextInputAction.done);
+    await t.pumpAndSettle();
+    expect(cubit.state.credentials.aliyunAccessKeyId, isEmpty);
+    expect(cubit.state.credentials.volcAppId, 'volc-secret-id');
+  });
+
   testWidgets('obscures the secret fields but not the identifiers', (t) async {
     // An access token read over someone's shoulder is a billable credential.
     await cubit.load();
