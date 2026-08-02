@@ -319,6 +319,8 @@ class PairingClient {
           _subs[sub]?.add(bytes);
         case InputFrame():
           break; // client never receives input frames
+        case UploadFrame():
+          break; // phone sends upload frames and never receives them
       }
     } on Object catch (e) {
       _emit('frame error: $e', error: true);

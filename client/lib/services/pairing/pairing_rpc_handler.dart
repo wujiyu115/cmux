@@ -69,6 +69,9 @@ class PairingRpcHandler {
       case SnapshotFrame():
         // Host never receives output/snapshot frames — ignore defensively.
         break;
+      case UploadFrame():
+        // Task 5 replaces this with real chunk handling.
+        break;
     }
   }
 
