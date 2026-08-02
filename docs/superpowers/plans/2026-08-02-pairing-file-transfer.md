@@ -80,6 +80,8 @@ upload.commit → result: {'ok': true, 'path': String}
 
 **Files:**
 - Modify: `client/lib/services/pairing/pairing_frames.dart`
+- Modify: `client/lib/services/pairing/pairing_rpc_handler.dart`（只加一个防御 `case`）
+- Modify: `client/lib/services/pairing/pairing_client.dart`（只加一个防御 `case`）
 - Test: `client/test/services/pairing/pairing_frames_test.dart`（若不存在则新建）
 
 **Interfaces:**
@@ -90,7 +92,26 @@ upload.commit → result: {'ok': true, 'path': String}
   - `static Uint8List PairingCodec.encodeUpload(int transferId, int chunkIndex, Uint8List bytes)`
   - `PairingCodec.decode` 认 `0x05` 并返回 `UploadFrame`
 
-**现状（读过再动）：** 帧是 `[1 字节 kind][body]`，既有 kind 常量 `_kJson = 0x01`、`_kOutput = 0x02`、`_kInput = 0x03`、`_kSnapshot = 0x04`。`_Writer` 提供 `byte`/`varint`（LEB128，负数抛 `ArgumentError`）/`raw`/`take`，`_Reader` 提供 `byte`/`varint`/`rest`。`decode` 是一个 `switch (kind)`，`default` 抛 `FormatException`。**`PairingFrame` 是 `sealed`**，所以新增子类会让所有 `switch (frame)` 的穷举检查失效 —— `pairing_rpc_handler.dart:61` 的 `handle` 与 `pairing_client.dart:301` 的 `_onBytes` 都会报编译错。这是好事（编译器逼你处理），但你本任务**只加帧、不改那两处**，所以本任务结束时全仓编译会失败。这是预期的：Task 5、6 分别补上。**因此本任务的验证只跑本测试文件与本目录的 analyze，不跑全量。**
+**现状（读过再动）：** 帧是 `[1 字节 kind][body]`，既有 kind 常量 `_kJson = 0x01`、`_kOutput = 0x02`、`_kInput = 0x03`、`_kSnapshot = 0x04`。`_Writer` 提供 `byte`/`varint`（LEB128，负数抛 `ArgumentError`）/`raw`/`take`，`_Reader` 提供 `byte`/`varint`/`rest`。`decode` 是一个 `switch (kind)`，`default` 抛 `FormatException`。
+
+**`PairingFrame` 是 `sealed`**，所以新增子类会让 `pairing_rpc_handler.dart:61` 的 `handle` 与 `pairing_client.dart:301` 的 `_onBytes` 两处 `switch (frame)` 的穷举检查失效。**本任务必须同时补上这两处的防御分支**，让每一个提交都能编译、能 bisect、能跑 CI：
+
+```dart
+      // pairing_rpc_handler.dart — handle(), beside the existing
+      // OutputFrame()/SnapshotFrame() defensive cases.
+      // Task 5 replaces this with real chunk handling.
+      case UploadFrame():
+        break;
+```
+
+```dart
+      // pairing_client.dart — _onBytes(). This one stays a permanent no-op:
+      // the phone sends upload frames and never receives them.
+      case UploadFrame():
+        break;
+```
+
+所以本任务的验证**要跑全量 analyze**，不留编译不过的中间态。
 
 - [ ] **Step 1: 写失败的测试**
 
@@ -262,28 +283,33 @@ cd client && flutter test test/services/pairing/pairing_frames_test.dart
 
 预期：`All tests passed!`，7 个测试。
 
-- [ ] **Step 5: 目录级 analyze**
+- [ ] **Step 5: 全量 analyze 与全量测试**
 
 ```bash
-cd client && flutter analyze --no-fatal-infos --no-fatal-warnings lib/services/pairing test/services/pairing
+cd client && flutter analyze --no-fatal-infos --no-fatal-warnings
+cd client && flutter test --exclude-tags integration
 ```
 
-**预期：两处 `sealed` 穷举错误**，指向 `pairing_rpc_handler.dart` 的 `handle` 与 `pairing_client.dart` 的 `_onBytes`。这是预期的、由 Task 5 与 Task 6 补齐。把实际报错原文抄进报告。若出现除这两处以外的错误，那才是问题。
+预期：analyze 只剩 49 条既存 info（全在 `test/` 与 `tool/`），退出码 0；测试除 `command_palette_overlay_test.dart` 与 `pty_launch_environment_test.dart` 两个既存失败外全绿。**若 analyze 报出 `sealed` 穷举错误，说明 Step 3 的两个防御 `case` 漏了一处。**
 
 - [ ] **Step 6: 提交**
 
 ```bash
 cd /Users/yitouxiaomaolv/git/cmux && git add \
   client/lib/services/pairing/pairing_frames.dart \
+  client/lib/services/pairing/pairing_rpc_handler.dart \
+  client/lib/services/pairing/pairing_client.dart \
   client/test/services/pairing/pairing_frames_test.dart && \
 git commit -m "feat(pairing): add the upload frame kind
 
 Chunks stay binary rather than base64 JSON so a phone photo does not pay
 33% inflation and a jsonEncode per chunk.
 
-PairingFrame is sealed, so this deliberately breaks the exhaustive switches
-in the rpc handler and the client until the next two tasks handle the new
-case — the compiler is the checklist."
+PairingFrame is sealed, so both switches over it get a defensive case in the
+same commit rather than being left broken for two tasks — every commit on
+this branch compiles and bisects. The client's case is permanent (the phone
+sends upload frames and never receives them); the handler's is replaced with
+real chunk handling later."
 ```
 
 ---
@@ -1199,7 +1225,7 @@ cd client && flutter test test/services/pairing/pairing_rpc_handler_upload_test.
        ),
 ```
 
-2. `handle` 的 `switch (frame)` 新增分支（Task 1 让 `sealed` 穷举报错，这里补上）：
+2. `handle` 的 `switch (frame)` 里，Task 1 留下的 `case UploadFrame(): break;` 换成真实处理：
 
 ```dart
       case UploadFrame(:final transferId, :final chunkIndex, :final bytes):
@@ -1366,7 +1392,7 @@ cd client && flutter test test/services/pairing/
 cd client && flutter analyze --no-fatal-infos --no-fatal-warnings
 ```
 
-预期：pairing 目录全绿；analyze 只剩 `pairing_client.dart` 的 `sealed` 穷举错误（Task 6 补），以及 49 条既存 info。**若 analyze 报出别的错误，先修再往下。**
+预期：pairing 目录全绿；analyze 只剩 49 条既存 info。**若 analyze 报出任何错误，先修再往下。**
 
 - [ ] **Step 7: 提交**
 
@@ -1411,13 +1437,7 @@ window instead of inviting more bytes into a dead transfer."
 
 - [ ] **Step 1: 改 `pairing_client.dart`**
 
-1. `_onBytes` 的 `switch (frame)` 补 `UploadFrame` 分支（Task 1 的 `sealed` 报错在这里）。客户端**从不**收上传帧，照既有 `OutputFrame()`/`SnapshotFrame()` 在 handler 侧的写法防御性忽略：
-
-```dart
-      case UploadFrame():
-        // Phone never receives upload frames — ignore defensively.
-        break;
-```
+1. `_onBytes` 的 `UploadFrame` 分支 Task 1 已加为永久性的防御忽略（手机只发不收），**本任务不动它**。
 
 2. `_onJson` 在 `session.changed` 分支之后加：
 
@@ -1510,7 +1530,7 @@ cd client && flutter test test/cubits/pairing_client_cubit_test.dart test/servic
 cd client && flutter analyze --no-fatal-infos --no-fatal-warnings
 ```
 
-预期：全绿；analyze **此时应当只剩 49 条既存 info**（`sealed` 穷举错误至此全部补齐）。若还有编译错误，说明漏了某个 `switch (frame)`。
+预期：全绿；analyze 只剩 49 条既存 info。
 
 - [ ] **Step 5: 跑全量测试并提交**
 
