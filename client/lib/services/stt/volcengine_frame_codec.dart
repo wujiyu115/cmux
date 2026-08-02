@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -34,21 +35,34 @@ class VolcSerialization {
 
 /// A decoded Volcengine (火山引擎豆包) speech frame.
 ///
-/// Only the fields the caller needs are surfaced: the [messageType] and
-/// [flags] nibbles, the signed [sequence], and the (already gunzipped)
-/// [payload].
+/// The fields the caller needs are surfaced: the [messageType] and [flags]
+/// nibbles, the signed [sequence], and the (already gunzipped) [payload].
+///
+/// Error frames (`messageType == 0x0f`) carry no gzipped payload; instead they
+/// populate [errorCode] and [errorMessage]. For a result frame those two are
+/// `null`; for an error frame [payload] is empty. This keeps an error frame's
+/// numeric code from silently landing in [sequence].
 class VolcFrame {
   const VolcFrame({
     required this.messageType,
     required this.flags,
     required this.sequence,
     required this.payload,
+    this.errorCode,
+    this.errorMessage,
   });
 
   final int messageType;
   final int flags;
   final int sequence;
   final List<int> payload;
+
+  /// The server's numeric error code — set only on error frames (`0x0f`).
+  final int? errorCode;
+
+  /// The server's plain-UTF-8 error message — set only on error frames
+  /// (`0x0f`). Never gzip-decoded.
+  final String? errorMessage;
 }
 
 /// Builds one Volcengine binary frame.
@@ -89,38 +103,15 @@ Uint8List buildVolcFrame({
   return frame;
 }
 
-/// Parses a frame produced by [buildVolcFrame] and returns its [VolcFrame].
+/// Decodes a frame that WE produced with [buildVolcFrame] — i.e. an
+/// **outbound client→server** frame, round-tripped in tests. This is NOT for
+/// live server traffic; for **inbound server→client** frames use
+/// [decodeVolcServerFrame].
 ///
-/// This inverts [buildVolcFrame]'s fixed layout: a 4-byte header, an int32
+/// It inverts [buildVolcFrame]'s fixed layout: a 4-byte header, an int32
 /// sequence at offset 4, a uint32 body length at offset 8, then the body. The
 /// body is gunzipped when the compression nibble (`byte2 & 0x0f`) is `0x01`,
 /// otherwise it is returned as-is.
-///
-/// ---
-/// The *real server* frames (ported byte-for-byte from `_handleServerMessage`
-/// in the Nexterm reference) are richer and do NOT share one post-header
-/// layout — the fixed parse above is intentionally the symmetric inverse of
-/// our own builder, not a full server decoder. The true server layout is:
-///
-/// ```
-/// byte 0      : header descriptor; headerSize = (byte0 & 0x0f) * 4
-/// byte 1      : messageType<<4 | flags
-/// byte 2      : serialization<<4 | compression
-/// byte 3      : reserved
-/// [headerSize .. ]  optional, flag-gated fields consumed by offset:
-///   if flags & 0x01 (POS_SEQUENCE): + int32 sequence   (read then discarded)
-///   flags & 0x02  => this is the last packet (isLast)
-///   if flags & 0x04:                 + int32 event field
-///   then, depending on messageType:
-///     0x09 result frame : uint32 payloadLen, then payload (gzip-decoded if compression==0x01)
-///     0x0f error frame  : int32 ERROR CODE, then uint32 msgLen, then UTF-8 message
-/// ```
-///
-/// The critical divergence: in a result frame the first 4-byte slot after the
-/// (optional) header fields is a payload *length*, but in an error frame that
-/// same slot is an *error code* — the two frames do not share the post-header
-/// field layout. A later socket task that decodes live server traffic must use
-/// this flag-gated, per-type layout rather than the fixed parse here.
 VolcFrame parseVolcFrame(List<int> bytes) {
   final Uint8List data = Uint8List.fromList(bytes);
   if (data.length < 12) {
@@ -147,6 +138,147 @@ VolcFrame parseVolcFrame(List<int> bytes) {
   final Uint8List body = data.sublist(12, 12 + length);
   final List<int> payload =
       compression == 0x01 ? gzip.decode(body) : body;
+
+  return VolcFrame(
+    messageType: messageType,
+    flags: flags,
+    sequence: sequence,
+    payload: payload,
+  );
+}
+
+/// Decodes a live **inbound server→client** Volcengine frame. This is the
+/// counterpart to [parseVolcFrame] (which is only for our own outbound frames)
+/// — use THIS one for anything that arrives off the socket.
+///
+/// Ported byte-for-byte from `_handleServerMessage` in the Nexterm reference
+/// provider. The wire layout is flag-gated and per-message-type; it does NOT
+/// match [buildVolcFrame]'s fixed layout:
+///
+/// ```
+/// byte 0      : header descriptor; headerSize = (byte0 & 0x0f) * 4
+/// byte 1      : messageType<<4 | flags
+/// byte 2      : serialization<<4 | compression
+/// byte 3      : reserved
+/// [headerSize ..]  optional, flag-gated fields consumed by offset:
+///   if flags & 0x01 : + int32 sequence      (read, surfaced on VolcFrame)
+///   flags & 0x02    => this is the last packet
+///   if flags & 0x04 : + int32 event field   (skipped)
+///   then, depending on messageType:
+///     0x0f error  : int32 errorCode, uint32 msgLen, then PLAIN UTF-8 message
+///                   (never gzip-decoded)
+///     otherwise   : uint32 payloadLen, then payload
+///                   (gzip-decoded when compression nibble == 0x01)
+/// ```
+///
+/// Every read at a computed offset is bounds-checked first because these bytes
+/// come straight off a socket. A malformed frame — a short buffer, a length
+/// that overruns, bad gzip, or invalid UTF-8 — always throws [FormatException]
+/// and never a raw exception that could crash the session.
+VolcFrame decodeVolcServerFrame(List<int> bytes) {
+  final Uint8List data = Uint8List.fromList(bytes);
+  if (data.length < 4) {
+    throw FormatException(
+      'Volcengine server frame too short: need at least 4 header bytes, '
+      'got ${data.length}',
+    );
+  }
+
+  final int headerSize = (data[0] & 0x0f) * 4;
+  final int messageType = (data[1] >> 4) & 0x0f;
+  final int flags = data[1] & 0x0f;
+  final int compression = data[2] & 0x0f;
+
+  int offset = headerSize;
+
+  int sequence = 0;
+  if (flags & 0x01 != 0) {
+    if (data.length < offset + 4) {
+      throw FormatException(
+        'Volcengine server frame truncated: sequence field needs 4 bytes at '
+        'offset $offset but only ${data.length} present',
+      );
+    }
+    sequence = ByteData.sublistView(data, offset, offset + 4).getInt32(0);
+    offset += 4;
+  }
+
+  if (flags & 0x04 != 0) {
+    if (data.length < offset + 4) {
+      throw FormatException(
+        'Volcengine server frame truncated: event field needs 4 bytes at '
+        'offset $offset but only ${data.length} present',
+      );
+    }
+    offset += 4; // event field — consumed but not surfaced.
+  }
+
+  if (messageType == VolcMessageType.errorResponse) {
+    if (data.length < offset + 8) {
+      throw FormatException(
+        'Volcengine error frame truncated: need 8 bytes for code+length at '
+        'offset $offset but only ${data.length} present',
+      );
+    }
+    final int errorCode =
+        ByteData.sublistView(data, offset, offset + 4).getInt32(0);
+    final int msgLen =
+        ByteData.sublistView(data, offset + 4, offset + 8).getUint32(0);
+    offset += 8;
+    if (data.length < offset + msgLen) {
+      throw FormatException(
+        'Volcengine error frame message overruns buffer: header claims '
+        '$msgLen bytes at offset $offset but only ${data.length - offset} '
+        'remain',
+      );
+    }
+    // Error messages are plain UTF-8 — never gzip-decoded, even when the
+    // compression nibble is set. Malformed UTF-8 throws FormatException.
+    final String errorMessage =
+        utf8.decode(data.sublist(offset, offset + msgLen));
+    return VolcFrame(
+      messageType: messageType,
+      flags: flags,
+      sequence: sequence,
+      payload: const <int>[],
+      errorCode: errorCode,
+      errorMessage: errorMessage,
+    );
+  }
+
+  // Result frame (0x09) and any other non-error type: uint32 payload length
+  // then the (optionally gzipped) payload.
+  if (data.length < offset + 4) {
+    throw FormatException(
+      'Volcengine result frame truncated: payload length needs 4 bytes at '
+      'offset $offset but only ${data.length} present',
+    );
+  }
+  final int payloadLen =
+      ByteData.sublistView(data, offset, offset + 4).getUint32(0);
+  offset += 4;
+  if (data.length < offset + payloadLen) {
+    throw FormatException(
+      'Volcengine result frame payload overruns buffer: header claims '
+      '$payloadLen bytes at offset $offset but only ${data.length - offset} '
+      'remain',
+    );
+  }
+
+  final Uint8List body = data.sublist(offset, offset + payloadLen);
+  final List<int> payload;
+  if (compression == 0x01) {
+    try {
+      payload = gzip.decode(body);
+    } on FormatException {
+      rethrow;
+    } catch (e) {
+      // Guarantee callers only ever see FormatException for a bad frame.
+      throw FormatException('Volcengine result frame gzip decode failed: $e');
+    }
+  } else {
+    payload = body;
+  }
 
   return VolcFrame(
     messageType: messageType,
