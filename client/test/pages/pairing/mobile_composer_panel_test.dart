@@ -2,14 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:teampilot/cubits/mobile_toolbar_cubit.dart';
+import 'package:teampilot/cubits/voice_input_cubit.dart';
 import 'package:teampilot/l10n/app_localizations.dart';
 import 'package:teampilot/pages/pairing/mobile_toolbar/mobile_composer_panel.dart';
 import 'package:teampilot/repositories/mobile_toolbar_repository.dart';
+import 'package:teampilot/repositories/voice_input_repository.dart';
 import 'package:teampilot/utils/ui/app_keys.dart';
+
+import '../../support/fake_stt_provider.dart';
 
 void main() {
   late List<List<int>> sent;
   late MobileToolbarCubit cubit;
+  late VoiceInputCubit voice;
   late TextEditingController controller;
   late FocusNode focusNode;
 
@@ -22,12 +27,19 @@ void main() {
       usageFlushDelay: const Duration(milliseconds: 10),
     );
     cubit.setMode(MobileInputMode.composer);
+    // The composer now requires a VoiceInputCubit in scope. Left unloaded so
+    // no backend is available and the mic button stays hidden.
+    voice = VoiceInputCubit(
+      repository: InMemoryVoiceInputRepository(),
+      providerFactory: (_, _) => FakeSttProvider(),
+    );
     controller = TextEditingController();
     focusNode = FocusNode();
   });
 
   tearDown(() async {
     await cubit.close();
+    await voice.close();
     controller.dispose();
     focusNode.dispose();
   });
@@ -42,8 +54,11 @@ void main() {
           body: Column(
             children: [
               const Expanded(child: SizedBox.expand()),
-              BlocProvider.value(
-                value: cubit,
+              MultiBlocProvider(
+                providers: [
+                  BlocProvider.value(value: cubit),
+                  BlocProvider.value(value: voice),
+                ],
                 child: MobileComposerPanel(
                   controller: controller,
                   focusNode: focusNode,

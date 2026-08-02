@@ -9,7 +9,9 @@ list(APPEND FLUTTER_PLUGIN_LIST
   flutter_secure_storage_windows
   native_splash_screen_windows
   pasteboard
+  record_windows
   screen_retriever_windows
+  speech_to_text_windows
   url_launcher_windows
   window_manager
 )

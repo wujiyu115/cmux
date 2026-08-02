@@ -8,7 +8,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../cubits/mobile_toolbar_cubit.dart';
 import '../../cubits/pairing_client_cubit.dart';
+import '../../cubits/voice_input_cubit.dart';
 import '../../repositories/mobile_toolbar_repository.dart';
+import '../../services/stt/transcript_insertion.dart';
 import '../../theme/app_fonts.dart';
 import '../../utils/ui/app_keys.dart';
 import 'mobile_toolbar/mobile_bottom_slot.dart';
@@ -39,6 +41,11 @@ class _PairingMirrorPageState extends State<PairingMirrorPage> {
   final _composerFocus = FocusNode();
   StreamSubscription<Uint8List>? _hostOutput;
   StreamSubscription<Uint8List>? _localInput;
+  StreamSubscription<String>? _transcripts;
+
+  /// Borrowed from the pairing shell — the page only ever stops it, never
+  /// closes it. Captured here because [dispose] cannot `context.read`.
+  late final VoiceInputCubit _voice;
 
   /// Last geometry the host acknowledged, shown in the nav bar so a mismatched
   /// mirror (phone rotated, desktop resized) is visible rather than mysterious.
@@ -66,12 +73,24 @@ class _PairingMirrorPageState extends State<PairingMirrorPage> {
       sendInput: cubit.sendInput,
     );
     _toolbar.load();
+
+    _voice = context.read<VoiceInputCubit>();
+    // Recognized speech goes into the composer's controller, not into cubit
+    // state: a per-result emit would rebuild the panel on every spoken word.
+    _transcripts = _voice.transcripts.listen((text) {
+      _composerText.value = insertTranscript(_composerText.value, text);
+    });
   }
 
   @override
   void dispose() {
     _hostOutput?.cancel();
     _localInput?.cancel();
+    // Cancel before disposing the controller: an in-flight result must not
+    // write into a disposed controller. Stop the mic (never close — the shell
+    // owns the cubit); one of the four paths that must not leave it hot.
+    _transcripts?.cancel();
+    _voice.stopListening();
     _controller.dispose();
     _engine.dispose();
     _composerText.dispose();
@@ -88,7 +107,11 @@ class _PairingMirrorPageState extends State<PairingMirrorPage> {
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) cubit.leaveMirror();
+        if (!didPop) {
+          // The fourth path that must not leave the microphone hot.
+          _voice.stopListening();
+          cubit.leaveMirror();
+        }
       },
       child: Scaffold(
         key: AppKeys.pairingMirrorPage,
@@ -129,8 +152,11 @@ class _PairingMirrorPageState extends State<PairingMirrorPage> {
                   },
                 ),
               ),
-              BlocProvider.value(
-                value: _toolbar,
+              MultiBlocProvider(
+                providers: [
+                  BlocProvider.value(value: _toolbar),
+                  BlocProvider.value(value: _voice),
+                ],
                 child: MobileBottomSlot(
                   controller: _composerText,
                   focusNode: _composerFocus,

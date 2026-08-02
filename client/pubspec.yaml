@@ -55,6 +55,8 @@ dependencies:
   pub_semver: ^2.2.0
   android_package_installer: ^0.0.3
   crypto: ^3.0.7
+  speech_to_text: ^7.0.0
+  record: 5.1.0
   pinenacl: ^0.6.0
   qr_flutter: ^4.1.0
   mobile_scanner: ^5.2.3
@@ -90,6 +92,7 @@ dependency_overrides:
     path: packages/flutter_alacritty/packages/rust_lib_flutter_alacritty
   panes:
     path: packages/panes
+  record_platform_interface: 1.1.0
 
 dev_dependencies:
   flutter_test:

@@ -2,13 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:teampilot/cubits/mobile_toolbar_cubit.dart';
+import 'package:teampilot/cubits/voice_input_cubit.dart';
 import 'package:teampilot/l10n/app_localizations.dart';
 import 'package:teampilot/models/toolbar_key.dart';
 import 'package:teampilot/pages/pairing/mobile_toolbar/mobile_bottom_slot.dart';
 import 'package:teampilot/pages/pairing/mobile_toolbar/mobile_composer_panel.dart';
 import 'package:teampilot/pages/pairing/mobile_toolbar/mobile_keyboard_toolbar.dart';
 import 'package:teampilot/repositories/mobile_toolbar_repository.dart';
+import 'package:teampilot/repositories/voice_input_repository.dart';
 import 'package:teampilot/utils/ui/app_keys.dart';
+
+import '../../support/fake_stt_provider.dart';
 
 /// Short enough that one extra pump retires the cubit's usage-count debounce.
 const _usageFlushDelay = Duration(milliseconds: 10);
@@ -16,6 +20,7 @@ const _usageFlushDelay = Duration(milliseconds: 10);
 void main() {
   late List<List<int>> sent;
   late MobileToolbarCubit cubit;
+  late VoiceInputCubit voice;
   late TextEditingController controller;
   late FocusNode focusNode;
 
@@ -30,6 +35,12 @@ void main() {
       // [drainUsageFlush] to retire it.
       usageFlushDelay: _usageFlushDelay,
     );
+    // The composer now requires a VoiceInputCubit in scope. Left unloaded so
+    // no backend is available and the mic button stays hidden.
+    voice = VoiceInputCubit(
+      repository: InMemoryVoiceInputRepository(),
+      providerFactory: (_, _) => FakeSttProvider(),
+    );
     // The slot forwards these to the composer; the mirror page owns them, so
     // the test mirrors that ownership by creating and disposing them here.
     controller = TextEditingController();
@@ -38,6 +49,7 @@ void main() {
 
   tearDown(() async {
     await cubit.close();
+    await voice.close();
     controller.dispose();
     focusNode.dispose();
   });
@@ -56,8 +68,11 @@ void main() {
           body: Column(
             children: [
               const Expanded(child: SizedBox.expand()),
-              BlocProvider.value(
-                value: cubit,
+              MultiBlocProvider(
+                providers: [
+                  BlocProvider.value(value: cubit),
+                  BlocProvider.value(value: voice),
+                ],
                 child: MobileBottomSlot(
                   controller: controller,
                   focusNode: focusNode,

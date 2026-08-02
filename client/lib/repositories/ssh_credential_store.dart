@@ -182,3 +182,20 @@ class InMemorySshCredentialStore implements SshCredentialStore {
     _passphrases.remove(profileId);
   }
 }
+
+/// Test double for [SecureKeyValueStore].
+///
+/// Lives here beside [InMemorySshCredentialStore] so both fakes for this file's
+/// abstractions stay in one place.
+class InMemorySecureKeyValueStore implements SecureKeyValueStore {
+  final _values = <String, String>{};
+
+  @override
+  Future<String?> read(String key) async => _values[key];
+
+  @override
+  Future<void> write(String key, String value) async => _values[key] = value;
+
+  @override
+  Future<void> delete(String key) async => _values.remove(key);
+}

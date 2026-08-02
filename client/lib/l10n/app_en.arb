@@ -1298,5 +1298,34 @@
   "mobileComposerClose": "Close composer",
   "mobileComposerSend": "Send",
   "mobileComposerSubmitOn": "Send with Return",
-  "mobileComposerSubmitOff": "Send without Return"
+  "mobileComposerSubmitOff": "Send without Return",
+  "voiceInputStart": "Start dictation",
+  "voiceInputStop": "Stop dictation",
+  "voiceInputBadgeSystem": "SYS",
+  "voiceInputBadgeVolcengine": "DOU",
+  "voiceInputBadgeAliyun": "ALI",
+  "voiceInputPermissionDenied": "Microphone access denied. Enable it in system settings.",
+  "voiceInputFailed": "Voice input failed",
+  "voiceInputSettings": "Voice input",
+  "voiceInputProvider": "Recognition service",
+  "voiceInputProviderSystem": "System",
+  "voiceInputProviderVolcengine": "Doubao (Volcengine)",
+  "voiceInputProviderAliyun": "Alibaba Cloud NLS",
+  "voiceInputLanguage": "Language",
+  "voiceInputLanguageDefault": "System default",
+  "voiceInputCredentials": "Credentials",
+  "voiceInputVolcAppId": "App ID",
+  "voiceInputVolcAccessToken": "Access token",
+  "voiceInputAliyunAccessKeyId": "AccessKey ID",
+  "voiceInputAliyunAccessKeySecret": "AccessKey secret",
+  "voiceInputAliyunAppKey": "App key",
+  "voiceInputTestConnection": "Test connection",
+  "voiceInputTestPassed": "Connected in {ms} ms",
+  "@voiceInputTestPassed": {
+    "placeholders": {
+      "ms": { "type": "int" }
+    }
+  },
+  "voiceInputTestFailed": "Connection failed",
+  "voiceInputCloudPrivacyNote": "Audio is sent directly to the cloud provider, not through the encrypted pairing channel."
 }
