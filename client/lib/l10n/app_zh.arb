@@ -1165,5 +1165,22 @@
   "voiceInputBadgeVolcengine": "豆包",
   "voiceInputBadgeAliyun": "阿里",
   "voiceInputPermissionDenied": "麦克风权限被拒绝，请在系统设置中开启",
-  "voiceInputFailed": "语音输入失败"
+  "voiceInputFailed": "语音输入失败",
+  "voiceInputSettings": "语音输入",
+  "voiceInputProvider": "识别服务",
+  "voiceInputProviderSystem": "系统",
+  "voiceInputProviderVolcengine": "豆包（火山引擎）",
+  "voiceInputProviderAliyun": "阿里云智能语音",
+  "voiceInputLanguage": "识别语言",
+  "voiceInputLanguageDefault": "跟随系统",
+  "voiceInputCredentials": "凭据",
+  "voiceInputVolcAppId": "App ID",
+  "voiceInputVolcAccessToken": "Access Token",
+  "voiceInputAliyunAccessKeyId": "AccessKey ID",
+  "voiceInputAliyunAccessKeySecret": "AccessKey Secret",
+  "voiceInputAliyunAppKey": "App Key",
+  "voiceInputTestConnection": "测试连接",
+  "voiceInputTestPassed": "连接成功，耗时 {ms} 毫秒",
+  "voiceInputTestFailed": "连接失败",
+  "voiceInputCloudPrivacyNote": "音频将直接发送给云服务商，不经过端到端加密的配对通道。"
 }

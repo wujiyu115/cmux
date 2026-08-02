@@ -186,4 +186,35 @@ void main() {
 
     expect(find.text('Voice input failed'), findsOneWidget);
   });
+
+  testWidgets('long-pressing the mic opens voice settings', (t) async {
+    await voice.load();
+    await pump(t);
+    await t.longPress(find.byKey(AppKeys.mobileComposerMicButton));
+    await t.pumpAndSettle();
+    expect(find.byKey(AppKeys.voiceSettingsPage), findsOneWidget);
+
+    // Pop back to the composer so the tree ends where the other tests leave it;
+    // disposing the shared focus node under a lingering route trips the focus
+    // manager during tearDown.
+    await t.tap(find.byType(BackButton));
+    await t.pumpAndSettle();
+  });
+
+  testWidgets('tapping an unconfigured mic opens voice settings', (t) async {
+    // The tap's only useful outcome is configuration, so go there instead of
+    // reporting a failure the user cannot act on from here.
+    await voiceRepository.savePrefs(
+      const VoiceInputPrefs(provider: SttProviderType.aliyun, localeId: ''),
+    );
+    await voice.load();
+    await pump(t);
+    await t.tap(find.byKey(AppKeys.mobileComposerMicButton));
+    await t.pumpAndSettle();
+    expect(find.byKey(AppKeys.voiceSettingsPage), findsOneWidget);
+    expect(provider.startCalls, 0);
+
+    await t.tap(find.byType(BackButton));
+    await t.pumpAndSettle();
+  });
 }

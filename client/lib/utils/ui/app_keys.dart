@@ -86,6 +86,14 @@ class AppKeys {
   static const mobileComposerCloseButton = Key('mobile-composer-close');
   static const mobileComposerSubmitToggle = Key('mobile-composer-submit');
   static const mobileComposerMicButton = Key('mobile-composer-mic');
+  static const voiceSettingsPage = Key('voice-settings-page');
+  static Key voiceSettingsProviderTile(String provider) =>
+      Key('voice-settings-provider-$provider');
+  static const voiceSettingsLanguageTile = Key('voice-settings-language');
+  static Key voiceSettingsCredentialField(String field) =>
+      Key('voice-settings-credential-$field');
+  static const voiceSettingsTestButton = Key('voice-settings-test');
+  static const mobileSettingsVoiceRow = Key('mobile-settings-voice');
   static Key pairingWorkspaceHeader(String workspaceId) =>
       Key('pairing-workspace-$workspaceId');
   static Key pairingOpenTerminalButton(String workspaceId) =>

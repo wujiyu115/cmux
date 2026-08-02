@@ -1305,5 +1305,27 @@
   "voiceInputBadgeVolcengine": "DOU",
   "voiceInputBadgeAliyun": "ALI",
   "voiceInputPermissionDenied": "Microphone access denied. Enable it in system settings.",
-  "voiceInputFailed": "Voice input failed"
+  "voiceInputFailed": "Voice input failed",
+  "voiceInputSettings": "Voice input",
+  "voiceInputProvider": "Recognition service",
+  "voiceInputProviderSystem": "System",
+  "voiceInputProviderVolcengine": "Doubao (Volcengine)",
+  "voiceInputProviderAliyun": "Alibaba Cloud NLS",
+  "voiceInputLanguage": "Language",
+  "voiceInputLanguageDefault": "System default",
+  "voiceInputCredentials": "Credentials",
+  "voiceInputVolcAppId": "App ID",
+  "voiceInputVolcAccessToken": "Access token",
+  "voiceInputAliyunAccessKeyId": "AccessKey ID",
+  "voiceInputAliyunAccessKeySecret": "AccessKey secret",
+  "voiceInputAliyunAppKey": "App key",
+  "voiceInputTestConnection": "Test connection",
+  "voiceInputTestPassed": "Connected in {ms} ms",
+  "@voiceInputTestPassed": {
+    "placeholders": {
+      "ms": { "type": "int" }
+    }
+  },
+  "voiceInputTestFailed": "Connection failed",
+  "voiceInputCloudPrivacyNote": "Audio is sent directly to the cloud provider, not through the encrypted pairing channel."
 }

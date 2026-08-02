@@ -9,6 +9,7 @@ import '../../../cubits/voice_input_cubit.dart';
 import '../../../l10n/l10n_extensions.dart';
 import '../../../services/stt/stt_provider.dart';
 import '../../../utils/ui/app_keys.dart';
+import '../voice/voice_settings_page.dart';
 import 'voice_failure_messenger.dart';
 
 /// Multi-line composer for the mirrored terminal.
@@ -181,15 +182,26 @@ class _MobileComposerPanelState extends State<MobileComposerPanel> {
                             return const SizedBox.shrink();
                           }
                           final voice = context.read<VoiceInputCubit>();
+                          void openSettings() => Navigator.of(context).push(
+                            VoiceSettingsPage.route(voice),
+                          );
                           return Padding(
                             padding: const EdgeInsets.only(right: 8),
                             child: _MicButton(
                               state: voiceState,
-                              // An unconfigured cloud backend has no credentials,
-                              // so startListening returns early and the tap is
-                              // inert; routing that tap to settings is Task 10.
-                              onStart: voice.startListening,
+                              // An unconfigured backend has no credentials, so a
+                              // tap could only fail opaquely from here.
+                              // Configuration is the tap's only useful outcome,
+                              // so send it to the settings page.
+                              onStart: voiceState.configured
+                                  ? voice.startListening
+                                  : openSettings,
                               onStop: voice.stopListening,
+                              // A spare gesture: dictation is tap-to-toggle, so
+                              // long-press is free to give the settings page a
+                              // close-at-hand entry (it is otherwise several
+                              // taps away on the home screen).
+                              onSettings: openSettings,
                             ),
                           );
                         },
@@ -251,17 +263,26 @@ class _CircleButton extends StatelessWidget {
 /// a provider badge, and a pulse ring while a session is live.
 ///
 /// Its own widget rather than a [_CircleButton] because the pulse needs an
-/// [AnimationController], which a `StatelessWidget` cannot own.
+/// [AnimationController], which a `StatelessWidget` cannot own. It also owns its
+/// own tap and long-press through a single [GestureDetector] rather than a
+/// [TpIconButton]: a tooltip's long-press recognizer would win the gesture
+/// arena and swallow [onSettings], and long-press-to-settings and a long-press
+/// tooltip cannot coexist anyway.
 class _MicButton extends StatefulWidget {
   const _MicButton({
     required this.state,
     required this.onStart,
     required this.onStop,
+    required this.onSettings,
   });
 
   final VoiceInputState state;
   final VoidCallback onStart;
   final VoidCallback onStop;
+
+  /// Opens the voice settings page — the long-press action, and the tap action
+  /// when the selected backend is unconfigured.
+  final VoidCallback onSettings;
 
   @override
   State<_MicButton> createState() => _MicButtonState();
@@ -305,58 +326,75 @@ class _MicButtonState extends State<_MicButton>
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = context.l10n;
     final status = widget.state.status;
 
-    final Widget control = switch (status) {
-      VoiceInputStatus.idle => _CircleButton(
-        buttonKey: AppKeys.mobileComposerMicButton,
-        icon: Icons.mic_none,
-        tooltip: l10n.voiceInputStart,
-        onTap: widget.onStart,
-      ),
-      // Minting a token and shaking hands takes a beat; a spinner reads as
-      // working, an idle-looking button reads as an unresponsive tap. Not
-      // tappable.
-      VoiceInputStatus.starting => Container(
-        width: MobileComposerPanel._buttonSize,
-        height: MobileComposerPanel._buttonSize,
-        decoration: BoxDecoration(
-          color: cs.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(
-            MobileComposerPanel._buttonSize / 2,
-          ),
-        ),
-        child: const Center(
-          child: SizedBox(
-            width: 18,
-            height: 18,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        ),
-      ),
-      VoiceInputStatus.listening => _CircleButton(
-        buttonKey: AppKeys.mobileComposerMicButton,
-        icon: Icons.mic,
-        tooltip: l10n.voiceInputStop,
-        filled: true,
-        onTap: widget.onStop,
-      ),
+    // The tap action, or null while starting — that window shows a spinner and
+    // must not be tappable.
+    final VoidCallback? onTap = switch (status) {
+      VoiceInputStatus.idle => widget.onStart,
+      VoiceInputStatus.starting => null,
+      VoiceInputStatus.listening => widget.onStop,
     };
 
-    return Stack(
-      clipBehavior: Clip.none,
-      alignment: Alignment.center,
-      children: [
-        if (status == VoiceInputStatus.listening)
-          _PulseRing(animation: _pulse, color: cs.primary),
-        control,
-        Positioned(
-          right: 0,
-          top: 0,
-          child: _ProviderBadge(provider: widget.state.provider),
+    final Widget control = switch (status) {
+      VoiceInputStatus.idle => _circle(cs, icon: Icons.mic_none),
+      // Minting a token and shaking hands takes a beat; a spinner reads as
+      // working, an idle-looking button reads as an unresponsive tap.
+      VoiceInputStatus.starting => _circle(
+        cs,
+        child: const SizedBox(
+          width: 18,
+          height: 18,
+          child: CircularProgressIndicator(strokeWidth: 2),
         ),
-      ],
+      ),
+      VoiceInputStatus.listening => _circle(cs, icon: Icons.mic, filled: true),
+    };
+
+    return GestureDetector(
+      // A single detector owns tap and long-press so the two never contend in
+      // the gesture arena the way a nested tooltip's long-press would.
+      key: status == VoiceInputStatus.starting
+          ? null
+          : AppKeys.mobileComposerMicButton,
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      onLongPress: widget.onSettings,
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.center,
+        children: [
+          if (status == VoiceInputStatus.listening)
+            _PulseRing(animation: _pulse, color: cs.primary),
+          control,
+          Positioned(
+            right: 0,
+            top: 0,
+            child: _ProviderBadge(provider: widget.state.provider),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// The mic's circular chip. Mirrors [_CircleButton]'s look without its
+  /// [TpIconButton] gestures, which the enclosing [GestureDetector] replaces.
+  Widget _circle(ColorScheme cs, {IconData? icon, Widget? child, bool filled = false}) {
+    return Container(
+      width: MobileComposerPanel._buttonSize,
+      height: MobileComposerPanel._buttonSize,
+      decoration: BoxDecoration(
+        color: filled ? cs.primary : cs.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(MobileComposerPanel._buttonSize / 2),
+      ),
+      child: Center(
+        child: child ??
+            Icon(
+              icon,
+              size: 18,
+              color: filled ? cs.onPrimary : cs.onSurfaceVariant,
+            ),
+      ),
     );
   }
 }

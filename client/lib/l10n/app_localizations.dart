@@ -5323,6 +5323,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Voice input failed'**
   String get voiceInputFailed;
+
+  /// No description provided for @voiceInputSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice input'**
+  String get voiceInputSettings;
+
+  /// No description provided for @voiceInputProvider.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognition service'**
+  String get voiceInputProvider;
+
+  /// No description provided for @voiceInputProviderSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get voiceInputProviderSystem;
+
+  /// No description provided for @voiceInputProviderVolcengine.
+  ///
+  /// In en, this message translates to:
+  /// **'Doubao (Volcengine)'**
+  String get voiceInputProviderVolcengine;
+
+  /// No description provided for @voiceInputProviderAliyun.
+  ///
+  /// In en, this message translates to:
+  /// **'Alibaba Cloud NLS'**
+  String get voiceInputProviderAliyun;
+
+  /// No description provided for @voiceInputLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get voiceInputLanguage;
+
+  /// No description provided for @voiceInputLanguageDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'System default'**
+  String get voiceInputLanguageDefault;
+
+  /// No description provided for @voiceInputCredentials.
+  ///
+  /// In en, this message translates to:
+  /// **'Credentials'**
+  String get voiceInputCredentials;
+
+  /// No description provided for @voiceInputVolcAppId.
+  ///
+  /// In en, this message translates to:
+  /// **'App ID'**
+  String get voiceInputVolcAppId;
+
+  /// No description provided for @voiceInputVolcAccessToken.
+  ///
+  /// In en, this message translates to:
+  /// **'Access token'**
+  String get voiceInputVolcAccessToken;
+
+  /// No description provided for @voiceInputAliyunAccessKeyId.
+  ///
+  /// In en, this message translates to:
+  /// **'AccessKey ID'**
+  String get voiceInputAliyunAccessKeyId;
+
+  /// No description provided for @voiceInputAliyunAccessKeySecret.
+  ///
+  /// In en, this message translates to:
+  /// **'AccessKey secret'**
+  String get voiceInputAliyunAccessKeySecret;
+
+  /// No description provided for @voiceInputAliyunAppKey.
+  ///
+  /// In en, this message translates to:
+  /// **'App key'**
+  String get voiceInputAliyunAppKey;
+
+  /// No description provided for @voiceInputTestConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Test connection'**
+  String get voiceInputTestConnection;
+
+  /// No description provided for @voiceInputTestPassed.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected in {ms} ms'**
+  String voiceInputTestPassed(int ms);
+
+  /// No description provided for @voiceInputTestFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection failed'**
+  String get voiceInputTestFailed;
+
+  /// No description provided for @voiceInputCloudPrivacyNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio is sent directly to the cloud provider, not through the encrypted pairing channel.'**
+  String get voiceInputCloudPrivacyNote;
 }
 
 class _AppLocalizationsDelegate

@@ -2767,4 +2767,57 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get voiceInputFailed => '语音输入失败';
+
+  @override
+  String get voiceInputSettings => '语音输入';
+
+  @override
+  String get voiceInputProvider => '识别服务';
+
+  @override
+  String get voiceInputProviderSystem => '系统';
+
+  @override
+  String get voiceInputProviderVolcengine => '豆包（火山引擎）';
+
+  @override
+  String get voiceInputProviderAliyun => '阿里云智能语音';
+
+  @override
+  String get voiceInputLanguage => '识别语言';
+
+  @override
+  String get voiceInputLanguageDefault => '跟随系统';
+
+  @override
+  String get voiceInputCredentials => '凭据';
+
+  @override
+  String get voiceInputVolcAppId => 'App ID';
+
+  @override
+  String get voiceInputVolcAccessToken => 'Access Token';
+
+  @override
+  String get voiceInputAliyunAccessKeyId => 'AccessKey ID';
+
+  @override
+  String get voiceInputAliyunAccessKeySecret => 'AccessKey Secret';
+
+  @override
+  String get voiceInputAliyunAppKey => 'App Key';
+
+  @override
+  String get voiceInputTestConnection => '测试连接';
+
+  @override
+  String voiceInputTestPassed(int ms) {
+    return '连接成功，耗时 $ms 毫秒';
+  }
+
+  @override
+  String get voiceInputTestFailed => '连接失败';
+
+  @override
+  String get voiceInputCloudPrivacyNote => '音频将直接发送给云服务商，不经过端到端加密的配对通道。';
 }

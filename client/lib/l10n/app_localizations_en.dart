@@ -2863,4 +2863,58 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get voiceInputFailed => 'Voice input failed';
+
+  @override
+  String get voiceInputSettings => 'Voice input';
+
+  @override
+  String get voiceInputProvider => 'Recognition service';
+
+  @override
+  String get voiceInputProviderSystem => 'System';
+
+  @override
+  String get voiceInputProviderVolcengine => 'Doubao (Volcengine)';
+
+  @override
+  String get voiceInputProviderAliyun => 'Alibaba Cloud NLS';
+
+  @override
+  String get voiceInputLanguage => 'Language';
+
+  @override
+  String get voiceInputLanguageDefault => 'System default';
+
+  @override
+  String get voiceInputCredentials => 'Credentials';
+
+  @override
+  String get voiceInputVolcAppId => 'App ID';
+
+  @override
+  String get voiceInputVolcAccessToken => 'Access token';
+
+  @override
+  String get voiceInputAliyunAccessKeyId => 'AccessKey ID';
+
+  @override
+  String get voiceInputAliyunAccessKeySecret => 'AccessKey secret';
+
+  @override
+  String get voiceInputAliyunAppKey => 'App key';
+
+  @override
+  String get voiceInputTestConnection => 'Test connection';
+
+  @override
+  String voiceInputTestPassed(int ms) {
+    return 'Connected in $ms ms';
+  }
+
+  @override
+  String get voiceInputTestFailed => 'Connection failed';
+
+  @override
+  String get voiceInputCloudPrivacyNote =>
+      'Audio is sent directly to the cloud provider, not through the encrypted pairing channel.';
 }

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 import '../../cubits/pairing_client_cubit.dart';
+import '../../cubits/voice_input_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../repositories/pairing_settings_repository.dart';
 import '../../theme/app_fonts.dart';
@@ -99,7 +100,12 @@ class _Header extends StatelessWidget {
             key: AppKeys.mobileSettingsButton,
             icon: Icons.settings_outlined,
             tooltip: context.l10n.settings,
-            onTap: () => showMobileSettingsSheet(context),
+            // The sheet mounts in the root navigator, above the shell's voice
+            // cubit; hand it the cubit read here so its voice row can reach it.
+            onTap: () => showMobileSettingsSheet(
+              context,
+              voiceCubit: context.read<VoiceInputCubit>(),
+            ),
           ),
         ],
       ),
