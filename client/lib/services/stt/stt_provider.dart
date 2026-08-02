@@ -72,6 +72,12 @@ abstract class SttProvider {
   /// It resolves `false` rather than throwing so the stream stays the single
   /// error channel — a rejected future nobody awaited would surface as an
   /// unhandled async error instead of as a message to the user.
+  ///
+  /// Scoped to one session: each [start] installs a fresh future that
+  /// supersedes the previous one, so a provider reused across a
+  /// stop-then-start cycle reports the new session rather than the old
+  /// verdict. Reading it before the first [start] is not defined — callers
+  /// only ever reach it by way of the stream [start] handed them.
   Future<bool> get ready;
 
   Future<void> stop();
