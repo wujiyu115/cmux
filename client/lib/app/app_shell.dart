@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../cubits/app_bootstrap_cubit.dart';
@@ -34,6 +35,8 @@ import '../cubits/ssh_connection_cubit.dart';
 import '../cubits/ssh_profile_cubit.dart';
 import '../models/runtime_target.dart';
 import '../models/ssh_profile.dart';
+import '../models/workspace_folder.dart';
+import '../models/workspace_topology.dart';
 import '../services/app/boot_splash.dart';
 import '../utils/ui/yield_ui_frame.dart';
 import '../l10n/app_localizations.dart';
@@ -50,6 +53,7 @@ import '../repositories/pairing_settings_repository.dart';
 import '../cubits/pairing_client_cubit.dart';
 import '../cubits/pairing_host_cubit.dart';
 import '../services/app/platform_utils.dart';
+import '../services/io/filesystem.dart';
 import '../services/pairing/device_registry.dart';
 import '../services/pairing/lan_pairing_server.dart';
 import '../services/pairing/pairing_crypto.dart';
@@ -770,11 +774,41 @@ Future<AppShell> buildAppShell({
       );
     }
 
+    // Phone → desktop image upload. Resolving the pane's machine lives here
+    // rather than in the pairing layer: this is the only place that has both
+    // the session repository and the runtime-context registry.
+    Future<String> pairingUploadSink({
+      required String workspaceId,
+      required String cwd,
+      required String filename,
+      required List<int> bytes,
+    }) async {
+      final workspaces = await sessionRepo.loadWorkspacesIndex();
+      final workspace = workspaces
+          .where((w) => w.workspaceId == workspaceId)
+          .firstOrNull;
+      final folders = workspace?.folders ?? const <WorkspaceFolder>[];
+      // Which machine owns this cwd. matchSubpaths so a pane launched in a
+      // subdirectory of a folder still resolves to that folder's target.
+      final targetId =
+          targetIdForFolderPaths(folders, [cwd], matchSubpaths: true) ??
+          (folders.isEmpty ? RuntimeTarget.localId : folders.first.targetId);
+      final context = await sessionLifecycleService
+          .resolveWorkContextForTargetId(targetId);
+      final fs = context.filesystem;
+      final pathContext = fs.pathContext;
+      await fs.ensureDir(cwd);
+      final destination = await _freeUploadPath(fs, pathContext, cwd, filename);
+      await fs.writeBytes(destination, bytes);
+      return destination;
+    }
+
     LanPairingServer serverFactory() => LanPairingServer(
       hostStaticKey: hostStaticKey,
       registry: deviceRegistry,
       catalog: sessionCatalog,
       hostName: Platform.localHostname,
+      uploadSink: pairingUploadSink,
       workspaceIndex: pairingWorkspaceIndex,
       activator: pairingActivate,
     );
@@ -906,6 +940,31 @@ List<SessionCatalogEntry> _workspaceCatalogEntries(
     }
   }
   return entries;
+}
+
+/// First unused path for [filename] in [cwd], suffixing `-1`, `-2`, … before the
+/// extension.
+///
+/// Never overwriting is also what keeps a symlink planted in the cwd from being
+/// followed: a pre-existing `photo.jpg` pointing at `/etc/passwd` makes us write
+/// `photo-1.jpg` instead. Anyone changing this must know that.
+Future<String> _freeUploadPath(
+  Filesystem fs,
+  p.Context pathContext,
+  String cwd,
+  String filename,
+) async {
+  final extension = pathContext.extension(filename);
+  final stem = pathContext.basenameWithoutExtension(filename);
+  for (var attempt = 0; attempt < 100; attempt++) {
+    final candidate = attempt == 0 ? filename : '$stem-$attempt$extension';
+    final path = pathContext.join(cwd, candidate);
+    final stat = await fs.stat(path);
+    if (!stat.exists) return path;
+  }
+  // A cwd already holding 100 same-named files is either pathological or an
+  // attempt to pin us in this loop.
+  throw StateError('no free upload path for $filename in $cwd');
 }
 
 /// Loads user-imported terminal themes into [UserTerminalThemeRegistry].

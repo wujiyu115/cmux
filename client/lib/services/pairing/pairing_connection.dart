@@ -9,6 +9,7 @@ import 'pairing_crypto.dart';
 import 'pairing_frames.dart';
 import 'pairing_offer.dart';
 import 'pairing_rpc_handler.dart';
+import 'pairing_upload_receiver.dart';
 import 'pairing_workspace_index.dart';
 import 'session_catalog.dart';
 import 'ws_transport.dart';
@@ -27,6 +28,7 @@ class PairingConnection {
     required DeviceRegistry registry,
     required SessionCatalog catalog,
     required String hostName,
+    required PairingUploadSink uploadSink,
     PairingWorkspaceIndexProvider? workspaceIndex,
     PairingSessionActivator? activator,
     void Function()? onClosed,
@@ -36,6 +38,7 @@ class PairingConnection {
        _registry = registry,
        _catalog = catalog,
        _hostName = hostName,
+       _uploadSink = uploadSink,
        _workspaceIndex = workspaceIndex,
        _activator = activator,
        _onClosed = onClosed;
@@ -46,6 +49,7 @@ class PairingConnection {
   final DeviceRegistry _registry;
   final SessionCatalog _catalog;
   final String _hostName;
+  final PairingUploadSink _uploadSink;
   final PairingWorkspaceIndexProvider? _workspaceIndex;
   final PairingSessionActivator? _activator;
   final void Function()? _onClosed;
@@ -154,6 +158,7 @@ class PairingConnection {
     _handler = PairingRpcHandler(
       catalog: _catalog,
       send: _sendEncrypted,
+      uploadSink: _uploadSink,
       workspaceIndex: _workspaceIndex,
       activator: _activator,
     );

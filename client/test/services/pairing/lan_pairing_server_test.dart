@@ -15,6 +15,12 @@ LanPairingServer _server(PairingKeyPair key) => LanPairingServer(
   registry: DeviceRegistry(InMemoryPairingKeyStore()),
   catalog: SessionCatalog(),
   hostName: 'Test Desktop',
+  uploadSink: ({
+    required String workspaceId,
+    required String cwd,
+    required String filename,
+    required List<int> bytes,
+  }) async => '',
 );
 
 void main() {

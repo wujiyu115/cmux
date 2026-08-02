@@ -5,6 +5,7 @@ import 'device_registry.dart';
 import 'pairing_connection.dart';
 import 'pairing_crypto.dart';
 import 'pairing_offer.dart';
+import 'pairing_upload_receiver.dart';
 import 'pairing_workspace_index.dart';
 import 'session_catalog.dart';
 import 'ws_transport.dart';
@@ -22,6 +23,7 @@ class LanPairingServer {
     required DeviceRegistry registry,
     required SessionCatalog catalog,
     required String hostName,
+    required PairingUploadSink uploadSink,
     PairingWorkspaceIndexProvider? workspaceIndex,
     PairingSessionActivator? activator,
     PairingOfferWindow? offerWindow,
@@ -29,6 +31,7 @@ class LanPairingServer {
        _registry = registry,
        _catalog = catalog,
        _hostName = hostName,
+       _uploadSink = uploadSink,
        _workspaceIndex = workspaceIndex,
        _activator = activator,
        offerWindow = offerWindow ?? PairingOfferWindow();
@@ -37,6 +40,7 @@ class LanPairingServer {
   final DeviceRegistry _registry;
   final SessionCatalog _catalog;
   final String _hostName;
+  final PairingUploadSink _uploadSink;
   final PairingWorkspaceIndexProvider? _workspaceIndex;
   final PairingSessionActivator? _activator;
 
@@ -95,6 +99,7 @@ class LanPairingServer {
       registry: _registry,
       catalog: _catalog,
       hostName: _hostName,
+      uploadSink: _uploadSink,
       workspaceIndex: _workspaceIndex,
       activator: _activator,
       onClosed: () => _connections.remove(connection),

@@ -14,6 +14,13 @@ class _MockSession extends Mock implements TerminalSession {}
 
 Uint8List _json(Map<String, Object?> data) => PairingCodec.encodeJson(data);
 
+Future<String> _noopSink({
+  required String workspaceId,
+  required String cwd,
+  required String filename,
+  required List<int> bytes,
+}) async => '';
+
 void main() {
   setUpAll(() => registerFallbackValue(Uint8List(0)));
 
@@ -51,6 +58,7 @@ void main() {
     handler = PairingRpcHandler(
       catalog: catalog,
       send: sent.add,
+      uploadSink: _noopSink,
       batchWindow: const Duration(milliseconds: 1),
     );
   });
@@ -279,6 +287,7 @@ void main() {
       handler = PairingRpcHandler(
         catalog: catalog,
         send: sent.add,
+        uploadSink: _noopSink,
         workspaceIndex: () async => const [
           PairingWorkspaceInfo(workspaceId: 'wsA', title: 'Workspace A'),
           PairingWorkspaceInfo(workspaceId: 'wsC', title: 'Dormant'),
@@ -336,6 +345,7 @@ void main() {
       handler = PairingRpcHandler(
         catalog: catalog,
         send: sent.add,
+        uploadSink: _noopSink,
         activatePollInterval: const Duration(milliseconds: 5),
         activator: (req) async {
           isLive = true;
@@ -364,6 +374,7 @@ void main() {
       handler = PairingRpcHandler(
         catalog: catalog,
         send: sent.add,
+        uploadSink: _noopSink,
         activateTimeout: const Duration(milliseconds: 20),
         activatePollInterval: const Duration(milliseconds: 5),
         activator: (req) async =>

@@ -16,6 +16,12 @@ class _FakeServer extends LanPairingServer {
         registry: DeviceRegistry(InMemoryPairingKeyStore()),
         catalog: SessionCatalog(),
         hostName: 'Test',
+        uploadSink: ({
+          required String workspaceId,
+          required String cwd,
+          required String filename,
+          required List<int> bytes,
+        }) async => '',
       );
 
   bool started = false;
