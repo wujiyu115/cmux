@@ -866,7 +866,13 @@ class _TeamPilotMaterialAppState extends State<_TeamPilotMaterialApp> {
       uiFontId: _sessionUiFontId,
       monoFontId: _sessionMonoFontId,
     );
-    final textScale = AppTypographyScale(multiplier: effectiveTextMult);
+    final textScale = AppTypographyScale(
+      multiplier: effectiveTextMult,
+      // Chrome takes the phone boost; the terminal opts out. A 15% larger face
+      // would cost ~7 columns on a phone, and column count is the scarce
+      // resource there.
+      terminalMultiplier: isPairingClient ? 1 / kMobileTextScaleBoost : 1.0,
+    );
     final iconScale = AppTypographyScale(multiplier: iconMultiplier);
     _cachedColorPreset = widget.colorPreset;
     _cachedTypographyScaleId = widget.typographyScaleId;

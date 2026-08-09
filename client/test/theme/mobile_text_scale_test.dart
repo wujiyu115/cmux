@@ -47,4 +47,40 @@ void main() {
     expect(autoTextScaleForSystem(0, 0, mobile: true), kMobileTextScaleBoost);
     expect(autoTextScaleForSystem(-1, -1, mobile: true), kMobileTextScaleBoost);
   });
+
+  group('the terminal opts out of the phone boost', () {
+    // Chrome grows, terminal does not: a 15% larger face costs roughly seven
+    // columns on a phone, and columns are the scarce resource there.
+    const phoneMultiplier =
+        kTypographyCustomMultiplierMax * kMobileTextScaleBoost;
+
+    test('terminal lands back on the unboosted size', () {
+      const boosted = AppTypographyScale(
+        multiplier: phoneMultiplier,
+        terminalMultiplier: 1 / kMobileTextScaleBoost,
+      );
+      const unboosted = AppTypographyScale(
+        multiplier: kTypographyCustomMultiplierMax,
+      );
+      expect(boosted.terminal, closeTo(unboosted.terminal, 1e-9));
+    });
+
+    test('chrome still grows while the terminal holds', () {
+      const boosted = AppTypographyScale(
+        multiplier: phoneMultiplier,
+        terminalMultiplier: 1 / kMobileTextScaleBoost,
+      );
+      const unboosted = AppTypographyScale(
+        multiplier: kTypographyCustomMultiplierMax,
+      );
+      expect(boosted.bodySmall, greaterThan(unboosted.bodySmall));
+      expect(boosted.bodyLarge, greaterThan(unboosted.bodyLarge));
+    });
+
+    test('the trim defaults to inert, so desktop is unaffected', () {
+      const desktop = AppTypographyScale(multiplier: 1.7);
+      expect(desktop.terminalMultiplier, 1.0);
+      expect(desktop.terminal, AppTypographyScale.terminalBase * 1.7);
+    });
+  });
 }

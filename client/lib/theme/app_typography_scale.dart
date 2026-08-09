@@ -135,7 +135,10 @@ AppTypographyScale typographyScaleForPreferences({
 
 @immutable
 final class AppTypographyScale {
-  const AppTypographyScale({this.multiplier = 1.0});
+  const AppTypographyScale({
+    this.multiplier = 1.0,
+    this.terminalMultiplier = 1.0,
+  });
 
   /// Default scale used by [buildLightTheme] / [buildDarkTheme].
   static const standard = AppTypographyScale();
@@ -148,6 +151,14 @@ final class AppTypographyScale {
 
   /// Applied to every role below (also composes with [MediaQuery.textScaler]).
   final double multiplier;
+
+  /// Terminal-only trim on top of [multiplier].
+  ///
+  /// Exists so the terminal can opt out of a UI-wide change: the phone's
+  /// [kMobileTextScaleBoost] enlarges chrome, but growing the terminal costs
+  /// columns (a 15% larger face drops an 80-column phone view to ~40), so the
+  /// host passes the inverse here and terminal glyphs stay put.
+  final double terminalMultiplier;
 
   // --- Base sizes at multiplier 1.0 (Material 3 type scale) ---
 
@@ -167,7 +178,6 @@ final class AppTypographyScale {
 
   /// xterm / bundled terminal face (not [TextTheme]).
   static const double terminalBase = 14;
-  static const double terminalMultiplier = 1.0;
 
   /// Code editor & log viewer monospace (defaults to body medium).
   static const double monoBase = bodyMediumBase;
