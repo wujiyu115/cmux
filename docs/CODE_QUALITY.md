@@ -14,6 +14,19 @@ flutter test --exclude-tags integration
 
 Run these commands and confirm success before claiming work is done.
 
+### Touched a native dependency? Compile a desktop target too
+
+If your change adds, removes or re-pins anything in `pubspec.yaml` that ships native code, also run:
+
+```bash
+cd client
+flutter build macos --debug
+```
+
+Neither gate above can see a `pod install` failure, and an iOS build cannot either — deployment targets are per-platform. Adding `speech_to_text`, which requires macOS 11.0, broke the desktop build against a project targeting 10.15 and stayed broken for an entire subproject because analyze and the test suite both stayed green.
+
+CI does not close this gap today: the `verify` matrix in [client-verify.yml](../.github/workflows/client-verify.yml) lists Linux, Windows and macOS, but its only compile step is `flutter build ios` — those three rows run analyze and the tests and never build the app. Until that changes, compiling a desktop target locally is the only check.
+
 ## Layering
 
 | Layer | Path | Responsibility |
