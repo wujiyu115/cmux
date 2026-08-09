@@ -13,6 +13,7 @@ import '../../cubits/pairing_client_cubit.dart';
 import '../../cubits/voice_input_cubit.dart';
 import '../../repositories/mobile_toolbar_repository.dart';
 import '../../services/stt/transcript_insertion.dart';
+import '../../services/terminal/terminal_fonts.dart';
 import '../../theme/app_fonts.dart';
 import '../../utils/shell_quote.dart';
 import '../../utils/ui/app_keys.dart';
@@ -180,6 +181,13 @@ class _PairingMirrorPageState extends State<PairingMirrorPage> {
                 child: TerminalView(
                   _engine,
                   controller: _controller,
+                  // Without this the view falls back to TerminalStyle.defaults(),
+                  // whose family is 'monospace' — a fontconfig generic that iOS
+                  // cannot resolve, so glyphs come from the proportional system
+                  // face while cells are sized from that same face's 'W'
+                  // advance. Narrow glyphs then float in oversized cells. The
+                  // desktop terminal has always passed this; the mirror did not.
+                  textStyle: appTerminalTextStyle(context),
                   autofocus: true,
                   padding: const EdgeInsets.all(4),
                   onPtyResize: (columns, rows) {
