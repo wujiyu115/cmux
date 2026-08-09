@@ -8,6 +8,7 @@ import '../repositories/pairing_settings_repository.dart';
 import '../services/pairing/local_lan_ip.dart';
 import '../services/pairing/pairing_client.dart';
 import '../services/pairing/pairing_offer.dart';
+import '../services/pairing/pairing_upload_sender.dart';
 
 /// Client-side pairing flow, mirroring orca's screens:
 /// idle → confirmAwaiting → confirmConnecting → connected → mirroring, with a
@@ -406,6 +407,26 @@ class PairingClientCubit extends Cubit<PairingClientState> {
   void sendResize(int cols, int rows) {
     final sub = _activeSubscription;
     if (sub != null) _client?.sendResize(sub.sub, cols, rows);
+  }
+
+  /// Ships [bytes] to the host, which writes them into the mirrored pane's
+  /// working directory and returns the absolute path it used.
+  Future<String> uploadImage({
+    required String filename,
+    required Uint8List bytes,
+    void Function(int sent, int total)? onProgress,
+  }) {
+    final sub = _activeSubscription;
+    final client = _client;
+    if (sub == null || client == null) {
+      throw const PairingUploadException('no_target');
+    }
+    return client.uploadFile(
+      sub: sub.sub,
+      filename: filename,
+      bytes: bytes,
+      onProgress: onProgress,
+    );
   }
 
   /// Cancels pairing / disconnects and returns to the host list.
