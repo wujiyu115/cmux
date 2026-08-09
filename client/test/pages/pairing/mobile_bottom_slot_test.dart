@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:teampilot/cubits/image_upload_cubit.dart';
 import 'package:teampilot/cubits/mobile_toolbar_cubit.dart';
 import 'package:teampilot/cubits/voice_input_cubit.dart';
 import 'package:teampilot/l10n/app_localizations.dart';
@@ -21,6 +22,7 @@ void main() {
   late List<List<int>> sent;
   late MobileToolbarCubit cubit;
   late VoiceInputCubit voice;
+  late ImageUploadCubit upload;
   late TextEditingController controller;
   late FocusNode focusNode;
 
@@ -41,6 +43,12 @@ void main() {
       repository: InMemoryVoiceInputRepository(),
       providerFactory: (_, _) => FakeSttProvider(),
     );
+    // The composer now requires an ImageUploadCubit in scope; this suite never
+    // exercises uploads, so the callbacks are inert.
+    upload = ImageUploadCubit(
+      pickImage: () async => null,
+      upload: ({required filename, required bytes, onProgress}) async => '',
+    );
     // The slot forwards these to the composer; the mirror page owns them, so
     // the test mirrors that ownership by creating and disposing them here.
     controller = TextEditingController();
@@ -50,6 +58,7 @@ void main() {
   tearDown(() async {
     await cubit.close();
     await voice.close();
+    await upload.close();
     controller.dispose();
     focusNode.dispose();
   });
@@ -72,6 +81,7 @@ void main() {
                 providers: [
                   BlocProvider.value(value: cubit),
                   BlocProvider.value(value: voice),
+                  BlocProvider.value(value: upload),
                 ],
                 child: MobileBottomSlot(
                   controller: controller,
@@ -103,9 +113,7 @@ void main() {
     expect(find.byType(MobileKeyboardToolbar), findsNothing);
   });
 
-  testWidgets('a usage-bumping emit does not unmount the composer', (
-    t,
-  ) async {
+  testWidgets('a usage-bumping emit does not unmount the composer', (t) async {
     await pump(t);
     cubit.toggleComposer();
     // Two frames so the composer is actually mounted before we type into it

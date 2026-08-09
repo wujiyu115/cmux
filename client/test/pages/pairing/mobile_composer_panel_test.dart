@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:teampilot/cubits/image_upload_cubit.dart';
 import 'package:teampilot/cubits/mobile_toolbar_cubit.dart';
 import 'package:teampilot/cubits/voice_input_cubit.dart';
 import 'package:teampilot/l10n/app_localizations.dart';
@@ -15,6 +16,7 @@ void main() {
   late List<List<int>> sent;
   late MobileToolbarCubit cubit;
   late VoiceInputCubit voice;
+  late ImageUploadCubit upload;
   late TextEditingController controller;
   late FocusNode focusNode;
 
@@ -33,6 +35,12 @@ void main() {
       repository: InMemoryVoiceInputRepository(),
       providerFactory: (_, _) => FakeSttProvider(),
     );
+    // The composer now requires an ImageUploadCubit in scope; this suite never
+    // exercises uploads, so the callbacks are inert.
+    upload = ImageUploadCubit(
+      pickImage: () async => null,
+      upload: ({required filename, required bytes, onProgress}) async => '',
+    );
     controller = TextEditingController();
     focusNode = FocusNode();
   });
@@ -40,6 +48,7 @@ void main() {
   tearDown(() async {
     await cubit.close();
     await voice.close();
+    await upload.close();
     controller.dispose();
     focusNode.dispose();
   });
@@ -58,6 +67,7 @@ void main() {
                 providers: [
                   BlocProvider.value(value: cubit),
                   BlocProvider.value(value: voice),
+                  BlocProvider.value(value: upload),
                 ],
                 child: MobileComposerPanel(
                   controller: controller,
@@ -72,7 +82,7 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('renders the field and its four controls', (t) async {
+  testWidgets('renders the field and its five controls', (t) async {
     await pump(t);
     expect(find.byKey(AppKeys.mobileComposerPanel), findsOneWidget);
     expect(find.text('Type a command'), findsOneWidget);
@@ -81,6 +91,8 @@ void main() {
       AppKeys.mobileComposerSendButton,
       AppKeys.mobileComposerCloseButton,
       AppKeys.mobileComposerSubmitToggle,
+      // The attach (+) button is the fifth control, added with image upload.
+      AppKeys.mobileComposerAttachButton,
     ]) {
       expect(find.byKey(key), findsOneWidget);
     }
@@ -115,7 +127,9 @@ void main() {
     await pump(t);
     await t.tap(find.byKey(AppKeys.mobileComposerSendButton));
     await t.pump();
-    expect(sent, [[0x0d]]);
+    expect(sent, [
+      [0x0d],
+    ]);
   });
 
   testWidgets('close returns the bottom slot to the key bar', (t) async {

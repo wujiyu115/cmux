@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import '../terminal/terminal_session.dart';
 import 'pairing_frames.dart';
+import 'pairing_upload_receiver.dart';
 import 'pairing_workspace_index.dart';
 import 'session_catalog.dart';
 
@@ -26,25 +27,40 @@ class _Subscription {
 /// channel, after auth). Owns this connection's subscription book; [dispose]
 /// tears every listener down so a dropped socket leaks nothing.
 ///
-/// Requests: `session.list`, `terminal.subscribe|unsubscribe|resize`, `ping`.
-/// Binary [InputFrame]s carry `terminal.input`. Output is pushed as batched
-/// binary frames with a monotonic `seq`, preceded on subscribe by one snapshot.
+/// Requests: `session.list`, `terminal.subscribe|unsubscribe|resize`,
+/// `upload.begin`, `upload.commit`, `ping`. Binary [InputFrame]s carry
+/// `terminal.input`; binary [UploadFrame]s carry image chunks (`_onUploadChunk`
+/// acks each accepted one). Output is pushed as batched binary frames with a
+/// monotonic `seq`, preceded on subscribe by one snapshot.
 class PairingRpcHandler {
   PairingRpcHandler({
     required SessionCatalog catalog,
     required PairingFrameSender send,
+    required PairingUploadSink uploadSink,
     Duration batchWindow = const Duration(milliseconds: 5),
     PairingWorkspaceIndexProvider? workspaceIndex,
     PairingSessionActivator? activator,
     Duration activateTimeout = const Duration(seconds: 8),
     Duration activatePollInterval = const Duration(milliseconds: 40),
+    int uploadMaxBytes = 25 * 1024 * 1024,
+    int uploadChunkSize = 64 * 1024,
+    // Injection point for tests: production always builds the receiver from the
+    // sink below. A fake here lets a test assert the handler's calls into it.
+    PairingUploadReceiver? uploadReceiver,
   }) : _catalog = catalog,
        _send = send,
        _batchWindow = batchWindow,
        _workspaceIndex = workspaceIndex,
        _activator = activator,
        _activateTimeout = activateTimeout,
-       _activatePollInterval = activatePollInterval;
+       _activatePollInterval = activatePollInterval,
+       _uploads =
+           uploadReceiver ??
+           PairingUploadReceiver(
+             sink: uploadSink,
+             maxBytes: uploadMaxBytes,
+             chunkSize: uploadChunkSize,
+           );
 
   final SessionCatalog _catalog;
   final PairingFrameSender _send;
@@ -53,6 +69,7 @@ class PairingRpcHandler {
   final PairingSessionActivator? _activator;
   final Duration _activateTimeout;
   final Duration _activatePollInterval;
+  final PairingUploadReceiver _uploads;
 
   final _subs = <int, _Subscription>{};
   var _nextSub = 1;
@@ -69,6 +86,8 @@ class PairingRpcHandler {
       case SnapshotFrame():
         // Host never receives output/snapshot frames — ignore defensively.
         break;
+      case UploadFrame(:final transferId, :final chunkIndex, :final bytes):
+        _onUploadChunk(transferId, chunkIndex, bytes);
     }
   }
 
@@ -94,6 +113,11 @@ class PairingRpcHandler {
       case 'terminal.resize':
         _resize(params);
         _replyResult(id, const {'ok': true});
+      case 'upload.begin':
+        _uploadBegin(id, params);
+      case 'upload.commit':
+        // `_handleJson` is sync; the commit awaits the sink write.
+        unawaited(_uploadCommit(id, params));
       case 'ping':
         _replyResult(id, const {'pong': true});
       default:
@@ -295,6 +319,70 @@ class PairingRpcHandler {
     }));
   }
 
+  /// Upload replies carry success in the *result* envelope rather than the
+  /// JSON-RPC `error` field: [_replyError] sends a bare string that the client
+  /// turns into `Exception(message)`, so a structured code could not survive
+  /// the trip. Do not "fix" this back to the error channel.
+  void _uploadBegin(Object? id, Map<String, Object?> params) {
+    final sub = params['sub'];
+    final filename = params['filename'];
+    final size = params['size'];
+    final record = sub is int ? _subs[sub] : null;
+    if (record == null || filename is! String || size is! int) {
+      _replyResult(id, const {'ok': false, 'code': 'no_target'});
+      return;
+    }
+    final entry = _catalog.resolve(record.catalogId);
+    if (entry == null) {
+      _replyResult(id, const {'ok': false, 'code': 'no_target'});
+      return;
+    }
+    final result = _uploads.begin(
+      workspaceId: entry.ref.workspaceId,
+      cwd: record.session.runtimeTarget.workingDirectory,
+      filename: filename,
+      size: size,
+    );
+    _replyResult(
+      id,
+      result.isOk
+          ? {
+              'ok': true,
+              'transferId': result.transferId,
+              'chunkSize': result.chunkSize,
+            }
+          : {'ok': false, 'code': result.code},
+    );
+  }
+
+  void _onUploadChunk(int transferId, int chunkIndex, Uint8List bytes) {
+    final result = _uploads.chunk(transferId, chunkIndex, bytes);
+    // Only a good chunk reopens the credit window. Acking a rejected chunk
+    // would let the phone keep streaming into a dead transfer.
+    if (!result.isOk) return;
+    _send(
+      PairingCodec.encodeJson({
+        'method': 'upload.ack',
+        'params': {'transferId': transferId, 'received': result.received},
+      }),
+    );
+  }
+
+  Future<void> _uploadCommit(Object? id, Map<String, Object?> params) async {
+    final transferId = params['transferId'];
+    if (transferId is! int) {
+      _replyResult(id, const {'ok': false, 'code': 'unknown_transfer'});
+      return;
+    }
+    final result = await _uploads.commit(transferId);
+    _replyResult(
+      id,
+      result.isOk
+          ? {'ok': true, 'path': result.path}
+          : {'ok': false, 'code': result.code},
+    );
+  }
+
   void _replyResult(Object? id, Map<String, Object?> result) {
     if (id == null) return;
     _send(PairingCodec.encodeJson({'id': id, 'result': result}));
@@ -308,6 +396,10 @@ class PairingRpcHandler {
   void dispose() {
     if (_disposed) return;
     _disposed = true;
+    // Release every unfinished transfer's bytes: a connection that closes
+    // mid-upload must not pin them, or a phone that reconnects repeatedly
+    // feeds the desktop's memory.
+    _uploads.abandonAll();
     for (final record in _subs.values) {
       record.flushTimer?.cancel();
       record.listener?.cancel();

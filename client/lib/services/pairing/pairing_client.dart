@@ -6,6 +6,7 @@ import '../../utils/logging/logger.dart';
 import 'e2ee_channel.dart';
 import 'pairing_crypto.dart';
 import 'pairing_frames.dart';
+import 'pairing_upload_sender.dart';
 import 'ws_transport.dart';
 
 /// The four observable phases of a pairing connect, in order. Emitted on
@@ -319,6 +320,8 @@ class PairingClient {
           _subs[sub]?.add(bytes);
         case InputFrame():
           break; // client never receives input frames
+        case UploadFrame():
+          break; // phone sends upload frames and never receives them
       }
     } on Object catch (e) {
       _emit('frame error: $e', error: true);
@@ -353,6 +356,17 @@ class PairingClient {
       if (!_sessionsChanged.isClosed) _sessionsChanged.add(null);
       return;
     }
+    if (method == 'upload.ack') {
+      final params = _params(data);
+      final transferId = params['transferId'];
+      final received = params['received'];
+      if (transferId is int && received is int && !_uploadAcks.isClosed) {
+        _uploadAcks.add(
+          PairingUploadAck(transferId: transferId, received: received),
+        );
+      }
+      return;
+    }
     // JSON-RPC response correlated by id.
     final id = data['id'];
     if (id is int) {
@@ -370,6 +384,12 @@ class PairingClient {
 
   /// Fires when the host reports its session set changed (refetch [listSessions]).
   Stream<void> get sessionsChanged => _sessionsChanged.stream;
+
+  final _uploadAcks = StreamController<PairingUploadAck>.broadcast();
+
+  /// Credit-window receipts for in-flight uploads. Broadcast because each
+  /// upload attaches its own filtered listener.
+  Stream<PairingUploadAck> get uploadAcks => _uploadAcks.stream;
 
   Future<List<PairingSessionSummary>> listSessions() async {
     final result = await _rpc('session.list');
@@ -478,6 +498,24 @@ class PairingClient {
     });
   }
 
+  Future<String> uploadFile({
+    required int sub,
+    required String filename,
+    required Uint8List bytes,
+    void Function(int sent, int total)? onProgress,
+  }) {
+    return PairingUploadSender(
+      rpc: _rpc,
+      send: _sendEncrypted,
+      acks: uploadAcks,
+    ).upload(
+      sub: sub,
+      filename: filename,
+      bytes: bytes,
+      onProgress: onProgress,
+    );
+  }
+
   Future<Map<String, Object?>> _rpc(
     String method, [
     Map<String, Object?> params = const {},
@@ -536,5 +574,6 @@ class PairingClient {
     await _log.close();
     await _stages.close();
     await _sessionsChanged.close();
+    await _uploadAcks.close();
   }
 }

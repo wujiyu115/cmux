@@ -2748,6 +2748,20 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mobileComposerSubmitOff => '发送不回车';
 
   @override
+  String get mobileComposerAttach => '附加图片';
+
+  @override
+  String get imageUploadFailed => '图片上传失败';
+
+  @override
+  String imageUploadTooLarge(int mb) {
+    return '图片超过 $mb MB';
+  }
+
+  @override
+  String get imageUploadUnsupportedType => '不支持该图片格式';
+
+  @override
   String get voiceInputStart => '开始语音输入';
 
   @override

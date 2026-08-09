@@ -6,6 +6,7 @@ import 'package:teampilot/cubits/pairing_client_cubit.dart';
 import 'package:teampilot/repositories/pairing_settings_repository.dart';
 import 'package:teampilot/services/pairing/pairing_client.dart';
 import 'package:teampilot/services/pairing/pairing_offer.dart';
+import 'package:teampilot/services/pairing/pairing_upload_sender.dart';
 
 /// Hand-rolled fake so the cubit runs its full flow without a real socket.
 class _FakePairingClient extends PairingClient {
@@ -38,6 +39,8 @@ class _FakePairingClient extends PairingClient {
   final _changedCtrl = StreamController<void>.broadcast();
   final List<(int, Uint8List)> sentInput = [];
   final List<(int, int, int)> sentResize = [];
+  final List<(int, String, Uint8List)> uploads = [];
+  String uploadPath = '/home/me/pics/photo.png';
   final List<int> unsubscribed = [];
   int listWorkspacesCalls = 0;
   bool closed = false;
@@ -112,6 +115,17 @@ class _FakePairingClient extends PairingClient {
   @override
   void sendResize(int sub, int cols, int rows) =>
       sentResize.add((sub, cols, rows));
+
+  @override
+  Future<String> uploadFile({
+    required int sub,
+    required String filename,
+    required Uint8List bytes,
+    void Function(int sent, int total)? onProgress,
+  }) async {
+    uploads.add((sub, filename, bytes));
+    return uploadPath;
+  }
 
   @override
   Future<void> close() async {
@@ -563,6 +577,50 @@ void main() {
       await cubit.removeDesktop('d1');
       expect(cubit.state.pairedDesktops, isEmpty);
       expect(await settings.loadPairedDesktops(), isEmpty);
+    });
+
+    test('uploadImage without an active mirror throws no_target', () async {
+      final cubit = PairingClientCubit(
+        settings: InMemoryPairingSettingsRepository(),
+        clientFactory: _FakePairingClient.new,
+      );
+      addTearDown(cubit.close);
+
+      expect(
+        () => cubit.uploadImage(
+          filename: 'photo.png',
+          bytes: Uint8List.fromList([1, 2, 3]),
+        ),
+        throwsA(
+          isA<PairingUploadException>().having(
+            (e) => e.code,
+            'code',
+            'no_target',
+          ),
+        ),
+      );
+    });
+
+    test('uploadImage forwards sub, filename, and bytes to the client',
+        () async {
+      final fake = _FakePairingClient()..uploadPath = '/host/wd/photo.png';
+      final cubit = PairingClientCubit(
+        settings: InMemoryPairingSettingsRepository(),
+        clientFactory: () => fake,
+      );
+      addTearDown(cubit.close);
+
+      cubit.beginPairing(_makeOffer());
+      await cubit.confirmPairing();
+      await cubit.openSession('ws:p1');
+
+      final bytes = Uint8List.fromList([9, 8, 7]);
+      final path = await cubit.uploadImage(filename: 'photo.png', bytes: bytes);
+
+      expect(path, '/host/wd/photo.png');
+      expect(fake.uploads.single.$1, 42);
+      expect(fake.uploads.single.$2, 'photo.png');
+      expect(fake.uploads.single.$3, bytes);
     });
   });
 }

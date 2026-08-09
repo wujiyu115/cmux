@@ -5282,6 +5282,30 @@ abstract class AppLocalizations {
   /// **'Send without Return'**
   String get mobileComposerSubmitOff;
 
+  /// No description provided for @mobileComposerAttach.
+  ///
+  /// In en, this message translates to:
+  /// **'Attach image'**
+  String get mobileComposerAttach;
+
+  /// No description provided for @imageUploadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Image upload failed'**
+  String get imageUploadFailed;
+
+  /// No description provided for @imageUploadTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'Image is larger than {mb} MB'**
+  String imageUploadTooLarge(int mb);
+
+  /// No description provided for @imageUploadUnsupportedType.
+  ///
+  /// In en, this message translates to:
+  /// **'That image type is not supported'**
+  String get imageUploadUnsupportedType;
+
   /// No description provided for @voiceInputStart.
   ///
   /// In en, this message translates to:

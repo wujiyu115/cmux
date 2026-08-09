@@ -4,14 +4,17 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_alacritty/flutter_alacritty.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../cubits/image_upload_cubit.dart';
 import '../../cubits/mobile_toolbar_cubit.dart';
 import '../../cubits/pairing_client_cubit.dart';
 import '../../cubits/voice_input_cubit.dart';
 import '../../repositories/mobile_toolbar_repository.dart';
 import '../../services/stt/transcript_insertion.dart';
 import '../../theme/app_fonts.dart';
+import '../../utils/shell_quote.dart';
 import '../../utils/ui/app_keys.dart';
 import 'mobile_toolbar/mobile_bottom_slot.dart';
 import 'pairing_nav_bar.dart';
@@ -42,6 +45,11 @@ class _PairingMirrorPageState extends State<PairingMirrorPage> {
   StreamSubscription<Uint8List>? _hostOutput;
   StreamSubscription<Uint8List>? _localInput;
   StreamSubscription<String>? _transcripts;
+
+  /// Picks and uploads one image at a time; created here so `image_picker`
+  /// stays out of the cubit and the cubit stays testable.
+  late final ImageUploadCubit _upload;
+  StreamSubscription<String>? _uploadPaths;
 
   /// Borrowed from the pairing shell — the page only ever stops it, never
   /// closes it. Captured here because [dispose] cannot `context.read`.
@@ -80,6 +88,32 @@ class _PairingMirrorPageState extends State<PairingMirrorPage> {
     _transcripts = _voice.transcripts.listen((text) {
       _composerText.value = insertTranscript(_composerText.value, text);
     });
+
+    _upload = ImageUploadCubit(
+      pickImage: _pickImage,
+      upload: cubit.uploadImage,
+    );
+    // The host decides the path; the phone never guesses it. Quote it so a cwd
+    // containing a space still yields one shell argument.
+    _uploadPaths = _upload.paths.listen((path) {
+      _composerText.value = insertTranscript(
+        _composerText.value,
+        '${shellQuotePath(path)} ',
+      );
+    });
+  }
+
+  /// Reads one gallery image off disk into memory. The only place `image_picker`
+  /// is used, so the cubit takes plain callbacks and stays testable. [XFile.name]
+  /// is already a bare filename with no directory part; the host validates it
+  /// independently, so both checks exist.
+  Future<PickedImage?> _pickImage() async {
+    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (picked == null) return null;
+    return PickedImage(
+      filename: picked.name,
+      bytes: await picked.readAsBytes(),
+    );
   }
 
   @override
@@ -90,12 +124,17 @@ class _PairingMirrorPageState extends State<PairingMirrorPage> {
     // write into a disposed controller. Stop the mic (never close — the shell
     // owns the cubit); one of the four paths that must not leave it hot.
     _transcripts?.cancel();
+    // Same reason as the transcript subscription: an upload can still land a
+    // path after this page is torn down, and that path must not be written into
+    // an already-disposed controller — so cancel before _composerText.dispose().
+    _uploadPaths?.cancel();
     _voice.stopListening();
     _controller.dispose();
     _engine.dispose();
     _composerText.dispose();
     _composerFocus.dispose();
     _toolbar.close();
+    _upload.close();
     super.dispose();
   }
 
@@ -156,6 +195,7 @@ class _PairingMirrorPageState extends State<PairingMirrorPage> {
                 providers: [
                   BlocProvider.value(value: _toolbar),
                   BlocProvider.value(value: _voice),
+                  BlocProvider.value(value: _upload),
                 ],
                 child: MobileBottomSlot(
                   controller: _composerText,

@@ -34,6 +34,8 @@ import '../cubits/ssh_connection_cubit.dart';
 import '../cubits/ssh_profile_cubit.dart';
 import '../models/runtime_target.dart';
 import '../models/ssh_profile.dart';
+import '../models/workspace_folder.dart';
+import '../models/workspace_topology.dart';
 import '../services/app/boot_splash.dart';
 import '../utils/ui/yield_ui_frame.dart';
 import '../l10n/app_localizations.dart';
@@ -53,6 +55,7 @@ import '../services/app/platform_utils.dart';
 import '../services/pairing/device_registry.dart';
 import '../services/pairing/lan_pairing_server.dart';
 import '../services/pairing/pairing_crypto.dart';
+import '../services/pairing/upload_destination.dart';
 import '../services/pairing/pairing_workspace_index.dart';
 import '../services/pairing/session_catalog.dart';
 import '../repositories/user_terminal_theme_repository.dart';
@@ -770,11 +773,44 @@ Future<AppShell> buildAppShell({
       );
     }
 
+    // Phone → desktop image upload. Resolving the pane's machine lives here
+    // rather than in the pairing layer: this is the only place that has both
+    // the session repository and the runtime-context registry.
+    Future<String> pairingUploadSink({
+      required String workspaceId,
+      required String cwd,
+      required String filename,
+      required List<int> bytes,
+    }) async {
+      final workspaces = await sessionRepo.loadWorkspacesIndex();
+      final workspace = workspaces
+          .where((w) => w.workspaceId == workspaceId)
+          .firstOrNull;
+      final folders = workspace?.folders ?? const <WorkspaceFolder>[];
+      // Which machine owns this cwd. matchSubpaths so a pane launched in a
+      // subdirectory of a folder still resolves to that folder's target.
+      final targetId =
+          targetIdForFolderPaths(folders, [cwd], matchSubpaths: true) ??
+          (folders.isEmpty ? RuntimeTarget.localId : folders.first.targetId);
+      final context = await sessionLifecycleService
+          .resolveWorkContextForTargetId(targetId);
+      final fs = context.filesystem;
+      await fs.ensureDir(cwd);
+      final destination = await resolveUploadDestination(
+        filesystem: fs,
+        directory: cwd,
+        filename: filename,
+      );
+      await fs.writeBytes(destination, bytes);
+      return destination;
+    }
+
     LanPairingServer serverFactory() => LanPairingServer(
       hostStaticKey: hostStaticKey,
       registry: deviceRegistry,
       catalog: sessionCatalog,
       hostName: Platform.localHostname,
+      uploadSink: pairingUploadSink,
       workspaceIndex: pairingWorkspaceIndex,
       activator: pairingActivate,
     );

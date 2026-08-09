@@ -1299,6 +1299,15 @@
   "mobileComposerSend": "Send",
   "mobileComposerSubmitOn": "Send with Return",
   "mobileComposerSubmitOff": "Send without Return",
+  "mobileComposerAttach": "Attach image",
+  "imageUploadFailed": "Image upload failed",
+  "imageUploadTooLarge": "Image is larger than {mb} MB",
+  "@imageUploadTooLarge": {
+    "placeholders": {
+      "mb": { "type": "int" }
+    }
+  },
+  "imageUploadUnsupportedType": "That image type is not supported",
   "voiceInputStart": "Start dictation",
   "voiceInputStop": "Stop dictation",
   "voiceInputBadgeSystem": "SYS",

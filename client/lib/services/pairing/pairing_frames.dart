@@ -10,10 +10,14 @@ import 'dart:typed_data';
 /// - **Binary terminal** (`0x02` output / `0x03` input / `0x04` snapshot) — the
 ///   hot path. Raw PTY bytes with a varint `sub` (+ `seq` for host→client) and
 ///   no base64 inflation.
+/// - **Binary upload** (`0x05`) — phone→host file chunks with a varint
+///   `transferId` and `chunkIndex`. Bookended by `upload.begin` /
+///   `upload.commit` JSON-RPC; the chunks themselves stay binary so a photo
+///   does not pay base64's 33% inflation.
 ///
 /// The plaintext handshake frames (`hello`/`hello.ack`) are plain JSON on the
 /// socket and never pass through here.
-enum PairingFrameKind { json, output, input, snapshot }
+enum PairingFrameKind { json, output, input, snapshot, upload }
 
 sealed class PairingFrame {
   const PairingFrame();
@@ -44,6 +48,13 @@ class InputFrame extends PairingFrame {
   final Uint8List bytes;
 }
 
+class UploadFrame extends PairingFrame {
+  const UploadFrame(this.transferId, this.chunkIndex, this.bytes);
+  final int transferId;
+  final int chunkIndex;
+  final Uint8List bytes;
+}
+
 class PairingCodec {
   const PairingCodec._();
 
@@ -51,6 +62,7 @@ class PairingCodec {
   static const _kOutput = 0x02;
   static const _kInput = 0x03;
   static const _kSnapshot = 0x04;
+  static const _kUpload = 0x05;
 
   static Uint8List encodeJson(Map<String, Object?> data) {
     final body = utf8.encode(jsonEncode(data));
@@ -70,6 +82,15 @@ class PairingCodec {
     final builder = _Writer()
       ..byte(_kInput)
       ..varint(sub)
+      ..raw(bytes);
+    return builder.take();
+  }
+
+  static Uint8List encodeUpload(int transferId, int chunkIndex, Uint8List bytes) {
+    final builder = _Writer()
+      ..byte(_kUpload)
+      ..varint(transferId)
+      ..varint(chunkIndex)
       ..raw(bytes);
     return builder.take();
   }
@@ -113,6 +134,10 @@ class PairingCodec {
       case _kInput:
         final sub = reader.varint();
         return InputFrame(sub, reader.rest());
+      case _kUpload:
+        final transferId = reader.varint();
+        final chunkIndex = reader.varint();
+        return UploadFrame(transferId, chunkIndex, reader.rest());
       default:
         throw FormatException('unknown pairing frame kind: $kind');
     }
