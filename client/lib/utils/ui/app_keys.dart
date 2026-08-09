@@ -86,6 +86,7 @@ class AppKeys {
   static const mobileComposerCloseButton = Key('mobile-composer-close');
   static const mobileComposerSubmitToggle = Key('mobile-composer-submit');
   static const mobileComposerMicButton = Key('mobile-composer-mic');
+  static const mobileComposerAttachButton = Key('mobile-composer-attach');
   static const voiceSettingsPage = Key('voice-settings-page');
   static Key voiceSettingsProviderTile(String provider) =>
       Key('voice-settings-provider-$provider');

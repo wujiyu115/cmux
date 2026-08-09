@@ -4,12 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_ui/shared_ui.dart';
 
+import '../../../cubits/image_upload_cubit.dart';
 import '../../../cubits/mobile_toolbar_cubit.dart';
 import '../../../cubits/voice_input_cubit.dart';
 import '../../../l10n/l10n_extensions.dart';
 import '../../../services/stt/stt_provider.dart';
 import '../../../utils/ui/app_keys.dart';
 import '../voice/voice_settings_page.dart';
+import 'upload_failure_messenger.dart';
 import 'voice_failure_messenger.dart';
 
 /// Multi-line composer for the mirrored terminal.
@@ -76,147 +78,165 @@ class _MobileComposerPanelState extends State<MobileComposerPanel> {
     final cs = Theme.of(context).colorScheme;
     final l10n = context.l10n;
     final cubit = context.read<MobileToolbarCubit>();
-    return VoiceFailureMessenger(
-      failures: _voice.failures,
-      child: DecoratedBox(
-        key: AppKeys.mobileComposerPanel,
-        decoration: BoxDecoration(
-          color: cs.surface,
-          border: Border(top: BorderSide(color: cs.outlineVariant, width: 0.5)),
-        ),
-        child: SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxHeight: MobileComposerPanel._fieldMaxHeight,
-                  ),
-                  child: Scrollbar(
-                    child: TextField(
-                      key: AppKeys.mobileComposerField,
-                      controller: widget.controller,
-                      focusNode: widget.focusNode,
-                      style: TextStyle(color: cs.onSurface, fontSize: 15),
-                      minLines: 3,
-                      maxLines: null,
-                      keyboardType: TextInputType.multiline,
-                      textInputAction: TextInputAction.newline,
-                      decoration: InputDecoration(
-                        hintText: l10n.mobileComposerHint,
-                        hintStyle: TextStyle(color: cs.onSurfaceVariant),
-                        filled: true,
-                        fillColor: cs.surfaceContainerHighest,
-                        isDense: true,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 10,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide.none,
+    // Two messengers stacked, not merged: each stream maps to different copy,
+    // and a shared messenger would have to erase the failure type to do both.
+    return UploadFailureMessenger(
+      failures: context.read<ImageUploadCubit>().failures,
+      child: VoiceFailureMessenger(
+        failures: _voice.failures,
+        child: DecoratedBox(
+          key: AppKeys.mobileComposerPanel,
+          decoration: BoxDecoration(
+            color: cs.surface,
+            border: Border(
+              top: BorderSide(color: cs.outlineVariant, width: 0.5),
+            ),
+          ),
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxHeight: MobileComposerPanel._fieldMaxHeight,
+                    ),
+                    child: Scrollbar(
+                      child: TextField(
+                        key: AppKeys.mobileComposerField,
+                        controller: widget.controller,
+                        focusNode: widget.focusNode,
+                        style: TextStyle(color: cs.onSurface, fontSize: 15),
+                        minLines: 3,
+                        maxLines: null,
+                        keyboardType: TextInputType.multiline,
+                        textInputAction: TextInputAction.newline,
+                        decoration: InputDecoration(
+                          hintText: l10n.mobileComposerHint,
+                          hintStyle: TextStyle(color: cs.onSurfaceVariant),
+                          filled: true,
+                          fillColor: cs.surfaceContainerHighest,
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide.none,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                BlocBuilder<MobileToolbarCubit, MobileToolbarState>(
-                  // Only the Return-mode flag changes anything in this row, and
-                  // the state re-emits on every key tap.
-                  buildWhen: (before, after) =>
-                      before.chatMode != after.chatMode,
-                  builder: (context, state) => Row(
-                    children: [
-                      _CircleButton(
-                        buttonKey: AppKeys.mobileComposerCloseButton,
-                        icon: Icons.close,
-                        tooltip: l10n.mobileComposerClose,
-                        onTap: () {
-                          // One of the four paths that must not leave the
-                          // microphone hot. Fire-and-forget: the callback is
-                          // synchronous and the stop is best-effort.
-                          context.read<VoiceInputCubit>().stopListening();
-                          // Drop the keyboard before the field disappears —
-                          // otherwise the focus node stays focused with no
-                          // TextField mounted and the keyboard hangs around over
-                          // the key bar.
-                          FocusScope.of(context).unfocus();
-                          cubit.setMode(MobileInputMode.keys);
-                        },
-                      ),
-                      const SizedBox(width: 8),
-                      _CircleButton(
-                        icon: Icons.keyboard_hide,
-                        tooltip: l10n.mobileToolbarHideKeyboard,
-                        onTap: () => FocusScope.of(context).unfocus(),
-                      ),
-                      const SizedBox(width: 8),
-                      _CircleButton(
-                        buttonKey: AppKeys.mobileComposerSubmitToggle,
-                        icon: state.chatMode
-                            ? Icons.keyboard_return
-                            : Icons.text_fields,
-                        tooltip: state.chatMode
-                            ? l10n.mobileComposerSubmitOn
-                            : l10n.mobileComposerSubmitOff,
-                        filled: state.chatMode,
-                        onTap: cubit.toggleChatMode,
-                      ),
-                      const Spacer(),
-                      BlocBuilder<VoiceInputCubit, VoiceInputState>(
-                        // VoiceInputState has no value equality: without this
-                        // guard every emit would rebuild — and restart — the
-                        // pulse animation.
-                        buildWhen: (a, b) =>
-                            a.status != b.status ||
-                            a.available != b.available ||
-                            a.provider != b.provider,
-                        builder: (context, voiceState) {
-                          // No backend can run: a tap could only ever fail, so
-                          // the mic is not offered.
-                          if (!voiceState.available) {
-                            return const SizedBox.shrink();
-                          }
-                          final voice = context.read<VoiceInputCubit>();
-                          void openSettings() => Navigator.of(context).push(
-                            VoiceSettingsPage.route(voice),
-                          );
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: _MicButton(
-                              state: voiceState,
-                              // An unconfigured backend has no credentials, so a
-                              // tap could only fail opaquely from here.
-                              // Configuration is the tap's only useful outcome,
-                              // so send it to the settings page.
-                              onStart: voiceState.configured
-                                  ? voice.startListening
-                                  : openSettings,
-                              onStop: voice.stopListening,
-                              // A spare gesture: dictation is tap-to-toggle, so
-                              // long-press is free to give the settings page a
-                              // close-at-hand entry (it is otherwise several
-                              // taps away on the home screen).
-                              onSettings: openSettings,
-                            ),
-                          );
-                        },
-                      ),
-                      _CircleButton(
-                        buttonKey: AppKeys.mobileComposerSendButton,
-                        icon: Icons.arrow_upward,
-                        tooltip: l10n.mobileComposerSend,
-                        filled: true,
-                        onTap: () => _send(state.chatMode),
-                      ),
-                    ],
+                  const SizedBox(height: 8),
+                  BlocBuilder<MobileToolbarCubit, MobileToolbarState>(
+                    // Only the Return-mode flag changes anything in this row, and
+                    // the state re-emits on every key tap.
+                    buildWhen: (before, after) =>
+                        before.chatMode != after.chatMode,
+                    builder: (context, state) => Row(
+                      children: [
+                        _CircleButton(
+                          buttonKey: AppKeys.mobileComposerCloseButton,
+                          icon: Icons.close,
+                          tooltip: l10n.mobileComposerClose,
+                          onTap: () {
+                            // One of the four paths that must not leave the
+                            // microphone hot. Fire-and-forget: the callback is
+                            // synchronous and the stop is best-effort.
+                            context.read<VoiceInputCubit>().stopListening();
+                            // Drop the keyboard before the field disappears —
+                            // otherwise the focus node stays focused with no
+                            // TextField mounted and the keyboard hangs around over
+                            // the key bar.
+                            FocusScope.of(context).unfocus();
+                            cubit.setMode(MobileInputMode.keys);
+                          },
+                        ),
+                        const SizedBox(width: 8),
+                        _CircleButton(
+                          icon: Icons.keyboard_hide,
+                          tooltip: l10n.mobileToolbarHideKeyboard,
+                          onTap: () => FocusScope.of(context).unfocus(),
+                        ),
+                        const SizedBox(width: 8),
+                        _CircleButton(
+                          buttonKey: AppKeys.mobileComposerSubmitToggle,
+                          icon: state.chatMode
+                              ? Icons.keyboard_return
+                              : Icons.text_fields,
+                          tooltip: state.chatMode
+                              ? l10n.mobileComposerSubmitOn
+                              : l10n.mobileComposerSubmitOff,
+                          filled: state.chatMode,
+                          onTap: cubit.toggleChatMode,
+                        ),
+                        const SizedBox(width: 8),
+                        BlocBuilder<ImageUploadCubit, ImageUploadState>(
+                          // ImageUploadState has no value equality and progress
+                          // emits on every ack, so this guard keeps the rest of
+                          // the row out of the rebuild.
+                          buildWhen: (before, after) =>
+                              before.status != after.status ||
+                              before.progress != after.progress,
+                          builder: (context, upload) =>
+                              _AttachButton(state: upload),
+                        ),
+                        const Spacer(),
+                        BlocBuilder<VoiceInputCubit, VoiceInputState>(
+                          // VoiceInputState has no value equality: without this
+                          // guard every emit would rebuild — and restart — the
+                          // pulse animation.
+                          buildWhen: (a, b) =>
+                              a.status != b.status ||
+                              a.available != b.available ||
+                              a.provider != b.provider,
+                          builder: (context, voiceState) {
+                            // No backend can run: a tap could only ever fail, so
+                            // the mic is not offered.
+                            if (!voiceState.available) {
+                              return const SizedBox.shrink();
+                            }
+                            final voice = context.read<VoiceInputCubit>();
+                            void openSettings() => Navigator.of(
+                              context,
+                            ).push(VoiceSettingsPage.route(voice));
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: _MicButton(
+                                state: voiceState,
+                                // An unconfigured backend has no credentials, so a
+                                // tap could only fail opaquely from here.
+                                // Configuration is the tap's only useful outcome,
+                                // so send it to the settings page.
+                                onStart: voiceState.configured
+                                    ? voice.startListening
+                                    : openSettings,
+                                onStop: voice.stopListening,
+                                // A spare gesture: dictation is tap-to-toggle, so
+                                // long-press is free to give the settings page a
+                                // close-at-hand entry (it is otherwise several
+                                // taps away on the home screen).
+                                onSettings: openSettings,
+                              ),
+                            );
+                          },
+                        ),
+                        _CircleButton(
+                          buttonKey: AppKeys.mobileComposerSendButton,
+                          icon: Icons.arrow_upward,
+                          tooltip: l10n.mobileComposerSend,
+                          filled: true,
+                          onTap: () => _send(state.chatMode),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -255,6 +275,60 @@ class _CircleButton extends StatelessWidget {
       borderRadius: MobileComposerPanel._buttonSize / 2,
       color: filled ? cs.onPrimary : cs.onSurfaceVariant,
       backgroundColor: filled ? cs.primary : cs.surfaceContainerHighest,
+    );
+  }
+}
+
+/// The attach-image control: a `+` when idle, a spinner while picking or
+/// uploading.
+///
+/// The uploading spinner is *determinate* — deliberately unlike every other
+/// progress indicator in the pairing UI, which all spin indeterminately. During
+/// an upload the byte count is genuinely known, and an indeterminate ring would
+/// throw that information away. While picking there is no byte count yet, so the
+/// ring falls back to indeterminate.
+class _AttachButton extends StatelessWidget {
+  const _AttachButton({required this.state});
+
+  final ImageUploadState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
+
+    if (state.status == ImageUploadStatus.idle) {
+      return _CircleButton(
+        buttonKey: AppKeys.mobileComposerAttachButton,
+        icon: Icons.add,
+        tooltip: l10n.mobileComposerAttach,
+        onTap: () => context.read<ImageUploadCubit>().pickAndUpload(),
+      );
+    }
+
+    // Picking or uploading: a non-tappable chip matching [_CircleButton]'s look.
+    return Container(
+      width: MobileComposerPanel._buttonSize,
+      height: MobileComposerPanel._buttonSize,
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(
+          MobileComposerPanel._buttonSize / 2,
+        ),
+      ),
+      child: Center(
+        child: SizedBox(
+          width: 18,
+          height: 18,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            // Determinate only while uploading; picking has no bytes yet.
+            value: state.status == ImageUploadStatus.uploading
+                ? state.progress
+                : null,
+          ),
+        ),
+      ),
     );
   }
 }
@@ -391,16 +465,24 @@ class _MicButtonState extends State<_MicButton>
 
   /// The mic's circular chip. Mirrors [_CircleButton]'s look without its
   /// [TpIconButton] gestures, which the enclosing [GestureDetector] replaces.
-  Widget _circle(ColorScheme cs, {IconData? icon, Widget? child, bool filled = false}) {
+  Widget _circle(
+    ColorScheme cs, {
+    IconData? icon,
+    Widget? child,
+    bool filled = false,
+  }) {
     return Container(
       width: MobileComposerPanel._buttonSize,
       height: MobileComposerPanel._buttonSize,
       decoration: BoxDecoration(
         color: filled ? cs.primary : cs.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(MobileComposerPanel._buttonSize / 2),
+        borderRadius: BorderRadius.circular(
+          MobileComposerPanel._buttonSize / 2,
+        ),
       ),
       child: Center(
-        child: child ??
+        child:
+            child ??
             Icon(
               icon,
               size: 18,

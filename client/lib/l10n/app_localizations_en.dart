@@ -2843,6 +2843,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mobileComposerSubmitOff => 'Send without Return';
 
   @override
+  String get mobileComposerAttach => 'Attach image';
+
+  @override
+  String get imageUploadFailed => 'Image upload failed';
+
+  @override
+  String imageUploadTooLarge(int mb) {
+    return 'Image is larger than $mb MB';
+  }
+
+  @override
+  String get imageUploadUnsupportedType => 'That image type is not supported';
+
+  @override
   String get voiceInputStart => 'Start dictation';
 
   @override
