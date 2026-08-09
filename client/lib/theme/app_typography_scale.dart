@@ -67,6 +67,14 @@ String normalizeTypographyScale(String? raw) {
 double clampTypographyCustomMultiplier(double value) =>
     value.clamp(kTypographyCustomMultiplierMin, kTypographyCustomMultiplierMax);
 
+/// Extra text scale for phones, on top of the dpr-normalized baseline.
+///
+/// The base sizes are tuned for a desktop viewing distance; at arm's length a
+/// 12pt subtitle reads small. Scales text and icons only — [TpSpacing] is
+/// pinned to 1.0 by the host, so density is unchanged (whole-UI growth is the
+/// separate `uiZoomScale` knob).
+const double kMobileTextScaleBoost = 1.15;
+
 /// `standard` text-size baseline: the OS's intended *physical* text scale =
 /// [osTextScale] (e.g. GNOME text-scaling-factor; 1.0 where the OS has none) ×
 /// [devicePixelRatio] (display scaling). The `standard` preset maps to this;
@@ -74,10 +82,19 @@ double clampTypographyCustomMultiplier(double value) =>
 /// interface zoom (1/dpr) this renders text at the size the OS would while
 /// icons/spacing stay compact. e.g. Ubuntu GNOME 1.5 @100% → 1.5; Windows @150%
 /// → 1.5.
-double autoTextScaleForSystem(double osTextScale, double devicePixelRatio) {
+///
+/// [mobile] applies [kMobileTextScaleBoost] *after* the clamp. A 3x phone
+/// already saturates the baseline at [kTypographyCustomMultiplierMax], so
+/// folding the boost in beforehand would be silently discarded.
+double autoTextScaleForSystem(
+  double osTextScale,
+  double devicePixelRatio, {
+  bool mobile = false,
+}) {
   final dpr = devicePixelRatio <= 0 ? 1.0 : devicePixelRatio;
   final os = osTextScale <= 0 ? 1.0 : osTextScale;
-  return clampTypographyCustomMultiplier(os * dpr);
+  final baseline = clampTypographyCustomMultiplier(os * dpr);
+  return mobile ? baseline * kMobileTextScaleBoost : baseline;
 }
 
 /// Effective scale = [baseline] × the relative preset multiplier (compact 0.92,

@@ -837,6 +837,8 @@ class _TeamPilotMaterialAppState extends State<_TeamPilotMaterialApp> {
     final textBaseline = autoTextScaleForSystem(
       systemMq.textScaler.scale(1.0),
       systemMq.devicePixelRatio,
+      // The phone build is read at arm's length, not desk distance.
+      mobile: isPairingClient,
     );
     final effectiveTextMult = resolveRelativeScale(
       scaleId: widget.typographyScaleId,
