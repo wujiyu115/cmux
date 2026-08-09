@@ -3,6 +3,7 @@ import 'package:shared_ui/shared_ui.dart';
 
 import '../../l10n/l10n_extensions.dart';
 import '../../theme/app_fonts.dart';
+import '../../theme/app_typography_scale.dart';
 import '../../utils/ui/app_keys.dart';
 
 /// This phone's own network context above the hosts list. Pairing fails most
@@ -20,6 +21,7 @@ class PairingNetworkStrip extends StatelessWidget {
     if (ip == null || ip.isEmpty) return const SizedBox.shrink();
     final cs = Theme.of(context).colorScheme;
     final spacing = context.tpSpacing;
+    final typography = context.appTypography;
     return Padding(
       key: AppKeys.pairingNetworkStrip,
       padding: EdgeInsets.only(bottom: spacing.md),
@@ -35,7 +37,7 @@ class PairingNetworkStrip extends StatelessWidget {
               ip,
               style: appMonoTextStyle(
                 context,
-                fontSize: 12,
+                fontSize: typography.bodySmall,
                 color: cs.onSurfaceVariant,
               ),
               maxLines: 1,

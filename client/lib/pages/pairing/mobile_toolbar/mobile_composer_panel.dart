@@ -9,6 +9,7 @@ import '../../../cubits/mobile_toolbar_cubit.dart';
 import '../../../cubits/voice_input_cubit.dart';
 import '../../../l10n/l10n_extensions.dart';
 import '../../../services/stt/stt_provider.dart';
+import '../../../theme/app_typography_scale.dart';
 import '../../../utils/ui/app_keys.dart';
 import '../voice/voice_settings_page.dart';
 import 'upload_failure_messenger.dart';
@@ -77,6 +78,7 @@ class _MobileComposerPanelState extends State<MobileComposerPanel> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final l10n = context.l10n;
+    final typography = context.appTypography;
     final cubit = context.read<MobileToolbarCubit>();
     // Two messengers stacked, not merged: each stream maps to different copy,
     // and a shared messenger would have to erase the failure type to do both.
@@ -108,7 +110,10 @@ class _MobileComposerPanelState extends State<MobileComposerPanel> {
                         key: AppKeys.mobileComposerField,
                         controller: widget.controller,
                         focusNode: widget.focusNode,
-                        style: TextStyle(color: cs.onSurface, fontSize: 15),
+                        style: TextStyle(
+                          color: cs.onSurface,
+                          fontSize: typography.bodyLarge,
+                        ),
                         minLines: 3,
                         maxLines: null,
                         keyboardType: TextInputType.multiline,
@@ -548,6 +553,9 @@ class _ProviderBadge extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
+          // Fixed, not typography-scaled: this badge sits in the corner of a
+          // fixed 34pt circular chip and would overflow it if it grew with the
+          // text scale. Leave it literal so the chip stays intact.
           fontSize: 8,
           height: 1,
           fontWeight: FontWeight.w700,

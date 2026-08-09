@@ -15,6 +15,7 @@ import '../../repositories/mobile_toolbar_repository.dart';
 import '../../services/stt/transcript_insertion.dart';
 import '../../services/terminal/terminal_fonts.dart';
 import '../../theme/app_fonts.dart';
+import '../../theme/app_typography_scale.dart';
 import '../../utils/shell_quote.dart';
 import '../../utils/ui/app_keys.dart';
 import 'mobile_toolbar/mobile_bottom_slot.dart';
@@ -142,6 +143,7 @@ class _PairingMirrorPageState extends State<PairingMirrorPage> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final typography = context.appTypography;
     final cubit = context.read<PairingClientCubit>();
     final geometry = _geometry;
     return PopScope(
@@ -171,7 +173,7 @@ class _PairingMirrorPageState extends State<PairingMirrorPage> {
                           textAlign: TextAlign.right,
                           style: appMonoTextStyle(
                             context,
-                            fontSize: 12,
+                            fontSize: typography.bodySmall,
                             color: cs.onSurfaceVariant,
                           ),
                         ),

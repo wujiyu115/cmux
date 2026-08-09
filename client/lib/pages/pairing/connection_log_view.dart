@@ -5,6 +5,7 @@ import 'package:shared_ui/shared_ui.dart';
 import '../../cubits/pairing_client_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../theme/app_fonts.dart';
+import '../../theme/app_typography_scale.dart';
 import '../../utils/ui/app_keys.dart';
 
 /// Live connection diagnostics. LAN pairing fails in opaque ways — wrong IP,
@@ -73,6 +74,7 @@ class _Summary extends StatelessWidget {
     final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final spacing = context.tpSpacing;
+    final typography = context.appTypography;
     return InkWell(
       onTap: onTap,
       child: ConstrainedBox(
@@ -94,7 +96,7 @@ class _Summary extends StatelessWidget {
                 l10n.pairingLogLineCount(count),
                 style: appMonoTextStyle(
                   context,
-                  fontSize: 12,
+                  fontSize: typography.bodySmall,
                   color: cs.onSurfaceVariant,
                 ),
               ),
@@ -125,9 +127,10 @@ class _Lines extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final spacing = context.tpSpacing;
+    final typography = context.appTypography;
     final mono = appMonoTextStyle(
       context,
-      fontSize: 11.5,
+      fontSize: typography.labelSmall,
       height: 1.5,
       color: cs.onSurfaceVariant,
     );

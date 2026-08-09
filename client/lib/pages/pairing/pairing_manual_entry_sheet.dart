@@ -4,6 +4,7 @@ import 'package:shared_ui/shared_ui.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../services/pairing/pairing_offer.dart';
 import '../../theme/app_fonts.dart';
+import '../../theme/app_typography_scale.dart';
 import '../../utils/ui/app_keys.dart';
 
 /// Manual pairing-code entry, as a bottom sheet rather than a dialog: the field
@@ -52,6 +53,7 @@ class _PairingManualEntrySheetState extends State<_PairingManualEntrySheet> {
     final cs = Theme.of(context).colorScheme;
     final styles = TpTextStyles.of(context);
     final spacing = context.tpSpacing;
+    final typography = context.appTypography;
     final error = _error;
 
     return Padding(
@@ -82,7 +84,7 @@ class _PairingManualEntrySheetState extends State<_PairingManualEntrySheet> {
                 autofocus: true,
                 minHeight: 92,
                 resizable: false,
-                style: appMonoTextStyle(context, fontSize: 13),
+                style: appMonoTextStyle(context, fontSize: typography.bodyLarge),
                 decoration: InputDecoration(hintText: l10n.pairingCodeHint),
                 onChanged: (_) {
                   if (_error != null) setState(() => _error = null);

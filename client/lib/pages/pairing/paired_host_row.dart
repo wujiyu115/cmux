@@ -4,6 +4,7 @@ import 'package:shared_ui/shared_ui.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../repositories/pairing_settings_repository.dart';
 import '../../theme/app_fonts.dart';
+import '../../theme/app_typography_scale.dart';
 import '../../utils/ui/app_keys.dart';
 import '../../utils/ui/coarse_relative_time.dart';
 import 'pairing_host_glyph.dart';
@@ -30,9 +31,10 @@ class PairedHostRow extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final styles = TpTextStyles.of(context);
     final spacing = context.tpSpacing;
+    final typography = context.appTypography;
     final mono = appMonoTextStyle(
       context,
-      fontSize: 12,
+      fontSize: typography.bodySmall,
       color: cs.onSurfaceVariant,
     );
     final lastConnected = desktop.lastConnectedAt;

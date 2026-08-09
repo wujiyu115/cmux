@@ -6,6 +6,7 @@ import '../../cubits/pairing_client_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../services/pairing/pairing_client.dart';
 import '../../theme/app_fonts.dart';
+import '../../theme/app_typography_scale.dart';
 import '../../utils/ui/app_keys.dart';
 import 'connection_log_view.dart';
 import 'pairing_host_glyph.dart';
@@ -102,6 +103,7 @@ class _HostCard extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final styles = TpTextStyles.of(context);
     final spacing = context.tpSpacing;
+    final typography = context.appTypography;
     final offer = state.pendingOffer;
     // Once a candidate wins, show the address that actually connected — the
     // offer's first entry is often a dead route the dial already skipped. While
@@ -111,7 +113,7 @@ class _HostCard extends StatelessWidget {
         (offer?.wsUrls.isNotEmpty ?? false ? offer!.wsUrls.first : null);
     final mono = appMonoTextStyle(
       context,
-      fontSize: 12,
+      fontSize: typography.bodySmall,
       color: cs.onSurfaceVariant,
     );
 

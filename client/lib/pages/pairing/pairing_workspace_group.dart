@@ -4,6 +4,7 @@ import 'package:shared_ui/shared_ui.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../services/pairing/pairing_client.dart';
 import '../../theme/app_fonts.dart';
+import '../../theme/app_typography_scale.dart';
 import '../../utils/ui/app_keys.dart';
 import 'pairing_node_row.dart';
 
@@ -109,6 +110,7 @@ class _Summary extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final styles = TpTextStyles.of(context);
     final spacing = context.tpSpacing;
+    final typography = context.appTypography;
     final total = workspace.panes.length;
 
     return InkWell(
@@ -151,7 +153,7 @@ class _Summary extends StatelessWidget {
                       '$total',
                       style: appMonoTextStyle(
                         context,
-                        fontSize: 12,
+                        fontSize: typography.bodySmall,
                         color: cs.onSurfaceVariant,
                       ),
                     ),

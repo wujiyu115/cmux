@@ -7,6 +7,7 @@ import '../../cubits/voice_input_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../repositories/pairing_settings_repository.dart';
 import '../../theme/app_fonts.dart';
+import '../../theme/app_typography_scale.dart';
 import '../../utils/ui/app_keys.dart';
 import '../../widgets/app_toast/app_toast.dart';
 import 'mobile_settings_sheet.dart';
@@ -76,6 +77,7 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final spacing = context.tpSpacing;
+    final typography = context.appTypography;
     return Padding(
       padding: EdgeInsets.fromLTRB(spacing.lg, spacing.md, spacing.lg, spacing.sm),
       child: Row(
@@ -91,7 +93,7 @@ class _Header extends StatelessWidget {
             '$count',
             style: appMonoTextStyle(
               context,
-              fontSize: 13,
+              fontSize: typography.bodySmall,
               color: cs.onSurfaceVariant,
             ),
           ),

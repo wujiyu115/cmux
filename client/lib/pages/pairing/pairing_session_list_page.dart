@@ -5,6 +5,7 @@ import 'package:shared_ui/shared_ui.dart';
 import '../../cubits/pairing_client_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../theme/app_fonts.dart';
+import '../../theme/app_typography_scale.dart';
 import '../../utils/ui/app_keys.dart';
 import 'pairing_nav_bar.dart';
 import 'pairing_workspace_group.dart';
@@ -79,6 +80,7 @@ class _ConnectionRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final spacing = context.tpSpacing;
+    final typography = context.appTypography;
     return Padding(
       padding: EdgeInsets.symmetric(vertical: spacing.md),
       child: Row(
@@ -97,7 +99,7 @@ class _ConnectionRow extends StatelessWidget {
                       url,
                       style: appMonoTextStyle(
                         context,
-                        fontSize: 12,
+                        fontSize: typography.bodySmall,
                         color: cs.onSurfaceVariant,
                       ),
                       maxLines: 1,
