@@ -60,6 +60,7 @@ void main() {
   test('emits the host path and returns to idle', () async {
     final cubit = build();
     await cubit.pickAndUpload();
+    await Future<void>.delayed(Duration.zero);
     expect(paths, ['/home/dev/app/photo.jpg']);
     expect(cubit.state.status, ImageUploadStatus.idle);
     expect(failures, isEmpty);
@@ -86,6 +87,7 @@ void main() {
     );
     final cubit = build(maxBytes: 100);
     await cubit.pickAndUpload();
+    await Future<void>.delayed(Duration.zero);
     expect(failures, [ImageUploadFailure.tooLarge]);
     expect(uploadCalls, 0);
     await cubit.close();
@@ -95,6 +97,7 @@ void main() {
     uploadError = const PairingUploadException('too_large');
     final cubit = build();
     await cubit.pickAndUpload();
+    await Future<void>.delayed(Duration.zero);
     expect(failures, [ImageUploadFailure.tooLarge]);
     await cubit.close();
   });
@@ -103,6 +106,7 @@ void main() {
     uploadError = const PairingUploadException('unsupported_type');
     final cubit = build();
     await cubit.pickAndUpload();
+    await Future<void>.delayed(Duration.zero);
     expect(failures, [ImageUploadFailure.unsupportedType]);
     await cubit.close();
   });
@@ -113,6 +117,7 @@ void main() {
       uploadError = PairingUploadException(code);
       final cubit = build();
       await cubit.pickAndUpload();
+      await Future<void>.delayed(Duration.zero);
       expect(failures, [ImageUploadFailure.failed], reason: code);
       await cubit.close();
     }
@@ -123,6 +128,7 @@ void main() {
     uploadError = StateError('socket died');
     final cubit = build();
     await cubit.pickAndUpload();
+    await Future<void>.delayed(Duration.zero);
     expect(failures, [ImageUploadFailure.failed]);
     expect(cubit.state.status, ImageUploadStatus.idle);
     await cubit.close();

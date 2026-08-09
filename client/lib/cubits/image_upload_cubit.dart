@@ -111,12 +111,15 @@ class ImageUploadCubit extends Cubit<ImageUploadState> {
   /// oversized pick is refused locally instead of after a wasted round trip.
   final int _maxBytes;
 
-  // Synchronous broadcast: a path/failure must reach its listener within the
-  // `pickAndUpload` turn that produced it, so a consumer that awaits the call
-  // sees the event without a further event-loop turn. `add` is only ever called
-  // behind an `!isClosed` guard, so it never targets a closed controller.
-  final _paths = StreamController<String>.broadcast(sync: true);
-  final _failures = StreamController<ImageUploadFailure>.broadcast(sync: true);
+  // Asynchronous delivery on purpose: with `sync: true` a `_paths.add(path)`
+  // would run the listener (which writes into a `TextEditingController` and can
+  // drive a rebuild) synchronously inside `pickAndUpload`'s `try` block, so any
+  // exception it threw would land in the `catch` and be mis-reported as an
+  // upload failure for an upload that actually succeeded. Plain `.broadcast()`
+  // keeps the listener's work out of the cubit's error handling. Do not
+  // reintroduce `sync: true` to quiet a test — add an event-loop turn instead.
+  final _paths = StreamController<String>.broadcast();
+  final _failures = StreamController<ImageUploadFailure>.broadcast();
 
   /// Host paths of committed uploads, ready to insert into the composer.
   Stream<String> get paths => _paths.stream;
