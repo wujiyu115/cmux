@@ -120,6 +120,19 @@ jobs:
         if: matrix.platform == 'ios'
         run: flutter build ios --release --no-codesign
 
+      # Analyze and the test suite cannot see a `pod install` failure, and the
+      # iOS build cannot either — deployment targets are per-platform. Adding
+      # speech_to_text (macOS 11.0) against a project targeting 10.15 broke this
+      # build for an entire subproject while both gates stayed green. Debug
+      # rather than release: it catches the same class of failure and matches
+      # what AGENTS.md asks contributors to run locally.
+      #
+      # Windows and Linux have the same hole in this matrix; neither is added
+      # here because neither has been confirmed green first.
+      - name: Build macOS
+        if: matrix.platform == 'macos'
+        run: flutter build macos --debug
+
   integration-linux:
     name: Linux integration (Claude PTY + Docker SSH)
     if: inputs.run_integration

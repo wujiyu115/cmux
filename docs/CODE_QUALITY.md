@@ -25,7 +25,9 @@ flutter build macos --debug
 
 Neither gate above can see a `pod install` failure, and an iOS build cannot either — deployment targets are per-platform. Adding `speech_to_text`, which requires macOS 11.0, broke the desktop build against a project targeting 10.15 and stayed broken for an entire subproject because analyze and the test suite both stayed green.
 
-CI does not close this gap today: the `verify` matrix in [client-verify.yml](../.github/workflows/client-verify.yml) lists Linux, Windows and macOS, but its only compile step is `flutter build ios` — those three rows run analyze and the tests and never build the app. Until that changes, compiling a desktop target locally is the only check.
+CI now builds macOS in the `verify` matrix ([client-verify.yml](../.github/workflows/client-verify.yml)), so a `pod install` break is caught there too — but run it locally first rather than discovering it in CI.
+
+**Windows and Linux still have this hole.** That matrix lists both, yet neither row compiles the app; they run analyze and the tests on a different runner and stop. Adding those steps needs someone to confirm each target is green first, so a pre-existing break does not turn CI red for an unrelated change.
 
 ## Layering
 
