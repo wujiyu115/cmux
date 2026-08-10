@@ -9,7 +9,7 @@ import '../../../cubits/mobile_toolbar_cubit.dart';
 import '../../../cubits/voice_input_cubit.dart';
 import '../../../l10n/l10n_extensions.dart';
 import '../../../services/stt/stt_provider.dart';
-import '../../../theme/app_typography_scale.dart';
+import '../../../theme/app_fonts.dart';
 import '../../../utils/ui/app_keys.dart';
 import '../voice/voice_settings_page.dart';
 import 'upload_failure_messenger.dart';
@@ -35,15 +35,26 @@ class MobileComposerPanel extends StatefulWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
 
-  static const double _buttonSize = 44;
+  /// Prototype `.cmd-actions .ca`: 40px circle, 22px glyph, 16px gaps.
+  static const double _buttonSize = 40;
 
   /// Glyph size inside the circular action buttons; enlarged with the buttons
   /// so the composer controls read at arm's length.
   static const double _iconSize = 22;
 
+  /// Gap between adjacent action buttons (prototype `.cmd-actions` gap:16).
+  static const double _actionGap = 16;
+
   /// Caps the field at four text lines; comfortably larger than four boosted
   /// lines so nothing clips, while [minLines]/[maxLines] fix the visible count.
   static const double _fieldMaxHeight = 220;
+
+  /// Prototype `.cmd-input` min-height `calc(1.5em*4 + 26px)` = 16·1.5·4 + 26 =
+  /// 122: the field stands four mono lines tall even when empty. Pinned as a
+  /// floor because [TextField.minLines] alone renders a single line here — the
+  /// composer's [Scrollbar]/[ConstrainedBox] wrapping collapses the intrinsic
+  /// multi-line height back to one row.
+  static const double _fieldMinHeight = 122;
 
   @override
   State<MobileComposerPanel> createState() => _MobileComposerPanelState();
@@ -85,7 +96,6 @@ class _MobileComposerPanelState extends State<MobileComposerPanel> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final l10n = context.l10n;
-    final typography = context.appTypography;
     final cubit = context.read<MobileToolbarCubit>();
     // Two messengers stacked, not merged: each stream maps to different copy,
     // and a shared messenger would have to erase the failure type to do both.
@@ -104,12 +114,13 @@ class _MobileComposerPanelState extends State<MobileComposerPanel> {
           child: SafeArea(
             top: false,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+              padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   ConstrainedBox(
                     constraints: const BoxConstraints(
+                      minHeight: MobileComposerPanel._fieldMinHeight,
                       maxHeight: MobileComposerPanel._fieldMaxHeight,
                     ),
                     child: Scrollbar(
@@ -117,33 +128,42 @@ class _MobileComposerPanelState extends State<MobileComposerPanel> {
                         key: AppKeys.mobileComposerField,
                         controller: widget.controller,
                         focusNode: widget.focusNode,
-                        style: TextStyle(
+                        // Prototype `.cmd-input`: mono 16 / line 1.5.
+                        style: appMonoTextStyle(
+                          context,
+                          fontSize: 16,
                           color: cs.onSurface,
-                          fontSize: typography.bodyLarge,
-                        ),
+                        ).copyWith(height: 1.5),
                         minLines: 4,
                         maxLines: 4,
                         keyboardType: TextInputType.multiline,
                         textInputAction: TextInputAction.newline,
                         decoration: InputDecoration(
                           hintText: l10n.mobileComposerHint,
-                          hintStyle: TextStyle(color: cs.onSurfaceVariant),
+                          hintStyle: appMonoTextStyle(
+                            context,
+                            fontSize: 16,
+                            color: cs.onSurfaceVariant,
+                          ).copyWith(height: 1.5),
                           filled: true,
                           fillColor: cs.surfaceContainerHighest,
                           isDense: true,
+                          // Prototype `.cmd-input`: padding 13 16.
                           contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 10,
+                            horizontal: 16,
+                            vertical: 13,
                           ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide.none,
-                          ),
+                          // Prototype `.cmd-input`: 1.5px accent border, r14 —
+                          // constant across focus so the field never reflows.
+                          border: _fieldBorder(cs),
+                          enabledBorder: _fieldBorder(cs),
+                          focusedBorder: _fieldBorder(cs),
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  // Prototype `.cmd-actions`: 12px above the action row.
+                  const SizedBox(height: 12),
                   BlocBuilder<MobileToolbarCubit, MobileToolbarState>(
                     // Only the Return-mode flag changes anything in this row, and
                     // the state re-emits on every key tap.
@@ -168,13 +188,13 @@ class _MobileComposerPanelState extends State<MobileComposerPanel> {
                             cubit.setMode(MobileInputMode.keys);
                           },
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: MobileComposerPanel._actionGap),
                         _CircleButton(
                           icon: Icons.keyboard_hide,
                           tooltip: l10n.mobileToolbarHideKeyboard,
                           onTap: () => FocusScope.of(context).unfocus(),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: MobileComposerPanel._actionGap),
                         _CircleButton(
                           buttonKey: AppKeys.mobileComposerSubmitToggle,
                           icon: state.chatMode
@@ -186,7 +206,7 @@ class _MobileComposerPanelState extends State<MobileComposerPanel> {
                           filled: state.chatMode,
                           onTap: cubit.toggleChatMode,
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: MobileComposerPanel._actionGap),
                         BlocBuilder<ImageUploadCubit, ImageUploadState>(
                           // ImageUploadState has no value equality and progress
                           // emits on every ack, so this guard keeps the rest of
@@ -207,17 +227,19 @@ class _MobileComposerPanelState extends State<MobileComposerPanel> {
                               a.available != b.available ||
                               a.provider != b.provider,
                           builder: (context, voiceState) {
-                            // No backend can run: a tap could only ever fail, so
-                            // the mic is not offered.
-                            if (!voiceState.available) {
-                              return const SizedBox.shrink();
-                            }
                             final voice = context.read<VoiceInputCubit>();
                             void openSettings() => Navigator.of(
                               context,
                             ).push(VoiceSettingsPage.route(voice));
+                            // The mic always shows, matching the prototype's fixed
+                            // action row — a hidden control would reflow the whole
+                            // strip the moment a backend appears. When no backend
+                            // can run yet, the tap routes to settings (its only
+                            // useful outcome) instead of failing opaquely.
                             return Padding(
-                              padding: const EdgeInsets.only(right: 8),
+                              padding: const EdgeInsets.only(
+                                right: MobileComposerPanel._actionGap,
+                              ),
                               child: _MicButton(
                                 state: voiceState,
                                 // An unconfigured backend has no credentials, so a
@@ -257,6 +279,13 @@ class _MobileComposerPanelState extends State<MobileComposerPanel> {
   }
 }
 
+/// Prototype `.cmd-input` border: 1.5px accent, 14px radius. Colors stay
+/// theme-driven — the accent maps to [ColorScheme.primary].
+OutlineInputBorder _fieldBorder(ColorScheme cs) => OutlineInputBorder(
+  borderRadius: BorderRadius.circular(14),
+  borderSide: BorderSide(color: cs.primary, width: 1.5),
+);
+
 /// Round variant of [TpIconButton] — the composer's controls read as chips
 /// rather than as toolbar squares.
 class _CircleButton extends StatelessWidget {
@@ -277,7 +306,7 @@ class _CircleButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    return TpIconButton(
+    final button = TpIconButton(
       key: buttonKey,
       icon: icon,
       tooltip: tooltip,
@@ -287,6 +316,15 @@ class _CircleButton extends StatelessWidget {
       borderRadius: MobileComposerPanel._buttonSize / 2,
       color: filled ? cs.onPrimary : cs.onSurfaceVariant,
       backgroundColor: filled ? cs.primary : cs.surfaceContainerHighest,
+    );
+    // Prototype `.ca`: 1px border on the non-amber chips; the amber ones drop it.
+    if (filled) return button;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: cs.outlineVariant),
+      ),
+      child: button,
     );
   }
 }
@@ -324,6 +362,7 @@ class _AttachButton extends StatelessWidget {
       height: MobileComposerPanel._buttonSize,
       decoration: BoxDecoration(
         color: cs.surfaceContainerHighest,
+        border: Border.all(color: cs.outlineVariant),
         borderRadius: BorderRadius.circular(
           MobileComposerPanel._buttonSize / 2,
         ),
@@ -465,11 +504,15 @@ class _MicButtonState extends State<_MicButton>
                 : l10n.voiceInputStart,
             child: control,
           ),
-          Positioned(
-            right: 0,
-            top: 0,
-            child: _ProviderBadge(provider: widget.state.provider),
-          ),
+          // The prototype's mic is a plain circle. The badge earns its corner
+          // only for a cloud backend, where which one is live is worth knowing;
+          // the on-device recognizer is the implicit default, so it stays bare.
+          if (widget.state.provider != SttProviderType.system)
+            Positioned(
+              right: 0,
+              top: 0,
+              child: _ProviderBadge(provider: widget.state.provider),
+            ),
         ],
       ),
     );
@@ -488,6 +531,7 @@ class _MicButtonState extends State<_MicButton>
       height: MobileComposerPanel._buttonSize,
       decoration: BoxDecoration(
         color: filled ? cs.primary : cs.surfaceContainerHighest,
+        border: filled ? null : Border.all(color: cs.outlineVariant),
         borderRadius: BorderRadius.circular(
           MobileComposerPanel._buttonSize / 2,
         ),
