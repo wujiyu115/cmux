@@ -67,8 +67,7 @@ class AppKeys {
   static const pairingManualEntryField = Key('pairing-manual-entry-field');
   static const pairingNetworkStrip = Key('pairing-network-strip');
   static const mobileSettingsButton = Key('mobile-settings-button');
-  static const mobileSettingsSheet = Key('mobile-settings-sheet');
-  static const mobileSettingsCloseButton = Key('mobile-settings-close');
+  static const mobileSettingsPage = Key('mobile-settings-page');
   static const mobileToolbar = Key('mobile-toolbar');
   static const mobileToolbarHideKeyboardButton = Key('mobile-toolbar-hide-kb');
   static Key mobileToolbarKey(String keyId) => Key('mobile-toolbar-key-$keyId');

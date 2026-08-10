@@ -35,8 +35,15 @@ class MobileComposerPanel extends StatefulWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
 
-  static const double _buttonSize = 34;
-  static const double _fieldMaxHeight = 120;
+  static const double _buttonSize = 44;
+
+  /// Glyph size inside the circular action buttons; enlarged with the buttons
+  /// so the composer controls read at arm's length.
+  static const double _iconSize = 22;
+
+  /// Caps the field at four text lines; comfortably larger than four boosted
+  /// lines so nothing clips, while [minLines]/[maxLines] fix the visible count.
+  static const double _fieldMaxHeight = 220;
 
   @override
   State<MobileComposerPanel> createState() => _MobileComposerPanelState();
@@ -114,8 +121,8 @@ class _MobileComposerPanelState extends State<MobileComposerPanel> {
                           color: cs.onSurface,
                           fontSize: typography.bodyLarge,
                         ),
-                        minLines: 3,
-                        maxLines: null,
+                        minLines: 4,
+                        maxLines: 4,
                         keyboardType: TextInputType.multiline,
                         textInputAction: TextInputAction.newline,
                         decoration: InputDecoration(
@@ -276,7 +283,7 @@ class _CircleButton extends StatelessWidget {
       tooltip: tooltip,
       onTap: onTap,
       size: MobileComposerPanel._buttonSize,
-      iconSize: 18,
+      iconSize: MobileComposerPanel._iconSize,
       borderRadius: MobileComposerPanel._buttonSize / 2,
       color: filled ? cs.onPrimary : cs.onSurfaceVariant,
       backgroundColor: filled ? cs.primary : cs.surfaceContainerHighest,
@@ -323,8 +330,8 @@ class _AttachButton extends StatelessWidget {
       ),
       child: Center(
         child: SizedBox(
-          width: 18,
-          height: 18,
+          width: MobileComposerPanel._iconSize,
+          height: MobileComposerPanel._iconSize,
           child: CircularProgressIndicator(
             strokeWidth: 2,
             // Determinate only while uploading; picking has no bytes yet.
@@ -423,8 +430,8 @@ class _MicButtonState extends State<_MicButton>
       VoiceInputStatus.starting => _circle(
         cs,
         child: const SizedBox(
-          width: 18,
-          height: 18,
+          width: MobileComposerPanel._iconSize,
+          height: MobileComposerPanel._iconSize,
           child: CircularProgressIndicator(strokeWidth: 2),
         ),
       ),
@@ -490,7 +497,7 @@ class _MicButtonState extends State<_MicButton>
             child ??
             Icon(
               icon,
-              size: 18,
+              size: MobileComposerPanel._iconSize,
               color: filled ? cs.onPrimary : cs.onSurfaceVariant,
             ),
       ),
@@ -553,10 +560,11 @@ class _ProviderBadge extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-          // Fixed, not typography-scaled: this badge sits in the corner of a
-          // fixed 34pt circular chip and would overflow it if it grew with the
-          // text scale. Leave it literal so the chip stays intact.
-          fontSize: 8,
+          // Fixed, not typography-scaled: this badge sits in the corner of the
+          // fixed circular chip ([MobileComposerPanel._buttonSize]) and would
+          // overflow it if it grew with the text scale. Leave it literal so the
+          // chip stays intact.
+          fontSize: 9,
           height: 1,
           fontWeight: FontWeight.w700,
           color: cs.onPrimary,

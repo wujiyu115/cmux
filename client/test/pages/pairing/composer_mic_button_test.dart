@@ -207,7 +207,7 @@ void main() {
     // Pop back to the composer so the tree ends where the other tests leave it;
     // disposing the shared focus node under a lingering route trips the focus
     // manager during tearDown.
-    await t.tap(find.byType(BackButton));
+    await t.tap(find.byTooltip('Back'));
     await t.pumpAndSettle();
   });
 
@@ -224,7 +224,7 @@ void main() {
     expect(find.byKey(AppKeys.voiceSettingsPage), findsOneWidget);
     expect(provider.startCalls, 0);
 
-    await t.tap(find.byType(BackButton));
+    await t.tap(find.byTooltip('Back'));
     await t.pumpAndSettle();
   });
 

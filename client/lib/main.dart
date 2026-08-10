@@ -834,12 +834,16 @@ class _TeamPilotMaterialAppState extends State<_TeamPilotMaterialApp> {
     final systemMq = systemView == null
         ? const MediaQueryData()
         : MediaQueryData.fromView(systemView);
-    final textBaseline = autoTextScaleForSystem(
-      systemMq.textScaler.scale(1.0),
-      systemMq.devicePixelRatio,
-      // The phone build is read at arm's length, not desk distance.
-      mobile: isPairingClient,
-    );
+    // The pairing (phone) client is a 1:1 port of the Android prototype, which
+    // is authored in a 393-logical-px design space. Pin its text baseline to
+    // 1.0 so glyphs render at the prototype's exact px — no arm's-length boost,
+    // no dpr saturation. Desktop keeps the per-system auto baseline.
+    final textBaseline = isPairingClient
+        ? 1.0
+        : autoTextScaleForSystem(
+            systemMq.textScaler.scale(1.0),
+            systemMq.devicePixelRatio,
+          );
     final effectiveTextMult = resolveRelativeScale(
       scaleId: widget.typographyScaleId,
       customMultiplier: widget.typographyCustomMultiplier,
@@ -867,11 +871,11 @@ class _TeamPilotMaterialAppState extends State<_TeamPilotMaterialApp> {
       monoFontId: _sessionMonoFontId,
     );
     final textScale = AppTypographyScale(
+      // Pairing renders in the prototype's 393-logical space (textBaseline
+      // pinned to 1.0 above), so the terminal already gets the prototype's
+      // 14px mono — no boost to undo.
       multiplier: effectiveTextMult,
-      // Chrome takes the phone boost; the terminal opts out. A 15% larger face
-      // would cost ~7 columns on a phone, and column count is the scarce
-      // resource there.
-      terminalMultiplier: isPairingClient ? 1 / kMobileTextScaleBoost : 1.0,
+      terminalMultiplier: 1.0,
     );
     final iconScale = AppTypographyScale(multiplier: iconMultiplier);
     _cachedColorPreset = widget.colorPreset;
@@ -950,13 +954,18 @@ class _TeamPilotMaterialAppState extends State<_TeamPilotMaterialApp> {
               final dpr = MediaQuery.of(context).devicePixelRatio;
               final baseline = autoUiZoomForDevicePixelRatio(dpr);
               context.read<UiZoomBaseline>().value = baseline;
-              final effectiveZoom = clampUiZoom(
-                resolveRelativeScale(
-                  scaleId: zoomBundle.uiZoomScale,
-                  customMultiplier: zoomBundle.uiZoomCustomMultiplier,
-                  baseline: baseline,
-                ),
-              );
+              // Pairing is a 1:1 port of the 393-logical-px prototype: pin the
+              // zoom to 1.0 so the phone renders that exact coordinate space,
+              // bypassing the dpr baseline and the compact/comfortable prefs.
+              final effectiveZoom = isPairingClient
+                  ? 1.0
+                  : clampUiZoom(
+                      resolveRelativeScale(
+                        scaleId: zoomBundle.uiZoomScale,
+                        customMultiplier: zoomBundle.uiZoomCustomMultiplier,
+                        baseline: baseline,
+                      ),
+                    );
               Widget content = AppTextScaleBoundary(
                 child: _AppUpdateAutoCheck(
                   child: child ?? const SizedBox.shrink(),

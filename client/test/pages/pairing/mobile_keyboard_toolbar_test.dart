@@ -109,7 +109,12 @@ void main() {
     await pump(t);
     await t.tap(find.byKey(AppKeys.mobileToolbarHideKeyboardButton));
     await t.pump();
-    await t.tap(find.byKey(AppKeys.mobileToolbarKey('tab')));
+    // Tab sits past the 800px strip's visible edge (the composer/customize
+    // buttons eat the right), so scroll it in like a user would first.
+    final tab = find.byKey(AppKeys.mobileToolbarKey('tab'));
+    await t.ensureVisible(tab);
+    await t.pump();
+    await t.tap(tab);
     await drainUsageFlush(t);
     expect(sent, [[0x09]]);
   });

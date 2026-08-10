@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -7,7 +5,7 @@ import 'package:shared_ui/shared_ui.dart';
 import 'package:teampilot/cubits/layout_cubit.dart';
 import 'package:teampilot/cubits/voice_input_cubit.dart';
 import 'package:teampilot/l10n/app_localizations.dart';
-import 'package:teampilot/pages/pairing/mobile_settings_sheet.dart';
+import 'package:teampilot/pages/pairing/mobile_settings_page.dart';
 import 'package:teampilot/repositories/voice_input_repository.dart';
 import 'package:teampilot/theme/app_typography_scale.dart';
 import 'package:teampilot/utils/ui/app_keys.dart';
@@ -35,8 +33,26 @@ Widget _wrap(LayoutCubit layout, {required Widget child}) {
   );
 }
 
+Future<BuildContext> _pumpEntry(WidgetTester tester, LayoutCubit layout) async {
+  late BuildContext ctx;
+  await tester.pumpWidget(
+    _wrap(
+      layout,
+      child: Scaffold(
+        body: Builder(
+          builder: (context) {
+            ctx = context;
+            return const SizedBox.shrink();
+          },
+        ),
+      ),
+    ),
+  );
+  return ctx;
+}
+
 void main() {
-  testWidgets('the sheet exposes the appearance controls and closes',
+  testWidgets('the page exposes the appearance controls and pops back',
       (tester) async {
     final layout = LayoutCubit();
     addTearDown(layout.close);
@@ -47,37 +63,24 @@ void main() {
     addTearDown(voice.close);
     await voice.load();
 
-    late BuildContext ctx;
-    await tester.pumpWidget(
-      _wrap(
-        layout,
-        child: Scaffold(
-          body: Builder(
-            builder: (context) {
-              ctx = context;
-              return const SizedBox.shrink();
-            },
-          ),
-        ),
-      ),
-    );
+    final ctx = await _pumpEntry(tester, layout);
 
-    unawaited(showMobileSettingsSheet(ctx, voiceCubit: voice));
+    Navigator.of(ctx).push(MobileSettingsPage.route(voice));
     await tester.pumpAndSettle();
 
-    // The sheet renders and reuses the language control from onboarding.
-    expect(find.byKey(AppKeys.mobileSettingsSheet), findsOneWidget);
+    // The page renders and reuses the language control from onboarding.
+    expect(find.byKey(AppKeys.mobileSettingsPage), findsOneWidget);
     expect(find.byKey(AppKeys.languageSystemButton), findsOneWidget);
 
-    // The close affordance dismisses it.
-    await tester.tap(find.byKey(AppKeys.mobileSettingsCloseButton));
+    // The app bar back button dismisses it.
+    await tester.tap(find.byTooltip('Back'));
     await tester.pumpAndSettle();
-    expect(find.byKey(AppKeys.mobileSettingsSheet), findsNothing);
+    expect(find.byKey(AppKeys.mobileSettingsPage), findsNothing);
   });
 
   testWidgets('the voice row opens voice settings', (tester) async {
-    // The sheet mounts in the root navigator, above the shell's voice cubit, so
-    // the entry point can only work if showMobileSettingsSheet re-provides it.
+    // The page mounts in the root navigator, above the shell's voice cubit, so
+    // the entry point can only work if the route re-provides it.
     final layout = LayoutCubit();
     addTearDown(layout.close);
     final voice = VoiceInputCubit(
@@ -87,22 +90,9 @@ void main() {
     addTearDown(voice.close);
     await voice.load();
 
-    late BuildContext ctx;
-    await tester.pumpWidget(
-      _wrap(
-        layout,
-        child: Scaffold(
-          body: Builder(
-            builder: (context) {
-              ctx = context;
-              return const SizedBox.shrink();
-            },
-          ),
-        ),
-      ),
-    );
+    final ctx = await _pumpEntry(tester, layout);
 
-    unawaited(showMobileSettingsSheet(ctx, voiceCubit: voice));
+    Navigator.of(ctx).push(MobileSettingsPage.route(voice));
     await tester.pumpAndSettle();
     expect(find.byKey(AppKeys.mobileSettingsVoiceRow), findsOneWidget);
 

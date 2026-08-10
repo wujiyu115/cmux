@@ -4,8 +4,8 @@ import 'package:shared_ui/shared_ui.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../services/pairing/pairing_client.dart';
 import '../../theme/app_fonts.dart';
-import '../../theme/app_typography_scale.dart';
 import '../../utils/ui/app_keys.dart';
+import 'pairing_block_button.dart';
 import 'pairing_node_row.dart';
 
 /// One workspace and its nodes, as a collapsible group closed by a hairline.
@@ -71,9 +71,9 @@ class _PairingWorkspaceGroupState extends State<PairingWorkspaceGroup> {
                 context.tpSpacing.xs,
                 context.tpSpacing.md,
               ),
-              child: TpButton(
+              child: PairingBlockButton(
                 key: AppKeys.pairingOpenTerminalButton(workspace.workspaceId),
-                variant: TpButtonVariant.outline,
+                outlined: true,
                 onPressed: () => widget.onOpenNode(
                   PairingSessionNode(
                     workspaceId: workspace.workspaceId,
@@ -108,9 +108,7 @@ class _Summary extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
-    final styles = TpTextStyles.of(context);
     final spacing = context.tpSpacing;
-    final typography = context.appTypography;
     final total = workspace.panes.length;
 
     return InkWell(
@@ -130,7 +128,7 @@ class _Summary extends StatelessWidget {
                 duration: const Duration(milliseconds: 160),
                 child: Icon(
                   Icons.chevron_right,
-                  size: 18,
+                  size: context.tpIconSizes.md,
                   color: cs.onSurfaceVariant,
                 ),
               ),
@@ -144,16 +142,22 @@ class _Summary extends StatelessWidget {
                       workspace.title.isEmpty
                           ? workspace.workspaceId
                           : workspace.title,
-                      style: styles.mdSemibold,
+                      // Prototype `.biglist .brow .bname`: 21 / 700, tight.
+                      style: const TextStyle(
+                        fontSize: 21,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.21,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     SizedBox(height: spacing.xxs),
                     Text(
                       '$total',
+                      // Prototype `.biglist .brow .bsub`: mono 15, muted.
                       style: appMonoTextStyle(
                         context,
-                        fontSize: typography.bodySmall,
+                        fontSize: 15,
                         color: cs.onSurfaceVariant,
                       ),
                     ),

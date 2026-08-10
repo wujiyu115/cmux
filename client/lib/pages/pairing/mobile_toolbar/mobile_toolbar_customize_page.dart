@@ -5,7 +5,9 @@ import 'package:shared_ui/shared_ui.dart';
 import '../../../cubits/mobile_toolbar_cubit.dart';
 import '../../../l10n/l10n_extensions.dart';
 import '../../../models/toolbar_key.dart';
+import '../../../theme/app_fonts.dart';
 import '../../../utils/ui/app_keys.dart';
+import '../pairing_nav_bar.dart';
 import 'mobile_toolbar_labels.dart';
 
 /// Lets the user decide which key groups the toolbar shows and in what order.
@@ -33,23 +35,23 @@ class MobileToolbarCustomizePage extends StatelessWidget {
     final cubit = context.read<MobileToolbarCubit>();
     return Scaffold(
       key: AppKeys.mobileToolbarCustomizePage,
-      appBar: AppBar(
-        title: Text(l10n.mobileToolbarCustomize),
-        actions: [
-          TpIconButton(
-            key: AppKeys.mobileToolbarResetButton,
-            icon: Icons.restart_alt,
-            tooltip: l10n.mobileToolbarReset,
-            onTap: cubit.resetLayout,
-          ),
-          SizedBox(width: spacing.sm),
-        ],
-      ),
-      body: BlocBuilder<MobileToolbarCubit, MobileToolbarState>(
-        builder: (context, state) {
-          final groupCount = state.groupOrder.length;
-          return Column(
-            children: [
+      body: SafeArea(
+        bottom: false,
+        child: BlocBuilder<MobileToolbarCubit, MobileToolbarState>(
+          builder: (context, state) {
+            final groupCount = state.groupOrder.length;
+            return Column(
+              children: [
+                PairingNavBar.large(
+                  title: l10n.mobileToolbarCustomize,
+                  onBack: () => Navigator.of(context).maybePop(),
+                  trailing: PairingNavAction(
+                    key: AppKeys.mobileToolbarResetButton,
+                    icon: Icons.restart_alt,
+                    tooltip: l10n.mobileToolbarReset,
+                    onTap: cubit.resetLayout,
+                  ),
+                ),
               Padding(
                 padding: EdgeInsets.all(spacing.lg),
                 child: Row(
@@ -111,24 +113,75 @@ class MobileToolbarCustomizePage extends StatelessWidget {
                     final group = toolbarGroupById(id);
                     final visible = index < state.visibleGroupCount;
                     final cs = Theme.of(context).colorScheme;
-                    return ListTile(
+                    final preview = group?.keys.map((k) => k.label).join('  ');
+                    return Padding(
                       key: AppKeys.mobileToolbarGroupTile(id),
-                      leading: Icon(
-                        visible ? Icons.visibility : Icons.visibility_off,
-                        color: visible ? cs.primary : cs.onSurfaceVariant,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: spacing.lg,
+                        vertical: spacing.sm,
                       ),
-                      title: Text(toolbarGroupLabel(id, l10n)),
-                      subtitle: group == null
-                          ? null
-                          : Text(group.keys.map((k) => k.label).join('  ')),
-                      trailing: const Icon(Icons.drag_handle),
+                      child: Row(
+                        children: [
+                          // Display-only: visibility is driven by the count
+                          // stepper (index < visibleGroupCount), not a per-row
+                          // toggle. The amber-vs-grey eye mirrors that state.
+                          Icon(
+                            visible ? Icons.visibility : Icons.visibility_off,
+                            size: context.tpIconSizes.lg,
+                            color: visible ? cs.primary : cs.onSurfaceVariant,
+                          ),
+                          SizedBox(width: spacing.md),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  toolbarGroupLabel(id, l10n),
+                                  // Prototype `.keyrow .kname`: 19 / 600.
+                                  style: const TextStyle(
+                                    fontSize: 19,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                if (preview != null &&
+                                    preview.isNotEmpty) ...[
+                                  SizedBox(height: spacing.xxs),
+                                  Text(
+                                    preview,
+                                    // Prototype `.keyrow .kpreview`: mono 15.
+                                    style: appMonoTextStyle(
+                                      context,
+                                      fontSize: 15,
+                                      color: cs.onSurfaceVariant,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          SizedBox(width: spacing.sm),
+                          ReorderableDragStartListener(
+                            index: index,
+                            child: Icon(
+                              Icons.drag_handle,
+                              color: cs.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
                     );
                   },
                 ),
               ),
-            ],
-          );
-        },
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -161,7 +214,7 @@ class _MostUsed extends StatelessWidget {
                 DecoratedBox(
                   decoration: BoxDecoration(
                     color: cs.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(spacing.sm),
                   ),
                   child: Padding(
                     padding: EdgeInsets.symmetric(

@@ -70,10 +70,11 @@ double clampTypographyCustomMultiplier(double value) =>
 /// Extra text scale for phones, on top of the dpr-normalized baseline.
 ///
 /// The base sizes are tuned for a desktop viewing distance; at arm's length a
-/// 12pt subtitle reads small. Scales text and icons only — [TpSpacing] is
-/// pinned to 1.0 by the host, so density is unchanged (whole-UI growth is the
-/// separate `uiZoomScale` knob).
-const double kMobileTextScaleBoost = 1.15;
+/// 12pt subtitle reads small and controls are hard to tap. Scales text, icons,
+/// and control metrics (via `controlScale`) — [TpSpacing] is pinned to 1.0 by
+/// the host, so gaps are unchanged (whole-UI growth is the separate
+/// `uiZoomScale` knob).
+const double kMobileTextScaleBoost = 1.3;
 
 /// `standard` text-size baseline: the OS's intended *physical* text scale =
 /// [osTextScale] (e.g. GNOME text-scaling-factor; 1.0 where the OS has none) ×

@@ -4,7 +4,6 @@ import 'package:shared_ui/shared_ui.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../services/pairing/pairing_client.dart';
 import '../../theme/app_fonts.dart';
-import '../../theme/app_typography_scale.dart';
 import '../../utils/ui/app_keys.dart';
 
 /// One session or live terminal under a workspace. Title in UI type, the command
@@ -29,14 +28,21 @@ class PairingNodeRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
-    final styles = TpTextStyles.of(context);
     final spacing = context.tpSpacing;
-    final typography = context.appTypography;
+    // Prototype `.biglist .brow .bsub`: mono 15, muted.
     final mono = appMonoTextStyle(
       context,
-      fontSize: typography.bodySmall,
+      fontSize: 15,
       color: cs.onSurfaceVariant,
     );
+    // Prototype `.srow .bname`: 17 / 500. Busy state dims it.
+    final titleStyle = TextStyle(
+      fontSize: 17,
+      fontWeight: FontWeight.w500,
+      color: busy ? cs.onSurfaceVariant : cs.onSurface,
+    );
+    // Prototype `.iconbox`: 34px box, 20px glyph.
+    const boxSize = 34.0;
     return InkWell(
       key: AppKeys.pairingSessionNode(node.nodeKey),
       onTap: busy ? null : onTap,
@@ -52,10 +58,20 @@ class PairingNodeRow extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Icon(
-                Icons.terminal_outlined,
-                size: 17,
-                color: node.live ? cs.tertiary : cs.onSurfaceVariant,
+              Container(
+                width: boxSize,
+                height: boxSize,
+                decoration: BoxDecoration(
+                  color: cs.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(spacing.sm),
+                  border: Border.all(color: cs.outlineVariant),
+                ),
+                alignment: Alignment.center,
+                child: Icon(
+                  Icons.terminal_outlined,
+                  size: 20,
+                  color: node.live ? cs.tertiary : cs.onSurfaceVariant,
+                ),
               ),
               SizedBox(width: spacing.md),
               Expanded(
@@ -65,9 +81,7 @@ class PairingNodeRow extends StatelessWidget {
                   children: [
                     Text(
                       node.title.isEmpty ? node.nodeKey : node.title,
-                      style: busy
-                          ? styles.smMediumColored(cs.onSurfaceVariant)
-                          : styles.smMedium,
+                      style: titleStyle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),

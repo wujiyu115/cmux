@@ -8,6 +8,7 @@ import 'package:shared_ui/shared_ui.dart';
 import '../../../cubits/mobile_toolbar_cubit.dart';
 import '../../../l10n/l10n_extensions.dart';
 import '../../../models/toolbar_key.dart';
+import '../../../theme/app_fonts.dart';
 import '../../../utils/ui/app_keys.dart';
 import 'mobile_toolbar_customize_page.dart';
 
@@ -20,7 +21,11 @@ import 'mobile_toolbar_customize_page.dart';
 class MobileKeyboardToolbar extends StatelessWidget {
   const MobileKeyboardToolbar({super.key});
 
-  static const double barHeight = 44;
+  static const double barHeight = 52;
+
+  /// Bigger than the icon-button default (`sizes.md` ≈ 24) so the composer /
+  /// customize / hide-keyboard glyphs read at arm's length.
+  static const double _iconSize = 28;
 
   @override
   Widget build(BuildContext context) {
@@ -61,6 +66,7 @@ class MobileKeyboardToolbar extends StatelessWidget {
                 icon: Icons.chat_bubble_outline,
                 tooltip: context.l10n.mobileComposerOpen,
                 size: barHeight,
+                iconSize: _iconSize,
                 onTap: context.read<MobileToolbarCubit>().toggleComposer,
               ),
               TpIconButton(
@@ -68,6 +74,7 @@ class MobileKeyboardToolbar extends StatelessWidget {
                 icon: Icons.tune,
                 tooltip: context.l10n.mobileToolbarCustomize,
                 size: barHeight,
+                iconSize: _iconSize,
                 onTap: () => Navigator.of(context).push(
                   MobileToolbarCustomizePage.route(
                     context.read<MobileToolbarCubit>(),
@@ -79,6 +86,7 @@ class MobileKeyboardToolbar extends StatelessWidget {
                 icon: Icons.keyboard_hide,
                 tooltip: context.l10n.mobileToolbarHideKeyboard,
                 size: barHeight,
+                iconSize: _iconSize,
                 onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
               ),
             ],
@@ -178,22 +186,27 @@ class _ToolbarKeyCapState extends State<_ToolbarKeyCap> {
       onLongPressStart: repeatable ? (_) => _startRepeat() : null,
       onLongPressEnd: repeatable ? (_) => _stopRepeat() : null,
       onLongPressCancel: repeatable ? _stopRepeat : null,
+      // Prototype `.keycap`: min-width 40, height 40 (52-bar minus 6+6 margin),
+      // padding 0 12, radius 9, 1px border, mono 16.
       child: Container(
         constraints: const BoxConstraints(minWidth: 40),
-        margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 6),
+        margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: widget.active ? cs.primary : cs.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(9),
+          border: Border.all(
+            color: widget.active ? cs.primary : cs.outlineVariant,
+          ),
         ),
         child: Text(
           widget.toolbarKey.label,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-            height: 1,
+          style: appMonoTextStyle(
+            context,
+            fontSize: 16,
             color: widget.active ? cs.onPrimary : cs.onSurface,
-          ),
+          ).copyWith(height: 1),
         ),
       ),
     );

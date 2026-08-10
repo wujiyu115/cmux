@@ -191,7 +191,9 @@ class _PairingMirrorPageState extends State<PairingMirrorPage> {
                   // desktop terminal has always passed this; the mirror did not.
                   textStyle: appTerminalTextStyle(context),
                   autofocus: true,
-                  padding: const EdgeInsets.all(4),
+                  // Zero padding so the grid fills the full phone width; the
+                  // resolver's sub-cell remainder is the only inset left.
+                  padding: EdgeInsets.zero,
                   onPtyResize: (columns, rows) {
                     cubit.sendResize(columns, rows);
                     if (geometry?.cols == columns && geometry?.rows == rows) {

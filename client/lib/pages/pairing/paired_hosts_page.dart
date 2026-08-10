@@ -6,12 +6,11 @@ import '../../cubits/pairing_client_cubit.dart';
 import '../../cubits/voice_input_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../repositories/pairing_settings_repository.dart';
-import '../../theme/app_fonts.dart';
-import '../../theme/app_typography_scale.dart';
 import '../../utils/ui/app_keys.dart';
 import '../../widgets/app_toast/app_toast.dart';
-import 'mobile_settings_sheet.dart';
+import 'mobile_settings_page.dart';
 import 'paired_host_row.dart';
+import 'pairing_block_button.dart';
 import 'pairing_network_strip.dart';
 
 /// Mobile home: the desktops this phone has paired with.
@@ -77,36 +76,37 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final spacing = context.tpSpacing;
-    final typography = context.appTypography;
     return Padding(
       padding: EdgeInsets.fromLTRB(spacing.lg, spacing.md, spacing.lg, spacing.sm),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
             child: Text(
               context.l10n.pairingDesktops,
-              style: TpTextStyles.of(context).lgSemibold,
+              // Prototype large `.appbar` title: 26 / 700 — same as
+              // [PairingNavBar.large] so every list header reads identically.
+              style: TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.w700,
+                color: cs.onSurface,
+              ),
             ),
           ),
           Text(
             '$count',
-            style: appMonoTextStyle(
-              context,
-              fontSize: typography.bodySmall,
-              color: cs.onSurfaceVariant,
-            ),
+            // Prototype `.appbar .count`: 17, muted.
+            style: TextStyle(fontSize: 17, color: cs.onSurfaceVariant),
           ),
           SizedBox(width: spacing.xs),
           TpIconButton(
             key: AppKeys.mobileSettingsButton,
             icon: Icons.settings_outlined,
             tooltip: context.l10n.settings,
-            // The sheet mounts in the root navigator, above the shell's voice
+            // The page mounts in the root navigator, above the shell's voice
             // cubit; hand it the cubit read here so its voice row can reach it.
-            onTap: () => showMobileSettingsSheet(
-              context,
-              voiceCubit: context.read<VoiceInputCubit>(),
+            onTap: () => Navigator.of(context).push(
+              MobileSettingsPage.route(context.read<VoiceInputCubit>()),
             ),
           ),
         ],
@@ -182,13 +182,14 @@ class _Footer extends StatelessWidget {
             spacing.lg,
             spacing.md,
           ),
-          child: TpButton(
+          child: PairingBlockButton(
             key: AppKeys.pairingScanCtaButton,
             onPressed: onScan,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.qr_code_scanner, size: 19),
+                // Prototype `.btn svg`: 22px.
+                const Icon(Icons.qr_code_scanner, size: 22),
                 SizedBox(width: spacing.sm),
                 Text(context.l10n.pairingScanToPair),
               ],

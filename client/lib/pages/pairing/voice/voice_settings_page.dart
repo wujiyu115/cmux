@@ -7,6 +7,7 @@ import '../../../l10n/l10n_extensions.dart';
 import '../../../services/stt/stt_locales.dart';
 import '../../../services/stt/stt_provider.dart';
 import '../../../utils/ui/app_keys.dart';
+import '../pairing_nav_bar.dart';
 import 'voice_credentials_section.dart';
 
 /// Voice-input settings for the mobile pairing client: which recognition
@@ -33,47 +34,70 @@ class VoiceSettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final spacing = context.tpSpacing;
     return Scaffold(
       key: AppKeys.voiceSettingsPage,
-      appBar: AppBar(title: Text(l10n.voiceInputSettings)),
-      body: BlocBuilder<VoiceInputCubit, VoiceInputState>(
-        // Settings never need to repaint while a recognition session starts or
-        // stops; only these three fields change what this page renders, and
-        // VoiceInputState has no value equality so every emit is distinct.
-        buildWhen: (a, b) =>
-            a.provider != b.provider ||
-            a.localeId != b.localeId ||
-            a.credentials != b.credentials,
-        builder: (context, state) {
-          final cubit = context.read<VoiceInputCubit>();
-          return ListView(
-            children: [
-              _SectionHeader(title: l10n.voiceInputProvider),
-              RadioGroup<SttProviderType>(
-                groupValue: state.provider,
-                onChanged: (type) {
-                  if (type != null) cubit.setProvider(type);
-                },
-                child: Column(
-                  children: [
-                    for (final type in SttProviderType.values)
-                      RadioListTile<SttProviderType>(
-                        key: AppKeys.voiceSettingsProviderTile(type.name),
-                        value: type,
-                        title: Text(_providerLabel(l10n, type)),
+      body: SafeArea(
+        child: Column(
+          children: [
+            PairingNavBar.large(
+              title: l10n.voiceInputSettings,
+              onBack: () => Navigator.of(context).maybePop(),
+            ),
+            Expanded(
+              child: BlocBuilder<VoiceInputCubit, VoiceInputState>(
+                // Settings never need to repaint while a recognition session
+                // starts or stops; only these three fields change what this
+                // page renders, and VoiceInputState has no value equality so
+                // every emit is distinct.
+                buildWhen: (a, b) =>
+                    a.provider != b.provider ||
+                    a.localeId != b.localeId ||
+                    a.credentials != b.credentials,
+                builder: (context, state) {
+                  final cubit = context.read<VoiceInputCubit>();
+                  return ListView(
+                    children: [
+                      _SectionHeader(title: l10n.voiceInputProvider),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: spacing.lg),
+                        child: TpCard.outlined(
+                          child: RadioGroup<SttProviderType>(
+                            groupValue: state.provider,
+                            onChanged: (type) {
+                              if (type != null) cubit.setProvider(type);
+                            },
+                            child: Column(
+                              children: [
+                                for (final type in SttProviderType.values)
+                                  RadioListTile<SttProviderType>(
+                                    key: AppKeys.voiceSettingsProviderTile(
+                                      type.name,
+                                    ),
+                                    value: type,
+                                    title: Text(_providerLabel(l10n, type)),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
-                  ],
-                ),
+                      SizedBox(height: spacing.md),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: spacing.lg),
+                        child: TpCard.outlined(child: _LanguageRow(state: state)),
+                      ),
+                      if (state.provider != SttProviderType.system) ...[
+                        SizedBox(height: spacing.md),
+                        VoiceCredentialsSection(provider: state.provider),
+                      ],
+                    ],
+                  );
+                },
               ),
-              const Divider(height: 1),
-              _LanguageRow(state: state),
-              if (state.provider != SttProviderType.system) ...[
-                const Divider(height: 1),
-                VoiceCredentialsSection(provider: state.provider),
-              ],
-            ],
-          );
-        },
+            ),
+          ],
+        ),
       ),
     );
   }
