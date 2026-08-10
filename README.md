@@ -8,8 +8,9 @@
 
 TeamPilot 不会替你启动或编排这些 CLI；它只负责把它们跑起来的**工作区、终端与 IDE 环境**组织好。此外还内置了针对 **Claude** 的**Agent 状态通知**：当 Agent 结束一轮或需要授权时弹出系统通知。
 
-![应用预览](assets/image.png)
-![应用预览](assets/image1.png)
+| 桌面端 | 移动端（配对） |
+|:---:|:---:|
+| ![桌面端](imgs/desktop.png) | ![移动端](imgs/mobile.png) |
 
 ## 核心能力
 
