@@ -31,6 +31,10 @@ class PairingConnection {
     required PairingUploadSink uploadSink,
     PairingWorkspaceIndexProvider? workspaceIndex,
     PairingSessionActivator? activator,
+    PairingDirBrowser? dirBrowser,
+    PairingWorkspaceCreator? workspaceCreator,
+    PairingGroupCreator? groupCreator,
+    PairingGroupIndexProvider? groupIndex,
     void Function()? onClosed,
   }) : _transport = transport,
        _hostStaticKey = hostStaticKey,
@@ -41,6 +45,10 @@ class PairingConnection {
        _uploadSink = uploadSink,
        _workspaceIndex = workspaceIndex,
        _activator = activator,
+       _dirBrowser = dirBrowser,
+       _workspaceCreator = workspaceCreator,
+       _groupCreator = groupCreator,
+       _groupIndex = groupIndex,
        _onClosed = onClosed;
 
   final WsTransport _transport;
@@ -52,6 +60,10 @@ class PairingConnection {
   final PairingUploadSink _uploadSink;
   final PairingWorkspaceIndexProvider? _workspaceIndex;
   final PairingSessionActivator? _activator;
+  final PairingDirBrowser? _dirBrowser;
+  final PairingWorkspaceCreator? _workspaceCreator;
+  final PairingGroupCreator? _groupCreator;
+  final PairingGroupIndexProvider? _groupIndex;
   final void Function()? _onClosed;
 
   _ConnPhase _phase = _ConnPhase.awaitingHello;
@@ -161,6 +173,10 @@ class PairingConnection {
       uploadSink: _uploadSink,
       workspaceIndex: _workspaceIndex,
       activator: _activator,
+      dirBrowser: _dirBrowser,
+      workspaceCreator: _workspaceCreator,
+      groupCreator: _groupCreator,
+      groupIndex: _groupIndex,
     );
     _catalogChanges = _catalog.changes.listen(
       (_) => _sendEncryptedJson({'method': 'session.changed'}),

@@ -26,6 +26,10 @@ class LanPairingServer {
     required PairingUploadSink uploadSink,
     PairingWorkspaceIndexProvider? workspaceIndex,
     PairingSessionActivator? activator,
+    PairingDirBrowser? dirBrowser,
+    PairingWorkspaceCreator? workspaceCreator,
+    PairingGroupCreator? groupCreator,
+    PairingGroupIndexProvider? groupIndex,
     PairingOfferWindow? offerWindow,
   }) : _hostStaticKey = hostStaticKey,
        _registry = registry,
@@ -34,6 +38,10 @@ class LanPairingServer {
        _uploadSink = uploadSink,
        _workspaceIndex = workspaceIndex,
        _activator = activator,
+       _dirBrowser = dirBrowser,
+       _workspaceCreator = workspaceCreator,
+       _groupCreator = groupCreator,
+       _groupIndex = groupIndex,
        offerWindow = offerWindow ?? PairingOfferWindow();
 
   final PairingKeyPair _hostStaticKey;
@@ -43,6 +51,10 @@ class LanPairingServer {
   final PairingUploadSink _uploadSink;
   final PairingWorkspaceIndexProvider? _workspaceIndex;
   final PairingSessionActivator? _activator;
+  final PairingDirBrowser? _dirBrowser;
+  final PairingWorkspaceCreator? _workspaceCreator;
+  final PairingGroupCreator? _groupCreator;
+  final PairingGroupIndexProvider? _groupIndex;
 
   /// One-time pairing-code window; [createOffer] opens it, auth consumes it.
   final PairingOfferWindow offerWindow;
@@ -102,6 +114,10 @@ class LanPairingServer {
       uploadSink: _uploadSink,
       workspaceIndex: _workspaceIndex,
       activator: _activator,
+      dirBrowser: _dirBrowser,
+      workspaceCreator: _workspaceCreator,
+      groupCreator: _groupCreator,
+      groupIndex: _groupIndex,
       onClosed: () => _connections.remove(connection),
     );
     _connections.add(connection);

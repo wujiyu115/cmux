@@ -2662,6 +2662,54 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pairingOpenTerminalHere => '在此打开终端';
 
   @override
+  String get pairingCreate => '创建';
+
+  @override
+  String get pairingNewWorkspace => '新建工作区';
+
+  @override
+  String get pairingNewGroup => '新建分组';
+
+  @override
+  String get pairingNewGroupNameHint => '分组名称';
+
+  @override
+  String get pairingGroupCreateFailed => '无法创建分组。';
+
+  @override
+  String get pairingWorkspaceCreateFailed => '无法创建工作区。';
+
+  @override
+  String get pairingNewWorkspaceFolderLabel => '文件夹';
+
+  @override
+  String get pairingNewWorkspaceNameLabel => '名称';
+
+  @override
+  String get pairingNewWorkspaceNameHint => '可选，默认使用文件夹名';
+
+  @override
+  String get pairingNewWorkspaceGroupLabel => '分组';
+
+  @override
+  String get pairingBrowseFolder => '浏览';
+
+  @override
+  String get pairingSelectFolderFirst => '请先选择一个文件夹。';
+
+  @override
+  String get pairingSelectThisFolder => '选择此文件夹';
+
+  @override
+  String get pairingParentDirectory => '上级目录';
+
+  @override
+  String get pairingBrowseTitle => '选择文件夹';
+
+  @override
+  String get pairingBrowseEmpty => '此处没有子文件夹。';
+
+  @override
   String get mobileToolbarHideKeyboard => '收起键盘';
 
   @override

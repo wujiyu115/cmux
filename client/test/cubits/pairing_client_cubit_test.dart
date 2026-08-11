@@ -45,6 +45,10 @@ class _FakePairingClient extends PairingClient {
   int listWorkspacesCalls = 0;
   bool closed = false;
 
+  final List<(String, String?, String?)> createdWorkspaces = [];
+  final List<String> createdGroups = [];
+  String? lastBrowsePath = 'unset';
+
   void pushSessionsChanged() => _changedCtrl.add(null);
 
   @override
@@ -85,9 +89,35 @@ class _FakePairingClient extends PairingClient {
   Future<List<PairingSessionSummary>> listSessions() async => sessions;
 
   @override
-  Future<List<PairingWorkspaceNode>> listWorkspaces() async {
+  Future<PairingWorkspaceListing> listWorkspaces() async {
     listWorkspacesCalls++;
-    return workspaces;
+    return PairingWorkspaceListing(workspaces: workspaces, groups: const []);
+  }
+
+  @override
+  Future<PairingDirListing> browseDir([String? path]) async {
+    lastBrowsePath = path;
+    return const PairingDirListing(
+      path: '/home/me',
+      parent: '/home',
+      dirs: ['a', 'b'],
+    );
+  }
+
+  @override
+  Future<String> createWorkspace({
+    required String folderPath,
+    String? title,
+    String? groupId,
+  }) async {
+    createdWorkspaces.add((folderPath, title, groupId));
+    return 'ws-new';
+  }
+
+  @override
+  Future<String> createGroup(String name) async {
+    createdGroups.add(name);
+    return 'g-new';
   }
 
   @override
@@ -557,6 +587,62 @@ void main() {
 
       expect(fake.listWorkspacesCalls, 2);
       expect(cubit.state.workspaces, hasLength(1));
+    });
+
+    test('browseDir forwards the path and returns the listing', () async {
+      final fake = _FakePairingClient();
+      final cubit = PairingClientCubit(
+        settings: InMemoryPairingSettingsRepository(),
+        clientFactory: () => fake,
+      );
+      addTearDown(cubit.close);
+      cubit.beginPairing(_makeOffer());
+      await cubit.confirmPairing();
+
+      final listing = await cubit.browseDir('/home/me');
+      expect(fake.lastBrowsePath, '/home/me');
+      expect(listing, isNotNull);
+      expect(listing!.path, '/home/me');
+      expect(listing.dirs, ['a', 'b']);
+    });
+
+    test('createGroup forwards the name and refreshes the tree', () async {
+      final fake = _FakePairingClient();
+      final cubit = PairingClientCubit(
+        settings: InMemoryPairingSettingsRepository(),
+        clientFactory: () => fake,
+      );
+      addTearDown(cubit.close);
+      cubit.beginPairing(_makeOffer());
+      await cubit.confirmPairing();
+      expect(fake.listWorkspacesCalls, 1);
+
+      final id = await cubit.createGroup('Frontend');
+      expect(id, 'g-new');
+      expect(fake.createdGroups, ['Frontend']);
+      // Success re-lists so the desktop's new group shows on the phone.
+      expect(fake.listWorkspacesCalls, 2);
+    });
+
+    test('createWorkspace forwards fields and refreshes the tree', () async {
+      final fake = _FakePairingClient();
+      final cubit = PairingClientCubit(
+        settings: InMemoryPairingSettingsRepository(),
+        clientFactory: () => fake,
+      );
+      addTearDown(cubit.close);
+      cubit.beginPairing(_makeOffer());
+      await cubit.confirmPairing();
+      expect(fake.listWorkspacesCalls, 1);
+
+      final id = await cubit.createWorkspace(
+        folderPath: '/repo/app',
+        title: 'App',
+        groupId: 'g1',
+      );
+      expect(id, 'ws-new');
+      expect(fake.createdWorkspaces.single, ('/repo/app', 'App', 'g1'));
+      expect(fake.listWorkspacesCalls, 2);
     });
 
     test('removeDesktop drops it from state and storage', () async {

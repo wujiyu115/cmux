@@ -61,6 +61,7 @@ import '../services/pairing/session_catalog.dart';
 import '../repositories/user_terminal_theme_repository.dart';
 import '../router/app_router.dart';
 import '../services/storage/app_storage.dart';
+import '../services/storage/remote_directory_browser.dart';
 import '../services/perf/live_perf_driver.dart';
 import '../services/home_workspace/home_workspace_ui_cache.dart';
 import '../services/cli/toolchain_executable_discovery.dart';
@@ -736,9 +737,67 @@ Future<AppShell> buildAppShell({
           PairingWorkspaceInfo(
             workspaceId: workspace.workspaceId,
             title: workspace.effectiveDisplay,
+            groupId: workspace.groupId,
           ),
       ];
     }
+
+    // Every workspace group on disk, so the phone can render workspaces folded
+    // by group and offer them as create targets.
+    Future<List<PairingGroupInfo>> pairingGroupIndex() async {
+      return [
+        for (final g in workspaceGroupsCubit.state.groups)
+          PairingGroupInfo(id: g.id, name: g.name, order: g.order),
+      ];
+    }
+
+    // Host-side directory browser: the phone picks an existing desktop folder to
+    // create a workspace over. `path` null opens the default workspace root
+    // (Documents/TeamPilot) rather than the app-support cwd.
+    Future<PairingDirListing> pairingBrowseDir(String? path) async {
+      final browser = RemoteDirectoryBrowser(AppStorage.fs);
+      final start = path == null || path.trim().isEmpty
+          ? await DefaultWorkspaceDirectory.resolveDefaultWorkspacePath()
+          : await browser.resolveInitial(path);
+      final listing = await browser.list(start);
+      return PairingDirListing(
+        path: listing.path,
+        parent: listing.parent,
+        dirs: listing.directories,
+      );
+    }
+
+    // Create a workspace over the phone-picked folder; file it under a group
+    // when one was chosen. `allowDuplicate` mirrors the desktop "New Workspace"
+    // action (multiple workspaces may target one directory). Routed through
+    // ChatCubit rather than the repository so the desktop chrome — which renders
+    // `ChatCubit.state.workspaces` — shows the new workspace immediately instead
+    // of only after a restart, and so a follow-up `pairingActivate` finds it.
+    Future<String> pairingCreateWorkspace({
+      required String folderPath,
+      String? title,
+      String? groupId,
+    }) async {
+      await AppStorage.fs.ensureDir(folderPath);
+      final workspaceId = await chatCubit.createWorkspace(
+        [WorkspaceFolder(path: folderPath)],
+        sessionRepo,
+        display: title ?? '',
+        allowDuplicate: true,
+      );
+      if (groupId != null && groupId.isNotEmpty) {
+        await chatCubit.updateWorkspaceMetadata(
+          sessionRepo,
+          workspaceId,
+          groupId: groupId,
+        );
+      }
+      return workspaceId;
+    }
+
+    // Create a group through the cubit so the desktop sidebar refreshes too.
+    Future<String> pairingCreateGroup(String name) =>
+        workspaceGroupsCubit.addGroup(name);
 
     // Host-side activation: hand the phone a live pane to mirror. An already
     // running pane is reused; anything else opens this workspace's default
@@ -813,6 +872,10 @@ Future<AppShell> buildAppShell({
       uploadSink: pairingUploadSink,
       workspaceIndex: pairingWorkspaceIndex,
       activator: pairingActivate,
+      dirBrowser: pairingBrowseDir,
+      workspaceCreator: pairingCreateWorkspace,
+      groupCreator: pairingCreateGroup,
+      groupIndex: pairingGroupIndex,
     );
     pairingHostCubit = PairingHostCubit(
       settings: pairingSettings,

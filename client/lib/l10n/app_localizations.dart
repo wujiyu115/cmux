@@ -5114,6 +5114,102 @@ abstract class AppLocalizations {
   /// **'Open a terminal here'**
   String get pairingOpenTerminalHere;
 
+  /// No description provided for @pairingCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get pairingCreate;
+
+  /// No description provided for @pairingNewWorkspace.
+  ///
+  /// In en, this message translates to:
+  /// **'New workspace'**
+  String get pairingNewWorkspace;
+
+  /// No description provided for @pairingNewGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'New group'**
+  String get pairingNewGroup;
+
+  /// No description provided for @pairingNewGroupNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Group name'**
+  String get pairingNewGroupNameHint;
+
+  /// No description provided for @pairingGroupCreateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not create the group.'**
+  String get pairingGroupCreateFailed;
+
+  /// No description provided for @pairingWorkspaceCreateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not create the workspace.'**
+  String get pairingWorkspaceCreateFailed;
+
+  /// No description provided for @pairingNewWorkspaceFolderLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Folder'**
+  String get pairingNewWorkspaceFolderLabel;
+
+  /// No description provided for @pairingNewWorkspaceNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get pairingNewWorkspaceNameLabel;
+
+  /// No description provided for @pairingNewWorkspaceNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional — defaults to the folder name'**
+  String get pairingNewWorkspaceNameHint;
+
+  /// No description provided for @pairingNewWorkspaceGroupLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Group'**
+  String get pairingNewWorkspaceGroupLabel;
+
+  /// No description provided for @pairingBrowseFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse'**
+  String get pairingBrowseFolder;
+
+  /// No description provided for @pairingSelectFolderFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a folder first.'**
+  String get pairingSelectFolderFirst;
+
+  /// No description provided for @pairingSelectThisFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Select this folder'**
+  String get pairingSelectThisFolder;
+
+  /// No description provided for @pairingParentDirectory.
+  ///
+  /// In en, this message translates to:
+  /// **'Parent directory'**
+  String get pairingParentDirectory;
+
+  /// No description provided for @pairingBrowseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a folder'**
+  String get pairingBrowseTitle;
+
+  /// No description provided for @pairingBrowseEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No subfolders here.'**
+  String get pairingBrowseEmpty;
+
   /// No description provided for @mobileToolbarHideKeyboard.
   ///
   /// In en, this message translates to:

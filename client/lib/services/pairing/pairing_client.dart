@@ -90,12 +90,55 @@ class PairingWorkspaceNode {
   const PairingWorkspaceNode({
     required this.workspaceId,
     required this.title,
+    this.groupId = '',
     this.panes = const [],
   });
 
   final String workspaceId;
   final String title;
+
+  /// Id of the group this workspace is filed under; empty = ungrouped.
+  final String groupId;
   final List<PairingSessionNode> panes;
+}
+
+/// One workspace group advertised by `workspace.list`, so the phone can render
+/// workspaces folded by group and offer them as create targets.
+class PairingGroup {
+  const PairingGroup({
+    required this.id,
+    required this.name,
+    required this.order,
+  });
+
+  final String id;
+  final String name;
+  final int order;
+}
+
+/// Result of [PairingClient.listWorkspaces]: the workspace tree plus the host's
+/// group index.
+class PairingWorkspaceListing {
+  const PairingWorkspaceListing({
+    required this.workspaces,
+    required this.groups,
+  });
+
+  final List<PairingWorkspaceNode> workspaces;
+  final List<PairingGroup> groups;
+}
+
+/// One remote directory listing for `fs.browse`.
+class PairingDirListing {
+  const PairingDirListing({
+    required this.path,
+    required this.parent,
+    required this.dirs,
+  });
+
+  final String path;
+  final String? parent;
+  final List<String> dirs;
 }
 
 /// Outcome of [PairingClient.activateSession]: the catalogId to subscribe to,
@@ -411,15 +454,29 @@ class PairingClient {
   /// Fetches the workspace tree (every workspace and its live terminal panes).
   /// Defensive parse: unknown/missing fields fall back to sane defaults so a
   /// protocol skew never throws in the UI.
-  Future<List<PairingWorkspaceNode>> listWorkspaces() async {
+  Future<PairingWorkspaceListing> listWorkspaces() async {
     final result = await _rpc('workspace.list');
     final raw = result['workspaces'];
-    if (raw is! List) return const [];
-    return [
-      for (final item in raw)
-        if (item is Map) _parseWorkspace(item.cast<String, Object?>()),
-    ];
+    final rawGroups = result['groups'];
+    return PairingWorkspaceListing(
+      workspaces: [
+        if (raw is List)
+          for (final item in raw)
+            if (item is Map) _parseWorkspace(item.cast<String, Object?>()),
+      ],
+      groups: [
+        if (rawGroups is List)
+          for (final g in rawGroups)
+            if (g is Map) _parseGroup(g.cast<String, Object?>()),
+      ],
+    );
   }
+
+  PairingGroup _parseGroup(Map<String, Object?> g) => PairingGroup(
+    id: g['id'] as String? ?? '',
+    name: g['name'] as String? ?? '',
+    order: g['order'] is int ? g['order'] as int : 0,
+  );
 
   PairingWorkspaceNode _parseWorkspace(Map<String, Object?> ws) {
     final workspaceId = ws['workspaceId'] as String? ?? '';
@@ -427,6 +484,7 @@ class PairingClient {
     return PairingWorkspaceNode(
       workspaceId: workspaceId,
       title: ws['title'] as String? ?? '',
+      groupId: ws['groupId'] as String? ?? '',
       panes: [
         if (rawPanes is List)
           for (final p in rawPanes)
@@ -469,6 +527,53 @@ class PairingClient {
       rows: result['rows'] is int ? result['rows'] as int : 0,
       fallback: result['fallback'] == true,
     );
+  }
+
+  /// Lists directories on the desktop so the phone can pick an existing folder
+  /// when creating a workspace. [path] null opens the default workspace root.
+  Future<PairingDirListing> browseDir([String? path]) async {
+    final result = await _rpc('fs.browse', {
+      if (path != null) 'path': path,
+    });
+    final rawDirs = result['dirs'];
+    return PairingDirListing(
+      path: result['path'] as String? ?? '',
+      parent: result['parent'] as String?,
+      dirs: [
+        if (rawDirs is List)
+          for (final d in rawDirs)
+            if (d is String) d,
+      ],
+    );
+  }
+
+  /// Asks the desktop to create a workspace over [folderPath]; returns the new
+  /// workspace id.
+  Future<String> createWorkspace({
+    required String folderPath,
+    String? title,
+    String? groupId,
+  }) async {
+    final result = await _rpc('workspace.create', {
+      'folderPath': folderPath,
+      if (title != null && title.isNotEmpty) 'title': title,
+      if (groupId != null && groupId.isNotEmpty) 'groupId': groupId,
+    });
+    final id = result['workspaceId'] as String?;
+    if (id == null || id.isEmpty) {
+      throw Exception('workspace.create returned no workspaceId');
+    }
+    return id;
+  }
+
+  /// Asks the desktop to create a workspace group; returns the new group id.
+  Future<String> createGroup(String name) async {
+    final result = await _rpc('group.create', {'name': name});
+    final id = result['groupId'] as String?;
+    if (id == null || id.isEmpty) {
+      throw Exception('group.create returned no groupId');
+    }
+    return id;
   }
 
   Future<PairingSubscription> subscribe(String catalogId) async {

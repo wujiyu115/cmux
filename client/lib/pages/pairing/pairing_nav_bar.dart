@@ -100,11 +100,11 @@ class PairingNavBar extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        SizedBox(
-          width: _slotWidth,
-          child: trailing == null
-              ? null
-              : Align(alignment: Alignment.centerRight, child: trailing),
+        // Grows past one slot for multi-action trailings (e.g. add + refresh),
+        // but keeps a full slot when empty so a lone back button stays centered.
+        ConstrainedBox(
+          constraints: const BoxConstraints(minWidth: _slotWidth),
+          child: trailing ?? const SizedBox(width: _slotWidth),
         ),
       ],
     );

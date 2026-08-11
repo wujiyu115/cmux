@@ -40,6 +40,10 @@ class PairingRpcHandler {
     Duration batchWindow = const Duration(milliseconds: 5),
     PairingWorkspaceIndexProvider? workspaceIndex,
     PairingSessionActivator? activator,
+    PairingDirBrowser? dirBrowser,
+    PairingWorkspaceCreator? workspaceCreator,
+    PairingGroupCreator? groupCreator,
+    PairingGroupIndexProvider? groupIndex,
     Duration activateTimeout = const Duration(seconds: 8),
     Duration activatePollInterval = const Duration(milliseconds: 40),
     int uploadMaxBytes = 25 * 1024 * 1024,
@@ -52,6 +56,10 @@ class PairingRpcHandler {
        _batchWindow = batchWindow,
        _workspaceIndex = workspaceIndex,
        _activator = activator,
+       _dirBrowser = dirBrowser,
+       _workspaceCreator = workspaceCreator,
+       _groupCreator = groupCreator,
+       _groupIndex = groupIndex,
        _activateTimeout = activateTimeout,
        _activatePollInterval = activatePollInterval,
        _uploads =
@@ -67,6 +75,10 @@ class PairingRpcHandler {
   final Duration _batchWindow;
   final PairingWorkspaceIndexProvider? _workspaceIndex;
   final PairingSessionActivator? _activator;
+  final PairingDirBrowser? _dirBrowser;
+  final PairingWorkspaceCreator? _workspaceCreator;
+  final PairingGroupCreator? _groupCreator;
+  final PairingGroupIndexProvider? _groupIndex;
   final Duration _activateTimeout;
   final Duration _activatePollInterval;
   final PairingUploadReceiver _uploads;
@@ -103,6 +115,12 @@ class PairingRpcHandler {
         _replyResult(id, {'sessions': _sessionList()});
       case 'workspace.list':
         _workspaceList(id);
+      case 'fs.browse':
+        _browseDir(id, params);
+      case 'workspace.create':
+        _createWorkspace(id, params);
+      case 'group.create':
+        _createGroup(id, params);
       case 'session.activate':
         _activate(id, params);
       case 'terminal.subscribe':
@@ -146,8 +164,10 @@ class PairingRpcHandler {
       return;
     }
     List<PairingWorkspaceInfo> workspaces;
+    List<PairingGroupInfo> groups;
     try {
       workspaces = await provider();
+      groups = _groupIndex == null ? const [] : await _groupIndex();
     } on Object catch (e) {
       _replyError(id, 'workspace.list failed: $e');
       return;
@@ -175,10 +195,95 @@ class PairingRpcHandler {
       out.add({
         'workspaceId': ws.workspaceId,
         'title': ws.title,
+        'groupId': ws.groupId,
         'panes': panes,
       });
     }
-    _replyResult(id, {'workspaces': out});
+    _replyResult(id, {
+      'workspaces': out,
+      'groups': [
+        for (final g in groups)
+          {'id': g.id, 'name': g.name, 'order': g.order},
+      ],
+    });
+  }
+
+  /// Lists directories host-side so the phone can pick an existing folder when
+  /// creating a workspace. `path` null means the default workspace root.
+  Future<void> _browseDir(Object? id, Map<String, Object?> params) async {
+    final browser = _dirBrowser;
+    if (browser == null) {
+      _replyError(id, 'fs.browse unsupported');
+      return;
+    }
+    final path = params['path'] is String ? params['path'] as String : null;
+    PairingDirListing listing;
+    try {
+      listing = await browser(path);
+    } on Object catch (e) {
+      _replyError(id, 'fs.browse failed: $e');
+      return;
+    }
+    if (_disposed) return;
+    _replyResult(id, {
+      'path': listing.path,
+      'parent': listing.parent,
+      'dirs': listing.dirs,
+    });
+  }
+
+  /// Creates a workspace host-side over the client-picked folder, optionally
+  /// titled and filed under a group.
+  Future<void> _createWorkspace(Object? id, Map<String, Object?> params) async {
+    final creator = _workspaceCreator;
+    if (creator == null) {
+      _replyError(id, 'workspace.create unsupported');
+      return;
+    }
+    final folderPath = params['folderPath'];
+    if (folderPath is! String || folderPath.isEmpty) {
+      _replyError(id, 'workspace.create requires folderPath');
+      return;
+    }
+    final title = params['title'] is String ? params['title'] as String : null;
+    final groupId =
+        params['groupId'] is String ? params['groupId'] as String : null;
+    String workspaceId;
+    try {
+      workspaceId = await creator(
+        folderPath: folderPath,
+        title: title,
+        groupId: groupId,
+      );
+    } on Object catch (e) {
+      _replyError(id, 'workspace.create failed: $e');
+      return;
+    }
+    if (_disposed) return;
+    _replyResult(id, {'workspaceId': workspaceId});
+  }
+
+  /// Creates a workspace group host-side and returns its id.
+  Future<void> _createGroup(Object? id, Map<String, Object?> params) async {
+    final creator = _groupCreator;
+    if (creator == null) {
+      _replyError(id, 'group.create unsupported');
+      return;
+    }
+    final name = params['name'];
+    if (name is! String || name.trim().isEmpty) {
+      _replyError(id, 'group.create requires name');
+      return;
+    }
+    String groupId;
+    try {
+      groupId = await creator(name.trim());
+    } on Object catch (e) {
+      _replyError(id, 'group.create failed: $e');
+      return;
+    }
+    if (_disposed) return;
+    _replyResult(id, {'groupId': groupId});
   }
 
   /// Opens/reuses a terminal host-side, then waits (bounded) for it to appear

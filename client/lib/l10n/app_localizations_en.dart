@@ -2756,6 +2756,55 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pairingOpenTerminalHere => 'Open a terminal here';
 
   @override
+  String get pairingCreate => 'Create';
+
+  @override
+  String get pairingNewWorkspace => 'New workspace';
+
+  @override
+  String get pairingNewGroup => 'New group';
+
+  @override
+  String get pairingNewGroupNameHint => 'Group name';
+
+  @override
+  String get pairingGroupCreateFailed => 'Could not create the group.';
+
+  @override
+  String get pairingWorkspaceCreateFailed => 'Could not create the workspace.';
+
+  @override
+  String get pairingNewWorkspaceFolderLabel => 'Folder';
+
+  @override
+  String get pairingNewWorkspaceNameLabel => 'Name';
+
+  @override
+  String get pairingNewWorkspaceNameHint =>
+      'Optional — defaults to the folder name';
+
+  @override
+  String get pairingNewWorkspaceGroupLabel => 'Group';
+
+  @override
+  String get pairingBrowseFolder => 'Browse';
+
+  @override
+  String get pairingSelectFolderFirst => 'Pick a folder first.';
+
+  @override
+  String get pairingSelectThisFolder => 'Select this folder';
+
+  @override
+  String get pairingParentDirectory => 'Parent directory';
+
+  @override
+  String get pairingBrowseTitle => 'Choose a folder';
+
+  @override
+  String get pairingBrowseEmpty => 'No subfolders here.';
+
+  @override
   String get mobileToolbarHideKeyboard => 'Hide keyboard';
 
   @override

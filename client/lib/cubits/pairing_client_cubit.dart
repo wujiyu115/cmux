@@ -33,6 +33,7 @@ class PairingClientState extends Equatable {
     this.pairedDesktops = const [],
     this.sessions = const [],
     this.workspaces = const [],
+    this.groups = const [],
     this.logs = const [],
     this.stageStatuses = idleStages,
     this.pendingOffer,
@@ -59,6 +60,9 @@ class PairingClientState extends Equatable {
 
   /// Full workspace tree (all workspaces, persisted sessions + live panes).
   final List<PairingWorkspaceNode> workspaces;
+
+  /// The host's workspace groups, so the list can render folded by group.
+  final List<PairingGroup> groups;
   final List<String> logs;
 
   /// Connect progress indexed by [PairingStage.index] — drives the step rail.
@@ -87,6 +91,7 @@ class PairingClientState extends Equatable {
     List<PairedDesktop>? pairedDesktops,
     List<PairingSessionSummary>? sessions,
     List<PairingWorkspaceNode>? workspaces,
+    List<PairingGroup>? groups,
     List<String>? logs,
     List<PairingStageStatus>? stageStatuses,
     PairingOffer? pendingOffer,
@@ -107,6 +112,7 @@ class PairingClientState extends Equatable {
     pairedDesktops: pairedDesktops ?? this.pairedDesktops,
     sessions: sessions ?? this.sessions,
     workspaces: workspaces ?? this.workspaces,
+    groups: groups ?? this.groups,
     logs: logs ?? this.logs,
     stageStatuses: stageStatuses ?? this.stageStatuses,
     pendingOffer: clearPendingOffer ? null : (pendingOffer ?? this.pendingOffer),
@@ -129,6 +135,7 @@ class PairingClientState extends Equatable {
     pairedDesktops,
     sessions,
     workspaces,
+    groups,
     logs,
     stageStatuses,
     pendingOffer,
@@ -279,14 +286,15 @@ class PairingClientCubit extends Cubit<PairingClientState> {
     // The workspace fetch is the rail's last step, and it lives here rather than
     // in the client — so this stage is emitted by the cubit.
     _setStage(PairingStage.loadWorkspaces, PairingStageStatus.active);
-    final workspaces = await _client!.listWorkspaces();
+    final listing = await _client!.listWorkspaces();
     _setStage(PairingStage.loadWorkspaces, PairingStageStatus.done);
     emit(
       state.copyWith(
         phase: PairingClientPhase.connected,
         activeHostName: hostName,
         activeHostUrl: _client?.connectedUrl,
-        workspaces: workspaces,
+        workspaces: listing.workspaces,
+        groups: listing.groups,
         clearPendingOffer: true,
       ),
     );
@@ -323,10 +331,68 @@ class PairingClientCubit extends Cubit<PairingClientState> {
     final client = _client;
     if (client == null) return;
     try {
-      final workspaces = await client.listWorkspaces();
-      emit(state.copyWith(workspaces: workspaces));
+      final listing = await client.listWorkspaces();
+      emit(
+        state.copyWith(
+          workspaces: listing.workspaces,
+          groups: listing.groups,
+        ),
+      );
     } on Object catch (e) {
       _appendLog('Refresh failed: $e');
+    }
+  }
+
+  /// Lists directories on the desktop for the create-workspace folder picker.
+  /// Returns null (and logs) on failure so the picker can surface an error
+  /// without crashing.
+  Future<PairingDirListing?> browseDir([String? path]) async {
+    final client = _client;
+    if (client == null) return null;
+    try {
+      return await client.browseDir(path);
+    } on Object catch (e) {
+      _appendLog('Browse failed: $e');
+      return null;
+    }
+  }
+
+  /// Asks the desktop to create a workspace over [folderPath], then refreshes
+  /// the tree so the new workspace appears. Returns the new id, or null on
+  /// failure.
+  Future<String?> createWorkspace({
+    required String folderPath,
+    String? title,
+    String? groupId,
+  }) async {
+    final client = _client;
+    if (client == null) return null;
+    try {
+      final id = await client.createWorkspace(
+        folderPath: folderPath,
+        title: title,
+        groupId: groupId,
+      );
+      await refreshWorkspaces();
+      return id;
+    } on Object catch (e) {
+      _appendLog('Create workspace failed: $e');
+      return null;
+    }
+  }
+
+  /// Asks the desktop to create a workspace group, then refreshes so it appears
+  /// in the group index. Returns the new id, or null on failure.
+  Future<String?> createGroup(String name) async {
+    final client = _client;
+    if (client == null) return null;
+    try {
+      final id = await client.createGroup(name);
+      await refreshWorkspaces();
+      return id;
+    } on Object catch (e) {
+      _appendLog('Create group failed: $e');
+      return null;
     }
   }
 

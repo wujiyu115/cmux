@@ -394,4 +394,253 @@ void main() {
       expect(frame.data['error'], contains('did not become live'));
     });
   });
+
+  group('workspace.list groups', () {
+    test('emits groups and each workspace groupId', () async {
+      handler = PairingRpcHandler(
+        catalog: catalog,
+        send: sent.add,
+        uploadSink: _noopSink,
+        workspaceIndex: () async => const [
+          PairingWorkspaceInfo(
+            workspaceId: 'wsA',
+            title: 'A',
+            groupId: 'g1',
+          ),
+        ],
+        groupIndex: () async => const [
+          PairingGroupInfo(id: 'g1', name: 'Group One', order: 0),
+        ],
+      );
+
+      handler.handle(
+        PairingCodec.decode(_json({'id': 1, 'method': 'workspace.list'})),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      final result = (decodeLast() as JsonFrame).data['result'] as Map;
+      final wsA = (result['workspaces'] as List).single as Map;
+      expect(wsA['groupId'], 'g1');
+      final groups = result['groups'] as List;
+      expect(groups, hasLength(1));
+      final g = groups.single as Map;
+      expect(g['id'], 'g1');
+      expect(g['name'], 'Group One');
+      expect(g['order'], 0);
+    });
+
+    test('groups is empty when no group index is injected', () async {
+      handler = PairingRpcHandler(
+        catalog: catalog,
+        send: sent.add,
+        uploadSink: _noopSink,
+        workspaceIndex: () async => const [
+          PairingWorkspaceInfo(workspaceId: 'wsA', title: 'A'),
+        ],
+      );
+      handler.handle(
+        PairingCodec.decode(_json({'id': 1, 'method': 'workspace.list'})),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      final result = (decodeLast() as JsonFrame).data['result'] as Map;
+      expect(result['groups'], isEmpty);
+      // Default groupId is the empty string, not null.
+      expect(((result['workspaces'] as List).single as Map)['groupId'], '');
+    });
+  });
+
+  group('fs.browse', () {
+    test('unsupported when no browser is injected', () async {
+      handler.handle(
+        PairingCodec.decode(_json({'id': 1, 'method': 'fs.browse'})),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect((decodeLast() as JsonFrame).data['error'], contains('unsupported'));
+    });
+
+    test('passes the path through and returns the listing', () async {
+      String? seen = 'unset';
+      handler = PairingRpcHandler(
+        catalog: catalog,
+        send: sent.add,
+        uploadSink: _noopSink,
+        dirBrowser: (path) async {
+          seen = path;
+          return const PairingDirListing(
+            path: '/home/me',
+            parent: '/home',
+            dirs: ['a', 'b'],
+          );
+        },
+      );
+      handler.handle(
+        PairingCodec.decode(_json({
+          'id': 2,
+          'method': 'fs.browse',
+          'params': {'path': '/home/me'},
+        })),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      expect(seen, '/home/me');
+      final result = (decodeLast() as JsonFrame).data['result'] as Map;
+      expect(result['path'], '/home/me');
+      expect(result['parent'], '/home');
+      expect(result['dirs'], ['a', 'b']);
+    });
+
+    test('null path reaches the browser (default root)', () async {
+      Object? seen = 'unset';
+      handler = PairingRpcHandler(
+        catalog: catalog,
+        send: sent.add,
+        uploadSink: _noopSink,
+        dirBrowser: (path) async {
+          seen = path;
+          return const PairingDirListing(
+            path: '/root',
+            parent: null,
+            dirs: [],
+          );
+        },
+      );
+      handler.handle(
+        PairingCodec.decode(_json({'id': 3, 'method': 'fs.browse'})),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      expect(seen, isNull);
+      final result = (decodeLast() as JsonFrame).data['result'] as Map;
+      expect(result['parent'], isNull);
+    });
+  });
+
+  group('workspace.create', () {
+    test('unsupported when no creator is injected', () async {
+      handler.handle(
+        PairingCodec.decode(_json({
+          'id': 1,
+          'method': 'workspace.create',
+          'params': {'folderPath': '/x'},
+        })),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect((decodeLast() as JsonFrame).data['error'], contains('unsupported'));
+    });
+
+    test('requires a non-empty folderPath', () async {
+      handler = PairingRpcHandler(
+        catalog: catalog,
+        send: sent.add,
+        uploadSink: _noopSink,
+        workspaceCreator: ({required folderPath, title, groupId}) async => 'w',
+      );
+      handler.handle(
+        PairingCodec.decode(_json({
+          'id': 1,
+          'method': 'workspace.create',
+          'params': {'folderPath': ''},
+        })),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        (decodeLast() as JsonFrame).data['error'],
+        contains('requires folderPath'),
+      );
+    });
+
+    test('forwards folderPath/title/groupId and returns the id', () async {
+      String? gotFolder, gotTitle, gotGroup;
+      handler = PairingRpcHandler(
+        catalog: catalog,
+        send: sent.add,
+        uploadSink: _noopSink,
+        workspaceCreator: ({required folderPath, title, groupId}) async {
+          gotFolder = folderPath;
+          gotTitle = title;
+          gotGroup = groupId;
+          return 'ws-new';
+        },
+      );
+      handler.handle(
+        PairingCodec.decode(_json({
+          'id': 2,
+          'method': 'workspace.create',
+          'params': {
+            'folderPath': '/repo/app',
+            'title': 'App',
+            'groupId': 'g1',
+          },
+        })),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      expect(gotFolder, '/repo/app');
+      expect(gotTitle, 'App');
+      expect(gotGroup, 'g1');
+      final result = (decodeLast() as JsonFrame).data['result'] as Map;
+      expect(result['workspaceId'], 'ws-new');
+    });
+  });
+
+  group('group.create', () {
+    test('unsupported when no creator is injected', () async {
+      handler.handle(
+        PairingCodec.decode(_json({
+          'id': 1,
+          'method': 'group.create',
+          'params': {'name': 'X'},
+        })),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect((decodeLast() as JsonFrame).data['error'], contains('unsupported'));
+    });
+
+    test('requires a non-blank name', () async {
+      handler = PairingRpcHandler(
+        catalog: catalog,
+        send: sent.add,
+        uploadSink: _noopSink,
+        groupCreator: (name) async => 'g',
+      );
+      handler.handle(
+        PairingCodec.decode(_json({
+          'id': 1,
+          'method': 'group.create',
+          'params': {'name': '   '},
+        })),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        (decodeLast() as JsonFrame).data['error'],
+        contains('requires name'),
+      );
+    });
+
+    test('trims the name, forwards it, and returns the id', () async {
+      String? got;
+      handler = PairingRpcHandler(
+        catalog: catalog,
+        send: sent.add,
+        uploadSink: _noopSink,
+        groupCreator: (name) async {
+          got = name;
+          return 'g-new';
+        },
+      );
+      handler.handle(
+        PairingCodec.decode(_json({
+          'id': 2,
+          'method': 'group.create',
+          'params': {'name': '  Frontend  '},
+        })),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      expect(got, 'Frontend');
+      final result = (decodeLast() as JsonFrame).data['result'] as Map;
+      expect(result['groupId'], 'g-new');
+    });
+  });
 }
