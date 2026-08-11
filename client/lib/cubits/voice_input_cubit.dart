@@ -53,8 +53,9 @@ class VoiceInputState {
       ? systemAvailable
       : credentials.hasFor(provider);
 
-  /// Whether any backend could run — drives whether the mic button shows at
-  /// all. Derived for the same reason as [configured].
+  /// Whether any backend could run at all. The mic button always shows (see
+  /// `MobileComposerPanel`); this only feeds its rebuild guard and the settings
+  /// page. Derived for the same reason as [configured].
   bool get available =>
       systemAvailable || credentials.hasVolcengine || credentials.hasAliyun;
 

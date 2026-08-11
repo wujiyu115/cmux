@@ -88,9 +88,12 @@ void main() {
     expect(find.byKey(AppKeys.mobileComposerMicButton), findsOneWidget);
   });
 
-  testWidgets('hides the mic when nothing can run', (t) async {
-    // No on-device recognizer and no cloud keys: a tap could only ever fail, so
-    // the button is not offered. The settings sheet still reaches the page.
+  testWidgets('keeps the mic when nothing can run, routed to settings', (
+    t,
+  ) async {
+    // No on-device recognizer and no cloud keys. The action row is fixed, so the
+    // button stays rather than reflowing the whole strip the moment a backend
+    // appears; the tap goes to settings, its only useful outcome.
     final unavailable = VoiceInputCubit(
       repository: InMemoryVoiceInputRepository(),
       providerFactory: (_, _) => FakeSttProvider(availableValue: false),
@@ -99,7 +102,15 @@ void main() {
     await unavailable.load();
     voice = unavailable;
     await pump(t);
-    expect(find.byKey(AppKeys.mobileComposerMicButton), findsNothing);
+    expect(find.byKey(AppKeys.mobileComposerMicButton), findsOneWidget);
+
+    await t.tap(find.byKey(AppKeys.mobileComposerMicButton));
+    await t.pumpAndSettle();
+    expect(find.byKey(AppKeys.voiceSettingsPage), findsOneWidget);
+    expect(provider.startCalls, 0);
+
+    await t.tap(find.byTooltip('Back'));
+    await t.pumpAndSettle();
   });
 
   testWidgets('tapping the mic starts a session', (t) async {
