@@ -13,7 +13,9 @@ import '../../cubits/pairing_client_cubit.dart';
 import '../../cubits/voice_input_cubit.dart';
 import '../../repositories/mobile_toolbar_repository.dart';
 import '../../services/stt/transcript_insertion.dart';
+import '../../services/terminal/keyboard_inset_pty_hold.dart';
 import '../../services/terminal/terminal_fonts.dart';
+import '../../services/terminal/terminal_layout_coordinator.dart';
 import '../../theme/app_fonts.dart';
 import '../../theme/app_typography_scale.dart';
 import '../../utils/shell_quote.dart';
@@ -34,10 +36,23 @@ class PairingMirrorPage extends StatefulWidget {
   State<PairingMirrorPage> createState() => _PairingMirrorPageState();
 }
 
-class _PairingMirrorPageState extends State<PairingMirrorPage> {
+class _PairingMirrorPageState extends State<PairingMirrorPage>
+    with WidgetsBindingObserver {
   late final TerminalEngine _engine;
   late final TerminalController _controller;
   late final MobileToolbarCubit _toolbar;
+
+  /// Reaches [TerminalViewState.beginPtyHold] — the only way to bracket the
+  /// soft-keyboard animation from out here.
+  final _terminalViewKey = GlobalKey<TerminalViewState>();
+
+  /// Turns the IME animation's per-frame insets into one PTY resize.
+  late final _keyboardHold = KeyboardInsetPtyHold(
+    target: () {
+      final state = _terminalViewKey.currentState;
+      return state == null ? null : ptyHoldTargetFor(state);
+    },
+  );
 
   /// The composer's draft outlives the panel: flipping to the key bar unmounts
   /// the panel, and the half-typed command has to still be there on the way
@@ -64,6 +79,7 @@ class _PairingMirrorPageState extends State<PairingMirrorPage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _engine = TerminalEngine(config: TerminalConfig.defaults());
     _controller = TerminalController();
 
@@ -105,6 +121,20 @@ class _PairingMirrorPageState extends State<PairingMirrorPage> {
     });
   }
 
+  /// The soft keyboard does not arrive in one step — see [KeyboardInsetPtyHold]
+  /// for why every frame of that animation must not become its own SIGWINCH.
+  /// Read from [View] rather than `MediaQuery`: this fires before the inherited
+  /// widget is rebuilt, so the MediaQuery value here is still the old one.
+  @override
+  void didChangeMetrics() {
+    super.didChangeMetrics();
+    if (!mounted) return;
+    final view = View.of(context);
+    _keyboardHold.onInsetChanged(
+      view.viewInsets.bottom / view.devicePixelRatio,
+    );
+  }
+
   /// Reads one gallery image off disk into memory. The only place `image_picker`
   /// is used, so the cubit takes plain callbacks and stays testable. [XFile.name]
   /// is already a bare filename with no directory part; the host validates it
@@ -120,6 +150,10 @@ class _PairingMirrorPageState extends State<PairingMirrorPage> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    // Before the terminal view goes: a flush here would push a grid nobody is
+    // looking at any more.
+    _keyboardHold.dispose();
     _hostOutput?.cancel();
     _localInput?.cancel();
     // Cancel before disposing the controller: an in-flight result must not
@@ -182,6 +216,7 @@ class _PairingMirrorPageState extends State<PairingMirrorPage> {
               Expanded(
                 child: TerminalView(
                   _engine,
+                  key: _terminalViewKey,
                   controller: _controller,
                   // Without this the view falls back to TerminalStyle.defaults(),
                   // whose family is 'monospace' — a fontconfig generic that iOS
