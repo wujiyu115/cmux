@@ -333,6 +333,10 @@ class _GroupHeaderState extends State<_GroupHeader> {
       group.accent,
       fallback: cs.onSurfaceVariant,
     );
+    // Footprint of the trailing slot below. Derived from the icon scale, not a
+    // literal: `sm` grows with the UI scale setting, and a fixed box would clip
+    // the glyph at large scales.
+    final actionSize = context.tpIconSizes.sm + 4;
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -372,29 +376,44 @@ class _GroupHeaderState extends State<_GroupHeader> {
                   style: styles.smSemiboldColored(cs.onSurfaceVariant),
                 ),
               ),
-              if (_hovered)
-                TpIconButton(
-                  icon: Icons.more_horiz_rounded,
-                  tooltip: group.name,
-                  size: TpIconButton.kCompactSize,
-                  compact: true,
-                  color: cs.onSurfaceVariant,
-                  backgroundColor: Colors.transparent,
-                  onTap: () {
-                    final box = context.findRenderObject() as RenderBox?;
-                    final pos = box == null
-                        ? Offset.zero
-                        : box.localToGlobal(box.size.centerRight(Offset.zero));
-                    _showMenu(context, pos);
-                  },
-                )
-              else
-                Text(
-                  '${widget.count}',
-                  style: styles.xsColored(
-                    cs.onSurfaceVariant.withValues(alpha: 0.7),
-                  ),
+              // Constant-size trailing slot, as in [_WorkspaceNavRow]: the
+              // hovered menu button is taller than the count it replaces, so
+              // swapping them unconstrained grew the header and every row below
+              // it shifted under the cursor. Sized to the header's own line
+              // height rather than [TpIconButton.kCompactSize] (28) — a group
+              // header is deliberately tighter than a workspace row, and
+              // reserving 28 here would pad every header out by ~10px.
+              SizedBox(
+                width: actionSize,
+                height: actionSize,
+                child: Center(
+                  child: _hovered
+                      ? TpIconButton(
+                          icon: Icons.more_horiz_rounded,
+                          tooltip: group.name,
+                          size: actionSize,
+                          compact: true,
+                          color: cs.onSurfaceVariant,
+                          backgroundColor: Colors.transparent,
+                          onTap: () {
+                            final box =
+                                context.findRenderObject() as RenderBox?;
+                            final pos = box == null
+                                ? Offset.zero
+                                : box.localToGlobal(
+                                    box.size.centerRight(Offset.zero),
+                                  );
+                            _showMenu(context, pos);
+                          },
+                        )
+                      : Text(
+                          '${widget.count}',
+                          style: styles.xsColored(
+                            cs.onSurfaceVariant.withValues(alpha: 0.7),
+                          ),
+                        ),
                 ),
+              ),
             ],
           ),
         ),
