@@ -5,6 +5,7 @@ import 'device_registry.dart';
 import 'pairing_connection.dart';
 import 'pairing_crypto.dart';
 import 'pairing_offer.dart';
+import 'pairing_ports.dart';
 import 'pairing_upload_receiver.dart';
 import 'pairing_workspace_index.dart';
 import 'session_catalog.dart';
@@ -31,7 +32,9 @@ class LanPairingServer {
     PairingGroupCreator? groupCreator,
     PairingGroupIndexProvider? groupIndex,
     PairingOfferWindow? offerWindow,
-  }) : _hostStaticKey = hostStaticKey,
+    List<int> ports = kPairingPortLadder,
+  }) : _ports = ports,
+       _hostStaticKey = hostStaticKey,
        _registry = registry,
        _catalog = catalog,
        _hostName = hostName,
@@ -43,6 +46,10 @@ class LanPairingServer {
        _groupCreator = groupCreator,
        _groupIndex = groupIndex,
        offerWindow = offerWindow ?? PairingOfferWindow();
+
+  /// Ports [ensureStarted] tries in order. `[0]` means "any", which tests use to
+  /// avoid contending with a real desktop on the same machine.
+  final List<int> _ports;
 
   final PairingKeyPair _hostStaticKey;
   final DeviceRegistry _registry;
@@ -66,9 +73,43 @@ class LanPairingServer {
 
   int get port => _http!.port;
 
+  /// Claims the first port of [_ports] that binds, so a phone's saved URL keeps
+  /// working across desktop restarts.
+  ///
+  /// Binding a fixed port genuinely fails in the field: a second instance holds
+  /// it, or it sits inside a Windows excluded range (Hyper-V / WSL / Docker
+  /// reservations), where bind returns access-denied with nothing listening.
+  /// Hence the ladder — every port in it is one a stranded phone will re-probe.
+  /// Only when the whole ladder is refused does this fall back to an ephemeral
+  /// port, which keeps pairing usable for a fresh scan but is the one case saved
+  /// URLs cannot survive.
   Future<void> ensureStarted() async {
     if (_http != null) return;
-    final server = await HttpServer.bind(InternetAddress.anyIPv4, 0);
+    HttpServer? server;
+    final refusals = <String>[];
+    for (final port in _ports) {
+      try {
+        server = await HttpServer.bind(InternetAddress.anyIPv4, port);
+        break;
+      } on SocketException catch (error) {
+        refusals.add('$port (${error.osError?.message ?? error.message})');
+      }
+    }
+    if (server == null) {
+      appLogger.w(
+        '[pairing] no agreed port could be bound; using an ephemeral one. '
+        'Phones paired before now will have to scan again. Refused: '
+        '${refusals.join(', ')}',
+      );
+      server = await HttpServer.bind(InternetAddress.anyIPv4, 0);
+    } else if (refusals.isNotEmpty) {
+      // Still reachable — a stranded phone probes the whole ladder — but worth
+      // saying out loud, because it means reconnect now costs extra probes.
+      appLogger.w(
+        '[pairing] listening on :${server.port} after refusals: '
+        '${refusals.join(', ')}',
+      );
+    }
     _http = server;
     server.listen(_onRequest);
     appLogger.d('LanPairingServer listening on :${server.port}');

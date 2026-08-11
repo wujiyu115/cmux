@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:teampilot/services/pairing/pairing_client.dart';
+import 'package:teampilot/services/pairing/pairing_ports.dart';
 import 'package:teampilot/services/pairing/ws_transport.dart';
 
 void main() {
@@ -18,6 +19,8 @@ void main() {
             if (url.host == '10.0.0.2') return Completer<WsTransport>().future;
             return Future.error(StateError('connection refused'));
           },
+          // No ladder port answers, so this case ends where it always did.
+          portProbe: (_, _) async => false,
         );
         addTearDown(client.close);
 
@@ -65,6 +68,7 @@ void main() {
             dialed.add(url.toString());
             return Completer<WsTransport>().future;
           },
+          portProbe: (_, _) async => false,
         );
         addTearDown(client.close);
 
@@ -92,6 +96,77 @@ void main() {
         async.flushMicrotasks();
         expect(dialed, hasLength(3));
       });
+    });
+  });
+
+  group('PairingClient.connect ladder fallback', () {
+    test('re-probes the agreed ladder when the saved port moved', () async {
+      // The desktop could not rebind the port it advertised at pairing time (a
+      // second instance, or a Windows excluded range) and landed further down
+      // the ladder. Without this the phone is stranded on a re-scan.
+      final probed = <String>[];
+      final dialed = <String>[];
+      final client = PairingClient(
+        connector: (url) {
+          dialed.add(url.toString());
+          return Future.error(StateError('connection refused'));
+        },
+        portProbe: (host, port) async {
+          probed.add('$host:$port');
+          return port == kPairingPortLadder[2];
+        },
+      );
+      addTearDown(client.close);
+
+      await expectLater(
+        client.connect(
+          wsUrls: ['ws://192.168.1.5:${kPairingPortLadder.first}/pair/ws'],
+          token: 'device-token',
+          hostPublicKeyB64: 'AAABBBCCC',
+          deviceId: 'd1',
+        ),
+        throwsA(isA<Exception>()),
+      );
+
+      // The port from the saved URL is not re-probed; the rest of the ladder is.
+      expect(probed, [
+        '192.168.1.5:${kPairingPortLadder[1]}',
+        '192.168.1.5:${kPairingPortLadder[2]}',
+        '192.168.1.5:${kPairingPortLadder[3]}',
+      ]);
+      // Only the port that answered earns a full dial.
+      expect(dialed, [
+        'ws://192.168.1.5:${kPairingPortLadder.first}/pair/ws',
+        'ws://192.168.1.5:${kPairingPortLadder[2]}/pair/ws',
+      ]);
+    });
+
+    test('ports already covered by saved URLs are not re-probed', () async {
+      var probes = 0;
+      final client = PairingClient(
+        connector: (_) => Future.error(StateError('refused')),
+        portProbe: (_, _) async {
+          probes++;
+          return true;
+        },
+      );
+      addTearDown(client.close);
+
+      // Saved URLs already span the whole ladder, so the fallback has nothing
+      // left to try and must not dial each port a second time.
+      await expectLater(
+        client.connect(
+          wsUrls: [
+            for (final port in kPairingPortLadder)
+              'ws://192.168.1.5:$port/pair/ws',
+          ],
+          token: 't',
+          hostPublicKeyB64: 'k',
+        ),
+        throwsA(isA<Exception>()),
+      );
+      // Every ladder port was already in the saved list, so nothing to probe.
+      expect(probes, 0);
     });
   });
 }

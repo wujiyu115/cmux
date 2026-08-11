@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
 import '../../utils/logging/logger.dart';
 import 'e2ee_channel.dart';
 import 'pairing_crypto.dart';
 import 'pairing_frames.dart';
+import 'pairing_ports.dart';
 import 'pairing_upload_sender.dart';
 import 'ws_transport.dart';
 
@@ -175,10 +177,30 @@ class PairingSubscription {
 /// Connection progress is surfaced on [log] so the confirm UI can diagnose LAN
 /// failures (wrong IP, firewall, expired code).
 class PairingClient {
-  PairingClient({Future<WsTransport> Function(Uri)? connector})
-    : _connector = connector ?? WsTransport.connect;
+  PairingClient({
+    Future<WsTransport> Function(Uri)? connector,
+    Future<bool> Function(String host, int port)? portProbe,
+  }) : _connector = connector ?? WsTransport.connect,
+       _portProbe = portProbe ?? _tcpProbe;
 
   final Future<WsTransport> Function(Uri) _connector;
+
+  /// Answers whether *something* accepts TCP on host:port. Used only to pick
+  /// ladder candidates worth a full dial; injected in tests.
+  final Future<bool> Function(String host, int port) _portProbe;
+
+  /// A plain TCP connect: far cheaper than a WebSocket dial, and enough to tell
+  /// a live listener from a dead port. A false positive (some other process on
+  /// that port) just costs one failed dial afterwards.
+  static Future<bool> _tcpProbe(String host, int port) async {
+    try {
+      final socket = await Socket.connect(host, port, timeout: probeTimeout);
+      socket.destroy();
+      return true;
+    } on Object {
+      return false;
+    }
+  }
 
   /// Per-candidate dial budget.
   ///
@@ -189,6 +211,12 @@ class PairingClient {
   /// round trips are milliseconds, so 4s is generous and still leaves room for
   /// every candidate the host is likely to advertise.
   static const dialTimeout = Duration(seconds: 4);
+
+  /// Budget for one ladder probe. Deliberately far below [dialTimeout]: the
+  /// ladder is walked only after every saved URL already failed, so a full dial
+  /// per candidate would multiply an already-slow failure. A LAN handshake is
+  /// milliseconds; anything slower is not the desktop we are looking for.
+  static const probeTimeout = Duration(milliseconds: 500);
 
   final _log = StreamController<String>.broadcast();
   Stream<String> get log => _log.stream;
@@ -252,7 +280,59 @@ class PairingClient {
         await _teardown();
       }
     }
+
+    // Every saved URL is dead. Before declaring failure, re-probe the agreed
+    // ladder on the same hosts: the desktop may have had to move ports (a second
+    // instance held one, or it sits in a Windows excluded range), and a stored
+    // URL pins the port it happened to bind at pairing time.
+    for (final url in await _ladderCandidates(wsUrls)) {
+      try {
+        _stage(PairingStage.connect, PairingStageStatus.active);
+        _emit('Retrying moved port: $url…');
+        return await _connectOne(
+          url: url,
+          token: token,
+          hostPublicKeyB64: hostPublicKeyB64,
+          deviceId: deviceId,
+          deviceName: deviceName,
+        );
+      } on Object catch (e) {
+        lastError = e;
+        _emit('Failed on $url: $e', error: true);
+        await _teardown();
+      }
+    }
     throw Exception('All pairing URLs failed: $lastError');
+  }
+
+  /// Ladder ports on the hosts from [wsUrls] that answer a TCP probe, minus the
+  /// host:port pairs already tried. Probes run concurrently per host so the whole
+  /// sweep costs about one [probeTimeout], not one per candidate.
+  Future<List<String>> _ladderCandidates(List<String> wsUrls) async {
+    final tried = <String>{};
+    final hosts = <String>[];
+    for (final raw in wsUrls) {
+      final url = Uri.tryParse(raw);
+      final host = url?.host;
+      if (url == null || host == null || host.isEmpty) continue;
+      tried.add('$host:${url.port}');
+      if (!hosts.contains(host)) hosts.add(host);
+    }
+
+    final candidates = <String>[];
+    for (final host in hosts) {
+      final ports = [
+        for (final port in kPairingPortLadder)
+          if (!tried.contains('$host:$port')) port,
+      ];
+      final live = await Future.wait(
+        ports.map((port) => _portProbe(host, port)),
+      );
+      for (var i = 0; i < ports.length; i++) {
+        if (live[i]) candidates.add('ws://$host:${ports[i]}/pair/ws');
+      }
+    }
+    return candidates;
   }
 
   Future<PairingAuthResult> _connectOne({
