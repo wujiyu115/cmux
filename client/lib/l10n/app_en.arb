@@ -1280,6 +1280,7 @@
   "pairingParentDirectory": "Parent directory",
   "pairingBrowseTitle": "Choose a folder",
   "pairingBrowseEmpty": "No subfolders here.",
+  "pairingBrowseFailed": "Could not list this folder.",
   "mobileToolbarHideKeyboard": "Hide keyboard",
   "mobileToolbarCustomize": "Customize keys",
   "mobileToolbarVisibleGroups": "Visible groups: {count}",

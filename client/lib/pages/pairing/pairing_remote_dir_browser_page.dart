@@ -46,6 +46,11 @@ class _PairingRemoteDirBrowserPageState
   PairingDirListing? _listing;
   bool _loading = true;
 
+  /// The host's reason for the last refused listing. Kept alongside [_listing]
+  /// rather than replacing it: a failed step into a subdirectory should leave
+  /// the parent listing usable and just say what went wrong.
+  String? _error;
+
   @override
   void initState() {
     super.initState();
@@ -53,14 +58,21 @@ class _PairingRemoteDirBrowserPageState
   }
 
   Future<void> _load(String? path) async {
-    setState(() => _loading = true);
-    final listing = await widget.cubit.browseDir(path);
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    final result = await widget.cubit.browseDir(path);
     if (!mounted) return;
     setState(() {
       _loading = false;
       // Keep the previous listing on failure so the user isn't stranded on a
-      // blank page; browseDir already logged the error.
-      if (listing != null) _listing = listing;
+      // blank page — but say why, rather than looking like an empty folder.
+      if (result.ok) {
+        _listing = result.value;
+      } else {
+        _error = result.error;
+      }
     });
   }
 
@@ -97,6 +109,21 @@ class _PairingRemoteDirBrowserPageState
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            if (_error != null)
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  spacing.lg,
+                  spacing.sm,
+                  spacing.lg,
+                  spacing.sm,
+                ),
+                child: Text(
+                  // Localized headline plus the host's untranslatable reason,
+                  // the same shape the create sheets use.
+                  '${l10n.pairingBrowseFailed}\n$_error',
+                  style: TextStyle(color: cs.error),
                 ),
               ),
             Expanded(

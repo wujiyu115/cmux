@@ -2710,6 +2710,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pairingBrowseEmpty => '此处没有子文件夹。';
 
   @override
+  String get pairingBrowseFailed => '无法列出该文件夹。';
+
+  @override
   String get mobileToolbarHideKeyboard => '收起键盘';
 
   @override

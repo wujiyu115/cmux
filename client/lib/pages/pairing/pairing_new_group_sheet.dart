@@ -49,12 +49,16 @@ class _PairingNewGroupSheetState extends State<_PairingNewGroupSheet> {
       _submitting = true;
       _error = null;
     });
-    final id = await widget.cubit.createGroup(name);
+    final result = await widget.cubit.createGroup(name);
     if (!mounted) return;
-    if (id == null) {
+    if (!result.ok) {
       setState(() {
         _submitting = false;
-        _error = context.l10n.pairingGroupCreateFailed;
+        // Localized headline plus the host's own words. The tail is not
+        // translatable (it is an exception / RPC error) and it is the only thing
+        // that distinguishes a stale desktop — `unknown method: group.create` —
+        // from a real failure.
+        _error = '${context.l10n.pairingGroupCreateFailed}\n${result.error}';
       });
       return;
     }

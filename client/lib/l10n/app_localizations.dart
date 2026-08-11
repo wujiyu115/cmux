@@ -5210,6 +5210,12 @@ abstract class AppLocalizations {
   /// **'No subfolders here.'**
   String get pairingBrowseEmpty;
 
+  /// No description provided for @pairingBrowseFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not list this folder.'**
+  String get pairingBrowseFailed;
+
   /// No description provided for @mobileToolbarHideKeyboard.
   ///
   /// In en, this message translates to:

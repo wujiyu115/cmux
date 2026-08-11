@@ -114,8 +114,14 @@ class _FakePairingClient extends PairingClient {
     return 'ws-new';
   }
 
+  /// When set, `group.create` throws this instead of succeeding — how a host
+  /// that does not know the method behaves.
+  String? createGroupError;
+
   @override
   Future<String> createGroup(String name) async {
+    final failure = createGroupError;
+    if (failure != null) throw Exception(failure);
     createdGroups.add(name);
     return 'g-new';
   }
@@ -599,11 +605,11 @@ void main() {
       cubit.beginPairing(_makeOffer());
       await cubit.confirmPairing();
 
-      final listing = await cubit.browseDir('/home/me');
+      final result = await cubit.browseDir('/home/me');
       expect(fake.lastBrowsePath, '/home/me');
-      expect(listing, isNotNull);
-      expect(listing!.path, '/home/me');
-      expect(listing.dirs, ['a', 'b']);
+      expect(result.ok, isTrue);
+      expect(result.value!.path, '/home/me');
+      expect(result.value!.dirs, ['a', 'b']);
     });
 
     test('createGroup forwards the name and refreshes the tree', () async {
@@ -617,8 +623,8 @@ void main() {
       await cubit.confirmPairing();
       expect(fake.listWorkspacesCalls, 1);
 
-      final id = await cubit.createGroup('Frontend');
-      expect(id, 'g-new');
+      final result = await cubit.createGroup('Frontend');
+      expect(result.value, 'g-new');
       expect(fake.createdGroups, ['Frontend']);
       // Success re-lists so the desktop's new group shows on the phone.
       expect(fake.listWorkspacesCalls, 2);
@@ -635,14 +641,45 @@ void main() {
       await cubit.confirmPairing();
       expect(fake.listWorkspacesCalls, 1);
 
-      final id = await cubit.createWorkspace(
+      final result = await cubit.createWorkspace(
         folderPath: '/repo/app',
         title: 'App',
         groupId: 'g1',
       );
-      expect(id, 'ws-new');
+      expect(result.value, 'ws-new');
       expect(fake.createdWorkspaces.single, ('/repo/app', 'App', 'g1'));
       expect(fake.listWorkspacesCalls, 2);
+    });
+
+    test('a refused create carries the host reason, not a bare failure', () async {
+      // The regression this guards: a stale desktop answers `unknown method:
+      // group.create`, and that text is the only thing that tells the user to
+      // rebuild rather than retry. It used to reach the connection log only,
+      // which is unreachable once connected.
+      final fake = _FakePairingClient()..createGroupError = 'unknown method';
+      final cubit = PairingClientCubit(
+        settings: InMemoryPairingSettingsRepository(),
+        clientFactory: () => fake,
+      );
+      addTearDown(cubit.close);
+      cubit.beginPairing(_makeOffer());
+      await cubit.confirmPairing();
+
+      final result = await cubit.createGroup('Frontend');
+      expect(result.ok, isFalse);
+      expect(result.value, isNull);
+      expect(result.error, contains('unknown method'));
+    });
+
+    test('creating while disconnected fails without throwing', () async {
+      final cubit = PairingClientCubit(
+        settings: InMemoryPairingSettingsRepository(),
+      );
+      addTearDown(cubit.close);
+
+      final result = await cubit.createGroup('Frontend');
+      expect(result.ok, isFalse);
+      expect(result.error, isNotEmpty);
     });
 
     test('removeDesktop drops it from state and storage', () async {

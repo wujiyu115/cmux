@@ -79,16 +79,18 @@ class _PairingNewWorkspaceSheetState extends State<_PairingNewWorkspaceSheet> {
       _submitting = true;
       _error = null;
     });
-    final id = await widget.cubit.createWorkspace(
+    final result = await widget.cubit.createWorkspace(
       folderPath: folder,
       title: _nameController.text.trim(),
       groupId: _group.id.isEmpty ? null : _group.id,
     );
     if (!mounted) return;
-    if (id == null) {
+    if (!result.ok) {
       setState(() {
         _submitting = false;
-        _error = context.l10n.pairingWorkspaceCreateFailed;
+        // Localized headline plus the host's untranslatable reason — see the
+        // same pattern in the new-group sheet.
+        _error = '${context.l10n.pairingWorkspaceCreateFailed}\n${result.error}';
       });
       return;
     }

@@ -27,6 +27,28 @@ enum PairingClientPhase {
 /// enum so the cubit stays free of display strings (mapped to l10n at render).
 enum PairingNotice { activateFailed, fallbackOpenedTerminal }
 
+/// Outcome of one host-side request: the value, or the host's own words for why
+/// it refused.
+///
+/// [error] is deliberately the raw host/exception text rather than a localized
+/// string. A desktop that predates a feature answers `unknown method:
+/// group.create`, which is the single fact identifying a stale desktop — and it
+/// used to go only to the connection log, a screen unreachable once connected,
+/// leaving the phone showing nothing but "could not create group". Callers pair
+/// it with a localized headline; this is the diagnostic tail.
+class PairingCallResult<T> {
+  const PairingCallResult.ok(T value) : _value = value, error = null;
+  const PairingCallResult.failed(this.error) : _value = null;
+
+  final T? _value;
+  final String? error;
+
+  /// Non-null exactly when [ok]; callers that checked `ok` may use `value!`.
+  T? get value => _value;
+
+  bool get ok => error == null;
+}
+
 class PairingClientState extends Equatable {
   const PairingClientState({
     this.phase = PairingClientPhase.idle,
@@ -344,29 +366,33 @@ class PairingClientCubit extends Cubit<PairingClientState> {
   }
 
   /// Lists directories on the desktop for the create-workspace folder picker.
-  /// Returns null (and logs) on failure so the picker can surface an error
-  /// without crashing.
-  Future<PairingDirListing?> browseDir([String? path]) async {
+  /// Carries the host's refusal reason rather than a bare null so the picker can
+  /// say *why* instead of showing an empty folder.
+  Future<PairingCallResult<PairingDirListing>> browseDir([String? path]) async {
     final client = _client;
-    if (client == null) return null;
+    if (client == null) {
+      return const PairingCallResult<PairingDirListing>.failed('not connected');
+    }
     try {
-      return await client.browseDir(path);
+      return PairingCallResult.ok(await client.browseDir(path));
     } on Object catch (e) {
       _appendLog('Browse failed: $e');
-      return null;
+      return PairingCallResult.failed('$e');
     }
   }
 
   /// Asks the desktop to create a workspace over [folderPath], then refreshes
-  /// the tree so the new workspace appears. Returns the new id, or null on
-  /// failure.
-  Future<String?> createWorkspace({
+  /// the tree so the new workspace appears. Carries the new id, or the host's
+  /// reason for refusing.
+  Future<PairingCallResult<String>> createWorkspace({
     required String folderPath,
     String? title,
     String? groupId,
   }) async {
     final client = _client;
-    if (client == null) return null;
+    if (client == null) {
+      return const PairingCallResult<String>.failed('not connected');
+    }
     try {
       final id = await client.createWorkspace(
         folderPath: folderPath,
@@ -374,25 +400,27 @@ class PairingClientCubit extends Cubit<PairingClientState> {
         groupId: groupId,
       );
       await refreshWorkspaces();
-      return id;
+      return PairingCallResult.ok(id);
     } on Object catch (e) {
       _appendLog('Create workspace failed: $e');
-      return null;
+      return PairingCallResult.failed('$e');
     }
   }
 
   /// Asks the desktop to create a workspace group, then refreshes so it appears
-  /// in the group index. Returns the new id, or null on failure.
-  Future<String?> createGroup(String name) async {
+  /// in the group index. Carries the new id, or the host's reason for refusing.
+  Future<PairingCallResult<String>> createGroup(String name) async {
     final client = _client;
-    if (client == null) return null;
+    if (client == null) {
+      return const PairingCallResult<String>.failed('not connected');
+    }
     try {
       final id = await client.createGroup(name);
       await refreshWorkspaces();
-      return id;
+      return PairingCallResult.ok(id);
     } on Object catch (e) {
       _appendLog('Create group failed: $e');
-      return null;
+      return PairingCallResult.failed('$e');
     }
   }
 

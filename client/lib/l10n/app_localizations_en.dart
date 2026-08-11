@@ -2805,6 +2805,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pairingBrowseEmpty => 'No subfolders here.';
 
   @override
+  String get pairingBrowseFailed => 'Could not list this folder.';
+
+  @override
   String get mobileToolbarHideKeyboard => 'Hide keyboard';
 
   @override
