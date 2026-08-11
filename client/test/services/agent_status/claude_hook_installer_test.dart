@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:teampilot/services/agent_status/claude_hook_installer.dart';
 
+import '../../support/in_memory_filesystem.dart';
+
 /// The events the installer manages in the user's settings.json.
 const _managedEvents = [
   'UserPromptSubmit',
@@ -146,5 +148,115 @@ void main() {
     // Sanity: the resolver returns something absolute-ish on this host.
     final dir = ClaudeHookInstaller.resolveClaudeConfigDir();
     expect(dir, isNotNull);
+  });
+
+  group('script line endings', () {
+    test('emits LF even when the body literal arrives as CRLF', () async {
+      final fs = InMemoryFilesystem();
+      final crlf = ClaudeHookInstaller(
+        scriptPath: '/app/agent-hooks/claude-hook.sh',
+        settingsPath: '/home/u/.claude/settings.json',
+        filesystem: fs,
+        scriptBody: 'if [ -z "\$X" ]; then\r\n  exit 0\r\nfi\r\n',
+      );
+      await crlf.install();
+
+      final written = fs.files['/app/agent-hooks/claude-hook.sh'];
+      expect(written, isNotNull);
+      // `sh` (dash in a distro) fails on `then\r`, and a `\` before CR breaks
+      // line continuation — turning the curl invocation into separate commands.
+      expect(written, isNot(contains('\r')));
+      expect(written, 'if [ -z "\$X" ]; then\n  exit 0\nfi\n');
+    });
+
+    test('shipped bodies are CR-free after normalisation', () {
+      for (final body in [
+        claudeHookHostScriptBody,
+        claudeHookWslScriptBody,
+      ]) {
+        expect(
+          ClaudeHookInstaller.normalizeScriptEndings(body),
+          isNot(contains('\r')),
+        );
+      }
+    });
+  });
+
+  group('forWslDistro', () {
+    test('writes both files inside the distro via the injected fs', () async {
+      final fs = InMemoryFilesystem();
+      final wsl = ClaudeHookInstaller.forWslDistro(
+        distro: 'Ubuntu',
+        distroHome: '/home/u',
+        distroAppDataRoot: '/home/u/.local/share/com.hhoa.teampilot',
+        filesystem: fs,
+      );
+      await wsl.install();
+
+      const script =
+          '/home/u/.local/share/com.hhoa.teampilot/agent-hooks/claude-hook.sh';
+      expect(fs.files[script], isNotNull);
+      expect(fs.files['/home/u/.claude/settings.json'], isNotNull);
+      // The command must be a POSIX path valid *inside* the distro.
+      expect(wsl.hookCommand, 'sh "$script"');
+    });
+
+    test('distro body reaches the host gateway through Windows curl.exe', () {
+      // WSL2 NAT: the distro's own 127.0.0.1 is not the host's, and the gateway
+      // deliberately binds loopback only. Interop curl.exe runs on the Windows
+      // network stack, so it can reach it.
+      expect(
+        claudeHookWslScriptBody,
+        contains('/mnt/c/Windows/System32/curl.exe'),
+      );
+      // Degrades to the distro curl when interop is unavailable.
+      expect(claudeHookWslScriptBody, contains('CURL=curl'));
+      expect(claudeHookHostScriptBody, isNot(contains('curl.exe')));
+    });
+  });
+
+  test('strips managed groups written under a different app-data root',
+      () async {
+    // Regression: the needle used to be the full scriptPath, so entries from an
+    // earlier root were never recognised and piled up on every reinstall.
+    final fs = InMemoryFilesystem();
+    fs.files['/home/u/.claude/settings.json'] = jsonEncode({
+      'hooks': {
+        'Stop': [
+          {
+            'hooks': [
+              {
+                'type': 'command',
+                'command': 'sh "D:/old/root/agent-hooks/claude-hook.sh"',
+                'timeout': 5,
+              },
+            ],
+          },
+          {
+            'hooks': [
+              {'type': 'command', 'command': 'my-own-hook', 'timeout': 5},
+            ],
+          },
+        ],
+      },
+    });
+
+    await ClaudeHookInstaller(
+      scriptPath: '/new/root/agent-hooks/claude-hook.sh',
+      settingsPath: '/home/u/.claude/settings.json',
+      filesystem: fs,
+    ).install();
+
+    final root =
+        jsonDecode(fs.files['/home/u/.claude/settings.json']!) as Map;
+    final stop = (root['hooks'] as Map)['Stop'] as List;
+    final commands = stop
+        .map((g) => ((g as Map)['hooks'] as List).first as Map)
+        .map((h) => h['command'] as String)
+        .toList();
+
+    expect(commands, contains('my-own-hook'));
+    expect(commands.where((c) => c.contains('D:/old/root')), isEmpty);
+    expect(commands.where((c) => c.contains('claude-hook.sh')), hasLength(1));
   });
 }

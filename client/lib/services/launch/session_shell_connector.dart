@@ -6,8 +6,7 @@ import '../../cubits/chat/session_launch_host.dart';
 import '../../models/app_session.dart';
 import '../../models/cli_tool.dart';
 import '../../models/runtime_target.dart';
-import '../agent_status/claude_hook_installer.dart';
-import '../agent_status/member_agent_status_endpoint.dart';
+import '../agent_status/agent_status_launch_env.dart';
 import '../../services/host/host_interactive_shell.dart';
 import '../../services/host/host_interactive_shell_kind.dart';
 import '../../models/workspace.dart';
@@ -177,10 +176,19 @@ class SessionShellConnector {
         // otherwise reading agentStatusEndpoint dereferences a null server
         // (tests, or agent-status disabled). The hook stays a no-op without it.
         if (_host.agentStatusGateway.isStarted) {
-          agentStatusEnv[agentStatusUrlEnvKey] =
-              _host.agentStatusGateway.agentStatusEndpoint.toString();
-          agentStatusEnv[agentStatusSessionEnvKey] = seatId;
-          agentStatusEnv[agentStatusMemberEnvKey] = seatId;
+          // usesWsl: false even for a WSL target. A session pane's shell comes
+          // from HostInteractiveShell.defaultExecutable(), which on Windows is
+          // COMSPEC / cmd.exe / Git bash — never `wsl.exe` — so the CLI runs on
+          // the host and already sees these vars. Should this path ever spawn
+          // `wsl.exe` directly, it needs the WSLENV declaration too (see
+          // AgentStatusLaunchEnv).
+          agentStatusEnv.addAll(
+            AgentStatusLaunchEnv.build(
+              endpoint: _host.agentStatusGateway.agentStatusEndpoint.toString(),
+              seatId: seatId,
+              usesWsl: false,
+            ),
+          );
         }
       }
       shell.connect(

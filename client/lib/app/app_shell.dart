@@ -11,9 +11,10 @@ import '../cubits/app_update_cubit.dart';
 import '../cubits/agent_attention_cubit.dart';
 import '../cubits/chat_cubit.dart';
 import '../services/agent_status/agent_status_http_handler.dart';
+import '../services/agent_status/agent_attention_state.dart';
 import '../services/agent_status/agent_status_seat_lookup.dart';
 import '../services/agent_status/agent_status_gateway.dart';
-import '../services/agent_status/claude_hook_installer.dart';
+import '../services/agent_status/claude_hook_install_service.dart';
 import '../services/notification/agent_attention_notification_service.dart';
 import '../services/editor_platform/editor_platform.dart';
 import '../cubits/notification_cubit.dart';
@@ -419,11 +420,37 @@ Future<AppShell> buildAppShell({
     sshClientFactory: sshClientFactory,
   );
 
+  // Built before the connectors that stamp seat identity: workspace panes need
+  // the bound loopback port at plan time, so the listener must already be up.
+  final agentStatusGateway = AgentStatusGateway();
+  await agentStatusGateway.ensureStarted();
+  final agentStatusSeatLookup = AgentStatusSeatLookup();
+  final agentAttentionCubit = AgentAttentionCubit();
+
+  // `nativeAppDataPath` and not `AppStorage.appDataRoot`: with a WSL home target
+  // the latter is already an in-distro POSIX path, and writing it through the
+  // local filesystem would create `/home/<u>/…` on the Windows drive.
+  final claudeHookInstallService = ClaudeHookInstallService(
+    hostAppDataRoot: nativeAppDataPath,
+    resolveWslPaths: (distro) async {
+      // forTarget caches per target id, which also sidesteps the single-slot
+      // static cache in RuntimeContextResolver._queryWslHome.
+      final ctx = await runtimeContextRegistry.forTarget(
+        RuntimeTarget.wsl(distro),
+      );
+      return (home: ctx.home, appDataRoot: ctx.appDataRoot);
+    },
+  );
+
   final workspaceShellConnector = WorkspaceShellConnector(
     transportFactory: transportFactory,
     sshProfileRepository: sshProfileRepo,
     sshUseLoginShell: () =>
         sessionPreferencesCubit.state.preferences.sshUseLoginShell,
+    agentStatusGateway: agentStatusGateway,
+    agentStatusSeatLookup: agentStatusSeatLookup,
+    agentAttentionCubit: agentAttentionCubit,
+    onWslDistroLaunch: claudeHookInstallService.ensureWslDistro,
   );
   // Terminal inject deps after connector: registry was created earlier.
   final workspaceTerminalSessionOps = WorkspaceTerminalSessionOps();
@@ -437,23 +464,14 @@ Future<AppShell> buildAppShell({
     ),
   );
 
-  final agentStatusGateway = AgentStatusGateway();
-  await agentStatusGateway.ensureStarted();
+  // Install the shared Claude lifecycle hook on the host (idempotent,
+  // best-effort): additively merges gateway-forwarding entries into the user's
+  // ~/.claude/settings.json and drops the forwarder script under the host
+  // <teampilotRoot>/agent-hooks/. Panes stamp seat identity env at connect; the
+  // hook reads it at run time (see claude_hook_installer.dart). WSL distros are
+  // installed lazily on first launch into them, via onWslDistroLaunch above.
+  unawaited(claudeHookInstallService.installHost());
 
-  // Install the shared Claude lifecycle hook once (idempotent, best-effort):
-  // additively merges gateway-forwarding entries into the user's
-  // ~/.claude/settings.json and drops the global forwarder script under
-  // <teampilotRoot>/agent-hooks/. Panes stamp seat identity env at connect;
-  // the hook reads it at run time (see claude_hook_installer.dart).
-  unawaited(
-    ClaudeHookInstaller.forEnvironment(
-      appDataRoot: AppStorage.appDataRoot,
-    )?.install() ??
-        Future<void>.value(),
-  );
-
-  final agentAttentionCubit = AgentAttentionCubit();
-  final agentStatusSeatLookup = AgentStatusSeatLookup();
   agentStatusGateway.attachAgentStatusHandler(
     AgentStatusHttpHandler(
       attention: agentAttentionCubit,
@@ -542,6 +560,16 @@ Future<AppShell> buildAppShell({
   // status-hook driven service below (disjoint surfaces — no double-fire).
   TerminalIdleNotificationService(
     registry: workspaceTerminalRegistry,
+    // Panes whose agent reports through the status hook are notified
+    // semantically by the service below — suppress the PTY-burst duplicate.
+    // Keyed on "has actually reported", not "was stamped": every non-ssh pane
+    // carries the env, but a pane running `npm build` must keep its idle notice.
+    reportsAgentStatus: (paneId) {
+      final seatId = WorkspaceShellConnector.seatIdFor(paneId);
+      return agentAttentionCubit.state.seats.containsKey(
+        agentSeatKey(sessionId: seatId, memberId: seatId),
+      );
+    },
   ).start();
 
   // Turn agent lifecycle edges (done / interrupted / waiting) reported by the
@@ -550,11 +578,42 @@ Future<AppShell> buildAppShell({
   AgentAttentionNotificationService(
     attention: agentAttentionCubit,
     isForegroundSeat: (sessionId, memberId) {
+      // Workspace-terminal seats are panes, not chat sessions: the user is
+      // "watching" one when its workspace tab is active and it is the focused
+      // pane. Not checked: whether the terminal panel is collapsed — same
+      // assumption TerminalIdleNotificationService already makes.
+      final paneId = WorkspaceShellConnector.paneIdOfSeat(sessionId);
+      if (paneId != null) {
+        final located = workspaceTerminalRegistry.locatePane(paneId);
+        if (located == null) return false;
+        final (group, _) = located;
+        return chatCubit.tabStore.activeWorkspaceId == group.workspaceId &&
+            group.activeId == paneId;
+      }
       final s = chatCubit.state;
       return s.activeSessionId == sessionId;
     },
     resolveAttribution: (sessionId, memberId) {
       final s = chatCubit.state;
+      final paneId = WorkspaceShellConnector.paneIdOfSeat(sessionId);
+      if (paneId != null) {
+        final located = workspaceTerminalRegistry.locatePane(paneId);
+        if (located == null) return null;
+        final (group, _) = located;
+        final paneLabel = s.workspaces
+            .where((w) => w.workspaceId == group.workspaceId)
+            .firstOrNull
+            ?.effectiveDisplay ??
+            '';
+        return AgentNoticeAttribution(
+          title: group.paneAttribution(paneId),
+          workspaceId: group.workspaceId,
+          workspaceLabel: paneLabel,
+          // Explicit: `ws:<paneId>` is not a session id, so the default
+          // session-location composition would build a dead route.
+          location: '/home-v2/workspace/${group.workspaceId}',
+        );
+      }
       final session = s.sessions
           .where((e) => e.sessionId == sessionId)
           .firstOrNull;

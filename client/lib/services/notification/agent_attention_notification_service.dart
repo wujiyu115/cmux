@@ -38,6 +38,7 @@ class AgentNoticeAttribution {
     required this.title,
     required this.workspaceId,
     this.workspaceLabel = '',
+    this.location = '',
   });
 
   /// Notification headline — the session's own name (its task), when known.
@@ -49,6 +50,13 @@ class AgentNoticeAttribution {
   /// Human label of [workspaceId], surfaced in the body so the user sees which
   /// workspace/directory the agent is in.
   final String workspaceLabel;
+
+  /// Explicit tap deep-link, for seats that are not chat sessions.
+  ///
+  /// A workspace-terminal seat id (`ws:<paneId>`) is not a session id, so the
+  /// default composition would build a route to a session that does not exist.
+  /// When set, this is used verbatim instead.
+  final String location;
 }
 
 /// Turns [AgentAttentionCubit] seat transitions into OS + in-app notifications:
@@ -193,15 +201,19 @@ class AgentAttentionNotificationService {
         : (kindBody.isEmpty ? workspaceLabel : '$workspaceLabel · $kindBody');
     final workspaceId = attribution?.workspaceId ?? '';
     // Deep-link straight to the seat's session tab so the tap lands on the
-    // very terminal that needs attention, not just its workspace.
-    final payload = workspaceId.isEmpty
-        ? ''
-        : (notice.sessionId.trim().isEmpty
-              ? '/home-v2/workspace/$workspaceId'
-              : HomeWorkspaceRoute.sessionLocation(
-                  workspaceId: workspaceId,
-                  sessionId: notice.sessionId,
-                ));
+    // very terminal that needs attention, not just its workspace. Seats that
+    // are not chat sessions supply their own route instead.
+    final explicitLocation = attribution?.location.trim() ?? '';
+    final payload = explicitLocation.isNotEmpty
+        ? explicitLocation
+        : (workspaceId.isEmpty
+              ? ''
+              : (notice.sessionId.trim().isEmpty
+                    ? '/home-v2/workspace/$workspaceId'
+                    : HomeWorkspaceRoute.sessionLocation(
+                        workspaceId: workspaceId,
+                        sessionId: notice.sessionId,
+                      )));
 
     _recorder()?.record(
       title: title,

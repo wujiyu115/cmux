@@ -78,6 +78,15 @@ class WorkspaceTerminalEntry {
   /// OSC 133 → command log, bound for this pane's session.
   ShellCommandTracker? commandTracker;
 
+  /// Run once when the pane is disposed (pane close, surface close, workspace
+  /// close).
+  ///
+  /// The agent-status seat is released here and not only from the PTY exit
+  /// callback: `TerminalLaunchController` skips `onProcessExited` entirely on a
+  /// non-zero exit and clears it outright in `disconnect()`, so Ctrl+C, a crash,
+  /// or a manual disconnect would otherwise leak the seat.
+  VoidCallback? onDisposed;
+
   int bumpConnectGeneration() => ++connectGeneration;
 
   void dispose() {
@@ -90,6 +99,10 @@ class WorkspaceTerminalEntry {
     session.disconnect();
     session.dispose();
     controller.dispose();
+    // Cleared before invoking so a re-entrant dispose cannot double-fire.
+    final callback = onDisposed;
+    onDisposed = null;
+    callback?.call();
   }
 }
 
@@ -489,6 +502,21 @@ class WorkspaceTerminalRegistry {
   /// Live view of all currently-tracked workspace groups. Used by the
   /// terminal-idle notifier to poll pane activity across every workspace.
   Iterable<WorkspaceTerminalGroup> get groups => _groups.values;
+
+  /// The group and entry owning [paneId], or null when no pane matches.
+  ///
+  /// Non-creating on purpose — unlike [groupFor], which inserts an empty group
+  /// as a side effect. Used to map an agent-status seat (`ws:<paneId>`) back to
+  /// its workspace for notification attribution and foreground suppression.
+  (WorkspaceTerminalGroup, WorkspaceTerminalEntry)? locatePane(String paneId) {
+    final id = paneId.trim();
+    if (id.isEmpty) return null;
+    for (final group in _groups.values) {
+      final entry = group.entryById(id);
+      if (entry != null) return (group, entry);
+    }
+    return null;
+  }
 
   /// Resolves a workspace's display name for notification attribution. Set once
   /// the workspace store exists; until then notifications carry the pane label

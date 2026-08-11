@@ -48,7 +48,9 @@ class TerminalIdleNotificationService {
     NotificationRecorder? Function()? recorder,
     TerminalIdleNotifyContext? Function()? resolveContext,
     DateTime Function()? now,
+    bool Function(String paneId)? reportsAgentStatus,
   }) : _registry = registry,
+       _reportsAgentStatus = reportsAgentStatus ?? ((_) => false),
        _pollInterval = pollInterval,
        _minimumWorkDuration = minimumWorkDuration,
        _isAppFocused =
@@ -61,6 +63,13 @@ class TerminalIdleNotificationService {
        _now = now ?? DateTime.now;
 
   final WorkspaceTerminalRegistry _registry;
+
+  /// True when the pane's agent reports lifecycle events through the status
+  /// hook. Those panes are notified by `AgentAttentionNotificationService`
+  /// instead — this PTY-burst heuristic would fire a second time for the same
+  /// turn. Defaults to "never", so callers that don't wire it keep the old
+  /// behaviour.
+  final bool Function(String paneId) _reportsAgentStatus;
   final Duration _pollInterval;
   final Duration _minimumWorkDuration;
   final Future<bool> Function() _isAppFocused;
@@ -131,6 +140,17 @@ class TerminalIdleNotificationService {
         live.add(id);
         final working = entry.connected && entry.session.activityTracker.isWorking;
         final was = _wasWorking[id] ?? false;
+
+        // Defer to the status-hook service for panes that report agent
+        // lifecycle: it already notifies on the semantic edge, and this
+        // PTY-burst heuristic would fire a second time for the same turn. Keep
+        // the bookkeeping current so the pane doesn't surface a stale edge if it
+        // later stops reporting.
+        if (_reportsAgentStatus(id)) {
+          _wasWorking[id] = working;
+          _workingSince.remove(id);
+          continue;
+        }
 
         if (working && !was) {
           _workingSince[id] = now;

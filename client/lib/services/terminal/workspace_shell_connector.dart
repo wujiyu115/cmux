@@ -1,11 +1,16 @@
 import 'dart:io';
 
+import '../../cubits/agent_attention_cubit.dart';
+import '../../models/cli_tool.dart';
 import '../../models/runtime_target.dart';
 import '../../models/workspace_shell_launch_plan.dart';
 import '../../models/ssh_profile.dart';
 import '../../models/workspace_folder.dart';
 import '../../models/workspace_terminal_session_spec.dart';
 import '../../repositories/ssh_profile_repository.dart';
+import '../agent_status/agent_status_gateway.dart';
+import '../agent_status/agent_status_launch_env.dart';
+import '../agent_status/agent_status_seat_lookup.dart';
 import '../session/launch_command_builder.dart';
 import '../session/remote_flashskyai_command_builder.dart';
 import '../ssh/ssh_member_session.dart';
@@ -22,13 +27,46 @@ class WorkspaceShellConnector {
     required TerminalTransportFactory transportFactory,
     required SshProfileRepository sshProfileRepository,
     bool Function()? sshUseLoginShell,
+    AgentStatusGateway? agentStatusGateway,
+    AgentStatusSeatLookup? agentStatusSeatLookup,
+    AgentAttentionCubit? agentAttentionCubit,
+    void Function(String distro)? onWslDistroLaunch,
   }) : _transportFactory = transportFactory,
        _sshProfileRepository = sshProfileRepository,
-       _sshUseLoginShell = sshUseLoginShell ?? (() => true);
+       _sshUseLoginShell = sshUseLoginShell ?? (() => true),
+       _agentStatusGateway = agentStatusGateway,
+       _agentStatusSeatLookup = agentStatusSeatLookup,
+       _agentAttentionCubit = agentAttentionCubit,
+       _onWslDistroLaunch = onWslDistroLaunch;
 
   final TerminalTransportFactory _transportFactory;
   final SshProfileRepository _sshProfileRepository;
   final bool Function() _sshUseLoginShell;
+
+  /// Optional so tests and harnesses can build a connector without the
+  /// agent-status stack; absent means panes launch exactly as before.
+  final AgentStatusGateway? _agentStatusGateway;
+  final AgentStatusSeatLookup? _agentStatusSeatLookup;
+  final AgentAttentionCubit? _agentAttentionCubit;
+
+  /// Notified with the distro name whenever a pane launches into WSL, so the
+  /// hook can be installed into that distro on first use. Fire-and-forget on
+  /// the callee's side — this is a launch path.
+  final void Function(String distro)? _onWslDistroLaunch;
+
+  /// Seat-id prefix keeping workspace panes out of the session-tab id space
+  /// (mirrors `paneCatalogId` in `services/pairing/session_catalog.dart`).
+  static const seatIdPrefix = 'ws:';
+
+  static String seatIdFor(String paneId) => '$seatIdPrefix${paneId.trim()}';
+
+  /// Inverse of [seatIdFor]; null when [seatId] is not a workspace pane seat.
+  /// Lets notification wiring map a seat back to its pane without hardcoding
+  /// the prefix.
+  static String? paneIdOfSeat(String seatId) =>
+      seatId.startsWith(seatIdPrefix)
+      ? seatId.substring(seatIdPrefix.length)
+      : null;
 
   static final _remoteShell = HostInteractiveShell.remotePosixExecutable;
 
@@ -56,24 +94,84 @@ class WorkspaceShellConnector {
     );
   }
 
+  /// [paneId] is the owning `WorkspaceTerminalEntry.id`. When supplied (and the
+  /// gateway is up) the pane is registered as an agent-status seat and the
+  /// resulting plan carries the identity env the shared Claude hook reads. SSH
+  /// panes are skipped — they need a reverse tunnel and a remote script, same
+  /// deferral as `SessionShellConnector`.
   WorkspaceShellLaunchPlan resolveLaunchPlan({
     required WorkspaceTerminalSessionSpec spec,
     required String workingDirectory,
+    String paneId = '',
   }) {
     final target = runtimeTargetFor(spec);
+    if (target.kind == RuntimeKind.wsl) {
+      // First launch into this distro installs the hook there (the distro reads
+      // its own ~/.claude/settings.json). Deliberately not awaited.
+      _onWslDistroLaunch?.call(target.wslDistro ?? '');
+    }
     return switch (target.kind) {
       RuntimeKind.ssh => _sshLaunchPlan(workingDirectory: workingDirectory),
       RuntimeKind.wsl => _wslLaunchPlan(
         distro: target.wslDistro ?? '',
         workingDirectory: workingDirectory,
         runtimeTarget: target,
+        environment: _registerAgentStatusSeat(paneId: paneId, usesWsl: true),
       ),
       RuntimeKind.local => _localLaunchPlan(
         spec: spec,
         workingDirectory: workingDirectory,
         runtimeTarget: target,
+        environment: _registerAgentStatusSeat(paneId: paneId, usesWsl: false),
       ),
     };
+  }
+
+  /// Registers the pane as an agent-status seat and returns the identity env.
+  ///
+  /// Returns empty (leaving the launch env untouched) when there is no gateway,
+  /// no pane id, or the loopback listener never bound — reading
+  /// [AgentStatusGateway.agentStatusEndpoint] before that would dereference a
+  /// null server.
+  Map<String, String> _registerAgentStatusSeat({
+    required String paneId,
+    required bool usesWsl,
+  }) {
+    final gateway = _agentStatusGateway;
+    if (gateway == null || paneId.trim().isEmpty || !gateway.isStarted) {
+      return const {};
+    }
+    final seatId = seatIdFor(paneId);
+    gateway.registerAgentStatusSession(sessionId: seatId);
+    // A workspace pane runs a plain shell, so the CLI is unknown until a hook
+    // fires — assume `claude`, the only wired family.
+    _agentStatusSeatLookup?.registerSeat(
+      sessionId: seatId,
+      memberId: seatId,
+      cli: CliTool.claude,
+      skipPermissions: false,
+    );
+    return AgentStatusLaunchEnv.build(
+      endpoint: gateway.agentStatusEndpoint.toString(),
+      seatId: seatId,
+      usesWsl: usesWsl,
+    );
+  }
+
+  /// Drops the pane's agent-status seat. Safe to call for panes that never
+  /// registered one.
+  void releaseAgentStatusSeat(String paneId) {
+    if (paneId.trim().isEmpty) return;
+    final seatId = seatIdFor(paneId);
+    // Same three steps as the session path's `clearAgentStatusSeat`: drop the
+    // attention row too, or a closed pane keeps a ghost seat until the 30-minute
+    // stale prune. All three are idempotent.
+    _agentAttentionCubit?.clearSeat(sessionId: seatId, memberId: seatId);
+    _agentStatusSeatLookup?.unregisterSeat(
+      sessionId: seatId,
+      memberId: seatId,
+    );
+    _agentStatusGateway?.unregisterAgentStatusSession(seatId);
   }
 
   Future<SshMemberSession?> openSshSession(
@@ -175,6 +273,7 @@ class WorkspaceShellConnector {
     required WorkspaceTerminalSessionSpec spec,
     required String workingDirectory,
     required RuntimeTarget runtimeTarget,
+    Map<String, String> environment = const {},
   }) {
     final shell = _posixShellSpec(spec);
     final cwd = LaunchCommandBuilder.workingDirectoryForProcess(
@@ -189,6 +288,7 @@ class WorkspaceShellConnector {
       inheritHostEnvironment: true,
       runtimeTarget: runtimeTarget,
       usesRemoteTransport: false,
+      environment: environment,
     );
   }
 
@@ -196,6 +296,7 @@ class WorkspaceShellConnector {
     required String distro,
     required String workingDirectory,
     required RuntimeTarget runtimeTarget,
+    Map<String, String> environment = const {},
   }) {
     final cwd = workingDirectory.trim();
     final wslArgs = <String>[];
@@ -218,6 +319,7 @@ class WorkspaceShellConnector {
       inheritHostEnvironment: true,
       runtimeTarget: runtimeTarget,
       usesRemoteTransport: false,
+      environment: environment,
     );
   }
 

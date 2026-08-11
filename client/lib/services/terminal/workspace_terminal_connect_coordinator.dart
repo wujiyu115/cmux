@@ -65,7 +65,11 @@ class WorkspaceTerminalConnectCoordinator {
     final plan = _connector.resolveLaunchPlan(
       spec: entry.spec,
       workingDirectory: cwd,
+      paneId: entry.id,
     );
+    // Pane teardown is the only guaranteed release point — the PTY exit callback
+    // is skipped on a non-zero exit and dropped by disconnect().
+    entry.onDisposed = () => _connector.releaseAgentStatusSeat(entry.id);
 
     SchedulerBinding.instance.addPostFrameCallback((_) {
       if (!mounted() || !stillLive(group, entry, generation)) return;
@@ -76,6 +80,7 @@ class WorkspaceTerminalConnectCoordinator {
         onProcessFailed: (_) => onStateChanged(),
         onProcessExited: () {
           entry.connected = false;
+          _connector.releaseAgentStatusSeat(entry.id);
           onStateChanged();
         },
       );

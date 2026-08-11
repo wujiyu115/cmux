@@ -409,9 +409,11 @@ class TerminalSession {
         : (plan.useWslPaths
               ? RuntimeTarget.wsl()
               : _localRuntimeTarget(plan.workingDirectory));
-    _extraEnvironment = null;
+    // Empty stays null so panes that report no agent status keep the exact
+    // pre-existing launch env (this path is shared by every workspace pane).
+    _extraEnvironment = plan.environment.isEmpty ? null : plan.environment;
     _ptyEnvironment = PtyLaunchEnvironment.buildPtyEnvironment(
-      null,
+      _extraEnvironment,
       themeBackground: _terminalTheme?.background,
       inheritHostEnvironment: plan.inheritHostEnvironment,
     );
