@@ -44,6 +44,7 @@ class PairingRpcHandler {
     PairingWorkspaceCreator? workspaceCreator,
     PairingGroupCreator? groupCreator,
     PairingGroupIndexProvider? groupIndex,
+    PairingTargetIndexProvider? targetIndex,
     Duration activateTimeout = const Duration(seconds: 8),
     Duration activatePollInterval = const Duration(milliseconds: 40),
     int uploadMaxBytes = 25 * 1024 * 1024,
@@ -60,6 +61,7 @@ class PairingRpcHandler {
        _workspaceCreator = workspaceCreator,
        _groupCreator = groupCreator,
        _groupIndex = groupIndex,
+       _targetIndex = targetIndex,
        _activateTimeout = activateTimeout,
        _activatePollInterval = activatePollInterval,
        _uploads =
@@ -79,6 +81,7 @@ class PairingRpcHandler {
   final PairingWorkspaceCreator? _workspaceCreator;
   final PairingGroupCreator? _groupCreator;
   final PairingGroupIndexProvider? _groupIndex;
+  final PairingTargetIndexProvider? _targetIndex;
   final Duration _activateTimeout;
   final Duration _activatePollInterval;
   final PairingUploadReceiver _uploads;
@@ -165,9 +168,14 @@ class PairingRpcHandler {
     }
     List<PairingWorkspaceInfo> workspaces;
     List<PairingGroupInfo> groups;
+    List<PairingTargetInfo> targets;
     try {
       workspaces = await provider();
       groups = _groupIndex == null ? const [] : await _groupIndex();
+      // Inside this try on purpose: enumerating machines shells out to the host
+      // (`wsl.exe -l -q`), so a hiccup there must surface as one clean
+      // `workspace.list failed:` rather than an unhandled async error.
+      targets = _targetIndex == null ? const [] : await _targetIndex();
     } on Object catch (e) {
       _replyError(id, 'workspace.list failed: $e');
       return;
@@ -205,11 +213,21 @@ class PairingRpcHandler {
         for (final g in groups)
           {'id': g.id, 'name': g.name, 'order': g.order},
       ],
+      // Absent-vs-empty is the whole compatibility story: a host without a
+      // target index sends `[]`, the phone hides its machine selector, and
+      // neither side sends a targetId. See [PairingTargetInfo].
+      'targets': [
+        for (final t in targets)
+          {'id': t.id, 'label': t.label, 'kind': t.kind},
+      ],
     });
   }
 
   /// Lists directories host-side so the phone can pick an existing folder when
-  /// creating a workspace. `path` null means the default workspace root.
+  /// creating a workspace. `path` null means a sensible root for the target;
+  /// `targetId` absent means the host's default plane. Neither is validated here —
+  /// this handler has no target catalog, so an unknown id is the bootstrap
+  /// closure's to reject, and its throw lands in the catch below.
   Future<void> _browseDir(Object? id, Map<String, Object?> params) async {
     final browser = _dirBrowser;
     if (browser == null) {
@@ -217,9 +235,12 @@ class PairingRpcHandler {
       return;
     }
     final path = params['path'] is String ? params['path'] as String : null;
+    final targetId = params['targetId'] is String
+        ? params['targetId'] as String
+        : null;
     PairingDirListing listing;
     try {
-      listing = await browser(path);
+      listing = await browser(path, targetId: targetId);
     } on Object catch (e) {
       _replyError(id, 'fs.browse failed: $e');
       return;
@@ -233,7 +254,9 @@ class PairingRpcHandler {
   }
 
   /// Creates a workspace host-side over the client-picked folder, optionally
-  /// titled and filed under a group.
+  /// titled, filed under a group, and bound to a machine (`targetId`, absent =
+  /// the host's default plane). Same non-validation of `targetId` as
+  /// [_browseDir].
   Future<void> _createWorkspace(Object? id, Map<String, Object?> params) async {
     final creator = _workspaceCreator;
     if (creator == null) {
@@ -248,12 +271,16 @@ class PairingRpcHandler {
     final title = params['title'] is String ? params['title'] as String : null;
     final groupId =
         params['groupId'] is String ? params['groupId'] as String : null;
+    final targetId = params['targetId'] is String
+        ? params['targetId'] as String
+        : null;
     String workspaceId;
     try {
       workspaceId = await creator(
         folderPath: folderPath,
         title: title,
         groupId: groupId,
+        targetId: targetId,
       );
     } on Object catch (e) {
       _replyError(id, 'workspace.create failed: $e');

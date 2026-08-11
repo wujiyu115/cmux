@@ -12,16 +12,21 @@ import 'pairing_nav_bar.dart';
 /// or null when dismissed.
 ///
 /// [cubit] is captured by the caller (the create-workspace sheet), which already
-/// holds it above the modal barrier.
+/// holds it above the modal barrier. [target] is the machine to browse — null
+/// leaves the choice to the host's default plane.
 Future<String?> showPairingRemoteDirBrowser(
   BuildContext context,
   PairingClientCubit cubit, {
   String? initialPath,
+  PairingTarget? target,
 }) {
   return Navigator.of(context).push<String>(
     MaterialPageRoute(
-      builder: (_) =>
-          _PairingRemoteDirBrowserPage(cubit: cubit, initialPath: initialPath),
+      builder: (_) => _PairingRemoteDirBrowserPage(
+        cubit: cubit,
+        initialPath: initialPath,
+        target: target,
+      ),
       fullscreenDialog: true,
     ),
   );
@@ -31,10 +36,15 @@ class _PairingRemoteDirBrowserPage extends StatefulWidget {
   const _PairingRemoteDirBrowserPage({
     required this.cubit,
     this.initialPath,
+    this.target,
   });
 
   final PairingClientCubit cubit;
   final String? initialPath;
+
+  /// Whose filesystem this is listing. Also the subtitle: on a desktop with more
+  /// than one machine, a bare path does not say which one it came from.
+  final PairingTarget? target;
 
   @override
   State<_PairingRemoteDirBrowserPage> createState() =>
@@ -62,7 +72,10 @@ class _PairingRemoteDirBrowserPageState
       _loading = true;
       _error = null;
     });
-    final result = await widget.cubit.browseDir(path);
+    final result = await widget.cubit.browseDir(
+      path: path,
+      targetId: widget.target?.id,
+    );
     if (!mounted) return;
     setState(() {
       _loading = false;
@@ -82,6 +95,7 @@ class _PairingRemoteDirBrowserPageState
     final cs = Theme.of(context).colorScheme;
     final spacing = context.tpSpacing;
     final listing = _listing;
+    final target = widget.target;
 
     return Scaffold(
       body: SafeArea(
@@ -89,7 +103,12 @@ class _PairingRemoteDirBrowserPageState
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             PairingNavBar(
-              title: l10n.pairingBrowseTitle,
+              // Name the machine when the host offered a choice, so a bare
+              // `/home/me` cannot be mistaken for the wrong one. The label is
+              // host-rendered and shown verbatim.
+              title: target == null
+                  ? l10n.pairingBrowseTitle
+                  : l10n.pairingBrowseTitleOn(target.label),
               onBack: () => Navigator.of(context).pop(),
             ),
             if (listing != null)

@@ -31,6 +31,7 @@ class LanPairingServer {
     PairingWorkspaceCreator? workspaceCreator,
     PairingGroupCreator? groupCreator,
     PairingGroupIndexProvider? groupIndex,
+    PairingTargetIndexProvider? targetIndex,
     PairingOfferWindow? offerWindow,
     List<int> ports = kPairingPortLadder,
   }) : _ports = ports,
@@ -45,6 +46,7 @@ class LanPairingServer {
        _workspaceCreator = workspaceCreator,
        _groupCreator = groupCreator,
        _groupIndex = groupIndex,
+       _targetIndex = targetIndex,
        offerWindow = offerWindow ?? PairingOfferWindow();
 
   /// Ports [ensureStarted] tries in order. `[0]` means "any", which tests use to
@@ -62,6 +64,7 @@ class LanPairingServer {
   final PairingWorkspaceCreator? _workspaceCreator;
   final PairingGroupCreator? _groupCreator;
   final PairingGroupIndexProvider? _groupIndex;
+  final PairingTargetIndexProvider? _targetIndex;
 
   /// One-time pairing-code window; [createOffer] opens it, auth consumes it.
   final PairingOfferWindow offerWindow;
@@ -159,6 +162,7 @@ class LanPairingServer {
       workspaceCreator: _workspaceCreator,
       groupCreator: _groupCreator,
       groupIndex: _groupIndex,
+      targetIndex: _targetIndex,
       onClosed: () => _connections.remove(connection),
     );
     _connections.add(connection);

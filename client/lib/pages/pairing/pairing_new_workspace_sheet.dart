@@ -7,28 +7,41 @@ import '../../services/pairing/pairing_client.dart';
 import '../../theme/app_fonts.dart';
 import 'pairing_remote_dir_browser_page.dart';
 
-/// Bottom sheet to create a workspace on the paired desktop: pick an existing
-/// desktop folder, optionally name it, and file it under a group.
+/// Bottom sheet to create a workspace on the paired desktop: pick the machine,
+/// pick an existing folder on it, optionally name it, and file it under a group.
 ///
-/// [cubit] and [groups] are captured by the caller before the sheet opens (the
-/// modal route sits above the pairing shell's `BlocProvider`).
+/// [cubit], [groups] and [targets] are captured by the caller before the sheet
+/// opens (the modal route sits above the pairing shell's `BlocProvider`).
 Future<void> showPairingNewWorkspaceSheet(
   BuildContext context,
   PairingClientCubit cubit,
   List<PairingGroup> groups,
+  List<PairingTarget> targets,
 ) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    builder: (_) => _PairingNewWorkspaceSheet(cubit: cubit, groups: groups),
+    builder: (_) => _PairingNewWorkspaceSheet(
+      cubit: cubit,
+      groups: groups,
+      targets: targets,
+    ),
   );
 }
 
 class _PairingNewWorkspaceSheet extends StatefulWidget {
-  const _PairingNewWorkspaceSheet({required this.cubit, required this.groups});
+  const _PairingNewWorkspaceSheet({
+    required this.cubit,
+    required this.groups,
+    required this.targets,
+  });
 
   final PairingClientCubit cubit;
   final List<PairingGroup> groups;
+
+  /// The desktop's machines. Empty from a desktop that predates machine
+  /// selection; a single entry means there is nothing to choose.
+  final List<PairingTarget> targets;
 
   @override
   State<_PairingNewWorkspaceSheet> createState() =>
@@ -42,8 +55,28 @@ class _PairingNewWorkspaceSheetState extends State<_PairingNewWorkspaceSheet> {
   final _nameController = TextEditingController();
   String? _folderPath;
   PairingGroup _group = _ungrouped;
+
+  /// The machine the folder will live on. Null when the host advertised none, in
+  /// which case no `targetId` is ever sent and the host uses its default plane.
+  PairingTarget? _target;
+
+  /// Whether the name in the field was derived from the folder rather than typed.
+  /// Only an auto-filled name is cleared when the machine changes — a name the
+  /// user chose outlives the folder it was seeded from.
+  bool _nameAutoFilled = false;
   bool _submitting = false;
   String? _error;
+
+  /// Hidden for a single machine, not just for none: the host always lists itself,
+  /// so one entry means there is nothing to pick and a one-option dropdown is
+  /// pure noise.
+  bool get _showTargetPicker => widget.targets.length > 1;
+
+  @override
+  void initState() {
+    super.initState();
+    _target = widget.targets.isEmpty ? null : widget.targets.first;
+  }
 
   @override
   void dispose() {
@@ -56,6 +89,7 @@ class _PairingNewWorkspaceSheetState extends State<_PairingNewWorkspaceSheet> {
       context,
       widget.cubit,
       initialPath: _folderPath,
+      target: _target,
     );
     if (!mounted || picked == null) return;
     setState(() {
@@ -63,6 +97,24 @@ class _PairingNewWorkspaceSheetState extends State<_PairingNewWorkspaceSheet> {
       // Default the name to the folder basename when the user hasn't typed one.
       if (_nameController.text.trim().isEmpty) {
         _nameController.text = _basename(picked);
+        _nameAutoFilled = true;
+      }
+      _error = null;
+    });
+  }
+
+  /// Switching machines invalidates the folder: a path on one machine names
+  /// nothing on another, and the host cannot tell the difference (`/home/me` is
+  /// plausible everywhere). Clearing it is what keeps the path/target pair
+  /// coherent, not a courtesy.
+  void _onTargetChanged(PairingTarget? next) {
+    if (next == null || next.id == _target?.id) return;
+    setState(() {
+      _target = next;
+      _folderPath = null;
+      if (_nameAutoFilled) {
+        _nameController.clear();
+        _nameAutoFilled = false;
       }
       _error = null;
     });
@@ -83,6 +135,7 @@ class _PairingNewWorkspaceSheetState extends State<_PairingNewWorkspaceSheet> {
       folderPath: folder,
       title: _nameController.text.trim(),
       groupId: _group.id.isEmpty ? null : _group.id,
+      targetId: _target?.id,
     );
     if (!mounted) return;
     if (!result.ok) {
@@ -127,6 +180,26 @@ class _PairingNewWorkspaceSheetState extends State<_PairingNewWorkspaceSheet> {
             children: [
               Text(l10n.pairingNewWorkspace, style: styles.lgSemibold),
               SizedBox(height: spacing.md),
+              // Machine first, then the folder on it — the folder field is
+              // meaningless until you know which machine it is being read from.
+              if (_showTargetPicker) ...[
+                Text(
+                  l10n.pairingNewWorkspaceTargetLabel,
+                  style: styles.mutedSm,
+                ),
+                SizedBox(height: spacing.xs),
+                TpSelect<PairingTarget>(
+                  items: widget.targets,
+                  initialItem: _target,
+                  searchable: false,
+                  // Host-rendered ('WSL · Ubuntu', an SSH profile's own name):
+                  // shown verbatim, never localized.
+                  itemLabel: (t) => t.label,
+                  enabled: !_submitting,
+                  onChanged: _onTargetChanged,
+                ),
+                SizedBox(height: spacing.md),
+              ],
               Text(l10n.pairingNewWorkspaceFolderLabel, style: styles.mutedSm),
               SizedBox(height: spacing.xs),
               Row(

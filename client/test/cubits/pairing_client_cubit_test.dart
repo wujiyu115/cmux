@@ -45,9 +45,14 @@ class _FakePairingClient extends PairingClient {
   int listWorkspacesCalls = 0;
   bool closed = false;
 
-  final List<(String, String?, String?)> createdWorkspaces = [];
+  /// (folderPath, title, groupId, targetId)
+  final List<(String, String?, String?, String?)> createdWorkspaces = [];
   final List<String> createdGroups = [];
+
+  /// Sentinel, not null: these distinguish "never called" from "called with
+  /// null", and null is the meaningful value for both.
   String? lastBrowsePath = 'unset';
+  String? lastBrowseTargetId = 'unset';
 
   void pushSessionsChanged() => _changedCtrl.add(null);
 
@@ -88,15 +93,24 @@ class _FakePairingClient extends PairingClient {
   @override
   Future<List<PairingSessionSummary>> listSessions() async => sessions;
 
+  /// What `workspace.list` advertises as the desktop's machines. Empty by
+  /// default — the shape a desktop that predates machine selection sends.
+  List<PairingTarget> targets = const [];
+
   @override
   Future<PairingWorkspaceListing> listWorkspaces() async {
     listWorkspacesCalls++;
-    return PairingWorkspaceListing(workspaces: workspaces, groups: const []);
+    return PairingWorkspaceListing(
+      workspaces: workspaces,
+      groups: const [],
+      targets: targets,
+    );
   }
 
   @override
-  Future<PairingDirListing> browseDir([String? path]) async {
+  Future<PairingDirListing> browseDir({String? path, String? targetId}) async {
     lastBrowsePath = path;
+    lastBrowseTargetId = targetId;
     return const PairingDirListing(
       path: '/home/me',
       parent: '/home',
@@ -109,8 +123,9 @@ class _FakePairingClient extends PairingClient {
     required String folderPath,
     String? title,
     String? groupId,
+    String? targetId,
   }) async {
-    createdWorkspaces.add((folderPath, title, groupId));
+    createdWorkspaces.add((folderPath, title, groupId, targetId));
     return 'ws-new';
   }
 
@@ -605,11 +620,27 @@ void main() {
       cubit.beginPairing(_makeOffer());
       await cubit.confirmPairing();
 
-      final result = await cubit.browseDir('/home/me');
+      final result = await cubit.browseDir(path: '/home/me');
       expect(fake.lastBrowsePath, '/home/me');
       expect(result.ok, isTrue);
       expect(result.value!.path, '/home/me');
       expect(result.value!.dirs, ['a', 'b']);
+      // No machine chosen: the host is left on its default plane.
+      expect(fake.lastBrowseTargetId, isNull);
+    });
+
+    test('browseDir forwards the chosen machine', () async {
+      final fake = _FakePairingClient();
+      final cubit = PairingClientCubit(
+        settings: InMemoryPairingSettingsRepository(),
+        clientFactory: () => fake,
+      );
+      addTearDown(cubit.close);
+      cubit.beginPairing(_makeOffer());
+      await cubit.confirmPairing();
+
+      await cubit.browseDir(path: '/home/me', targetId: 'wsl:Ubuntu');
+      expect(fake.lastBrowseTargetId, 'wsl:Ubuntu');
     });
 
     test('createGroup forwards the name and refreshes the tree', () async {
@@ -645,10 +676,53 @@ void main() {
         folderPath: '/repo/app',
         title: 'App',
         groupId: 'g1',
+        targetId: 'wsl:Ubuntu',
       );
       expect(result.value, 'ws-new');
-      expect(fake.createdWorkspaces.single, ('/repo/app', 'App', 'g1'));
+      // targetId rides along: it is what binds the workspace to that machine and
+      // decides where its terminal opens.
+      expect(
+        fake.createdWorkspaces.single,
+        ('/repo/app', 'App', 'g1', 'wsl:Ubuntu'),
+      );
       expect(fake.listWorkspacesCalls, 2);
+    });
+
+    test('the host machines land in state', () async {
+      final fake = _FakePairingClient()
+        ..targets = const [
+          PairingTarget(id: 'local', label: 'This device', kind: 'local'),
+          PairingTarget(id: 'wsl:Ubuntu', label: 'WSL · Ubuntu', kind: 'wsl'),
+        ];
+      final cubit = PairingClientCubit(
+        settings: InMemoryPairingSettingsRepository(),
+        clientFactory: () => fake,
+      );
+      addTearDown(cubit.close);
+      cubit.beginPairing(_makeOffer());
+      await cubit.confirmPairing();
+
+      expect(cubit.state.targets.map((t) => t.id), [
+        'local',
+        'wsl:Ubuntu',
+      ]);
+      expect(cubit.state.targets.last.label, 'WSL · Ubuntu');
+    });
+
+    test('a desktop that advertises no machines leaves targets empty', () async {
+      // The stale-desktop shape: the phone must be able to tell "no choice
+      // offered" from "local only", because it hides the picker either way but
+      // sends a targetId only when the host asked for one.
+      final fake = _FakePairingClient();
+      final cubit = PairingClientCubit(
+        settings: InMemoryPairingSettingsRepository(),
+        clientFactory: () => fake,
+      );
+      addTearDown(cubit.close);
+      cubit.beginPairing(_makeOffer());
+      await cubit.confirmPairing();
+
+      expect(cubit.state.targets, isEmpty);
     });
 
     test('a refused create carries the host reason, not a bare failure', () async {

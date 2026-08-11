@@ -56,6 +56,7 @@ class PairingClientState extends Equatable {
     this.sessions = const [],
     this.workspaces = const [],
     this.groups = const [],
+    this.targets = const [],
     this.logs = const [],
     this.stageStatuses = idleStages,
     this.pendingOffer,
@@ -85,6 +86,10 @@ class PairingClientState extends Equatable {
 
   /// The host's workspace groups, so the list can render folded by group.
   final List<PairingGroup> groups;
+
+  /// The machines the host can create a workspace on. Empty when the desktop
+  /// predates machine selection, which is the cue to hide the picker entirely.
+  final List<PairingTarget> targets;
   final List<String> logs;
 
   /// Connect progress indexed by [PairingStage.index] — drives the step rail.
@@ -114,6 +119,7 @@ class PairingClientState extends Equatable {
     List<PairingSessionSummary>? sessions,
     List<PairingWorkspaceNode>? workspaces,
     List<PairingGroup>? groups,
+    List<PairingTarget>? targets,
     List<String>? logs,
     List<PairingStageStatus>? stageStatuses,
     PairingOffer? pendingOffer,
@@ -135,6 +141,7 @@ class PairingClientState extends Equatable {
     sessions: sessions ?? this.sessions,
     workspaces: workspaces ?? this.workspaces,
     groups: groups ?? this.groups,
+    targets: targets ?? this.targets,
     logs: logs ?? this.logs,
     stageStatuses: stageStatuses ?? this.stageStatuses,
     pendingOffer: clearPendingOffer ? null : (pendingOffer ?? this.pendingOffer),
@@ -158,6 +165,7 @@ class PairingClientState extends Equatable {
     sessions,
     workspaces,
     groups,
+    targets,
     logs,
     stageStatuses,
     pendingOffer,
@@ -317,6 +325,7 @@ class PairingClientCubit extends Cubit<PairingClientState> {
         activeHostUrl: _client?.connectedUrl,
         workspaces: listing.workspaces,
         groups: listing.groups,
+        targets: listing.targets,
         clearPendingOffer: true,
       ),
     );
@@ -358,6 +367,7 @@ class PairingClientCubit extends Cubit<PairingClientState> {
         state.copyWith(
           workspaces: listing.workspaces,
           groups: listing.groups,
+          targets: listing.targets,
         ),
       );
     } on Object catch (e) {
@@ -367,14 +377,20 @@ class PairingClientCubit extends Cubit<PairingClientState> {
 
   /// Lists directories on the desktop for the create-workspace folder picker.
   /// Carries the host's refusal reason rather than a bare null so the picker can
-  /// say *why* instead of showing an empty folder.
-  Future<PairingCallResult<PairingDirListing>> browseDir([String? path]) async {
+  /// say *why* instead of showing an empty folder. [targetId] picks the machine;
+  /// null means the host's default plane.
+  Future<PairingCallResult<PairingDirListing>> browseDir({
+    String? path,
+    String? targetId,
+  }) async {
     final client = _client;
     if (client == null) {
       return const PairingCallResult<PairingDirListing>.failed('not connected');
     }
     try {
-      return PairingCallResult.ok(await client.browseDir(path));
+      return PairingCallResult.ok(
+        await client.browseDir(path: path, targetId: targetId),
+      );
     } on Object catch (e) {
       _appendLog('Browse failed: $e');
       return PairingCallResult.failed('$e');
@@ -388,6 +404,7 @@ class PairingClientCubit extends Cubit<PairingClientState> {
     required String folderPath,
     String? title,
     String? groupId,
+    String? targetId,
   }) async {
     final client = _client;
     if (client == null) {
@@ -398,6 +415,7 @@ class PairingClientCubit extends Cubit<PairingClientState> {
         folderPath: folderPath,
         title: title,
         groupId: groupId,
+        targetId: targetId,
       );
       await refreshWorkspaces();
       return PairingCallResult.ok(id);

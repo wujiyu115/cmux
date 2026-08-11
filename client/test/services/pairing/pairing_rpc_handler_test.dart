@@ -448,6 +448,83 @@ void main() {
       // Default groupId is the empty string, not null.
       expect(((result['workspaces'] as List).single as Map)['groupId'], '');
     });
+
+    test('advertises the machines from the target index', () async {
+      handler = PairingRpcHandler(
+        catalog: catalog,
+        send: sent.add,
+        uploadSink: _noopSink,
+        workspaceIndex: () async => const [
+          PairingWorkspaceInfo(workspaceId: 'wsA', title: 'A'),
+        ],
+        targetIndex: () async => const [
+          PairingTargetInfo(id: 'local', label: 'This device', kind: 'local'),
+          PairingTargetInfo(
+            id: 'wsl:Ubuntu',
+            label: 'WSL · Ubuntu',
+            kind: 'wsl',
+          ),
+        ],
+      );
+      handler.handle(
+        PairingCodec.decode(_json({'id': 1, 'method': 'workspace.list'})),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      final result = (decodeLast() as JsonFrame).data['result'] as Map;
+      final targets = result['targets'] as List;
+      expect(targets, hasLength(2));
+      expect((targets.last as Map)['id'], 'wsl:Ubuntu');
+      expect((targets.last as Map)['label'], 'WSL · Ubuntu');
+      expect((targets.last as Map)['kind'], 'wsl');
+    });
+
+    test('targets is empty when no target index is injected', () async {
+      // This is the compatibility contract in one assertion: a host without
+      // machine selection advertises none, which is exactly how the phone knows
+      // to hide its picker and send no targetId.
+      handler = PairingRpcHandler(
+        catalog: catalog,
+        send: sent.add,
+        uploadSink: _noopSink,
+        workspaceIndex: () async => const [
+          PairingWorkspaceInfo(workspaceId: 'wsA', title: 'A'),
+        ],
+      );
+      handler.handle(
+        PairingCodec.decode(_json({'id': 1, 'method': 'workspace.list'})),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      expect((decodeLast() as JsonFrame).data['result'], isA<Map>());
+      final result = (decodeLast() as JsonFrame).data['result'] as Map;
+      expect(result['targets'], isEmpty);
+    });
+
+    test('a failing target index fails the call once, cleanly', () async {
+      // Enumerating machines shells out to the host, so it can fail. The await
+      // must sit inside the existing try or this surfaces as an unhandled async
+      // error instead of an error frame.
+      handler = PairingRpcHandler(
+        catalog: catalog,
+        send: sent.add,
+        uploadSink: _noopSink,
+        workspaceIndex: () async => const [
+          PairingWorkspaceInfo(workspaceId: 'wsA', title: 'A'),
+        ],
+        targetIndex: () async => throw StateError('wsl.exe went missing'),
+      );
+      handler.handle(
+        PairingCodec.decode(_json({'id': 1, 'method': 'workspace.list'})),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      expect(
+        (decodeLast() as JsonFrame).data['error'],
+        contains('workspace.list failed'),
+      );
+      expect(sent, hasLength(1));
+    });
   });
 
   group('fs.browse', () {
@@ -465,7 +542,7 @@ void main() {
         catalog: catalog,
         send: sent.add,
         uploadSink: _noopSink,
-        dirBrowser: (path) async {
+        dirBrowser: (path, {targetId}) async {
           seen = path;
           return const PairingDirListing(
             path: '/home/me',
@@ -496,7 +573,7 @@ void main() {
         catalog: catalog,
         send: sent.add,
         uploadSink: _noopSink,
-        dirBrowser: (path) async {
+        dirBrowser: (path, {targetId}) async {
           seen = path;
           return const PairingDirListing(
             path: '/root',
@@ -513,6 +590,78 @@ void main() {
       expect(seen, isNull);
       final result = (decodeLast() as JsonFrame).data['result'] as Map;
       expect(result['parent'], isNull);
+    });
+
+    test('forwards the requested machine', () async {
+      Object? seenTarget = 'unset';
+      handler = PairingRpcHandler(
+        catalog: catalog,
+        send: sent.add,
+        uploadSink: _noopSink,
+        dirBrowser: (path, {targetId}) async {
+          seenTarget = targetId;
+          return const PairingDirListing(
+            path: '/home/me',
+            parent: '/home',
+            dirs: [],
+          );
+        },
+      );
+      handler.handle(
+        PairingCodec.decode(_json({
+          'id': 4,
+          'method': 'fs.browse',
+          'params': {'path': '/home/me', 'targetId': 'wsl:Ubuntu'},
+        })),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(seenTarget, 'wsl:Ubuntu');
+    });
+
+    test('an absent machine is null, not empty', () async {
+      // The compatibility contract: a phone that predates machine selection
+      // sends no targetId, and the host must read that as "default plane".
+      Object? seenTarget = 'unset';
+      handler = PairingRpcHandler(
+        catalog: catalog,
+        send: sent.add,
+        uploadSink: _noopSink,
+        dirBrowser: (path, {targetId}) async {
+          seenTarget = targetId;
+          return const PairingDirListing(path: '/x', parent: null, dirs: []);
+        },
+      );
+      handler.handle(
+        PairingCodec.decode(_json({
+          'id': 5,
+          'method': 'fs.browse',
+          'params': {'path': '/x'},
+        })),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(seenTarget, isNull);
+    });
+
+    test('a non-string machine is treated as absent', () async {
+      Object? seenTarget = 'unset';
+      handler = PairingRpcHandler(
+        catalog: catalog,
+        send: sent.add,
+        uploadSink: _noopSink,
+        dirBrowser: (path, {targetId}) async {
+          seenTarget = targetId;
+          return const PairingDirListing(path: '/x', parent: null, dirs: []);
+        },
+      );
+      handler.handle(
+        PairingCodec.decode(_json({
+          'id': 6,
+          'method': 'fs.browse',
+          'params': {'targetId': 42},
+        })),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(seenTarget, isNull);
     });
   });
 
@@ -534,7 +683,8 @@ void main() {
         catalog: catalog,
         send: sent.add,
         uploadSink: _noopSink,
-        workspaceCreator: ({required folderPath, title, groupId}) async => 'w',
+        workspaceCreator:
+            ({required folderPath, title, groupId, targetId}) async => 'w',
       );
       handler.handle(
         PairingCodec.decode(_json({
@@ -550,16 +700,18 @@ void main() {
       );
     });
 
-    test('forwards folderPath/title/groupId and returns the id', () async {
+    test('forwards folderPath/title/groupId/targetId and returns the id', () async {
       String? gotFolder, gotTitle, gotGroup;
+      Object? gotTarget = 'unset';
       handler = PairingRpcHandler(
         catalog: catalog,
         send: sent.add,
         uploadSink: _noopSink,
-        workspaceCreator: ({required folderPath, title, groupId}) async {
+        workspaceCreator: ({required folderPath, title, groupId, targetId}) async {
           gotFolder = folderPath;
           gotTitle = title;
           gotGroup = groupId;
+          gotTarget = targetId;
           return 'ws-new';
         },
       );
@@ -571,6 +723,7 @@ void main() {
             'folderPath': '/repo/app',
             'title': 'App',
             'groupId': 'g1',
+            'targetId': 'wsl:Ubuntu',
           },
         })),
       );
@@ -579,8 +732,31 @@ void main() {
       expect(gotFolder, '/repo/app');
       expect(gotTitle, 'App');
       expect(gotGroup, 'g1');
+      expect(gotTarget, 'wsl:Ubuntu');
       final result = (decodeLast() as JsonFrame).data['result'] as Map;
       expect(result['workspaceId'], 'ws-new');
+    });
+
+    test('an absent machine reaches the creator as null', () async {
+      Object? gotTarget = 'unset';
+      handler = PairingRpcHandler(
+        catalog: catalog,
+        send: sent.add,
+        uploadSink: _noopSink,
+        workspaceCreator: ({required folderPath, title, groupId, targetId}) async {
+          gotTarget = targetId;
+          return 'ws-new';
+        },
+      );
+      handler.handle(
+        PairingCodec.decode(_json({
+          'id': 3,
+          'method': 'workspace.create',
+          'params': {'folderPath': '/repo/app'},
+        })),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(gotTarget, isNull);
     });
   });
 

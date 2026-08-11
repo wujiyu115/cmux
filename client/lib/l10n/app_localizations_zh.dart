@@ -2713,6 +2713,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pairingBrowseFailed => '无法列出该文件夹。';
 
   @override
+  String pairingBrowseTitleOn(String target) {
+    return '在 $target 上选择文件夹';
+  }
+
+  @override
+  String get pairingNewWorkspaceTargetLabel => '机器';
+
+  @override
   String get mobileToolbarHideKeyboard => '收起键盘';
 
   @override

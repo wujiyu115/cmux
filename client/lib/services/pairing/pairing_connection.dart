@@ -35,6 +35,7 @@ class PairingConnection {
     PairingWorkspaceCreator? workspaceCreator,
     PairingGroupCreator? groupCreator,
     PairingGroupIndexProvider? groupIndex,
+    PairingTargetIndexProvider? targetIndex,
     void Function()? onClosed,
   }) : _transport = transport,
        _hostStaticKey = hostStaticKey,
@@ -49,6 +50,7 @@ class PairingConnection {
        _workspaceCreator = workspaceCreator,
        _groupCreator = groupCreator,
        _groupIndex = groupIndex,
+       _targetIndex = targetIndex,
        _onClosed = onClosed;
 
   final WsTransport _transport;
@@ -64,6 +66,7 @@ class PairingConnection {
   final PairingWorkspaceCreator? _workspaceCreator;
   final PairingGroupCreator? _groupCreator;
   final PairingGroupIndexProvider? _groupIndex;
+  final PairingTargetIndexProvider? _targetIndex;
   final void Function()? _onClosed;
 
   _ConnPhase _phase = _ConnPhase.awaitingHello;
@@ -177,6 +180,7 @@ class PairingConnection {
       workspaceCreator: _workspaceCreator,
       groupCreator: _groupCreator,
       groupIndex: _groupIndex,
+      targetIndex: _targetIndex,
     );
     _catalogChanges = _catalog.changes.listen(
       (_) => _sendEncryptedJson({'method': 'session.changed'}),

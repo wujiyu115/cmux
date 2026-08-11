@@ -5216,6 +5216,18 @@ abstract class AppLocalizations {
   /// **'Could not list this folder.'**
   String get pairingBrowseFailed;
 
+  /// No description provided for @pairingBrowseTitleOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a folder on {target}'**
+  String pairingBrowseTitleOn(String target);
+
+  /// No description provided for @pairingNewWorkspaceTargetLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Machine'**
+  String get pairingNewWorkspaceTargetLabel;
+
   /// No description provided for @mobileToolbarHideKeyboard.
   ///
   /// In en, this message translates to:

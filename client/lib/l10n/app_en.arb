@@ -1281,6 +1281,15 @@
   "pairingBrowseTitle": "Choose a folder",
   "pairingBrowseEmpty": "No subfolders here.",
   "pairingBrowseFailed": "Could not list this folder.",
+  "pairingBrowseTitleOn": "Choose a folder on {target}",
+  "@pairingBrowseTitleOn": {
+    "placeholders": {
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "pairingNewWorkspaceTargetLabel": "Machine",
   "mobileToolbarHideKeyboard": "Hide keyboard",
   "mobileToolbarCustomize": "Customize keys",
   "mobileToolbarVisibleGroups": "Visible groups: {count}",

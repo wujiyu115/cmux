@@ -1148,6 +1148,8 @@
   "pairingBrowseTitle": "选择文件夹",
   "pairingBrowseEmpty": "此处没有子文件夹。",
   "pairingBrowseFailed": "无法列出该文件夹。",
+  "pairingBrowseTitleOn": "在 {target} 上选择文件夹",
+  "pairingNewWorkspaceTargetLabel": "机器",
   "mobileToolbarHideKeyboard": "收起键盘",
   "mobileToolbarCustomize": "自定义按键",
   "mobileToolbarVisibleGroups": "显示组数：{count}",

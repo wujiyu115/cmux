@@ -2808,6 +2808,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pairingBrowseFailed => 'Could not list this folder.';
 
   @override
+  String pairingBrowseTitleOn(String target) {
+    return 'Choose a folder on $target';
+  }
+
+  @override
+  String get pairingNewWorkspaceTargetLabel => 'Machine';
+
+  @override
   String get mobileToolbarHideKeyboard => 'Hide keyboard';
 
   @override

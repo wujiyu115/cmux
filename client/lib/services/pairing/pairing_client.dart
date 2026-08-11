@@ -118,16 +118,43 @@ class PairingGroup {
   final int order;
 }
 
-/// Result of [PairingClient.listWorkspaces]: the workspace tree plus the host's
-/// group index.
+/// One machine the desktop can bind a workspace folder to — itself, one of its
+/// WSL distros, or an SSH profile.
+///
+/// [label] is rendered host-side (`WSL · Ubuntu`, the user's own SSH profile
+/// name) and is displayed verbatim: it is not translatable. [kind] is the host's
+/// `RuntimeKind` name, useful only for an icon; [id] stays authoritative.
+class PairingTarget {
+  const PairingTarget({
+    required this.id,
+    required this.label,
+    required this.kind,
+  });
+
+  final String id;
+  final String label;
+  final String kind;
+
+  bool get isLocal => id == 'local';
+}
+
+/// Result of [PairingClient.listWorkspaces]: the workspace tree, the host's group
+/// index, and the machines it can create workspaces on.
 class PairingWorkspaceListing {
   const PairingWorkspaceListing({
     required this.workspaces,
     required this.groups,
+    this.targets = const [],
   });
 
   final List<PairingWorkspaceNode> workspaces;
   final List<PairingGroup> groups;
+
+  /// Empty when the desktop predates machine selection — which is also the
+  /// signal for the phone to hide its machine picker and send no `targetId`, so
+  /// the whole flow degrades to what it did before. Defaulted rather than
+  /// required so that reading an older host stays a one-line change.
+  final List<PairingTarget> targets;
 }
 
 /// One remote directory listing for `fs.browse`.
@@ -217,6 +244,9 @@ class PairingClient {
   /// per candidate would multiply an already-slow failure. A LAN handshake is
   /// milliseconds; anything slower is not the desktop we are looking for.
   static const probeTimeout = Duration(milliseconds: 500);
+
+  /// Budget for a request the host answers from its own memory.
+  static const _defaultRpcTimeout = Duration(seconds: 10);
 
   final _log = StreamController<String>.broadcast();
   Stream<String> get log => _log.stream;
@@ -538,6 +568,7 @@ class PairingClient {
     final result = await _rpc('workspace.list');
     final raw = result['workspaces'];
     final rawGroups = result['groups'];
+    final rawTargets = result['targets'];
     return PairingWorkspaceListing(
       workspaces: [
         if (raw is List)
@@ -549,6 +580,15 @@ class PairingClient {
           for (final g in rawGroups)
             if (g is Map) _parseGroup(g.cast<String, Object?>()),
       ],
+      // Absent on a desktop that predates machine selection, which is exactly
+      // the signal the UI keys off. An entry with no id is unusable as a
+      // `targetId`, so drop it rather than offer a machine we cannot name.
+      targets: [
+        if (rawTargets is List)
+          for (final t in rawTargets)
+            if (t is Map && (t['id'] as String? ?? '').isNotEmpty)
+              _parseTarget(t.cast<String, Object?>()),
+      ],
     );
   }
 
@@ -557,6 +597,18 @@ class PairingClient {
     name: g['name'] as String? ?? '',
     order: g['order'] is int ? g['order'] as int : 0,
   );
+
+  PairingTarget _parseTarget(Map<String, Object?> t) {
+    final id = t['id'] as String? ?? '';
+    final label = t['label'] as String? ?? '';
+    return PairingTarget(
+      id: id,
+      // A host that sent an id but no label still names a real machine; showing
+      // the id beats showing an empty row.
+      label: label.isEmpty ? id : label,
+      kind: t['kind'] as String? ?? '',
+    );
+  }
 
   PairingWorkspaceNode _parseWorkspace(Map<String, Object?> ws) {
     final workspaceId = ws['workspaceId'] as String? ?? '';
@@ -587,16 +639,19 @@ class PairingClient {
   }
 
   /// Asks the host to activate a session/pane and returns the resulting
-  /// [catalogId] to `terminal.subscribe`. Uses a longer timeout than [_rpc]
-  /// because the host waits (bounded) for the session to come live.
+  /// [catalogId] to `terminal.subscribe`. Uses a longer timeout than the default
+  /// because the host waits (bounded) for the session to come live — its own
+  /// `activateTimeout` is 8s, so the default 10s left only a 2s margin despite
+  /// this comment having always claimed otherwise.
   Future<PairingActivateResult> activateSession({
     required String workspaceId,
     String? paneId,
   }) async {
-    final result = await _rpc('session.activate', {
-      'workspaceId': workspaceId,
-      if (paneId != null) 'paneId': paneId,
-    });
+    final result = await _rpc(
+      'session.activate',
+      {'workspaceId': workspaceId, if (paneId != null) 'paneId': paneId},
+      const Duration(seconds: 20),
+    );
     final catalogId = result['catalogId'] as String?;
     if (catalogId == null || catalogId.isEmpty) {
       throw Exception('activate returned no catalogId');
@@ -610,11 +665,28 @@ class PairingClient {
   }
 
   /// Lists directories on the desktop so the phone can pick an existing folder
-  /// when creating a workspace. [path] null opens the default workspace root.
-  Future<PairingDirListing> browseDir([String? path]) async {
-    final result = await _rpc('fs.browse', {
-      if (path != null) 'path': path,
-    });
+  /// when creating a workspace.
+  ///
+  /// [targetId] names the machine to list on; null means the host's default
+  /// plane. [path] is interpreted in that machine's namespace, so the two must
+  /// come from the same machine — null [path] asks the host for a sensible root.
+  ///
+  /// Named rather than positional: two bare optional `String?`s in a row are the
+  /// classic pair to transpose.
+  ///
+  /// The budget is deliberately far above [_rpc]'s default. A cold SSH target
+  /// makes the host connect, read the remote `$HOME`, and open SFTP before it can
+  /// list anything — the SSH connect alone is allowed 10s. This is a single
+  /// user-initiated browse, so waiting beats a spurious timeout.
+  Future<PairingDirListing> browseDir({String? path, String? targetId}) async {
+    final result = await _rpc(
+      'fs.browse',
+      {
+        if (path != null) 'path': path,
+        if (targetId != null && targetId.isNotEmpty) 'targetId': targetId,
+      },
+      const Duration(seconds: 30),
+    );
     final rawDirs = result['dirs'];
     return PairingDirListing(
       path: result['path'] as String? ?? '',
@@ -628,16 +700,20 @@ class PairingClient {
   }
 
   /// Asks the desktop to create a workspace over [folderPath]; returns the new
-  /// workspace id.
+  /// workspace id. [targetId] is the machine [folderPath] lives on (null = the
+  /// host's default plane) and is what decides where the workspace's terminal
+  /// will open.
   Future<String> createWorkspace({
     required String folderPath,
     String? title,
     String? groupId,
+    String? targetId,
   }) async {
     final result = await _rpc('workspace.create', {
       'folderPath': folderPath,
       if (title != null && title.isNotEmpty) 'title': title,
       if (groupId != null && groupId.isNotEmpty) 'groupId': groupId,
+      if (targetId != null && targetId.isNotEmpty) 'targetId': targetId,
     });
     final id = result['workspaceId'] as String?;
     if (id == null || id.isEmpty) {
@@ -701,16 +777,22 @@ class PairingClient {
     );
   }
 
+  /// [timeout] is positional rather than named because Dart forbids mixing
+  /// optional positional and named parameters, and `params` was already
+  /// positional. Callers that leave it out get [_defaultRpcTimeout], which suits
+  /// every request the host answers from memory; the ones that make the host
+  /// reach another machine pass their own.
   Future<Map<String, Object?>> _rpc(
     String method, [
     Map<String, Object?> params = const {},
+    Duration timeout = _defaultRpcTimeout,
   ]) {
     final id = _nextId++;
     final completer = Completer<Map<String, Object?>>();
     _pending[id] = completer;
     _sendEncryptedJson({'id': id, 'method': method, 'params': params});
     return completer.future.timeout(
-      const Duration(seconds: 10),
+      timeout,
       onTimeout: () {
         _pending.remove(id);
         throw TimeoutException('RPC $method timed out');

@@ -52,16 +52,17 @@ import '../repositories/pairing_settings_repository.dart';
 import '../cubits/pairing_client_cubit.dart';
 import '../cubits/pairing_host_cubit.dart';
 import '../services/app/platform_utils.dart';
+import '../services/io/filesystem.dart';
 import '../services/pairing/device_registry.dart';
 import '../services/pairing/lan_pairing_server.dart';
 import '../services/pairing/pairing_crypto.dart';
+import '../services/pairing/pairing_host_dir_browser.dart';
 import '../services/pairing/upload_destination.dart';
 import '../services/pairing/pairing_workspace_index.dart';
 import '../services/pairing/session_catalog.dart';
 import '../repositories/user_terminal_theme_repository.dart';
 import '../router/app_router.dart';
 import '../services/storage/app_storage.dart';
-import '../services/storage/remote_directory_browser.dart';
 import '../services/perf/live_perf_driver.dart';
 import '../services/home_workspace/home_workspace_ui_cache.dart';
 import '../services/cli/toolchain_executable_discovery.dart';
@@ -751,21 +752,69 @@ Future<AppShell> buildAppShell({
       ];
     }
 
-    // Host-side directory browser: the phone picks an existing desktop folder to
-    // create a workspace over. `path` null opens the default workspace root
-    // (Documents/TeamPilot) rather than the app-support cwd.
-    Future<PairingDirListing> pairingBrowseDir(String? path) async {
-      final browser = RemoteDirectoryBrowser(AppStorage.fs);
-      final start = path == null || path.trim().isEmpty
-          ? await DefaultWorkspaceDirectory.resolveDefaultWorkspacePath()
-          : await browser.resolveInitial(path);
-      final listing = await browser.list(start);
-      return PairingDirListing(
-        path: listing.path,
-        parent: listing.parent,
-        dirs: listing.directories,
-      );
+    // Which machines the phone may bind a folder to — itself, its WSL distros,
+    // its SSH profiles. Memoized: `workspace.list` is re-served on every
+    // `session.changed` (the listener above), and listTargets() shells out to
+    // `wsl.exe -l -q` on each call, so an un-cached provider would spawn a
+    // subprocess per connected phone every time a terminal pane opens or closes.
+    // A short TTL still lets a freshly added SSH profile show up without a
+    // restart. Cheap by construction: listTargets reads config and enumerates
+    // distros, it never connects — only RuntimeContextRegistry.forTarget does.
+    DateTime? pairingTargetsCachedAt;
+    var pairingTargetsCache = const <PairingTargetInfo>[];
+    Future<List<PairingTargetInfo>> pairingTargetIndex() async {
+      final cachedAt = pairingTargetsCachedAt;
+      final now = DateTime.now();
+      if (cachedAt != null &&
+          now.difference(cachedAt) < const Duration(seconds: 30)) {
+        return pairingTargetsCache;
+      }
+      final targets = await runtimeTargetRegistry.listTargets();
+      pairingTargetsCache = [
+        for (final target in targets)
+          PairingTargetInfo(
+            id: target.id,
+            label: target.label,
+            kind: target.kind.name,
+          ),
+      ];
+      pairingTargetsCachedAt = now;
+      return pairingTargetsCache;
     }
+
+    // Rejects a target the desktop does not have. Not defensive boilerplate:
+    // WorkspaceDirectoryPicker.targetById falls back to the *local* machine for
+    // an id it does not know, so an id that disappeared between `workspace.list`
+    // and now (an uninstalled distro, a deleted SSH profile) would silently
+    // ensureDir a POSIX path onto the Windows disk — creating C:\home\me\proj —
+    // and then persist the dead targetId, leaving a workspace whose terminal
+    // dies on launch. Returns the id to act on; empty means "default plane".
+    Future<String> pairingResolveTargetId(String? raw) async {
+      final id = raw?.trim() ?? '';
+      if (id.isEmpty || id == RuntimeTarget.localId) return id;
+      final known = await pairingTargetIndex();
+      if (!known.any((target) => target.id == id)) {
+        throw ArgumentError('unknown runtime target: $id');
+      }
+      return id;
+    }
+
+    // The filesystem a phone-supplied target names. An empty id is a phone that
+    // predates machine selection: keep the home plane so its behaviour is
+    // unchanged.
+    Future<Filesystem> pairingFilesystemFor(String targetId) async =>
+        targetId.isEmpty
+        ? AppStorage.fs
+        : directoryPicker.filesystemFor(targetId);
+
+    // Host-side directory browser: the phone picks an existing folder on one of
+    // the desktop's machines to create a workspace over.
+    final pairingDirBrowser = PairingHostDirBrowser(
+      resolveTargetId: pairingResolveTargetId,
+      filesystemFor: pairingFilesystemFor,
+      homeFor: directoryPicker.homeFor,
+      defaultLocalRoot: DefaultWorkspaceDirectory.resolveDefaultWorkspacePath,
+    );
 
     // Create a workspace over the phone-picked folder; file it under a group
     // when one was chosen. `allowDuplicate` mirrors the desktop "New Workspace"
@@ -777,10 +826,25 @@ Future<AppShell> buildAppShell({
       required String folderPath,
       String? title,
       String? groupId,
+      String? targetId,
     }) async {
-      await AppStorage.fs.ensureDir(folderPath);
+      // Validate before touching disk, and create the directory on the machine
+      // the folder claims to live on — not on the desktop's own.
+      final resolvedTargetId = await pairingResolveTargetId(targetId);
+      await (await pairingFilesystemFor(resolvedTargetId)).ensureDir(folderPath);
       final workspaceId = await chatCubit.createWorkspace(
-        [WorkspaceFolder(path: folderPath)],
+        [
+          WorkspaceFolder(
+            path: folderPath,
+            // This one field is what makes the workspace's terminal open on that
+            // machine: defaultSessionSpecFor resolves the runtime target from the
+            // folder alone (workspace_terminal_session_spec.dart:81-95). No
+            // defaultShell needed — pinning one would short-circuit that.
+            targetId: resolvedTargetId.isEmpty
+                ? WorkspaceFolder.localTargetId
+                : resolvedTargetId,
+          ),
+        ],
         sessionRepo,
         display: title ?? '',
         allowDuplicate: true,
@@ -872,10 +936,11 @@ Future<AppShell> buildAppShell({
       uploadSink: pairingUploadSink,
       workspaceIndex: pairingWorkspaceIndex,
       activator: pairingActivate,
-      dirBrowser: pairingBrowseDir,
+      dirBrowser: pairingDirBrowser.browse,
       workspaceCreator: pairingCreateWorkspace,
       groupCreator: pairingCreateGroup,
       groupIndex: pairingGroupIndex,
+      targetIndex: pairingTargetIndex,
     );
     pairingHostCubit = PairingHostCubit(
       settings: pairingSettings,

@@ -90,6 +90,7 @@ class PairingSessionListPage extends StatelessWidget {
   ) {
     final l10n = context.l10n;
     final groups = state.groups;
+    final targets = state.targets;
     showModalBottomSheet<void>(
       context: context,
       builder: (sheetContext) => SafeArea(
@@ -102,7 +103,7 @@ class PairingSessionListPage extends StatelessWidget {
               title: Text(l10n.pairingNewWorkspace),
               onTap: () {
                 Navigator.of(sheetContext).pop();
-                showPairingNewWorkspaceSheet(context, cubit, groups);
+                showPairingNewWorkspaceSheet(context, cubit, groups, targets);
               },
             ),
             ListTile(
