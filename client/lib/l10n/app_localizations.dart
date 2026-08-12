@@ -2516,6 +2516,18 @@ abstract class AppLocalizations {
   /// **'When a terminal finishes a burst of output and goes idle (agent turn done), show an OS notification in addition to the in-app notification center.'**
   String get notifyOnSessionIdleDescription;
 
+  /// No description provided for @notifyWhileWatchingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notify even while watching'**
+  String get notifyWhileWatchingTitle;
+
+  /// No description provided for @notifyWhileWatchingDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'When enabled (default), notify even if the app is focused and you are looking at the very terminal that reported. Turn off to stay undisturbed about the terminal you are already watching.'**
+  String get notifyWhileWatchingDescription;
+
   /// No description provided for @sessionIdleNotificationTitle.
   ///
   /// In en, this message translates to:

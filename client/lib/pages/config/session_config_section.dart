@@ -267,6 +267,16 @@ class _SessionControlsState extends State<_SessionControls> {
                     value: snapshot.notifyOnSessionIdle,
                     onChanged: (value) => cubit.setNotifyOnSessionIdle(value),
                   ),
+                  showDividerBelow: true,
+                ),
+                TpPreferenceRow(
+                  title: l10n.notifyWhileWatchingTitle,
+                  subtitle: l10n.notifyWhileWatchingDescription,
+                  trailing: Switch(
+                    key: AppKeys.notifyWhileWatchingSwitch,
+                    value: snapshot.notifyWhileWatching,
+                    onChanged: (value) => cubit.setNotifyWhileWatching(value),
+                  ),
                   showDividerBelow: false,
                 ),
               ],
@@ -287,6 +297,7 @@ class _SessionControlsSnapshot {
     required this.openExistingSessionStartsTerminal,
     required this.simpleModeDefaultFullAccess,
     required this.notifyOnSessionIdle,
+    required this.notifyWhileWatching,
   });
 
   final String defaultSshWorkingDirectory;
@@ -296,6 +307,7 @@ class _SessionControlsSnapshot {
   final bool openExistingSessionStartsTerminal;
   final bool simpleModeDefaultFullAccess;
   final bool notifyOnSessionIdle;
+  final bool notifyWhileWatching;
 
   static _SessionControlsSnapshot from(SessionPreferences preferences) {
     return _SessionControlsSnapshot(
@@ -307,6 +319,7 @@ class _SessionControlsSnapshot {
           preferences.openExistingSessionStartsTerminal,
       simpleModeDefaultFullAccess: preferences.simpleModeDefaultFullAccess,
       notifyOnSessionIdle: preferences.notifyOnSessionIdle,
+      notifyWhileWatching: preferences.notifyWhileWatching,
     );
   }
 
@@ -320,7 +333,8 @@ class _SessionControlsSnapshot {
         other.openExistingSessionStartsTerminal ==
             openExistingSessionStartsTerminal &&
         other.simpleModeDefaultFullAccess == simpleModeDefaultFullAccess &&
-        other.notifyOnSessionIdle == notifyOnSessionIdle;
+        other.notifyOnSessionIdle == notifyOnSessionIdle &&
+        other.notifyWhileWatching == notifyWhileWatching;
   }
 
   @override
@@ -332,5 +346,6 @@ class _SessionControlsSnapshot {
     openExistingSessionStartsTerminal,
     simpleModeDefaultFullAccess,
     notifyOnSessionIdle,
+    notifyWhileWatching,
   );
 }

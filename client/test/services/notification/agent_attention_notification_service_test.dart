@@ -17,6 +17,7 @@ void main() {
   late List<_Emit> emitted;
   bool focused = false;
   bool enabled = true;
+  bool notifyWhileWatching = true;
   String foregroundSession = '';
   AgentNoticeAttribution? Function(String, String) attribution =
       (_, __) => null;
@@ -31,14 +32,15 @@ void main() {
         },
     recorder: () => null,
     resolveContext: () => enabled
-        ? const AgentAttentionNotifyContext(
+        ? AgentAttentionNotifyContext(
             enabled: true,
-            titles: {
+            notifyWhileWatching: notifyWhileWatching,
+            titles: const {
               AgentNoticeKind.done: 'done',
               AgentNoticeKind.interrupted: 'interrupted',
               AgentNoticeKind.waiting: 'waiting',
             },
-            bodies: {
+            bodies: const {
               AgentNoticeKind.done: 'done-body',
               AgentNoticeKind.interrupted: 'interrupted-body',
               AgentNoticeKind.waiting: 'waiting-body',
@@ -74,6 +76,7 @@ void main() {
     emitted = [];
     focused = false;
     enabled = true;
+    notifyWhileWatching = true;
     foregroundSession = '';
     attribution = (_, __) => null;
   });
@@ -121,7 +124,8 @@ void main() {
     expect(emitted, hasLength(1));
   });
 
-  test('focused + foreground seat is suppressed', () async {
+  test('focused + foreground seat is suppressed when opted out', () async {
+    notifyWhileWatching = false;
     focused = true;
     foregroundSession = 's1';
     build().start();
@@ -129,6 +133,17 @@ void main() {
     await settle();
 
     expect(emitted, isEmpty);
+  });
+
+  test('focused + foreground seat still fires while notifyWhileWatching', () async {
+    focused = true;
+    foregroundSession = 's1';
+    build().start();
+    apply('done');
+    await settle();
+
+    expect(emitted, hasLength(1));
+    expect(emitted.single.body, 'done-body');
   });
 
   test('focused but not the foreground seat still fires', () async {

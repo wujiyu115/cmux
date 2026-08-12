@@ -7,6 +7,7 @@ import '../../cubits/session_preferences_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../models/app_notification.dart';
 import '../../router/app_router.dart';
+import '../../utils/logging/logger.dart';
 import '../terminal/workspace_terminal_registry.dart';
 import 'desktop_system_notifier.dart';
 import 'notification_recorder.dart';
@@ -18,11 +19,16 @@ class TerminalIdleNotifyContext {
     required this.enabled,
     required this.title,
     required this.subtitle,
+    this.notifyWhileWatching = true,
   });
 
   final bool enabled;
   final String title;
   final String subtitle;
+
+  /// When false, the active pane of the active surface is skipped while the
+  /// window is focused. Mirrors `SessionPreferences.notifyWhileWatching`.
+  final bool notifyWhileWatching;
 }
 
 /// Polls every embedded terminal's [WorkspaceTerminalGroup] for panes that go
@@ -118,8 +124,15 @@ class TerminalIdleNotificationService {
       final focused = await _isAppFocused();
       for (final pane in becameIdle) {
         // While the window is focused, assume the user is watching the active
-        // pane of the active surface — don't nag about it.
-        if (focused && pane.isActive) continue;
+        // pane of the active surface — don't nag about it, unless the user opted
+        // into being notified anyway (notifyWhileWatching).
+        if (!context.notifyWhileWatching && focused && pane.isActive) {
+          appLogger.d(
+            '[terminal-idle] notify suppressed: watching pane '
+            '${pane.attribution}',
+          );
+          continue;
+        }
         _emit(pane, context);
       }
     } finally {
@@ -208,13 +221,13 @@ class TerminalIdleNotificationService {
     final context = appRouter.routerDelegate.navigatorKey.currentContext;
     if (context == null || !context.mounted) return null;
     final l10n = context.l10n;
-    final enabled = context
+    final preferences = context
         .read<SessionPreferencesCubit>()
         .state
-        .preferences
-        .notifyOnSessionIdle;
+        .preferences;
     return TerminalIdleNotifyContext(
-      enabled: enabled,
+      enabled: preferences.notifyOnSessionIdle,
+      notifyWhileWatching: preferences.notifyWhileWatching,
       title: l10n.sessionIdleNotificationTitle,
       subtitle: l10n.sessionIdleNotificationSubtitle,
     );

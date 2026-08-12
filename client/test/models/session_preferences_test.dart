@@ -81,6 +81,21 @@ void main() {
       expect(restored.simpleModeDefaultFullAccess, isTrue);
     });
 
+    test('notifyWhileWatching defaults true', () {
+      expect(SessionPreferences().notifyWhileWatching, isTrue);
+    });
+
+    test('notifyWhileWatching JSON round-trip', () {
+      final prefs = SessionPreferences(notifyWhileWatching: false);
+      final again = SessionPreferences.fromJson(prefs.toJson());
+      expect(again.notifyWhileWatching, isFalse);
+    });
+
+    test('fromJson defaults notifyWhileWatching when key missing', () {
+      final restored = SessionPreferences.fromJson(const <String, Object?>{});
+      expect(restored.notifyWhileWatching, isTrue);
+    });
+
     test('fromJson ignores non-string cli executable path entries', () {
       final restored = SessionPreferences.fromJson(const <String, Object?>{
         'cliExecutablePaths': {

@@ -1278,6 +1278,13 @@ class AppLocalizationsZh extends AppLocalizations {
       '终端输出结束一轮并进入空闲（agent 完成一轮）时，除应用内通知中心外，同时发送操作系统通知。';
 
   @override
+  String get notifyWhileWatchingTitle => '正在查看时也通知';
+
+  @override
+  String get notifyWhileWatchingDescription =>
+      '开启（默认）时，即使应用在前台、且你正停在报告事件的那个终端上，仍然发送通知。关闭则对正在查看的终端不再打扰。';
+
+  @override
   String get sessionIdleNotificationTitle => 'Agent 已就绪';
 
   @override

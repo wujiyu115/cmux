@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import '../../cubits/agent_attention_cubit.dart';
 import '../../models/cli_tool.dart';
+import '../../utils/logging/logger.dart';
 import 'agent_status_normalizer.dart';
 
 /// Max POST body size for `/agent-status` (~1 MiB).
@@ -31,11 +32,29 @@ class AgentStatusHttpHandler {
   }) async {
     try {
       final body = await _readJsonBody(request);
-      if (body != null) {
+      // Logged at every exit: a dropped report is otherwise indistinguishable
+      // from a delivered one, since the response is always 200 `{}`.
+      if (body == null) {
+        appLogger.d('[agent-status] dropped: empty or corrupt body');
+      } else {
+        final hook = body['hook_event_name'] ?? body['event'];
         final cli = resolveCli(sessionId, memberId);
-        if (cli != null) {
+        if (cli == null) {
+          appLogger.d(
+            '[agent-status] dropped: seat not registered '
+            '(session=$sessionId hook=$hook)',
+          );
+        } else {
           final event = AgentStatusNormalizer.normalize(cli: cli, body: body);
-          if (event != null) {
+          if (event == null) {
+            appLogger.d(
+              '[agent-status] dropped: ${cli.value} hook not mapped (hook=$hook)',
+            );
+          } else {
+            appLogger.d(
+              '[agent-status] applied: ${event.state.name} '
+              '(session=$sessionId hook=$hook)',
+            );
             attention.applyEvent(
               sessionId: sessionId,
               memberId: memberId,
@@ -46,7 +65,12 @@ class AgentStatusHttpHandler {
         }
       }
       await _writeOkEmpty(request);
-    } catch (_) {
+    } catch (error, stackTrace) {
+      appLogger.w(
+        '[agent-status] handler failed: $error',
+        error: error,
+        stackTrace: stackTrace,
+      );
       try {
         await _writeOkEmpty(request);
       } catch (_) {}

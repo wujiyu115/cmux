@@ -123,6 +123,19 @@ void main() {
     },
   );
 
+  test('notifyWhileWatching defaults to true and persists toggle', () async {
+    final cubit = await makeCubit();
+    await cubit.load();
+    expect(cubit.state.preferences.notifyWhileWatching, true);
+
+    await cubit.setNotifyWhileWatching(false);
+    expect(cubit.state.preferences.notifyWhileWatching, false);
+
+    final cubit2 = await makeCubit();
+    await cubit2.load();
+    expect(cubit2.state.preferences.notifyWhileWatching, false);
+  });
+
   test(
     'setDefaultSshWorkingDirectory persists the remote default cwd',
     () async {

@@ -9,6 +9,7 @@ class SessionPreferences {
     this.openExistingSessionStartsTerminal = false,
     this.simpleModeDefaultFullAccess = true,
     this.notifyOnSessionIdle = true,
+    this.notifyWhileWatching = true,
   }) : cliExecutablePaths = Map.unmodifiable(
          _normalizeCliExecutablePaths(cliExecutablePaths),
        ),
@@ -38,6 +39,7 @@ class SessionPreferences {
       simpleModeDefaultFullAccess:
           json['simpleModeDefaultFullAccess'] as bool? ?? true,
       notifyOnSessionIdle: json['notifyOnSessionIdle'] as bool? ?? true,
+      notifyWhileWatching: json['notifyWhileWatching'] as bool? ?? true,
     );
   }
 
@@ -81,6 +83,11 @@ class SessionPreferences {
   /// notification center records it regardless.
   final bool notifyOnSessionIdle;
 
+  /// When true (default), notify even while the app is focused and the user is
+  /// looking at the very terminal that reported the edge. When false, that case
+  /// is suppressed as "don't nag about what you are already watching".
+  final bool notifyWhileWatching;
+
   String cliExecutablePathFor(String toolId) =>
       cliExecutablePaths[toolId]?.trim() ?? '';
 
@@ -94,6 +101,7 @@ class SessionPreferences {
     bool? openExistingSessionStartsTerminal,
     bool? simpleModeDefaultFullAccess,
     bool? notifyOnSessionIdle,
+    bool? notifyWhileWatching,
   }) {
     return SessionPreferences(
       cliExecutablePaths: cliExecutablePaths ?? this.cliExecutablePaths,
@@ -111,6 +119,7 @@ class SessionPreferences {
       simpleModeDefaultFullAccess:
           simpleModeDefaultFullAccess ?? this.simpleModeDefaultFullAccess,
       notifyOnSessionIdle: notifyOnSessionIdle ?? this.notifyOnSessionIdle,
+      notifyWhileWatching: notifyWhileWatching ?? this.notifyWhileWatching,
     );
   }
 
@@ -125,6 +134,7 @@ class SessionPreferences {
       'openExistingSessionStartsTerminal': openExistingSessionStartsTerminal,
       'simpleModeDefaultFullAccess': simpleModeDefaultFullAccess,
       'notifyOnSessionIdle': notifyOnSessionIdle,
+      'notifyWhileWatching': notifyWhileWatching,
     };
   }
 

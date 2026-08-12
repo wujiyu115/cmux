@@ -9,6 +9,7 @@ import '../../l10n/l10n_extensions.dart';
 import '../../models/app_notification.dart';
 import '../../pages/home_workspace/home_workspace_route.dart';
 import '../../router/app_router.dart';
+import '../../utils/logging/logger.dart';
 import '../agent_status/agent_attention_state.dart';
 import 'desktop_system_notifier.dart';
 import 'notification_recorder.dart';
@@ -25,11 +26,16 @@ class AgentAttentionNotifyContext {
     required this.enabled,
     required this.titles,
     required this.bodies,
+    this.notifyWhileWatching = true,
   });
 
   final bool enabled;
   final Map<AgentNoticeKind, String> titles;
   final Map<AgentNoticeKind, String> bodies;
+
+  /// When false, a seat the user is already watching (app focused + foreground
+  /// seat) is skipped. Mirrors `SessionPreferences.notifyWhileWatching`.
+  final bool notifyWhileWatching;
 }
 
 /// Where a seat lives + how to name it, for the notification body and tap route.
@@ -135,12 +141,32 @@ class AgentAttentionNotificationService {
     if (notices.isEmpty) return;
 
     final context = _resolveContext();
-    if (context == null || !context.enabled) return;
+    if (context == null) {
+      appLogger.d(
+        '[agent-status] notify skipped: no app context '
+        '(${notices.length} notice(s))',
+      );
+      return;
+    }
+    if (!context.enabled) {
+      appLogger.d(
+        '[agent-status] notify skipped: notifyOnSessionIdle off '
+        '(${notices.length} notice(s))',
+      );
+      return;
+    }
 
     final focused = await _isAppFocused();
     for (final notice in notices) {
-      // While focused and looking at this very seat, don't nag.
-      if (focused && _isForegroundSeat(notice.sessionId, notice.memberId)) {
+      // While focused and looking at this very seat, don't nag — unless the user
+      // opted into being notified anyway (notifyWhileWatching).
+      if (!context.notifyWhileWatching &&
+          focused &&
+          _isForegroundSeat(notice.sessionId, notice.memberId)) {
+        appLogger.d(
+          '[agent-status] notify suppressed: watching seat '
+          '${notice.sessionId} (${notice.kind.name})',
+        );
         continue;
       }
       _emit(notice, context);
@@ -247,13 +273,13 @@ class AgentAttentionNotificationService {
     final context = appRouter.routerDelegate.navigatorKey.currentContext;
     if (context == null || !context.mounted) return null;
     final l10n = context.l10n;
-    final enabled = context
+    final preferences = context
         .read<SessionPreferencesCubit>()
         .state
-        .preferences
-        .notifyOnSessionIdle;
+        .preferences;
     return AgentAttentionNotifyContext(
-      enabled: enabled,
+      enabled: preferences.notifyOnSessionIdle,
+      notifyWhileWatching: preferences.notifyWhileWatching,
       titles: {
         AgentNoticeKind.done: l10n.agentDoneNotificationTitle,
         AgentNoticeKind.interrupted: l10n.agentInterruptedNotificationTitle,

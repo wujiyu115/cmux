@@ -579,6 +579,8 @@
   "simpleModeDefaultFullAccessDescription": "When enabled (default), new Simple-mode compose landing starts with full access permissions. Workspace chip choices still override and persist per workspace.",
   "notifyOnSessionIdleTitle": "Agent idle system notification",
   "notifyOnSessionIdleDescription": "When a terminal finishes a burst of output and goes idle (agent turn done), show an OS notification in addition to the in-app notification center.",
+  "notifyWhileWatchingTitle": "Notify even while watching",
+  "notifyWhileWatchingDescription": "When enabled (default), notify even if the app is focused and you are looking at the very terminal that reported. Turn off to stay undisturbed about the terminal you are already watching.",
   "sessionIdleNotificationTitle": "Agent ready",
   "sessionIdleNotificationSubtitle": "Ready for your next message",
   "agentDoneNotificationTitle": "Agent finished",

@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math';
 
+import '../../utils/logging/logger.dart';
 import 'agent_attention_state.dart';
 import 'agent_status_event.dart';
 import 'agent_status_http_handler.dart';
@@ -115,11 +116,24 @@ class AgentStatusGateway {
         sessionId.isNotEmpty &&
         _agentStatusSessions.contains(sessionId);
     if (handler == null || !allowed || member.isEmpty) {
+      // Always 200 (see _onRequest), so a rejection is otherwise invisible.
+      final reason = handler == null
+          ? 'no handler attached'
+          : member.isEmpty
+          ? 'empty X-Member header'
+          : 'session not registered';
+      appLogger.d(
+        '[agent-status] rejected: $reason '
+        '(session=${sessionId ?? '<none>'} member=${member.isEmpty ? '<none>' : member})',
+      );
       await _writeAgentStatusOkEmpty(request);
       return;
     }
 
-    await handler.handle(request, sessionId: sessionId!, memberId: member);
+    appLogger.d(
+      '[agent-status] accepted: session=$sessionId member=$member',
+    );
+    await handler.handle(request, sessionId: sessionId, memberId: member);
   }
 
   /// Clears seat attention when a seat reports idle out of band.

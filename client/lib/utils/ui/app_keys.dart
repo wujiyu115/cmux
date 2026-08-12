@@ -24,6 +24,9 @@ class AppKeys {
   static const simpleModeDefaultFullAccessSwitch = Key(
     'simple-mode-default-full-access-switch',
   );
+  static const notifyWhileWatchingSwitch = Key(
+    'notify-while-watching-switch',
+  );
   static const sidebarSessionWaitingMarker = Key(
     'sidebar-session-waiting-marker',
   );
