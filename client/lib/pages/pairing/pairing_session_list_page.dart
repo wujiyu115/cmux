@@ -111,7 +111,7 @@ class PairingSessionListPage extends StatelessWidget {
               title: Text(l10n.pairingNewGroup),
               onTap: () {
                 Navigator.of(sheetContext).pop();
-                showPairingNewGroupSheet(context, cubit);
+                showPairingNewGroupSheet(context, cubit, groups);
               },
             ),
           ],
@@ -232,10 +232,13 @@ class _GroupSectionState extends State<_GroupSection> {
                 Expanded(
                   child: Text(
                     title.toUpperCase(),
+                    // Top of the list's hierarchy: group > workspace > terminal.
+                    // Rank is carried by size and colour rather than weight —
+                    // nothing in this list is bold.
                     style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.6,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0.2,
                       color: cs.onSurfaceVariant,
                     ),
                     maxLines: 1,
@@ -247,7 +250,7 @@ class _GroupSectionState extends State<_GroupSection> {
                   '${widget.count}',
                   style: appMonoTextStyle(
                     context,
-                    fontSize: 12,
+                    fontSize: 13,
                     color: cs.onSurfaceVariant,
                   ),
                 ),

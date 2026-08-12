@@ -5147,8 +5147,32 @@ abstract class AppLocalizations {
   /// No description provided for @pairingNewGroupNameHint.
   ///
   /// In en, this message translates to:
-  /// **'Group name'**
+  /// **'e.g. Client work'**
   String get pairingNewGroupNameHint;
+
+  /// No description provided for @pairingNewGroupNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Group name'**
+  String get pairingNewGroupNameLabel;
+
+  /// No description provided for @pairingNewGroupHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Created on the paired desktop — it appears there right away.'**
+  String get pairingNewGroupHelp;
+
+  /// No description provided for @pairingNewGroupDuplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'A group with that name already exists. Pick another.'**
+  String get pairingNewGroupDuplicate;
+
+  /// No description provided for @pairingCreating.
+  ///
+  /// In en, this message translates to:
+  /// **'Creating…'**
+  String get pairingCreating;
 
   /// No description provided for @pairingGroupCreateFailed.
   ///
@@ -5177,8 +5201,50 @@ abstract class AppLocalizations {
   /// No description provided for @pairingNewWorkspaceNameHint.
   ///
   /// In en, this message translates to:
-  /// **'Optional — defaults to the folder name'**
+  /// **'Defaults to the folder name'**
   String get pairingNewWorkspaceNameHint;
+
+  /// No description provided for @pairingNewWorkspaceNameHintFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Defaults to the folder name ({name})'**
+  String pairingNewWorkspaceNameHintFolder(String name);
+
+  /// No description provided for @pairingNewWorkspaceSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'A workspace points at a folder on the host; sessions start inside it.'**
+  String get pairingNewWorkspaceSubtitle;
+
+  /// No description provided for @pairingNewWorkspaceFolderHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a folder on the host, not one on this phone.'**
+  String get pairingNewWorkspaceFolderHelp;
+
+  /// No description provided for @pairingNewWorkspaceFolderPicked.
+  ///
+  /// In en, this message translates to:
+  /// **'Sessions will start in this folder.'**
+  String get pairingNewWorkspaceFolderPicked;
+
+  /// No description provided for @pairingNoFolderSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'No folder selected'**
+  String get pairingNoFolderSelected;
+
+  /// No description provided for @pairingFieldRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get pairingFieldRequired;
+
+  /// No description provided for @pairingFieldOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get pairingFieldOptional;
 
   /// No description provided for @pairingNewWorkspaceGroupLabel.
   ///

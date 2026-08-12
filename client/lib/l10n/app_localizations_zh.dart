@@ -2678,7 +2678,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pairingNewGroup => '新建分组';
 
   @override
-  String get pairingNewGroupNameHint => '分组名称';
+  String get pairingNewGroupNameHint => '例如：客户项目';
+
+  @override
+  String get pairingNewGroupNameLabel => '分组名称';
+
+  @override
+  String get pairingNewGroupHelp => '创建在已配对的桌面端，桌面端会立刻出现。';
+
+  @override
+  String get pairingNewGroupDuplicate => '已存在同名分组，换一个名字。';
+
+  @override
+  String get pairingCreating => '创建中…';
 
   @override
   String get pairingGroupCreateFailed => '无法创建分组。';
@@ -2693,7 +2705,30 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pairingNewWorkspaceNameLabel => '名称';
 
   @override
-  String get pairingNewWorkspaceNameHint => '可选，默认使用文件夹名';
+  String get pairingNewWorkspaceNameHint => '默认使用文件夹名';
+
+  @override
+  String pairingNewWorkspaceNameHintFolder(String name) {
+    return '默认使用文件夹名（$name）';
+  }
+
+  @override
+  String get pairingNewWorkspaceSubtitle => '工作区指向主机上的一个目录，会话都在该目录里启动。';
+
+  @override
+  String get pairingNewWorkspaceFolderHelp => '选主机上的目录，不是手机本地目录。';
+
+  @override
+  String get pairingNewWorkspaceFolderPicked => '会话都在该目录里启动。';
+
+  @override
+  String get pairingNoFolderSelected => '未选择目录';
+
+  @override
+  String get pairingFieldRequired => '必填';
+
+  @override
+  String get pairingFieldOptional => '可选';
 
   @override
   String get pairingNewWorkspaceGroupLabel => '分组';

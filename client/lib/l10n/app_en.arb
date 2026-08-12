@@ -1269,12 +1269,30 @@
   "pairingCreate": "Create",
   "pairingNewWorkspace": "New workspace",
   "pairingNewGroup": "New group",
-  "pairingNewGroupNameHint": "Group name",
+  "pairingNewGroupNameHint": "e.g. Client work",
+  "pairingNewGroupNameLabel": "Group name",
+  "pairingNewGroupHelp": "Created on the paired desktop — it appears there right away.",
+  "pairingNewGroupDuplicate": "A group with that name already exists. Pick another.",
+  "pairingCreating": "Creating…",
   "pairingGroupCreateFailed": "Could not create the group.",
   "pairingWorkspaceCreateFailed": "Could not create the workspace.",
   "pairingNewWorkspaceFolderLabel": "Folder",
   "pairingNewWorkspaceNameLabel": "Name",
-  "pairingNewWorkspaceNameHint": "Optional — defaults to the folder name",
+  "pairingNewWorkspaceNameHint": "Defaults to the folder name",
+  "pairingNewWorkspaceNameHintFolder": "Defaults to the folder name ({name})",
+  "@pairingNewWorkspaceNameHintFolder": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "pairingNewWorkspaceSubtitle": "A workspace points at a folder on the host; sessions start inside it.",
+  "pairingNewWorkspaceFolderHelp": "Pick a folder on the host, not one on this phone.",
+  "pairingNewWorkspaceFolderPicked": "Sessions will start in this folder.",
+  "pairingNoFolderSelected": "No folder selected",
+  "pairingFieldRequired": "Required",
+  "pairingFieldOptional": "Optional",
   "pairingNewWorkspaceGroupLabel": "Group",
   "pairingBrowseFolder": "Browse",
   "pairingSelectFolderFirst": "Pick a folder first.",

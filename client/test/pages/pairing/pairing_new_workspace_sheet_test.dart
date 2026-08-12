@@ -5,6 +5,7 @@ import 'package:teampilot/l10n/app_localizations.dart';
 import 'package:teampilot/pages/pairing/pairing_new_workspace_sheet.dart';
 import 'package:teampilot/repositories/pairing_settings_repository.dart';
 import 'package:teampilot/services/pairing/pairing_client.dart';
+import 'package:teampilot/theme/app_theme.dart';
 
 const _local = PairingTarget(
   id: 'local',
@@ -68,6 +69,11 @@ void main() {
         locale: const Locale('en'),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
+        // The app's real theme, not the default one: its button theme pins every
+        // button to a 26px track, and a widget that raises only its *minimum*
+        // height then gets `40<=h<=26` — invalid constraints that render as a
+        // six-figure overflow on device while a bare MaterialApp looks fine.
+        theme: buildDarkTheme(),
         home: Builder(
           builder: (context) => Scaffold(
             body: Center(
@@ -153,7 +159,7 @@ void main() {
 
     // Folder back to the placeholder, and the name it seeded is gone too.
     expect(find.text('/home/me'), findsNothing);
-    expect(find.text('—'), findsOneWidget);
+    expect(find.text('No folder selected'), findsOneWidget);
   });
 
   testWidgets('submits the chosen machine with the folder', (tester) async {

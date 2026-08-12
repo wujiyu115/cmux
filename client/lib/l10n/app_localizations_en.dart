@@ -2772,7 +2772,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pairingNewGroup => 'New group';
 
   @override
-  String get pairingNewGroupNameHint => 'Group name';
+  String get pairingNewGroupNameHint => 'e.g. Client work';
+
+  @override
+  String get pairingNewGroupNameLabel => 'Group name';
+
+  @override
+  String get pairingNewGroupHelp =>
+      'Created on the paired desktop — it appears there right away.';
+
+  @override
+  String get pairingNewGroupDuplicate =>
+      'A group with that name already exists. Pick another.';
+
+  @override
+  String get pairingCreating => 'Creating…';
 
   @override
   String get pairingGroupCreateFailed => 'Could not create the group.';
@@ -2787,8 +2801,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pairingNewWorkspaceNameLabel => 'Name';
 
   @override
-  String get pairingNewWorkspaceNameHint =>
-      'Optional — defaults to the folder name';
+  String get pairingNewWorkspaceNameHint => 'Defaults to the folder name';
+
+  @override
+  String pairingNewWorkspaceNameHintFolder(String name) {
+    return 'Defaults to the folder name ($name)';
+  }
+
+  @override
+  String get pairingNewWorkspaceSubtitle =>
+      'A workspace points at a folder on the host; sessions start inside it.';
+
+  @override
+  String get pairingNewWorkspaceFolderHelp =>
+      'Pick a folder on the host, not one on this phone.';
+
+  @override
+  String get pairingNewWorkspaceFolderPicked =>
+      'Sessions will start in this folder.';
+
+  @override
+  String get pairingNoFolderSelected => 'No folder selected';
+
+  @override
+  String get pairingFieldRequired => 'Required';
+
+  @override
+  String get pairingFieldOptional => 'Optional';
 
   @override
   String get pairingNewWorkspaceGroupLabel => 'Group';
