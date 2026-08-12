@@ -11,6 +11,7 @@ import '../../utils/logging/logger.dart';
 import '../terminal/workspace_terminal_registry.dart';
 import 'desktop_system_notifier.dart';
 import 'notification_recorder.dart';
+import 'terminal_idle_edge_detector.dart';
 
 /// Resolved, localized strings + the enabled flag for one notification fire.
 /// Null when there is no live app context (startup / teardown windows).
@@ -42,7 +43,8 @@ class TerminalIdleNotificationService {
   TerminalIdleNotificationService({
     required WorkspaceTerminalRegistry registry,
     Duration pollInterval = const Duration(milliseconds: 750),
-    Duration minimumWorkDuration = const Duration(seconds: 2),
+    Duration minimumWorkDuration = const Duration(seconds: 5),
+    Duration idleGrace = const Duration(seconds: 8),
     Future<bool> Function()? isAppFocused,
     Future<void> Function({
       required String title,
@@ -58,7 +60,10 @@ class TerminalIdleNotificationService {
   }) : _registry = registry,
        _reportsAgentStatus = reportsAgentStatus ?? ((_) => false),
        _pollInterval = pollInterval,
-       _minimumWorkDuration = minimumWorkDuration,
+       _edges = TerminalIdleEdgeDetector(
+         minimumWorkDuration: minimumWorkDuration,
+         idleGrace: idleGrace,
+       ),
        _isAppFocused =
            isAppFocused ?? DesktopSystemNotifier.instance.isAppFocused,
        _showSystemNotification =
@@ -77,7 +82,7 @@ class TerminalIdleNotificationService {
   /// behaviour.
   final bool Function(String paneId) _reportsAgentStatus;
   final Duration _pollInterval;
-  final Duration _minimumWorkDuration;
+  final TerminalIdleEdgeDetector _edges;
   final Future<bool> Function() _isAppFocused;
   final Future<void> Function({
     required String title,
@@ -90,13 +95,6 @@ class TerminalIdleNotificationService {
   final TerminalIdleNotifyContext? Function() _resolveContext;
   final DateTime Function() _now;
 
-  /// Per-pane last-observed working flag.
-  final Map<String, bool> _wasWorking = {};
-
-  /// Per-pane timestamp of the idle → working rising edge, used to drop
-  /// trivially short bursts (a quick `ls`) below [_minimumWorkDuration].
-  final Map<String, DateTime> _workingSince = {};
-
   Timer? _timer;
   bool _ticking = false;
 
@@ -107,8 +105,7 @@ class TerminalIdleNotificationService {
   void dispose() {
     _timer?.cancel();
     _timer = null;
-    _wasWorking.clear();
-    _workingSince.clear();
+    _edges.clear();
   }
 
   Future<void> _tick() async {
@@ -140,8 +137,8 @@ class TerminalIdleNotificationService {
     }
   }
 
-  /// Scans every group's panes, updates the working/idle bookkeeping, and
-  /// returns the panes that just crossed working → idle this tick.
+  /// Feeds every group's panes to [_edges] and returns the panes whose quiet has
+  /// now held long enough to announce.
   List<_IdlePane> _collectIdleTransitions() {
     final now = _now();
     final live = <String>{};
@@ -151,43 +148,27 @@ class TerminalIdleNotificationService {
       for (final entry in group.entries) {
         final id = entry.id;
         live.add(id);
-        final working = entry.connected && entry.session.activityTracker.isWorking;
-        final was = _wasWorking[id] ?? false;
-
-        // Defer to the status-hook service for panes that report agent
-        // lifecycle: it already notifies on the semantic edge, and this
-        // PTY-burst heuristic would fire a second time for the same turn. Keep
-        // the bookkeeping current so the pane doesn't surface a stale edge if it
-        // later stops reporting.
-        if (_reportsAgentStatus(id)) {
-          _wasWorking[id] = working;
-          _workingSince.remove(id);
-          continue;
-        }
-
-        if (working && !was) {
-          _workingSince[id] = now;
-        } else if (!working && was) {
-          final since = _workingSince.remove(id);
-          final workedLongEnough =
-              since != null && now.difference(since) >= _minimumWorkDuration;
-          if (workedLongEnough) {
-            becameIdle.add(
-              _IdlePane(
-                attribution: group.paneAttribution(id),
-                workspaceId: group.workspaceId,
-                isActive: group.activeId == id,
-              ),
-            );
-          }
-        }
-        _wasWorking[id] = working;
+        final notify = _edges.observe(
+          paneId: id,
+          working: entry.connected && entry.session.activityTracker.isWorking,
+          // Panes that report agent lifecycle are notified by
+          // `AgentAttentionNotificationService` on the semantic edge; this
+          // PTY-burst heuristic would fire a second time for the same turn.
+          reportsAgentStatus: _reportsAgentStatus(id),
+          now: now,
+        );
+        if (!notify) continue;
+        becameIdle.add(
+          _IdlePane(
+            attribution: group.paneAttribution(id),
+            workspaceId: group.workspaceId,
+            isActive: group.activeId == id,
+          ),
+        );
       }
     }
 
-    // Drop bookkeeping for panes that no longer exist.
-    _wasWorking.removeWhere((id, _) => !live.contains(id));
-    _workingSince.removeWhere((id, _) => !live.contains(id));
+    _edges.retainOnly(live);
     return becameIdle;
   }
 
