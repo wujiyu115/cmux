@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../cubits/image_upload_cubit.dart';
+import '../../cubits/layout_cubit.dart';
 import '../../cubits/mobile_toolbar_cubit.dart';
 import '../../cubits/pairing_client_cubit.dart';
 import '../../cubits/voice_input_cubit.dart';
@@ -16,6 +17,7 @@ import '../../services/stt/transcript_insertion.dart';
 import '../../services/terminal/keyboard_inset_pty_hold.dart';
 import '../../services/terminal/terminal_fonts.dart';
 import '../../services/terminal/terminal_layout_coordinator.dart';
+import '../../services/terminal/terminal_theme_mapper.dart';
 import '../../theme/app_fonts.dart';
 import '../../theme/app_typography_scale.dart';
 import '../../utils/shell_quote.dart';
@@ -45,6 +47,10 @@ class _PairingMirrorPageState extends State<PairingMirrorPage>
   /// Reaches [TerminalViewState.beginPtyHold] — the only way to bracket the
   /// soft-keyboard animation from out here.
   final _terminalViewKey = GlobalKey<TerminalViewState>();
+
+  /// Last theme handed to the engine, so a rebuild that changed nothing about the
+  /// colours does not re-enter the Rust side.
+  TerminalTheme? _appliedTheme;
 
   /// Turns the IME animation's per-frame insets into one PTY resize.
   late final _keyboardHold = KeyboardInsetPtyHold(
@@ -121,6 +127,29 @@ class _PairingMirrorPageState extends State<PairingMirrorPage>
     });
   }
 
+  /// Reconfigures the engine whenever the resolved terminal theme changes.
+  ///
+  /// The colours have to reach the *engine*, not just [TerminalView]: the area
+  /// outside the cell grid — the sub-cell remainder the viewport resolver centres
+  /// — is cleared engine-side from its config, so a mirror left on
+  /// `TerminalConfig.defaults()` framed the grid in the default background no
+  /// matter what Flutter painted behind it. The desktop path does the same thing
+  /// through `TerminalSession.applyTerminalTheme`.
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final theme = _resolveTerminalTheme();
+    if (theme.background == _appliedTheme?.background) return;
+    _appliedTheme = theme;
+    _engine.reconfigure(terminalConfigFromTheme(theme));
+  }
+
+  TerminalTheme _resolveTerminalTheme() => teampilotTerminalTheme(
+    Theme.of(context).colorScheme,
+    isDark: Theme.of(context).brightness == Brightness.dark,
+    mode: context.watch<LayoutCubit>().state.preferences.terminalThemeMode,
+  );
+
   /// The soft keyboard does not arrive in one step — see [KeyboardInsetPtyHold]
   /// for why every frame of that animation must not become its own SIGWINCH.
   /// Read from [View] rather than `MediaQuery`: this fires before the inherited
@@ -180,6 +209,9 @@ class _PairingMirrorPageState extends State<PairingMirrorPage>
     final typography = context.appTypography;
     final cubit = context.read<PairingClientCubit>();
     final geometry = _geometry;
+    // The same theme the desktop pane passes, so the mirror renders the app's
+    // terminal colours instead of the engine's built-in defaults.
+    final terminalTheme = _resolveTerminalTheme();
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -214,10 +246,27 @@ class _PairingMirrorPageState extends State<PairingMirrorPage>
                 ),
               ),
               Expanded(
-                child: TerminalView(
+                // The grid can only be a whole number of cells, so the resolver
+                // hands the sub-cell remainder back as centered padding
+                // (`viewport_resolver.dart`) — up to a cell of width split left
+                // and right, and a row of height split top and bottom. That is
+                // unavoidable; what made it *visible* is that the remainder is
+                // cleared by the engine, not by Flutter, so it took the colour
+                // from the engine's config rather than from anything painted
+                // behind it. So the colour has to be set in two places, and
+                // measuring showed both are needed: the engine's config (see
+                // [didChangeDependencies]) covers the remainder inside its
+                // surface, and this box covers the frame *outside* that surface —
+                // 23 logical rows at the top and ~14 at each side, which was
+                // still showing the Scaffold's black once the first half was
+                // fixed. Same packed RGB feeds both, so they cannot disagree.
+                child: ColoredBox(
+                  color: Color(0xFF000000 | terminalTheme.background),
+                  child: TerminalView(
                   _engine,
                   key: _terminalViewKey,
                   controller: _controller,
+                  theme: terminalTheme,
                   // Without this the view falls back to TerminalStyle.defaults(),
                   // whose family is 'monospace' — a fontconfig generic that iOS
                   // cannot resolve, so glyphs come from the proportional system
@@ -236,6 +285,7 @@ class _PairingMirrorPageState extends State<PairingMirrorPage>
                     }
                     setState(() => _geometry = (cols: columns, rows: rows));
                   },
+                  ),
                 ),
               ),
               MultiBlocProvider(
