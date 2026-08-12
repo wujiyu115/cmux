@@ -29,16 +29,17 @@ class PairingNodeRow extends StatelessWidget {
     final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final spacing = context.tpSpacing;
-    // Prototype `.biglist .brow .bsub`: mono 15, muted.
     final mono = appMonoTextStyle(
       context,
-      fontSize: 15,
+      fontSize: 12,
       color: cs.onSurfaceVariant,
     );
-    // Prototype `.srow .bname`: 17 / 500. Busy state dims it.
+    // Bottom rank of the list's hierarchy (group > workspace > terminal), so it
+    // sits under the workspace name that owns it. The prototype's 17 / 500 reads
+    // a size larger on device thanks to the phone-wide 15% text boost. Busy dims
+    // it.
     final titleStyle = TextStyle(
-      fontSize: 17,
-      fontWeight: FontWeight.w500,
+      fontSize: 14,
       color: busy ? cs.onSurfaceVariant : cs.onSurface,
     );
     // Prototype `.iconbox`: 34px box, 20px glyph.

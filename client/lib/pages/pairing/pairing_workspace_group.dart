@@ -82,7 +82,17 @@ class _PairingWorkspaceGroupState extends State<PairingWorkspaceGroup> {
                     live: false,
                   ),
                 ),
-                child: Text(l10n.pairingOpenTerminalHere),
+                // Overridden per call site, not on PairingBlockButton: the
+                // primary "scan to pair" action shares that component and keeps
+                // its prototype 18/600. This one sits inside a workspace row, so
+                // it takes the terminal rank's size.
+                child: Text(
+                  l10n.pairingOpenTerminalHere,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
             ),
         ],
@@ -142,11 +152,13 @@ class _Summary extends StatelessWidget {
                       workspace.title.isEmpty
                           ? workspace.workspaceId
                           : workspace.title,
-                      // Prototype `.biglist .brow .bname`: 21 / 700, tight.
+                      // Middle rank: below the group header, above a terminal
+                      // row. The prototype's 21 / 700 does not survive the
+                      // phone-wide 15% text boost, and bold at this size fought
+                      // the group header above it for attention.
                       style: const TextStyle(
-                        fontSize: 21,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -0.21,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -154,10 +166,9 @@ class _Summary extends StatelessWidget {
                     SizedBox(height: spacing.xxs),
                     Text(
                       '$total',
-                      // Prototype `.biglist .brow .bsub`: mono 15, muted.
                       style: appMonoTextStyle(
                         context,
-                        fontSize: 15,
+                        fontSize: 12,
                         color: cs.onSurfaceVariant,
                       ),
                     ),

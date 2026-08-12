@@ -29,10 +29,9 @@ class PairedHostRow extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final spacing = context.tpSpacing;
     final iconSizes = context.tpIconSizes;
-    // Prototype `.biglist .brow .bsub`: mono 15, muted.
     final mono = appMonoTextStyle(
       context,
-      fontSize: 15,
+      fontSize: 12,
       color: cs.onSurfaceVariant,
     );
     final lastConnected = desktop.lastConnectedAt;
@@ -52,11 +51,13 @@ class PairedHostRow extends StatelessWidget {
                 children: [
                   Text(
                     desktop.name,
-                    // Prototype `.biglist .brow .bname`: 21 / 700, tight track.
+                    // Same rank as a workspace name in the session list, so the
+                    // two lists read as one size language. The prototype's
+                    // 21 / 700 reads a size larger on device (phone-wide 15%
+                    // text boost) and bold made a single row shout.
                     style: const TextStyle(
-                      fontSize: 21,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.21,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
