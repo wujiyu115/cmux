@@ -35,26 +35,31 @@ class MobileComposerPanel extends StatefulWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
 
-  /// Prototype `.cmd-actions .ca`: 40px circle, 22px glyph, 16px gaps.
-  static const double _buttonSize = 40;
+  /// Prototype `.cmd-actions .ca` is a 40px circle with a 22px glyph and 16px
+  /// gaps. Scaled down one step: the composer covers the mirrored terminal while
+  /// it is open, so its own chrome should cost as little of that as it can.
+  static const double _buttonSize = 34;
 
-  /// Glyph size inside the circular action buttons; enlarged with the buttons
-  /// so the composer controls read at arm's length.
-  static const double _iconSize = 22;
+  /// Glyph inside the circular action buttons, sized with them.
+  static const double _iconSize = 18;
 
-  /// Gap between adjacent action buttons (prototype `.cmd-actions` gap:16).
-  static const double _actionGap = 16;
+  static const double _actionGap = 12;
 
-  /// Caps the field at four text lines; comfortably larger than four boosted
-  /// lines so nothing clips, while [minLines]/[maxLines] fix the visible count.
-  static const double _fieldMaxHeight = 220;
+  /// Caps the field at [_fieldLines] text lines with room to spare, so a boosted
+  /// line height cannot clip; [minLines]/[maxLines] fix the visible count.
+  static const double _fieldMaxHeight = 180;
 
-  /// Prototype `.cmd-input` min-height `calc(1.5em*4 + 26px)` = 16·1.5·4 + 26 =
-  /// 122: the field stands four mono lines tall even when empty. Pinned as a
-  /// floor because [TextField.minLines] alone renders a single line here — the
-  /// composer's [Scrollbar]/[ConstrainedBox] wrapping collapses the intrinsic
-  /// multi-line height back to one row.
-  static const double _fieldMinHeight = 122;
+  /// Visible rows of the empty field. Three rather than the prototype's four —
+  /// one line of command is the common case, and the fourth row was buying
+  /// nothing at the cost of terminal output behind the panel.
+  static const int _fieldLines = 3;
+
+  /// Prototype `.cmd-input` min-height is `calc(1.5em*lines + 26px)`, i.e.
+  /// 16·1.5·3 + 26 = 98 at [_fieldLines]: the field stands that tall even when
+  /// empty. Pinned as a floor because [TextField.minLines] alone renders a single
+  /// line here — the composer's [Scrollbar]/[ConstrainedBox] wrapping collapses
+  /// the intrinsic multi-line height back to one row.
+  static const double _fieldMinHeight = 98;
 
   @override
   State<MobileComposerPanel> createState() => _MobileComposerPanelState();
@@ -114,7 +119,7 @@ class _MobileComposerPanelState extends State<MobileComposerPanel> {
           child: SafeArea(
             top: false,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -134,8 +139,8 @@ class _MobileComposerPanelState extends State<MobileComposerPanel> {
                           fontSize: 16,
                           color: cs.onSurface,
                         ).copyWith(height: 1.5),
-                        minLines: 4,
-                        maxLines: 4,
+                        minLines: MobileComposerPanel._fieldLines,
+                        maxLines: MobileComposerPanel._fieldLines,
                         keyboardType: TextInputType.multiline,
                         textInputAction: TextInputAction.newline,
                         decoration: InputDecoration(
@@ -148,10 +153,11 @@ class _MobileComposerPanelState extends State<MobileComposerPanel> {
                           filled: true,
                           fillColor: cs.surfaceContainerHighest,
                           isDense: true,
-                          // Prototype `.cmd-input`: padding 13 16.
+                          // Prototype `.cmd-input` is 13/16, tightened with
+                          // the rest of the panel.
                           contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 13,
+                            horizontal: 14,
+                            vertical: 11,
                           ),
                           // Prototype `.cmd-input`: 1.5px accent border, r14 —
                           // constant across focus so the field never reflows.
@@ -162,8 +168,10 @@ class _MobileComposerPanelState extends State<MobileComposerPanel> {
                       ),
                     ),
                   ),
-                  // Prototype `.cmd-actions`: 12px above the action row.
-                  const SizedBox(height: 12),
+                  // Prototype `.cmd-actions` puts 12px above the action row; 6
+                  // here. The circles carry their own visual padding, so a wide
+                  // gap only pushed the terminal further off screen.
+                  const SizedBox(height: 6),
                   BlocBuilder<MobileToolbarCubit, MobileToolbarState>(
                     // Only the Return-mode flag changes anything in this row, and
                     // the state re-emits on every key tap.

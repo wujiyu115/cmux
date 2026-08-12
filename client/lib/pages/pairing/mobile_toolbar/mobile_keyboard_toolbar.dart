@@ -21,11 +21,16 @@ import 'mobile_toolbar_customize_page.dart';
 class MobileKeyboardToolbar extends StatelessWidget {
   const MobileKeyboardToolbar({super.key});
 
-  static const double barHeight = 52;
+  /// The strip sits between the terminal and the soft keyboard, so every pixel
+  /// it takes is a row of output the user cannot see. 44 keeps the caps at the
+  /// 34px the platform still considers a comfortable target while giving one more
+  /// terminal line back than the prototype's 52.
+  static const double barHeight = 44;
 
-  /// Bigger than the icon-button default (`sizes.md` ≈ 24) so the composer /
-  /// customize / hide-keyboard glyphs read at arm's length.
-  static const double _iconSize = 28;
+  /// Slightly above the icon-button default (`sizes.md` ≈ 24) rather than the 28
+  /// it was: at 28 the three trailing glyphs read heavier than the key caps they
+  /// sit beside.
+  static const double _iconSize = 22;
 
   @override
   Widget build(BuildContext context) {
@@ -53,12 +58,8 @@ class MobileKeyboardToolbar extends StatelessWidget {
                       before.alt != after.alt ||
                       before.visibleGroupCount != after.visibleGroupCount ||
                       !identical(before.groupOrder, after.groupOrder),
-                  builder: (context, state) => SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Row(children: _caps(context, state)),
-                  ),
+                  builder: (context, state) =>
+                      _CapStrip(children: _caps(context, state)),
                 ),
               ),
               TpIconButton(
@@ -125,13 +126,94 @@ class MobileKeyboardToolbar extends StatelessWidget {
   }
 }
 
+/// The horizontally scrolling key caps, with a fade at whichever edge still has
+/// caps beyond it.
+///
+/// Without the fade a wide cap (`Paste`, `Enter`) is sliced clean through by the
+/// viewport edge and reads as a rendering bug rather than as "there is more if
+/// you swipe" — the strip has no scrollbar on a phone, so the fade is the only
+/// affordance it gets.
+class _CapStrip extends StatefulWidget {
+  const _CapStrip({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  State<_CapStrip> createState() => _CapStripState();
+}
+
+class _CapStripState extends State<_CapStrip> {
+  /// Width of the fade. Wide enough to read as a gradient, narrow enough that a
+  /// cap sitting under it is still legible.
+  static const _fadeWidth = 20.0;
+
+  final _controller = ScrollController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final strip = SingleChildScrollView(
+      controller: _controller,
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Row(children: widget.children),
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) => AnimatedBuilder(
+        animation: _controller,
+        builder: (context, _) {
+          // No attached position on the first frame: assume nothing is clipped
+          // rather than guessing, and let the first scroll notification correct
+          // it.
+          final position = _controller.hasClients ? _controller.position : null;
+          final fadeStart = (position?.pixels ?? 0) > 0;
+          final fadeEnd = position != null &&
+              position.hasContentDimensions &&
+              position.pixels < position.maxScrollExtent;
+          // The ShaderMask is unconditional and the gradient degenerates instead:
+          // inserting or removing a layer above the strip would rebuild every cap
+          // element, which cancels the auto-repeat timer a held arrow key owns
+          // and drops the gesture a tap is in the middle of.
+          final fade = _fadeWidth / constraints.maxWidth;
+          return ShaderMask(
+            blendMode: BlendMode.dstIn,
+            shaderCallback: (bounds) => LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              colors: [
+                fadeStart ? Colors.transparent : Colors.white,
+                Colors.white,
+                Colors.white,
+                fadeEnd ? Colors.transparent : Colors.white,
+              ],
+              stops: [
+                0,
+                fadeStart ? fade : 0,
+                fadeEnd ? 1 - fade : 1,
+                1,
+              ],
+            ).createShader(bounds),
+            child: strip,
+          );
+        },
+      ),
+    );
+  }
+}
+
 class _GroupDivider extends StatelessWidget {
   const _GroupDivider();
 
   @override
   Widget build(BuildContext context) => Container(
     width: 1,
-    height: 24,
+    height: 20,
     margin: const EdgeInsets.symmetric(horizontal: 4),
     color: Theme.of(context).colorScheme.outlineVariant,
   );
@@ -186,16 +268,16 @@ class _ToolbarKeyCapState extends State<_ToolbarKeyCap> {
       onLongPressStart: repeatable ? (_) => _startRepeat() : null,
       onLongPressEnd: repeatable ? (_) => _stopRepeat() : null,
       onLongPressCancel: repeatable ? _stopRepeat : null,
-      // Prototype `.keycap`: min-width 40, height 40 (52-bar minus 6+6 margin),
-      // padding 0 12, radius 9, 1px border, mono 16.
+      // Prototype `.keycap` scaled down with the bar: min-width 34, height 34
+      // (44-bar minus 5+5 margin), padding 0 10, radius 8, 1px border, mono 14.
       child: Container(
-        constraints: const BoxConstraints(minWidth: 40),
-        margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        constraints: const BoxConstraints(minWidth: 34),
+        margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 5),
+        padding: const EdgeInsets.symmetric(horizontal: 10),
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: widget.active ? cs.primary : cs.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(9),
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: widget.active ? cs.primary : cs.outlineVariant,
           ),
@@ -204,7 +286,7 @@ class _ToolbarKeyCapState extends State<_ToolbarKeyCap> {
           widget.toolbarKey.label,
           style: appMonoTextStyle(
             context,
-            fontSize: 16,
+            fontSize: 14,
             color: widget.active ? cs.onPrimary : cs.onSurface,
           ).copyWith(height: 1),
         ),
