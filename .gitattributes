@@ -1,0 +1,12 @@
+# Line endings are decided here, not by each machine's core.autocrlf.
+#
+# Without this file a Windows clone with autocrlf=true checks the tree out as
+# CRLF while tools that regenerate files (Flutter's generated_plugin_registrant,
+# generated_plugins.cmake, …) write LF, so those files sit permanently "modified"
+# with an empty diff. Pinning eol=lf makes the working tree match the index
+# byte-for-byte on Windows, Linux and macOS alike, and `text=auto` normalises to
+# LF on commit no matter which editor or platform wrote the file.
+* text=auto eol=lf
+
+# Batch files keep CRLF by convention; cmd.exe accepts either.
+*.bat text eol=crlf
