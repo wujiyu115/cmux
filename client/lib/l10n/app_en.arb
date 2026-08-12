@@ -1211,6 +1211,8 @@
   "pairingRetry": "Retry",
   "pairingConnect": "Connect",
   "pairingConnecting": "Connecting…",
+  "pairingConnectionLost": "Connection lost — reconnecting…",
+  "pairingReconnected": "Reconnected to the desktop.",
   "pairingFailed": "Pairing failed.",
   "pairingReadyHint": "Ready to pair. Make sure this phone and the desktop are on the same network, then tap Connect.",
   "pairingDesktopFallback": "Desktop",

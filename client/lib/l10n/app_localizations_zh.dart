@@ -2560,6 +2560,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pairingConnecting => '连接中…';
 
   @override
+  String get pairingConnectionLost => '连接已断开，正在重连…';
+
+  @override
+  String get pairingReconnected => '已重新连接到桌面。';
+
+  @override
   String get pairingFailed => '配对失败。';
 
   @override

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import '../../utils/logging/logger.dart';
+import 'agent_notice_message.dart';
 import 'device_registry.dart';
 import 'e2ee_channel.dart';
 import 'pairing_crypto.dart';
@@ -36,6 +37,7 @@ class PairingConnection {
     PairingGroupCreator? groupCreator,
     PairingGroupIndexProvider? groupIndex,
     PairingTargetIndexProvider? targetIndex,
+    Stream<PairingAgentNotice>? agentNotices,
     void Function()? onClosed,
   }) : _transport = transport,
        _hostStaticKey = hostStaticKey,
@@ -51,6 +53,7 @@ class PairingConnection {
        _groupCreator = groupCreator,
        _groupIndex = groupIndex,
        _targetIndex = targetIndex,
+       _agentNotices = agentNotices,
        _onClosed = onClosed;
 
   final WsTransport _transport;
@@ -67,6 +70,11 @@ class PairingConnection {
   final PairingGroupCreator? _groupCreator;
   final PairingGroupIndexProvider? _groupIndex;
   final PairingTargetIndexProvider? _targetIndex;
+
+  /// Broadcast feed of desktop agent-attention edges. Shared by every
+  /// connection, so each authenticated phone gets its own subscription — the
+  /// same fan-out idiom as [SessionCatalog.changes].
+  final Stream<PairingAgentNotice>? _agentNotices;
   final void Function()? _onClosed;
 
   _ConnPhase _phase = _ConnPhase.awaitingHello;
@@ -74,6 +82,7 @@ class PairingConnection {
   PairingRpcHandler? _handler;
   StreamSubscription<Uint8List>? _inbound;
   StreamSubscription<void>? _catalogChanges;
+  StreamSubscription<PairingAgentNotice>? _agentNoticeSub;
 
   void start() {
     _inbound = _transport.inbound.listen(
@@ -185,6 +194,16 @@ class PairingConnection {
     _catalogChanges = _catalog.changes.listen(
       (_) => _sendEncryptedJson({'method': 'session.changed'}),
     );
+    // Only reached after auth, so an unauthenticated socket never sees agent
+    // activity. Not unit-testable — WsTransport wraps a concrete dart:io
+    // WebSocket with no injectable seam (same reason there are no
+    // PairingConnection tests); covered by the manual LAN pass instead.
+    _agentNoticeSub = _agentNotices?.listen(
+      (notice) => _sendEncryptedJson({
+        'method': 'agent.notice',
+        'params': notice.toJson(),
+      }),
+    );
     _phase = _ConnPhase.active;
   }
 
@@ -215,6 +234,8 @@ class PairingConnection {
     _handler = null;
     _catalogChanges?.cancel();
     _catalogChanges = null;
+    _agentNoticeSub?.cancel();
+    _agentNoticeSub = null;
     _inbound?.cancel();
     _inbound = null;
     unawaited(_transport.close());

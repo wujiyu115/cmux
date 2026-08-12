@@ -54,6 +54,7 @@ import '../cubits/pairing_client_cubit.dart';
 import '../cubits/pairing_host_cubit.dart';
 import '../services/app/platform_utils.dart';
 import '../services/io/filesystem.dart';
+import '../services/pairing/agent_notice_message.dart';
 import '../services/pairing/device_registry.dart';
 import '../services/pairing/lan_pairing_server.dart';
 import '../services/pairing/pairing_crypto.dart';
@@ -82,6 +83,7 @@ import '../services/storage/workspace_directory_picker.dart';
 import '../services/storage/home_target_store.dart';
 import '../services/storage/runtime_target_registry.dart';
 import '../services/storage/targets_repository.dart';
+import '../services/notification/mobile_agent_notice_presenter.dart';
 import '../services/notification/notification_recorder.dart';
 import '../services/notification/terminal_idle_notification_service.dart';
 import '../services/terminal/command_log_sink.dart';
@@ -422,10 +424,19 @@ Future<AppShell> buildAppShell({
 
   // Built before the connectors that stamp seat identity: workspace panes need
   // the bound loopback port at plan time, so the listener must already be up.
+  // Mobile is a pure pairing/mirror client: it never runs a local agent CLI, so
+  // the loopback listener would only ever reject. Keep the object (the seat
+  // stamping sites are all `isStarted`-gated) and skip the bind.
   final agentStatusGateway = AgentStatusGateway();
-  await agentStatusGateway.ensureStarted();
+  if (hasDesktopWindow) {
+    await agentStatusGateway.ensureStarted();
+  }
   final agentStatusSeatLookup = AgentStatusSeatLookup();
   final agentAttentionCubit = AgentAttentionCubit();
+  // Agent-attention edges destined for paired phones. Owned here rather than by
+  // the pairing stack so it survives LanPairingServer being rebuilt on every
+  // enable toggle; never closed, like the registry listener further down.
+  final agentNotices = StreamController<PairingAgentNotice>.broadcast();
 
   // `nativeAppDataPath` and not `AppStorage.appDataRoot`: with a WSL home target
   // the latter is already an in-distro POSIX path, and writing it through the
@@ -470,7 +481,11 @@ Future<AppShell> buildAppShell({
   // <teampilotRoot>/agent-hooks/. Panes stamp seat identity env at connect; the
   // hook reads it at run time (see claude_hook_installer.dart). WSL distros are
   // installed lazily on first launch into them, via onWslDistroLaunch above.
-  unawaited(claudeHookInstallService.installHost());
+  // Skipped on mobile: there is no local `claude` to read the hook, and when
+  // Android happens to set HOME it would write junk into the app sandbox.
+  if (hasDesktopWindow) {
+    unawaited(claudeHookInstallService.installHost());
+  }
 
   agentStatusGateway.attachAgentStatusHandler(
     AgentStatusHttpHandler(
@@ -631,6 +646,26 @@ Future<AppShell> buildAppShell({
         workspaceLabel: label,
       );
     },
+    // Mirror every notice to paired phones. `catalogId` is stamped later, where
+    // the SessionCatalog lives; published even when attribution is null (pane
+    // not located) so the phone can still fall back to the localized kind title.
+    onAgentNotice: (notice, attribution) {
+      if (agentNotices.isClosed) return;
+      agentNotices.add(
+        PairingAgentNotice(
+          kind: switch (notice.kind) {
+            AgentNoticeKind.done => PairingAgentNoticeKind.done,
+            AgentNoticeKind.interrupted => PairingAgentNoticeKind.interrupted,
+            AgentNoticeKind.waiting => PairingAgentNoticeKind.waiting,
+          },
+          seatId: notice.sessionId,
+          workspaceId: attribution?.workspaceId ?? '',
+          workspaceLabel: attribution?.workspaceLabel.trim() ?? '',
+          title: attribution?.title.trim() ?? '',
+          atMs: notice.at.millisecondsSinceEpoch,
+        ),
+      );
+    },
   ).start();
 
   boot('loading layout');
@@ -788,6 +823,16 @@ Future<AppShell> buildAppShell({
     // close. The registry lives for the app's lifetime, so this listener is
     // intentionally never detached.
     workspaceTerminalRegistry.changes.addListener(sessionCatalog.notifyChanged);
+    // Stamp mirrorability where the catalog knowledge lives. A seat id for a
+    // workspace pane IS its catalogId (`ws:<paneId>` on both sides), so this is
+    // a pure lookup; chat-session seats and dead panes stay null and the phone
+    // then notifies without offering navigation. `map` preserves isBroadcast, so
+    // per-connection subscriptions keep working.
+    final agentNoticeWire = agentNotices.stream.map(
+      (notice) => sessionCatalog.resolve(notice.seatId) != null
+          ? notice.withCatalogId(notice.seatId)
+          : notice,
+    );
     // Every workspace on disk, so the phone can list (and open a terminal in)
     // workspaces that currently have nothing running.
     Future<List<PairingWorkspaceInfo>> pairingWorkspaceIndex() async {
@@ -1000,6 +1045,7 @@ Future<AppShell> buildAppShell({
       groupCreator: pairingCreateGroup,
       groupIndex: pairingGroupIndex,
       targetIndex: pairingTargetIndex,
+      agentNotices: agentNoticeWire,
     );
     pairingHostCubit = PairingHostCubit(
       settings: pairingSettings,
@@ -1014,7 +1060,13 @@ Future<AppShell> buildAppShell({
   PairingClientCubit? pairingClientCubit;
   if (isPairingClient) {
     final pairingSettings = SharedPrefsPairingSettingsRepository(preferences);
-    pairingClientCubit = PairingClientCubit(settings: pairingSettings);
+    // Host-pushed agent edges become local phone notifications, localized here
+    // (not on the desktop) so the phone's own language wins.
+    final agentNoticePresenter = MobileAgentNoticePresenter();
+    pairingClientCubit = PairingClientCubit(
+      settings: pairingSettings,
+      onAgentNotice: agentNoticePresenter.show,
+    );
     unawaited(pairingClientCubit.loadPairedDesktops());
     unawaited(pairingClientCubit.loadNetworkInfo());
   }

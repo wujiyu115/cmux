@@ -20,6 +20,7 @@ import 'cubits/ssh_connection_cubit.dart';
 import 'cubits/chat_cubit.dart';
 import 'cubits/layout_cubit.dart';
 import 'cubits/notification_cubit.dart';
+import 'cubits/pairing_client_cubit.dart';
 import 'cubits/command_log_cubit.dart';
 import 'cubits/shortcut_cubit.dart';
 import 'l10n/l10n_extensions.dart';
@@ -63,6 +64,7 @@ import 'services/terminal/workspace_terminal_run_service.dart';
 import 'services/notification/desktop_system_notifier.dart';
 import 'services/notification/notification_recorder.dart';
 import 'services/terminal/command_log_sink.dart';
+import 'services/notification/pairing_mirror_notification_tap.dart';
 import 'services/notification/session_idle_notification_tap.dart';
 import 'widgets/ssh/ssh_connection_binder.dart';
 import 'repositories/layout_repository.dart';
@@ -527,6 +529,23 @@ void main() async {
   }
   await DesktopSystemNotifier.ensureInitialized(
     onNotificationTap: (payload) {
+      // A forwarded agent notice from a paired desktop carries its own scheme
+      // and opens a mirror, not a router location.
+      if (isPairingMirrorPayload(payload)) {
+        unawaited(
+          handlePairingMirrorNotificationTap(
+            payload: payload,
+            openMirror: (catalogId) async {
+              final context =
+                  appRouter.routerDelegate.navigatorKey.currentContext;
+              if (context == null || !context.mounted) return;
+              final cubit = context.read<PairingClientCubit>();
+              await cubit.openMirrorFromNotification(catalogId);
+            },
+          ).catchError((_) {}),
+        );
+        return;
+      }
       unawaited(
         handleSessionIdleNotificationTap(
           payload: payload,
@@ -538,7 +557,9 @@ void main() async {
             }
           },
           focusWindow: () async {
-            if (Platform.isAndroid) return;
+            // window_manager ships no iOS/Android implementation, so every
+            // call throws MissingPluginException on mobile — not just Android.
+            if (!hasDesktopWindow) return;
             await windowManager.show();
             await windowManager.focus();
           },

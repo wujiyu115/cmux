@@ -4922,6 +4922,18 @@ abstract class AppLocalizations {
   /// **'Connecting…'**
   String get pairingConnecting;
 
+  /// No description provided for @pairingConnectionLost.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection lost — reconnecting…'**
+  String get pairingConnectionLost;
+
+  /// No description provided for @pairingReconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Reconnected to the desktop.'**
+  String get pairingReconnected;
+
   /// No description provided for @pairingFailed.
   ///
   /// In en, this message translates to:

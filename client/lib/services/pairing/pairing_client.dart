@@ -3,7 +3,10 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:meta/meta.dart';
+
 import '../../utils/logging/logger.dart';
+import 'agent_notice_message.dart';
 import 'e2ee_channel.dart';
 import 'pairing_crypto.dart';
 import 'pairing_frames.dart';
@@ -379,8 +382,14 @@ class PairingClient {
     _transport = transport;
     _inbound = transport.inbound.listen(
       _onBytes,
-      onError: (Object e) => _emit('socket error: $e', error: true),
-      onDone: () => _emit('socket closed'),
+      onError: (Object e) {
+        _emit('socket error: $e', error: true);
+        _signalDisconnected();
+      },
+      onDone: () {
+        _emit('socket closed');
+        _signalDisconnected();
+      },
     );
 
     // Phase 1 — plaintext hello / hello.ack.
@@ -419,7 +428,28 @@ class PairingClient {
     final result = await _auth!.future.timeout(const Duration(seconds: 10));
     _emit('Paired with ${result.hostName}');
     _stage(PairingStage.authenticate, PairingStageStatus.done);
+    _authenticated = true;
     return result;
+  }
+
+  /// True once auth succeeded, so a candidate that merely failed mid-handshake
+  /// is reported by [connect] throwing rather than as a lost connection.
+  bool _authenticated = false;
+  bool _closing = false;
+
+  final _disconnected = StreamController<void>.broadcast();
+
+  /// Fires when an established connection dies on its own — socket error, FIN,
+  /// or an unanswered keepalive ping (see [kPairingPingInterval]). Deliberate
+  /// [close] calls stay silent, so a listener can treat every event as
+  /// "reconnect if the user still wants to be connected".
+  Stream<void> get disconnected => _disconnected.stream;
+
+  void _signalDisconnected() {
+    if (!_authenticated || _closing) return;
+    // Once is enough: onError is commonly followed by onDone for the same death.
+    _authenticated = false;
+    if (!_disconnected.isClosed) _disconnected.add(null);
   }
 
   /// Dials [url], giving up after [dialTimeout] so [connect] can move on.
@@ -509,6 +539,13 @@ class PairingClient {
       if (!_sessionsChanged.isClosed) _sessionsChanged.add(null);
       return;
     }
+    if (method == 'agent.notice') {
+      // Dropped silently when unusable (e.g. a kind this build predates), so a
+      // newer desktop cannot break an older phone.
+      final notice = PairingAgentNotice.tryFromJson(_params(data));
+      if (notice != null && !_agentNotices.isClosed) _agentNotices.add(notice);
+      return;
+    }
     if (method == 'upload.ack') {
       final params = _params(data);
       final transferId = params['transferId'];
@@ -537,6 +574,18 @@ class PairingClient {
 
   /// Fires when the host reports its session set changed (refetch [listSessions]).
   Stream<void> get sessionsChanged => _sessionsChanged.stream;
+
+  final _agentNotices = StreamController<PairingAgentNotice>.broadcast();
+
+  /// Agent-attention edges pushed by the host, for a local phone notification.
+  /// Only arrives while this client is connected: the socket dies when Android
+  /// backgrounds the app, and there is no keepalive, reconnect, or backlog.
+  Stream<PairingAgentNotice> get agentNotices => _agentNotices.stream;
+
+  /// Test seam: [WsTransport] wraps a concrete `dart:io` WebSocket with no
+  /// injectable interface, so the push arms are otherwise unreachable in tests.
+  @visibleForTesting
+  void debugHandleJson(Map<String, Object?> data) => _onJson(data);
 
   final _uploadAcks = StreamController<PairingUploadAck>.broadcast();
 
@@ -833,6 +882,7 @@ class PairingClient {
   }
 
   Future<void> close() async {
+    _closing = true;
     for (final controller in _subs.values) {
       await controller.close();
     }
@@ -841,6 +891,8 @@ class PairingClient {
     await _log.close();
     await _stages.close();
     await _sessionsChanged.close();
+    await _agentNotices.close();
+    await _disconnected.close();
     await _uploadAcks.close();
   }
 }

@@ -1099,6 +1099,8 @@
   "pairingRetry": "重试",
   "pairingConnect": "连接",
   "pairingConnecting": "连接中…",
+  "pairingConnectionLost": "连接已断开，正在重连…",
+  "pairingReconnected": "已重新连接到桌面。",
   "pairingFailed": "配对失败。",
   "pairingReadyHint": "准备配对。请确保此手机与桌面处于同一网络，然后点击“连接”。",
   "pairingDesktopFallback": "桌面",

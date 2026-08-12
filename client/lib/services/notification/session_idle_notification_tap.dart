@@ -9,7 +9,14 @@ Future<void> handleSessionIdleNotificationTap({
   if (location.isEmpty) return;
   if (!location.startsWith('/home-v2/workspace/')) return;
 
-  await markReadMatchingPayload?.call(location);
-  await focusWindow?.call();
+  // Both collaborators are best-effort side effects; navigation is the
+  // invariant. `focusWindow` in particular reaches window_manager, which has no
+  // iOS/Android implementation and throws MissingPluginException there.
+  try {
+    await markReadMatchingPayload?.call(location);
+  } on Object catch (_) {}
+  try {
+    await focusWindow?.call();
+  } on Object catch (_) {}
   go(location);
 }

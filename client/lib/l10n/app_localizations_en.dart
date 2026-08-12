@@ -2644,6 +2644,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pairingConnecting => 'Connecting…';
 
   @override
+  String get pairingConnectionLost => 'Connection lost — reconnecting…';
+
+  @override
+  String get pairingReconnected => 'Reconnected to the desktop.';
+
+  @override
   String get pairingFailed => 'Pairing failed.';
 
   @override

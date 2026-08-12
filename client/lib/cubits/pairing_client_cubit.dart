@@ -5,6 +5,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../repositories/pairing_settings_repository.dart';
+import '../services/pairing/agent_notice_message.dart';
 import '../services/pairing/local_lan_ip.dart';
 import '../services/pairing/pairing_client.dart';
 import '../services/pairing/pairing_offer.dart';
@@ -25,7 +26,12 @@ enum PairingClientPhase {
 
 /// A one-shot, localizable toast the UI should surface then clear. Kept as an
 /// enum so the cubit stays free of display strings (mapped to l10n at render).
-enum PairingNotice { activateFailed, fallbackOpenedTerminal }
+enum PairingNotice {
+  activateFailed,
+  fallbackOpenedTerminal,
+  connectionLost,
+  reconnected,
+}
 
 /// Outcome of one host-side request: the value, or the host's own words for why
 /// it refused.
@@ -67,6 +73,8 @@ class PairingClientState extends Equatable {
     this.localIp,
     this.notice,
     this.error,
+    this.reconnecting = false,
+    this.connectGeneration = 0,
   });
 
   /// One [PairingStageStatus.idle] per [PairingStage], in enum order.
@@ -113,6 +121,18 @@ class PairingClientState extends Equatable {
   final PairingNotice? notice;
   final String? error;
 
+  /// The connection dropped on its own and a retry is pending or in flight.
+  ///
+  /// Deliberately *not* a [PairingClientPhase]: a WiFi blip must not throw the
+  /// user out of the mirror. [phase] stays put — the mirror keeps showing the
+  /// last frame the desktop actually sent — and only this flag changes.
+  final bool reconnecting;
+
+  /// Bumped on every successful reconnect. The mirror's widget key includes it,
+  /// so a reconnect remounts the page onto the *new* subscription instead of
+  /// leaving it bound to the dead one (the catalogId alone is unchanged).
+  final int connectGeneration;
+
   PairingClientState copyWith({
     PairingClientPhase? phase,
     List<PairedDesktop>? pairedDesktops,
@@ -135,6 +155,8 @@ class PairingClientState extends Equatable {
     bool clearNotice = false,
     String? error,
     bool clearError = false,
+    bool? reconnecting,
+    int? connectGeneration,
   }) => PairingClientState(
     phase: phase ?? this.phase,
     pairedDesktops: pairedDesktops ?? this.pairedDesktops,
@@ -156,6 +178,8 @@ class PairingClientState extends Equatable {
     localIp: localIp ?? this.localIp,
     notice: clearNotice ? null : (notice ?? this.notice),
     error: clearError ? null : (error ?? this.error),
+    reconnecting: reconnecting ?? this.reconnecting,
+    connectGeneration: connectGeneration ?? this.connectGeneration,
   );
 
   @override
@@ -176,6 +200,8 @@ class PairingClientState extends Equatable {
     localIp,
     notice,
     error,
+    reconnecting,
+    connectGeneration,
   ];
 }
 
@@ -185,20 +211,46 @@ class PairingClientCubit extends Cubit<PairingClientState> {
   PairingClientCubit({
     required PairingSettingsRepository settings,
     PairingClient Function()? clientFactory,
+    void Function(PairingAgentNotice notice)? onAgentNotice,
   }) : _settings = settings,
        _clientFactory = clientFactory ?? PairingClient.new,
+       _onAgentNotice = onAgentNotice ?? ((_) {}),
        super(const PairingClientState());
 
   final PairingSettingsRepository _settings;
   final PairingClient Function() _clientFactory;
 
+  /// Sink for host-pushed agent notices. Kept as a callback so the cubit never
+  /// touches display strings — same rationale as [PairingNotice].
+  final void Function(PairingAgentNotice notice) _onAgentNotice;
+
   static const connectTimeout = Duration(seconds: 25);
+
+  /// Retry delays after a dropped connection, then [reconnectMaxBackoff] forever.
+  /// Doubling rather than a fixed interval so a desktop that is genuinely off
+  /// (asleep, moved network) is not probed once a second all afternoon.
+  static const reconnectFirstBackoff = Duration(seconds: 1);
+  static const reconnectMaxBackoff = Duration(seconds: 30);
 
   PairingClient? _client;
   StreamSubscription<String>? _logSub;
   StreamSubscription<PairingStageEvent>? _stageSub;
   StreamSubscription<void>? _sessionsChangedSub;
+  StreamSubscription<PairingAgentNotice>? _agentNoticeSub;
+  StreamSubscription<void>? _disconnectedSub;
   PairingSubscription? _activeSubscription;
+
+  /// The desktop to dial on a retry, and the mirror to restore once back. Both
+  /// survive the client being thrown away and rebuilt.
+  PairedDesktop? _lastDesktop;
+  String? _resumeCatalogId;
+
+  /// The user wants to be connected. False after [cancel], which is what stops
+  /// the retry loop — a dropped socket alone never ends it.
+  bool _wantsConnection = false;
+  Timer? _reconnectTimer;
+  int _reconnectAttempt = 0;
+  int _generation = 0;
 
   /// Stage the client last reported as in-flight; a thrown connect fails *this*
   /// one, which is what makes the rail's failure attribution correct.
@@ -264,11 +316,22 @@ class PairingClientCubit extends Cubit<PairingClientState> {
         lastConnectedUrl: client.connectedUrl,
       );
       await _persistDesktop(desktop);
+      _lastDesktop = desktop;
+      _wantsConnection = true;
       await _enterConnected(result.hostName);
     } on Object catch (e) {
       _appendLog('Error: $e');
       _failActiveStage();
-      emit(state.copyWith(phase: PairingClientPhase.error, error: '$e'));
+      // Reaching the error screen means the user has to act, so no silent retry
+      // should be left ticking behind it.
+      _stopReconnecting();
+      emit(
+        state.copyWith(
+          phase: PairingClientPhase.error,
+          error: '$e',
+          reconnecting: false,
+        ),
+      );
       await _disposeClient();
     }
   }
@@ -297,6 +360,8 @@ class PairingClientCubit extends Cubit<PairingClientState> {
             deviceId: desktop.id,
           )
           .timeout(connectTimeout);
+      _lastDesktop = desktop;
+      _wantsConnection = true;
       await _enterConnected(result.hostName);
       await _persistDesktop(
         desktop.copyWith(
@@ -307,7 +372,16 @@ class PairingClientCubit extends Cubit<PairingClientState> {
     } on Object catch (e) {
       _appendLog('Error: $e');
       _failActiveStage();
-      emit(state.copyWith(phase: PairingClientPhase.error, error: '$e'));
+      // Reaching the error screen means the user has to act, so no silent retry
+      // should be left ticking behind it.
+      _stopReconnecting();
+      emit(
+        state.copyWith(
+          phase: PairingClientPhase.error,
+          error: '$e',
+          reconnecting: false,
+        ),
+      );
       await _disposeClient();
     }
   }
@@ -329,6 +403,145 @@ class PairingClientCubit extends Cubit<PairingClientState> {
         clearPendingOffer: true,
       ),
     );
+  }
+
+  // --- Reconnect ------------------------------------------------------------
+
+  /// An established connection died on its own. Keeps the current screen (the
+  /// mirror stays on its last frame) and starts retrying.
+  void _onDisconnected() {
+    if (isClosed || !_wantsConnection || state.reconnecting) return;
+    // The old subscription is dead; drop it so input/upload stop pretending.
+    _resumeCatalogId = state.activeCatalogId;
+    _activeSubscription = null;
+    _appendLog('Connection lost — reconnecting…');
+    emit(
+      state.copyWith(
+        reconnecting: true,
+        notice: PairingNotice.connectionLost,
+      ),
+    );
+    _scheduleReconnect();
+  }
+
+  void _scheduleReconnect() {
+    _reconnectTimer?.cancel();
+    final seconds =
+        reconnectFirstBackoff.inSeconds * (1 << _reconnectAttempt.clamp(0, 5));
+    final delay = Duration(
+      seconds: seconds.clamp(
+        reconnectFirstBackoff.inSeconds,
+        reconnectMaxBackoff.inSeconds,
+      ),
+    );
+    _reconnectTimer = Timer(delay, () => unawaited(_reconnectNow()));
+  }
+
+  /// Retries immediately, resetting the backoff. Called when the app returns to
+  /// the foreground: the socket almost certainly died while it was away, and the
+  /// user is looking at the screen right now.
+  void onAppResumed() {
+    if (isClosed || !_wantsConnection) return;
+    if (!state.reconnecting && _client != null) return;
+    _reconnectAttempt = 0;
+    _reconnectTimer?.cancel();
+    if (!state.reconnecting) {
+      emit(state.copyWith(reconnecting: true));
+    }
+    unawaited(_reconnectNow());
+  }
+
+  Future<void> _reconnectNow() async {
+    final desktop = _lastDesktop;
+    if (isClosed || !_wantsConnection || desktop == null) return;
+    _reconnectAttempt++;
+    final client = _spawnClient();
+    try {
+      final result = await client
+          .connect(
+            wsUrls: desktop.wsUrls,
+            token: desktop.deviceToken,
+            hostPublicKeyB64: desktop.hostPublicKeyB64,
+            deviceId: desktop.id,
+          )
+          .timeout(connectTimeout);
+      if (isClosed || !_wantsConnection) return;
+      final listing = await client.listWorkspaces();
+      if (isClosed || !_wantsConnection) return;
+      _reconnectAttempt = 0;
+      _generation++;
+      _appendLog('Reconnected to ${result.hostName}');
+      emit(
+        state.copyWith(
+          activeHostName: result.hostName,
+          activeHostUrl: client.connectedUrl,
+          workspaces: listing.workspaces,
+          groups: listing.groups,
+          targets: listing.targets,
+          reconnecting: false,
+          notice: PairingNotice.reconnected,
+          clearError: true,
+        ),
+      );
+      await _persistDesktop(
+        desktop.copyWith(
+          lastConnectedAt: DateTime.now(),
+          lastConnectedUrl: client.connectedUrl,
+        ),
+      );
+      final resume = _resumeCatalogId;
+      _resumeCatalogId = null;
+      if (resume != null) await _resumeMirror(resume);
+    } on Object catch (e) {
+      _appendLog('Reconnect failed: $e');
+      if (isClosed || !_wantsConnection) return;
+      _scheduleReconnect();
+    }
+  }
+
+  /// Re-subscribes the mirror the user was watching before the drop. Falls back
+  /// to the session list when that pane did not survive.
+  Future<void> _resumeMirror(String catalogId) async {
+    final client = _client;
+    if (client == null || isClosed) return;
+    if (!_knowsLiveCatalogId(catalogId)) {
+      _appendLog('Mirrored pane is gone; returning to the session list');
+      emit(
+        state.copyWith(
+          phase: PairingClientPhase.connected,
+          clearActiveCatalogId: true,
+        ),
+      );
+      return;
+    }
+    try {
+      _activeSubscription = await client.subscribe(catalogId);
+      if (isClosed) return;
+      emit(
+        state.copyWith(
+          phase: PairingClientPhase.mirroring,
+          activeCatalogId: catalogId,
+          connectGeneration: _generation,
+        ),
+      );
+    } on Object catch (e) {
+      _appendLog('Resume mirror failed: $e');
+      if (isClosed) return;
+      emit(
+        state.copyWith(
+          phase: PairingClientPhase.connected,
+          clearActiveCatalogId: true,
+        ),
+      );
+    }
+  }
+
+  void _stopReconnecting() {
+    _wantsConnection = false;
+    _reconnectTimer?.cancel();
+    _reconnectTimer = null;
+    _reconnectAttempt = 0;
+    _resumeCatalogId = null;
   }
 
   void _onStageEvent(PairingStageEvent event) =>
@@ -493,9 +706,41 @@ class PairingClientCubit extends Cubit<PairingClientState> {
       state.copyWith(
         phase: PairingClientPhase.mirroring,
         activeCatalogId: catalogId,
+        connectGeneration: _generation,
       ),
     );
   }
+
+  /// Opens the mirror named by a tapped host notification.
+  ///
+  /// Not routed through [openSession] alone: that one overwrites
+  /// [_activeSubscription] without releasing the old mirror and lets the host's
+  /// `no such session` bubble out. The list-tap path cannot reach either (the
+  /// list only renders while connected and only offers live panes); a stale
+  /// notification can reach both.
+  Future<void> openMirrorFromNotification(String catalogId) async {
+    if (_client == null) return;
+    if (state.phase != PairingClientPhase.connected &&
+        state.phase != PairingClientPhase.mirroring) {
+      return;
+    }
+    if (state.activeCatalogId == catalogId) return;
+    if (!_knowsLiveCatalogId(catalogId)) {
+      // The pane list can lag the host by one `session.changed`.
+      await refreshWorkspaces();
+      if (isClosed || !_knowsLiveCatalogId(catalogId)) return;
+    }
+    if (state.phase == PairingClientPhase.mirroring) leaveMirror();
+    try {
+      await openSession(catalogId);
+    } on Object catch (e) {
+      _appendLog('Open from notification failed: $e');
+    }
+  }
+
+  bool _knowsLiveCatalogId(String catalogId) => state.workspaces.any(
+    (w) => w.panes.any((p) => p.live && p.catalogId == catalogId),
+  );
 
   void leaveMirror() {
     final sub = _activeSubscription;
@@ -541,8 +786,10 @@ class PairingClientCubit extends Cubit<PairingClientState> {
     );
   }
 
-  /// Cancels pairing / disconnects and returns to the host list.
+  /// Cancels pairing / disconnects and returns to the host list. Also ends any
+  /// pending retry — this is the only thing that does.
   Future<void> cancel() async {
+    _stopReconnecting();
     await _disposeClient();
     _activeSubscription = null;
     emit(
@@ -551,6 +798,7 @@ class PairingClientCubit extends Cubit<PairingClientState> {
         clearPendingOffer: true,
         clearActiveCatalogId: true,
         clearError: true,
+        reconnecting: false,
       ),
     );
   }
@@ -564,6 +812,8 @@ class PairingClientCubit extends Cubit<PairingClientState> {
     _sessionsChangedSub = client.sessionsChanged.listen(
       (_) => unawaited(refreshWorkspaces()),
     );
+    _agentNoticeSub = client.agentNotices.listen(_onAgentNotice);
+    _disconnectedSub = client.disconnected.listen((_) => _onDisconnected());
     return client;
   }
 
@@ -601,6 +851,10 @@ class PairingClientCubit extends Cubit<PairingClientState> {
     _stageSub = null;
     _sessionsChangedSub?.cancel();
     _sessionsChangedSub = null;
+    _agentNoticeSub?.cancel();
+    _agentNoticeSub = null;
+    _disconnectedSub?.cancel();
+    _disconnectedSub = null;
     final client = _client;
     _client = null;
     if (client != null) unawaited(client.close());
@@ -613,6 +867,10 @@ class PairingClientCubit extends Cubit<PairingClientState> {
     _stageSub = null;
     _sessionsChangedSub?.cancel();
     _sessionsChangedSub = null;
+    _agentNoticeSub?.cancel();
+    _agentNoticeSub = null;
+    _disconnectedSub?.cancel();
+    _disconnectedSub = null;
     final client = _client;
     _client = null;
     if (client != null) await client.close();
@@ -620,6 +878,7 @@ class PairingClientCubit extends Cubit<PairingClientState> {
 
   @override
   Future<void> close() async {
+    _stopReconnecting();
     await _disposeClient();
     return super.close();
   }

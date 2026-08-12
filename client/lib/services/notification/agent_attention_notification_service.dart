@@ -86,6 +86,8 @@ class AgentAttentionNotificationService {
     AgentAttentionNotifyContext? Function()? resolveContext,
     AgentNoticeAttribution? Function(String sessionId, String memberId)?
     resolveAttribution,
+    void Function(AgentNotice notice, AgentNoticeAttribution? attribution)?
+    onAgentNotice,
   }) : _attention = attention,
        _isAppFocused =
            isAppFocused ?? DesktopSystemNotifier.instance.isAppFocused,
@@ -95,7 +97,8 @@ class AgentAttentionNotificationService {
            DesktopSystemNotifier.instance.showNotification,
        _recorder = recorder ?? (() => NotificationRecorder.maybeCurrent),
        _resolveContext = resolveContext ?? _defaultResolveContext,
-       _resolveAttribution = resolveAttribution ?? ((_, __) => null);
+       _resolveAttribution = resolveAttribution ?? ((_, __) => null),
+       _onAgentNotice = onAgentNotice ?? ((_, __) {});
 
   final AgentAttentionCubit _attention;
   final Future<bool> Function() _isAppFocused;
@@ -111,6 +114,8 @@ class AgentAttentionNotificationService {
   final AgentAttentionNotifyContext? Function() _resolveContext;
   final AgentNoticeAttribution? Function(String sessionId, String memberId)
   _resolveAttribution;
+  final void Function(AgentNotice notice, AgentNoticeAttribution? attribution)
+  _onAgentNotice;
 
   /// Per-seat last-observed attention, for rising-edge detection.
   final Map<String, AgentSeatAttention> _last = {};
@@ -158,6 +163,16 @@ class AgentAttentionNotificationService {
 
     final focused = await _isAppFocused();
     for (final notice in notices) {
+      final attribution = _resolveAttribution(
+        notice.sessionId,
+        notice.memberId,
+      );
+      // Forwarded before the per-seat focus gate on purpose: a phone user is not
+      // the person watching this desktop pane, so desktop focus must not silence
+      // the phone. The two global gates above (no app context, notifyOnSessionIdle
+      // off) still apply — that preference is the user's single "tell me about
+      // agent edges" switch and there is no separate mobile toggle yet.
+      _onAgentNotice(notice, attribution);
       // While focused and looking at this very seat, don't nag — unless the user
       // opted into being notified anyway (notifyWhileWatching).
       if (!context.notifyWhileWatching &&
@@ -169,15 +184,15 @@ class AgentAttentionNotificationService {
         );
         continue;
       }
-      _emit(notice, context);
+      _emit(notice, context, attribution);
     }
   }
 
   /// Diffs seat attention against the last snapshot, returning the rising edges
   /// worth a notification. Also prunes bookkeeping for seats that vanished.
-  List<_AgentNotice> _collectNotices(AgentAttentionState state) {
+  List<AgentNotice> _collectNotices(AgentAttentionState state) {
     final live = <String>{};
-    final notices = <_AgentNotice>[];
+    final notices = <AgentNotice>[];
 
     for (final entry in state.seats.entries) {
       final key = entry.key;
@@ -200,10 +215,11 @@ class AgentAttentionNotificationService {
       final seat = _splitSeatKey(key);
       if (seat == null) continue;
       notices.add(
-        _AgentNotice(
+        AgentNotice(
           sessionId: seat.$1,
           memberId: seat.$2,
           kind: kind,
+          at: entry.value.updatedAt,
         ),
       );
     }
@@ -212,8 +228,11 @@ class AgentAttentionNotificationService {
     return notices;
   }
 
-  void _emit(_AgentNotice notice, AgentAttentionNotifyContext context) {
-    final attribution = _resolveAttribution(notice.sessionId, notice.memberId);
+  void _emit(
+    AgentNotice notice,
+    AgentAttentionNotifyContext context,
+    AgentNoticeAttribution? attribution,
+  ) {
     final fallbackTitle = context.titles[notice.kind] ?? '';
     final title = (attribution?.title.trim().isNotEmpty ?? false)
         ? attribution!.title.trim()
@@ -294,14 +313,20 @@ class AgentAttentionNotificationService {
   }
 }
 
-class _AgentNotice {
-  const _AgentNotice({
+/// One rising edge worth notifying about. Public so bootstrap can forward it to
+/// paired phones over the pairing channel (see `onAgentNotice`).
+class AgentNotice {
+  const AgentNotice({
     required this.sessionId,
     required this.memberId,
     required this.kind,
+    required this.at,
   });
 
   final String sessionId;
   final String memberId;
   final AgentNoticeKind kind;
+
+  /// When the seat reached this attention, from `AgentSeatAttentionEntry`.
+  final DateTime at;
 }

@@ -36,14 +36,26 @@ class PairingMobileShell extends StatefulWidget {
   State<PairingMobileShell> createState() => _PairingMobileShellState();
 }
 
-class _PairingMobileShellState extends State<PairingMobileShell> {
+class _PairingMobileShellState extends State<PairingMobileShell>
+    with WidgetsBindingObserver {
   final AppLinks _appLinks = AppLinks();
   StreamSubscription<Uri>? _linkSub;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initDeepLinks();
+  }
+
+  /// The LAN socket does not survive the OS freezing this process, and nothing
+  /// wakes us to notice: the drop is only observable once we are back. So retry
+  /// on resume instead of waiting out the backoff the user cannot see.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state != AppLifecycleState.resumed || !mounted) return;
+    context.read<PairingClientCubit>().onAppResumed();
   }
 
   Future<void> _initDeepLinks() async {
@@ -67,6 +79,7 @@ class _PairingMobileShellState extends State<PairingMobileShell> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _linkSub?.cancel();
     super.dispose();
   }
@@ -102,7 +115,9 @@ class _PairingMobileShellState extends State<PairingMobileShell> {
         listener: _showNotice,
         child: BlocBuilder<PairingClientCubit, PairingClientState>(
           buildWhen: (a, b) =>
-              a.phase != b.phase || a.activeCatalogId != b.activeCatalogId,
+              a.phase != b.phase ||
+              a.activeCatalogId != b.activeCatalogId ||
+              a.connectGeneration != b.connectGeneration,
           builder: _buildPhase,
         ),
       ),
@@ -116,11 +131,15 @@ class _PairingMobileShellState extends State<PairingMobileShell> {
     final message = switch (notice) {
       PairingNotice.activateFailed => l10n.pairingActivateFailed,
       PairingNotice.fallbackOpenedTerminal => l10n.pairingFallbackOpenedTerminal,
+      PairingNotice.connectionLost => l10n.pairingConnectionLost,
+      PairingNotice.reconnected => l10n.pairingReconnected,
     };
     AppToast.show(
       context,
       message: message,
-      variant: TpToastVariant.warning,
+      variant: notice == PairingNotice.reconnected
+          ? TpToastVariant.success
+          : TpToastVariant.warning,
     );
     context.read<PairingClientCubit>().clearNotice();
   }
@@ -136,9 +155,13 @@ class _PairingMobileShellState extends State<PairingMobileShell> {
           case PairingClientPhase.connected:
             return const PairingSessionListPage();
           case PairingClientPhase.mirroring:
-            // Key on the session so a new mirror gets a fresh engine.
+            // Key on the session so a new mirror gets a fresh engine, and on the
+            // connection generation so a reconnect rebinds to the *new*
+            // subscription — the catalogId alone is unchanged across a drop.
             return PairingMirrorPage(
-              key: ValueKey('mirror-${state.activeCatalogId}'),
+              key: ValueKey(
+                'mirror-${state.activeCatalogId}-${state.connectGeneration}',
+              ),
             );
     }
   }

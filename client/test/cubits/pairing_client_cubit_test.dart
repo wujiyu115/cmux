@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:teampilot/cubits/pairing_client_cubit.dart';
 import 'package:teampilot/repositories/pairing_settings_repository.dart';
+import 'package:teampilot/services/pairing/agent_notice_message.dart';
 import 'package:teampilot/services/pairing/pairing_client.dart';
 import 'package:teampilot/services/pairing/pairing_offer.dart';
 import 'package:teampilot/services/pairing/pairing_upload_sender.dart';
@@ -37,6 +38,8 @@ class _FakePairingClient extends PairingClient {
   final _logCtrl = StreamController<String>.broadcast();
   final _stageCtrl = StreamController<PairingStageEvent>.broadcast();
   final _changedCtrl = StreamController<void>.broadcast();
+  final _agentNoticeCtrl = StreamController<PairingAgentNotice>.broadcast();
+  final _disconnectedCtrl = StreamController<void>.broadcast();
   final List<(int, Uint8List)> sentInput = [];
   final List<(int, int, int)> sentResize = [];
   final List<(int, String, Uint8List)> uploads = [];
@@ -56,6 +59,18 @@ class _FakePairingClient extends PairingClient {
 
   void pushSessionsChanged() => _changedCtrl.add(null);
 
+  void pushAgentNotice(PairingAgentNotice notice) =>
+      _agentNoticeCtrl.add(notice);
+
+  /// Whether the cubit still holds its agent-notice subscription. The fake's
+  /// controller is closed by [close], so "did the cubit cancel?" has to be read
+  /// off the listener count rather than by pushing after teardown.
+  bool get agentNoticeHasListener => _agentNoticeCtrl.hasListener;
+
+  /// When set, `terminal.subscribe` throws — the host's `no such session` for a
+  /// pane that died between the notification and the tap.
+  Object? subscribeError;
+
   @override
   Stream<String> get log => _logCtrl.stream;
 
@@ -64,6 +79,17 @@ class _FakePairingClient extends PairingClient {
 
   @override
   Stream<void> get sessionsChanged => _changedCtrl.stream;
+
+  @override
+  Stream<PairingAgentNotice> get agentNotices => _agentNoticeCtrl.stream;
+
+  @override
+  Stream<void> get disconnected => _disconnectedCtrl.stream;
+
+  /// Simulates the socket dying on its own (unanswered keepalive / FIN).
+  void pushDisconnected() => _disconnectedCtrl.add(null);
+
+  bool get disconnectedHasListener => _disconnectedCtrl.hasListener;
 
   @override
   Future<PairingAuthResult> connect({
@@ -150,8 +176,12 @@ class _FakePairingClient extends PairingClient {
     return activateResult;
   }
 
+  final List<String> subscribed = [];
+
   @override
   Future<PairingSubscription> subscribe(String catalogId) async {
+    subscribed.add(catalogId);
+    if (subscribeError != null) throw subscribeError!;
     final controller = StreamController<Uint8List>.broadcast();
     addTearDown(controller.close);
     return PairingSubscription(42, controller);
@@ -184,6 +214,8 @@ class _FakePairingClient extends PairingClient {
     if (!_logCtrl.isClosed) await _logCtrl.close();
     if (!_stageCtrl.isClosed) await _stageCtrl.close();
     if (!_changedCtrl.isClosed) await _changedCtrl.close();
+    if (!_agentNoticeCtrl.isClosed) await _agentNoticeCtrl.close();
+    if (!_disconnectedCtrl.isClosed) await _disconnectedCtrl.close();
   }
 }
 
@@ -818,6 +850,360 @@ void main() {
       expect(fake.uploads.single.$1, 42);
       expect(fake.uploads.single.$2, 'photo.png');
       expect(fake.uploads.single.$3, bytes);
+    });
+  });
+
+  group('PairingClientCubit agent notices', () {
+    const livePane = PairingSessionNode(
+      workspaceId: 'wsA',
+      title: 'shell',
+      subtitle: '',
+      live: true,
+      paneId: 'p1',
+      catalogId: 'ws:p1',
+    );
+
+    _FakePairingClient newFake() =>
+        _FakePairingClient(workspaces: [_wsNode(panes: const [livePane])]);
+
+    Future<(PairingClientCubit, _FakePairingClient, List<PairingAgentNotice>)>
+    connected({_FakePairingClient? client}) async {
+      final fake = client ?? newFake();
+      final received = <PairingAgentNotice>[];
+      final cubit = PairingClientCubit(
+        settings: InMemoryPairingSettingsRepository(),
+        clientFactory: () => fake,
+        onAgentNotice: received.add,
+      );
+      addTearDown(cubit.close);
+      cubit.beginPairing(_makeOffer());
+      await cubit.confirmPairing();
+      return (cubit, fake, received);
+    }
+
+    test('a host push reaches the injected sink', () async {
+      final (_, fake, received) = await connected();
+
+      fake.pushAgentNotice(
+        const PairingAgentNotice(
+          kind: PairingAgentNoticeKind.waiting,
+          seatId: 'ws:p1',
+          catalogId: 'ws:p1',
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      expect(received, hasLength(1));
+      expect(received.single.kind, PairingAgentNoticeKind.waiting);
+      expect(received.single.catalogId, 'ws:p1');
+    });
+
+    test('cancel releases the notice subscription', () async {
+      final (cubit, fake, _) = await connected();
+      expect(fake.agentNoticeHasListener, isTrue);
+
+      await cubit.cancel();
+
+      expect(fake.agentNoticeHasListener, isFalse);
+    });
+
+    test('close releases the notice subscription', () async {
+      // The two dispose paths are duplicated; a cancel added to only one of them
+      // leaves this listening after teardown.
+      final (cubit, fake, _) = await connected();
+      expect(fake.agentNoticeHasListener, isTrue);
+
+      await cubit.close();
+
+      expect(fake.agentNoticeHasListener, isFalse);
+    });
+
+    test('openMirrorFromNotification mirrors a live pane', () async {
+      final (cubit, fake, _) = await connected();
+
+      await cubit.openMirrorFromNotification('ws:p1');
+
+      expect(cubit.state.phase, PairingClientPhase.mirroring);
+      expect(cubit.state.activeCatalogId, 'ws:p1');
+      expect(fake.subscribed, ['ws:p1']);
+    });
+
+    test('openMirrorFromNotification is a no-op while idle', () async {
+      final fake = newFake();
+      final cubit = PairingClientCubit(
+        settings: InMemoryPairingSettingsRepository(),
+        clientFactory: () => fake,
+      );
+      addTearDown(cubit.close);
+
+      await cubit.openMirrorFromNotification('ws:p1');
+
+      expect(cubit.state.phase, PairingClientPhase.idle);
+      expect(fake.subscribed, isEmpty);
+    });
+
+    test('openMirrorFromNotification retries the tree once, then gives up',
+        () async {
+      final fake = _FakePairingClient(workspaces: const []);
+      final (cubit, _, _) = await connected(client: fake);
+      expect(fake.listWorkspacesCalls, 1);
+
+      await cubit.openMirrorFromNotification('ws:gone');
+
+      // One refresh in case the pane list lagged a `session.changed`, then stop.
+      expect(fake.listWorkspacesCalls, 2);
+      expect(fake.subscribed, isEmpty);
+      expect(cubit.state.phase, PairingClientPhase.connected);
+    });
+
+    test('openMirrorFromNotification releases the previous mirror', () async {
+      const second = PairingSessionNode(
+        workspaceId: 'wsA',
+        title: 'other',
+        subtitle: '',
+        live: true,
+        paneId: 'p2',
+        catalogId: 'ws:p2',
+      );
+      final fake = _FakePairingClient(
+        workspaces: [_wsNode(panes: const [livePane, second])],
+      );
+      final (cubit, _, _) = await connected(client: fake);
+      await cubit.openSession('ws:p1');
+
+      await cubit.openMirrorFromNotification('ws:p2');
+
+      // The old subscription is dropped rather than leaked (openSession alone
+      // would overwrite it).
+      expect(fake.unsubscribed, [42]);
+      expect(cubit.state.activeCatalogId, 'ws:p2');
+    });
+
+    test('openMirrorFromNotification ignores the pane already mirrored',
+        () async {
+      final (cubit, fake, _) = await connected();
+      await cubit.openSession('ws:p1');
+
+      await cubit.openMirrorFromNotification('ws:p1');
+
+      expect(fake.subscribed, ['ws:p1']);
+      expect(fake.unsubscribed, isEmpty);
+    });
+
+    test('openMirrorFromNotification swallows a refused subscribe', () async {
+      final fake = newFake()..subscribeError = Exception('no such session');
+      final (cubit, _, _) = await connected(client: fake);
+
+      await cubit.openMirrorFromNotification('ws:p1');
+
+      expect(cubit.state.phase, PairingClientPhase.connected);
+      expect(
+        cubit.state.logs.any((l) => l.contains('Open from notification failed')),
+        isTrue,
+      );
+    });
+  });
+
+  group('PairingClientCubit reconnect', () {
+    const livePane = PairingSessionNode(
+      workspaceId: 'wsA',
+      title: 'shell',
+      subtitle: '',
+      live: true,
+      paneId: 'p1',
+      catalogId: 'ws:p1',
+    );
+
+    late List<_FakePairingClient> clients;
+
+    /// Fresh fake per spawn: a reconnect throws the old client away, and the
+    /// previous instance has already closed its controllers.
+    PairingClientCubit build({
+      List<PairingWorkspaceNode> Function(int spawn)? tree,
+    }) {
+      clients = [];
+      final cubit = PairingClientCubit(
+        settings: InMemoryPairingSettingsRepository(),
+        clientFactory: () {
+          final fake = _FakePairingClient(
+            workspaces:
+                tree?.call(clients.length) ??
+                [_wsNode(panes: const [livePane])],
+          );
+          clients.add(fake);
+          return fake;
+        },
+      );
+      addTearDown(cubit.close);
+      return cubit;
+    }
+
+    Future<PairingClientCubit> connected() async {
+      final cubit = build();
+      cubit.beginPairing(_makeOffer());
+      await cubit.confirmPairing();
+      return cubit;
+    }
+
+    test('a dropped socket starts reconnecting without leaving the screen',
+        () async {
+      final cubit = await connected();
+      await cubit.openSession('ws:p1');
+
+      clients.last.pushDisconnected();
+      await Future<void>.delayed(Duration.zero);
+
+      // The mirror stays up on its last frame; only the flag changes.
+      expect(cubit.state.phase, PairingClientPhase.mirroring);
+      expect(cubit.state.reconnecting, isTrue);
+      expect(cubit.state.notice, PairingNotice.connectionLost);
+      // The dead subscription is dropped so input stops pretending to arrive.
+      expect(cubit.activeSubscription, isNull);
+    });
+
+    test('resume reconnects and rebinds the mirror on a new generation',
+        () async {
+      final cubit = await connected();
+      await cubit.openSession('ws:p1');
+      final generationBefore = cubit.state.connectGeneration;
+
+      clients.last.pushDisconnected();
+      await Future<void>.delayed(Duration.zero);
+      cubit.onAppResumed();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(cubit.state.reconnecting, isFalse);
+      expect(cubit.state.notice, PairingNotice.reconnected);
+      expect(cubit.state.phase, PairingClientPhase.mirroring);
+      expect(cubit.state.activeCatalogId, 'ws:p1');
+      expect(cubit.activeSubscription, isNotNull);
+      // The widget key includes this, so the mirror page remounts onto the new
+      // subscription instead of listening to the dead one.
+      expect(cubit.state.connectGeneration, greaterThan(generationBefore));
+      expect(clients, hasLength(2));
+      expect(clients.last.subscribed, ['ws:p1']);
+    });
+
+    test('resume drops to the session list when the pane did not survive',
+        () async {
+      // Second spawn advertises an empty tree: the pane died while away.
+      final cubit = build(
+        tree: (spawn) =>
+            spawn == 0 ? [_wsNode(panes: const [livePane])] : const [],
+      );
+      cubit.beginPairing(_makeOffer());
+      await cubit.confirmPairing();
+      await cubit.openSession('ws:p1');
+
+      clients.last.pushDisconnected();
+      await Future<void>.delayed(Duration.zero);
+      cubit.onAppResumed();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(cubit.state.phase, PairingClientPhase.connected);
+      expect(cubit.state.activeCatalogId, isNull);
+      expect(cubit.state.reconnecting, isFalse);
+      expect(clients.last.subscribed, isEmpty);
+    });
+
+    test('a reconnect while merely connected refreshes without a mirror',
+        () async {
+      final cubit = await connected();
+
+      clients.last.pushDisconnected();
+      await Future<void>.delayed(Duration.zero);
+      cubit.onAppResumed();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(cubit.state.phase, PairingClientPhase.connected);
+      expect(cubit.state.reconnecting, isFalse);
+      expect(cubit.state.workspaces, hasLength(1));
+      expect(clients.last.subscribed, isEmpty);
+    });
+
+    test('cancel ends the retry loop for good', () async {
+      final cubit = await connected();
+      clients.last.pushDisconnected();
+      await Future<void>.delayed(Duration.zero);
+      expect(cubit.state.reconnecting, isTrue);
+
+      await cubit.cancel();
+      expect(cubit.state.reconnecting, isFalse);
+      expect(cubit.state.phase, PairingClientPhase.idle);
+
+      // A later foreground must not resurrect the connection the user dropped.
+      cubit.onAppResumed();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(clients, hasLength(1));
+      expect(cubit.state.phase, PairingClientPhase.idle);
+    });
+
+    test('resume on a healthy connection does nothing', () async {
+      final cubit = await connected();
+
+      cubit.onAppResumed();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(clients, hasLength(1));
+      expect(cubit.state.reconnecting, isFalse);
+    });
+
+    test('a second drop while already reconnecting does not stack', () async {
+      final cubit = await connected();
+
+      clients.last.pushDisconnected();
+      clients.last.pushDisconnected();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(cubit.state.reconnecting, isTrue);
+      expect(
+        cubit.state.logs.where((l) => l.contains('Connection lost')).length,
+        1,
+      );
+    });
+
+    test('a failed reconnect stays in the reconnecting state', () async {
+      // Every spawn after the first refuses, as a desktop that is actually off.
+      clients = [];
+      final cubit = PairingClientCubit(
+        settings: InMemoryPairingSettingsRepository(),
+        clientFactory: () {
+          final fake = _FakePairingClient(
+            workspaces: [_wsNode(panes: const [livePane])],
+            connectError: clients.isEmpty ? null : Exception('no route'),
+          );
+          clients.add(fake);
+          return fake;
+        },
+      );
+      addTearDown(cubit.close);
+      cubit.beginPairing(_makeOffer());
+      await cubit.confirmPairing();
+
+      clients.last.pushDisconnected();
+      await Future<void>.delayed(Duration.zero);
+      cubit.onAppResumed();
+      await Future<void>.delayed(Duration.zero);
+
+      // Still trying — a failed attempt must not land on the error screen, which
+      // would make the user re-pair by hand.
+      expect(cubit.state.reconnecting, isTrue);
+      expect(cubit.state.phase, PairingClientPhase.connected);
+      expect(
+        cubit.state.logs.any((l) => l.contains('Reconnect failed')),
+        isTrue,
+      );
+    });
+
+    test('close releases the disconnect subscription', () async {
+      final cubit = await connected();
+      final fake = clients.last;
+      expect(fake.disconnectedHasListener, isTrue);
+
+      await cubit.close();
+
+      expect(fake.disconnectedHasListener, isFalse);
     });
   });
 }

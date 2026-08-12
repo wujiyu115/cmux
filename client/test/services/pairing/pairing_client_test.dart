@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:teampilot/services/pairing/agent_notice_message.dart';
 import 'package:teampilot/services/pairing/pairing_client.dart';
 import 'package:teampilot/services/pairing/pairing_ports.dart';
 import 'package:teampilot/services/pairing/ws_transport.dart';
@@ -167,6 +168,90 @@ void main() {
       );
       // Every ladder port was already in the saved list, so nothing to probe.
       expect(probes, 0);
+    });
+  });
+
+  group('PairingClient disconnect signal', () {
+    test('a socket that dies before auth is reported by connect, not as a drop',
+        () async {
+      // Mid-handshake failures are `connect` throwing; a listener must not also
+      // see them as "an established connection was lost" and start retrying.
+      final client = PairingClient(
+        connector: (_) => Future.error(StateError('connection refused')),
+        portProbe: (_, _) async => false,
+      );
+      addTearDown(client.close);
+      final drops = <void>[];
+      final sub = client.disconnected.listen(drops.add);
+      addTearDown(sub.cancel);
+
+      await expectLater(
+        client.connect(
+          wsUrls: const ['ws://192.168.1.5:5555/pair/ws'],
+          token: 't',
+          hostPublicKeyB64: 'k',
+        ),
+        throwsA(isA<Exception>()),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      expect(drops, isEmpty);
+    });
+  });
+
+  group('PairingClient agent.notice push', () {
+    PairingClient build() {
+      final client = PairingClient(
+        connector: (_) => Future.error(StateError('unused')),
+        portProbe: (_, _) async => false,
+      );
+      addTearDown(client.close);
+      return client;
+    }
+
+    test('a well-formed push lands on agentNotices', () async {
+      final client = build();
+      final received = client.agentNotices.first;
+
+      client.debugHandleJson({
+        'method': 'agent.notice',
+        'params': {
+          'kind': 'waiting',
+          'seatId': 'ws:pane-1',
+          'catalogId': 'ws:pane-1',
+          'workspaceLabel': 'my-repo',
+          'title': 'zsh · client',
+          'atMs': 42,
+        },
+      });
+
+      final notice = await received;
+      expect(notice.kind, PairingAgentNoticeKind.waiting);
+      expect(notice.seatId, 'ws:pane-1');
+      expect(notice.catalogId, 'ws:pane-1');
+      expect(notice.workspaceLabel, 'my-repo');
+      expect(notice.atMs, 42);
+    });
+
+    test('a malformed push is dropped without throwing', () async {
+      final client = build();
+      final seen = <PairingAgentNotice>[];
+      final sub = client.agentNotices.listen(seen.add);
+      addTearDown(sub.cancel);
+
+      // Unknown kind (a newer desktop) and a missing seat id.
+      client.debugHandleJson({
+        'method': 'agent.notice',
+        'params': {'kind': 'exploded', 'seatId': 'ws:pane-1'},
+      });
+      client.debugHandleJson({
+        'method': 'agent.notice',
+        'params': {'kind': 'done'},
+      });
+      client.debugHandleJson({'method': 'agent.notice'});
+      await Future<void>.delayed(Duration.zero);
+
+      expect(seen, isEmpty);
     });
   });
 }

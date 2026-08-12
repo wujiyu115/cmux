@@ -57,4 +57,21 @@ void main() {
     expect(navigated, isEmpty);
     expect(marked, isEmpty);
   });
+
+  test('handleSessionIdleNotificationTap navigates when focusWindow throws',
+      () async {
+    // window_manager has no mobile implementation: on iOS the focus call throws
+    // MissingPluginException, which must not swallow the navigation.
+    final navigated = <String>[];
+
+    await handleSessionIdleNotificationTap(
+      payload: '/home-v2/workspace/ws-1',
+      go: navigated.add,
+      markReadMatchingPayload: (_) async =>
+          throw Exception('MissingPluginException'),
+      focusWindow: () async => throw Exception('MissingPluginException'),
+    );
+
+    expect(navigated, ['/home-v2/workspace/ws-1']);
+  });
 }

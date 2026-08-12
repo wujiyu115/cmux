@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import '../../utils/logging/logger.dart';
+import 'agent_notice_message.dart';
 import 'device_registry.dart';
 import 'pairing_connection.dart';
 import 'pairing_crypto.dart';
@@ -32,9 +33,11 @@ class LanPairingServer {
     PairingGroupCreator? groupCreator,
     PairingGroupIndexProvider? groupIndex,
     PairingTargetIndexProvider? targetIndex,
+    Stream<PairingAgentNotice>? agentNotices,
     PairingOfferWindow? offerWindow,
     List<int> ports = kPairingPortLadder,
   }) : _ports = ports,
+       _agentNotices = agentNotices,
        _hostStaticKey = hostStaticKey,
        _registry = registry,
        _catalog = catalog,
@@ -65,6 +68,10 @@ class LanPairingServer {
   final PairingGroupCreator? _groupCreator;
   final PairingGroupIndexProvider? _groupIndex;
   final PairingTargetIndexProvider? _targetIndex;
+
+  /// Broadcast feed of agent-attention edges, handed to every connection so each
+  /// authenticated phone can pop its own local notification.
+  final Stream<PairingAgentNotice>? _agentNotices;
 
   /// One-time pairing-code window; [createOffer] opens it, auth consumes it.
   final PairingOfferWindow offerWindow;
@@ -163,6 +170,7 @@ class LanPairingServer {
       groupCreator: _groupCreator,
       groupIndex: _groupIndex,
       targetIndex: _targetIndex,
+      agentNotices: _agentNotices,
       onClosed: () => _connections.remove(connection),
     );
     _connections.add(connection);
