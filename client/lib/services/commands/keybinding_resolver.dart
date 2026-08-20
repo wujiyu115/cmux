@@ -2,6 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:teampilot/services/commands/command_catalog.dart';
 import 'package:teampilot/services/commands/command_definition.dart';
 import 'package:teampilot/services/commands/key_chord.dart';
+import 'package:teampilot/services/commands/reconciled_keyboard.dart';
 import 'package:teampilot/services/commands/shortcut_context.dart';
 
 /// Two or more commands whose effective chord lists share [chord].
@@ -37,17 +38,25 @@ abstract final class KeybindingResolver {
   /// Returns the id of the first command in declaration order whose
   /// effective chords match [event] and whose `when`/terminal/text-input
   /// rules are satisfied by [context], or `null` if nothing matches.
+  ///
+  /// [keyboardState] supplies the modifier state chords are matched against.
+  /// It defaults to [ReconciledKeyboard.instance] rather than
+  /// [HardwareKeyboard.instance] because the framework's own state can hold a
+  /// phantom modifier indefinitely — a stranded Alt key-up makes a bare `1`
+  /// satisfy `Alt+1` and hop session tabs. See [ReconciledKeyboard].
   static String? match({
     required KeyEvent event,
     required Map<String, List<KeyChord>> effectiveByCommand,
     required ShortcutContext context,
     required bool isMacOS,
     List<CommandDefinition>? catalog,
+    HardwareKeyboard? keyboardState,
   }) {
     if (event is! KeyDownEvent) {
       return null;
     }
 
+    final keyboard = keyboardState ?? ReconciledKeyboard.instance.state;
     final effectiveCatalog = catalog ?? CommandCatalog.v1;
 
     for (final def in effectiveCatalog) {
@@ -66,7 +75,13 @@ abstract final class KeybindingResolver {
         // Double-tap chords need multi-event state; see ShortcutDispatcher.
         if (chord.doubleTap) continue;
 
-        if (!chord.hasModifiers && context.inTextInput) {
+        // A focused terminal is `inTerminal`, never `inTextInput`, so guarding
+        // only the latter let every modifier-less chord fire into a shell —
+        // bare F5 ran the Run command AND was withheld from the PTY. A bare key
+        // belongs to whatever is taking typed input, terminal included.
+        // `inTerminal` and `inCompose` are mutually exclusive (see
+        // `_liveShortcutContext`), so the compose escape hatch is unaffected.
+        if (!chord.hasModifiers && (context.inTextInput || context.inTerminal)) {
           final allowedBareComposeKey =
               def.when == ShortcutWhen.inCompose && context.inCompose;
           if (!allowedBareComposeKey) {
@@ -75,7 +90,7 @@ abstract final class KeybindingResolver {
         }
 
         final activator = chord.toActivator(isMacOS: isMacOS);
-        if (activator.accepts(event, HardwareKeyboard.instance)) {
+        if (activator.accepts(event, keyboard)) {
           return def.id;
         }
       }

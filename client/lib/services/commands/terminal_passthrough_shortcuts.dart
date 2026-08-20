@@ -37,6 +37,10 @@ Map<ShortcutActivator, Intent> terminalPassthroughShortcutOverlay({
       // Double-tap Shift is matched by ShortcutDispatcher state, not
       // SingleActivator; bare Shift is a no-op for PTY encode anyway.
       if (chord.doubleTap) continue;
+      // Modifier-less chords no longer fire while a terminal is focused (see
+      // `KeybindingResolver.match`), so they must not be withheld from the PTY
+      // either — otherwise F5 becomes a no-op instead of reaching the shell.
+      if (!chord.hasModifiers) continue;
       overlay[chord.toActivator(isMacOS: isMacOS)] =
           const DoNothingAndStopPropagationIntent();
     }

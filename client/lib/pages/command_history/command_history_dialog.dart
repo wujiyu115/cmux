@@ -4,6 +4,7 @@ import 'package:shared_ui/shared_ui.dart';
 
 import '../../cubits/command_log_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
+import '../../services/commands/reconciled_keyboard.dart';
 import '../../services/commands/shortcut_focus.dart';
 
 /// Loads the recent commands for [paneId] and shows the history picker over the
@@ -157,7 +158,7 @@ class _CommandHistoryDialogState extends State<CommandHistoryDialog> {
     if (key == LogicalKeyboardKey.enter ||
         key == LogicalKeyboardKey.numpadEnter) {
       // Shift+Enter inserts, plain Enter runs — the picker's whole shortcut.
-      if (HardwareKeyboard.instance.isShiftPressed) {
+      if (ReconciledKeyboard.instance.state.isShiftPressed) {
         _insert();
       } else {
         _run();

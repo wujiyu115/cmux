@@ -16,6 +16,7 @@ import '../../services/workspace_dnd/terminal_drop_ingestor.dart';
 import '../../services/workspace_dnd/workspace_drop_target.dart';
 import '../../widgets/terminal/parked_send_overlay.dart';
 import '../../widgets/terminal/teampilot_alacritty_terminal.dart';
+import '../../services/commands/reconciled_keyboard.dart';
 import '../../widgets/terminal/terminal_mirror_takeover_scope.dart';
 import '../../widgets/terminal_find_bar.dart';
 import '../../widgets/workspace_dnd/external_file_drop_region.dart';
@@ -162,8 +163,9 @@ class _ChatWorkbenchRunningTerminalState
                   linkProviders: widget.session.linkProviders,
                   onPtyResize: widget.session.onTerminalPtyResize,
                   onTapDown: (_, offset) {
-                    if (!HardwareKeyboard.instance.isControlPressed &&
-                        !HardwareKeyboard.instance.isMetaPressed) {
+                    final keyboard = ReconciledKeyboard.instance.state;
+                    if (!keyboard.isControlPressed &&
+                        !keyboard.isMetaPressed) {
                       widget.terminalController.clearSelection();
                     }
                   },

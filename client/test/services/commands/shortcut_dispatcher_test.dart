@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:teampilot/services/commands/command_bus.dart';
 import 'package:teampilot/services/commands/command_definition.dart';
 import 'package:teampilot/services/commands/key_chord.dart';
+import 'package:teampilot/services/commands/reconciled_keyboard.dart';
 import 'package:teampilot/services/commands/shortcut_context.dart';
 import 'package:teampilot/services/commands/shortcut_dispatcher.dart';
 
@@ -11,6 +12,8 @@ PhysicalKeyboardKey _physicalFor(LogicalKeyboardKey logicalKey) {
     LogicalKeyboardKey.keyK => PhysicalKeyboardKey.keyK,
     LogicalKeyboardKey.keyZ => PhysicalKeyboardKey.keyZ,
     LogicalKeyboardKey.metaLeft => PhysicalKeyboardKey.metaLeft,
+    LogicalKeyboardKey.altLeft => PhysicalKeyboardKey.altLeft,
+    LogicalKeyboardKey.digit1 => PhysicalKeyboardKey.digit1,
     _ => throw UnsupportedError('Add mapping for $logicalKey'),
   };
 }
@@ -39,10 +42,13 @@ void main() {
   }
 
   tearDown(() {
-    if (HardwareKeyboard.instance.isLogicalKeyPressed(
+    for (final key in [
       LogicalKeyboardKey.metaLeft,
-    )) {
-      releaseModifier(LogicalKeyboardKey.metaLeft);
+      LogicalKeyboardKey.altLeft,
+    ]) {
+      if (HardwareKeyboard.instance.isLogicalKeyPressed(key)) {
+        releaseModifier(key);
+      }
     }
   });
 
@@ -132,6 +138,101 @@ void main() {
       final handled = dispatcher.handle(keyUp(LogicalKeyboardKey.keyK));
 
       expect(handled, isFalse);
+    });
+  });
+
+  group('ShortcutDispatcher reconciled keyboard', () {
+    final altTabId = 'test.altTab';
+    final altTabCatalog = [
+      CommandDefinition(
+        id: altTabId,
+        category: CommandCategory.tabs,
+        defaultChords: [KeyChord(key: 'digit1', mods: [KeyChordMod.alt])],
+        when: ShortcutWhen.always,
+        terminalPassthrough: true,
+        titleL10nKey: 'x',
+      ),
+    ];
+
+    ShortcutDispatcher buildWith(
+      CommandBus bus,
+      ReconciledKeyboard keyboard, {
+      List<CommandDefinition>? catalog,
+    }) {
+      final effectiveCatalog = catalog ?? testCatalog;
+      return ShortcutDispatcher(
+        bus: bus,
+        effectiveChords: (commandId) => effectiveCatalog
+            .firstWhere((def) => def.id == commandId)
+            .defaultChords,
+        context: () => const ShortcutContext(),
+        isMacOS: () => true,
+        catalog: effectiveCatalog,
+        keyboard: keyboard,
+      );
+    }
+
+    test('attach asserts when the mirror is not listening yet', () {
+      final keyboard = ReconciledKeyboard();
+      final dispatcher = buildWith(CommandBus(), keyboard);
+
+      expect(dispatcher.attach, throwsAssertionError);
+
+      keyboard.attach();
+      addTearDown(keyboard.detach);
+      addTearDown(dispatcher.detach);
+      expect(dispatcher.attach, returnsNormally);
+    });
+
+    test('a phantom Alt no longer fires the Alt+1 tab command', () {
+      final keyboard = ReconciledKeyboard()..attach();
+      addTearDown(keyboard.detach);
+      final bus = CommandBus();
+      var called = false;
+      bus.register(altTabId, () => called = true);
+      final dispatcher = buildWith(bus, keyboard, catalog: altTabCatalog);
+
+      // Alt goes down for real, then its key-up is stranded in another window
+      // — modeled by clearing the mirror the way a window blur does.
+      pressModifier(LogicalKeyboardKey.altLeft);
+      keyboard.clear();
+
+      final handled = dispatcher.handle(keyDown(LogicalKeyboardKey.digit1));
+
+      expect(handled, isFalse);
+      expect(called, isFalse);
+      // The framework is still wrong; only the mirror was fixed.
+      expect(HardwareKeyboard.instance.isAltPressed, isTrue);
+    });
+
+    test('a genuinely held Alt still fires Alt+1', () {
+      final keyboard = ReconciledKeyboard()..attach();
+      addTearDown(keyboard.detach);
+      final bus = CommandBus();
+      var called = false;
+      bus.register(altTabId, () => called = true);
+      final dispatcher = buildWith(bus, keyboard, catalog: altTabCatalog);
+
+      pressModifier(LogicalKeyboardKey.altLeft);
+
+      expect(dispatcher.handle(keyDown(LogicalKeyboardKey.digit1)), isTrue);
+      expect(called, isTrue);
+    });
+
+    test('the mirror keeps tracking while the dispatcher is disabled', () {
+      // Design lock: feeding the mirror must NOT live behind handle()'s
+      // `enabled` guard. The rebind dialog disables the dispatcher for its
+      // whole lifetime, which is exactly when it captures modifier state.
+      final keyboard = ReconciledKeyboard()..attach();
+      addTearDown(keyboard.detach);
+      final bus = CommandBus();
+      final dispatcher = buildWith(bus, keyboard)..enabled = false;
+
+      pressModifier(LogicalKeyboardKey.metaLeft);
+      dispatcher.enabled = true;
+
+      // Only passes if the mirror saw the Meta press while disabled.
+      expect(dispatcher.handle(keyDown(LogicalKeyboardKey.keyK)), isTrue);
     });
   });
 

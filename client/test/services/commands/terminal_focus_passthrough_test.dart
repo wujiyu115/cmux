@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:teampilot/services/commands/command_bus.dart';
 import 'package:teampilot/services/commands/command_catalog.dart';
 import 'package:teampilot/services/commands/command_ids.dart';
+import 'package:teampilot/services/commands/reconciled_keyboard.dart';
 import 'package:teampilot/services/commands/shortcut_context.dart';
 import 'package:teampilot/services/commands/shortcut_dispatcher.dart';
 import 'package:teampilot/services/commands/shortcut_focus.dart';
@@ -28,6 +29,7 @@ void main() {
       LogicalKeyboardKey.enter => PhysicalKeyboardKey.enter,
       LogicalKeyboardKey.tab => PhysicalKeyboardKey.tab,
       LogicalKeyboardKey.controlLeft => PhysicalKeyboardKey.controlLeft,
+      LogicalKeyboardKey.f5 => PhysicalKeyboardKey.f5,
       _ => throw UnsupportedError('Add mapping for $logicalKey'),
     };
   }
@@ -98,6 +100,10 @@ void main() {
   }
 
   ShortcutDispatcher installDispatcher(CommandBus bus) {
+    // The dispatcher asserts its mirror is already listening, so it sees the
+    // same modifier state the real app does.
+    final keyboard = ReconciledKeyboard()..attach();
+    addTearDown(keyboard.detach);
     final dispatcher = ShortcutDispatcher(
       bus: bus,
       effectiveChords: (commandId) => CommandCatalog.v1
@@ -105,6 +111,7 @@ void main() {
           .defaultChords,
       context: liveContext,
       isMacOS: () => false,
+      keyboard: keyboard,
     );
     dispatcher.attach();
     return dispatcher;
@@ -154,6 +161,37 @@ void main() {
       dispatcher.handle(keyDown(LogicalKeyboardKey.enter));
 
       expect(composeSubmitCalls, 1);
+    },
+  );
+
+  testWidgets(
+    'a bare passthrough chord (F5) yields to a focused terminal but still '
+    'fires elsewhere',
+    (tester) async {
+      await pumpFocusRegions(tester);
+
+      final bus = CommandBus();
+      var runCalls = 0;
+      bus.register(CommandIds.runRunSelected, () => runCalls++);
+      final dispatcher = installDispatcher(bus);
+      addTearDown(dispatcher.detach);
+
+      terminalFocusNode.requestFocus();
+      await tester.pump();
+
+      // runRunSelected is terminalPassthrough, but its default chord has no
+      // modifier — a bare key belongs to whatever takes typed input.
+      dispatcher.handle(keyDown(LogicalKeyboardKey.f5));
+
+      expect(runCalls, 0);
+
+      // Focus outside any ShortcutFocus: inTerminal flips false, F5 runs.
+      terminalFocusNode.unfocus();
+      await tester.pump();
+
+      dispatcher.handle(keyDown(LogicalKeyboardKey.f5));
+
+      expect(runCalls, 1);
     },
   );
 }

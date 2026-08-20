@@ -6,6 +6,7 @@ import 'command_definition.dart';
 import 'double_shift_detector.dart';
 import 'key_chord.dart';
 import 'keybinding_resolver.dart';
+import 'reconciled_keyboard.dart';
 import 'shortcut_context.dart';
 
 /// Matches every [KeyDownEvent] against the effective keybindings and, on a
@@ -23,12 +24,14 @@ class ShortcutDispatcher {
     required bool Function() isMacOS,
     List<CommandDefinition>? catalog,
     DoubleShiftDetector? doubleShiftDetector,
+    ReconciledKeyboard? keyboard,
   }) : _bus = bus,
        _effectiveChords = effectiveChords,
        _context = context,
        _isMacOS = isMacOS,
        _catalog = catalog ?? CommandCatalog.v1,
-       _doubleShiftDetector = doubleShiftDetector ?? DoubleShiftDetector();
+       _doubleShiftDetector = doubleShiftDetector ?? DoubleShiftDetector(),
+       _keyboard = keyboard ?? ReconciledKeyboard.instance;
 
   final CommandBus _bus;
   final List<KeyChord> Function(String commandId) _effectiveChords;
@@ -36,6 +39,7 @@ class ShortcutDispatcher {
   final bool Function() _isMacOS;
   final List<CommandDefinition> _catalog;
   final DoubleShiftDetector _doubleShiftDetector;
+  final ReconciledKeyboard _keyboard;
 
   /// Set to `false` to temporarily suspend all shortcut matching (e.g. while
   /// a modal keyboard grab, such as a rebind-capture dialog, is active).
@@ -73,6 +77,7 @@ class ShortcutDispatcher {
       context: _context(),
       isMacOS: _isMacOS(),
       catalog: _catalog,
+      keyboardState: _keyboard.state,
     );
     if (commandId == null) return false;
 
@@ -96,6 +101,15 @@ class ShortcutDispatcher {
   }
 
   void attach() {
+    // The mirror must already be listening, or it will miss the events that
+    // happen before it attaches and report stale modifiers to [handle]. Owning
+    // the mirror's lifecycle here instead would hide that ordering from the
+    // host, which also needs it for the window-focus clears.
+    assert(
+      _keyboard.isAttached,
+      'ReconciledKeyboard must be attached before the dispatcher so the mirror '
+      'is current when handle() runs',
+    );
     HardwareKeyboard.instance.addHandler(handle);
   }
 

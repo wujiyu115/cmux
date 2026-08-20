@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:window_manager/window_manager.dart';
 
+import 'package:teampilot/services/commands/reconciled_keyboard.dart';
+
 /// Invokes [action], swallowing [MissingPluginException] (e.g. widget tests).
 Future<T?> windowManagerCall<T>(Future<T> Function() action) async {
   try {
@@ -13,7 +15,7 @@ Future<T?> windowManagerCall<T>(Future<T> Function() action) async {
 }
 
 /// Whether the macOS Option (⌥) modifier is held at click time.
-bool isMacOptionKeyPressed() => HardwareKeyboard.instance.isAltPressed;
+bool isMacOptionKeyPressed() => ReconciledKeyboard.instance.state.isAltPressed;
 
 /// Whether the window fills the display: macOS native fullscreen or zoomed
 /// maximize on other desktops.

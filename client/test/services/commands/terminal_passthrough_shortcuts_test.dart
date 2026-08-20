@@ -15,6 +15,7 @@ PhysicalKeyboardKey _physicalFor(LogicalKeyboardKey logicalKey) {
     LogicalKeyboardKey.controlLeft => PhysicalKeyboardKey.controlLeft,
     LogicalKeyboardKey.metaLeft => PhysicalKeyboardKey.metaLeft,
     LogicalKeyboardKey.keyW => PhysicalKeyboardKey.keyW,
+    LogicalKeyboardKey.f5 => PhysicalKeyboardKey.f5,
     _ => throw UnsupportedError('Add mapping for $logicalKey'),
   };
 }
@@ -100,6 +101,25 @@ void main() {
         anyEntryAccepts(overlay, keyDown(LogicalKeyboardKey.enter)),
         isFalse,
         reason: 'composeSubmit (bare Enter) has terminalPassthrough: false',
+      );
+    });
+
+    test('does not claim a bare passthrough chord (F5) — the shell owns it', () {
+      // runRunSelected is terminalPassthrough with a modifier-less F5 default.
+      // Since `KeybindingResolver.match` no longer fires bare chords while a
+      // terminal is focused, withholding F5 from the PTY would make it a no-op.
+      final effective = KeybindingResolver.effectiveBindings(
+        catalog: CommandCatalog.v1,
+        overrides: {},
+      );
+      final overlay = terminalPassthroughShortcutOverlay(
+        effectiveByCommand: effective,
+        isMacOS: false,
+      );
+
+      expect(
+        anyEntryAccepts(overlay, keyDown(LogicalKeyboardKey.f5)),
+        isFalse,
       );
     });
 

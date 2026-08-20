@@ -14,8 +14,11 @@ PhysicalKeyboardKey _physicalFor(LogicalKeyboardKey logicalKey) {
     LogicalKeyboardKey.controlLeft => PhysicalKeyboardKey.controlLeft,
     LogicalKeyboardKey.shiftLeft => PhysicalKeyboardKey.shiftLeft,
     LogicalKeyboardKey.metaLeft => PhysicalKeyboardKey.metaLeft,
+    LogicalKeyboardKey.altLeft => PhysicalKeyboardKey.altLeft,
     LogicalKeyboardKey.keyW => PhysicalKeyboardKey.keyW,
     LogicalKeyboardKey.keyK => PhysicalKeyboardKey.keyK,
+    LogicalKeyboardKey.digit1 => PhysicalKeyboardKey.digit1,
+    LogicalKeyboardKey.f5 => PhysicalKeyboardKey.f5,
     _ => throw UnsupportedError('Add mapping for $logicalKey'),
   };
 }
@@ -48,6 +51,7 @@ void main() {
       LogicalKeyboardKey.controlLeft,
       LogicalKeyboardKey.shiftLeft,
       LogicalKeyboardKey.metaLeft,
+      LogicalKeyboardKey.altLeft,
     ]) {
       if (HardwareKeyboard.instance.isLogicalKeyPressed(key)) {
         releaseModifier(key);
@@ -186,6 +190,47 @@ void main() {
       expect(result, CommandIds.composeSubmit);
     });
 
+    group('inTerminal bare chords', () {
+      test('bare F5 does not steal the key from the PTY', () {
+        // runRunSelected is terminalPassthrough with a modifier-less F5
+        // default, and a focused terminal is inTerminal / NOT inTextInput —
+        // so before this guard it fired into the shell.
+        final result = KeybindingResolver.match(
+          event: keyDown(LogicalKeyboardKey.f5),
+          effectiveByCommand: effective,
+          context: const ShortcutContext(hasWorkspace: true, inTerminal: true),
+          isMacOS: false,
+        );
+
+        expect(result, isNull);
+      });
+
+      test('bare F5 still runs when no terminal has focus', () {
+        final result = KeybindingResolver.match(
+          event: keyDown(LogicalKeyboardKey.f5),
+          effectiveByCommand: effective,
+          context: const ShortcutContext(hasWorkspace: true),
+          isMacOS: false,
+        );
+
+        expect(result, CommandIds.runRunSelected);
+      });
+
+      test('a modifier chord still fires in a terminal (Ctrl+Tab)', () {
+        pressModifier(LogicalKeyboardKey.controlLeft);
+        addTearDown(() => releaseModifier(LogicalKeyboardKey.controlLeft));
+
+        final result = KeybindingResolver.match(
+          event: keyDown(LogicalKeyboardKey.tab),
+          effectiveByCommand: effective,
+          context: const ShortcutContext(hasWorkspace: true, inTerminal: true),
+          isMacOS: false,
+        );
+
+        expect(result, CommandIds.stripNextTab);
+      });
+    });
+
     group('inTextInput', () {
       test('modifier chord still matches (Mod+W closes session tab)', () {
         pressModifier(LogicalKeyboardKey.metaLeft);
@@ -240,6 +285,63 @@ void main() {
         );
 
         expect(result, CommandIds.composeSubmit);
+      });
+    });
+
+    group('stuck Alt', () {
+      /// A keyboard with no keys held — models the mirror after a
+      /// window-focus clear.
+      HardwareKeyboard cleanKeyboard() => HardwareKeyboard();
+
+      /// A keyboard that genuinely has Alt held.
+      HardwareKeyboard altHeldKeyboard() =>
+          HardwareKeyboard()..handleKeyEvent(keyDown(LogicalKeyboardKey.altLeft));
+
+      test('bare digit does not hop tabs when only the framework thinks Alt '
+          'is down', () {
+        // The bug: Windows Alt+Tab strands the Alt key-up in another window,
+        // so HardwareKeyboard.instance reports Alt forever and a bare `1`
+        // satisfies SingleActivator(digit1, alt: true).
+        pressModifier(LogicalKeyboardKey.altLeft);
+        addTearDown(() => releaseModifier(LogicalKeyboardKey.altLeft));
+
+        final result = KeybindingResolver.match(
+          event: keyDown(LogicalKeyboardKey.digit1),
+          effectiveByCommand: effective,
+          context: const ShortcutContext(hasWorkspace: true, inTerminal: true),
+          isMacOS: false,
+          keyboardState: cleanKeyboard(),
+        );
+
+        expect(result, isNull);
+      });
+
+      test('a real Alt+1 still focuses strip tab 1', () {
+        final result = KeybindingResolver.match(
+          event: keyDown(LogicalKeyboardKey.digit1),
+          effectiveByCommand: effective,
+          context: const ShortcutContext(hasWorkspace: true, inTerminal: true),
+          isMacOS: false,
+          keyboardState: altHeldKeyboard(),
+        );
+
+        expect(result, CommandIds.stripFocusTab(1));
+      });
+
+      test('omitting keyboardState falls back to the reconciled instance', () {
+        // The default path used by every pre-existing caller: unattached, so
+        // ReconciledKeyboard.state defers to HardwareKeyboard.instance.
+        pressModifier(LogicalKeyboardKey.altLeft);
+        addTearDown(() => releaseModifier(LogicalKeyboardKey.altLeft));
+
+        final result = KeybindingResolver.match(
+          event: keyDown(LogicalKeyboardKey.digit1),
+          effectiveByCommand: effective,
+          context: const ShortcutContext(hasWorkspace: true, inTerminal: true),
+          isMacOS: false,
+        );
+
+        expect(result, CommandIds.stripFocusTab(1));
       });
     });
 

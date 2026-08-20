@@ -5,6 +5,7 @@ import 'package:shared_ui/shared_ui.dart';
 import '../l10n/l10n_extensions.dart';
 import '../services/app/desktop_window_actions.dart';
 import '../services/app/platform_utils.dart';
+import '../services/commands/reconciled_keyboard.dart';
 
 /// Default height for [WindowChromeControls] when embedded in
 /// [DesktopWindowTitleBar].
@@ -88,20 +89,29 @@ class _MacTrafficLightControlsState extends State<MacTrafficLightControls> {
   void initState() {
     super.initState();
     HardwareKeyboard.instance.addHandler(_onKeyEvent);
+    // A window-focus clear releases Option without producing a key event, so
+    // without this the affordance would stay stuck in its held state.
+    ReconciledKeyboard.instance.addListener(_syncOptionHeld);
   }
 
   @override
   void dispose() {
+    ReconciledKeyboard.instance.removeListener(_syncOptionHeld);
     HardwareKeyboard.instance.removeHandler(_onKeyEvent);
     super.dispose();
   }
 
   bool _onKeyEvent(KeyEvent event) {
+    _syncOptionHeld();
+    return false;
+  }
+
+  void _syncOptionHeld() {
+    if (!mounted) return;
     final held = isMacOptionKeyPressed();
     if (held != _optionHeld) {
       setState(() => _optionHeld = held);
     }
-    return false;
   }
 
   @override

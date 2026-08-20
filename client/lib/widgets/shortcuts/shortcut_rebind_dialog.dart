@@ -9,6 +9,7 @@ import '../../l10n/l10n_extensions.dart';
 import '../../services/commands/command_l10n.dart';
 import '../../services/commands/key_chord.dart';
 import '../../services/commands/key_chord_formatter.dart';
+import '../../services/commands/reconciled_keyboard.dart';
 import '../../services/commands/shortcut_dispatcher_handle.dart';
 import 'package:shared_ui/shared_ui.dart';
 
@@ -120,11 +121,16 @@ class _ShortcutRebindDialogState extends State<ShortcutRebindDialog> {
       return KeyEventResult.handled;
     }
 
+    // Read the reconciled state, not the framework's: a phantom modifier here
+    // would be persisted into keybindings.json and mis-bind the command for
+    // good. This runs from Focus.onKeyEvent, i.e. after the mirror's own
+    // HardwareKeyboard handler, so it already reflects this event.
+    final keyboard = ReconciledKeyboard.instance.state;
     final mods = <KeyChordMod>[
-      if (HardwareKeyboard.instance.isControlPressed) KeyChordMod.ctrl,
-      if (HardwareKeyboard.instance.isMetaPressed) KeyChordMod.meta,
-      if (HardwareKeyboard.instance.isAltPressed) KeyChordMod.alt,
-      if (HardwareKeyboard.instance.isShiftPressed) KeyChordMod.shift,
+      if (keyboard.isControlPressed) KeyChordMod.ctrl,
+      if (keyboard.isMetaPressed) KeyChordMod.meta,
+      if (keyboard.isAltPressed) KeyChordMod.alt,
+      if (keyboard.isShiftPressed) KeyChordMod.shift,
     ];
     final chord = KeyChord(key: key, mods: mods);
     unawaited(_captureChord(chord));

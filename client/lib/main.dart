@@ -32,6 +32,7 @@ import 'repositories/ssh_profile_repository.dart';
 import 'router/app_router.dart';
 import 'services/commands/command_bus.dart';
 import 'services/commands/key_chord.dart';
+import 'services/commands/reconciled_keyboard.dart';
 import 'services/commands/run_command_registrar.dart';
 import 'services/commands/workspace_search_command_registrar.dart';
 import 'services/commands/shortcut_context.dart';
@@ -136,12 +137,18 @@ class ShortcutDispatcherHost extends StatefulWidget {
       _ShortcutDispatcherHostState();
 }
 
-class _ShortcutDispatcherHostState extends State<ShortcutDispatcherHost> {
+class _ShortcutDispatcherHostState extends State<ShortcutDispatcherHost>
+    with WidgetsBindingObserver {
   ShortcutDispatcher? _dispatcher;
+  ReconciledKeyboardWindowListener? _keyboardWindowListener;
 
   @override
   void initState() {
     super.initState();
+    // Before the dispatcher: HardwareKeyboard runs handlers in registration
+    // order, so mirroring first is what keeps the mirror current for both
+    // ShortcutDispatcher.handle and every Focus.onKeyEvent downstream.
+    ReconciledKeyboard.instance.attach();
     final shortcutCubit = context.read<ShortcutCubit>();
     final chatCubit = context.read<ChatCubit>();
     final workspaceChromeCommands = context.read<WorkspaceChromeCommands>();
@@ -155,15 +162,36 @@ class _ShortcutDispatcherHostState extends State<ShortcutDispatcherHost> {
     dispatcher.attach();
     _dispatcher = dispatcher;
     ShortcutDispatcherHandle.instance = dispatcher;
+    WidgetsBinding.instance.addObserver(this);
+    if (hasDesktopWindow) {
+      final listener = ReconciledKeyboardWindowListener(
+        ReconciledKeyboard.instance,
+      );
+      windowManager.addListener(listener);
+      _keyboardWindowListener = listener;
+    }
   }
 
   @override
   void dispose() {
+    final keyboardWindowListener = _keyboardWindowListener;
+    if (keyboardWindowListener != null) {
+      windowManager.removeListener(keyboardWindowListener);
+      _keyboardWindowListener = null;
+    }
+    WidgetsBinding.instance.removeObserver(this);
     if (ShortcutDispatcherHandle.instance == _dispatcher) {
       ShortcutDispatcherHandle.instance = null;
     }
     _dispatcher?.detach();
+    ReconciledKeyboard.instance.detach();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    ReconciledKeyboard.instance.handleAppLifecycleState(state);
   }
 
   @override
@@ -455,6 +483,12 @@ void main() async {
   }
   preserveBootSplash(binding);
   installWindowsKeyboardWorkaround();
+  // Point the terminal's modifier reads at our reconciled mirror, so a phantom
+  // Alt (Windows Alt+Tab strands the key-up in another window) can't swallow
+  // digits, kill Ctrl+Shift+V, or break IME deferral. Safe this early:
+  // `state` falls back to HardwareKeyboard.instance until the mirror attaches
+  // in ShortcutDispatcherHost.
+  TerminalKeyboardState.setSource(() => ReconciledKeyboard.instance.state);
   await RustLib.init();
   GoogleFonts.config.allowRuntimeFetching = false;
 
