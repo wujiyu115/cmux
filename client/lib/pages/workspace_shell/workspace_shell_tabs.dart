@@ -9,6 +9,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../cubits/chat_cubit.dart';
 import '../../cubits/layout_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
+import '../../models/app_session.dart';
+import '../../repositories/session_repository.dart';
 import '../../theme/workspace_surface_layers.dart';
 import '../../utils/ui/app_keys.dart';
 import '../../utils/session/session_row_content.dart';
@@ -284,7 +286,6 @@ class _WorkspaceShellNewChatButtonState
   }
 }
 
-
 class WorkspaceShellTabChip extends StatefulWidget {
   const WorkspaceShellTabChip({
     super.key,
@@ -333,8 +334,13 @@ class WorkspaceShellTabChipState extends State<WorkspaceShellTabChip> {
   /// [MouseRegion.onExit] and removes the button before [onSelected] runs.
   final _overflowMenuOpen = false;
 
+  /// Session tabs can be renamed; non-session chips (run panel) cannot.
+  bool get _renamable => widget.sessionId != null;
+
   void _handleTabMenuSelection(String value) {
-    if (value == 'pin') {
+    if (value == 'rename') {
+      unawaited(_showRenameDialog());
+    } else if (value == 'pin') {
       widget.onPin?.call();
     } else if (value == 'close') {
       widget.onClose();
@@ -348,6 +354,12 @@ class WorkspaceShellTabChipState extends State<WorkspaceShellTabChip> {
   List<TpActionMenuSpec> _tabMenuSpecs(BuildContext menuContext) {
     final l10n = menuContext.l10n;
     return [
+      if (_renamable)
+        TpActionMenuSpec.item(
+          value: 'rename',
+          icon: Icons.drive_file_rename_outline,
+          label: l10n.renameConversation,
+        ),
       if (widget.pinnable && widget.onPin != null)
         TpActionMenuSpec.item(
           value: 'pin',
@@ -398,6 +410,36 @@ class WorkspaceShellTabChipState extends State<WorkspaceShellTabChip> {
     _handleTabMenuSelection(selected);
   }
 
+  /// Renames the tab's session. Same dialog + cubit path as
+  /// [SidebarSessionTile], so `session.json` and every other surface that reads
+  /// the live title (including agent notifications) follow immediately.
+  Future<void> _showRenameDialog() async {
+    final sessionId = widget.sessionId;
+    if (sessionId == null || !mounted) return;
+    final l10n = context.l10n;
+    final repo = context.read<SessionRepository>();
+    final chatCubit = context.read<ChatCubit>();
+    AppSession? session;
+    for (final candidate in chatCubit.state.sessions) {
+      if (candidate.sessionId == sessionId) {
+        session = candidate;
+        break;
+      }
+    }
+    final name = await showTpTextPromptDialog(
+      context,
+      title: l10n.renameConversationTitle,
+      initialText:
+          session?.resolveDisplayTitle(l10n.defaultNewChatSessionTitle) ??
+          widget.title,
+      labelText: l10n.conversationName,
+      confirmLabel: l10n.save,
+    );
+    final trimmed = name?.trim() ?? '';
+    if (trimmed.isEmpty || !mounted) return;
+    await chatCubit.renameSession(repo, sessionId, trimmed);
+  }
+
   void _showTabContextMenuAtChipCenter() {
     final box = context.findRenderObject();
     if (box is! RenderBox || !box.hasSize) return;
@@ -422,8 +464,10 @@ class WorkspaceShellTabChipState extends State<WorkspaceShellTabChip> {
     final title = sessionId == null
         ? widget.title
         : context.select<ChatCubit, String>(
-            (c) =>
-                SessionRowContent.fromChatState(c.state, sessionId).titleForPaint,
+            (c) => SessionRowContent.fromChatState(
+              c.state,
+              sessionId,
+            ).titleForPaint,
           );
     final cs = Theme.of(context).colorScheme;
     final styles = TpTextStyles.of(context);
@@ -465,6 +509,10 @@ class WorkspaceShellTabChipState extends State<WorkspaceShellTabChip> {
             clipBehavior: Clip.antiAlias,
             child: InkWell(
               onTap: widget.onTap,
+              // Double-click the tab to rename, like an editor tab.
+              onDoubleTap: _renamable
+                  ? () => unawaited(_showRenameDialog())
+                  : null,
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 200),
                 child: Padding(
