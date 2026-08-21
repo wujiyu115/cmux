@@ -5138,6 +5138,12 @@ abstract class AppLocalizations {
   /// **'Open a terminal here'**
   String get pairingOpenTerminalHere;
 
+  /// No description provided for @pairingNewTerminalHere.
+  ///
+  /// In en, this message translates to:
+  /// **'New terminal'**
+  String get pairingNewTerminalHere;
+
   /// No description provided for @pairingCreate.
   ///
   /// In en, this message translates to:

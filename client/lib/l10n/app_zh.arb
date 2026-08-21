@@ -1135,6 +1135,7 @@
   "pairingRemovedUndo": "已移除 {name}",
   "pairingUndo": "撤销",
   "pairingOpenTerminalHere": "在此打开终端",
+  "pairingNewTerminalHere": "新建终端",
   "pairingCreate": "创建",
   "pairingNewWorkspace": "新建工作区",
   "pairingNewGroup": "新建分组",

@@ -2769,6 +2769,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pairingOpenTerminalHere => 'Open a terminal here';
 
   @override
+  String get pairingNewTerminalHere => 'New terminal';
+
+  @override
   String get pairingCreate => 'Create';
 
   @override

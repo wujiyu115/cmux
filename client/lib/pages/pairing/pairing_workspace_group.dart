@@ -60,10 +60,13 @@ class _PairingWorkspaceGroupState extends State<PairingWorkspaceGroup> {
               activatingKey: widget.activatingKey,
               onOpenNode: widget.onOpenNode,
             ),
-          // Nothing running here — offer to start one rather than dead-ending,
-          // since this is the only way to get a mirrorable terminal in a
-          // dormant workspace from the phone.
-          if (workspace.panes.isEmpty && _expanded)
+          // Shown whether or not something is already running: with no panes it
+          // is the only way to get a mirrorable terminal in a dormant workspace
+          // from the phone, and with panes it is the only way to add a tab —
+          // host-side `session.activate` with a null paneId opens a fresh
+          // terminal rather than reusing one, the same call the desktop's "new
+          // terminal tab" command makes.
+          if (_expanded)
             Padding(
               padding: EdgeInsets.fromLTRB(
                 context.tpSpacing.xs,
@@ -87,7 +90,12 @@ class _PairingWorkspaceGroupState extends State<PairingWorkspaceGroup> {
                 // its prototype 18/600. This one sits inside a workspace row, so
                 // it takes the terminal rank's size.
                 child: Text(
-                  l10n.pairingOpenTerminalHere,
+                  // "Open" reads as "show me the one that is there" once rows
+                  // are listed above the button, so a workspace with panes gets
+                  // the additive label instead.
+                  workspace.panes.isEmpty
+                      ? l10n.pairingOpenTerminalHere
+                      : l10n.pairingNewTerminalHere,
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w500,

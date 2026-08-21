@@ -137,6 +137,29 @@ void main() {
     expect(cubit.activated.single.paneId, isNull);
   });
 
+  testWidgets('a workspace with panes still offers a new terminal',
+      (tester) async {
+    cubit.set(
+      const PairingClientState(
+        phase: PairingClientPhase.connected,
+        activeHostName: 'Studio',
+        workspaces: [_wsA],
+      ),
+    );
+    await pump(tester);
+
+    // The group starts open because wsA has live panes; the button is there
+    // too now, with the additive label and no paneId — host-side activate with
+    // a null paneId opens a fresh tab instead of reusing one.
+    expect(find.text('New terminal'), findsOneWidget);
+    expect(find.text('Open a terminal here'), findsNothing);
+    await tester.tap(find.byKey(AppKeys.pairingOpenTerminalButton('wsA')));
+    await tester.pump();
+
+    expect(cubit.activated.single.workspaceId, 'wsA');
+    expect(cubit.activated.single.paneId, isNull);
+  });
+
   testWidgets('the connection row shows the URL that actually connected',
       (tester) async {
     cubit.set(

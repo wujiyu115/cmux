@@ -2675,6 +2675,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pairingOpenTerminalHere => '在此打开终端';
 
   @override
+  String get pairingNewTerminalHere => '新建终端';
+
+  @override
   String get pairingCreate => '创建';
 
   @override

@@ -1268,6 +1268,7 @@
   },
   "pairingUndo": "Undo",
   "pairingOpenTerminalHere": "Open a terminal here",
+  "pairingNewTerminalHere": "New terminal",
   "pairingCreate": "Create",
   "pairingNewWorkspace": "New workspace",
   "pairingNewGroup": "New group",
