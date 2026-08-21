@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:pasteboard/pasteboard.dart';
@@ -40,8 +41,11 @@ class PasteboardComposeImageClipboardReader
     if (!supported) return null;
     final bytes = await Pasteboard.image;
     if (bytes == null || bytes.isEmpty) return null;
+    // Windows' Pasteboard.image hands back a BMP file (CF_DIB → CreateBMPFile);
+    // saving that under a `.png` name makes every downstream image reader
+    // reject it, so re-encode once here — see [ensurePngBytes].
     return ComposeImageClipboardPayload(
-      bytes: Uint8List.fromList(bytes),
+      bytes: await ensurePngBytes(Uint8List.fromList(bytes)),
       extension: 'png',
     );
   }
@@ -106,3 +110,47 @@ String _normalizeClipboardPath(String raw) {
   }
   return trimmed;
 }
+
+/// Returns [bytes] as genuine PNG, re-encoding when the clipboard held
+/// something else.
+///
+/// The payload always lands in a file named `.png` ([ComposeImageClipboardPayload]
+/// carries no format of its own), so the bytes must actually *be* PNG or every
+/// reader — agent vision, image previews — chokes and the user converts by
+/// hand. On Windows the screenshot path is BMP end to end; macOS/Linux/Android
+/// already deliver PNG and take the fast pass-through. Bytes the engine cannot
+/// decode are returned unchanged rather than dropped.
+Future<Uint8List> ensurePngBytes(Uint8List bytes) async {
+  if (isPngBytes(bytes)) return bytes;
+  try {
+    final codec = await ui.instantiateImageCodec(bytes);
+    try {
+      final frame = await codec.getNextFrame();
+      try {
+        final encoded = await frame.image.toByteData(
+          format: ui.ImageByteFormat.png,
+        );
+        if (encoded != null) return encoded.buffer.asUint8List();
+      } finally {
+        frame.image.dispose();
+      }
+    } finally {
+      codec.dispose();
+    }
+  } on Object {
+    // Undecodable: keep the original bytes instead of losing the paste.
+  }
+  return bytes;
+}
+
+/// PNG signature: `0x89 P N G 0x0d 0x0a 0x1a 0x0a`.
+bool isPngBytes(Uint8List bytes) =>
+    bytes.length >= 8 &&
+    bytes[0] == 0x89 &&
+    bytes[1] == 0x50 &&
+    bytes[2] == 0x4e &&
+    bytes[3] == 0x47 &&
+    bytes[4] == 0x0d &&
+    bytes[5] == 0x0a &&
+    bytes[6] == 0x1a &&
+    bytes[7] == 0x0a;
