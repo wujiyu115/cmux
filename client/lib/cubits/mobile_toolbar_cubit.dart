@@ -219,6 +219,32 @@ class MobileToolbarCubit extends Cubit<MobileToolbarState> {
     _countTap(key.id);
   }
 
+  /// Applies an armed one-shot modifier to bytes that came from somewhere other
+  /// than [tapKey] — the mirror's terminal engine — and consumes it.
+  ///
+  /// The phone's soft keyboard writes through `TerminalEngine.output`, not
+  /// through the key caps, so without this seam tapping Ctrl and then typing `c`
+  /// sent a bare `c` and left Ctrl armed for whatever cap the user pressed next.
+  /// The toolbar has no letter caps, so this is the only path `Ctrl+<letter>`
+  /// has at all.
+  ///
+  /// Single bytes only. That stream also carries mouse reports, bracketed paste
+  /// and multi-byte UTF-8, and [encodeToolbarKey]'s escape-sequence branch would
+  /// rewrite a mouse report into a nonsense chord — a modifier armed over one of
+  /// those is consumed and dropped rather than misapplied.
+  ///
+  /// Returns the caller's own list untouched when nothing is armed, so the hot
+  /// path stays allocation-free and the caller can keep passing the engine's
+  /// buffer straight through.
+  List<int> consumeModifiers(List<int> bytes) {
+    if (!state.ctrl && !state.alt) return bytes;
+    final encoded = bytes.length == 1
+        ? encodeToolbarKey(bytes, ctrl: state.ctrl, alt: state.alt)
+        : bytes;
+    _clearModifiers();
+    return encoded;
+  }
+
   /// Paste is raw text, so modifiers do not apply and it earns no usage count
   /// (Nexterm parity). Newlines become CR or the shell never runs the line.
   Future<void> _paste() async {

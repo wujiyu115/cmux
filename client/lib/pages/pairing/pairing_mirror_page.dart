@@ -93,11 +93,10 @@ class _PairingMirrorPageState extends State<PairingMirrorPage>
     // Host → engine: snapshot then live bytes, already ordered by the host.
     final sub = cubit.activeSubscription;
     _hostOutput = sub?.output.listen(_engine.feed);
-    // Engine → host: keystrokes / paste / mouse reports become input frames.
-    _localInput = _engine.output.listen(cubit.sendInput);
 
     // Toolbar keys bypass the engine and go straight out as input frames, so
-    // they work whether or not the terminal holds focus.
+    // they work whether or not the terminal holds focus. Created before the
+    // engine's own output is wired up, because that wiring reads through it.
     _toolbar = MobileToolbarCubit(
       repository: SharedPrefsMobileToolbarRepository(
         context.read<SharedPreferences>(),
@@ -105,6 +104,16 @@ class _PairingMirrorPageState extends State<PairingMirrorPage>
       sendInput: cubit.sendInput,
     );
     _toolbar.load();
+
+    // Engine → host: keystrokes / paste / mouse reports become input frames.
+    //
+    // Routed through the toolbar so an armed Ctrl / Alt applies to the *soft
+    // keyboard* too. The key caps cover no letters, so `Ctrl+C` typed on the
+    // phone keyboard has no other way to become 0x03 — see
+    // [MobileToolbarCubit.consumeModifiers].
+    _localInput = _engine.output.listen(
+      (bytes) => cubit.sendInput(_toolbar.consumeModifiers(bytes)),
+    );
 
     _voice = context.read<VoiceInputCubit>();
     // Recognized speech goes into the composer's controller, not into cubit

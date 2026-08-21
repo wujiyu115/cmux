@@ -259,6 +259,46 @@ void main() {
     });
   });
 
+  group('consumeModifiers', () {
+    test('applies an armed Ctrl to a soft-keyboard byte and consumes it',
+        () async {
+      final cubit = build();
+      await cubit.tapKey(key('ctrl'));
+      expect(cubit.consumeModifiers([0x63]), [0x03]); // Ctrl+C
+      expect(cubit.state.ctrl, isFalse);
+      expect(cubit.consumeModifiers([0x63]), [0x63], reason: 'one-shot');
+      await cubit.close();
+    });
+
+    test('applies an armed Alt as an ESC prefix and consumes it', () async {
+      final cubit = build();
+      await cubit.tapKey(key('alt'));
+      expect(cubit.consumeModifiers([0x62]), [0x1b, 0x62]); // Alt+b
+      expect(cubit.state.alt, isFalse);
+      await cubit.close();
+    });
+
+    test('no modifier armed passes the caller list through untouched',
+        () async {
+      final cubit = build();
+      final bytes = [0x6c];
+      expect(identical(cubit.consumeModifiers(bytes), bytes), isTrue);
+      await cubit.close();
+    });
+
+    test('multi-byte frames pass through but still consume the modifier',
+        () async {
+      // The engine output also carries mouse reports, bracketed paste and UTF-8;
+      // applying Ctrl there would rewrite them into nonsense chords.
+      final cubit = build();
+      await cubit.tapKey(key('ctrl'));
+      final frame = [0x1b, 0x5b, 0x4d]; // xterm mouse report prefix
+      expect(identical(cubit.consumeModifiers(frame), frame), isTrue);
+      expect(cubit.state.ctrl, isFalse, reason: 'dropped, not carried over');
+      await cubit.close();
+    });
+  });
+
   group('composer', () {
     test('starts in key mode with Return-mode on', () async {
       final cubit = build();
