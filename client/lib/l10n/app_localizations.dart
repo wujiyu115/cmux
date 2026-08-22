@@ -5024,6 +5024,12 @@ abstract class AppLocalizations {
   /// **'Copy code'**
   String get pairingCopyCode;
 
+  /// No description provided for @pairingMirrorCopySelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get pairingMirrorCopySelection;
+
   /// No description provided for @pairingCodeCopied.
   ///
   /// In en, this message translates to:

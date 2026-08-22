@@ -1,7 +1,7 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_alacritty/flutter_alacritty.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
@@ -23,6 +23,7 @@ import '../../theme/app_typography_scale.dart';
 import '../../utils/shell_quote.dart';
 import '../../utils/ui/app_keys.dart';
 import 'mobile_toolbar/mobile_bottom_slot.dart';
+import 'mirror_selection_bar.dart';
 import 'pairing_nav_bar.dart';
 
 /// Live, interactive mirror of a desktop session.
@@ -186,6 +187,19 @@ class _PairingMirrorPageState extends State<PairingMirrorPage>
     );
   }
 
+  /// Copies the touch selection to the system clipboard and clears it.
+  ///
+  /// Empty selections are skipped rather than clobbering whatever the user had
+  /// on the clipboard. Clearing after the copy matches the desktop flow, where
+  /// a completed copy ends the selection — and on a phone it also removes the
+  /// chip, which is the only signal that the copy landed.
+  Future<void> _copySelection() async {
+    final text = _controller.readSelectionText();
+    if (text == null || text.isEmpty) return;
+    await Clipboard.setData(ClipboardData(text: text));
+    _controller.clearSelection();
+  }
+
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
@@ -255,46 +269,72 @@ class _PairingMirrorPageState extends State<PairingMirrorPage>
                 ),
               ),
               Expanded(
-                // The grid can only be a whole number of cells, so the resolver
-                // hands the sub-cell remainder back as centered padding
-                // (`viewport_resolver.dart`) — up to a cell of width split left
-                // and right, and a row of height split top and bottom. That is
-                // unavoidable; what made it *visible* is that the remainder is
-                // cleared by the engine, not by Flutter, so it took the colour
-                // from the engine's config rather than from anything painted
-                // behind it. So the colour has to be set in two places, and
-                // measuring showed both are needed: the engine's config (see
-                // [didChangeDependencies]) covers the remainder inside its
-                // surface, and this box covers the frame *outside* that surface —
-                // 23 logical rows at the top and ~14 at each side, which was
-                // still showing the Scaffold's black once the first half was
-                // fixed. Same packed RGB feeds both, so they cannot disagree.
-                child: ColoredBox(
-                  color: Color(0xFF000000 | terminalTheme.background),
-                  child: TerminalView(
-                  _engine,
-                  key: _terminalViewKey,
-                  controller: _controller,
-                  theme: terminalTheme,
-                  // Without this the view falls back to TerminalStyle.defaults(),
-                  // whose family is 'monospace' — a fontconfig generic that iOS
-                  // cannot resolve, so glyphs come from the proportional system
-                  // face while cells are sized from that same face's 'W'
-                  // advance. Narrow glyphs then float in oversized cells. The
-                  // desktop terminal has always passed this; the mirror did not.
-                  textStyle: appTerminalTextStyle(context),
-                  autofocus: true,
-                  // Zero padding so the grid fills the full phone width; the
-                  // resolver's sub-cell remainder is the only inset left.
-                  padding: EdgeInsets.zero,
-                  onPtyResize: (columns, rows) {
-                    cubit.sendResize(columns, rows);
-                    if (geometry?.cols == columns && geometry?.rows == rows) {
-                      return;
-                    }
-                    setState(() => _geometry = (cols: columns, rows: rows));
-                  },
-                  ),
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      // The grid can only be a whole number of cells, so the resolver
+                      // hands the sub-cell remainder back as centered padding
+                      // (`viewport_resolver.dart`) — up to a cell of width split left
+                      // and right, and a row of height split top and bottom. That is
+                      // unavoidable; what made it *visible* is that the remainder is
+                      // cleared by the engine, not by Flutter, so it took the colour
+                      // from the engine's config rather than from anything painted
+                      // behind it. So the colour has to be set in two places, and
+                      // measuring showed both are needed: the engine's config (see
+                      // [didChangeDependencies]) covers the remainder inside its
+                      // surface, and this box covers the frame *outside* that surface —
+                      // 23 logical rows at the top and ~14 at each side, which was
+                      // still showing the Scaffold's black once the first half was
+                      // fixed. Same packed RGB feeds both, so they cannot disagree.
+                      child: ColoredBox(
+                        color: Color(0xFF000000 | terminalTheme.background),
+                        child: TerminalView(
+                          _engine,
+                          key: _terminalViewKey,
+                          controller: _controller,
+                          theme: terminalTheme,
+                          // Without this the view falls back to TerminalStyle.defaults(),
+                          // whose family is 'monospace' — a fontconfig generic that iOS
+                          // cannot resolve, so glyphs come from the proportional system
+                          // face while cells are sized from that same face's 'W'
+                          // advance. Narrow glyphs then float in oversized cells. The
+                          // desktop terminal has always passed this; the mirror did not.
+                          textStyle: appTerminalTextStyle(context),
+                          autofocus: true,
+                          // Zero padding so the grid fills the full phone width; the
+                          // resolver's sub-cell remainder is the only inset left.
+                          padding: EdgeInsets.zero,
+                          onPtyResize: (columns, rows) {
+                            cubit.sendResize(columns, rows);
+                            if (geometry?.cols == columns &&
+                                geometry?.rows == rows) {
+                              return;
+                            }
+                            setState(() => _geometry = (
+                              cols: columns,
+                              rows: rows,
+                            ));
+                          },
+                        ),
+                      ),
+                    ),
+                    // A phone has no Ctrl+Shift+C and no right-click menu, so the
+                    // touch selection a long press starts needs its own exit: the
+                    // chip appears while a selection is live and copies it out.
+                    ListenableBuilder(
+                      listenable: _controller,
+                      builder: (context, _) {
+                        if (!_controller.selectionActive) {
+                          return const SizedBox.shrink();
+                        }
+                        return Positioned(
+                          top: 8,
+                          right: 8,
+                          child: MirrorSelectionBar(onCopy: _copySelection),
+                        );
+                      },
+                    ),
+                  ],
                 ),
               ),
               MultiBlocProvider(

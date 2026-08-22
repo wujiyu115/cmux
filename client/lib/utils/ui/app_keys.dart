@@ -63,6 +63,7 @@ class AppKeys {
   static const pairingConnectionLog = Key('pairing-connection-log');
   static const pairingSessionListPage = Key('pairing-session-list-page');
   static const pairingMirrorPage = Key('pairing-mirror-page');
+  static const pairingMirrorCopyButton = Key('pairing-mirror-copy-button');
   static const pairingScanCtaButton = Key('pairing-scan-cta');
   static const pairingConnectButton = Key('pairing-connect-button');
   static const pairingStepRail = Key('pairing-step-rail');

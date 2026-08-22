@@ -2698,6 +2698,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pairingCopyCode => 'Copy code';
 
   @override
+  String get pairingMirrorCopySelection => 'Copy';
+
+  @override
   String get pairingCodeCopied => 'Pairing code copied.';
 
   @override

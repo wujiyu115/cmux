@@ -1228,6 +1228,7 @@
   "pairingNoQrInImage": "No pairing QR code found in that image.",
   "pairingManualCodeLabel": "Or copy this pairing code into the phone:",
   "pairingCopyCode": "Copy code",
+  "pairingMirrorCopySelection": "Copy",
   "pairingCodeCopied": "Pairing code copied.",
   "pairingCodeTtlHint": "This code stays valid for about 15 minutes. If pairing fails with an invalid-token error, tap New code and pair again.",
   "pairingLastConnected": "Last connected {time}",

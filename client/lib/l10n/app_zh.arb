@@ -1116,6 +1116,7 @@
   "pairingNoQrInImage": "该图片中未找到配对二维码。",
   "pairingManualCodeLabel": "或将此配对码复制到手机上：",
   "pairingCopyCode": "复制配对码",
+  "pairingMirrorCopySelection": "复制",
   "pairingCodeCopied": "配对码已复制。",
   "pairingCodeTtlHint": "配对码约 15 分钟内有效。若配对报 invalid token，请点“刷新配对码”后重新配对。",
   "pairingLastConnected": "上次连接 {time}",

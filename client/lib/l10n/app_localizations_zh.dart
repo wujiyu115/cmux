@@ -2611,6 +2611,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pairingCopyCode => '复制配对码';
 
   @override
+  String get pairingMirrorCopySelection => '复制';
+
+  @override
   String get pairingCodeCopied => '配对码已复制。';
 
   @override
