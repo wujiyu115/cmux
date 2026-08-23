@@ -10,6 +10,7 @@ import 'agent_notice_message.dart';
 import 'e2ee_channel.dart';
 import 'pairing_crypto.dart';
 import 'pairing_frames.dart';
+import 'pairing_git_view.dart';
 import 'pairing_ports.dart';
 import 'pairing_upload_sender.dart';
 import 'ws_transport.dart';
@@ -746,6 +747,36 @@ class PairingClient {
             if (d is String) d,
       ],
     );
+  }
+
+  /// Changed files in the repository the mirrored pane [sub] is sitting in.
+  ///
+  /// Keyed by the live subscription, not by a path: the host resolves the
+  /// repository (and the machine it lives on) from the pane itself, so the phone
+  /// never names a directory. See [PairingGitChanges].
+  ///
+  /// The budget is above [_rpc]'s default because `git status` on an SSH target
+  /// is a remote process launch, and on a large repo it is not instant.
+  Future<PairingGitChanges> gitChanges(int sub) async {
+    final result = await _rpc(
+      'git.changes',
+      {'sub': sub},
+      const Duration(seconds: 20),
+    );
+    return PairingGitChanges.fromJson(result);
+  }
+
+  /// Unified diff of [path] (working tree vs HEAD) in that same repository.
+  ///
+  /// [path] must be one the host advertised in the matching [gitChanges] call —
+  /// the host refuses anything else, so callers must not synthesize paths.
+  Future<String> gitDiff({required int sub, required String path}) async {
+    final result = await _rpc(
+      'git.diff',
+      {'sub': sub, 'path': path},
+      const Duration(seconds: 20),
+    );
+    return result['diff'] is String ? result['diff'] as String : '';
   }
 
   /// Asks the desktop to create a workspace over [folderPath]; returns the new

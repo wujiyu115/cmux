@@ -59,6 +59,7 @@ import '../services/pairing/device_registry.dart';
 import '../services/pairing/lan_pairing_server.dart';
 import '../services/pairing/pairing_crypto.dart';
 import '../services/pairing/pairing_host_dir_browser.dart';
+import '../services/pairing/pairing_git_view.dart';
 import '../services/pairing/upload_destination.dart';
 import '../services/pairing/pairing_workspace_index.dart';
 import '../services/pairing/session_catalog.dart';
@@ -76,6 +77,7 @@ import '../services/commands/shortcuts_ui_commands.dart';
 import '../services/commands/workspace_search_command_registrar.dart';
 import '../pages/home_workspace/workspace_chrome_commands.dart';
 import '../services/app/connection_mode_service.dart';
+import '../services/storage/runtime_context.dart';
 import '../services/storage/runtime_context_resolver.dart';
 import '../services/storage/runtime_context_registry.dart';
 import '../services/storage/home_target_controller.dart';
@@ -95,6 +97,8 @@ import '../services/ssh/ssh_profile_connection_coordinator.dart';
 import '../services/terminal/terminal_transport_factory.dart';
 import '../services/file_tree/workspace_file_tree_store.dart';
 import '../services/git/git_repo_store.dart';
+import '../services/git/git_service.dart';
+import '../models/git_status.dart';
 import '../services/workspace/workspace_tools_scope_registry.dart';
 import '../services/workspace/workspace_run_registry.dart';
 import '../services/run/workspace_run_platform_factory.dart';
@@ -1000,27 +1004,34 @@ Future<AppShell> buildAppShell({
       );
     }
 
-    // Phone → desktop image upload. Resolving the pane's machine lives here
-    // rather than in the pairing layer: this is the only place that has both
-    // the session repository and the runtime-context registry.
+    // Which machine a mirrored pane's cwd lives on. Resolving it lives here
+    // rather than in the pairing layer: this is the only place that has both the
+    // session repository and the runtime-context registry.
+    Future<RuntimeContext> pairingPaneContext(
+      String workspaceId,
+      String cwd,
+    ) async {
+      final workspaces = await sessionRepo.loadWorkspacesIndex();
+      final workspace = workspaces
+          .where((w) => w.workspaceId == workspaceId)
+          .firstOrNull;
+      final folders = workspace?.folders ?? const <WorkspaceFolder>[];
+      // matchSubpaths so a pane launched in a subdirectory of a folder still
+      // resolves to that folder's target.
+      final targetId =
+          targetIdForFolderPaths(folders, [cwd], matchSubpaths: true) ??
+          (folders.isEmpty ? RuntimeTarget.localId : folders.first.targetId);
+      return sessionLifecycleService.resolveWorkContextForTargetId(targetId);
+    }
+
+    // Phone → desktop image upload.
     Future<String> pairingUploadSink({
       required String workspaceId,
       required String cwd,
       required String filename,
       required List<int> bytes,
     }) async {
-      final workspaces = await sessionRepo.loadWorkspacesIndex();
-      final workspace = workspaces
-          .where((w) => w.workspaceId == workspaceId)
-          .firstOrNull;
-      final folders = workspace?.folders ?? const <WorkspaceFolder>[];
-      // Which machine owns this cwd. matchSubpaths so a pane launched in a
-      // subdirectory of a folder still resolves to that folder's target.
-      final targetId =
-          targetIdForFolderPaths(folders, [cwd], matchSubpaths: true) ??
-          (folders.isEmpty ? RuntimeTarget.localId : folders.first.targetId);
-      final context = await sessionLifecycleService
-          .resolveWorkContextForTargetId(targetId);
+      final context = await pairingPaneContext(workspaceId, cwd);
       final fs = context.filesystem;
       await fs.ensureDir(cwd);
       final destination = await resolveUploadDestination(
@@ -1030,6 +1041,71 @@ Future<AppShell> buildAppShell({
       );
       await fs.writeBytes(destination, bytes);
       return destination;
+    }
+
+    // Phone → desktop "what changed". `GitService.forContext` already speaks
+    // local / WSL / SSH, so the pane's machine is the only thing to resolve.
+    //
+    // The repository root is resolved explicitly rather than reusing the pane's
+    // cwd: `GitFileChange.path` is relative to the root, and a pane sitting in a
+    // subdirectory would otherwise have every diff path resolved against the
+    // wrong base.
+    Future<({GitService git, String root})?> pairingGitRepo(
+      String workspaceId,
+      String cwd,
+    ) async {
+      final context = await pairingPaneContext(workspaceId, cwd);
+      final git = GitService.forContext(context);
+      final root = await git.repoRoot(cwd);
+      if (root == null || root.isEmpty) return null;
+      return (git: git, root: root);
+    }
+
+    Future<PairingGitChanges> pairingGitChanges({
+      required String workspaceId,
+      required String cwd,
+    }) async {
+      final repo = await pairingGitRepo(workspaceId, cwd);
+      if (repo == null) return PairingGitChanges.notARepository;
+      final status = await repo.git.status(repo.root);
+      if (!status.isRepository) return PairingGitChanges.notARepository;
+      // Staged wins on a path present in both areas: the phone's list is "what
+      // changed against HEAD", and for a file staged-added then edited again
+      // that is an addition, not a modification. Dropping the duplicate matters
+      // more than which letter it keeps — a partly-staged file is in both.
+      final byPath = <String, GitFileChange>{};
+      for (final change in [...status.staged, ...status.unstaged]) {
+        byPath.putIfAbsent(change.path, () => change);
+      }
+      final paths = byPath.keys.toList()
+        ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+      return PairingGitChanges(
+        isRepository: true,
+        branch: status.branch ?? '',
+        files: [
+          for (final path in paths)
+            PairingGitFile(
+              path: path,
+              badge: byPath[path]!.badge,
+              untracked: byPath[path]!.kind == GitChangeKind.untracked,
+            ),
+        ],
+      );
+    }
+
+    Future<String> pairingGitDiff({
+      required String workspaceId,
+      required String cwd,
+      required String path,
+      required bool untracked,
+    }) async {
+      final repo = await pairingGitRepo(workspaceId, cwd);
+      if (repo == null) return '';
+      return repo.git.diffAgainstHead(
+        repo.root,
+        path,
+        untracked: untracked,
+      );
     }
 
     LanPairingServer serverFactory() => LanPairingServer(
@@ -1045,6 +1121,8 @@ Future<AppShell> buildAppShell({
       groupCreator: pairingCreateGroup,
       groupIndex: pairingGroupIndex,
       targetIndex: pairingTargetIndex,
+      gitChanges: pairingGitChanges,
+      gitDiff: pairingGitDiff,
       agentNotices: agentNoticeWire,
     );
     pairingHostCubit = PairingHostCubit(

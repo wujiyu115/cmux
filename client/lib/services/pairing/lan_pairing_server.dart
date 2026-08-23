@@ -5,6 +5,7 @@ import 'agent_notice_message.dart';
 import 'device_registry.dart';
 import 'pairing_connection.dart';
 import 'pairing_crypto.dart';
+import 'pairing_git_view.dart';
 import 'pairing_offer.dart';
 import 'pairing_ports.dart';
 import 'pairing_upload_receiver.dart';
@@ -33,6 +34,8 @@ class LanPairingServer {
     PairingGroupCreator? groupCreator,
     PairingGroupIndexProvider? groupIndex,
     PairingTargetIndexProvider? targetIndex,
+    PairingGitChangesProvider? gitChanges,
+    PairingGitDiffProvider? gitDiff,
     Stream<PairingAgentNotice>? agentNotices,
     PairingOfferWindow? offerWindow,
     List<int> ports = kPairingPortLadder,
@@ -50,6 +53,8 @@ class LanPairingServer {
        _groupCreator = groupCreator,
        _groupIndex = groupIndex,
        _targetIndex = targetIndex,
+       _gitChanges = gitChanges,
+       _gitDiff = gitDiff,
        offerWindow = offerWindow ?? PairingOfferWindow();
 
   /// Ports [ensureStarted] tries in order. `[0]` means "any", which tests use to
@@ -68,6 +73,8 @@ class LanPairingServer {
   final PairingGroupCreator? _groupCreator;
   final PairingGroupIndexProvider? _groupIndex;
   final PairingTargetIndexProvider? _targetIndex;
+  final PairingGitChangesProvider? _gitChanges;
+  final PairingGitDiffProvider? _gitDiff;
 
   /// Broadcast feed of agent-attention edges, handed to every connection so each
   /// authenticated phone can pop its own local notification.
@@ -170,6 +177,8 @@ class LanPairingServer {
       groupCreator: _groupCreator,
       groupIndex: _groupIndex,
       targetIndex: _targetIndex,
+      gitChanges: _gitChanges,
+      gitDiff: _gitDiff,
       agentNotices: _agentNotices,
       onClosed: () => _connections.remove(connection),
     );

@@ -64,6 +64,9 @@ class AppKeys {
   static const pairingSessionListPage = Key('pairing-session-list-page');
   static const pairingMirrorPage = Key('pairing-mirror-page');
   static const pairingMirrorCopyButton = Key('pairing-mirror-copy-button');
+  static const pairingMirrorChangesButton = Key('pairing-mirror-changes-button');
+  static const pairingMirrorChangesSheet = Key('pairing-mirror-changes-sheet');
+  static const pairingMirrorDiffPage = Key('pairing-mirror-diff-page');
   static const pairingScanCtaButton = Key('pairing-scan-cta');
   static const pairingConnectButton = Key('pairing-connect-button');
   static const pairingStepRail = Key('pairing-step-rail');

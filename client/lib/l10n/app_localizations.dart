@@ -5324,6 +5324,30 @@ abstract class AppLocalizations {
   /// **'Choose a folder on {target}'**
   String pairingBrowseTitleOn(String target);
 
+  /// No description provided for @pairingChangesFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not read changes from the desktop.'**
+  String get pairingChangesFailed;
+
+  /// No description provided for @pairingChangesBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'on {branch}'**
+  String pairingChangesBranch(String branch);
+
+  /// No description provided for @pairingDiffEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No diff for this file.'**
+  String get pairingDiffEmpty;
+
+  /// No description provided for @pairingDiffFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load the diff.'**
+  String get pairingDiffFailed;
+
   /// No description provided for @pairingNewWorkspaceTargetLabel.
   ///
   /// In en, this message translates to:

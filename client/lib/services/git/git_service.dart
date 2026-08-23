@@ -54,6 +54,23 @@ class GitService {
     return result.stdout;
   }
 
+  /// Work-tree root containing [dir], or null when [dir] is outside a repo.
+  ///
+  /// Needed whenever the starting directory is not itself the repository root:
+  /// [GitFileChange.path] is relative to the *root*, so passing a subdirectory
+  /// as `dir` to [diff] / [diffAgainstHead] would resolve those paths against
+  /// the wrong base. A terminal pane's cwd is routinely such a subdirectory.
+  Future<String?> repoRoot(String dir) async {
+    if (!await isAvailable) return null;
+    final result = await _runner.runInDirectory(dir, [
+      'rev-parse',
+      '--show-toplevel',
+    ]);
+    if (result.exitCode != 0) return null;
+    final root = result.stdout.trim();
+    return root.isEmpty ? null : root;
+  }
+
   /// Parses `git status --porcelain=v2 --branch` into a [GitRepoStatus].
   ///
   /// Returns [GitRepoStatus.notARepository] when [dir] is outside a work tree.

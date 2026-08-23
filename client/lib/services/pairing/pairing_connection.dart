@@ -8,6 +8,7 @@ import 'device_registry.dart';
 import 'e2ee_channel.dart';
 import 'pairing_crypto.dart';
 import 'pairing_frames.dart';
+import 'pairing_git_view.dart';
 import 'pairing_offer.dart';
 import 'pairing_rpc_handler.dart';
 import 'pairing_upload_receiver.dart';
@@ -37,6 +38,8 @@ class PairingConnection {
     PairingGroupCreator? groupCreator,
     PairingGroupIndexProvider? groupIndex,
     PairingTargetIndexProvider? targetIndex,
+    PairingGitChangesProvider? gitChanges,
+    PairingGitDiffProvider? gitDiff,
     Stream<PairingAgentNotice>? agentNotices,
     void Function()? onClosed,
   }) : _transport = transport,
@@ -53,6 +56,8 @@ class PairingConnection {
        _groupCreator = groupCreator,
        _groupIndex = groupIndex,
        _targetIndex = targetIndex,
+       _gitChanges = gitChanges,
+       _gitDiff = gitDiff,
        _agentNotices = agentNotices,
        _onClosed = onClosed;
 
@@ -70,6 +75,8 @@ class PairingConnection {
   final PairingGroupCreator? _groupCreator;
   final PairingGroupIndexProvider? _groupIndex;
   final PairingTargetIndexProvider? _targetIndex;
+  final PairingGitChangesProvider? _gitChanges;
+  final PairingGitDiffProvider? _gitDiff;
 
   /// Broadcast feed of desktop agent-attention edges. Shared by every
   /// connection, so each authenticated phone gets its own subscription — the
@@ -190,6 +197,8 @@ class PairingConnection {
       groupCreator: _groupCreator,
       groupIndex: _groupIndex,
       targetIndex: _targetIndex,
+      gitChanges: _gitChanges,
+      gitDiff: _gitDiff,
     );
     _catalogChanges = _catalog.changes.listen(
       (_) => _sendEncryptedJson({'method': 'session.changed'}),

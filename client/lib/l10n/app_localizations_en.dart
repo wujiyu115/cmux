@@ -2871,6 +2871,20 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get pairingChangesFailed => 'Could not read changes from the desktop.';
+
+  @override
+  String pairingChangesBranch(String branch) {
+    return 'on $branch';
+  }
+
+  @override
+  String get pairingDiffEmpty => 'No diff for this file.';
+
+  @override
+  String get pairingDiffFailed => 'Could not load the diff.';
+
+  @override
   String get pairingNewWorkspaceTargetLabel => 'Machine';
 
   @override

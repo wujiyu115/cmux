@@ -2772,6 +2772,20 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get pairingChangesFailed => '无法从桌面端读取更改。';
+
+  @override
+  String pairingChangesBranch(String branch) {
+    return '位于 $branch';
+  }
+
+  @override
+  String get pairingDiffEmpty => '该文件没有差异。';
+
+  @override
+  String get pairingDiffFailed => '无法加载差异。';
+
+  @override
   String get pairingNewWorkspaceTargetLabel => '机器';
 
   @override

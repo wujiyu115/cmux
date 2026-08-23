@@ -1313,6 +1313,13 @@
       }
     }
   },
+  "pairingChangesFailed": "Could not read changes from the desktop.",
+  "pairingChangesBranch": "on {branch}",
+  "@pairingChangesBranch": {
+    "placeholders": { "branch": { "type": "String" } }
+  },
+  "pairingDiffEmpty": "No diff for this file.",
+  "pairingDiffFailed": "Could not load the diff.",
   "pairingNewWorkspaceTargetLabel": "Machine",
   "mobileToolbarHideKeyboard": "Hide keyboard",
   "mobileToolbarCustomize": "Customize keys",

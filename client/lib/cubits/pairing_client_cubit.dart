@@ -8,6 +8,7 @@ import '../repositories/pairing_settings_repository.dart';
 import '../services/pairing/agent_notice_message.dart';
 import '../services/pairing/local_lan_ip.dart';
 import '../services/pairing/pairing_client.dart';
+import '../services/pairing/pairing_git_view.dart';
 import '../services/pairing/pairing_offer.dart';
 import '../services/pairing/pairing_upload_sender.dart';
 
@@ -766,6 +767,44 @@ class PairingClientCubit extends Cubit<PairingClientState> {
     if (sub != null) _client?.sendResize(sub.sub, cols, rows);
   }
 
+  /// Changed files in the repository the mirrored pane sits in, or null when
+  /// nothing is mirrored. Errors are logged and surface as null so the sheet can
+  /// say "couldn't read" without a crash on a repo-less pane.
+  Future<PairingGitChanges?> gitChanges() async {
+    final sub = _activeSubscription;
+    final client = _client;
+    if (sub == null || client == null) return null;
+    try {
+      return await client.gitChanges(sub.sub);
+    } on Object catch (e) {
+      _appendLog('git.changes failed: $e');
+      return null;
+    }
+  }
+
+  /// Unified diff of [path], or null when the request failed. [path] must come
+  /// from the [gitChanges] list — the host refuses anything else.
+  Future<String?> gitDiff(String path) async {
+    final sub = _activeSubscription;
+    final client = _client;
+    if (sub == null || client == null) return null;
+    try {
+      return await client.gitDiff(sub: sub.sub, path: path);
+    } on Object catch (e) {
+      _appendLog('git.diff failed: $e');
+      return null;
+    }
+  }
+
+  /// Fires when the mirrored pane's agent just finished a turn, which is the one
+  /// moment its changed-file list is worth re-reading.
+  ///
+  /// A hint rather than the list itself: the changes view is only mounted some of
+  /// the time, and fetching on every notice would run `git status` on the host
+  /// for a sheet nobody has open.
+  Stream<void> get gitRefreshHints => _gitRefreshHints.stream;
+  final _gitRefreshHints = StreamController<void>.broadcast();
+
   /// Ships [bytes] to the host, which writes them into the mirrored pane's
   /// working directory and returns the absolute path it used.
   Future<String> uploadImage({
@@ -812,9 +851,23 @@ class PairingClientCubit extends Cubit<PairingClientState> {
     _sessionsChangedSub = client.sessionsChanged.listen(
       (_) => unawaited(refreshWorkspaces()),
     );
-    _agentNoticeSub = client.agentNotices.listen(_onAgentNotice);
+    _agentNoticeSub = client.agentNotices.listen(_onNotice);
     _disconnectedSub = client.disconnected.listen((_) => _onDisconnected());
     return client;
+  }
+
+  /// Hands the notice to the presenter, and — when it is the mirrored pane's own
+  /// agent going idle — nudges the changes view to re-read.
+  ///
+  /// `waiting`/`interrupted` deliberately do not nudge: mid-turn the working tree
+  /// is whatever the agent has written so far, so refreshing then shows a
+  /// half-finished edit as if it were the result.
+  void _onNotice(PairingAgentNotice notice) {
+    _onAgentNotice(notice);
+    if (notice.kind != PairingAgentNoticeKind.done) return;
+    if (notice.catalogId == null) return;
+    if (notice.catalogId != state.activeCatalogId) return;
+    if (!_gitRefreshHints.isClosed) _gitRefreshHints.add(null);
   }
 
   void _appendLog(String message) {
@@ -880,6 +933,7 @@ class PairingClientCubit extends Cubit<PairingClientState> {
   Future<void> close() async {
     _stopReconnecting();
     await _disposeClient();
+    await _gitRefreshHints.close();
     return super.close();
   }
 }

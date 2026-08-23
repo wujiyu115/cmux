@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import '../terminal/terminal_session.dart';
 import 'pairing_frames.dart';
+import 'pairing_git_view.dart';
 import 'pairing_upload_receiver.dart';
 import 'pairing_workspace_index.dart';
 import 'session_catalog.dart';
@@ -21,6 +22,17 @@ class _Subscription {
   StreamSubscription<Uint8List>? listener;
   final _batch = BytesBuilder(copy: false);
   Timer? flushTimer;
+
+  /// Paths last advertised by `git.changes` on this subscription, mapped to
+  /// whether git considers them untracked.
+  ///
+  /// This is the authorization list for `git.diff`: the phone may only ask for a
+  /// diff of a path the host itself just offered. Without it, `git.diff` would
+  /// accept any relative path and turn a paired phone into an arbitrary-file
+  /// reader (`../../.ssh/id_rsa` is a valid argument to `git diff --no-index`).
+  /// Per-subscription rather than per-connection so leaving a mirror drops its
+  /// list with it.
+  var gitFiles = const <String, bool>{};
 }
 
 /// Per-connection JSON-RPC + terminal I/O dispatcher (runs *inside* the E2EE
@@ -28,7 +40,8 @@ class _Subscription {
 /// tears every listener down so a dropped socket leaks nothing.
 ///
 /// Requests: `session.list`, `terminal.subscribe|unsubscribe|resize`,
-/// `upload.begin`, `upload.commit`, `ping`. Binary [InputFrame]s carry
+/// `git.changes`, `git.diff`, `upload.begin`, `upload.commit`, `ping`. Binary
+/// [InputFrame]s carry
 /// `terminal.input`; binary [UploadFrame]s carry image chunks (`_onUploadChunk`
 /// acks each accepted one). Output is pushed as batched binary frames with a
 /// monotonic `seq`, preceded on subscribe by one snapshot.
@@ -45,6 +58,8 @@ class PairingRpcHandler {
     PairingGroupCreator? groupCreator,
     PairingGroupIndexProvider? groupIndex,
     PairingTargetIndexProvider? targetIndex,
+    PairingGitChangesProvider? gitChanges,
+    PairingGitDiffProvider? gitDiff,
     Duration activateTimeout = const Duration(seconds: 8),
     Duration activatePollInterval = const Duration(milliseconds: 40),
     int uploadMaxBytes = 25 * 1024 * 1024,
@@ -62,6 +77,8 @@ class PairingRpcHandler {
        _groupCreator = groupCreator,
        _groupIndex = groupIndex,
        _targetIndex = targetIndex,
+       _gitChanges = gitChanges,
+       _gitDiff = gitDiff,
        _activateTimeout = activateTimeout,
        _activatePollInterval = activatePollInterval,
        _uploads =
@@ -82,6 +99,8 @@ class PairingRpcHandler {
   final PairingGroupCreator? _groupCreator;
   final PairingGroupIndexProvider? _groupIndex;
   final PairingTargetIndexProvider? _targetIndex;
+  final PairingGitChangesProvider? _gitChanges;
+  final PairingGitDiffProvider? _gitDiff;
   final Duration _activateTimeout;
   final Duration _activatePollInterval;
   final PairingUploadReceiver _uploads;
@@ -134,6 +153,10 @@ class PairingRpcHandler {
       case 'terminal.resize':
         _resize(params);
         _replyResult(id, const {'ok': true});
+      case 'git.changes':
+        unawaited(_gitChangesFor(id, params));
+      case 'git.diff':
+        unawaited(_gitDiffFor(id, params));
       case 'upload.begin':
         _uploadBegin(id, params);
       case 'upload.commit':
@@ -449,6 +472,94 @@ class PairingRpcHandler {
       'method': 'terminal.closed',
       'params': {'sub': sub, 'reason': reason},
     }));
+  }
+
+  /// The mirrored pane behind [sub]: the workspace that owns it and the
+  /// directory it is sitting in. Null when the phone names a subscription this
+  /// connection does not have, or one whose catalog entry has since gone.
+  ({String workspaceId, String cwd})? _paneOf(Object? sub) {
+    final record = sub is int ? _subs[sub] : null;
+    if (record == null) return null;
+    final entry = _catalog.resolve(record.catalogId);
+    if (entry == null) return null;
+    return (
+      workspaceId: entry.ref.workspaceId,
+      cwd: record.session.runtimeTarget.workingDirectory,
+    );
+  }
+
+  /// Changed files in the repository the mirrored pane is sitting in, so the
+  /// phone can review what an agent did without leaving the terminal.
+  ///
+  /// The pane — not a phone-supplied path — decides which repository this is;
+  /// see [PairingGitChangesProvider].
+  Future<void> _gitChangesFor(Object? id, Map<String, Object?> params) async {
+    final provider = _gitChanges;
+    if (provider == null) {
+      _replyError(id, 'git.changes unsupported');
+      return;
+    }
+    final sub = params['sub'];
+    final pane = _paneOf(sub);
+    if (pane == null) {
+      _replyError(id, 'git.changes failed: no such subscription');
+      return;
+    }
+    PairingGitChanges changes;
+    try {
+      changes = await provider(
+        workspaceId: pane.workspaceId,
+        cwd: pane.cwd,
+      );
+    } on Object catch (e) {
+      _replyError(id, 'git.changes failed: $e');
+      return;
+    }
+    if (_disposed) return;
+    // Recorded before replying so a phone that pipelines its first `git.diff`
+    // behind this response cannot lose the race against its own authorization.
+    _subs[sub as int]?.gitFiles = {
+      for (final file in changes.files) file.path: file.untracked,
+    };
+    _replyResult(id, changes.toJson());
+  }
+
+  /// Unified diff (working tree vs HEAD) of one path from the list this
+  /// subscription was last given. An unknown path is refused rather than
+  /// forwarded — see [_Subscription.gitFiles].
+  Future<void> _gitDiffFor(Object? id, Map<String, Object?> params) async {
+    final provider = _gitDiff;
+    if (provider == null) {
+      _replyError(id, 'git.diff unsupported');
+      return;
+    }
+    final sub = params['sub'];
+    final path = params['path'];
+    final record = sub is int ? _subs[sub] : null;
+    final pane = _paneOf(sub);
+    if (record == null || pane == null || path is! String) {
+      _replyError(id, 'git.diff failed: no such subscription');
+      return;
+    }
+    final untracked = record.gitFiles[path];
+    if (untracked == null) {
+      _replyError(id, 'git.diff failed: path not in changes');
+      return;
+    }
+    String diff;
+    try {
+      diff = await provider(
+        workspaceId: pane.workspaceId,
+        cwd: pane.cwd,
+        path: path,
+        untracked: untracked,
+      );
+    } on Object catch (e) {
+      _replyError(id, 'git.diff failed: $e');
+      return;
+    }
+    if (_disposed) return;
+    _replyResult(id, {'diff': diff});
   }
 
   /// Upload replies carry success in the *result* envelope rather than the

@@ -23,6 +23,7 @@ import '../../theme/app_typography_scale.dart';
 import '../../utils/shell_quote.dart';
 import '../../utils/ui/app_keys.dart';
 import 'mobile_toolbar/mobile_bottom_slot.dart';
+import 'mirror_changes_sheet.dart';
 import 'mirror_selection_bar.dart';
 import 'pairing_nav_bar.dart';
 
@@ -52,6 +53,15 @@ class _PairingMirrorPageState extends State<PairingMirrorPage>
   /// Last theme handed to the engine, so a rebuild that changed nothing about the
   /// colours does not re-enter the Rust side.
   TerminalTheme? _appliedTheme;
+
+  /// Number of changed files in the mirrored pane's repository, or null when it
+  /// is unknown (not a repo, host too old, request failed).
+  ///
+  /// Read once on open and then only when the pane's agent finishes a turn: each
+  /// read is a `git status` on the host, and between turns the answer does not
+  /// change on its own.
+  final _changeCount = ValueNotifier<int?>(null);
+  StreamSubscription<void>? _changeHints;
 
   /// Turns the IME animation's per-frame insets into one PTY resize.
   late final _keyboardHold = KeyboardInsetPtyHold(
@@ -135,6 +145,17 @@ class _PairingMirrorPageState extends State<PairingMirrorPage>
         '${shellQuotePath(path)} ',
       );
     });
+
+    _changeHints = cubit.gitRefreshHints.listen((_) => _refreshChangeCount());
+    unawaited(_refreshChangeCount());
+  }
+
+  Future<void> _refreshChangeCount() async {
+    final changes = await context.read<PairingClientCubit>().gitChanges();
+    if (!mounted) return;
+    _changeCount.value = changes == null || !changes.isRepository
+        ? null
+        : changes.files.length;
   }
 
   /// Reconfigures the engine whenever the resolved terminal theme changes.
@@ -216,6 +237,8 @@ class _PairingMirrorPageState extends State<PairingMirrorPage>
     // path after this page is torn down, and that path must not be written into
     // an already-disposed controller — so cancel before _composerText.dispose().
     _uploadPaths?.cancel();
+    _changeHints?.cancel();
+    _changeCount.dispose();
     _voice.stopListening();
     _controller.dispose();
     _engine.dispose();
@@ -255,9 +278,22 @@ class _PairingMirrorPageState extends State<PairingMirrorPage>
                 builder: (context, title, _) => PairingNavBar(
                   title: title,
                   onBack: cubit.leaveMirror,
-                  trailing: geometry == null
-                      ? null
-                      : Text(
+                  // Changed files are reachable from *here* rather than only
+                  // from the workspace list: the reader is watching an agent
+                  // work in this terminal, and leaving the mirror to see what it
+                  // touched is exactly the trip worth avoiding.
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ValueListenableBuilder<int?>(
+                        valueListenable: _changeCount,
+                        builder: (context, count, _) => MirrorChangesAction(
+                          count: count,
+                          onTap: () => showMirrorChangesSheet(context, cubit),
+                        ),
+                      ),
+                      if (geometry != null)
+                        Text(
                           '${geometry.cols}×${geometry.rows}',
                           textAlign: TextAlign.right,
                           style: appMonoTextStyle(
@@ -266,6 +302,8 @@ class _PairingMirrorPageState extends State<PairingMirrorPage>
                             color: cs.onSurfaceVariant,
                           ),
                         ),
+                    ],
+                  ),
                 ),
               ),
               Expanded(
