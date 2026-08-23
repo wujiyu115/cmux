@@ -47,7 +47,7 @@ class ConnectedThemeColorPresetPicker extends StatelessWidget {
   }
 }
 
-class ThemeColorPresetPicker extends StatelessWidget {
+class ThemeColorPresetPicker extends StatefulWidget {
   const ThemeColorPresetPicker({
     required this.selected,
     required this.onSelect,
@@ -63,30 +63,101 @@ class ThemeColorPresetPicker extends StatelessWidget {
   final CmuxTerminalTheme? terminalTheme;
 
   @override
+  State<ThemeColorPresetPicker> createState() => _ThemeColorPresetPickerState();
+}
+
+class _ThemeColorPresetPickerState extends State<ThemeColorPresetPicker> {
+  /// Width of the fade applied to whichever edge still hides chips.
+  static const double _fadeWidth = 20;
+
+  bool _fadeLeading = false;
+  bool _fadeTrailing = false;
+  bool _syncScheduled = false;
+
+  /// `reverse: true` anchors offset 0 at the right edge, so the pixels still
+  /// hidden past the left edge are whatever is left of [maxScrollExtent], and
+  /// the ones hidden past the right edge are [pixels] itself.
+  void _syncFades(ScrollMetrics metrics) {
+    final leading = metrics.maxScrollExtent - metrics.pixels > 0.5;
+    final trailing = metrics.pixels > 0.5;
+    if (leading == _fadeLeading && trailing == _fadeTrailing) return;
+    // Metrics notifications are dispatched from the viewport's layout pass, so
+    // defer the rebuild instead of calling setState() mid-layout.
+    if (_syncScheduled) return;
+    _syncScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _syncScheduled = false;
+      if (!mounted) return;
+      setState(() {
+        _fadeLeading = leading;
+        _fadeTrailing = trailing;
+      });
+    });
+  }
+
+  Shader _fadeShader(Rect bounds) {
+    const opaque = Color(0xFF000000);
+    const clear = Color(0x00000000);
+    final inset = (_fadeWidth / bounds.width).clamp(0.0, 0.5);
+    return LinearGradient(
+      begin: Alignment.centerLeft,
+      end: Alignment.centerRight,
+      colors: [
+        _fadeLeading ? clear : opaque,
+        opaque,
+        opaque,
+        _fadeTrailing ? clear : opaque,
+      ],
+      stops: [0, inset, 1 - inset, 1],
+    ).createShader(bounds);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return Align(
-      alignment: Alignment.centerRight,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        reverse: true,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (final id in kThemeColorPresetIds)
-              Padding(
-                padding: const EdgeInsets.only(left: 8),
-                child: RepaintBoundary(
-                  child: ThemeColorPresetChip(
-                    id: id,
-                    label: l10n.themeColorPresetName(id),
-                    selected: id == selected,
-                    onTap: () => onSelect(id),
-                    terminalTheme: terminalTheme,
-                  ),
+    Widget scroller = SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      reverse: true,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final id in kThemeColorPresetIds)
+            Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: RepaintBoundary(
+                child: ThemeColorPresetChip(
+                  id: id,
+                  label: l10n.themeColorPresetName(id),
+                  selected: id == widget.selected,
+                  onTap: () => widget.onSelect(id),
+                  terminalTheme: widget.terminalTheme,
                 ),
               ),
-          ],
+            ),
+        ],
+      ),
+    );
+    // Skip the saveLayer entirely while every chip fits on screen.
+    if (_fadeLeading || _fadeTrailing) {
+      scroller = ShaderMask(
+        shaderCallback: _fadeShader,
+        blendMode: BlendMode.dstIn,
+        child: scroller,
+      );
+    }
+    return Align(
+      alignment: Alignment.centerRight,
+      child: NotificationListener<ScrollMetricsNotification>(
+        onNotification: (notification) {
+          _syncFades(notification.metrics);
+          return false;
+        },
+        child: NotificationListener<ScrollNotification>(
+          onNotification: (notification) {
+            _syncFades(notification.metrics);
+            return false;
+          },
+          child: scroller,
         ),
       ),
     );
