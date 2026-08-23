@@ -10,6 +10,7 @@ import '../../l10n/l10n_extensions.dart';
 import '../../services/app/connection_mode_service.dart';
 import '../../utils/ui/app_keys.dart';
 import '../../utils/debounce/debounce.dart';
+import 'push_channel_section.dart';
 import 'runtime_target_picker.dart';
 import 'session_config_constants.dart';
 
@@ -161,126 +162,159 @@ class _SessionControlsState extends State<_SessionControls> {
       builder: (context, snapshot) {
         _syncFromState(snapshot.defaultSshWorkingDirectory);
         return SingleChildScrollView(
-          child: TpCard.outlined(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const RuntimeTargetPicker(),
-                if (isSshMode) ...[
-                  TpPreferenceStack(
-                    title: l10n.sshDefaultWorkingDirectoryTitle,
-                    subtitle: l10n.sshDefaultWorkingDirectorySubtitle,
-                    body: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _sshCwdController,
-                            focusNode: _sshCwdFocus,
-                            decoration: const InputDecoration(
-                              hintText: '~/work/workspace',
-                              hintMaxLines: 1,
-                              floatingLabelBehavior:
-                                  FloatingLabelBehavior.never,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TpCard.outlined(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const RuntimeTargetPicker(),
+                    if (isSshMode) ...[
+                      TpPreferenceStack(
+                        title: l10n.sshDefaultWorkingDirectoryTitle,
+                        subtitle: l10n.sshDefaultWorkingDirectorySubtitle,
+                        body: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _sshCwdController,
+                                focusNode: _sshCwdFocus,
+                                decoration: const InputDecoration(
+                                  hintText: '~/work/workspace',
+                                  hintMaxLines: 1,
+                                  floatingLabelBehavior:
+                                      FloatingLabelBehavior.never,
+                                ),
+                                onChanged: (_) =>
+                                    _scheduleDebouncedSshCwdPersist(),
+                                onSubmitted: (_) => _flushSshCwdPersist(),
+                              ),
                             ),
-                            onChanged: (_) => _scheduleDebouncedSshCwdPersist(),
-                            onSubmitted: (_) => _flushSshCwdPersist(),
-                          ),
+                            const SizedBox(width: 6),
+                            TextButton(
+                              onPressed:
+                                  snapshot.defaultSshWorkingDirectory.isEmpty
+                                  ? null
+                                  : _resetSshCwd,
+                              child: Text(l10n.cliExecutablePathReset),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 6),
-                        TextButton(
-                          onPressed: snapshot.defaultSshWorkingDirectory.isEmpty
-                              ? null
-                              : _resetSshCwd,
-                          child: Text(l10n.cliExecutablePathReset),
+                        showDividerBelow: true,
+                      ),
+                      TpPreferenceRow(
+                        title: 'SSH 使用 bash 登录环境',
+                        subtitle:
+                            '通过 bash -lc 启动远端 flashskyai，以便读取远端 shell 配置中的 PATH。',
+                        trailing: Switch(
+                          value: snapshot.sshUseLoginShell,
+                          onChanged: (value) =>
+                              cubit.setSshUseLoginShell(value),
                         ),
-                      ],
+                        showDividerBelow: true,
+                      ),
+                    ],
+                    TpPreferenceRow(
+                      title: l10n.terminalScrollbackLinesTitle,
+                      subtitle: l10n.terminalScrollbackLinesDescription,
+                      trailing: SizedBox(
+                        width: 120,
+                        child: TextFormField(
+                          initialValue: '${snapshot.terminalScrollbackLines}',
+                          keyboardType: TextInputType.number,
+                          onFieldSubmitted: (value) {
+                            final parsed = int.tryParse(value.trim());
+                            if (parsed != null) {
+                              unawaited(
+                                cubit.setTerminalScrollbackLines(parsed),
+                              );
+                            }
+                          },
+                        ),
+                      ),
+                      showDividerBelow: true,
                     ),
-                    showDividerBelow: true,
-                  ),
-                  TpPreferenceRow(
-                    title: 'SSH 使用 bash 登录环境',
-                    subtitle:
-                        '通过 bash -lc 启动远端 flashskyai，以便读取远端 shell 配置中的 PATH。',
-                    trailing: Switch(
-                      value: snapshot.sshUseLoginShell,
-                      onChanged: (value) => cubit.setSshUseLoginShell(value),
+                    TpPreferenceRow(
+                      title: l10n.terminalLinkClickOpensInAppTitle,
+                      subtitle: l10n.terminalLinkClickOpensInAppDescription,
+                      trailing: Switch(
+                        key: AppKeys.terminalLinkClickOpensInAppSwitch,
+                        value: snapshot.terminalLinkClickOpensInApp,
+                        onChanged: (value) =>
+                            cubit.setTerminalLinkClickOpensInApp(value),
+                      ),
+                      showDividerBelow: true,
                     ),
-                    showDividerBelow: true,
-                  ),
-                ],
-                TpPreferenceRow(
-                  title: l10n.terminalScrollbackLinesTitle,
-                  subtitle: l10n.terminalScrollbackLinesDescription,
-                  trailing: SizedBox(
-                    width: 120,
-                    child: TextFormField(
-                      initialValue: '${snapshot.terminalScrollbackLines}',
-                      keyboardType: TextInputType.number,
-                      onFieldSubmitted: (value) {
-                        final parsed = int.tryParse(value.trim());
-                        if (parsed != null) {
-                          unawaited(cubit.setTerminalScrollbackLines(parsed));
-                        }
-                      },
+                    TpPreferenceRow(
+                      title: l10n.openExistingSessionStartsTerminalTitle,
+                      subtitle:
+                          l10n.openExistingSessionStartsTerminalDescription,
+                      trailing: Switch(
+                        key: AppKeys.openExistingSessionStartsTerminalSwitch,
+                        value: snapshot.openExistingSessionStartsTerminal,
+                        onChanged: (value) =>
+                            cubit.setOpenExistingSessionStartsTerminal(value),
+                      ),
+                      showDividerBelow: true,
                     ),
-                  ),
-                  showDividerBelow: true,
+                    TpPreferenceRow(
+                      title: l10n.simpleModeDefaultFullAccessTitle,
+                      subtitle: l10n.simpleModeDefaultFullAccessDescription,
+                      trailing: Switch(
+                        key: AppKeys.simpleModeDefaultFullAccessSwitch,
+                        value: snapshot.simpleModeDefaultFullAccess,
+                        onChanged: (value) =>
+                            cubit.setSimpleModeDefaultFullAccess(value),
+                      ),
+                      showDividerBelow: true,
+                    ),
+                    TpPreferenceRow(
+                      title: l10n.notifyOnSessionIdleTitle,
+                      subtitle: l10n.notifyOnSessionIdleDescription,
+                      trailing: Switch(
+                        value: snapshot.notifyOnSessionIdle,
+                        onChanged: (value) =>
+                            cubit.setNotifyOnSessionIdle(value),
+                      ),
+                      showDividerBelow: true,
+                    ),
+                    TpPreferenceRow(
+                      title: l10n.notifyOnPtyIdleTitle,
+                      subtitle: l10n.notifyOnPtyIdleDescription,
+                      trailing: Switch(
+                        key: AppKeys.notifyOnPtyIdleSwitch,
+                        value: snapshot.notifyOnPtyIdle,
+                        // Only meaningful while the master switch is on.
+                        onChanged: snapshot.notifyOnSessionIdle
+                            ? (value) => cubit.setNotifyOnPtyIdle(value)
+                            : null,
+                      ),
+                      showDividerBelow: true,
+                    ),
+                    TpPreferenceRow(
+                      title: l10n.notifyWhileWatchingTitle,
+                      subtitle: l10n.notifyWhileWatchingDescription,
+                      trailing: Switch(
+                        key: AppKeys.notifyWhileWatchingSwitch,
+                        value: snapshot.notifyWhileWatching,
+                        onChanged: (value) =>
+                            cubit.setNotifyWhileWatching(value),
+                      ),
+                      showDividerBelow: false,
+                    ),
+                  ],
                 ),
-                TpPreferenceRow(
-                  title: l10n.terminalLinkClickOpensInAppTitle,
-                  subtitle: l10n.terminalLinkClickOpensInAppDescription,
-                  trailing: Switch(
-                    key: AppKeys.terminalLinkClickOpensInAppSwitch,
-                    value: snapshot.terminalLinkClickOpensInApp,
-                    onChanged: (value) =>
-                        cubit.setTerminalLinkClickOpensInApp(value),
-                  ),
-                  showDividerBelow: true,
-                ),
-                TpPreferenceRow(
-                  title: l10n.openExistingSessionStartsTerminalTitle,
-                  subtitle: l10n.openExistingSessionStartsTerminalDescription,
-                  trailing: Switch(
-                    key: AppKeys.openExistingSessionStartsTerminalSwitch,
-                    value: snapshot.openExistingSessionStartsTerminal,
-                    onChanged: (value) =>
-                        cubit.setOpenExistingSessionStartsTerminal(value),
-                  ),
-                  showDividerBelow: true,
-                ),
-                TpPreferenceRow(
-                  title: l10n.simpleModeDefaultFullAccessTitle,
-                  subtitle: l10n.simpleModeDefaultFullAccessDescription,
-                  trailing: Switch(
-                    key: AppKeys.simpleModeDefaultFullAccessSwitch,
-                    value: snapshot.simpleModeDefaultFullAccess,
-                    onChanged: (value) =>
-                        cubit.setSimpleModeDefaultFullAccess(value),
-                  ),
-                  showDividerBelow: true,
-                ),
-                TpPreferenceRow(
-                  title: l10n.notifyOnSessionIdleTitle,
-                  subtitle: l10n.notifyOnSessionIdleDescription,
-                  trailing: Switch(
-                    value: snapshot.notifyOnSessionIdle,
-                    onChanged: (value) => cubit.setNotifyOnSessionIdle(value),
-                  ),
-                  showDividerBelow: true,
-                ),
-                TpPreferenceRow(
-                  title: l10n.notifyWhileWatchingTitle,
-                  subtitle: l10n.notifyWhileWatchingDescription,
-                  trailing: Switch(
-                    key: AppKeys.notifyWhileWatchingSwitch,
-                    value: snapshot.notifyWhileWatching,
-                    onChanged: (value) => cubit.setNotifyWhileWatching(value),
-                  ),
-                  showDividerBelow: false,
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 16),
+              _SessionHeading(
+                title: l10n.barkPushSectionTitle,
+                subtitle: l10n.barkPushSectionSubtitle,
+              ),
+              const SizedBox(height: 12),
+              const TpCard.outlined(child: PushChannelSection()),
+            ],
           ),
         );
       },
@@ -297,6 +331,7 @@ class _SessionControlsSnapshot {
     required this.openExistingSessionStartsTerminal,
     required this.simpleModeDefaultFullAccess,
     required this.notifyOnSessionIdle,
+    required this.notifyOnPtyIdle,
     required this.notifyWhileWatching,
   });
 
@@ -307,6 +342,7 @@ class _SessionControlsSnapshot {
   final bool openExistingSessionStartsTerminal;
   final bool simpleModeDefaultFullAccess;
   final bool notifyOnSessionIdle;
+  final bool notifyOnPtyIdle;
   final bool notifyWhileWatching;
 
   static _SessionControlsSnapshot from(SessionPreferences preferences) {
@@ -319,6 +355,7 @@ class _SessionControlsSnapshot {
           preferences.openExistingSessionStartsTerminal,
       simpleModeDefaultFullAccess: preferences.simpleModeDefaultFullAccess,
       notifyOnSessionIdle: preferences.notifyOnSessionIdle,
+      notifyOnPtyIdle: preferences.notifyOnPtyIdle,
       notifyWhileWatching: preferences.notifyWhileWatching,
     );
   }
@@ -334,6 +371,7 @@ class _SessionControlsSnapshot {
             openExistingSessionStartsTerminal &&
         other.simpleModeDefaultFullAccess == simpleModeDefaultFullAccess &&
         other.notifyOnSessionIdle == notifyOnSessionIdle &&
+        other.notifyOnPtyIdle == notifyOnPtyIdle &&
         other.notifyWhileWatching == notifyWhileWatching;
   }
 
@@ -346,6 +384,7 @@ class _SessionControlsSnapshot {
     openExistingSessionStartsTerminal,
     simpleModeDefaultFullAccess,
     notifyOnSessionIdle,
+    notifyOnPtyIdle,
     notifyWhileWatching,
   );
 }

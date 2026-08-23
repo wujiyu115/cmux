@@ -96,6 +96,23 @@ void main() {
       expect(restored.notifyWhileWatching, isTrue);
     });
 
+    test('notifyOnPtyIdle defaults false', () {
+      // The PTY-output heuristic is opt-in: it cannot tell a finished turn from
+      // a long build, so it must not fire for anyone who did not ask for it.
+      expect(SessionPreferences().notifyOnPtyIdle, isFalse);
+    });
+
+    test('notifyOnPtyIdle JSON round-trip', () {
+      final prefs = SessionPreferences(notifyOnPtyIdle: true);
+      final again = SessionPreferences.fromJson(prefs.toJson());
+      expect(again.notifyOnPtyIdle, isTrue);
+    });
+
+    test('fromJson defaults notifyOnPtyIdle when key missing', () {
+      final restored = SessionPreferences.fromJson(const <String, Object?>{});
+      expect(restored.notifyOnPtyIdle, isFalse);
+    });
+
     test('fromJson ignores non-string cli executable path entries', () {
       final restored = SessionPreferences.fromJson(const <String, Object?>{
         'cliExecutablePaths': {

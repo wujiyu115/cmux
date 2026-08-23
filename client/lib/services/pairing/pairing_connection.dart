@@ -85,6 +85,12 @@ class PairingConnection {
   final void Function()? _onClosed;
 
   _ConnPhase _phase = _ConnPhase.awaitingHello;
+
+  /// True once the handshake *and* auth have completed, i.e. this socket is a
+  /// phone that is receiving `agent.notice` frames. Used by the host to tell
+  /// "someone is watching over LAN" from "a socket is mid-handshake", which is
+  /// what decides whether a Bark push would be a duplicate.
+  bool get isAuthenticated => _phase == _ConnPhase.active;
   E2eeChannel? _channel;
   PairingRpcHandler? _handler;
   StreamSubscription<Uint8List>? _inbound;
@@ -149,7 +155,10 @@ class PairingConnection {
         : const <String, Object?>{};
     final token = params['token'];
     if (token is! String || token.isEmpty) {
-      _sendEncryptedJson({'method': 'auth.err', 'params': {'reason': 'no token'}});
+      _sendEncryptedJson({
+        'method': 'auth.err',
+        'params': {'reason': 'no token'},
+      });
       _close('auth: no token');
       return;
     }

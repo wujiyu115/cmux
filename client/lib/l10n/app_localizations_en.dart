@@ -1321,6 +1321,65 @@ class AppLocalizationsEn extends AppLocalizations {
       'When a terminal finishes a burst of output and goes idle (agent turn done), show an OS notification in addition to the in-app notification center.';
 
   @override
+  String get notifyOnPtyIdleTitle => 'Notify on terminal output going quiet';
+
+  @override
+  String get notifyOnPtyIdleDescription =>
+      'Off by default. For terminals whose agent reports nothing, guess a finished turn from PTY output falling quiet. It also fires for long commands like builds and test runs. Agents that report through the status hook notify exactly, without this.';
+
+  @override
+  String get barkPushSectionTitle => 'Phone push (Bark)';
+
+  @override
+  String get barkPushSectionSubtitle =>
+      'Reaches your phone even when it is not connected to this desktop. Carries the workspace name and the tab title so several agents stay apart.';
+
+  @override
+  String get barkPushModeTitle => 'Push agent notices to Bark';
+
+  @override
+  String get barkPushModeDescription =>
+      'Sends turn finished, waiting for permission, and interrupted.';
+
+  @override
+  String get barkPushModeOff => 'Off';
+
+  @override
+  String get barkPushModeDisconnected => 'Only when no phone is connected';
+
+  @override
+  String get barkPushModeAlways => 'Always';
+
+  @override
+  String get barkPushServerTitle => 'Bark server';
+
+  @override
+  String get barkPushServerDescription =>
+      'Leave as the default unless you self-host. Origin only — no /push path.';
+
+  @override
+  String get barkPushDeviceKeyTitle => 'Device key';
+
+  @override
+  String get barkPushDeviceKeyDescription =>
+      'From the Bark app\'s home screen. Stored in the system keychain, not in preferences.';
+
+  @override
+  String get barkPushTest => 'Send test';
+
+  @override
+  String get barkPushTestOk => 'Test push delivered.';
+
+  @override
+  String get barkPushTestFailed => 'Test push failed';
+
+  @override
+  String get barkPushTestTitle => 'TeamPilot';
+
+  @override
+  String get barkPushTestBody => 'Push channel works.';
+
+  @override
   String get notifyWhileWatchingTitle => 'Notify even while watching';
 
   @override

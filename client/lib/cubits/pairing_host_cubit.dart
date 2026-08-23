@@ -98,6 +98,11 @@ class PairingHostCubit extends Cubit<PairingHostState> {
     }
   }
 
+  /// Whether a phone is authenticated on the running host right now. False when
+  /// the host is off. Read by the Bark dispatcher to avoid pushing an event the
+  /// connected phone already got as an `agent.notice` frame.
+  bool get hasConnectedPhone => _server?.hasAuthenticatedClient ?? false;
+
   Future<void> _start() async {
     try {
       final server = _serverFactory();

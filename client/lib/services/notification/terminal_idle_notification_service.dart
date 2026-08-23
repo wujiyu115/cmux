@@ -39,6 +39,13 @@ class TerminalIdleNotifyContext {
 /// Replaces the old [ChatState.workingSessionIds] listener, which can no longer
 /// fire now that plain terminal sessions never populate that set. Detection
 /// hangs off [TerminalActivityTracker.isWorking] per pane instead.
+///
+/// **Opt-in** (`SessionPreferences.notifyOnPtyIdle`, off by default). This reads
+/// raw output volume, not a lifecycle signal, so it cannot tell a finished turn
+/// from a long `npm build` or from an agent thinking between tool calls. Panes
+/// whose agent reports through the status hook are excluded outright — see
+/// [_reportsAgentStatus] — and get exact notices from
+/// `AgentAttentionNotificationService` regardless of this flag.
 class TerminalIdleNotificationService {
   TerminalIdleNotificationService({
     required WorkspaceTerminalRegistry registry,
@@ -207,7 +214,11 @@ class TerminalIdleNotificationService {
         .state
         .preferences;
     return TerminalIdleNotifyContext(
-      enabled: preferences.notifyOnSessionIdle,
+      // Both gates: `notifyOnSessionIdle` is the master for turn-finished
+      // notices, `notifyOnPtyIdle` opts into *this* heuristic specifically. The
+      // second defaults to off, so out of the box only panes that actually
+      // report agent lifecycle notify.
+      enabled: preferences.notifyOnSessionIdle && preferences.notifyOnPtyIdle,
       notifyWhileWatching: preferences.notifyWhileWatching,
       title: l10n.sessionIdleNotificationTitle,
       subtitle: l10n.sessionIdleNotificationSubtitle,

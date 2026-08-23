@@ -88,6 +88,11 @@ class LanPairingServer {
 
   bool get isRunning => _http != null;
 
+  /// Whether any phone is authenticated right now. Sockets still handshaking do
+  /// not count — see [PairingConnection.isAuthenticated].
+  bool get hasAuthenticatedClient =>
+      _connections.any((connection) => connection.isAuthenticated);
+
   int get port => _http!.port;
 
   /// Claims the first port of [_ports] that binds, so a phone's saved URL keeps

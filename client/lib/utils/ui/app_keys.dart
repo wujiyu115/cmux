@@ -24,6 +24,12 @@ class AppKeys {
   static const simpleModeDefaultFullAccessSwitch = Key(
     'simple-mode-default-full-access-switch',
   );
+  static const notifyOnPtyIdleSwitch = Key('notify-on-pty-idle-switch');
+  static const barkPushModeDropdown = Key('bark-push-mode-dropdown');
+  static const barkPushServerField = Key('bark-push-server-field');
+  static const barkPushDeviceKeyField = Key('bark-push-device-key-field');
+  static const barkPushTestButton = Key('bark-push-test-button');
+  static const barkPushTestOutcome = Key('bark-push-test-outcome');
   static const notifyWhileWatchingSwitch = Key(
     'notify-while-watching-switch',
   );

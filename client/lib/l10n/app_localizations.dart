@@ -2516,6 +2516,114 @@ abstract class AppLocalizations {
   /// **'When a terminal finishes a burst of output and goes idle (agent turn done), show an OS notification in addition to the in-app notification center.'**
   String get notifyOnSessionIdleDescription;
 
+  /// No description provided for @notifyOnPtyIdleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notify on terminal output going quiet'**
+  String get notifyOnPtyIdleTitle;
+
+  /// No description provided for @notifyOnPtyIdleDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Off by default. For terminals whose agent reports nothing, guess a finished turn from PTY output falling quiet. It also fires for long commands like builds and test runs. Agents that report through the status hook notify exactly, without this.'**
+  String get notifyOnPtyIdleDescription;
+
+  /// No description provided for @barkPushSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone push (Bark)'**
+  String get barkPushSectionTitle;
+
+  /// No description provided for @barkPushSectionSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reaches your phone even when it is not connected to this desktop. Carries the workspace name and the tab title so several agents stay apart.'**
+  String get barkPushSectionSubtitle;
+
+  /// No description provided for @barkPushModeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Push agent notices to Bark'**
+  String get barkPushModeTitle;
+
+  /// No description provided for @barkPushModeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Sends turn finished, waiting for permission, and interrupted.'**
+  String get barkPushModeDescription;
+
+  /// No description provided for @barkPushModeOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get barkPushModeOff;
+
+  /// No description provided for @barkPushModeDisconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Only when no phone is connected'**
+  String get barkPushModeDisconnected;
+
+  /// No description provided for @barkPushModeAlways.
+  ///
+  /// In en, this message translates to:
+  /// **'Always'**
+  String get barkPushModeAlways;
+
+  /// No description provided for @barkPushServerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Bark server'**
+  String get barkPushServerTitle;
+
+  /// No description provided for @barkPushServerDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave as the default unless you self-host. Origin only — no /push path.'**
+  String get barkPushServerDescription;
+
+  /// No description provided for @barkPushDeviceKeyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Device key'**
+  String get barkPushDeviceKeyTitle;
+
+  /// No description provided for @barkPushDeviceKeyDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'From the Bark app\'s home screen. Stored in the system keychain, not in preferences.'**
+  String get barkPushDeviceKeyDescription;
+
+  /// No description provided for @barkPushTest.
+  ///
+  /// In en, this message translates to:
+  /// **'Send test'**
+  String get barkPushTest;
+
+  /// No description provided for @barkPushTestOk.
+  ///
+  /// In en, this message translates to:
+  /// **'Test push delivered.'**
+  String get barkPushTestOk;
+
+  /// No description provided for @barkPushTestFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Test push failed'**
+  String get barkPushTestFailed;
+
+  /// No description provided for @barkPushTestTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'TeamPilot'**
+  String get barkPushTestTitle;
+
+  /// No description provided for @barkPushTestBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Push channel works.'**
+  String get barkPushTestBody;
+
   /// No description provided for @notifyWhileWatchingTitle.
   ///
   /// In en, this message translates to:

@@ -208,6 +208,10 @@ class SessionPreferencesCubit extends Cubit<SessionPreferencesState> {
     return _save(state.preferences.copyWith(notifyOnSessionIdle: value));
   }
 
+  Future<void> setNotifyOnPtyIdle(bool value) {
+    return _save(state.preferences.copyWith(notifyOnPtyIdle: value));
+  }
+
   Future<void> setNotifyWhileWatching(bool value) {
     return _save(state.preferences.copyWith(notifyWhileWatching: value));
   }

@@ -99,8 +99,7 @@ ShortcutContext _liveShortcutContext(
   ChatCubit chatCubit,
   WorkspaceChromeCommands workspaceChromeCommands,
 ) {
-  final location = appRouter.routerDelegate.currentConfiguration.uri
-      .toString();
+  final location = appRouter.routerDelegate.currentConfiguration.uri.toString();
   final focusKind = _primaryShortcutFocusKind();
   return ShortcutContext(
     inTerminal: focusKind == ShortcutFocusKind.terminal,
@@ -133,8 +132,7 @@ class ShortcutDispatcherHost extends StatefulWidget {
   final Widget child;
 
   @override
-  State<ShortcutDispatcherHost> createState() =>
-      _ShortcutDispatcherHostState();
+  State<ShortcutDispatcherHost> createState() => _ShortcutDispatcherHostState();
 }
 
 class _ShortcutDispatcherHostState extends State<ShortcutDispatcherHost>
@@ -732,6 +730,7 @@ void main() async {
                   BlocProvider.value(value: shell.workspaceGroupsCubit),
                   BlocProvider.value(value: shell.workspaceToolsCubit),
                   BlocProvider.value(value: shell.sessionPreferencesCubit),
+                  BlocProvider.value(value: shell.barkPushCubit),
                   BlocProvider.value(value: shell.appUpdateCubit),
                   BlocProvider.value(value: shell.sshProfileCubit),
                   BlocProvider.value(value: shell.sshConnectionCubit),

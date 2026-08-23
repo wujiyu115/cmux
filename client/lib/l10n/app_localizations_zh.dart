@@ -1278,6 +1278,63 @@ class AppLocalizationsZh extends AppLocalizations {
       '终端输出结束一轮并进入空闲（agent 完成一轮）时，除应用内通知中心外，同时发送操作系统通知。';
 
   @override
+  String get notifyOnPtyIdleTitle => '终端输出静默时通知';
+
+  @override
+  String get notifyOnPtyIdleDescription =>
+      '默认关闭。对不上报状态的终端，用 PTY 输出转为静默来猜测一轮结束；构建、跑测试这类长命令也会触发。能通过状态钩子上报的 Agent 无需此项即可精确通知。';
+
+  @override
+  String get barkPushSectionTitle => '手机推送（Bark）';
+
+  @override
+  String get barkPushSectionSubtitle =>
+      '手机未连接到本桌面时也能收到。通知里带工作区名和标签页标题，便于区分多个 Agent。';
+
+  @override
+  String get barkPushModeTitle => '推送 Agent 通知到 Bark';
+
+  @override
+  String get barkPushModeDescription => '包含完成一轮、等待授权、被打断三类。';
+
+  @override
+  String get barkPushModeOff => '关闭';
+
+  @override
+  String get barkPushModeDisconnected => '仅在无手机连接时';
+
+  @override
+  String get barkPushModeAlways => '总是推送';
+
+  @override
+  String get barkPushServerTitle => 'Bark 服务器';
+
+  @override
+  String get barkPushServerDescription => '自建服务器才需要改。只填源地址，不要带 /push 路径。';
+
+  @override
+  String get barkPushDeviceKeyTitle => '设备 Key';
+
+  @override
+  String get barkPushDeviceKeyDescription =>
+      '在 Bark App 首页获取。存放在系统钥匙串，不写入偏好设置文件。';
+
+  @override
+  String get barkPushTest => '发送测试';
+
+  @override
+  String get barkPushTestOk => '测试推送已送达。';
+
+  @override
+  String get barkPushTestFailed => '测试推送失败';
+
+  @override
+  String get barkPushTestTitle => 'TeamPilot';
+
+  @override
+  String get barkPushTestBody => '推送通道正常。';
+
+  @override
   String get notifyWhileWatchingTitle => '正在查看时也通知';
 
   @override

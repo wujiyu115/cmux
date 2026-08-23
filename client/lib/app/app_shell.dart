@@ -85,6 +85,10 @@ import '../services/storage/workspace_directory_picker.dart';
 import '../services/storage/home_target_store.dart';
 import '../services/storage/runtime_target_registry.dart';
 import '../services/storage/targets_repository.dart';
+import '../cubits/bark_push_cubit.dart';
+import '../repositories/bark_push_repository.dart';
+import '../services/notification/bark_push_dispatcher.dart';
+import '../services/notification/bark_push_sender.dart';
 import '../services/notification/mobile_agent_notice_presenter.dart';
 import '../services/notification/notification_recorder.dart';
 import '../services/notification/terminal_idle_notification_service.dart';
@@ -110,6 +114,16 @@ import '../services/terminal/workspace_terminal_session_ops.dart';
 import '../theme/terminal/user_terminal_theme_registry.dart';
 import '../utils/logging/logger.dart';
 import 'ui_zoom_baseline.dart';
+
+/// Localized copy read from the live router context, for strings raised outside
+/// any widget tree (the Bark test push). Null during startup / teardown, when
+/// there is no context to localize against — callers fall back to English rather
+/// than showing a placeholder.
+AppLocalizations? _l10nOrNull() {
+  final context = appRouter.routerDelegate.navigatorKey.currentContext;
+  if (context == null || !context.mounted) return null;
+  return Localizations.of<AppLocalizations>(context, AppLocalizations);
+}
 
 /// Fully wired app dependencies produced after async bootstrap.
 class AppShell {
@@ -149,6 +163,7 @@ class AppShell {
     required this.workspaceGroupsCubit,
     required this.workspaceToolsCubit,
     required this.sessionPreferencesCubit,
+    required this.barkPushCubit,
     required this.appUpdateCubit,
     required this.sshProfileCubit,
     required this.sshConnectionCubit,
@@ -203,6 +218,7 @@ class AppShell {
   final WorkspaceGroupsCubit workspaceGroupsCubit;
   final WorkspaceToolsCubit workspaceToolsCubit;
   final SessionPreferencesCubit sessionPreferencesCubit;
+  final BarkPushCubit barkPushCubit;
   final AppUpdateCubit appUpdateCubit;
   final SshProfileCubit sshProfileCubit;
   final SshConnectionCubit sshConnectionCubit;
@@ -260,6 +276,21 @@ Future<AppShell> buildAppShell({
   final sshCredentialStore = const SecureSshCredentialStore(
     FlutterSecureKeyValueStore(),
   );
+  // Bark push channel. Built here because it needs both the preferences and the
+  // keychain store; the dispatcher is wired further down, once the pairing host
+  // exists to answer "is a phone connected".
+  final barkPushSender = BarkPushSender();
+  final barkPushCubit = BarkPushCubit(
+    repository: SharedPrefsBarkPushRepository(
+      preferences: preferences,
+      secureStore: const FlutterSecureKeyValueStore(),
+    ),
+    sender: barkPushSender,
+    testTitle: () => _l10nOrNull()?.barkPushTestTitle ?? 'TeamPilot',
+    testBody: () => _l10nOrNull()?.barkPushTestBody ?? 'Push channel works.',
+  );
+  unawaited(barkPushCubit.load());
+
   final sshKnownHostRepo = SharedPrefsSshKnownHostRepository(preferences);
   final sshConnectionEvents = SshConnectionEvents();
   final sshClientFactory = SshClientFactory(
@@ -531,7 +562,6 @@ Future<AppShell> buildAppShell({
     },
   );
 
-
   final sshProfileConnectionCoordinator = SshProfileConnectionCoordinator(
     factory: sshClientFactory,
     events: sshConnectionEvents,
@@ -619,10 +649,11 @@ Future<AppShell> buildAppShell({
         final located = workspaceTerminalRegistry.locatePane(paneId);
         if (located == null) return null;
         final (group, _) = located;
-        final paneLabel = s.workspaces
-            .where((w) => w.workspaceId == group.workspaceId)
-            .firstOrNull
-            ?.effectiveDisplay ??
+        final paneLabel =
+            s.workspaces
+                .where((w) => w.workspaceId == group.workspaceId)
+                .firstOrNull
+                ?.effectiveDisplay ??
             '';
         return AgentNoticeAttribution(
           title: group.paneAttribution(paneId),
@@ -637,10 +668,11 @@ Future<AppShell> buildAppShell({
           .where((e) => e.sessionId == sessionId)
           .firstOrNull;
       if (session == null) return null;
-      final label = s.workspaces
-          .where((w) => w.workspaceId == session.workspaceId)
-          .firstOrNull
-          ?.effectiveDisplay ??
+      final label =
+          s.workspaces
+              .where((w) => w.workspaceId == session.workspaceId)
+              .firstOrNull
+              ?.effectiveDisplay ??
           '';
       final sessionTitle = session.display.trim();
       return AgentNoticeAttribution(
@@ -769,8 +801,7 @@ Future<AppShell> buildAppShell({
     workbench: workbenchCubit,
     chat: chatCubit,
     markdownViewModes: markdownViewModes,
-    readMarkdownOpenMode: () =>
-        layoutCubit.state.preferences.markdownOpenMode,
+    readMarkdownOpenMode: () => layoutCubit.state.preferences.markdownOpenMode,
   );
   final resolvedShellLauncher = WorkbenchShellLauncher(
     workbench: workbenchCubit,
@@ -939,7 +970,9 @@ Future<AppShell> buildAppShell({
       // Validate before touching disk, and create the directory on the machine
       // the folder claims to live on — not on the desktop's own.
       final resolvedTargetId = await pairingResolveTargetId(targetId);
-      await (await pairingFilesystemFor(resolvedTargetId)).ensureDir(folderPath);
+      await (await pairingFilesystemFor(
+        resolvedTargetId,
+      )).ensureDir(folderPath);
       final workspaceId = await chatCubit.createWorkspace(
         [
           WorkspaceFolder(
@@ -1101,11 +1134,7 @@ Future<AppShell> buildAppShell({
     }) async {
       final repo = await pairingGitRepo(workspaceId, cwd);
       if (repo == null) return '';
-      return repo.git.diffAgainstHead(
-        repo.root,
-        path,
-        untracked: untracked,
-      );
+      return repo.git.diffAgainstHead(repo.root, path, untracked: untracked);
     }
 
     LanPairingServer serverFactory() => LanPairingServer(
@@ -1132,6 +1161,20 @@ Future<AppShell> buildAppShell({
     );
     unawaited(pairingHostCubit.init());
   }
+
+  // Bark delivery rides the same notice feed that paired phones do, so it is
+  // already downstream of the `notifyOnSessionIdle` master switch. Deliberately
+  // *not* gated on the pairing host running: push is the path that works when
+  // nothing is connected, which includes a desktop with pairing turned off.
+  final barkPushDispatcher = BarkPushDispatcher(
+    sender: barkPushSender,
+    target: barkPushCubit.target,
+    // Read through the variable, not captured by value: on a client build there
+    // is no host cubit at all, and on a host build this closure runs long after
+    // bootstrap assigned it.
+    hasConnectedPhone: () => pairingHostCubit?.hasConnectedPhone ?? false,
+  );
+  agentNotices.stream.listen(barkPushDispatcher.handle);
 
   // --- Pairing client (mobile only) -----------------------------------------
   // Pure LAN mirror/control client; never binds a server. Desktop skips this.
@@ -1185,6 +1228,7 @@ Future<AppShell> buildAppShell({
     workspaceGroupsCubit: workspaceGroupsCubit,
     workspaceToolsCubit: workspaceToolsCubit,
     sessionPreferencesCubit: sessionPreferencesCubit,
+    barkPushCubit: barkPushCubit,
     appUpdateCubit: appUpdateCubit,
     sshProfileCubit: sshProfileCubit,
     sshConnectionCubit: sshConnectionCubit,

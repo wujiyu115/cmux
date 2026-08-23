@@ -9,6 +9,7 @@ class SessionPreferences {
     this.openExistingSessionStartsTerminal = false,
     this.simpleModeDefaultFullAccess = true,
     this.notifyOnSessionIdle = true,
+    this.notifyOnPtyIdle = false,
     this.notifyWhileWatching = true,
   }) : cliExecutablePaths = Map.unmodifiable(
          _normalizeCliExecutablePaths(cliExecutablePaths),
@@ -39,6 +40,7 @@ class SessionPreferences {
       simpleModeDefaultFullAccess:
           json['simpleModeDefaultFullAccess'] as bool? ?? true,
       notifyOnSessionIdle: json['notifyOnSessionIdle'] as bool? ?? true,
+      notifyOnPtyIdle: json['notifyOnPtyIdle'] as bool? ?? false,
       notifyWhileWatching: json['notifyWhileWatching'] as bool? ?? true,
     );
   }
@@ -78,10 +80,21 @@ class SessionPreferences {
   /// unless a workspace has already persisted a different chip choice.
   final bool simpleModeDefaultFullAccess;
 
-  /// When true (default), fire an OS notification when an embedded terminal
-  /// finishes a burst of output and goes idle (agent turn done). The in-app
-  /// notification center records it regardless.
+  /// Master switch for turn-finished notifications. When false, neither the
+  /// agent-status hook nor the PTY heuristic notifies. The in-app notification
+  /// center records what does get raised regardless.
   final bool notifyOnSessionIdle;
+
+  /// When true, *also* notify for terminals that report no agent lifecycle at
+  /// all, by watching their PTY output go from a burst to quiet.
+  ///
+  /// Off by default because it is a heuristic on raw output, not a signal: it
+  /// fires for any long command (`npm build`, `pytest`), and a CLI agent that
+  /// pauses between tool calls looks the same as one that finished — see
+  /// `TerminalIdleEdgeDetector` for the delays that paper over that. Panes whose
+  /// agent does report through the status hook are unaffected by this flag;
+  /// they notify on the real edge either way.
+  final bool notifyOnPtyIdle;
 
   /// When true (default), notify even while the app is focused and the user is
   /// looking at the very terminal that reported the edge. When false, that case
@@ -101,6 +114,7 @@ class SessionPreferences {
     bool? openExistingSessionStartsTerminal,
     bool? simpleModeDefaultFullAccess,
     bool? notifyOnSessionIdle,
+    bool? notifyOnPtyIdle,
     bool? notifyWhileWatching,
   }) {
     return SessionPreferences(
@@ -119,6 +133,7 @@ class SessionPreferences {
       simpleModeDefaultFullAccess:
           simpleModeDefaultFullAccess ?? this.simpleModeDefaultFullAccess,
       notifyOnSessionIdle: notifyOnSessionIdle ?? this.notifyOnSessionIdle,
+      notifyOnPtyIdle: notifyOnPtyIdle ?? this.notifyOnPtyIdle,
       notifyWhileWatching: notifyWhileWatching ?? this.notifyWhileWatching,
     );
   }
@@ -134,6 +149,7 @@ class SessionPreferences {
       'openExistingSessionStartsTerminal': openExistingSessionStartsTerminal,
       'simpleModeDefaultFullAccess': simpleModeDefaultFullAccess,
       'notifyOnSessionIdle': notifyOnSessionIdle,
+      'notifyOnPtyIdle': notifyOnPtyIdle,
       'notifyWhileWatching': notifyWhileWatching,
     };
   }
