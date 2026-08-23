@@ -86,7 +86,22 @@ final appRouter = GoRouter(
           builder: (context, state, child) => isPairingClient
               // Mobile is a pure pairing/mirror client — its own slim shell
               // replaces the desktop workspace tabs entirely.
-              ? const PairingMobileShell()
+              //
+              // [child] is kept in the tree, offstage, even though nothing on
+              // mobile renders it. It carries this ShellRoute's Navigator, and
+              // `GoRouterDelegate._findCurrentNavigators` dereferences every
+              // shell match's `navigatorKey.currentState!` on a hardware back
+              // press. Dropping the child left that state null, so the *first*
+              // Android back gesture anywhere on mobile threw inside GoRouter
+              // and the OS backgrounded the app instead of dismissing the sheet
+              // or page the user was actually looking at. The pages under this
+              // shell all build `SizedBox.shrink`, so mounting it costs nothing.
+              ? Stack(
+                  children: [
+                    const PairingMobileShell(),
+                    Offstage(child: child),
+                  ],
+                )
               : SplashDeferredShell(
                   child: HomeShell(location: state.uri.toString()),
                 ),
