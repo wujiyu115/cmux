@@ -30,7 +30,13 @@ class PairingWorkspaceGroup extends StatefulWidget {
 }
 
 class _PairingWorkspaceGroupState extends State<PairingWorkspaceGroup> {
-  late bool _expanded = widget.workspace.panes.isNotEmpty;
+  /// Collapsed on open, regardless of how many panes the workspace has.
+  ///
+  /// Auto-expanding every workspace with a live pane made the list unusable on a
+  /// phone: a desktop with a handful of busy workspaces opened to screens of
+  /// terminal rows, and the workspace the reader came for was scrolled off. The
+  /// row's own liveness pill already says which ones have something running.
+  bool _expanded = false;
 
   @override
   Widget build(BuildContext context) {

@@ -97,7 +97,14 @@ void main() {
 
     expect(find.text('Studio'), findsOneWidget);
     expect(find.byKey(AppKeys.pairingWorkspaceHeader('wsA')), findsOneWidget);
-    // The group starts open because the workspace has live panes.
+
+    // Every workspace starts collapsed, live panes or not, so a desktop with
+    // several busy ones opens to a list of workspaces rather than screens of
+    // terminal rows.
+    expect(find.text('build'), findsNothing);
+    await tester.tap(find.byKey(AppKeys.pairingWorkspaceHeader('wsA')));
+    await tester.pumpAndSettle();
+
     expect(find.text('build'), findsOneWidget);
     expect(find.text('120×40'), findsOneWidget);
     expect(find.text('zsh'), findsOneWidget);
@@ -105,7 +112,7 @@ void main() {
     expect(find.text('Live'), findsWidgets);
     expect(find.byKey(AppKeys.pairingSessionNode('ws:p2')), findsOneWidget);
 
-    // Collapsing drops the node rows.
+    // Collapsing again drops the node rows.
     await tester.tap(find.byKey(AppKeys.pairingWorkspaceHeader('wsA')));
     await tester.pumpAndSettle();
 
@@ -148,9 +155,12 @@ void main() {
     );
     await pump(tester);
 
-    // The group starts open because wsA has live panes; the button is there
-    // too now, with the additive label and no paneId — host-side activate with
-    // a null paneId opens a fresh tab instead of reusing one.
+    await tester.tap(find.byKey(AppKeys.pairingWorkspaceHeader('wsA')));
+    await tester.pumpAndSettle();
+
+    // wsA has live panes, and the button is there anyway, with the additive
+    // label and no paneId — host-side activate with a null paneId opens a fresh
+    // tab instead of reusing one.
     expect(find.text('New terminal'), findsOneWidget);
     expect(find.text('Open a terminal here'), findsNothing);
     await tester.tap(find.byKey(AppKeys.pairingOpenTerminalButton('wsA')));
@@ -183,6 +193,8 @@ void main() {
       ),
     );
     await pump(tester);
+    await tester.tap(find.byKey(AppKeys.pairingWorkspaceHeader('wsA')));
+    await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(AppKeys.pairingSessionNode('ws:p1')));
     await tester.pump();
@@ -199,6 +211,10 @@ void main() {
       ),
     );
     await pump(tester);
+    await tester.tap(find.byKey(AppKeys.pairingWorkspaceHeader('wsA')));
+    // Not pumpAndSettle: the row spinner this test is looking for never stops
+    // animating, so settling would time out.
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
   });
