@@ -39,6 +39,29 @@ jobs:
       - name: Resolve Flutter packages
         run: flutter pub get
 
+      # A mismatch here is not a warning: RustLib.init throws
+      # "codegen version should be the same as runtime version" before runApp,
+      # and on iOS that is a blank screen with no reachable log. It already
+      # shipped once — the Dart constraint was `^2.12.0`, CI re-resolved to
+      # 2.13.0 the day it was published, and the IPA was white on launch.
+      - name: Assert flutter_rust_bridge codegen/runtime versions match
+        run: |
+          set -euo pipefail
+          crate=packages/flutter_alacritty/packages/rust_lib_flutter_alacritty/rust/Cargo.toml
+          rust=$(grep -oE 'flutter_rust_bridge = "=?[0-9]+\.[0-9]+\.[0-9]+"' "$crate" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+          dart=$(grep -A7 '^  flutter_rust_bridge:' pubspec.lock | grep -oE 'version: "[0-9]+\.[0-9]+\.[0-9]+"' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+          echo "rust crate pin: ${rust:-<none>} / resolved dart package: ${dart:-<none>}"
+          if [ -z "$rust" ] || [ -z "$dart" ]; then
+            echo "could not read both versions" >&2
+            exit 1
+          fi
+          if [ "$rust" != "$dart" ]; then
+            echo "flutter_rust_bridge mismatch: rust=$rust dart=$dart" >&2
+            echo "Bump rust/Cargo.toml, regenerate bindings, and pin the Dart" >&2
+            echo "dependency in client/pubspec.yaml to the same exact version." >&2
+            exit 1
+          fi
+
       - name: Sync bundled Google Fonts (Noto Sans SC)
         run: dart run tool/sync_bundled_google_fonts.dart
 

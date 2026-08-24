@@ -103,7 +103,16 @@ dev_dependencies:
   flutter_launcher_icons: ^0.14.4
   rename_app: ^1.6.6
   fake_async: ^1.3.1
-  flutter_rust_bridge: ^2.12.0
+  # Exact, not a caret range: the generated bindings in
+  # packages/flutter_alacritty/lib/src/rust are codegen'd against one
+  # flutter_rust_bridge version and the Rust crate pins the same one
+  # (`flutter_rust_bridge = "=2.12.0"` in rust/Cargo.toml). A mismatch is not
+  # a warning — RustLib.init throws `codegen version should be the same as
+  # runtime version` before runApp, which on iOS is a blank screen with no
+  # log. `^2.12.0` let CI resolve 2.13.0 the day it was published and shipped
+  # exactly that. Bump this only together with rust/Cargo.toml + regenerated
+  # bindings.
+  flutter_rust_bridge: 2.12.0
 
   mock_model_gateway:
     path: ../tools/mock_model_gateway
