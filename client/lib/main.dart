@@ -78,6 +78,8 @@ import 'theme/terminal_derived_scheme.dart';
 import 'theme/workspace_surface_layers.dart';
 import 'theme/app_typography_scale.dart';
 import 'pages/system/error_page.dart';
+import 'pages/system/fatal_screen.dart';
+import 'services/app/boot_progress.dart';
 import 'utils/logging/logger.dart';
 import 'widgets/app_text_scale_boundary.dart';
 import 'widgets/app_update_available_dialog.dart';
@@ -432,6 +434,55 @@ class _DragToResizeWrapperState extends State<_DragToResizeWrapper>
 const kDefaultDesktopWindowSize = Size(1380, 960);
 
 void main() async {
+  // Both halves of "the app shows a white rectangle and says nothing" are shut
+  // here, before anything that can fail:
+  //
+  // 1. An uncaught throw in [_bootStartup] means `runApp` is never reached, so
+  //    there is no widget tree at all. The catch below renders the error.
+  // 2. A build-phase throw in release renders `ErrorWidget` as an *empty* grey
+  //    box (only debug gets the red screen). [buildFatalErrorWidget] makes it
+  //    print the exception instead.
+  //
+  // Neither was survivable on iOS: no native splash to distinguish "still
+  // starting" from "dead", and no reachable log file on a non-jailbroken device.
+  // Calling ensureInitialized here is safe and idempotent — the custom binding
+  // still wins because this is the first binding call in the process.
+  TeampilotWidgetsFlutterBinding.ensureInitialized();
+  ErrorWidget.builder = buildFatalErrorWidget;
+  try {
+    await _bootStartup();
+  } on Object catch (error, stackTrace) {
+    await _reportStartupFailure(error, stackTrace);
+  }
+}
+
+/// Shows a startup failure, degrading to plain text when the rich error screen
+/// cannot build either.
+///
+/// [showInitErrorApp] awaits a theme, resolves l10n delegates and reads package
+/// info — all things that may be broken in precisely the failures it reports, in
+/// which case it throws and leaves the screen blank. That is the case
+/// [showFatalTextApp] exists for; it also carries the nested failure, because
+/// "the error screen crashed" is itself the most useful clue.
+Future<void> _reportStartupFailure(Object error, StackTrace stackTrace) async {
+  try {
+    await showInitErrorApp(error: error, stackTrace: stackTrace);
+  } on Object catch (nested, nestedStack) {
+    showFatalTextApp(
+      title: 'TeamPilot failed to start',
+      detail: [
+        '$error',
+        '$stackTrace',
+        '--- the error screen also failed ---',
+        '$nested',
+        '$nestedStack',
+      ].join('\n\n'),
+    );
+  }
+}
+
+Future<void> _bootStartup() async {
+  BootProgress.mark('binding');
   // Custom binding installs DesktopTextInputProbeBypassMessenger — must run
   // before any other Flutter binding (full restart required, not hot reload).
   final binding = TeampilotWidgetsFlutterBinding.ensureInitialized();
@@ -487,6 +538,7 @@ void main() async {
   // `state` falls back to HardwareKeyboard.instance until the mirror attaches
   // in ShortcutDispatcherHost.
   TerminalKeyboardState.setSource(() => ReconciledKeyboard.instance.state);
+  BootProgress.mark('RustLib.init');
   await RustLib.init();
   GoogleFonts.config.allowRuntimeFetching = false;
 
@@ -535,6 +587,7 @@ void main() async {
     uiFontId: layoutPrefs.uiFontId,
     monoFontId: layoutPrefs.monoFontId,
   );
+  BootProgress.mark('prepareFontsForUse');
   await prepareFontsForUse(bootFonts);
 
   late final String nativeAppDataPath;
@@ -554,11 +607,13 @@ void main() async {
     preferences: preferences,
   );
   final homeIndexPrefetchFuture = prefetchHomeIndexSnapshots(nativeAppDataPath);
+  BootProgress.mark('runApp');
   final bootstrapCubit = AppBootstrapCubit();
 
   if (hasDesktopWindow) {
     await windowManager.setPreventClose(true);
   }
+  BootProgress.mark('DesktopSystemNotifier.ensureInitialized');
   await DesktopSystemNotifier.ensureInitialized(
     onNotificationTap: (payload) {
       // A forwarded agent notice from a paired desktop carries its own scheme

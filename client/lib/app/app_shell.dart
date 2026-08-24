@@ -37,6 +37,7 @@ import '../models/runtime_target.dart';
 import '../models/ssh_profile.dart';
 import '../models/workspace_folder.dart';
 import '../models/workspace_topology.dart';
+import '../services/app/boot_progress.dart';
 import '../services/app/boot_splash.dart';
 import '../utils/ui/yield_ui_frame.dart';
 import '../l10n/app_localizations.dart';
@@ -241,8 +242,13 @@ Future<AppShell> buildAppShell({
   AppBootstrapCubit? bootstrapCubit,
 }) async {
   final bootSw = Stopwatch()..start();
-  void boot(String phase) =>
-      appLogger.i('[boot] +${bootSw.elapsedMilliseconds}ms $phase');
+  // Mirrored to BootProgress as well as the log: on iOS the log file is
+  // unreachable on a stock device, and the bootstrap gate is the only surface
+  // that can say which stage a stalled startup is sitting on.
+  void boot(String phase) {
+    BootProgress.mark(phase);
+    appLogger.i('[boot] +${bootSw.elapsedMilliseconds}ms $phase');
+  }
 
   boot('start');
   final documentsFuture =
