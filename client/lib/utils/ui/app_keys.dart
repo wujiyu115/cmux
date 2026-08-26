@@ -99,6 +99,14 @@ class AppKeys {
   static const mobileComposerSubmitToggle = Key('mobile-composer-submit');
   static const mobileComposerMicButton = Key('mobile-composer-mic');
   static const mobileComposerAttachButton = Key('mobile-composer-attach');
+
+  /// The attach chip while an upload is in flight. A distinct key from
+  /// [mobileComposerAttachButton] on purpose: the same slot means something
+  /// different (cancel, not pick), and a test asserting "not attachable right
+  /// now" must not accidentally match it.
+  static const mobileComposerCancelUploadButton = Key(
+    'mobile-composer-cancel-upload',
+  );
   static const voiceSettingsPage = Key('voice-settings-page');
   static Key voiceSettingsProviderTile(String provider) =>
       Key('voice-settings-provider-$provider');

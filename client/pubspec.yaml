@@ -61,6 +61,11 @@ dependencies:
   qr_flutter: ^4.1.0
   mobile_scanner: ^5.2.3
   image_picker: ^1.1.2
+  # Direct, not transitive, only so the mobile bootstrap can flip
+  # `useAndroidPhotoPicker`. Pure Dart config — the plugin's native side is
+  # unchanged by pinning it here.
+  image_picker_android: ^0.8.12
+  image_picker_platform_interface: ^2.10.0
   app_links: ^6.3.2
   archive: ^4.0.9
   toggle_switch: ^2.3.0

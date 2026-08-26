@@ -8,17 +8,11 @@ import 'package:teampilot/services/pairing/pairing_git_view.dart';
 import 'package:teampilot/services/pairing/pairing_rpc_handler.dart';
 import 'package:teampilot/services/pairing/recent_pty_buffer.dart';
 import 'package:teampilot/services/pairing/session_catalog.dart';
+import '../../support/pairing_upload_doubles.dart';
 import 'package:teampilot/services/terminal/terminal_session.dart';
 import 'package:teampilot/services/workspace_dnd/runtime_target.dart';
 
 class _MockSession extends Mock implements TerminalSession {}
-
-Future<String> _noopSink({
-  required String workspaceId,
-  required String cwd,
-  required String filename,
-  required List<int> bytes,
-}) async => '';
 
 Uint8List _json(Map<String, Object?> data) => PairingCodec.encodeJson(data);
 
@@ -70,7 +64,7 @@ void main() {
   PairingRpcHandler build({bool wired = true}) => PairingRpcHandler(
     catalog: catalog,
     send: sent.add,
-    uploadSink: _noopSink,
+    uploadOpener: noopUploadOpener,
     gitChanges: wired ? changes : null,
     gitDiff: wired ? diff : null,
   );

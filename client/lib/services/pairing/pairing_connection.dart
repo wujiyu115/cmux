@@ -11,7 +11,7 @@ import 'pairing_frames.dart';
 import 'pairing_git_view.dart';
 import 'pairing_offer.dart';
 import 'pairing_rpc_handler.dart';
-import 'pairing_upload_receiver.dart';
+import 'pairing_upload_target.dart';
 import 'pairing_workspace_index.dart';
 import 'session_catalog.dart';
 import 'ws_transport.dart';
@@ -30,7 +30,7 @@ class PairingConnection {
     required DeviceRegistry registry,
     required SessionCatalog catalog,
     required String hostName,
-    required PairingUploadSink uploadSink,
+    required PairingUploadOpener uploadOpener,
     PairingWorkspaceIndexProvider? workspaceIndex,
     PairingSessionActivator? activator,
     PairingDirBrowser? dirBrowser,
@@ -48,7 +48,7 @@ class PairingConnection {
        _registry = registry,
        _catalog = catalog,
        _hostName = hostName,
-       _uploadSink = uploadSink,
+       _uploadOpener = uploadOpener,
        _workspaceIndex = workspaceIndex,
        _activator = activator,
        _dirBrowser = dirBrowser,
@@ -67,7 +67,7 @@ class PairingConnection {
   final DeviceRegistry _registry;
   final SessionCatalog _catalog;
   final String _hostName;
-  final PairingUploadSink _uploadSink;
+  final PairingUploadOpener _uploadOpener;
   final PairingWorkspaceIndexProvider? _workspaceIndex;
   final PairingSessionActivator? _activator;
   final PairingDirBrowser? _dirBrowser;
@@ -198,7 +198,7 @@ class PairingConnection {
     _handler = PairingRpcHandler(
       catalog: _catalog,
       send: _sendEncrypted,
-      uploadSink: _uploadSink,
+      uploadOpener: _uploadOpener,
       workspaceIndex: _workspaceIndex,
       activator: _activator,
       dirBrowser: _dirBrowser,

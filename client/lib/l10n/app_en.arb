@@ -1374,15 +1374,30 @@
   "mobileComposerSend": "Send",
   "mobileComposerSubmitOn": "Send with Return",
   "mobileComposerSubmitOff": "Send without Return",
-  "mobileComposerAttach": "Attach image",
-  "imageUploadFailed": "Image upload failed",
-  "imageUploadTooLarge": "Image is larger than {mb} MB",
-  "@imageUploadTooLarge": {
+  "mobileComposerAttach": "Attach image or video",
+  "mobileComposerCancelUpload": "Cancel upload",
+  "mediaUploadProgress": "{percent}% · {sent}/{total} MB",
+  "@mediaUploadProgress": {
+    "placeholders": {
+      "percent": { "type": "int" },
+      "sent": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "mediaUploadFailed": "Upload failed",
+  "mediaUploadImageTooLarge": "Image is larger than {mb} MB",
+  "@mediaUploadImageTooLarge": {
     "placeholders": {
       "mb": { "type": "int" }
     }
   },
-  "imageUploadUnsupportedType": "That image type is not supported",
+  "mediaUploadVideoTooLarge": "Video is larger than {mb} MB",
+  "@mediaUploadVideoTooLarge": {
+    "placeholders": {
+      "mb": { "type": "int" }
+    }
+  },
+  "mediaUploadUnsupportedType": "That file type is not supported",
   "voiceInputStart": "Start dictation",
   "voiceInputStop": "Stop dictation",
   "voiceInputBadgeSystem": "SYS",

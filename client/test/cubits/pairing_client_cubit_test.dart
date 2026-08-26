@@ -8,6 +8,7 @@ import 'package:teampilot/services/pairing/agent_notice_message.dart';
 import 'package:teampilot/services/pairing/pairing_client.dart';
 import 'package:teampilot/services/pairing/pairing_offer.dart';
 import 'package:teampilot/services/pairing/pairing_upload_sender.dart';
+import 'package:teampilot/services/pairing/upload_source.dart';
 
 /// Hand-rolled fake so the cubit runs its full flow without a real socket.
 class _FakePairingClient extends PairingClient {
@@ -201,10 +202,10 @@ class _FakePairingClient extends PairingClient {
   Future<String> uploadFile({
     required int sub,
     required String filename,
-    required Uint8List bytes,
+    required UploadSource source,
     void Function(int sent, int total)? onProgress,
   }) async {
-    uploads.add((sub, filename, bytes));
+    uploads.add((sub, filename, await source.read(source.length)));
     return uploadPath;
   }
 
@@ -808,7 +809,7 @@ void main() {
       expect(await settings.loadPairedDesktops(), isEmpty);
     });
 
-    test('uploadImage without an active mirror throws no_target', () async {
+    test('uploadMedia without an active mirror throws no_target', () async {
       final cubit = PairingClientCubit(
         settings: InMemoryPairingSettingsRepository(),
         clientFactory: _FakePairingClient.new,
@@ -816,9 +817,9 @@ void main() {
       addTearDown(cubit.close);
 
       expect(
-        () => cubit.uploadImage(
+        () => cubit.uploadMedia(
           filename: 'photo.png',
-          bytes: Uint8List.fromList([1, 2, 3]),
+          source: MemoryUploadSource(Uint8List.fromList([1, 2, 3])),
         ),
         throwsA(
           isA<PairingUploadException>().having(
@@ -830,7 +831,7 @@ void main() {
       );
     });
 
-    test('uploadImage forwards sub, filename, and bytes to the client',
+    test('uploadMedia forwards sub, filename, and bytes to the client',
         () async {
       final fake = _FakePairingClient()..uploadPath = '/host/wd/photo.png';
       final cubit = PairingClientCubit(
@@ -844,7 +845,10 @@ void main() {
       await cubit.openSession('ws:p1');
 
       final bytes = Uint8List.fromList([9, 8, 7]);
-      final path = await cubit.uploadImage(filename: 'photo.png', bytes: bytes);
+      final path = await cubit.uploadMedia(
+        filename: 'photo.png',
+        source: MemoryUploadSource(bytes),
+      );
 
       expect(path, '/host/wd/photo.png');
       expect(fake.uploads.single.$1, 42);

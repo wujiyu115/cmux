@@ -5633,26 +5633,44 @@ abstract class AppLocalizations {
   /// No description provided for @mobileComposerAttach.
   ///
   /// In en, this message translates to:
-  /// **'Attach image'**
+  /// **'Attach image or video'**
   String get mobileComposerAttach;
 
-  /// No description provided for @imageUploadFailed.
+  /// No description provided for @mobileComposerCancelUpload.
   ///
   /// In en, this message translates to:
-  /// **'Image upload failed'**
-  String get imageUploadFailed;
+  /// **'Cancel upload'**
+  String get mobileComposerCancelUpload;
 
-  /// No description provided for @imageUploadTooLarge.
+  /// No description provided for @mediaUploadProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% · {sent}/{total} MB'**
+  String mediaUploadProgress(int percent, int sent, int total);
+
+  /// No description provided for @mediaUploadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload failed'**
+  String get mediaUploadFailed;
+
+  /// No description provided for @mediaUploadImageTooLarge.
   ///
   /// In en, this message translates to:
   /// **'Image is larger than {mb} MB'**
-  String imageUploadTooLarge(int mb);
+  String mediaUploadImageTooLarge(int mb);
 
-  /// No description provided for @imageUploadUnsupportedType.
+  /// No description provided for @mediaUploadVideoTooLarge.
   ///
   /// In en, this message translates to:
-  /// **'That image type is not supported'**
-  String get imageUploadUnsupportedType;
+  /// **'Video is larger than {mb} MB'**
+  String mediaUploadVideoTooLarge(int mb);
+
+  /// No description provided for @mediaUploadUnsupportedType.
+  ///
+  /// In en, this message translates to:
+  /// **'That file type is not supported'**
+  String get mediaUploadUnsupportedType;
 
   /// No description provided for @voiceInputStart.
   ///

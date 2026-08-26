@@ -2932,18 +2932,31 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mobileComposerSubmitOff => '发送不回车';
 
   @override
-  String get mobileComposerAttach => '附加图片';
+  String get mobileComposerAttach => '附加图片或视频';
 
   @override
-  String get imageUploadFailed => '图片上传失败';
+  String get mobileComposerCancelUpload => '取消上传';
 
   @override
-  String imageUploadTooLarge(int mb) {
+  String mediaUploadProgress(int percent, int sent, int total) {
+    return '$percent% · $sent/$total MB';
+  }
+
+  @override
+  String get mediaUploadFailed => '上传失败';
+
+  @override
+  String mediaUploadImageTooLarge(int mb) {
     return '图片超过 $mb MB';
   }
 
   @override
-  String get imageUploadUnsupportedType => '不支持该图片格式';
+  String mediaUploadVideoTooLarge(int mb) {
+    return '视频超过 $mb MB';
+  }
+
+  @override
+  String get mediaUploadUnsupportedType => '不支持该文件类型';
 
   @override
   String get voiceInputStart => '开始语音输入';

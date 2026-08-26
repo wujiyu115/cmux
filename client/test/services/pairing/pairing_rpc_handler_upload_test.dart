@@ -7,9 +7,13 @@ import 'package:teampilot/services/pairing/pairing_frames.dart';
 import 'package:teampilot/services/pairing/pairing_rpc_handler.dart';
 import 'package:teampilot/services/pairing/pairing_upload_receiver.dart';
 import 'package:teampilot/services/pairing/recent_pty_buffer.dart';
+import 'package:teampilot/services/pairing/pairing_upload_target.dart';
 import 'package:teampilot/services/pairing/session_catalog.dart';
+import 'package:teampilot/services/pairing/upload_limits.dart';
 import 'package:teampilot/services/terminal/terminal_session.dart';
 import 'package:teampilot/services/workspace_dnd/runtime_target.dart';
+
+import '../../support/pairing_upload_doubles.dart';
 
 class _MockSession extends Mock implements TerminalSession {}
 
@@ -20,22 +24,22 @@ class _MockSession extends Mock implements TerminalSession {}
 class _RecordingReceiver implements PairingUploadReceiver {
   final List<Map<String, Object?>> beginCalls = [];
   final List<List<Object?>> chunkCalls = [];
+  final List<int> abandonedIds = [];
   int commitCount = 0;
   int abandonAllCount = 0;
 
   UploadBeginResult beginResult = const UploadBeginResult.ok(7, 64);
-  UploadChunkResult chunkResult = const UploadChunkResult.ok(3);
   UploadCommitResult commitResult = const UploadCommitResult.ok(
     '/home/dev/app/photo.jpg',
   );
 
   @override
-  UploadBeginResult begin({
+  Future<UploadBeginResult> begin({
     required String workspaceId,
     required String cwd,
     required String filename,
     required int size,
-  }) {
+  }) async {
     beginCalls.add({
       'workspaceId': workspaceId,
       'cwd': cwd,
@@ -46,9 +50,8 @@ class _RecordingReceiver implements PairingUploadReceiver {
   }
 
   @override
-  UploadChunkResult chunk(int transferId, int chunkIndex, List<int> bytes) {
+  void chunk(int transferId, int chunkIndex, List<int> bytes) {
     chunkCalls.add([transferId, chunkIndex, bytes]);
-    return chunkResult;
   }
 
   @override
@@ -58,27 +61,27 @@ class _RecordingReceiver implements PairingUploadReceiver {
   }
 
   @override
-  void abandon(int id) {}
+  Future<void> abandon(int id) async => abandonedIds.add(id);
 
   @override
-  void abandonAll() => abandonAllCount++;
+  Future<void> abandonAll() async => abandonAllCount++;
 
   @override
-  PairingUploadSink get sink => throw UnimplementedError();
+  PairingUploadOpener get openTarget => throw UnimplementedError();
 
   @override
-  int get maxBytes => 0;
+  void Function(int transferId, int received) get onAck =>
+      throw UnimplementedError();
+
+  @override
+  PairingUploadCaps get caps => const PairingUploadCaps();
 
   @override
   int get chunkSize => 64;
-}
 
-Future<String> _noopSink({
-  required String workspaceId,
-  required String cwd,
-  required String filename,
-  required List<int> bytes,
-}) async => '';
+  @override
+  int get maxConcurrentTransfers => 4;
+}
 
 Uint8List _json(Map<String, Object?> data) => PairingCodec.encodeJson(data);
 
@@ -123,7 +126,7 @@ void main() {
     handler = PairingRpcHandler(
       catalog: catalog,
       send: sent.add,
-      uploadSink: _noopSink,
+      uploadOpener: noopUploadOpener,
       uploadReceiver: receiver,
     );
   });
@@ -155,7 +158,7 @@ void main() {
   JsonFrame lastJson() => jsonFrames().last;
 
   test('upload.begin on a subscribed sub replies ok and calls receiver.begin '
-      'with the pane workspaceId and cwd', () {
+      'with the pane workspaceId and cwd', () async {
     final sub = subscribe();
     handler.handle(
       PairingCodec.decode(
@@ -166,6 +169,8 @@ void main() {
         }),
       ),
     );
+    // begin now opens the destination, so the reply lands a microtask later.
+    await Future<void>.delayed(Duration.zero);
 
     final result = lastJson().data['result'] as Map;
     expect(result['ok'], true);
@@ -180,7 +185,7 @@ void main() {
   });
 
   test('upload.begin on an unsubscribed sub replies no_target and never '
-      'calls receiver.begin', () {
+      'calls receiver.begin', () async {
     handler.handle(
       PairingCodec.decode(
         _json({
@@ -190,6 +195,7 @@ void main() {
         }),
       ),
     );
+    await Future<void>.delayed(Duration.zero);
 
     final result = lastJson().data['result'] as Map;
     expect(result['ok'], false);
@@ -211,34 +217,97 @@ void main() {
     expect(receiver.chunkCalls.single[2], [9, 8, 7]);
   });
 
-  test('an accepted chunk emits an upload.ack with transferId and received', () {
-    receiver.chunkResult = const UploadChunkResult.ok(42);
-    handler.handle(
-      PairingCodec.decode(
-        PairingCodec.encodeUpload(5, 0, Uint8List.fromList([1, 2, 3])),
-      ),
-    );
+  group('ack wiring', () {
+    // *When* to ack is the receiver's decision (a chunk that triggers a flush is
+    // acked only after the write lands), so these run against the real receiver
+    // and only assert that the handler turns its callback into the right frame.
+    late FakeUploadOpener opener;
+    late PairingRpcHandler real;
 
-    final ack = jsonFrames().firstWhere(
-      (f) => f.data['method'] == 'upload.ack',
-    );
-    final params = ack.data['params'] as Map;
-    expect(params['transferId'], 5);
-    expect(params['received'], 42);
-  });
+    setUp(() {
+      opener = FakeUploadOpener();
+      real = PairingRpcHandler(
+        catalog: catalog,
+        send: sent.add,
+        uploadOpener: opener.call,
+      );
+    });
 
-  test('a rejected chunk emits no upload.ack', () {
-    receiver.chunkResult = const UploadChunkResult.error('write_failed');
-    handler.handle(
-      PairingCodec.decode(
-        PairingCodec.encodeUpload(5, 0, Uint8List.fromList([1, 2, 3])),
-      ),
-    );
+    tearDown(() => real.dispose());
 
-    expect(
-      jsonFrames().where((f) => f.data['method'] == 'upload.ack'),
-      isEmpty,
-    );
+    /// Subscribes on [real] and begins a 3-byte photo, returning its transferId.
+    Future<({int sub, int transferId})> beginOnReal() async {
+      real.handle(
+        PairingCodec.decode(
+          _json({
+            'id': 1,
+            'method': 'terminal.subscribe',
+            'params': {'catalogId': 'ws:p1'},
+          }),
+        ),
+      );
+      final sub =
+          ((PairingCodec.decode(sent.first) as JsonFrame).data['result']
+                  as Map)['sub']
+              as int;
+      sent.clear();
+      real.handle(
+        PairingCodec.decode(
+          _json({
+            'id': 2,
+            'method': 'upload.begin',
+            'params': {'sub': sub, 'filename': 'photo.jpg', 'size': 3},
+          }),
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+      final result =
+          (PairingCodec.decode(sent.last) as JsonFrame).data['result'] as Map;
+      sent.clear();
+      return (sub: sub, transferId: result['transferId']! as int);
+    }
+
+    Iterable<JsonFrame> acks() => sent
+        .map(PairingCodec.decode)
+        .whereType<JsonFrame>()
+        .where((f) => f.data['method'] == 'upload.ack');
+
+    test('an accepted chunk emits an upload.ack with transferId and received',
+        () async {
+      final t = await beginOnReal();
+      real.handle(
+        PairingCodec.decode(
+          PairingCodec.encodeUpload(t.transferId, 0, Uint8List.fromList([1, 2])),
+        ),
+      );
+
+      final params = acks().single.data['params'] as Map;
+      expect(params['transferId'], t.transferId);
+      expect(params['received'], 2);
+    });
+
+    test('a rejected chunk emits no upload.ack', () async {
+      final t = await beginOnReal();
+      // Index 1 with nothing at 0: a gap, which abandons the transfer.
+      real.handle(
+        PairingCodec.decode(
+          PairingCodec.encodeUpload(t.transferId, 1, Uint8List.fromList([1])),
+        ),
+      );
+
+      expect(acks(), isEmpty);
+    });
+
+    test('a chunk for an unknown transfer emits no upload.ack', () async {
+      await beginOnReal();
+      real.handle(
+        PairingCodec.decode(
+          PairingCodec.encodeUpload(999, 0, Uint8List.fromList([1])),
+        ),
+      );
+
+      expect(acks(), isEmpty);
+    });
   });
 
   test('upload.commit replies ok with the path from the receiver', () async {
@@ -278,7 +347,52 @@ void main() {
     expect(result['code'], 'write_failed');
   });
 
+  test('upload.abort abandons the transfer and replies ok', () {
+    handler.handle(
+      PairingCodec.decode(
+        _json({
+          'id': 4,
+          'method': 'upload.abort',
+          'params': {'transferId': 7},
+        }),
+      ),
+    );
+
+    expect(receiver.abandonedIds, [7]);
+    expect((lastJson().data['result'] as Map)['ok'], true);
+  });
+
+  test('upload.abort for an unknown transfer still replies ok', () {
+    // The phone aborts because the user tapped cancel; it has nothing useful to
+    // do with a failure, and the benign race where the commit already landed must
+    // not surface as an error.
+    handler.handle(
+      PairingCodec.decode(
+        _json({
+          'id': 4,
+          'method': 'upload.abort',
+          'params': {'transferId': 999},
+        }),
+      ),
+    );
+
+    expect((lastJson().data['result'] as Map)['ok'], true);
+  });
+
+  test('upload.abort without a transferId replies ok and abandons nothing', () {
+    handler.handle(
+      PairingCodec.decode(
+        _json({'id': 4, 'method': 'upload.abort', 'params': <String, Object?>{}}),
+      ),
+    );
+
+    expect(receiver.abandonedIds, isEmpty);
+    expect((lastJson().data['result'] as Map)['ok'], true);
+  });
+
   test('dispose abandons every unfinished transfer', () {
+    // Not only to release memory: each live transfer owns a part-file in the
+    // user's working directory, and abandoning is what deletes it.
     handler.dispose();
     expect(receiver.abandonAllCount, 1);
   });

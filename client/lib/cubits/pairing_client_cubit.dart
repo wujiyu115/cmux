@@ -11,6 +11,7 @@ import '../services/pairing/pairing_client.dart';
 import '../services/pairing/pairing_git_view.dart';
 import '../services/pairing/pairing_offer.dart';
 import '../services/pairing/pairing_upload_sender.dart';
+import '../services/pairing/upload_source.dart';
 
 /// Client-side pairing flow, mirroring orca's screens:
 /// idle → confirmAwaiting → confirmConnecting → connected → mirroring, with a
@@ -805,11 +806,11 @@ class PairingClientCubit extends Cubit<PairingClientState> {
   Stream<void> get gitRefreshHints => _gitRefreshHints.stream;
   final _gitRefreshHints = StreamController<void>.broadcast();
 
-  /// Ships [bytes] to the host, which writes them into the mirrored pane's
+  /// Streams [source] to the host, which writes it into the mirrored pane's
   /// working directory and returns the absolute path it used.
-  Future<String> uploadImage({
+  Future<String> uploadMedia({
     required String filename,
-    required Uint8List bytes,
+    required UploadSource source,
     void Function(int sent, int total)? onProgress,
   }) {
     final sub = _activeSubscription;
@@ -820,10 +821,15 @@ class PairingClientCubit extends Cubit<PairingClientState> {
     return client.uploadFile(
       sub: sub.sub,
       filename: filename,
-      bytes: bytes,
+      source: source,
       onProgress: onProgress,
     );
   }
+
+  /// Stops the in-flight upload. The upload future then completes with
+  /// [PairingUploadCancelled], which the caller treats as a user action rather
+  /// than a failure.
+  void cancelUpload() => _client?.cancelUpload();
 
   /// Cancels pairing / disconnects and returns to the host list. Also ends any
   /// pending retry — this is the only thing that does.

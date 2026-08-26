@@ -8,18 +8,12 @@ import 'package:teampilot/services/pairing/pairing_rpc_handler.dart';
 import 'package:teampilot/services/pairing/pairing_workspace_index.dart';
 import 'package:teampilot/services/pairing/recent_pty_buffer.dart';
 import 'package:teampilot/services/pairing/session_catalog.dart';
+import '../../support/pairing_upload_doubles.dart';
 import 'package:teampilot/services/terminal/terminal_session.dart';
 
 class _MockSession extends Mock implements TerminalSession {}
 
 Uint8List _json(Map<String, Object?> data) => PairingCodec.encodeJson(data);
-
-Future<String> _noopSink({
-  required String workspaceId,
-  required String cwd,
-  required String filename,
-  required List<int> bytes,
-}) async => '';
 
 void main() {
   setUpAll(() => registerFallbackValue(Uint8List(0)));
@@ -58,7 +52,7 @@ void main() {
     handler = PairingRpcHandler(
       catalog: catalog,
       send: sent.add,
-      uploadSink: _noopSink,
+      uploadOpener: noopUploadOpener,
       batchWindow: const Duration(milliseconds: 1),
     );
   });
@@ -287,7 +281,7 @@ void main() {
       handler = PairingRpcHandler(
         catalog: catalog,
         send: sent.add,
-        uploadSink: _noopSink,
+        uploadOpener: noopUploadOpener,
         workspaceIndex: () async => const [
           PairingWorkspaceInfo(workspaceId: 'wsA', title: 'Workspace A'),
           PairingWorkspaceInfo(workspaceId: 'wsC', title: 'Dormant'),
@@ -345,7 +339,7 @@ void main() {
       handler = PairingRpcHandler(
         catalog: catalog,
         send: sent.add,
-        uploadSink: _noopSink,
+        uploadOpener: noopUploadOpener,
         activatePollInterval: const Duration(milliseconds: 5),
         activator: (req) async {
           isLive = true;
@@ -374,7 +368,7 @@ void main() {
       handler = PairingRpcHandler(
         catalog: catalog,
         send: sent.add,
-        uploadSink: _noopSink,
+        uploadOpener: noopUploadOpener,
         activateTimeout: const Duration(milliseconds: 20),
         activatePollInterval: const Duration(milliseconds: 5),
         activator: (req) async =>
@@ -400,7 +394,7 @@ void main() {
       handler = PairingRpcHandler(
         catalog: catalog,
         send: sent.add,
-        uploadSink: _noopSink,
+        uploadOpener: noopUploadOpener,
         workspaceIndex: () async => const [
           PairingWorkspaceInfo(
             workspaceId: 'wsA',
@@ -433,7 +427,7 @@ void main() {
       handler = PairingRpcHandler(
         catalog: catalog,
         send: sent.add,
-        uploadSink: _noopSink,
+        uploadOpener: noopUploadOpener,
         workspaceIndex: () async => const [
           PairingWorkspaceInfo(workspaceId: 'wsA', title: 'A'),
         ],
@@ -453,7 +447,7 @@ void main() {
       handler = PairingRpcHandler(
         catalog: catalog,
         send: sent.add,
-        uploadSink: _noopSink,
+        uploadOpener: noopUploadOpener,
         workspaceIndex: () async => const [
           PairingWorkspaceInfo(workspaceId: 'wsA', title: 'A'),
         ],
@@ -486,7 +480,7 @@ void main() {
       handler = PairingRpcHandler(
         catalog: catalog,
         send: sent.add,
-        uploadSink: _noopSink,
+        uploadOpener: noopUploadOpener,
         workspaceIndex: () async => const [
           PairingWorkspaceInfo(workspaceId: 'wsA', title: 'A'),
         ],
@@ -508,7 +502,7 @@ void main() {
       handler = PairingRpcHandler(
         catalog: catalog,
         send: sent.add,
-        uploadSink: _noopSink,
+        uploadOpener: noopUploadOpener,
         workspaceIndex: () async => const [
           PairingWorkspaceInfo(workspaceId: 'wsA', title: 'A'),
         ],
@@ -541,7 +535,7 @@ void main() {
       handler = PairingRpcHandler(
         catalog: catalog,
         send: sent.add,
-        uploadSink: _noopSink,
+        uploadOpener: noopUploadOpener,
         dirBrowser: (path, {targetId}) async {
           seen = path;
           return const PairingDirListing(
@@ -572,7 +566,7 @@ void main() {
       handler = PairingRpcHandler(
         catalog: catalog,
         send: sent.add,
-        uploadSink: _noopSink,
+        uploadOpener: noopUploadOpener,
         dirBrowser: (path, {targetId}) async {
           seen = path;
           return const PairingDirListing(
@@ -597,7 +591,7 @@ void main() {
       handler = PairingRpcHandler(
         catalog: catalog,
         send: sent.add,
-        uploadSink: _noopSink,
+        uploadOpener: noopUploadOpener,
         dirBrowser: (path, {targetId}) async {
           seenTarget = targetId;
           return const PairingDirListing(
@@ -625,7 +619,7 @@ void main() {
       handler = PairingRpcHandler(
         catalog: catalog,
         send: sent.add,
-        uploadSink: _noopSink,
+        uploadOpener: noopUploadOpener,
         dirBrowser: (path, {targetId}) async {
           seenTarget = targetId;
           return const PairingDirListing(path: '/x', parent: null, dirs: []);
@@ -647,7 +641,7 @@ void main() {
       handler = PairingRpcHandler(
         catalog: catalog,
         send: sent.add,
-        uploadSink: _noopSink,
+        uploadOpener: noopUploadOpener,
         dirBrowser: (path, {targetId}) async {
           seenTarget = targetId;
           return const PairingDirListing(path: '/x', parent: null, dirs: []);
@@ -682,7 +676,7 @@ void main() {
       handler = PairingRpcHandler(
         catalog: catalog,
         send: sent.add,
-        uploadSink: _noopSink,
+        uploadOpener: noopUploadOpener,
         workspaceCreator:
             ({required folderPath, title, groupId, targetId}) async => 'w',
       );
@@ -706,7 +700,7 @@ void main() {
       handler = PairingRpcHandler(
         catalog: catalog,
         send: sent.add,
-        uploadSink: _noopSink,
+        uploadOpener: noopUploadOpener,
         workspaceCreator: ({required folderPath, title, groupId, targetId}) async {
           gotFolder = folderPath;
           gotTitle = title;
@@ -742,7 +736,7 @@ void main() {
       handler = PairingRpcHandler(
         catalog: catalog,
         send: sent.add,
-        uploadSink: _noopSink,
+        uploadOpener: noopUploadOpener,
         workspaceCreator: ({required folderPath, title, groupId, targetId}) async {
           gotTarget = targetId;
           return 'ws-new';
@@ -777,7 +771,7 @@ void main() {
       handler = PairingRpcHandler(
         catalog: catalog,
         send: sent.add,
-        uploadSink: _noopSink,
+        uploadOpener: noopUploadOpener,
         groupCreator: (name) async => 'g',
       );
       handler.handle(
@@ -799,7 +793,7 @@ void main() {
       handler = PairingRpcHandler(
         catalog: catalog,
         send: sent.add,
-        uploadSink: _noopSink,
+        uploadOpener: noopUploadOpener,
         groupCreator: (name) async {
           got = name;
           return 'g-new';

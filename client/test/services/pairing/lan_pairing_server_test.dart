@@ -6,6 +6,7 @@ import 'package:teampilot/services/pairing/device_registry.dart';
 import 'package:teampilot/services/pairing/lan_pairing_server.dart';
 import 'package:teampilot/services/pairing/pairing_crypto.dart';
 import 'package:teampilot/services/pairing/session_catalog.dart';
+import '../../support/pairing_upload_doubles.dart';
 
 // NOTE: TestWidgetsFlutterBinding blocks real outbound HTTP (HttpClient returns
 // 400 with no socket), so these tests exercise the server's lifecycle + offer
@@ -22,12 +23,7 @@ LanPairingServer _server(PairingKeyPair key, {List<int> ports = const [0]}) =>
   catalog: SessionCatalog(),
   hostName: 'Test Desktop',
   ports: ports,
-  uploadSink: ({
-    required String workspaceId,
-    required String cwd,
-    required String filename,
-    required List<int> bytes,
-  }) async => '',
+  uploadOpener: noopUploadOpener,
 );
 
 /// A port that was free a moment ago: bind ephemerally, note it, release it.

@@ -3034,18 +3034,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mobileComposerSubmitOff => 'Send without Return';
 
   @override
-  String get mobileComposerAttach => 'Attach image';
+  String get mobileComposerAttach => 'Attach image or video';
 
   @override
-  String get imageUploadFailed => 'Image upload failed';
+  String get mobileComposerCancelUpload => 'Cancel upload';
 
   @override
-  String imageUploadTooLarge(int mb) {
+  String mediaUploadProgress(int percent, int sent, int total) {
+    return '$percent% · $sent/$total MB';
+  }
+
+  @override
+  String get mediaUploadFailed => 'Upload failed';
+
+  @override
+  String mediaUploadImageTooLarge(int mb) {
     return 'Image is larger than $mb MB';
   }
 
   @override
-  String get imageUploadUnsupportedType => 'That image type is not supported';
+  String mediaUploadVideoTooLarge(int mb) {
+    return 'Video is larger than $mb MB';
+  }
+
+  @override
+  String get mediaUploadUnsupportedType => 'That file type is not supported';
 
   @override
   String get voiceInputStart => 'Start dictation';

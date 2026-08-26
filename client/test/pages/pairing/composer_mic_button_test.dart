@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:teampilot/cubits/image_upload_cubit.dart';
+import 'package:teampilot/cubits/media_upload_cubit.dart';
 import 'package:teampilot/cubits/mobile_toolbar_cubit.dart';
 import 'package:teampilot/cubits/voice_input_cubit.dart';
 import 'package:teampilot/l10n/app_localizations.dart';
@@ -16,7 +16,7 @@ import '../../support/fake_stt_provider.dart';
 void main() {
   late MobileToolbarCubit toolbar;
   late VoiceInputCubit voice;
-  late ImageUploadCubit upload;
+  late MediaUploadCubit upload;
   late InMemoryVoiceInputRepository voiceRepository;
   late FakeSttProvider provider;
   late TextEditingController controller;
@@ -35,11 +35,11 @@ void main() {
       repository: voiceRepository,
       providerFactory: (_, _) => provider,
     );
-    // The composer now requires an ImageUploadCubit in scope; this suite never
+    // The composer now requires an MediaUploadCubit in scope; this suite never
     // exercises uploads, so the callbacks are inert.
-    upload = ImageUploadCubit(
-      pickImage: () async => null,
-      upload: ({required filename, required bytes, onProgress}) async => '',
+    upload = MediaUploadCubit(
+      pickMedia: () async => null,
+      upload: ({required filename, required source, onProgress}) async => '',
     );
     controller = TextEditingController();
     focusNode = FocusNode();

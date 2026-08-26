@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_ui/shared_ui.dart';
 
-import '../../../cubits/image_upload_cubit.dart';
+import '../../../cubits/media_upload_cubit.dart';
 import '../../../cubits/mobile_toolbar_cubit.dart';
 import '../../../cubits/voice_input_cubit.dart';
 import '../../../l10n/l10n_extensions.dart';
@@ -105,7 +105,7 @@ class _MobileComposerPanelState extends State<MobileComposerPanel> {
     // Two messengers stacked, not merged: each stream maps to different copy,
     // and a shared messenger would have to erase the failure type to do both.
     return UploadFailureMessenger(
-      failures: context.read<ImageUploadCubit>().failures,
+      failures: context.read<MediaUploadCubit>().failures,
       child: VoiceFailureMessenger(
         failures: _voice.failures,
         child: DecoratedBox(
@@ -215,8 +215,8 @@ class _MobileComposerPanelState extends State<MobileComposerPanel> {
                           onTap: cubit.toggleChatMode,
                         ),
                         const SizedBox(width: MobileComposerPanel._actionGap),
-                        BlocBuilder<ImageUploadCubit, ImageUploadState>(
-                          // ImageUploadState has no value equality and progress
+                        BlocBuilder<MediaUploadCubit, MediaUploadState>(
+                          // MediaUploadState has no value equality and progress
                           // emits on every ack, so this guard keeps the rest of
                           // the row out of the rebuild.
                           buildWhen: (before, after) =>
@@ -337,34 +337,88 @@ class _CircleButton extends StatelessWidget {
   }
 }
 
-/// The attach-image control: a `+` when idle, a spinner while picking or
-/// uploading.
+/// The attach control: a `+` when idle, a progress ring while picking, and a
+/// tappable ring-with-× while uploading.
 ///
-/// The uploading spinner is *determinate* — deliberately unlike every other
+/// The uploading ring is *determinate* — deliberately unlike every other
 /// progress indicator in the pairing UI, which all spin indeterminately. During
 /// an upload the byte count is genuinely known, and an indeterminate ring would
-/// throw that information away. While picking there is no byte count yet, so the
-/// ring falls back to indeterminate.
+/// throw that information away. While picking, and once cancelling, there is no
+/// meaningful figure, so the ring falls back to indeterminate.
+///
+/// Tap-to-cancel rather than long-press: a long-press affordance on a 34px chip
+/// is undiscoverable, and ring-plus-× is a settled idiom. Note the attach key and
+/// `Icons.add` both disappear while busy — a *different* key appears.
 class _AttachButton extends StatelessWidget {
   const _AttachButton({required this.state});
 
-  final ImageUploadState state;
+  final MediaUploadState state;
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     final l10n = context.l10n;
 
-    if (state.status == ImageUploadStatus.idle) {
+    if (state.status == MediaUploadStatus.idle) {
       return _CircleButton(
         buttonKey: AppKeys.mobileComposerAttachButton,
         icon: Icons.add,
         tooltip: l10n.mobileComposerAttach,
-        onTap: () => context.read<ImageUploadCubit>().pickAndUpload(),
+        onTap: () => context.read<MediaUploadCubit>().pickAndUpload(),
       );
     }
 
-    // Picking or uploading: a non-tappable chip matching [_CircleButton]'s look.
+    final uploading = state.status == MediaUploadStatus.uploading;
+    final chip = _ProgressChip(
+      // Determinate only while uploading; picking has no bytes yet, and once
+      // cancelling the figure is no longer going anywhere.
+      value: uploading ? state.progress : null,
+      icon: uploading ? Icons.close : null,
+    );
+    if (!uploading) return chip;
+
+    // A video can take minutes on a LAN. The ring alone leaves no way to tell a
+    // slow transfer from a stalled one, so the byte figures ride alongside it.
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          l10n.mediaUploadProgress(
+            (state.progress * 100).round(),
+            _megabytes(state.sentBytes),
+            _megabytes(state.totalBytes),
+          ),
+          style: Theme.of(context).textTheme.labelSmall,
+        ),
+        const SizedBox(width: 6),
+        Tooltip(
+          message: l10n.mobileComposerCancelUpload,
+          child: GestureDetector(
+            key: AppKeys.mobileComposerCancelUploadButton,
+            onTap: () => context.read<MediaUploadCubit>().cancel(),
+            child: chip,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Rounded up, so a 0.4 MB clip reads as `1` rather than `0/0 MB`.
+  static int _megabytes(int bytes) => (bytes / (1024 * 1024)).ceil();
+}
+
+/// The busy form of [_CircleButton]: same 34px chip, a progress ring inside, and
+/// optionally a glyph centred in the ring.
+class _ProgressChip extends StatelessWidget {
+  const _ProgressChip({required this.value, this.icon});
+
+  /// `null` for an indeterminate ring.
+  final double? value;
+  final IconData? icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final glyph = icon;
     return Container(
       width: MobileComposerPanel._buttonSize,
       height: MobileComposerPanel._buttonSize,
@@ -379,12 +433,12 @@ class _AttachButton extends StatelessWidget {
         child: SizedBox(
           width: MobileComposerPanel._iconSize,
           height: MobileComposerPanel._iconSize,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            // Determinate only while uploading; picking has no bytes yet.
-            value: state.status == ImageUploadStatus.uploading
-                ? state.progress
-                : null,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              CircularProgressIndicator(strokeWidth: 2, value: value),
+              if (glyph != null) Icon(glyph, size: 10, color: cs.onSurface),
+            ],
           ),
         ),
       ),

@@ -7,6 +7,7 @@ import 'package:teampilot/services/pairing/lan_pairing_server.dart';
 import 'package:teampilot/services/pairing/pairing_crypto.dart';
 import 'package:teampilot/services/pairing/pairing_offer.dart';
 import 'package:teampilot/services/pairing/session_catalog.dart';
+import '../support/pairing_upload_doubles.dart';
 
 /// Fake host server: no real socket, deterministic port/offer.
 class _FakeServer extends LanPairingServer {
@@ -16,12 +17,7 @@ class _FakeServer extends LanPairingServer {
         registry: DeviceRegistry(InMemoryPairingKeyStore()),
         catalog: SessionCatalog(),
         hostName: 'Test',
-        uploadSink: ({
-          required String workspaceId,
-          required String cwd,
-          required String filename,
-          required List<int> bytes,
-        }) async => '',
+        uploadOpener: noopUploadOpener,
       );
 
   bool started = false;

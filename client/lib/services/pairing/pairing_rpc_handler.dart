@@ -5,8 +5,10 @@ import '../terminal/terminal_session.dart';
 import 'pairing_frames.dart';
 import 'pairing_git_view.dart';
 import 'pairing_upload_receiver.dart';
+import 'pairing_upload_target.dart';
 import 'pairing_workspace_index.dart';
 import 'session_catalog.dart';
+import 'upload_limits.dart';
 
 /// Encoded application frame, ready to be E2EE-boxed and put on the socket.
 typedef PairingFrameSender = void Function(Uint8List frame);
@@ -40,16 +42,16 @@ class _Subscription {
 /// tears every listener down so a dropped socket leaks nothing.
 ///
 /// Requests: `session.list`, `terminal.subscribe|unsubscribe|resize`,
-/// `git.changes`, `git.diff`, `upload.begin`, `upload.commit`, `ping`. Binary
+/// `git.changes`, `git.diff`, `upload.begin|commit|abort`, `ping`. Binary
 /// [InputFrame]s carry
-/// `terminal.input`; binary [UploadFrame]s carry image chunks (`_onUploadChunk`
+/// `terminal.input`; binary [UploadFrame]s carry media chunks (`_onUploadChunk`
 /// acks each accepted one). Output is pushed as batched binary frames with a
 /// monotonic `seq`, preceded on subscribe by one snapshot.
 class PairingRpcHandler {
   PairingRpcHandler({
     required SessionCatalog catalog,
     required PairingFrameSender send,
-    required PairingUploadSink uploadSink,
+    required PairingUploadOpener uploadOpener,
     Duration batchWindow = const Duration(milliseconds: 5),
     PairingWorkspaceIndexProvider? workspaceIndex,
     PairingSessionActivator? activator,
@@ -62,10 +64,10 @@ class PairingRpcHandler {
     PairingGitDiffProvider? gitDiff,
     Duration activateTimeout = const Duration(seconds: 8),
     Duration activatePollInterval = const Duration(milliseconds: 40),
-    int uploadMaxBytes = 25 * 1024 * 1024,
-    int uploadChunkSize = 64 * 1024,
+    PairingUploadCaps uploadCaps = const PairingUploadCaps(),
+    int uploadChunkSize = uploadWireChunkSize,
     // Injection point for tests: production always builds the receiver from the
-    // sink below. A fake here lets a test assert the handler's calls into it.
+    // opener below. A fake here lets a test assert the handler's calls into it.
     PairingUploadReceiver? uploadReceiver,
   }) : _catalog = catalog,
        _send = send,
@@ -80,14 +82,18 @@ class PairingRpcHandler {
        _gitChanges = gitChanges,
        _gitDiff = gitDiff,
        _activateTimeout = activateTimeout,
-       _activatePollInterval = activatePollInterval,
-       _uploads =
-           uploadReceiver ??
-           PairingUploadReceiver(
-             sink: uploadSink,
-             maxBytes: uploadMaxBytes,
-             chunkSize: uploadChunkSize,
-           );
+       _activatePollInterval = activatePollInterval {
+    // Built in the body, not the initializer list: the receiver's ack callback
+    // is a method on this handler, so `this` has to exist first.
+    _uploads =
+        uploadReceiver ??
+        PairingUploadReceiver(
+          openTarget: uploadOpener,
+          onAck: _sendUploadAck,
+          caps: uploadCaps,
+          chunkSize: uploadChunkSize,
+        );
+  }
 
   final SessionCatalog _catalog;
   final PairingFrameSender _send;
@@ -103,7 +109,7 @@ class PairingRpcHandler {
   final PairingGitDiffProvider? _gitDiff;
   final Duration _activateTimeout;
   final Duration _activatePollInterval;
-  final PairingUploadReceiver _uploads;
+  late final PairingUploadReceiver _uploads;
 
   final _subs = <int, _Subscription>{};
   var _nextSub = 1;
@@ -158,10 +164,13 @@ class PairingRpcHandler {
       case 'git.diff':
         unawaited(_gitDiffFor(id, params));
       case 'upload.begin':
-        _uploadBegin(id, params);
+        // `_handleJson` is sync; begin awaits opening the destination.
+        unawaited(_uploadBegin(id, params));
       case 'upload.commit':
-        // `_handleJson` is sync; the commit awaits the sink write.
+        // `_handleJson` is sync; the commit awaits the final flush and rename.
         unawaited(_uploadCommit(id, params));
+      case 'upload.abort':
+        _uploadAbort(id, params);
       case 'ping':
         _replyResult(id, const {'pong': true});
       default:
@@ -566,7 +575,7 @@ class PairingRpcHandler {
   /// JSON-RPC `error` field: [_replyError] sends a bare string that the client
   /// turns into `Exception(message)`, so a structured code could not survive
   /// the trip. Do not "fix" this back to the error channel.
-  void _uploadBegin(Object? id, Map<String, Object?> params) {
+  Future<void> _uploadBegin(Object? id, Map<String, Object?> params) async {
     final sub = params['sub'];
     final filename = params['filename'];
     final size = params['size'];
@@ -580,12 +589,15 @@ class PairingRpcHandler {
       _replyResult(id, const {'ok': false, 'code': 'no_target'});
       return;
     }
-    final result = _uploads.begin(
+    // Awaits: begin resolves the pane's machine and creates the part-file, so
+    // `no_target` comes back before any bytes cross the network.
+    final result = await _uploads.begin(
       workspaceId: entry.ref.workspaceId,
       cwd: record.session.runtimeTarget.workingDirectory,
       filename: filename,
       size: size,
     );
+    if (_disposed) return;
     _replyResult(
       id,
       result.isOk
@@ -598,15 +610,19 @@ class PairingRpcHandler {
     );
   }
 
-  void _onUploadChunk(int transferId, int chunkIndex, Uint8List bytes) {
-    final result = _uploads.chunk(transferId, chunkIndex, bytes);
-    // Only a good chunk reopens the credit window. Acking a rejected chunk
-    // would let the phone keep streaming into a dead transfer.
-    if (!result.isOk) return;
+  /// The receiver acks, not this method: a chunk that triggers a flush is acked
+  /// only after the write lands, which a return value cannot express. Rejected
+  /// chunks still produce no ack — acking one would let the phone keep streaming
+  /// into a dead transfer.
+  void _onUploadChunk(int transferId, int chunkIndex, Uint8List bytes) =>
+      _uploads.chunk(transferId, chunkIndex, bytes);
+
+  void _sendUploadAck(int transferId, int received) {
+    if (_disposed) return;
     _send(
       PairingCodec.encodeJson({
         'method': 'upload.ack',
-        'params': {'transferId': transferId, 'received': result.received},
+        'params': {'transferId': transferId, 'received': received},
       }),
     );
   }
@@ -626,6 +642,17 @@ class PairingRpcHandler {
     );
   }
 
+  /// Always replies `ok`, including for an id the receiver has never heard of.
+  ///
+  /// The phone aborts because the user tapped cancel; it has nothing useful to do
+  /// with a failure, and the benign race — the commit already landed, so the
+  /// transfer is gone — must not surface as an error.
+  void _uploadAbort(Object? id, Map<String, Object?> params) {
+    final transferId = params['transferId'];
+    if (transferId is int) unawaited(_uploads.abandon(transferId));
+    _replyResult(id, const {'ok': true});
+  }
+
   void _replyResult(Object? id, Map<String, Object?> result) {
     if (id == null) return;
     _send(PairingCodec.encodeJson({'id': id, 'result': result}));
@@ -639,10 +666,11 @@ class PairingRpcHandler {
   void dispose() {
     if (_disposed) return;
     _disposed = true;
-    // Release every unfinished transfer's bytes: a connection that closes
-    // mid-upload must not pin them, or a phone that reconnects repeatedly
-    // feeds the desktop's memory.
-    _uploads.abandonAll();
+    // Every unfinished transfer owns a part-file in the user's working
+    // directory, so abandoning is primarily about deleting those — a connection
+    // that drops mid-upload must not leave a 300 MB `.tp-upload` behind. It also
+    // releases the buffered tail each transfer still holds.
+    unawaited(_uploads.abandonAll());
     for (final record in _subs.values) {
       record.flushTimer?.cancel();
       record.listener?.cancel();

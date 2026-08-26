@@ -4,7 +4,8 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:teampilot/cubits/image_upload_cubit.dart';
+import 'package:teampilot/cubits/media_upload_cubit.dart';
+import 'package:teampilot/services/pairing/upload_source.dart';
 import 'package:teampilot/cubits/mobile_toolbar_cubit.dart';
 import 'package:teampilot/cubits/voice_input_cubit.dart';
 import 'package:teampilot/l10n/app_localizations.dart';
@@ -18,10 +19,10 @@ import '../../support/fake_stt_provider.dart';
 
 /// A stand-in photo picker. Returns whatever [next] is set to and counts calls.
 class _FakePicker {
-  PickedImage? next;
+  PickedMedia? next;
   int calls = 0;
 
-  Future<PickedImage?> pick() async {
+  Future<PickedMedia?> pick() async {
     calls++;
     return next;
   }
@@ -34,10 +35,19 @@ class _FakeUploader {
   final completer = Completer<String>();
   void Function(int sent, int total)? onProgress;
   Object? error;
+  int cancels = 0;
+
+  /// Records the request and leaves the upload pending.
+  ///
+  /// Deliberately does not fail the future: what the transport does after being
+  /// told to stop, and how the cubit reports it, is
+  /// `media_upload_cubit_test.dart`'s subject. Here the question is only whether
+  /// the chip is wired to `cancel` and what it renders once cancelling.
+  void cancel() => cancels++;
 
   Future<String> upload({
     required String filename,
-    required Uint8List bytes,
+    required UploadSource source,
     void Function(int sent, int total)? onProgress,
   }) {
     this.onProgress = onProgress;
@@ -49,7 +59,7 @@ class _FakeUploader {
 void main() {
   late MobileToolbarCubit toolbar;
   late VoiceInputCubit voice;
-  late ImageUploadCubit upload;
+  late MediaUploadCubit upload;
   late _FakePicker picker;
   late _FakeUploader uploader;
   late TextEditingController controller;
@@ -69,7 +79,11 @@ void main() {
     );
     picker = _FakePicker();
     uploader = _FakeUploader();
-    upload = ImageUploadCubit(pickImage: picker.pick, upload: uploader.upload);
+    upload = MediaUploadCubit(
+      pickMedia: picker.pick,
+      upload: uploader.upload,
+      cancelUpload: uploader.cancel,
+    );
     controller = TextEditingController();
     focusNode = FocusNode();
   });
@@ -111,8 +125,10 @@ void main() {
     await tester.pump();
   }
 
-  PickedImage smallImage() =>
-      PickedImage(filename: 'photo.jpg', bytes: Uint8List(10));
+  PickedMedia smallImage() => PickedMedia(
+    filename: 'photo.jpg',
+    source: MemoryUploadSource(Uint8List(10)),
+  );
 
   testWidgets('shows the attach button when idle', (t) async {
     await pump(t);
@@ -129,13 +145,18 @@ void main() {
     expect(picker.calls, 1);
   });
 
-  testWidgets('shows a determinate spinner while uploading', (t) async {
+  /// Taps attach and drives the cubit to `uploading` with the upload held open.
+  Future<void> startUpload(WidgetTester t) async {
     picker.next = smallImage();
     await pump(t);
     await t.tap(find.byKey(AppKeys.mobileComposerAttachButton));
     // picking → uploading; the upload future is held open by the completer.
     await t.pump();
     await t.pump();
+  }
+
+  testWidgets('shows a determinate spinner while uploading', (t) async {
+    await startUpload(t);
     uploader.onProgress?.call(5, 10);
     await t.pump();
 
@@ -145,9 +166,41 @@ void main() {
     // Determinate on purpose: the byte count is known during an upload.
     expect(indicator.value, isNotNull);
     expect(indicator.value, 0.5);
-    // The + is replaced by the spinner, so it is gone while uploading.
+    // The + is replaced by the ring, so it is gone while uploading.
     expect(find.byIcon(Icons.add), findsNothing);
     expect(find.byKey(AppKeys.mobileComposerAttachButton), findsNothing);
+  });
+
+  testWidgets('shows the percentage and byte figures while uploading',
+      (t) async {
+    // A video can take minutes on a LAN; the ring alone cannot tell a slow
+    // transfer from a stalled one.
+    await startUpload(t);
+    uploader.onProgress?.call(5 * 1024 * 1024, 10 * 1024 * 1024);
+    await t.pump();
+
+    expect(find.text('50% · 5/10 MB'), findsOneWidget);
+  });
+
+  testWidgets('the uploading chip cancels, and cancelling drops the key',
+      (t) async {
+    await startUpload(t);
+    expect(
+      find.byKey(AppKeys.mobileComposerCancelUploadButton),
+      findsOneWidget,
+    );
+
+    await t.tap(find.byKey(AppKeys.mobileComposerCancelUploadButton));
+    await t.pump();
+
+    expect(uploader.cancels, 1);
+    // Cancelling: no longer tappable, and the ring stops claiming a figure.
+    expect(find.byKey(AppKeys.mobileComposerCancelUploadButton), findsNothing);
+    final indicator = t.widget<CircularProgressIndicator>(
+      find.byType(CircularProgressIndicator),
+    );
+    expect(indicator.value, isNull);
+    expect(find.textContaining('MB'), findsNothing);
   });
 
   testWidgets('emits the host path once the upload commits', (t) async {
@@ -155,9 +208,9 @@ void main() {
     // spinner test already covers the in-flight state, so here we only need the
     // committed path to reach the stream.
     await upload.close();
-    upload = ImageUploadCubit(
-      pickImage: picker.pick,
-      upload: ({required filename, required bytes, onProgress}) async =>
+    upload = MediaUploadCubit(
+      pickMedia: picker.pick,
+      upload: ({required filename, required source, onProgress}) async =>
           '/Users/me/proj/photo.jpg',
     );
     picker.next = smallImage();
@@ -177,21 +230,30 @@ void main() {
     expect(emitted, '/Users/me/proj/photo.jpg');
   });
 
-  testWidgets('an oversized image raises the too-large snack bar', (t) async {
-    // maxBytes below the picked size trips the local guard before any transfer.
-    await upload.close();
-    upload = ImageUploadCubit(
-      pickImage: picker.pick,
-      upload: uploader.upload,
-      maxBytes: 4,
+  testWidgets('an oversized image names the image cap', (t) async {
+    // The local guard trips before any transfer, and the number now travels with
+    // the failure rather than being a default on the messenger.
+    picker.next = PickedMedia(
+      filename: 'huge.png',
+      source: MemoryUploadSource(Uint8List(26 * 1024 * 1024)),
     );
-    picker.next = smallImage();
     await pump(t);
     await t.tap(find.byKey(AppKeys.mobileComposerAttachButton));
     await t.pump();
     await t.pump();
-    // The 25 comes from UploadFailureMessenger's default maxMb, not maxBytes.
     expect(find.text('Image is larger than 25 MB'), findsOneWidget);
+  });
+
+  testWidgets('an oversized video names the video cap', (t) async {
+    picker.next = PickedMedia(
+      filename: 'huge.mp4',
+      source: _HugeSource(513 * 1024 * 1024),
+    );
+    await pump(t);
+    await t.tap(find.byKey(AppKeys.mobileComposerAttachButton));
+    await t.pump();
+    await t.pump();
+    expect(find.text('Video is larger than 512 MB'), findsOneWidget);
   });
 
   testWidgets('an unsupported type raises its snack bar', (t) async {
@@ -202,7 +264,7 @@ void main() {
     await t.pump();
     await t.pump();
     await t.pump();
-    expect(find.text('That image type is not supported'), findsOneWidget);
+    expect(find.text('That file type is not supported'), findsOneWidget);
   });
 
   testWidgets('any other failure raises the generic snack bar', (t) async {
@@ -213,6 +275,21 @@ void main() {
     await t.pump();
     await t.pump();
     await t.pump();
-    expect(find.text('Image upload failed'), findsOneWidget);
+    expect(find.text('Upload failed'), findsOneWidget);
   });
+}
+
+/// Claims a huge length without allocating it — a 513 MiB Uint8List in a widget
+/// test is pointless when only `length` is ever read.
+class _HugeSource implements UploadSource {
+  _HugeSource(this.length);
+
+  @override
+  final int length;
+
+  @override
+  Future<Uint8List> read(int maxBytes) async => Uint8List(0);
+
+  @override
+  Future<void> close() async {}
 }

@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker_android/image_picker_android.dart';
+import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../cubits/app_bootstrap_cubit.dart';
@@ -61,7 +63,8 @@ import '../services/pairing/lan_pairing_server.dart';
 import '../services/pairing/pairing_crypto.dart';
 import '../services/pairing/pairing_host_dir_browser.dart';
 import '../services/pairing/pairing_git_view.dart';
-import '../services/pairing/upload_destination.dart';
+import '../services/pairing/filesystem_upload_target.dart';
+import '../services/pairing/pairing_upload_target.dart';
 import '../services/pairing/pairing_workspace_index.dart';
 import '../services/pairing/session_catalog.dart';
 import '../repositories/user_terminal_theme_repository.dart';
@@ -1063,23 +1066,20 @@ Future<AppShell> buildAppShell({
       return sessionLifecycleService.resolveWorkContextForTargetId(targetId);
     }
 
-    // Phone → desktop image upload.
-    Future<String> pairingUploadSink({
+    // Phone → desktop media upload. Opens the destination up front (which is
+    // what makes `no_target` land before a 512 MiB video crosses the LAN) and
+    // hands back a target the receiver streams into.
+    Future<PairingUploadTarget> pairingUploadOpener({
       required String workspaceId,
       required String cwd,
       required String filename,
-      required List<int> bytes,
     }) async {
       final context = await pairingPaneContext(workspaceId, cwd);
-      final fs = context.filesystem;
-      await fs.ensureDir(cwd);
-      final destination = await resolveUploadDestination(
-        filesystem: fs,
+      return openFilesystemUploadTarget(
+        filesystem: context.filesystem,
         directory: cwd,
         filename: filename,
       );
-      await fs.writeBytes(destination, bytes);
-      return destination;
     }
 
     // Phone → desktop "what changed". `GitService.forContext` already speaks
@@ -1114,6 +1114,10 @@ Future<AppShell> buildAppShell({
       // more than which letter it keeps — a partly-staged file is in both.
       final byPath = <String, GitFileChange>{};
       for (final change in [...status.staged, ...status.unstaged]) {
+        // An upload in flight has a part-file on disk. It is dot-prefixed, so the
+        // file tree hides it, but git does not — and a two-minute video upload
+        // showing up in the phone's changed-file count reads as a bug.
+        if (change.path.endsWith(uploadPartSuffix)) continue;
         byPath.putIfAbsent(change.path, () => change);
       }
       final paths = byPath.keys.toList()
@@ -1148,7 +1152,7 @@ Future<AppShell> buildAppShell({
       registry: deviceRegistry,
       catalog: sessionCatalog,
       hostName: Platform.localHostname,
-      uploadSink: pairingUploadSink,
+      uploadOpener: pairingUploadOpener,
       workspaceIndex: pairingWorkspaceIndex,
       activator: pairingActivate,
       dirBrowser: pairingDirBrowser.browse,
@@ -1190,6 +1194,16 @@ Future<AppShell> buildAppShell({
     // Host-pushed agent edges become local phone notifications, localized here
     // (not on the desktop) so the phone's own language wins.
     final agentNoticePresenter = MobileAgentNoticePresenter();
+    // Android's Photo Picker needs no runtime permission and no manifest entry,
+    // which is why AndroidManifest.xml has no READ_MEDIA_IMAGES / READ_MEDIA_VIDEO
+    // — do not add them. The permission-based flow would mean a runtime dialog on
+    // API 33+ and a Play data-safety declaration for whole-library access, for a
+    // feature that only ever needs the one file the user picked. Devices without
+    // Play services fall back to ACTION_GET_CONTENT, which still works.
+    final imagePicker = ImagePickerPlatform.instance;
+    if (imagePicker is ImagePickerAndroid) {
+      imagePicker.useAndroidPhotoPicker = true;
+    }
     pairingClientCubit = PairingClientCubit(
       settings: pairingSettings,
       onAgentNotice: agentNoticePresenter.show,

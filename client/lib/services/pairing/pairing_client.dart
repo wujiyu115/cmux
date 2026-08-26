@@ -13,6 +13,7 @@ import 'pairing_frames.dart';
 import 'pairing_git_view.dart';
 import 'pairing_ports.dart';
 import 'pairing_upload_sender.dart';
+import 'upload_source.dart';
 import 'ws_transport.dart';
 
 /// The four observable phases of a pairing connect, in order. Emitted on
@@ -839,22 +840,44 @@ class PairingClient {
     });
   }
 
+  /// The upload in flight, so [cancelUpload] has something to talk to.
+  ///
+  /// One at a time: the media-upload cubit is the only caller and it is
+  /// single-flight, so a field is enough and `uploadFile`'s signature stays put.
+  PairingUploadSender? _activeUpload;
+
+  /// Stops the in-flight upload, if any. A no-op otherwise.
+  void cancelUpload() => _activeUpload?.cancel();
+
   Future<String> uploadFile({
     required int sub,
     required String filename,
-    required Uint8List bytes,
+    required UploadSource source,
     void Function(int sent, int total)? onProgress,
-  }) {
-    return PairingUploadSender(
-      rpc: _rpc,
+  }) async {
+    final sender = PairingUploadSender(
+      // Explicit timeout: both `upload.begin` and `upload.commit` make the host
+      // reach another machine — begin may cold-connect SFTP and create the
+      // part-file, commit flushes the last multi-megabyte batch and renames it —
+      // so the default, which suits requests answered from memory, is too tight.
+      rpc: (method, params) =>
+          _rpc(method, params, const Duration(seconds: 45)),
       send: _sendEncrypted,
       acks: uploadAcks,
-    ).upload(
-      sub: sub,
-      filename: filename,
-      bytes: bytes,
-      onProgress: onProgress,
     );
+    _activeUpload = sender;
+    try {
+      return await sender.upload(
+        sub: sub,
+        filename: filename,
+        source: source,
+        onProgress: onProgress,
+      );
+    } finally {
+      // Only if it is still ours: a later upload must not have its handle
+      // cleared by an earlier one settling.
+      if (_activeUpload == sender) _activeUpload = null;
+    }
   }
 
   /// [timeout] is positional rather than named because Dart forbids mixing

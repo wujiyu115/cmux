@@ -7,7 +7,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../cubits/image_upload_cubit.dart';
+import '../../cubits/media_upload_cubit.dart';
+import '../../services/pairing/upload_source.dart';
 import '../../cubits/layout_cubit.dart';
 import '../../cubits/mobile_toolbar_cubit.dart';
 import '../../cubits/pairing_client_cubit.dart';
@@ -83,7 +84,7 @@ class _PairingMirrorPageState extends State<PairingMirrorPage>
 
   /// Picks and uploads one image at a time; created here so `image_picker`
   /// stays out of the cubit and the cubit stays testable.
-  late final ImageUploadCubit _upload;
+  late final MediaUploadCubit _upload;
   StreamSubscription<String>? _uploadPaths;
 
   /// Borrowed from the pairing shell — the page only ever stops it, never
@@ -134,9 +135,10 @@ class _PairingMirrorPageState extends State<PairingMirrorPage>
       _composerText.value = insertTranscript(_composerText.value, text);
     });
 
-    _upload = ImageUploadCubit(
-      pickImage: _pickImage,
-      upload: cubit.uploadImage,
+    _upload = MediaUploadCubit(
+      pickMedia: _pickMedia,
+      upload: cubit.uploadMedia,
+      cancelUpload: cubit.cancelUpload,
     );
     // The host decides the path; the phone never guesses it. Quote it so a cwd
     // containing a space still yields one shell argument.
@@ -196,16 +198,30 @@ class _PairingMirrorPageState extends State<PairingMirrorPage>
     );
   }
 
-  /// Reads one gallery image off disk into memory. The only place `image_picker`
-  /// is used, so the cubit takes plain callbacks and stays testable. [XFile.name]
-  /// is already a bare filename with no directory part; the host validates it
-  /// independently, so both checks exist.
-  Future<PickedImage?> _pickImage() async {
-    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+  /// One gallery pick — image or video, same sheet.
+  ///
+  /// `pickMedia` rather than a separate video button: one tap, one sheet, and the
+  /// phone's own picker already distinguishes the two. It requires iOS 14, which
+  /// is why the deployment target was raised.
+  ///
+  /// The only place `image_picker` is used, so the cubit takes plain callbacks and
+  /// stays testable. [XFile.name] is already a bare filename with no directory
+  /// part; the host validates it independently, so both checks exist.
+  ///
+  /// Deliberately *not* `readAsBytes()`: a 512 MiB video read into a `Uint8List`
+  /// on a phone is an out-of-memory kill, which is the whole reason the upload
+  /// streams. `XFile.path` is a real path — image_picker copies the picked asset
+  /// into the app cache before returning.
+  ///
+  /// `requestFullMetadata: false` skips the iOS photo-library permission prompt
+  /// (PHPicker needs none) and costs nothing here: no resize or re-encode is
+  /// requested either way.
+  Future<PickedMedia?> _pickMedia() async {
+    final picked = await ImagePicker().pickMedia(requestFullMetadata: false);
     if (picked == null) return null;
-    return PickedImage(
+    return PickedMedia(
       filename: picked.name,
-      bytes: await picked.readAsBytes(),
+      source: await FileUploadSource.open(picked.path),
     );
   }
 

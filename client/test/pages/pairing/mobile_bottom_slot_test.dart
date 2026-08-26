@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:teampilot/cubits/image_upload_cubit.dart';
+import 'package:teampilot/cubits/media_upload_cubit.dart';
 import 'package:teampilot/cubits/mobile_toolbar_cubit.dart';
 import 'package:teampilot/cubits/voice_input_cubit.dart';
 import 'package:teampilot/l10n/app_localizations.dart';
@@ -22,7 +22,7 @@ void main() {
   late List<List<int>> sent;
   late MobileToolbarCubit cubit;
   late VoiceInputCubit voice;
-  late ImageUploadCubit upload;
+  late MediaUploadCubit upload;
   late TextEditingController controller;
   late FocusNode focusNode;
 
@@ -43,11 +43,11 @@ void main() {
       repository: InMemoryVoiceInputRepository(),
       providerFactory: (_, _) => FakeSttProvider(),
     );
-    // The composer now requires an ImageUploadCubit in scope; this suite never
+    // The composer now requires an MediaUploadCubit in scope; this suite never
     // exercises uploads, so the callbacks are inert.
-    upload = ImageUploadCubit(
-      pickImage: () async => null,
-      upload: ({required filename, required bytes, onProgress}) async => '',
+    upload = MediaUploadCubit(
+      pickMedia: () async => null,
+      upload: ({required filename, required source, onProgress}) async => '',
     );
     // The slot forwards these to the composer; the mirror page owns them, so
     // the test mirrors that ownership by creating and disposing them here.

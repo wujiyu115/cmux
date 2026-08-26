@@ -8,7 +8,7 @@ import 'pairing_crypto.dart';
 import 'pairing_git_view.dart';
 import 'pairing_offer.dart';
 import 'pairing_ports.dart';
-import 'pairing_upload_receiver.dart';
+import 'pairing_upload_target.dart';
 import 'pairing_workspace_index.dart';
 import 'session_catalog.dart';
 import 'ws_transport.dart';
@@ -26,7 +26,7 @@ class LanPairingServer {
     required DeviceRegistry registry,
     required SessionCatalog catalog,
     required String hostName,
-    required PairingUploadSink uploadSink,
+    required PairingUploadOpener uploadOpener,
     PairingWorkspaceIndexProvider? workspaceIndex,
     PairingSessionActivator? activator,
     PairingDirBrowser? dirBrowser,
@@ -45,7 +45,7 @@ class LanPairingServer {
        _registry = registry,
        _catalog = catalog,
        _hostName = hostName,
-       _uploadSink = uploadSink,
+       _uploadOpener = uploadOpener,
        _workspaceIndex = workspaceIndex,
        _activator = activator,
        _dirBrowser = dirBrowser,
@@ -65,7 +65,7 @@ class LanPairingServer {
   final DeviceRegistry _registry;
   final SessionCatalog _catalog;
   final String _hostName;
-  final PairingUploadSink _uploadSink;
+  final PairingUploadOpener _uploadOpener;
   final PairingWorkspaceIndexProvider? _workspaceIndex;
   final PairingSessionActivator? _activator;
   final PairingDirBrowser? _dirBrowser;
@@ -174,7 +174,7 @@ class LanPairingServer {
       registry: _registry,
       catalog: _catalog,
       hostName: _hostName,
-      uploadSink: _uploadSink,
+      uploadOpener: _uploadOpener,
       workspaceIndex: _workspaceIndex,
       activator: _activator,
       dirBrowser: _dirBrowser,

@@ -2,13 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../../../cubits/image_upload_cubit.dart';
+import '../../../cubits/media_upload_cubit.dart';
 import '../../../l10n/l10n_extensions.dart';
+import '../../../services/pairing/upload_limits.dart';
 
-/// Turns [ImageUploadCubit.failures] into snack bars.
+/// Turns [MediaUploadCubit.failures] into snack bars.
 ///
 /// A widget rather than a `BlocListener` because a failure is an event, not
-/// state — after a failure the cubit returns to [ImageUploadStatus.idle], which
+/// state — after a failure the cubit returns to [MediaUploadStatus.idle], which
 /// is indistinguishable from never having uploaded. A `BlocListener` keyed off
 /// state would either miss the event or refire on the next unrelated idle.
 class UploadFailureMessenger extends StatefulWidget {
@@ -16,22 +17,17 @@ class UploadFailureMessenger extends StatefulWidget {
     super.key,
     required this.failures,
     required this.child,
-    this.maxMb = 25,
   });
 
-  final Stream<ImageUploadFailure> failures;
+  final Stream<MediaUploadFailure> failures;
   final Widget child;
-
-  /// The size limit, in megabytes, named in the `tooLarge` copy. Passed in so
-  /// the ceiling lives in exactly one place (the cubit's `maxBytes`).
-  final int maxMb;
 
   @override
   State<UploadFailureMessenger> createState() => _UploadFailureMessengerState();
 }
 
 class _UploadFailureMessengerState extends State<UploadFailureMessenger> {
-  StreamSubscription<ImageUploadFailure>? _sub;
+  StreamSubscription<MediaUploadFailure>? _sub;
 
   @override
   void initState() {
@@ -39,15 +35,25 @@ class _UploadFailureMessengerState extends State<UploadFailureMessenger> {
     _sub = widget.failures.listen(_show);
   }
 
-  void _show(ImageUploadFailure failure) {
+  void _show(MediaUploadFailure failure) {
     // A late result can arrive after the panel is gone; showing a snack bar
     // then would dereference a dead context.
     if (!mounted) return;
     final l10n = context.l10n;
-    final message = switch (failure) {
-      ImageUploadFailure.tooLarge => l10n.imageUploadTooLarge(widget.maxMb),
-      ImageUploadFailure.unsupportedType => l10n.imageUploadUnsupportedType,
-      ImageUploadFailure.failed => l10n.imageUploadFailed,
+    // The limit rides along with the event: an image and a video have different
+    // ceilings, and only the cubit knows which one applied.
+    final mb = ((failure.limitBytes ?? 0) / (1024 * 1024)).round();
+    final message = switch (failure.reason) {
+      MediaUploadFailureReason.tooLarge => switch (failure.kind) {
+        UploadMediaKind.video => l10n.mediaUploadVideoTooLarge(mb),
+        // An unknown kind cannot name a ceiling, so it degrades to the generic
+        // line rather than claiming "larger than 0 MB".
+        null => l10n.mediaUploadFailed,
+        UploadMediaKind.image => l10n.mediaUploadImageTooLarge(mb),
+      },
+      MediaUploadFailureReason.unsupportedType =>
+        l10n.mediaUploadUnsupportedType,
+      MediaUploadFailureReason.failed => l10n.mediaUploadFailed,
     };
     ScaffoldMessenger.of(
       context,
