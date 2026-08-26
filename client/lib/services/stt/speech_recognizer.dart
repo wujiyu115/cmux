@@ -1,5 +1,8 @@
+import 'package:speech_to_text/speech_recognition_error.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
+
+import '../../utils/logging/logger_utils.dart';
 
 /// A recognition language, as the picker shows it.
 class SpeechLocale {
@@ -35,9 +38,20 @@ class PluginSpeechRecognizer implements SpeechRecognizer {
 
   @override
   Future<bool> initialize() => _speech.initialize(
+    // Errors were previously unwired, which made every platform-level
+    // interruption invisible: `cancelOnError: true` turns an ERROR_* from
+    // `SpeechRecognizer` / `SFSpeechRecognizer` into a plain `notListening`,
+    // so a session killed by the OS looked exactly like one the user ended.
+    // Log the reason; the session still ends through the status path below,
+    // because that is what the plugin actually reports.
+    onError: (SpeechRecognitionError error) => AppLogger.instance.w(
+      'Speech recognition error: ${error.errorMsg} '
+      '(permanent: ${error.permanent})',
+    ),
     // The plugin reports the end of a listening turn through its status
     // listener, not through the result callback, so [onDone] is wired here.
     onStatus: (status) {
+      AppLogger.instance.i('Speech recognizer status: $status');
       if (status == 'done' || status == 'notListening') {
         // Ported from the Nexterm reference (system_stt_provider.dart): the
         // final recognition result can arrive a beat *after* the status flips

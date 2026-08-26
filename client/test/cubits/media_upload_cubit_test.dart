@@ -14,6 +14,7 @@ void main() {
   /// Small, unequal caps so a test can tell which one was applied.
   const caps = PairingUploadCaps(imageMaxBytes: 100, videoMaxBytes: 300);
   late PickedMedia? picked;
+  late Object? pickError;
   late Object? uploadError;
   late int uploadCalls;
   late List<int> progressTicks;
@@ -24,7 +25,11 @@ void main() {
   MediaUploadCubit build() {
     final cubit = MediaUploadCubit(
       caps: caps,
-      pickMedia: () async => picked,
+      pickMedia: () async {
+        final error = pickError;
+        if (error != null) throw error;
+        return picked;
+      },
       cancelUpload: () => cancelCalls++,
       upload:
           ({
@@ -51,6 +56,7 @@ void main() {
     cancelCalls = 0;
     progressTicks = [];
     uploadError = null;
+    pickError = null;
     uploadedPath = '/home/dev/app/photo.jpg';
     driveProgress = null;
     picked = PickedMedia(
@@ -206,6 +212,37 @@ void main() {
     final cubit = build();
     await cubit.pickAndUpload();
     expect(progressTicks, [4, 10]);
+    await cubit.close();
+  });
+
+  test('a throwing picker reports a failure and returns to idle', () async {
+    // Regression: `pickAndUpload` is called from an `onTap` and nobody awaits
+    // it, so an exception out of the picker used to escape silently and leave
+    // the status pinned at `picking` — a spinner that never stopped and, via the
+    // single-flight guard, an attach button dead for the rest of the session.
+    pickError = StateError('no activity found to handle the intent');
+    final cubit = build();
+    await cubit.pickAndUpload();
+    await Future<void>.delayed(Duration.zero);
+
+    expect(failures.single.reason, MediaUploadFailureReason.failed);
+    expect(cubit.state.status, MediaUploadStatus.idle);
+    expect(uploadCalls, 0);
+    await cubit.close();
+  });
+
+  test('stays usable after a throwing picker', () async {
+    pickError = StateError('boom');
+    final cubit = build();
+    await cubit.pickAndUpload();
+    await Future<void>.delayed(Duration.zero);
+
+    pickError = null;
+    await cubit.pickAndUpload();
+    await Future<void>.delayed(Duration.zero);
+
+    expect(uploadCalls, 1, reason: 'the second attempt was not blocked');
+    expect(paths, ['/home/dev/app/photo.jpg']);
     await cubit.close();
   });
 

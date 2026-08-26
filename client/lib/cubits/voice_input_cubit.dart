@@ -202,7 +202,10 @@ class VoiceInputCubit extends Cubit<VoiceInputState> {
     // session emit `listening` or arm the cap timer.
     if (!identical(_provider, provider)) return;
     emit(state.copyWith(status: VoiceInputStatus.listening));
-    _capTimer = Timer(_maxDuration, stopListening);
+    _capTimer = Timer(_maxDuration, () {
+      AppLogger.instance.i('Voice input hit the ${_maxDuration.inSeconds}s cap');
+      unawaited(stopListening());
+    });
   }
 
   void _onResult(SttResult result) {
@@ -220,6 +223,10 @@ class VoiceInputCubit extends Cubit<VoiceInputState> {
   /// sent, the interim was cleared and nothing stale is re-inserted.
   Future<void> _finishNaturally() async {
     if (_provider == null) return;
+    // Distinguishes "the backend ended the turn" from "our own code stopped it".
+    // Both used to look identical in the logs, which made an OS-killed session
+    // indistinguishable from a deliberate stop.
+    AppLogger.instance.i('Voice input ended: backend closed the session');
     if (!_insertedFinal) {
       final partial = _lastPartial;
       if (partial != null && partial.isNotEmpty) _transcripts.add(partial);
@@ -279,6 +286,7 @@ class VoiceInputCubit extends Cubit<VoiceInputState> {
   Future<void> stopListening() async {
     final provider = _provider;
     if (provider == null) return;
+    AppLogger.instance.i('Voice input stopped by the app');
     final subscription = _subscription;
     _provider = null;
     _capTimer?.cancel();

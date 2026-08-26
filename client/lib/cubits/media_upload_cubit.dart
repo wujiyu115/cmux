@@ -200,7 +200,20 @@ class MediaUploadCubit extends Cubit<MediaUploadState> {
     if (state.status != MediaUploadStatus.idle) return;
 
     emit(const MediaUploadState(status: MediaUploadStatus.picking));
-    final media = await _pickMedia();
+    final PickedMedia? media;
+    try {
+      media = await _pickMedia();
+    } on Object catch (e, st) {
+      // The picker throwing must not escape: `pickAndUpload` is called from an
+      // `onTap` and nobody awaits it, so an exception here used to leave the
+      // status pinned at `picking` — a spinner that never stops and, because of
+      // the single-flight guard below, an attach button dead for the rest of the
+      // session.
+      AppLogger.instance.w('Media pick failed', error: e, stackTrace: st);
+      _failures.add(const MediaUploadFailure(MediaUploadFailureReason.failed));
+      if (!isClosed) emit(const MediaUploadState.idle());
+      return;
+    }
     // Every path from here on must close the source, or a RandomAccessFile leaks
     // — a real OS handle on iOS. The `finally` covers the upload; the two early
     // returns below have to do it themselves.

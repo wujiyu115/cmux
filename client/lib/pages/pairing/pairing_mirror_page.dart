@@ -21,6 +21,7 @@ import '../../services/terminal/terminal_layout_coordinator.dart';
 import '../../services/terminal/terminal_theme_mapper.dart';
 import '../../theme/app_fonts.dart';
 import '../../theme/app_typography_scale.dart';
+import '../../utils/logging/logger_utils.dart';
 import '../../utils/shell_quote.dart';
 import '../../utils/ui/app_keys.dart';
 import 'mobile_toolbar/mobile_bottom_slot.dart';
@@ -218,11 +219,20 @@ class _PairingMirrorPageState extends State<PairingMirrorPage>
   /// requested either way.
   Future<PickedMedia?> _pickMedia() async {
     final picked = await ImagePicker().pickMedia(requestFullMetadata: false);
-    if (picked == null) return null;
-    return PickedMedia(
-      filename: picked.name,
-      source: await FileUploadSource.open(picked.path),
+    if (picked == null) {
+      // Also what a platform picker that fails to return a path looks like, so
+      // it is worth a line: on the cubit side a null pick is silent (it means
+      // "user backed out"), which makes a broken picker indistinguishable from
+      // a cancelled one.
+      AppLogger.instance.i('Media pick returned nothing');
+      return null;
+    }
+    final source = await FileUploadSource.open(picked.path);
+    AppLogger.instance.i(
+      'Media picked: name=${picked.name} bytes=${source.length} '
+      'mime=${picked.mimeType} path=${picked.path}',
     );
+    return PickedMedia(filename: picked.name, source: source);
   }
 
   /// Copies the touch selection to the system clipboard and clears it.
