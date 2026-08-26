@@ -86,13 +86,29 @@ class PairingCodec {
     return builder.take();
   }
 
-  static Uint8List encodeUpload(int transferId, int chunkIndex, Uint8List bytes) {
-    final builder = _Writer()
-      ..byte(_kUpload)
-      ..varint(transferId)
-      ..varint(chunkIndex)
-      ..raw(bytes);
-    return builder.take();
+  /// Upload chunks are the largest frames on the wire (256 KiB, see
+  /// `PairingRpcHandler.uploadChunkSize`), so the payload never goes through
+  /// [_Writer]: its backing store is a growable `List<int>` of tagged Smis —
+  /// 8 bytes of heap per payload byte, plus growth reallocations, plus a final
+  /// `Uint8List.fromList` copy. The header is at most 11 bytes, so [_Writer]
+  /// still earns its keep there.
+  ///
+  /// `_encodeSeqFrame` (PTY output batches) has the same defect and is worth the
+  /// same treatment; left alone here to keep this change to the upload path.
+  static Uint8List encodeUpload(
+    int transferId,
+    int chunkIndex,
+    Uint8List bytes,
+  ) {
+    final header = (_Writer()
+          ..byte(_kUpload)
+          ..varint(transferId)
+          ..varint(chunkIndex))
+        .take();
+    final out = Uint8List(header.length + bytes.length);
+    out.setRange(0, header.length, header);
+    out.setRange(header.length, out.length, bytes);
+    return out;
   }
 
   static Uint8List _encodeSeqFrame(

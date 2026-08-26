@@ -33,6 +33,21 @@ void main() {
               as UploadFrame;
       expect(decoded.bytes, isEmpty);
     });
+
+    test('round-trips a full-size wire chunk', () {
+      // 256 KiB is the host-advertised chunk size, so this is the largest frame
+      // the encoder ever sees. Anchors the payload against re-entering _Writer,
+      // whose growable List<int> costs 8 bytes of heap per payload byte.
+      final payload = Uint8List.fromList(
+        List.generate(256 * 1024, (i) => i & 0xff),
+      );
+      final decoded =
+          PairingCodec.decode(PairingCodec.encodeUpload(1, 2, payload))
+              as UploadFrame;
+      expect(decoded.transferId, 1);
+      expect(decoded.chunkIndex, 2);
+      expect(decoded.bytes, payload);
+    });
   });
 
   group('decode', () {
