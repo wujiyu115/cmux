@@ -6,7 +6,10 @@ import '../../support/in_memory_filesystem.dart';
 void main() {
   late InMemoryFilesystem fs;
 
-  setUp(() => fs = InMemoryFilesystem());
+  setUp(() {
+    fs = InMemoryFilesystem();
+    resetUploadStagingDirectories();
+  });
 
   Future<FilesystemUploadTarget> open({
     String directory = '/home/dev/app',
@@ -35,6 +38,56 @@ void main() {
 
     test('handles a name with no extension', () {
       expect(uploadPartName('Makefile'), startsWith('.Makefile.'));
+    });
+  });
+
+  group('uploadStagingDirectory', () {
+    test('creates a temp directory, not the pane cwd', () async {
+      final dir = await uploadStagingDirectory(fs);
+
+      expect(fs.directories, contains(dir));
+      expect(
+        dir,
+        contains('teampilot-upload-'),
+        reason: 'a leaked staging dir should be attributable',
+      );
+      expect(
+        dir,
+        isNot(contains('/home/dev/app')),
+        reason:
+            'uploads must not land in the working tree — that is what put them '
+            'in the user git status',
+      );
+    });
+
+    test('is created once per filesystem', () async {
+      // One `mktemp -d` per machine per app run, not one per upload: on WSL and
+      // SFTP that call is a subprocess / a remote round trip.
+      expect(await uploadStagingDirectory(fs), await uploadStagingDirectory(fs));
+      expect(fs.directories.where((d) => d.contains('teampilot-upload-')),
+          hasLength(1));
+    });
+
+    test('two concurrent first calls share one directory', () async {
+      // The cache holds the *future*, so a race cannot create two directories.
+      final both = await Future.wait([
+        uploadStagingDirectory(fs),
+        uploadStagingDirectory(fs),
+      ]);
+
+      expect(both.first, both.last);
+      expect(fs.directories.where((d) => d.contains('teampilot-upload-')),
+          hasLength(1));
+    });
+
+    test('different filesystems get their own directory', () async {
+      // A WSL distro and the local machine are different machines; a path from
+      // one is meaningless on the other.
+      final other = InMemoryFilesystem();
+      expect(
+        await uploadStagingDirectory(fs),
+        isNot(await uploadStagingDirectory(other)),
+      );
     });
   });
 

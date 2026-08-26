@@ -1,3 +1,5 @@
+import 'package:meta/meta.dart';
+
 import '../io/filesystem.dart';
 import '../io/local_filesystem.dart';
 import 'pairing_upload_target.dart';
@@ -89,6 +91,35 @@ class FilesystemUploadTarget implements PairingUploadTarget {
   }
 }
 
+/// One staging directory per machine, created on first upload.
+///
+/// Uploads land here rather than in the mirrored pane's working directory: that
+/// directory is usually a git repository, so every phone upload showed up in
+/// `git status` and in the mirror's own changed-file count, and a stray binary
+/// in someone's working tree is worse than an extra path to type.
+///
+/// Cached per [Filesystem] instance — `RuntimeContextRegistry` hands back the
+/// same instance for a given machine, so this is one `mktemp -d` per machine per
+/// app run rather than one per upload. The *future* is cached, not the path, so
+/// two uploads racing the first call share a single directory instead of each
+/// creating one.
+///
+/// Deliberately not cleaned up on exit: the OS reclaims its own temp directory,
+/// and deleting it while a path the user just pasted into the composer is still
+/// unread would be worse than leaving it.
+final Map<Filesystem, Future<String>> _stagingDirs = {};
+
+Future<String> uploadStagingDirectory(Filesystem filesystem) =>
+    _stagingDirs.putIfAbsent(
+      filesystem,
+      () => filesystem.createTempDir(prefix: 'teampilot-upload-'),
+    );
+
+/// Forgets the cached staging directories. Tests only — production keeps them for
+/// the life of the process.
+@visibleForTesting
+void resetUploadStagingDirectories() => _stagingDirs.clear();
+
 /// Creates the part-file and returns a target writing to it.
 ///
 /// The part-file is created empty rather than lazily so a zero-byte transfer's
@@ -101,10 +132,8 @@ Future<FilesystemUploadTarget> openFilesystemUploadTarget({
 }) async {
   await filesystem.ensureDir(directory);
   // Same directory as the destination, mandatorily: `LocalFilesystem.rename`
-  // calls `File.rename`, which throws EXDEV across mount points, and
-  // `Filesystem.createTempDir` hands back a system temp dir that is frequently
-  // a different mount from the user's home. It looks like the obvious primitive
-  // here and it is the wrong one.
+  // calls `File.rename`, which throws EXDEV across mount points, so staging the
+  // part-file anywhere else risks a commit that cannot complete.
   final partPath = filesystem.pathContext.join(
     directory,
     uploadPartName(filename),
@@ -123,13 +152,13 @@ int _partCounter = 0;
 
 /// `.<stem>.<micros>-<counter>.tp-upload` — all four properties are load-bearing:
 ///
-/// - leading `.` hides it from `ls` and from the file tree's default view, so a
-///   512 MiB video in flight does not appear in the user's tree;
+/// - leading `.` hides it from `ls`, so a 512 MiB video in flight does not show
+///   up if the staging directory is ever browsed;
 /// - `<micros>-<counter>` keeps two concurrent uploads of the same name apart
 ///   (same shape `LocalFilesystem.atomicWrite` uses for its temp names);
-/// - the extension is `.tp-upload`, never the real one — a half-written `.mp4`
-///   invites thumbnailers and media indexers, an obviously-temporary extension
-///   does not;
+/// - the extension is [uploadPartSuffix], never the real one — a half-written
+///   `.mp4` invites thumbnailers and media indexers, an obviously-temporary
+///   extension does not;
 /// - the greppable suffix makes a leaked part-file attributable. A killed
 ///   process does leak one; there is no sweeper, because telling a stale
 ///   part-file from a live upload's would need a lock file, which is more
@@ -138,10 +167,13 @@ String uploadPartName(String filename) {
   final dot = filename.lastIndexOf('.');
   final stem = dot > 0 ? filename.substring(0, dot) : filename;
   final micros = DateTime.now().microsecondsSinceEpoch;
-  return '.$stem.$micros-${_partCounter++}.tp-upload';
+  return '.$stem.$micros-${_partCounter++}$uploadPartSuffix';
 }
 
-/// Suffix of an in-flight upload's part-file. Callers that surface directory
-/// contents to the user (the mirror's changed-file list, for one) filter on this
-/// so a two-minute upload does not read as a new file appearing in the repo.
+/// Suffix of an in-flight upload's part-file.
+///
+/// Uploads stage in [uploadStagingDirectory], not in the user's working tree, so
+/// nothing has to filter these out of a git status any more. It stays a named
+/// constant because it is the greppable marker that makes a leaked part-file
+/// attributable.
 const uploadPartSuffix = '.tp-upload';

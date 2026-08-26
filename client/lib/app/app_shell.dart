@@ -1069,15 +1069,21 @@ Future<AppShell> buildAppShell({
     // Phone → desktop media upload. Opens the destination up front (which is
     // what makes `no_target` land before a 512 MiB video crosses the LAN) and
     // hands back a target the receiver streams into.
+    //
+    // [cwd] only picks the *machine*: the bytes land in that machine's staging
+    // directory, not in the pane's working directory, so an upload never appears
+    // in the user's git status. The phone gets the absolute path back and quotes
+    // it into the composer, so an agent can still be pointed at the file.
     Future<PairingUploadTarget> pairingUploadOpener({
       required String workspaceId,
       required String cwd,
       required String filename,
     }) async {
       final context = await pairingPaneContext(workspaceId, cwd);
+      final filesystem = context.filesystem;
       return openFilesystemUploadTarget(
-        filesystem: context.filesystem,
-        directory: cwd,
+        filesystem: filesystem,
+        directory: await uploadStagingDirectory(filesystem),
         filename: filename,
       );
     }
@@ -1114,10 +1120,6 @@ Future<AppShell> buildAppShell({
       // more than which letter it keeps — a partly-staged file is in both.
       final byPath = <String, GitFileChange>{};
       for (final change in [...status.staged, ...status.unstaged]) {
-        // An upload in flight has a part-file on disk. It is dot-prefixed, so the
-        // file tree hides it, but git does not — and a two-minute video upload
-        // showing up in the phone's changed-file count reads as a bug.
-        if (change.path.endsWith(uploadPartSuffix)) continue;
         byPath.putIfAbsent(change.path, () => change);
       }
       final paths = byPath.keys.toList()
