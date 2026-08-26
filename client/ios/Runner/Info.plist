@@ -10,6 +10,8 @@
 	<string>TeamPilot connects to your desktop over the local network to mirror and control its terminal sessions.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>TeamPilot uses the microphone for voice input in the terminal composer.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>TeamPilot lets you attach a photo or video from your library to the terminal session you are mirroring.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>TeamPilot uses speech recognition to turn your voice into terminal input.</string>
 	<key>CFBundleURLTypes</key>

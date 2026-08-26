@@ -1,5 +1,9 @@
-# Uncomment this line to define a global platform for your project
-# platform :ios, '13.0'
+# Pinned to the Xcode project's IPHONEOS_DEPLOYMENT_TARGET. Without a global
+# platform CocoaPods warns and each pod picks its own minimum; matching the two
+# is what keeps `pod install` quiet. iOS 14 is the floor because the composer's
+# attach button uses image_picker's `pickMedia` (one sheet for photos and videos),
+# which needs PHPicker.
+platform :ios, '14.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
