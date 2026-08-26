@@ -79,6 +79,7 @@ import 'theme/workspace_surface_layers.dart';
 import 'theme/app_typography_scale.dart';
 import 'pages/system/error_page.dart';
 import 'pages/system/fatal_screen.dart';
+import 'services/app/debug_log_settings.dart';
 import 'services/app/boot_progress.dart';
 import 'utils/logging/logger.dart';
 import 'widgets/app_text_scale_boundary.dart';
@@ -594,7 +595,10 @@ Future<void> _bootStartup() async {
   try {
     await pathsFuture;
     nativeAppDataPath = AppPathsBootstrapper.current.basePath;
-    await initAppLogging(nativeAppDataPath);
+    await initAppLogging(
+      nativeAppDataPath,
+      fileLogging: DebugLogSettings.read(preferences),
+    );
   } on Object catch (error, stackTrace) {
     if (hasDesktopWindow) {
       await completeBootSplashTransition();

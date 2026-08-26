@@ -206,7 +206,18 @@ class AppLogger {
 
   bool _fileLoggerInitialized = false;
   bool _fileLoggerInitializing = false;
+
+  /// Set when writing to disk *failed* — a storage error, not a user choice. It
+  /// stops the app retrying a sink that is broken, and a fresh opt-in clears it.
   bool _fileLoggingDisabled = false;
+
+  /// The user's choice, from `DebugLogSettings`. Off means nothing reaches disk
+  /// and nothing is queued for a later flush, so opting out is not a way to
+  /// silently build up a backlog.
+  bool _fileLoggingOptIn = false;
+
+  /// Whether lines are currently reaching disk.
+  bool get fileLoggingEnabled => _fileLoggingOptIn && !_fileLoggingDisabled;
 
   final List<_PendingLog> _pendingFileLogs = [];
 
@@ -222,8 +233,30 @@ class AppLogger {
     );
   }
 
+  /// Turns the disk sink on or off at runtime.
+  ///
+  /// Enabling retries even after a previous storage failure — the user asking
+  /// again is a better signal than a stale flag. Disabling drops the pending
+  /// queue: those lines were never meant for disk.
+  Future<void> setFileLoggingEnabled(
+    bool enabled, {
+    required String appDataRoot,
+  }) async {
+    if (enabled == _fileLoggingOptIn) return;
+    _fileLoggingOptIn = enabled;
+    if (enabled) {
+      _fileLoggingDisabled = false;
+      await initFileLogging(appDataRoot);
+    } else {
+      _pendingFileLogs.clear();
+      _closeFileSink();
+      _consoleLogger?.i('[AppLogger] file logging turned off');
+    }
+  }
+
   /// Waits for or starts file logging (safe to call from the log viewer).
   Future<void> ensureFileLogging(String appDataRoot) async {
+    if (!_fileLoggingOptIn) return;
     if (_fileLoggerInitialized || _fileLoggingDisabled) return;
     while (_fileLoggerInitializing) {
       await Future<void>.delayed(const Duration(milliseconds: 50));
@@ -237,7 +270,8 @@ class AppLogger {
   Future<void> initFileLogging(String appDataRoot) async {
     _ensureConsoleLogger();
 
-    if (_fileLoggerInitialized ||
+    if (!_fileLoggingOptIn ||
+        _fileLoggerInitialized ||
         _fileLoggerInitializing ||
         _fileLoggingDisabled) {
       return;
@@ -367,7 +401,9 @@ class AppLogger {
     Object? error,
     StackTrace? stackTrace,
   }) {
-    if (_fileLoggingDisabled) return;
+    // The opt-in check comes before the pending buffer on purpose: with logging
+    // off, buffering would grow without bound for a flush that never comes.
+    if (!_fileLoggingOptIn || _fileLoggingDisabled) return;
 
     if (!_fileLoggerInitialized || _fileLogger == null) {
       _pendingFileLogs.add(
@@ -494,6 +530,14 @@ class AppLogger {
 
   void _disableFileLogging(String reason) {
     _fileLoggingDisabled = true;
+    _closeFileSink();
+    _consoleLogger?.w(reason);
+  }
+
+  /// Tears the sink down without deciding *why*. [_disableFileLogging] marks a
+  /// failure; [setFileLoggingEnabled] uses this alone, so a user opt-out stays
+  /// reversible.
+  void _closeFileSink() {
     _fileLoggerInitialized = false;
     _fileLogger = null;
     _logFile = null;
@@ -502,7 +546,6 @@ class AppLogger {
     if (output != null) {
       unawaited(output.destroy());
     }
-    _consoleLogger?.w(reason);
   }
 
   /// Ensures buffered file log lines are visible on disk (tests / log viewer).

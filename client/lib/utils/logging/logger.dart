@@ -10,9 +10,20 @@ export 'logger_utils.dart' show AppLogger;
 /// App-wide logger — [AppLogger.instance] is the single implementation.
 final appLogger = AppLogger.instance;
 
-/// Initializes rotating file logs and global Flutter error hooks.
-Future<void> initAppLogging(String appDataRoot) async {
-  await AppLogger.instance.initFileLogging(appDataRoot);
+/// Initializes global Flutter error hooks, and the rotating file log when
+/// [fileLogging] is on.
+///
+/// [fileLogging] comes from `DebugLogSettings` and is off by default; the console
+/// sink and the error hooks are unconditional, so turning disk logs off costs no
+/// diagnostics on a developer machine.
+Future<void> initAppLogging(
+  String appDataRoot, {
+  required bool fileLogging,
+}) async {
+  await AppLogger.instance.setFileLoggingEnabled(
+    fileLogging,
+    appDataRoot: appDataRoot,
+  );
   await ErrorLogService.instance.initialize(appDataRoot: appDataRoot);
 
   FlutterError.onError = (details) {

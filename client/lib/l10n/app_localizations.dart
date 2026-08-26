@@ -3326,6 +3326,48 @@ abstract class AppLocalizations {
   /// **'Run setup wizard again'**
   String get onboardingRerunSetup;
 
+  /// No description provided for @debugLogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Debug log'**
+  String get debugLogTitle;
+
+  /// No description provided for @debugLogWriteToFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Write log to file'**
+  String get debugLogWriteToFile;
+
+  /// No description provided for @debugLogWriteToFileHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Off by default. Turn this on before reproducing a problem, then copy the log from here.'**
+  String get debugLogWriteToFileHint;
+
+  /// No description provided for @debugLogDisabledHint.
+  ///
+  /// In en, this message translates to:
+  /// **'File logging is off, so nothing has been written. Turn it on above, reproduce the problem, then come back.'**
+  String get debugLogDisabledHint;
+
+  /// No description provided for @debugLogNoFile.
+  ///
+  /// In en, this message translates to:
+  /// **'No log file yet'**
+  String get debugLogNoFile;
+
+  /// No description provided for @debugLogCopyAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy the whole log'**
+  String get debugLogCopyAll;
+
+  /// No description provided for @debugLogCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Log copied'**
+  String get debugLogCopied;
+
   /// No description provided for @logViewerTitle.
   ///
   /// In en, this message translates to:

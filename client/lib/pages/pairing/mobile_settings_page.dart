@@ -6,6 +6,7 @@ import '../../cubits/voice_input_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../utils/ui/app_keys.dart';
 import '../../widgets/settings/appearance_controls.dart';
+import 'debug_log_page.dart';
 import 'pairing_nav_bar.dart';
 import 'voice/voice_settings_page.dart';
 
@@ -75,6 +76,19 @@ class MobileSettingsPage extends StatelessWidget {
                               context.read<VoiceInputCubit>(),
                             ),
                           ),
+                        ),
+                        Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: cs.outlineVariant,
+                        ),
+                        ListTile(
+                          key: AppKeys.mobileSettingsDebugLogRow,
+                          leading: const Icon(Icons.bug_report_outlined),
+                          title: Text(l10n.debugLogTitle),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () =>
+                              Navigator.of(context).push(DebugLogPage.route()),
                         ),
                       ],
                     ),

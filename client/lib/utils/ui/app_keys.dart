@@ -115,6 +115,14 @@ class AppKeys {
       Key('voice-settings-credential-$field');
   static const voiceSettingsTestButton = Key('voice-settings-test');
   static const mobileSettingsVoiceRow = Key('mobile-settings-voice');
+
+  /// Row on the mobile settings page that opens the diagnostic log viewer.
+  static const mobileSettingsDebugLogRow = Key('mobile-settings-debug-log');
+
+  static const debugLogPage = Key('debug-log-page');
+  static const debugLogEnableSwitch = Key('debug-log-enable-switch');
+  static const debugLogCopyButton = Key('debug-log-copy-button');
+  static const debugLogRefreshButton = Key('debug-log-refresh-button');
   static Key pairingWorkspaceHeader(String workspaceId) =>
       Key('pairing-workspace-$workspaceId');
   static Key pairingOpenTerminalButton(String workspaceId) =>

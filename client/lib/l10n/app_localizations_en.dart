@@ -1763,6 +1763,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingRerunSetup => 'Run setup wizard again';
 
   @override
+  String get debugLogTitle => 'Debug log';
+
+  @override
+  String get debugLogWriteToFile => 'Write log to file';
+
+  @override
+  String get debugLogWriteToFileHint =>
+      'Off by default. Turn this on before reproducing a problem, then copy the log from here.';
+
+  @override
+  String get debugLogDisabledHint =>
+      'File logging is off, so nothing has been written. Turn it on above, reproduce the problem, then come back.';
+
+  @override
+  String get debugLogNoFile => 'No log file yet';
+
+  @override
+  String get debugLogCopyAll => 'Copy the whole log';
+
+  @override
+  String get debugLogCopied => 'Log copied';
+
+  @override
   String get logViewerTitle => 'Logs';
 
   @override

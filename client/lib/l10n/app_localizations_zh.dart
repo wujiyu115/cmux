@@ -1707,6 +1707,27 @@ class AppLocalizationsZh extends AppLocalizations {
   String get onboardingRerunSetup => '重新运行设置向导';
 
   @override
+  String get debugLogTitle => '调试日志';
+
+  @override
+  String get debugLogWriteToFile => '把日志写入文件';
+
+  @override
+  String get debugLogWriteToFileHint => '默认关闭。复现问题前先打开，然后回到这里复制日志。';
+
+  @override
+  String get debugLogDisabledHint => '文件日志未开启，所以什么都没写。先在上面打开，复现问题，再回来查看。';
+
+  @override
+  String get debugLogNoFile => '还没有日志文件';
+
+  @override
+  String get debugLogCopyAll => '复制全部日志';
+
+  @override
+  String get debugLogCopied => '日志已复制';
+
+  @override
   String get logViewerTitle => '日志';
 
   @override
