@@ -8,6 +8,7 @@ import 'pairing_upload_receiver.dart';
 import 'pairing_upload_target.dart';
 import 'pairing_workspace_index.dart';
 import 'session_catalog.dart';
+import 'terminal_mode_resync.dart';
 import 'upload_limits.dart';
 
 /// Encoded application frame, ready to be E2EE-boxed and put on the socket.
@@ -439,9 +440,14 @@ class PairingRpcHandler {
       'rows': session.viewHeight,
       'seq': seq,
     });
-    if (snap != null && snap.bytes.isNotEmpty) {
-      _send(PairingCodec.encodeSnapshot(sub, snap.seq, snap.bytes));
-    }
+    // The mode resync goes *first*, and goes out even when the ring is empty:
+    // the snapshot is raw bytes with no state in it, so without this a fresh
+    // mirror engine keeps whatever modes it booted with. See
+    // [terminalModeResync] for why the cursor is the visible symptom.
+    final resync = terminalModeResync(cursorVisible: session.cursorVisible);
+    final body = BytesBuilder(copy: false)..add(resync);
+    if (snap != null) body.add(snap.bytes);
+    _send(PairingCodec.encodeSnapshot(sub, seq, body.takeBytes()));
   }
 
   void _onOutput(_Subscription record, Uint8List bytes) {

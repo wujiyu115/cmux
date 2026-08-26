@@ -261,6 +261,14 @@ class TerminalSession {
   /// Recent screen bytes for snapshot-on-subscribe; null until [mirrorOutput].
   RecentPtyBuffer? get recentBuffer => _launch.recentBuffer;
 
+  /// Whether this pane's program currently wants a hardware cursor drawn.
+  ///
+  /// Surfaced for the pairing host: a mirror replays raw PTY bytes into a fresh
+  /// engine, and the `CSI ?25l` a full-screen program sends at startup has
+  /// usually fallen out of the retained snapshot window by then. The host reads
+  /// the truth from here and prepends a resync — see `terminalModeResync`.
+  bool get cursorVisible => engine.grid.cursorVisible;
+
   /// Writes raw bytes from a remote pairing client straight into the child PTY.
   void writeRemoteInput(Uint8List data) => _launch.writeToPty(data);
 

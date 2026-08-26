@@ -8,6 +8,7 @@ import 'package:teampilot/services/pairing/pairing_rpc_handler.dart';
 import 'package:teampilot/services/pairing/pairing_workspace_index.dart';
 import 'package:teampilot/services/pairing/recent_pty_buffer.dart';
 import 'package:teampilot/services/pairing/session_catalog.dart';
+import 'package:teampilot/services/pairing/terminal_mode_resync.dart';
 import '../../support/pairing_upload_doubles.dart';
 import 'package:teampilot/services/terminal/terminal_session.dart';
 
@@ -46,6 +47,8 @@ void main() {
     when(() => session.onTerminalPtyResize(any(), any())).thenReturn(null);
     when(() => session.attachMirror()).thenReturn(null);
     when(() => session.detachMirror()).thenReturn(null);
+    // The subscribe path reads it to build the mirror's mode resync.
+    when(() => session.cursorVisible).thenReturn(true);
 
     catalog = SessionCatalog()..addSource(() => [makeEntry()]);
     sent = [];
@@ -98,7 +101,58 @@ void main() {
     final snap = PairingCodec.decode(sent[1]) as SnapshotFrame;
     expect(snap.sub, 1);
     expect(snap.seq, 3);
-    expect(snap.bytes, Uint8List.fromList([1, 2, 3]));
+    // The mode resync leads, then the retained bytes. The ring holds no terminal
+    // state, so without the preamble a fresh mirror engine keeps whatever modes
+    // it booted with — see [terminalModeResync].
+    expect(
+      snap.bytes,
+      Uint8List.fromList([
+        ...terminalModeResync(cursorVisible: true),
+        1,
+        2,
+        3,
+      ]),
+    );
+  });
+
+  test('subscribe hides the mirror cursor when the pane has it hidden', () {
+    // The symptom this fixes: a full-screen program sends `CSI ?25l` once at
+    // startup and draws its own caret, so a mirror that never hears the hide
+    // paints a second, blinking cursor on top of the drawn one.
+    when(() => session.cursorVisible).thenReturn(false);
+    final buffer = RecentPtyBuffer()..append(Uint8List.fromList([1]));
+    when(() => session.recentBuffer).thenReturn(buffer);
+    handler.handle(
+      PairingCodec.decode(_json({
+        'id': 1,
+        'method': 'terminal.subscribe',
+        'params': {'catalogId': 'ws:p1'},
+      })),
+    );
+
+    final snap = PairingCodec.decode(sent[1]) as SnapshotFrame;
+    expect(
+      snap.bytes,
+      Uint8List.fromList([...terminalModeResync(cursorVisible: false), 1]),
+    );
+  });
+
+  test('subscribe still sends the resync when the ring is empty', () {
+    // A pane that has produced nothing yet still has modes worth carrying over,
+    // so the snapshot frame must not be skipped just because there are no bytes.
+    when(() => session.cursorVisible).thenReturn(false);
+    when(() => session.recentBuffer).thenReturn(RecentPtyBuffer());
+    handler.handle(
+      PairingCodec.decode(_json({
+        'id': 1,
+        'method': 'terminal.subscribe',
+        'params': {'catalogId': 'ws:p1'},
+      })),
+    );
+
+    final snap = PairingCodec.decode(sent[1]) as SnapshotFrame;
+    expect(snap.seq, 0);
+    expect(snap.bytes, terminalModeResync(cursorVisible: false));
   });
 
   test('live output after subscribe is batched into an output frame', () async {

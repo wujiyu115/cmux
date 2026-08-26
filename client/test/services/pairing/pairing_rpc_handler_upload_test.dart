@@ -102,6 +102,8 @@ void main() {
     when(() => session.recentBuffer).thenReturn(RecentPtyBuffer());
     when(() => session.attachMirror()).thenReturn(null);
     when(() => session.detachMirror()).thenReturn(null);
+    // The subscribe path reads it to build the mirror's mode resync.
+    when(() => session.cursorVisible).thenReturn(true);
     when(() => session.runtimeTarget).thenReturn(
       const RuntimeTarget.localPosix(workingDirectory: '/home/dev/app'),
     );
