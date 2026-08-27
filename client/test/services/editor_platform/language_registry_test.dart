@@ -57,6 +57,15 @@ void main() {
     expect(LanguageRegistry.builtins().resolve('/x/a.unknown'), isNull);
   });
 
+  test('compound suffixes fall back to the inner extension', () {
+    final reg = LanguageRegistry.builtins();
+    expect(reg.resolve('/x/config.yaml.template')?.id, 'yaml');
+    expect(reg.resolve('/x/values.yml.sample')?.id, 'yaml');
+    expect(reg.resolve('/x/deploy.sh.dist')?.id, 'bash');
+    expect(reg.resolve('/x/archive.tar.gz'), isNull);
+    expect(reg.resolve('/x/photo.png.orig'), isNull);
+  });
+
   test('path with no extension resolves to null', () {
     expect(LanguageRegistry.builtins().resolve('/x/Makefile'), isNull);
   });

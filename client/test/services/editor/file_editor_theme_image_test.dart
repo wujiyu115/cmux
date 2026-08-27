@@ -22,6 +22,16 @@ void main() {
     expect(isWorkbenchOpenableFilePath('/a/x.pdf'), isFalse);
   });
 
+  test('compound suffixes fall back to the inner extension', () {
+    expect(isEditorOpenableFilePath('/d/config.yaml.template'), isTrue);
+    expect(isEditorOpenableFilePath('/d/upload_config.yaml.template'), isTrue);
+    expect(isEditorOpenableFilePath('/d/notes.txt.bak'), isTrue);
+    expect(isEditorOpenableFilePath('/d/start.sh'), isTrue);
+    expect(isEditorOpenableFilePath('/d/archive.tar.gz'), isFalse);
+    expect(isEditorOpenableFilePath('/d/photo.jpg.orig'), isFalse);
+    expect(isEditorOpenableFilePath('/d/Dockerfile.dev'), isFalse);
+  });
+
   test('kEditorMaxImageBytes is 25 MiB', () {
     expect(kEditorMaxImageBytes, 25 * 1024 * 1024);
   });

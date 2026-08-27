@@ -138,12 +138,19 @@ const kEditorImageExtensions = {
 const kEditorMaxImageBytes = 25 * 1024 * 1024;
 
 /// Whether [filePath] should open in the in-app text editor.
+///
+/// Compound suffixes fall back to inner segments: `config.yaml.template` is a
+/// YAML text file, so the `yaml` segment makes it openable even though
+/// `template` alone is not a known text extension.
 bool isEditorOpenableFilePath(String filePath) {
-  final ext = p.extension(filePath).replaceFirst('.', '').toLowerCase();
-  if (ext.isNotEmpty) {
-    return kEditorTextExtensions.contains(ext);
-  }
   final base = p.basename(filePath).toLowerCase();
+  var current = base;
+  while (true) {
+    final ext = p.extension(current).replaceFirst('.', '');
+    if (ext.isEmpty) break;
+    if (kEditorTextExtensions.contains(ext)) return true;
+    current = p.basenameWithoutExtension(current);
+  }
   return kEditorTextBasenames.contains(base);
 }
 

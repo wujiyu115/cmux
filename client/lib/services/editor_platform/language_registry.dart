@@ -88,9 +88,10 @@ class LanguageRegistry {
   /// All registered packs, in registration order.
   List<LanguagePack> get packs => _packs;
 
-  /// Looks up the pack for [path] by basename, then by lowercase
-  /// extension (without the leading dot). Returns `null` when no pack
-  /// claims this path.
+  /// Looks up the pack for [path] by basename, then by lowercase extension
+  /// (without the leading dot). Compound suffixes fall back to inner segments:
+  /// `config.yaml.template` resolves via its `yaml` segment. Returns `null`
+  /// when no pack claims this path.
   LanguagePack? resolve(String path) {
     final basename = _basename(path);
     for (final pack in _packs) {
@@ -99,16 +100,21 @@ class LanguageRegistry {
       }
     }
 
-    final extension = _extension(basename);
-    if (extension == null) {
-      return null;
-    }
-    for (final pack in _packs) {
-      if (pack.extensions.contains(extension)) {
-        return pack;
+    var current = basename;
+    while (true) {
+      final extension = _extension(current);
+      if (extension == null) {
+        return null;
       }
+      for (final pack in _packs) {
+        if (pack.extensions.contains(extension)) {
+          return pack;
+        }
+      }
+      final dotIndex = current.lastIndexOf('.');
+      if (dotIndex <= 0) return null;
+      current = current.substring(0, dotIndex);
     }
-    return null;
   }
 
   /// Looks up a registered pack by its [LanguagePack.id].
