@@ -370,5 +370,143 @@ void main() {
         isFalse,
       );
     });
+
+    group('workspaceAgentStatus', () {
+      test('empty session set yields none', () {
+        final c = _cubit();
+        c.applyEvent(
+          sessionId: 's1',
+          memberId: 'm1',
+          event: const AgentStatusEvent(state: AgentSeatAttention.working),
+          skipPermissions: false,
+        );
+        expect(c.state.workspaceAgentStatus(const {}), WorkspaceAgentStatus.none);
+      });
+
+      test('single session maps each seat state', () {
+        final c = _cubit();
+        c.applyEvent(
+          sessionId: 's1',
+          memberId: 'm1',
+          event: const AgentStatusEvent(state: AgentSeatAttention.working),
+          skipPermissions: false,
+        );
+        expect(
+          c.state.workspaceAgentStatus({'s1'}),
+          WorkspaceAgentStatus.working,
+        );
+        c.applyEvent(
+          sessionId: 's1',
+          memberId: 'm1',
+          event: const AgentStatusEvent(state: AgentSeatAttention.waiting),
+          skipPermissions: false,
+        );
+        expect(
+          c.state.workspaceAgentStatus({'s1'}),
+          WorkspaceAgentStatus.waiting,
+        );
+        c.applyEvent(
+          sessionId: 's1',
+          memberId: 'm1',
+          event: const AgentStatusEvent(state: AgentSeatAttention.done),
+          skipPermissions: false,
+        );
+        expect(c.state.workspaceAgentStatus({'s1'}), WorkspaceAgentStatus.done);
+      });
+
+      test('done with interrupted flag reports interrupted', () {
+        final c = _cubit();
+        c.applyEvent(
+          sessionId: 's1',
+          memberId: 'm1',
+          event: const AgentStatusEvent(
+            state: AgentSeatAttention.done,
+            interrupted: true,
+          ),
+          skipPermissions: false,
+        );
+        expect(
+          c.state.workspaceAgentStatus({'s1'}),
+          WorkspaceAgentStatus.interrupted,
+        );
+      });
+
+      test('priority waiting > working > interrupted > done across sessions', () {
+        final c = _cubit();
+        c.applyEvent(
+          sessionId: 's1',
+          memberId: 'm1',
+          event: const AgentStatusEvent(state: AgentSeatAttention.done),
+          skipPermissions: false,
+        );
+        c.applyEvent(
+          sessionId: 's2',
+          memberId: 'm1',
+          event: const AgentStatusEvent(
+            state: AgentSeatAttention.done,
+            interrupted: true,
+          ),
+          skipPermissions: false,
+        );
+        c.applyEvent(
+          sessionId: 's3',
+          memberId: 'm1',
+          event: const AgentStatusEvent(state: AgentSeatAttention.working),
+          skipPermissions: false,
+        );
+        const ids = {'s1', 's2', 's3'};
+        expect(c.state.workspaceAgentStatus(ids), WorkspaceAgentStatus.working);
+        c.applyEvent(
+          sessionId: 's4',
+          memberId: 'm1',
+          event: const AgentStatusEvent(state: AgentSeatAttention.waiting),
+          skipPermissions: false,
+        );
+        expect(
+          c.state.workspaceAgentStatus({...ids, 's4'}),
+          WorkspaceAgentStatus.waiting,
+        );
+        // Without the interrupted session, done still wins over none but not
+        // over working.
+        expect(
+          c.state.workspaceAgentStatus({'s1', 's3'}),
+          WorkspaceAgentStatus.working,
+        );
+        expect(
+          c.state.workspaceAgentStatus({'s1'}),
+          WorkspaceAgentStatus.done,
+        );
+      });
+
+      test('ignores seats from other workspaces sessions', () {
+        final c = _cubit();
+        c.applyEvent(
+          sessionId: 'other',
+          memberId: 'm1',
+          event: const AgentStatusEvent(state: AgentSeatAttention.waiting),
+          skipPermissions: false,
+        );
+        expect(
+          c.state.workspaceAgentStatus({'s1'}),
+          WorkspaceAgentStatus.none,
+        );
+      });
+
+      test('stale seats are ignored', () {
+        var now = DateTime.utc(2026, 8, 27, 12);
+        final c = _cubit(clock: () => now);
+        c.applyEvent(
+          sessionId: 's1',
+          memberId: 'm1',
+          event: const AgentStatusEvent(state: AgentSeatAttention.working),
+          skipPermissions: false,
+        );
+        now = now.add(const Duration(minutes: 31));
+        expect(
+          c.state.workspaceAgentStatus({'s1'}),
+          WorkspaceAgentStatus.none,
+        );
+      });
+    });
   });
 }

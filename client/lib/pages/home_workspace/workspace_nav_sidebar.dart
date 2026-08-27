@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_ui/shared_ui.dart';
 
+import '../../cubits/agent_attention_cubit.dart';
 import '../../cubits/chat_cubit.dart';
 import '../../cubits/workspace_groups_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
@@ -15,6 +16,7 @@ import '../../repositories/session_repository.dart';
 import '../../theme/workspace_accent_palette.dart';
 import '../../theme/workspace_surface_layers.dart';
 import '../../utils/workspace/workspace_display_name.dart';
+import '../../widgets/workspace_agent_status_indicator.dart';
 import '../../widgets/workspace_icon.dart';
 import 'home_new_workspace_dialog.dart';
 import 'home_workspace_tab_scope.dart';
@@ -226,6 +228,45 @@ class _WorkspaceNavSidebarState extends State<WorkspaceNavSidebar> {
     );
     if (name == null || name.trim().isEmpty || !context.mounted) return;
     await context.read<WorkspaceGroupsCubit>().addGroup(name);
+  }
+}
+
+/// Agent-status indicator for one workspace row: aggregates the seat map over
+/// this workspace's sessions (ChatCubit) and paints the matching glyph.
+/// Collapsed to zero width when idle so the row layout is unchanged.
+class _WorkspaceAgentStatusBadge extends StatelessWidget {
+  const _WorkspaceAgentStatusBadge({required this.workspaceId});
+
+  final String workspaceId;
+
+  @override
+  Widget build(BuildContext context) {
+    final sessionIds = context.select<ChatCubit, Set<String>>(
+      (cubit) => {
+        for (final s in cubit.state.sessions)
+          if (s.workspaceId == workspaceId) s.sessionId,
+      },
+    );
+    final status = context.select<AgentAttentionCubit, WorkspaceAgentStatus>(
+      (cubit) => cubit.state.workspaceAgentStatus(sessionIds),
+    );
+    if (status == WorkspaceAgentStatus.none) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.only(left: 6),
+      child: Tooltip(
+        message: switch (status) {
+          WorkspaceAgentStatus.waiting => context.l10n.workspaceNavAgentWaiting,
+          WorkspaceAgentStatus.working => context.l10n.workspaceNavAgentWorking,
+          WorkspaceAgentStatus.interrupted =>
+            context.l10n.workspaceNavAgentInterrupted,
+          WorkspaceAgentStatus.done => context.l10n.workspaceNavAgentDone,
+          WorkspaceAgentStatus.none => '',
+        },
+        child: WorkspaceAgentStatusIndicator(status: status),
+      ),
+    );
   }
 }
 
@@ -636,6 +677,9 @@ class _WorkspaceNavRowState extends State<_WorkspaceNavRow> {
                         ? styles.smSemiboldColored(fg)
                         : styles.smColored(fg),
                   ),
+                ),
+                _WorkspaceAgentStatusBadge(
+                  workspaceId: widget.workspace.workspaceId,
                 ),
                 // Constant-size trailing slot: reserving the close affordance's
                 // footprint keeps row height stable across hover.

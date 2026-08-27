@@ -536,6 +536,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workspaceNavNewGroup => '新建分组';
 
   @override
+  String get workspaceNavAgentWorking => 'Agent 工作中';
+
+  @override
+  String get workspaceNavAgentWaiting => '等待你的授权';
+
+  @override
+  String get workspaceNavAgentInterrupted => '回合已打断';
+
+  @override
+  String get workspaceNavAgentDone => '回合已完成';
+
+  @override
   String get workspaceNavGroupNameHint => '分组名称';
 
   @override

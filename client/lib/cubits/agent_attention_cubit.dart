@@ -10,6 +10,11 @@ import '../services/agent_status/claude_permission_sticky.dart';
 /// Orca-aligned TTL: drop seat attention with no refresh after this duration.
 const Duration agentAttentionStaleAfter = Duration(minutes: 30);
 
+/// Aggregate agent state of a workspace's sessions, for the workspace nav row
+/// indicator. Priority order (most action needed first):
+/// waiting > working > interrupted > done.
+enum WorkspaceAgentStatus { none, waiting, working, interrupted, done }
+
 /// How often [AgentAttentionCubit] physically prunes stale seats so BlocBuilder
 /// consumers clear waiting without waiting for a new hook.
 const Duration agentAttentionPruneInterval = Duration(minutes: 1);
@@ -97,6 +102,39 @@ class AgentAttentionState extends Equatable {
       ids.add(e.key.substring(prefix.length));
     }
     return ids;
+  }
+
+  /// Aggregate status across all sessions in [sessionIds] (one workspace's
+  /// sessions), skipping stale seats. `done` seats interrupted at their Stop
+  /// hook count as [WorkspaceAgentStatus.interrupted].
+  WorkspaceAgentStatus workspaceAgentStatus(Set<String> sessionIds) {
+    if (sessionIds.isEmpty) return WorkspaceAgentStatus.none;
+    final now = _now;
+    var seenWorking = false;
+    var seenInterrupted = false;
+    var seenDone = false;
+    for (final e in seats.entries) {
+      final sep = e.key.indexOf('\u0000');
+      if (sep <= 0) continue;
+      if (!sessionIds.contains(e.key.substring(0, sep))) continue;
+      if (_isStale(e.value, now)) continue;
+      switch (e.value.attention) {
+        case AgentSeatAttention.waiting:
+          return WorkspaceAgentStatus.waiting;
+        case AgentSeatAttention.working:
+          seenWorking = true;
+        case AgentSeatAttention.done:
+          if (e.value.lastEvent?.interrupted ?? false) {
+            seenInterrupted = true;
+          } else {
+            seenDone = true;
+          }
+      }
+    }
+    if (seenWorking) return WorkspaceAgentStatus.working;
+    if (seenInterrupted) return WorkspaceAgentStatus.interrupted;
+    if (seenDone) return WorkspaceAgentStatus.done;
+    return WorkspaceAgentStatus.none;
   }
 
   AgentAttentionState copyWith({

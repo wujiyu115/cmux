@@ -1106,6 +1106,30 @@ abstract class AppLocalizations {
   /// **'New group'**
   String get workspaceNavNewGroup;
 
+  /// No description provided for @workspaceNavAgentWorking.
+  ///
+  /// In en, this message translates to:
+  /// **'Agent working'**
+  String get workspaceNavAgentWorking;
+
+  /// No description provided for @workspaceNavAgentWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for your approval'**
+  String get workspaceNavAgentWaiting;
+
+  /// No description provided for @workspaceNavAgentInterrupted.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn interrupted'**
+  String get workspaceNavAgentInterrupted;
+
+  /// No description provided for @workspaceNavAgentDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn finished'**
+  String get workspaceNavAgentDone;
+
   /// No description provided for @workspaceNavGroupNameHint.
   ///
   /// In en, this message translates to:

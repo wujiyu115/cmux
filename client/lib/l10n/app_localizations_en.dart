@@ -557,6 +557,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workspaceNavNewGroup => 'New group';
 
   @override
+  String get workspaceNavAgentWorking => 'Agent working';
+
+  @override
+  String get workspaceNavAgentWaiting => 'Waiting for your approval';
+
+  @override
+  String get workspaceNavAgentInterrupted => 'Turn interrupted';
+
+  @override
+  String get workspaceNavAgentDone => 'Turn finished';
+
+  @override
   String get workspaceNavGroupNameHint => 'Group name';
 
   @override
