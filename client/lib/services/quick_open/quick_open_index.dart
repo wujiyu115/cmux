@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 
+import '../../utils/logging/logger_utils.dart';
+import '../git/git_command_runner.dart';
 import '../io/filesystem.dart';
 
 /// One indexed file: absolute [path], display basename [name], and
@@ -25,9 +27,7 @@ class QuickOpenFileEntry {
 class QuickOpenIndex {
   const QuickOpenIndex({required this.files, required this.truncated});
 
-  const QuickOpenIndex.empty()
-    : files = const [],
-      truncated = false;
+  const QuickOpenIndex.empty() : files = const [], truncated = false;
 
   final List<QuickOpenFileEntry> files;
 
@@ -61,10 +61,19 @@ typedef QuickOpenLister = Future<List<FsDirEntry>> Function(String path);
 /// A failed listing is never cached: the entry is removed on error so the
 /// next open retries.
 class QuickOpenIndexRegistry {
-  QuickOpenIndexRegistry({QuickOpenLister? lister, this.maxFiles = 50000})
-    : _listerOverride = lister;
+  QuickOpenIndexRegistry({
+    QuickOpenLister? lister,
+    this.gitRunner,
+    this.maxFiles = 50000,
+  }) : _listerOverride = lister;
 
   final QuickOpenLister? _listerOverride;
+
+  /// Work-plane git runner; when set, listings prefer `git ls-files` so
+  /// .gitignore rules are honored (nested ignore files, global excludes).
+  /// The dialog host updates it as the workspace target resolves; null keeps
+  /// the recursive fallback.
+  GitCommandRunner? gitRunner;
   final int maxFiles;
 
   final _indexes = <Object, Future<QuickOpenIndex>>{};
@@ -80,11 +89,11 @@ class QuickOpenIndexRegistry {
       // listing is still in flight, racing dialogs share it instead of piling
       // on duplicate re-lists.
       if (_settled.contains(key)) {
-        final refresh = _listIndex(fs, root, maxFiles ?? this.maxFiles).then((
-          index,
-        ) {
-          _indexes[key] = Future.value(index);
-        }).catchError((Object _) {});
+        final refresh = _listIndex(fs, root, maxFiles ?? this.maxFiles)
+            .then((index) {
+              _indexes[key] = Future.value(index);
+            })
+            .catchError((Object _) {});
         _refreshes.add(refresh);
       }
       return cached;
@@ -107,7 +116,74 @@ class QuickOpenIndexRegistry {
     );
   }
 
+  static const List<String> _gitListFilesArgs = [
+    'ls-files',
+    '--cached',
+    '--others',
+    '--exclude-standard',
+    '-z',
+  ];
+
   Future<QuickOpenIndex> _listIndex(
+    Filesystem fs,
+    String root,
+    int maxFiles,
+  ) async {
+    final gitIndex = await _listIndexViaGit(fs, root, maxFiles);
+    if (gitIndex != null) return gitIndex;
+    return _listIndexRecursive(fs, root, maxFiles);
+  }
+
+  /// Gitignore-aware source: `git ls-files` over tracked plus untracked,
+  /// not-ignored files. Returns null — caller falls back to the recursive
+  /// listing — when git cannot serve the root (no repo, git missing on the
+  /// target, transport error, or empty output).
+  Future<QuickOpenIndex?> _listIndexViaGit(
+    Filesystem fs,
+    String root,
+    int maxFiles,
+  ) async {
+    final runner = gitRunner;
+    if (runner == null) return null;
+    final GitCommandResult result;
+    try {
+      result = await runner.runInDirectory(root, _gitListFilesArgs);
+    } on Object catch (e) {
+      AppLogger.instance.d('quick-open git ls-files failed: $e');
+      return null;
+    }
+    if (result.exitCode != 0) {
+      AppLogger.instance.d(
+        'quick-open git ls-files exited ${result.exitCode}: ${result.stderr}',
+      );
+      return null;
+    }
+    if (result.stdout.isEmpty) return null;
+    final ctx = fs.pathContext;
+    final files = <QuickOpenFileEntry>[];
+    var truncated = false;
+    for (final raw in result.stdout.split('\x00')) {
+      if (raw.isEmpty) continue;
+      // git always prints POSIX separators; the recursive fallback yields the
+      // backend's native ones — normalize so both sources feed identical paths.
+      final relative = ctx.joinAll(raw.split('/'));
+      files.add(
+        QuickOpenFileEntry(
+          path: ctx.join(root, relative),
+          name: ctx.basename(relative),
+          relativePath: relative,
+        ),
+      );
+      if (files.length >= maxFiles) {
+        truncated = true;
+        break;
+      }
+    }
+    files.sort((a, b) => a.relativePath.compareTo(b.relativePath));
+    return QuickOpenIndex(files: files, truncated: truncated);
+  }
+
+  Future<QuickOpenIndex> _listIndexRecursive(
     Filesystem fs,
     String root,
     int maxFiles,
