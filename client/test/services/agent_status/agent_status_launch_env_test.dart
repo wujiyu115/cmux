@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:teampilot/services/agent_status/agent_status_launch_env.dart';
-import 'package:teampilot/services/agent_status/claude_hook_installer.dart';
+import 'package:teampilot/services/agent_status/agent_hook_installer.dart';
 import 'package:teampilot/services/agent_status/member_agent_status_endpoint.dart';
 
 void main() {

@@ -16,7 +16,7 @@ import '../services/agent_status/agent_status_http_handler.dart';
 import '../services/agent_status/agent_attention_state.dart';
 import '../services/agent_status/agent_status_seat_lookup.dart';
 import '../services/agent_status/agent_status_gateway.dart';
-import '../services/agent_status/claude_hook_install_service.dart';
+import '../services/agent_status/agent_hook_install_service.dart';
 import '../services/notification/agent_attention_notification_service.dart';
 import '../services/editor_platform/editor_platform.dart';
 import '../cubits/notification_cubit.dart';
@@ -485,7 +485,7 @@ Future<AppShell> buildAppShell({
   // `nativeAppDataPath` and not `AppStorage.appDataRoot`: with a WSL home target
   // the latter is already an in-distro POSIX path, and writing it through the
   // local filesystem would create `/home/<u>/…` on the Windows drive.
-  final claudeHookInstallService = ClaudeHookInstallService(
+  final agentHookInstallService = AgentHookInstallService(
     hostAppDataRoot: nativeAppDataPath,
     resolveWslPaths: (distro) async {
       // forTarget caches per target id, which also sidesteps the single-slot
@@ -505,7 +505,7 @@ Future<AppShell> buildAppShell({
     agentStatusGateway: agentStatusGateway,
     agentStatusSeatLookup: agentStatusSeatLookup,
     agentAttentionCubit: agentAttentionCubit,
-    onWslDistroLaunch: claudeHookInstallService.ensureWslDistro,
+    onWslDistroLaunch: agentHookInstallService.ensureWslDistro,
   );
   // Terminal inject deps after connector: registry was created earlier.
   final workspaceTerminalSessionOps = WorkspaceTerminalSessionOps();
@@ -519,16 +519,17 @@ Future<AppShell> buildAppShell({
     ),
   );
 
-  // Install the shared Claude lifecycle hook on the host (idempotent,
+  // Install the shared agent lifecycle hooks on the host (idempotent,
   // best-effort): additively merges gateway-forwarding entries into the user's
-  // ~/.claude/settings.json and drops the forwarder script under the host
-  // <teampilotRoot>/agent-hooks/. Panes stamp seat identity env at connect; the
-  // hook reads it at run time (see claude_hook_installer.dart). WSL distros are
-  // installed lazily on first launch into them, via onWslDistroLaunch above.
-  // Skipped on mobile: there is no local `claude` to read the hook, and when
-  // Android happens to set HOME it would write junk into the app sandbox.
+  // ~/.claude/settings.json, ~/.qoder/settings.json, and ~/.codex/hooks.json,
+  // and drops the forwarder scripts under the host <teampilotRoot>/agent-hooks/.
+  // Panes stamp seat identity env at connect; the hook reads it at run time
+  // (see agent_hook_installer.dart). WSL distros are installed lazily on first
+  // launch into them, via onWslDistroLaunch above. Skipped on mobile: there is
+  // no local CLI to read the hooks, and when Android happens to set HOME it
+  // would write junk into the app sandbox.
   if (hasDesktopWindow) {
-    unawaited(claudeHookInstallService.installHost());
+    unawaited(agentHookInstallService.installHost());
   }
 
   agentStatusGateway.attachAgentStatusHandler(

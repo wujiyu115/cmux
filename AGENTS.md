@@ -65,7 +65,7 @@ Embedded terminals render with **flutter_alacritty** (Alacritty-based Rust engin
 
 ### Agent-status notifications
 
-The one surviving AI-adjacent feature. A Claude Code hook (installed by `ClaudeHookInstaller`) posts agent lifecycle events to an app-wide loopback HTTP **`AgentStatusGateway`** (`POST /agent-status`); events are normalized and matched back to the originating session, then surfaced as desktop notifications when an agent finishes a turn or needs permission.
+The one surviving AI-adjacent feature. Shared agent hooks (installed by `AgentHookInstaller`) post CLI lifecycle events to an app-wide loopback HTTP **`AgentStatusGateway`** (`POST /agent-status`); events are normalized and matched back to the originating session, then surfaced as desktop notifications when an agent finishes a turn or needs permission. Covered CLIs: **Claude Code** (`~/.claude/settings.json`), **Qoder** (`~/.qoder/settings.json`), **Codex** (`~/.codex/hooks.json`) — all report Claude-Code-shaped payloads, so one normalizer path serves all three. Installs are additive merges that strip only TeamPilot's own entries; the user's other hook tooling (Orca, rtk, …) is left untouched.
 
 - Code: `client/lib/services/agent_status/` (gateway, HTTP handler, normalizer, seat lookup, hook installer; `remote/` carries the reverse-tunnel delivery for SSH).
 - Notifications: `client/lib/services/notification/` (`AgentAttentionNotificationService`, `TerminalIdleNotificationService`, `DesktopSystemNotifier`).

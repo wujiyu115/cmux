@@ -157,11 +157,12 @@ class SessionShellConnector {
         applyShellTerminalThemeForLaunch(shell, launchTheme);
       }
       // Revive the agent-status pipeline for local panes: register the gateway
-      // session + seat and stamp the identity env the shared Claude hook reads
-      // at run time (see claude_hook_installer.dart). The pane runs a plain
+      // session + seat and stamp the identity env the shared agent hook reads
+      // at run time (see agent_hook_installer.dart). The pane runs a plain
       // shell, so the CLI is unknown until a hook fires — assume `claude`, the
-      // only wired family. SSH panes need a remote tunnel + remote script and
-      // are deferred; skip stamping there so the hook stays a no-op.
+      // family every wired CLI (claude / qoder / codex) normalizes through.
+      // SSH panes need a remote tunnel + remote script and are deferred; skip
+      // stamping there so the hook stays a no-op.
       final agentStatusEnv = <String, String>{};
       if (launchTarget.kind != RuntimeKind.ssh) {
         final seatId = activeSession.sessionId;

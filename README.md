@@ -6,7 +6,7 @@
 
 **TeamPilot** 是一个面向开发者的桌面客户端：以**工作区**为中心，把仓库目录、内嵌**终端会话**、**分屏复用**和一个轻量**内置 IDE**（文件树、编辑器、Git、worktree）整合到同一个窗口里。会话标签是**普通的交互式终端**——桌面端直接以本机 PTY 打开，或通过 **SSH** 连接远端主机。你可以在终端里运行任何命令行工具，包括各类 AI Agent CLI（Claude Code、Codex、opencode、cursor、flashskyai 等）。
 
-TeamPilot 不会替你启动或编排这些 CLI；它只负责把它们跑起来的环境组织好。此外还内置了 **Agent 状态通知**：Claude Code / Codex / opencode / flashskyai 通过 hook 上报，cursor 通过窗口标题探测——Agent 结束一轮、被打断或需要授权时弹出系统通知。**手机**可通过配对远程操作桌面终端：实时镜像、接管输入、上传文件、语音输入、接收通知。
+TeamPilot 不会替你启动或编排这些 CLI；它只负责把它们跑起来的环境组织好。此外还内置了 **Agent 状态通知**：Claude Code / Qoder / Codex / opencode / flashskyai 通过 hook 上报，cursor 通过窗口标题探测——Agent 结束一轮、被打断或需要授权时弹出系统通知。**手机**可通过配对远程操作桌面终端：实时镜像、接管输入、上传文件、语音输入、接收通知。
 
 | 桌面端 | 移动端（配对） |
 |:---:|:---:|
@@ -83,9 +83,9 @@ TeamPilot 不会替你启动或编排这些 CLI；它只负责把它们跑起来
 
 ## Agent 状态通知
 
-TeamPilot 会安装一个 Claude Code hook（**附加式**合并进用户级 `~/.claude/settings.json`，只管理自己的条目，不覆盖你已有的 hook），把 Agent 生命周期事件上报到应用内的本机回环网关；应用匹配到对应会话后，在 Agent **结束一轮、被打断或等待授权**时弹出系统通知——即使窗口在后台，也能及时知道该回到哪个会话。
+TeamPilot 会安装一组共享 Agent hook（**附加式**合并进各 CLI 的用户级配置——Claude Code 的 `~/.claude/settings.json`、Qoder 的 `~/.qoder/settings.json`、Codex 的 `~/.codex/hooks.json`——只管理自己的条目，不覆盖你已有的 hook，包括其他工具装的 hook），把 Agent 生命周期事件上报到应用内的本机回环网关；应用匹配到对应会话后，在 Agent **结束一轮、被打断或等待授权**时弹出系统通知——即使窗口在后台，也能及时知道该回到哪个会话。
 
-- **支持的上报源**：Claude Code / Codex / opencode / flashskyai 走 hook 协议；cursor 不走 hook，改用窗口标题探测。
+- **支持的上报源**：Claude Code / Qoder / Codex / opencode / flashskyai 走 hook 协议；cursor 不走 hook，改用窗口标题探测。
 - **通知中心**：标题栏铃铛汇总 Agent 通知与终端自己发的 OSC 通知（OSC 9 / 99 kitty / 777），支持已读、清空、点击深链到对应工作区。
 - **推送到手机**：配对手机在线时收本地通知；离线可配置 **Bark** 推送（关闭 / 仅无手机连接时推 / 总是推），在「设置 → 会话」配置服务器与设备 Key，可发测试推送。
 - SSH 远端主机上的 Agent 同样覆盖：事件经反向隧道送回本机网关。

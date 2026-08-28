@@ -3,24 +3,30 @@ import 'dart:io';
 
 import '../../utils/logging/logger.dart';
 import '../io/filesystem.dart';
-import 'claude_hook_installer.dart';
+import 'agent_hook_installer.dart';
 
 /// In-distro `$HOME` and TeamPilot app-data root for a WSL distro.
 typedef WslHookPaths = ({String home, String appDataRoot});
 
-/// Decides *where* the shared Claude forwarder hook is installed.
+/// Decides *where* the shared agent forwarder hooks are installed.
 ///
-/// `claude` running inside a WSL distro reads that distro's own
-/// `~/.claude/settings.json` and cannot execute a Windows script path, so each
-/// distro needs its own installation next to the host one.
+/// Claude Code, Qoder, and Codex each read their own settings file on every
+/// machine the app touches, so one install fans out to one [AgentHookInstaller]
+/// per [AgentHookTarget]: the host at boot, each WSL distro lazily on first
+/// launch into it.
+///
+/// A WSL distro is a separate machine for this purpose: a CLI running inside
+/// it reads that distro's own `~/.claude/settings.json` / `~/.qoder/settings
+/// .json` / `~/.codex/hooks.json` and cannot execute a Windows script path, so
+/// each distro needs its own installation next to the host one.
 ///
 /// Distro installs are **lazy**: the first time a pane launches into a distro.
 /// Eager installation at boot would wake every registered distro on every app
 /// start — probing `$HOME` alone measured ~2s cold — for distros the user may
 /// never open. The trade-off is that a distro's very first pane can race the
 /// install and miss the hook for that one session; the next one has it.
-class ClaudeHookInstallService {
-  ClaudeHookInstallService({
+class AgentHookInstallService {
+  AgentHookInstallService({
     required this.hostAppDataRoot,
     Future<WslHookPaths?> Function(String distro)? resolveWslPaths,
     Filesystem Function(String distro)? wslFilesystemFor,
@@ -45,15 +51,17 @@ class ClaudeHookInstallService {
   /// launch can retry (the distro may simply have been unavailable).
   final Set<String> _wslAttempted = {};
 
-  /// Installs the host-side hook. Best-effort — [ClaudeHookInstaller.install]
-  /// logs and swallows its own failures.
+  /// Installs hooks for every [AgentHookTarget] on the host. Best-effort —
+  /// [AgentHookInstaller.install] logs and swallows its own failures.
   Future<void> installHost() async {
-    final installer = ClaudeHookInstaller.forHost(
-      hostAppDataRoot: hostAppDataRoot,
-      filesystem: _hostFilesystem,
-    );
-    if (installer == null) return;
-    await installer.install();
+    for (final target in AgentHookTarget.values) {
+      final installer = AgentHookInstaller.forHost(
+        target: target,
+        hostAppDataRoot: hostAppDataRoot,
+        filesystem: _hostFilesystem,
+      );
+      await installer?.install();
+    }
   }
 
   /// Installs into [distro] the first time it is used. Fire-and-forget: the
@@ -75,18 +83,21 @@ class ClaudeHookInstallService {
         _wslAttempted.remove(distro);
         return;
       }
-      await ClaudeHookInstaller.forWslDistro(
-        distro: distro,
-        distroHome: home,
-        distroAppDataRoot: appDataRoot,
-        filesystem: _wslFilesystemFor?.call(distro),
-      ).install();
-      appLogger.i('[agent-status] Claude hook installed in wsl:$distro');
+      for (final target in AgentHookTarget.values) {
+        await AgentHookInstaller.forWslDistro(
+          target: target,
+          distro: distro,
+          distroHome: home,
+          distroAppDataRoot: appDataRoot,
+          filesystem: _wslFilesystemFor?.call(distro),
+        ).install();
+      }
+      appLogger.i('[agent-status] agent hooks installed in wsl:$distro');
     } catch (e, st) {
       // Allow a retry on the next launch into this distro.
       _wslAttempted.remove(distro);
       appLogger.w(
-        '[agent-status] Claude hook install failed for wsl:$distro: $e',
+        '[agent-status] agent hook install failed for wsl:$distro: $e',
         error: e,
         stackTrace: st,
       );

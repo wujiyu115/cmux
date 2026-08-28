@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:teampilot/services/agent_status/claude_hook_install_service.dart';
+import 'package:teampilot/services/agent_status/agent_hook_install_service.dart';
 
 import '../../support/in_memory_filesystem.dart';
 
@@ -13,7 +13,7 @@ void main() {
 
   test('installs into a distro on first launch', () async {
     final fs = InMemoryFilesystem();
-    final service = ClaudeHookInstallService(
+    final service = AgentHookInstallService(
       hostAppDataRoot: '/host/app',
       supportsWsl: true,
       resolveWslPaths: (_) async => distroPaths,
@@ -23,13 +23,22 @@ void main() {
     service.ensureWslDistro('Ubuntu');
     await pumpEventQueue();
 
+    // One shared forwarder script plus each target's own settings file.
     expect(fs.files[distroScript], isNotNull);
     expect(fs.files['/home/u/.claude/settings.json'], isNotNull);
+    expect(fs.files['/home/u/.qoder/settings.json'], isNotNull);
+    expect(fs.files['/home/u/.codex/hooks.json'], isNotNull);
+    // A distro is POSIX — no Windows cmd forwarder there.
+    expect(
+      fs.files.containsKey('/home/u/.local/share/com.hhoa.teampilot/'
+          'agent-hooks/codex-hook.cmd'),
+      isFalse,
+    );
   });
 
   test('installs a distro only once across repeated launches', () async {
     var resolves = 0;
-    final service = ClaudeHookInstallService(
+    final service = AgentHookInstallService(
       hostAppDataRoot: '/host/app',
       supportsWsl: true,
       resolveWslPaths: (_) async {
@@ -50,7 +59,7 @@ void main() {
 
   test('tracks distros independently', () async {
     final seen = <String>[];
-    final service = ClaudeHookInstallService(
+    final service = AgentHookInstallService(
       hostAppDataRoot: '/host/app',
       supportsWsl: true,
       resolveWslPaths: (d) async {
@@ -69,7 +78,7 @@ void main() {
 
   test('a failed attempt is retried on the next launch', () async {
     var calls = 0;
-    final service = ClaudeHookInstallService(
+    final service = AgentHookInstallService(
       hostAppDataRoot: '/host/app',
       supportsWsl: true,
       resolveWslPaths: (_) async {
@@ -92,7 +101,7 @@ void main() {
 
   test('blank resolved paths are skipped and left retryable', () async {
     var calls = 0;
-    final service = ClaudeHookInstallService(
+    final service = AgentHookInstallService(
       hostAppDataRoot: '/host/app',
       supportsWsl: true,
       resolveWslPaths: (_) async {
@@ -112,7 +121,7 @@ void main() {
 
   test('does nothing when WSL is unsupported', () async {
     var resolves = 0;
-    final service = ClaudeHookInstallService(
+    final service = AgentHookInstallService(
       hostAppDataRoot: '/host/app',
       supportsWsl: false,
       resolveWslPaths: (_) async {
@@ -130,7 +139,7 @@ void main() {
 
   test('ignores a blank distro name', () async {
     var resolves = 0;
-    final service = ClaudeHookInstallService(
+    final service = AgentHookInstallService(
       hostAppDataRoot: '/host/app',
       supportsWsl: true,
       resolveWslPaths: (_) async {
@@ -149,7 +158,7 @@ void main() {
   test('installHost writes the forwarder under the host app-data root',
       () async {
     final fs = InMemoryFilesystem();
-    await ClaudeHookInstallService(
+    await AgentHookInstallService(
       hostAppDataRoot: '/host/app',
       hostFilesystem: fs,
     ).installHost();

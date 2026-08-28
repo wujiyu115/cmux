@@ -10,7 +10,7 @@ import 'package:teampilot/repositories/ssh_profile_repository.dart';
 import 'package:teampilot/services/agent_status/agent_status_gateway.dart';
 import 'package:teampilot/services/agent_status/agent_status_launch_env.dart';
 import 'package:teampilot/services/agent_status/agent_status_seat_lookup.dart';
-import 'package:teampilot/services/agent_status/claude_hook_installer.dart';
+import 'package:teampilot/services/agent_status/agent_hook_installer.dart';
 import 'package:teampilot/services/agent_status/member_agent_status_endpoint.dart';
 import 'package:teampilot/services/terminal/terminal_transport_factory.dart';
 import 'package:teampilot/services/terminal/workspace_shell_connector.dart';

@@ -1,9 +1,9 @@
 import 'dart:io';
 
-import 'claude_hook_installer.dart';
+import 'agent_hook_installer.dart';
 import 'member_agent_status_endpoint.dart';
 
-/// Builds the per-pane launch env that the shared Claude hook reads at run time.
+/// Builds the per-pane launch env that the shared agent hook reads at run time.
 ///
 /// The hook script no-ops unless all three keys are present, so this is the
 /// single seam that decides whether a pane reports agent status at all. Both
