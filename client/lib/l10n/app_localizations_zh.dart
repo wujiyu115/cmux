@@ -1980,6 +1980,29 @@ class AppLocalizationsZh extends AppLocalizations {
   String get shortcutsWorkspaceSearch => '搜索工作区';
 
   @override
+  String get shortcutsQuickOpen => '快速打开文件';
+
+  @override
+  String get quickOpenSearchHint => '输入文件名…';
+
+  @override
+  String get quickOpenIndexing => '正在索引文件…';
+
+  @override
+  String get quickOpenRecent => '最近打开';
+
+  @override
+  String get quickOpenEmptyRecent => '输入文件名开始搜索';
+
+  @override
+  String get quickOpenNoResults => '没有匹配的文件';
+
+  @override
+  String quickOpenTruncated(int count) {
+    return '工作区较大 — 仅显示前 $count 个文件';
+  }
+
+  @override
   String get shortcutsStripNextTab => '下一个标签';
 
   @override

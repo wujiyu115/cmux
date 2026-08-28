@@ -69,6 +69,16 @@ abstract final class CommandCatalog {
       terminalPassthrough: true,
       titleL10nKey: 'shortcutsWorkspaceSearch',
     ),
+    CommandDefinition(
+      id: CommandIds.quickOpen,
+      category: CommandCategory.navigation,
+      defaultChords: [
+        KeyChord(key: 'p', mods: [KeyChordMod.mod]),
+      ],
+      when: ShortcutWhen.hasWorkspace,
+      terminalPassthrough: true,
+      titleL10nKey: 'shortcutsQuickOpen',
+    ),
 
     // Workbench strip tabs
     CommandDefinition(

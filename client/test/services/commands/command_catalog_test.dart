@@ -36,6 +36,18 @@ void main() {
     expect(def.terminalPassthrough, isTrue);
   });
 
+  test('quick open defaults to Mod+P and resolves its title', () {
+    final def = CommandCatalog.v1.singleWhere(
+      (c) => c.id == CommandIds.quickOpen,
+    );
+    expect(def.defaultChords, [
+      KeyChord(key: 'p', mods: [KeyChordMod.mod]),
+    ]);
+    expect(def.when, ShortcutWhen.hasWorkspace);
+    expect(def.terminalPassthrough, isTrue);
+    expect(def.titleL10nKey, 'shortcutsQuickOpen');
+  });
+
   test('strip next tab defaults to explicit ctrl+tab', () {
     final def = CommandCatalog.v1.singleWhere(
       (c) => c.id == CommandIds.stripNextTab,

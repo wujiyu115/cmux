@@ -3824,6 +3824,48 @@ abstract class AppLocalizations {
   /// **'Search Workspace'**
   String get shortcutsWorkspaceSearch;
 
+  /// No description provided for @shortcutsQuickOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick Open File'**
+  String get shortcutsQuickOpen;
+
+  /// No description provided for @quickOpenSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Type a file name…'**
+  String get quickOpenSearchHint;
+
+  /// No description provided for @quickOpenIndexing.
+  ///
+  /// In en, this message translates to:
+  /// **'Indexing files…'**
+  String get quickOpenIndexing;
+
+  /// No description provided for @quickOpenRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Recently opened'**
+  String get quickOpenRecent;
+
+  /// No description provided for @quickOpenEmptyRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Start typing to search files'**
+  String get quickOpenEmptyRecent;
+
+  /// No description provided for @quickOpenNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching files'**
+  String get quickOpenNoResults;
+
+  /// No description provided for @quickOpenTruncated.
+  ///
+  /// In en, this message translates to:
+  /// **'Large workspace — showing the first {count} files'**
+  String quickOpenTruncated(int count);
+
   /// No description provided for @shortcutsStripNextTab.
   ///
   /// In en, this message translates to:

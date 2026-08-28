@@ -923,6 +923,20 @@
   "shortcutsWorkspaceCloseTab": "Close Workspace Tab",
   "shortcutsWorkspaceReopenClosed": "Reopen Closed Workspace Tab",
   "shortcutsWorkspaceSearch": "Search Workspace",
+  "shortcutsQuickOpen": "Quick Open File",
+  "quickOpenSearchHint": "Type a file name…",
+  "quickOpenIndexing": "Indexing files…",
+  "quickOpenRecent": "Recently opened",
+  "quickOpenEmptyRecent": "Start typing to search files",
+  "quickOpenNoResults": "No matching files",
+  "quickOpenTruncated": "Large workspace — showing the first {count} files",
+  "@quickOpenTruncated": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "shortcutsStripNextTab": "Next Tab",
   "shortcutsStripPrevTab": "Previous Tab",
   "shortcutsSessionNewTab": "New Terminal",

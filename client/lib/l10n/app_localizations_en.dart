@@ -2041,6 +2041,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shortcutsWorkspaceSearch => 'Search Workspace';
 
   @override
+  String get shortcutsQuickOpen => 'Quick Open File';
+
+  @override
+  String get quickOpenSearchHint => 'Type a file name…';
+
+  @override
+  String get quickOpenIndexing => 'Indexing files…';
+
+  @override
+  String get quickOpenRecent => 'Recently opened';
+
+  @override
+  String get quickOpenEmptyRecent => 'Start typing to search files';
+
+  @override
+  String get quickOpenNoResults => 'No matching files';
+
+  @override
+  String quickOpenTruncated(int count) {
+    return 'Large workspace — showing the first $count files';
+  }
+
+  @override
   String get shortcutsStripNextTab => 'Next Tab';
 
   @override
