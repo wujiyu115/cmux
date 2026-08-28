@@ -30,10 +30,7 @@ void main() {
       final local = InMemoryFilesystem();
       final wsl = InMemoryFilesystem();
       final state = WorkspaceToolsScopeState(
-        targetSlices: [
-          _slice('local', local),
-          _slice('wsl:Ubuntu', wsl),
-        ],
+        targetSlices: [_slice('local', local), _slice('wsl:Ubuntu', wsl)],
         resolving: false,
       );
 
@@ -54,6 +51,52 @@ void main() {
       const state = WorkspaceToolsScopeState();
 
       expect(state.filesystemForTarget('local'), isNull);
+    });
+  });
+
+  group('WorkspaceToolsScopeState.runtimeContextForTarget', () {
+    test('returns the context of the matching target slice', () {
+      final localCtx = _ctx(InMemoryFilesystem());
+      final wslCtx = _ctx(InMemoryFilesystem());
+      final state = WorkspaceToolsScopeState(
+        targetSlices: [
+          WorkspaceTargetSlice(
+            targetId: 'local',
+            tools: WorkspaceToolsContext(targetId: 'local', context: localCtx),
+            roots: const [],
+          ),
+          WorkspaceTargetSlice(
+            targetId: 'wsl:Ubuntu',
+            tools: WorkspaceToolsContext(
+              targetId: 'wsl:Ubuntu',
+              context: wslCtx,
+            ),
+            roots: const [],
+          ),
+        ],
+        resolving: false,
+      );
+
+      expect(state.runtimeContextForTarget('local'), same(localCtx));
+      expect(state.runtimeContextForTarget('wsl:Ubuntu'), same(wslCtx));
+    });
+
+    test('returns null for a target that is not resolved', () {
+      final state = WorkspaceToolsScopeState(
+        targetSlices: [
+          WorkspaceTargetSlice(
+            targetId: 'local',
+            tools: WorkspaceToolsContext(
+              targetId: 'local',
+              context: _ctx(InMemoryFilesystem()),
+            ),
+            roots: const [],
+          ),
+        ],
+        resolving: false,
+      );
+
+      expect(state.runtimeContextForTarget('ssh:down'), isNull);
     });
   });
 }

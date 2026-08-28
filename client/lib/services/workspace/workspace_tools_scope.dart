@@ -72,6 +72,15 @@ class WorkspaceToolsScopeState extends Equatable {
     return null;
   }
 
+  /// Runtime context of the machine with [targetId], or null when that target
+  /// has not been resolved (still resolving or unreachable).
+  RuntimeContext? runtimeContextForTarget(String targetId) {
+    for (final slice in targetSlices) {
+      if (slice.targetId == targetId) return slice.tools.context;
+    }
+    return null;
+  }
+
   WorkspaceToolsScopeState copyWith({
     WorkspaceToolsContext? tools,
     List<String>? roots,

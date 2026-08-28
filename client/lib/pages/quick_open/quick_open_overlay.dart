@@ -8,6 +8,7 @@ import 'package:shared_ui/shared_ui.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../models/workspace.dart';
 import '../../services/commands/shortcut_focus.dart';
+import '../../services/git/git_command_runner.dart';
 import '../../services/io/filesystem.dart';
 import '../../services/quick_open/quick_open_index.dart';
 import '../../services/quick_open/quick_open_mru_repository.dart';
@@ -26,10 +27,15 @@ final QuickOpenIndexRegistry _sharedIndexRegistry = QuickOpenIndexRegistry();
 /// [filesystem] must be the work-plane filesystem of the machine hosting the
 /// workspace folders (WSL/SSH workspaces cannot be read through the app's
 /// native home context).
+///
+/// [gitRunner], when provided, is the work-plane git runner for the machine
+/// hosting [workspace]'s folders; the index then prefers `git ls-files` so
+/// .gitignore rules hold, falling back to the recursive listing otherwise.
 Future<void> showQuickOpenDialog(
   BuildContext context, {
   required Workspace workspace,
   Filesystem? filesystem,
+  GitCommandRunner? gitRunner,
   QuickOpenIndexRegistry? indexRegistry,
   QuickOpenMruRepository? mruRepository,
 }) async {
@@ -39,6 +45,11 @@ Future<void> showQuickOpenDialog(
     final opener = context.read<WorkbenchEditorOpener>();
     final fs = filesystem ?? AppStorage.fs;
     final registry = indexRegistry ?? _sharedIndexRegistry;
+    if (gitRunner != null) {
+      // The shared registry keeps its (fs, root) cache across dialogs, so the
+      // runner is updated in place instead of replacing the registry.
+      registry.gitRunner = gitRunner;
+    }
     final mru = mruRepository ?? QuickOpenMruRepository(fs: fs);
     final path = await showDialog<String>(
       context: context,
@@ -162,7 +173,9 @@ class _QuickOpenOverlayState extends State<QuickOpenOverlay> {
   QuickOpenFileEntry _entryForPath(String path) {
     final ctx = widget.filesystem.pathContext;
     final root = widget.workspace.firstFolderPath;
-    final relative = ctx.isWithin(root, path) ? ctx.relative(path, from: root) : path;
+    final relative = ctx.isWithin(root, path)
+        ? ctx.relative(path, from: root)
+        : path;
     return QuickOpenFileEntry(
       path: path,
       name: ctx.basename(path),
@@ -189,9 +202,7 @@ class _QuickOpenOverlayState extends State<QuickOpenOverlay> {
       if (aLen != bLen) return aLen.compareTo(bLen);
       return a.row.entry.relativePath.compareTo(b.row.entry.relativePath);
     });
-    return [
-      for (final s in scored.take(_maxResultRows)) s.row,
-    ];
+    return [for (final s in scored.take(_maxResultRows)) s.row];
   }
 
   void _onQueryChanged(String value) {
@@ -260,7 +271,8 @@ class _QuickOpenOverlayState extends State<QuickOpenOverlay> {
       _moveSelection(-1, _rows.length);
       return KeyEventResult.handled;
     }
-    if (key == LogicalKeyboardKey.enter || key == LogicalKeyboardKey.numpadEnter) {
+    if (key == LogicalKeyboardKey.enter ||
+        key == LogicalKeyboardKey.numpadEnter) {
       _openSelected();
       return KeyEventResult.handled;
     }
@@ -387,7 +399,9 @@ class _SearchField extends StatelessWidget {
         floatingLabelBehavior: FloatingLabelBehavior.never,
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.7)),
+          borderSide: BorderSide(
+            color: cs.outlineVariant.withValues(alpha: 0.7),
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
@@ -417,9 +431,7 @@ class _EmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 32),
-      child: Center(
-        child: Text(text, style: TpTextStyles.of(context).mutedSm),
-      ),
+      child: Center(child: Text(text, style: TpTextStyles.of(context).mutedSm)),
     );
   }
 }
@@ -458,7 +470,11 @@ class _ResultList extends StatelessWidget {
 }
 
 class _ResultRow extends StatelessWidget {
-  const _ResultRow({required this.row, required this.selected, required this.onTap});
+  const _ResultRow({
+    required this.row,
+    required this.selected,
+    required this.onTap,
+  });
 
   final _QuickOpenRow row;
   final bool selected;
@@ -499,9 +515,9 @@ class _ResultRow extends StatelessWidget {
                         row.entry.relativePath,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TpTextStyles.of(context).xsColored(
-                          cs.onSurfaceVariant,
-                        ),
+                        style: TpTextStyles.of(
+                          context,
+                        ).xsColored(cs.onSurfaceVariant),
                       ),
                     ],
                   ),

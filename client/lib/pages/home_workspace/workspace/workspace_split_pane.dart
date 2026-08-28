@@ -14,6 +14,7 @@ import '../../../models/workspace_folder.dart';
 import '../../../services/commands/quick_open_command_registrar.dart';
 import '../../../services/commands/run_command_registrar.dart';
 import '../../../services/commands/workspace_search_command_registrar.dart';
+import '../../../services/git/git_command_runner.dart';
 import '../../../services/storage/app_storage.dart';
 import '../../../services/workspace/workspace_run_registry.dart';
 import '../../../services/workspace/workspace_tools_scope.dart';
@@ -86,9 +87,7 @@ class _WorkspaceSplitPaneState extends State<WorkspaceSplitPane> {
 
   void _openSearch() {
     if (!mounted) return;
-    unawaited(
-      showWorkspaceSearchDialog(context, workspace: widget.workspace),
-    );
+    unawaited(showWorkspaceSearchDialog(context, workspace: widget.workspace));
   }
 
   void _openQuickOpenNow() {
@@ -101,12 +100,16 @@ class _WorkspaceSplitPaneState extends State<WorkspaceSplitPane> {
     final targetId = widget.workspace.folders.isEmpty
         ? WorkspaceFolder.localTargetId
         : widget.workspace.folders.first.targetId;
-    final fs = scopeState.filesystemForTarget(targetId) ?? AppStorage.fs;
+    final targetContext = scopeState.runtimeContextForTarget(targetId);
+    final fs = targetContext?.filesystem ?? AppStorage.fs;
     unawaited(
       showQuickOpenDialog(
         context,
         workspace: widget.workspace,
         filesystem: fs,
+        gitRunner: targetContext == null
+            ? null
+            : gitCommandRunnerForContext(targetContext),
       ),
     );
   }
