@@ -8,15 +8,40 @@ import '../storage/remote_file_store.dart';
 import 'filesystem.dart';
 
 typedef ProcessRunner =
-    Future<ProcessResult> Function(String executable, List<String> arguments);
+    Future<ProcessResult> Function(
+      String executable,
+      List<String> arguments, {
+      Encoding? stdoutEncoding,
+      Encoding? stderrEncoding,
+    });
 
 class WslFilesystem implements Filesystem {
   WslFilesystem({String? distro, ProcessRunner? processRunner})
     : _distro = distro?.trim(),
-      _processRunner = processRunner ?? Process.run;
+      _processRunner = processRunner ?? _defaultProcessRunner;
 
   final String? _distro;
   final ProcessRunner _processRunner;
+
+  /// wsl.exe always emits UTF-8, but `Process.run`'s default stdoutEncoding is
+  /// the Windows console codepage (GBK on zh-CN) — Chinese filenames from
+  /// `find -printf %f` came back as mojibake. Malformed-tolerant so a stray
+  /// invalid byte degrades instead of throwing mid-listing.
+  static const Encoding _wslOutputEncoding = Utf8Codec(allowMalformed: true);
+
+  static Future<ProcessResult> _defaultProcessRunner(
+    String executable,
+    List<String> arguments, {
+    Encoding? stdoutEncoding,
+    Encoding? stderrEncoding,
+  }) {
+    return Process.run(
+      executable,
+      arguments,
+      stdoutEncoding: stdoutEncoding,
+      stderrEncoding: stderrEncoding,
+    );
+  }
 
   @override
   p.Context get pathContext => p.Context(style: p.Style.posix);
@@ -34,7 +59,12 @@ class WslFilesystem implements Filesystem {
   }
 
   Future<ProcessResult> _run(List<String> command) {
-    return _processRunner('wsl.exe', _args(command));
+    return _processRunner(
+      'wsl.exe',
+      _args(command),
+      stdoutEncoding: _wslOutputEncoding,
+      stderrEncoding: _wslOutputEncoding,
+    );
   }
 
   Future<void> _checked(List<String> command) async {
