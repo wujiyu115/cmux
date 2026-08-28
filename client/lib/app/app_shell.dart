@@ -75,6 +75,7 @@ import '../services/home_workspace/home_workspace_ui_cache.dart';
 import '../services/cli/toolchain_executable_discovery.dart';
 import '../services/commands/command_bus.dart';
 import '../services/commands/layout_command_registrar.dart';
+import '../services/commands/quick_open_command_registrar.dart';
 import '../services/commands/run_command_registrar.dart';
 import '../services/commands/session_command_registrar.dart';
 import '../services/commands/shortcuts_ui_commands.dart';
@@ -180,6 +181,7 @@ class AppShell {
     required this.workspaceChromeCommands,
     required this.runCommandHost,
     required this.workspaceSearchHost,
+    required this.quickOpenHost,
     required this.uiZoomBaseline,
   });
   final HomeWorkspaceUiCache homeWorkspaceUiCache;
@@ -234,6 +236,7 @@ class AppShell {
   final WorkspaceChromeCommands workspaceChromeCommands;
   final RunCommandHost runCommandHost;
   final WorkspaceSearchHost workspaceSearchHost;
+  final QuickOpenHost quickOpenHost;
   final UiZoomBaseline uiZoomBaseline;
 }
 
@@ -453,11 +456,13 @@ Future<AppShell> buildAppShell({
   final workspaceChromeCommands = WorkspaceChromeCommands();
   final runCommandHost = RunCommandHost();
   final workspaceSearchHost = WorkspaceSearchHost();
+  final quickOpenHost = QuickOpenHost();
   final uiZoomBaseline = UiZoomBaseline();
   registerShortcutsUiCommands(commandBus);
   registerCommandPaletteCommand(commandBus);
   registerRunCommands(commandBus, runCommandHost);
   registerWorkspaceSearchCommands(commandBus, workspaceSearchHost);
+  registerQuickOpenCommands(commandBus, quickOpenHost);
 
   final transportFactory = TerminalTransportFactory(
     sshProfileRepository: sshProfileRepo,
@@ -1264,6 +1269,7 @@ Future<AppShell> buildAppShell({
     workspaceChromeCommands: workspaceChromeCommands,
     runCommandHost: runCommandHost,
     workspaceSearchHost: workspaceSearchHost,
+    quickOpenHost: quickOpenHost,
     uiZoomBaseline: uiZoomBaseline,
   );
 }

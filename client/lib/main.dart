@@ -32,6 +32,7 @@ import 'repositories/ssh_profile_repository.dart';
 import 'router/app_router.dart';
 import 'services/commands/command_bus.dart';
 import 'services/commands/key_chord.dart';
+import 'services/commands/quick_open_command_registrar.dart';
 import 'services/commands/reconciled_keyboard.dart';
 import 'services/commands/run_command_registrar.dart';
 import 'services/commands/workspace_search_command_registrar.dart';
@@ -765,6 +766,9 @@ Future<void> _bootStartup() async {
                 ),
                 RepositoryProvider<WorkspaceSearchHost>.value(
                   value: shell.workspaceSearchHost,
+                ),
+                RepositoryProvider<QuickOpenHost>.value(
+                  value: shell.quickOpenHost,
                 ),
                 RepositoryProvider<UiZoomBaseline>.value(
                   value: shell.uiZoomBaseline,
