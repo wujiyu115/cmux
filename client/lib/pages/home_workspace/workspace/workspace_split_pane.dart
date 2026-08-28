@@ -10,9 +10,11 @@ import '../../../cubits/run_cubit.dart';
 import '../../../cubits/workbench/workbench_cubit.dart';
 import '../../../cubits/worktree_cubit.dart';
 import '../../../models/workspace.dart';
+import '../../../models/workspace_folder.dart';
 import '../../../services/commands/quick_open_command_registrar.dart';
 import '../../../services/commands/run_command_registrar.dart';
 import '../../../services/commands/workspace_search_command_registrar.dart';
+import '../../../services/storage/app_storage.dart';
 import '../../../services/workspace/workspace_run_registry.dart';
 import '../../../services/workspace/workspace_tools_scope.dart';
 import '../../../services/workspace/workspace_tools_scope_registry.dart';
@@ -91,7 +93,22 @@ class _WorkspaceSplitPaneState extends State<WorkspaceSplitPane> {
 
   void _openQuickOpenNow() {
     if (!mounted) return;
-    unawaited(showQuickOpenDialog(context, workspace: widget.workspace));
+    final lifecycle = context.read<ChatCubit>().lifecycle;
+    final scopeState = context
+        .read<WorkspaceToolsScopeRegistry>()
+        .cubitFor(tabScopeId: widget.tabScopeId, lifecycle: lifecycle)
+        .state;
+    final targetId = widget.workspace.folders.isEmpty
+        ? WorkspaceFolder.localTargetId
+        : widget.workspace.folders.first.targetId;
+    final fs = scopeState.filesystemForTarget(targetId) ?? AppStorage.fs;
+    unawaited(
+      showQuickOpenDialog(
+        context,
+        workspace: widget.workspace,
+        filesystem: fs,
+      ),
+    );
   }
 
   /// Empty workspaces auto-launch their default terminal — cmux keeps a live

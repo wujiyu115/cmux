@@ -22,9 +22,14 @@ final QuickOpenIndexRegistry _sharedIndexRegistry = QuickOpenIndexRegistry();
 /// Opens the quick-open dialog (Ctrl+P). Pops with the chosen absolute path;
 /// the MRU touch and editor open run *after* the pop so the opening editor
 /// does not fight the closing dialog (same ordering as the command palette).
+///
+/// [filesystem] must be the work-plane filesystem of the machine hosting the
+/// workspace folders (WSL/SSH workspaces cannot be read through the app's
+/// native home context).
 Future<void> showQuickOpenDialog(
   BuildContext context, {
   required Workspace workspace,
+  Filesystem? filesystem,
   QuickOpenIndexRegistry? indexRegistry,
   QuickOpenMruRepository? mruRepository,
 }) async {
@@ -32,7 +37,7 @@ Future<void> showQuickOpenDialog(
   _quickOpenDialogOpen = true;
   try {
     final opener = context.read<WorkbenchEditorOpener>();
-    final fs = AppStorage.fs;
+    final fs = filesystem ?? AppStorage.fs;
     final registry = indexRegistry ?? _sharedIndexRegistry;
     final mru = mruRepository ?? QuickOpenMruRepository(fs: fs);
     final path = await showDialog<String>(

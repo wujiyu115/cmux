@@ -7,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../models/workspace_folder.dart';
 import '../../models/workspace_topology.dart';
 import '../../utils/logging/logger_utils.dart';
+import '../io/filesystem.dart';
 import '../session/session_lifecycle_service.dart';
 import '../storage/runtime_context.dart';
 import 'workspace_tools_context.dart';
@@ -61,6 +62,15 @@ class WorkspaceToolsScopeState extends Equatable {
 
   bool get isMixed =>
       workspaceTopologyOf(effectiveFolders) == WorkspaceTopology.mixed;
+
+  /// Filesystem of the machine with [targetId], or null when that target has
+  /// not been resolved (still resolving or unreachable).
+  Filesystem? filesystemForTarget(String targetId) {
+    for (final slice in targetSlices) {
+      if (slice.targetId == targetId) return slice.tools.context.filesystem;
+    }
+    return null;
+  }
 
   WorkspaceToolsScopeState copyWith({
     WorkspaceToolsContext? tools,
