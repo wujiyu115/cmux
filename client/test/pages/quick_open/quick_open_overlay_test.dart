@@ -160,4 +160,28 @@ void main() {
     expect(result.value, isNull);
     expect(find.byType(QuickOpenOverlay), findsNothing);
   });
+
+  testWidgets('result rows do not overflow at elevated text scale', (
+    tester,
+  ) async {
+    tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+    final fs = _fs();
+    await _pumpDialog(
+      tester,
+      QuickOpenOverlay(
+        workspace: _workspace(),
+        filesystem: fs,
+        indexRegistry: QuickOpenIndexRegistry(),
+        mruRepository: QuickOpenMruRepository(fs: fs, path: '/mru.json'),
+      ),
+    );
+
+    await tester.enterText(find.byType(TextField), 'read');
+    await tester.pump(const Duration(milliseconds: 150));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+  });
 }

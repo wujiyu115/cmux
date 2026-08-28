@@ -113,7 +113,7 @@ class _QuickOpenOverlayState extends State<QuickOpenOverlay> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   late final FocusNode _searchFocus = FocusNode(onKeyEvent: _handleKey);
-  static const double _rowExtent = 48;
+  static const double _rowExtent = 64;
   static const int _maxResultRows = 50;
   static const Duration _debounce = Duration(milliseconds: 100);
 
@@ -494,7 +494,7 @@ class _ResultRow extends StatelessWidget {
           borderRadius: BorderRadius.circular(6),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             child: Row(
               children: [
                 Icon(
