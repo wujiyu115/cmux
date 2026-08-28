@@ -116,7 +116,15 @@ void main() {
       addTearDown(sut.close);
       await sut.load();
 
-      final chords = [KeyChord(key: 'p', mods: [KeyChordMod.mod])];
+      final defaults = {
+        for (final def in CommandCatalog.v1) ...def.defaultChords,
+      };
+      final key = ['k', 'g', 'm', 'n', 'o'].firstWhere(
+        (k) => !defaults.contains(
+          KeyChord(key: k, mods: [KeyChordMod.mod]),
+        ),
+      );
+      final chords = [KeyChord(key: key, mods: [KeyChordMod.mod])];
       final result = await sut.importOverrides({
         CommandIds.showCheatsheet: chords,
       });
