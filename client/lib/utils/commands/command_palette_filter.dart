@@ -1,4 +1,5 @@
 import '../../services/commands/command_definition.dart';
+import 'fuzzy_match.dart';
 
 /// One ranked command-palette entry produced by [filterCommandPalette].
 class CommandPaletteMatch {
@@ -78,7 +79,7 @@ List<CommandPaletteMatch> filterCommandPalette({
   final results = <CommandPaletteMatch>[];
   for (final def in available) {
     final title = titleOf(def);
-    final match = _subsequenceMatch(title, lowerQuery);
+    final match = fuzzyMatch(title, lowerQuery);
     if (match != null) {
       results.add(
         CommandPaletteMatch(
@@ -94,7 +95,7 @@ List<CommandPaletteMatch> filterCommandPalette({
     final categoryTitle = categoryTitleOf?.call(def);
     if (categoryTitle != null && categoryTitle.isNotEmpty) {
       final haystack = '$categoryTitle $title';
-      final catMatch = _subsequenceMatch(haystack, lowerQuery);
+      final catMatch = fuzzyMatch(haystack, lowerQuery);
       if (catMatch != null) {
         results.add(
           CommandPaletteMatch(
@@ -117,64 +118,4 @@ List<CommandPaletteMatch> filterCommandPalette({
     return catalogIndex[a.command.id]!.compareTo(catalogIndex[b.command.id]!);
   });
   return results;
-}
-
-class _SubsequenceMatch {
-  const _SubsequenceMatch(this.indexes, this.score);
-  final List<int> indexes;
-  final int score;
-}
-
-/// Greedy leftmost subsequence match of [lowerQuery] against [target]
-/// (case-insensitive). Returns matched indexes into [target] and a score, or
-/// `null` when [lowerQuery] is not a subsequence.
-_SubsequenceMatch? _subsequenceMatch(String target, String lowerQuery) {
-  final lowerTarget = target.toLowerCase();
-  final indexes = <int>[];
-  var t = 0;
-  for (var q = 0; q < lowerQuery.length; q++) {
-    final ch = lowerQuery.codeUnitAt(q);
-    var found = -1;
-    while (t < lowerTarget.length) {
-      if (lowerTarget.codeUnitAt(t) == ch) {
-        found = t;
-        t++;
-        break;
-      }
-      t++;
-    }
-    if (found < 0) return null;
-    indexes.add(found);
-  }
-
-  var score = 0;
-  var previous = -2;
-  for (final index in indexes) {
-    // Base credit per matched char.
-    score += 1;
-    // Contiguous run bonus.
-    if (index == previous + 1) score += 6;
-    // Word-start bonus (start of string or preceded by a boundary).
-    if (_isWordStart(target, index)) score += 10;
-    previous = index;
-  }
-  // Earlier first match is better (length-independent so long titles are not
-  // rewarded merely for being long).
-  score -= indexes.first;
-  return _SubsequenceMatch(indexes, score);
-}
-
-bool _isWordStart(String target, int index) {
-  if (index == 0) return true;
-  final prev = target.codeUnitAt(index - 1);
-  final isPrevAlnum =
-      (prev >= 0x30 && prev <= 0x39) ||
-      (prev >= 0x41 && prev <= 0x5A) ||
-      (prev >= 0x61 && prev <= 0x7A);
-  if (!isPrevAlnum) return true;
-  // camelCase / lower→Upper boundary.
-  final cur = target.codeUnitAt(index);
-  final prevIsLower = prev >= 0x61 && prev <= 0x7A;
-  final curIsUpper = cur >= 0x41 && cur <= 0x5A;
-  return prevIsLower && curIsUpper;
 }
