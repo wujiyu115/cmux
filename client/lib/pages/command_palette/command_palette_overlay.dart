@@ -75,7 +75,7 @@ class _CommandPaletteOverlayState extends State<CommandPaletteOverlay> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   late final FocusNode _searchFocus = FocusNode(onKeyEvent: _handleKey);
-  static const double _rowExtent = 44;
+  static const double _rowExtent = 48;
 
   String _query = '';
   int _selectedIndex = 0;
@@ -192,23 +192,26 @@ class _CommandPaletteOverlayState extends State<CommandPaletteOverlay> {
         return Align(
           alignment: const Alignment(0, -0.6),
           child: TpDialog(
-            maxWidth: 560,
-            maxHeight: 480,
-            contentPadding: EdgeInsets.zero,
+            maxWidth: 640,
+            maxHeight: 560,
             child: ShortcutFocus(
               kind: ShortcutFocusKind.text,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _SearchRow(
+                  _SearchField(
                     controller: _controller,
                     focusNode: _searchFocus,
                     hintText: l10n.commandPaletteSearchHint,
                     onChanged: _onQueryChanged,
                     onSubmitted: _invoke,
+                    onClear: () {
+                      _controller.clear();
+                      _onQueryChanged('');
+                    },
                   ),
-                  const TpSeparator(),
+                  const SizedBox(height: 12),
                   Flexible(
                     child: matches.isEmpty
                         ? _EmptyState(text: l10n.commandPaletteEmpty)
@@ -231,14 +234,16 @@ class _CommandPaletteOverlayState extends State<CommandPaletteOverlay> {
   }
 }
 
-/// Search field row with a leading search icon.
-class _SearchRow extends StatelessWidget {
-  const _SearchRow({
+/// Boxed search field mirroring the workspace-search dialog's input, so both
+/// overlays read as the same family.
+class _SearchField extends StatelessWidget {
+  const _SearchField({
     required this.controller,
     required this.focusNode,
     required this.hintText,
     required this.onChanged,
     required this.onSubmitted,
+    required this.onClear,
   });
 
   final TextEditingController controller;
@@ -246,33 +251,49 @@ class _SearchRow extends StatelessWidget {
   final String hintText;
   final ValueChanged<String> onChanged;
   final VoidCallback onSubmitted;
+  final VoidCallback onClear;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-      child: Row(
-        children: [
-          Icon(Icons.search_rounded, size: 18, color: cs.onSurfaceVariant),
-          const SizedBox(width: 8),
-          Expanded(
-            child: TextField(
-              controller: controller,
-              focusNode: focusNode,
-              autofocus: true,
-              decoration: InputDecoration(
-                isDense: true,
-                border: InputBorder.none,
-                hintText: hintText,
-                contentPadding: EdgeInsets.zero,
-              ),
-              onChanged: onChanged,
-              onSubmitted: (_) => onSubmitted(),
-            ),
-          ),
-        ],
+    return TextField(
+      controller: controller,
+      focusNode: focusNode,
+      autofocus: true,
+      decoration: InputDecoration(
+        hintText: hintText,
+        isDense: true,
+        filled: true,
+        fillColor: cs.surfaceContainer,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 10,
+          vertical: 10,
+        ),
+        prefixIcon: Icon(
+          Icons.search_rounded,
+          size: context.tpIconSizes.md,
+          color: cs.onSurfaceVariant,
+        ),
+        floatingLabelBehavior: FloatingLabelBehavior.never,
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.7)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: cs.primary),
+        ),
+        suffixIcon: controller.text.isNotEmpty
+            ? TpIconButton(
+                icon: Icons.clear,
+                compact: true,
+                size: TpIconButton.kCompactSize,
+                onTap: onClear,
+              )
+            : null,
       ),
+      onChanged: onChanged,
+      onSubmitted: (_) => onSubmitted(),
     );
   }
 }
