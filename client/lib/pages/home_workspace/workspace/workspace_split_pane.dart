@@ -10,6 +10,7 @@ import '../../../cubits/run_cubit.dart';
 import '../../../cubits/workbench/workbench_cubit.dart';
 import '../../../cubits/worktree_cubit.dart';
 import '../../../models/workspace.dart';
+import '../../../services/commands/quick_open_command_registrar.dart';
 import '../../../services/commands/run_command_registrar.dart';
 import '../../../services/commands/workspace_search_command_registrar.dart';
 import '../../../services/workspace/workspace_run_registry.dart';
@@ -21,6 +22,7 @@ import '../../../utils/ui/app_keys.dart';
 import '../../../widgets/right_tools/right_tools_panel.dart';
 import '../../../widgets/workspace_terminal_panel.dart';
 import '../../chat_page.dart';
+import '../../quick_open/quick_open_overlay.dart';
 import '../../workspace_ide/workspace_ide_shell.dart';
 import 'workspace_route_active_scope.dart';
 import 'workspace_search_dialog.dart';
@@ -48,7 +50,9 @@ class _WorkspaceSplitPaneState extends State<WorkspaceSplitPane> {
   RunCubit? _boundRunCubit;
   RunCommandHost? _runCommandHost;
   WorkspaceSearchHost? _workspaceSearchHost;
+  QuickOpenHost? _quickOpenHost;
   late final void Function() _openWorkspaceSearch = _openSearch;
+  late final void Function() _openQuickOpen = _openQuickOpenNow;
 
   /// Guards the empty-workspace auto-terminal so it fires once per empty
   /// episode (not on every rebuild while the shell is still connecting).
@@ -59,8 +63,10 @@ class _WorkspaceSplitPaneState extends State<WorkspaceSplitPane> {
     super.didChangeDependencies();
     _runCommandHost = context.read<RunCommandHost>();
     _workspaceSearchHost = context.read<WorkspaceSearchHost>();
+    _quickOpenHost = context.read<QuickOpenHost>();
     _syncRunCommandHost();
     _syncWorkspaceSearchHost();
+    _syncQuickOpenHost();
   }
 
   @override
@@ -72,6 +78,7 @@ class _WorkspaceSplitPaneState extends State<WorkspaceSplitPane> {
     }
     _boundRunCubit = null;
     _workspaceSearchHost?.unbind(_openWorkspaceSearch);
+    _quickOpenHost?.unbind(_openQuickOpen);
     super.dispose();
   }
 
@@ -80,6 +87,11 @@ class _WorkspaceSplitPaneState extends State<WorkspaceSplitPane> {
     unawaited(
       showWorkspaceSearchDialog(context, workspace: widget.workspace),
     );
+  }
+
+  void _openQuickOpenNow() {
+    if (!mounted) return;
+    unawaited(showQuickOpenDialog(context, workspace: widget.workspace));
   }
 
   /// Empty workspaces auto-launch their default terminal — cmux keeps a live
@@ -136,6 +148,17 @@ class _WorkspaceSplitPaneState extends State<WorkspaceSplitPane> {
       host.bind(_openWorkspaceSearch);
     } else {
       host.unbind(_openWorkspaceSearch);
+    }
+  }
+
+  void _syncQuickOpenHost() {
+    final host = _quickOpenHost;
+    if (host == null) return;
+    final routeActive = WorkspaceRouteActiveScope.routeActiveOf(context);
+    if (routeActive) {
+      host.bind(_openQuickOpen);
+    } else {
+      host.unbind(_openQuickOpen);
     }
   }
 

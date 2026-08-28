@@ -30,6 +30,7 @@ import 'package:teampilot/repositories/ssh_profile_repository.dart';
 import 'package:teampilot/router/app_router.dart';
 import 'package:teampilot/services/app/connection_mode_service.dart';
 import 'package:teampilot/services/commands/command_bus.dart';
+import 'package:teampilot/services/commands/quick_open_command_registrar.dart';
 import 'package:teampilot/services/commands/run_command_registrar.dart';
 import 'package:teampilot/services/commands/workspace_search_command_registrar.dart';
 import 'package:teampilot/services/git/git_command_runner.dart';
@@ -178,6 +179,9 @@ class PerformanceScenarioApp {
           ),
           RepositoryProvider<WorkspaceSearchHost>(
             create: (_) => WorkspaceSearchHost(),
+          ),
+          RepositoryProvider<QuickOpenHost>(
+            create: (_) => QuickOpenHost(),
           ),
         ],
         child: MultiBlocProvider(
