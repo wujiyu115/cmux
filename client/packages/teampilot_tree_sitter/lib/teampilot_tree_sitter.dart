@@ -58,6 +58,46 @@ class TsLanguage {
 
   /// The bundled CSS grammar.
   static TsLanguage css() => TsLanguage._(bindings.tp_ts_language_css());
+
+  /// The bundled Lua grammar.
+  static TsLanguage lua() => TsLanguage._(bindings.tp_ts_language_lua());
+
+  /// The bundled C grammar.
+  static TsLanguage c() => TsLanguage._(bindings.tp_ts_language_c());
+
+  /// The bundled C++ grammar.
+  static TsLanguage cpp() => TsLanguage._(bindings.tp_ts_language_cpp());
+
+  /// The bundled Java grammar.
+  static TsLanguage java() => TsLanguage._(bindings.tp_ts_language_java());
+
+  /// The bundled Go grammar.
+  static TsLanguage go() => TsLanguage._(bindings.tp_ts_language_go());
+
+  /// The bundled C# grammar.
+  static TsLanguage csharp() =>
+      TsLanguage._(bindings.tp_ts_language_csharp());
+
+  /// The bundled PHP grammar.
+  static TsLanguage php() => TsLanguage._(bindings.tp_ts_language_php());
+
+  /// The bundled Ruby grammar.
+  static TsLanguage ruby() => TsLanguage._(bindings.tp_ts_language_ruby());
+
+  /// The bundled Kotlin grammar.
+  static TsLanguage kotlin() => TsLanguage._(bindings.tp_ts_language_kotlin());
+
+  /// The bundled Swift grammar.
+  static TsLanguage swift() => TsLanguage._(bindings.tp_ts_language_swift());
+
+  /// The bundled SQL grammar.
+  static TsLanguage sql() => TsLanguage._(bindings.tp_ts_language_sql());
+
+  /// The bundled HTML grammar.
+  static TsLanguage html() => TsLanguage._(bindings.tp_ts_language_html());
+
+  /// The bundled SCSS grammar.
+  static TsLanguage scss() => TsLanguage._(bindings.tp_ts_language_scss());
 }
 
 /// A parsed syntax tree (`TSTree *`). Call [dispose] when done.

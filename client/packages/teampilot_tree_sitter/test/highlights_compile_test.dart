@@ -23,6 +23,19 @@ final _packs = <String, TsLanguage Function()>{
   'xml': TsLanguage.xml,
   'toml': TsLanguage.toml,
   'css': TsLanguage.css,
+  'lua': TsLanguage.lua,
+  'c': TsLanguage.c,
+  'cpp': TsLanguage.cpp,
+  'java': TsLanguage.java,
+  'go': TsLanguage.go,
+  'csharp': TsLanguage.csharp,
+  'php': TsLanguage.php,
+  'ruby': TsLanguage.ruby,
+  'kotlin': TsLanguage.kotlin,
+  'swift': TsLanguage.swift,
+  'sql': TsLanguage.sql,
+  'html': TsLanguage.html,
+  'scss': TsLanguage.scss,
 };
 
 void main() {

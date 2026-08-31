@@ -1,15 +1,12 @@
 import 'package:teampilot/services/editor_platform/language_pack.dart';
 
-/// Resolves file paths to [LanguagePack]s. Unknown extensions (including
-/// extensions intentionally left as plain text, e.g. `.scss` this phase)
-/// resolve to `null` — callers must not substitute a different language's
-/// grammar as a stand-in.
+/// Resolves file paths to [LanguagePack]s. Unknown extensions resolve to
+/// `null` — callers must not substitute a different language's grammar as a
+/// stand-in.
 class LanguageRegistry {
   LanguageRegistry(List<LanguagePack> packs) : _packs = List.unmodifiable(packs);
 
-  /// Built-in packs shipped with the app. First-wave grammars (Task 10) cover
-  /// common config/code file types; `.scss` intentionally stays plain text
-  /// (no pack). Later tasks extend this list without changing the registry API.
+  /// Built-in packs shipped with the app.
   factory LanguageRegistry.builtins() {
     return LanguageRegistry(const [
       LanguagePack(
@@ -61,10 +58,11 @@ class LanguageRegistry {
         grammarId: 'bash',
         highlightsAsset: 'assets/editor_languages/bash/highlights.scm',
       ),
-      // One xml pack covers .xml plus .html/.htm this phase.
+      // One xml pack covers .xml; .html/.htm resolve to the dedicated html
+      // pack below.
       LanguagePack(
         id: 'xml',
-        extensions: {'xml', 'html', 'htm'},
+        extensions: {'xml'},
         grammarId: 'xml',
         highlightsAsset: 'assets/editor_languages/xml/highlights.scm',
       ),
@@ -79,6 +77,84 @@ class LanguageRegistry {
         extensions: {'css'},
         grammarId: 'css',
         highlightsAsset: 'assets/editor_languages/css/highlights.scm',
+      ),
+      LanguagePack(
+        id: 'lua',
+        extensions: {'lua'},
+        grammarId: 'lua',
+        highlightsAsset: 'assets/editor_languages/lua/highlights.scm',
+      ),
+      LanguagePack(
+        id: 'c',
+        extensions: {'c', 'h'},
+        grammarId: 'c',
+        highlightsAsset: 'assets/editor_languages/c/highlights.scm',
+      ),
+      LanguagePack(
+        id: 'cpp',
+        extensions: {'cpp', 'cc', 'cxx', 'hpp', 'hh', 'hxx'},
+        grammarId: 'cpp',
+        highlightsAsset: 'assets/editor_languages/cpp/highlights.scm',
+      ),
+      LanguagePack(
+        id: 'java',
+        extensions: {'java'},
+        grammarId: 'java',
+        highlightsAsset: 'assets/editor_languages/java/highlights.scm',
+      ),
+      LanguagePack(
+        id: 'go',
+        extensions: {'go'},
+        grammarId: 'go',
+        highlightsAsset: 'assets/editor_languages/go/highlights.scm',
+      ),
+      LanguagePack(
+        id: 'csharp',
+        extensions: {'cs'},
+        grammarId: 'csharp',
+        highlightsAsset: 'assets/editor_languages/csharp/highlights.scm',
+      ),
+      LanguagePack(
+        id: 'php',
+        extensions: {'php'},
+        grammarId: 'php',
+        highlightsAsset: 'assets/editor_languages/php/highlights.scm',
+      ),
+      LanguagePack(
+        id: 'ruby',
+        extensions: {'rb'},
+        grammarId: 'ruby',
+        highlightsAsset: 'assets/editor_languages/ruby/highlights.scm',
+      ),
+      LanguagePack(
+        id: 'kotlin',
+        extensions: {'kt', 'kts'},
+        grammarId: 'kotlin',
+        highlightsAsset: 'assets/editor_languages/kotlin/highlights.scm',
+      ),
+      LanguagePack(
+        id: 'swift',
+        extensions: {'swift'},
+        grammarId: 'swift',
+        highlightsAsset: 'assets/editor_languages/swift/highlights.scm',
+      ),
+      LanguagePack(
+        id: 'sql',
+        extensions: {'sql'},
+        grammarId: 'sql',
+        highlightsAsset: 'assets/editor_languages/sql/highlights.scm',
+      ),
+      LanguagePack(
+        id: 'html',
+        extensions: {'html', 'htm'},
+        grammarId: 'html',
+        highlightsAsset: 'assets/editor_languages/html/highlights.scm',
+      ),
+      LanguagePack(
+        id: 'scss',
+        extensions: {'scss'},
+        grammarId: 'scss',
+        highlightsAsset: 'assets/editor_languages/scss/highlights.scm',
       ),
     ]);
   }

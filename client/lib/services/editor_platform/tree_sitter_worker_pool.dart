@@ -335,6 +335,32 @@ TsLanguage? _languageFor(String grammarId) {
       return TsLanguage.toml();
     case 'css':
       return TsLanguage.css();
+    case 'lua':
+      return TsLanguage.lua();
+    case 'c':
+      return TsLanguage.c();
+    case 'cpp':
+      return TsLanguage.cpp();
+    case 'java':
+      return TsLanguage.java();
+    case 'go':
+      return TsLanguage.go();
+    case 'csharp':
+      return TsLanguage.csharp();
+    case 'php':
+      return TsLanguage.php();
+    case 'ruby':
+      return TsLanguage.ruby();
+    case 'kotlin':
+      return TsLanguage.kotlin();
+    case 'swift':
+      return TsLanguage.swift();
+    case 'sql':
+      return TsLanguage.sql();
+    case 'html':
+      return TsLanguage.html();
+    case 'scss':
+      return TsLanguage.scss();
     default:
       return null;
   }

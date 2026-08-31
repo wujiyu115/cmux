@@ -30,6 +30,19 @@ FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_bash(void);
 FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_xml(void);
 FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_toml(void);
 FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_css(void);
+FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_lua(void);
+FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_c(void);
+FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_cpp(void);
+FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_java(void);
+FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_go(void);
+FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_csharp(void);
+FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_php(void);
+FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_ruby(void);
+FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_kotlin(void);
+FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_swift(void);
+FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_sql(void);
+FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_html(void);
+FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_scss(void);
 
 #ifdef __cplusplus
 }

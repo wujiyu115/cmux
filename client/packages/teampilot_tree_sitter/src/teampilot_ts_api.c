@@ -12,6 +12,19 @@ extern const TSLanguage *tree_sitter_bash(void);
 extern const TSLanguage *tree_sitter_xml(void);
 extern const TSLanguage *tree_sitter_toml(void);
 extern const TSLanguage *tree_sitter_css(void);
+extern const TSLanguage *tree_sitter_lua(void);
+extern const TSLanguage *tree_sitter_c(void);
+extern const TSLanguage *tree_sitter_cpp(void);
+extern const TSLanguage *tree_sitter_java(void);
+extern const TSLanguage *tree_sitter_go(void);
+extern const TSLanguage *tree_sitter_c_sharp(void);
+extern const TSLanguage *tree_sitter_php(void);
+extern const TSLanguage *tree_sitter_ruby(void);
+extern const TSLanguage *tree_sitter_kotlin(void);
+extern const TSLanguage *tree_sitter_swift(void);
+extern const TSLanguage *tree_sitter_sql(void);
+extern const TSLanguage *tree_sitter_html(void);
+extern const TSLanguage *tree_sitter_scss(void);
 
 FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_json(void) {
   return tree_sitter_json();
@@ -56,4 +69,57 @@ FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_toml(void) {
 
 FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_css(void) {
   return tree_sitter_css();
+}
+
+FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_lua(void) {
+  return tree_sitter_lua();
+}
+
+FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_c(void) {
+  return tree_sitter_c();
+}
+
+FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_cpp(void) {
+  return tree_sitter_cpp();
+}
+
+FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_java(void) {
+  return tree_sitter_java();
+}
+
+FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_go(void) {
+  return tree_sitter_go();
+}
+
+// The upstream symbol is tree_sitter_c_sharp; the pack id is `csharp`.
+FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_csharp(void) {
+  return tree_sitter_c_sharp();
+}
+
+FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_php(void) {
+  return tree_sitter_php();
+}
+
+FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_ruby(void) {
+  return tree_sitter_ruby();
+}
+
+FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_kotlin(void) {
+  return tree_sitter_kotlin();
+}
+
+FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_swift(void) {
+  return tree_sitter_swift();
+}
+
+FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_sql(void) {
+  return tree_sitter_sql();
+}
+
+FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_html(void) {
+  return tree_sitter_html();
+}
+
+FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_scss(void) {
+  return tree_sitter_scss();
 }

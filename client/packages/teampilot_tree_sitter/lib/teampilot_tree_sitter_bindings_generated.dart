@@ -1488,6 +1488,45 @@ external ffi.Pointer<TSLanguage> tp_ts_language_toml();
 @ffi.Native<ffi.Pointer<TSLanguage> Function()>()
 external ffi.Pointer<TSLanguage> tp_ts_language_css();
 
+@ffi.Native<ffi.Pointer<TSLanguage> Function()>()
+external ffi.Pointer<TSLanguage> tp_ts_language_lua();
+
+@ffi.Native<ffi.Pointer<TSLanguage> Function()>()
+external ffi.Pointer<TSLanguage> tp_ts_language_c();
+
+@ffi.Native<ffi.Pointer<TSLanguage> Function()>()
+external ffi.Pointer<TSLanguage> tp_ts_language_cpp();
+
+@ffi.Native<ffi.Pointer<TSLanguage> Function()>()
+external ffi.Pointer<TSLanguage> tp_ts_language_java();
+
+@ffi.Native<ffi.Pointer<TSLanguage> Function()>()
+external ffi.Pointer<TSLanguage> tp_ts_language_go();
+
+@ffi.Native<ffi.Pointer<TSLanguage> Function()>()
+external ffi.Pointer<TSLanguage> tp_ts_language_csharp();
+
+@ffi.Native<ffi.Pointer<TSLanguage> Function()>()
+external ffi.Pointer<TSLanguage> tp_ts_language_php();
+
+@ffi.Native<ffi.Pointer<TSLanguage> Function()>()
+external ffi.Pointer<TSLanguage> tp_ts_language_ruby();
+
+@ffi.Native<ffi.Pointer<TSLanguage> Function()>()
+external ffi.Pointer<TSLanguage> tp_ts_language_kotlin();
+
+@ffi.Native<ffi.Pointer<TSLanguage> Function()>()
+external ffi.Pointer<TSLanguage> tp_ts_language_swift();
+
+@ffi.Native<ffi.Pointer<TSLanguage> Function()>()
+external ffi.Pointer<TSLanguage> tp_ts_language_sql();
+
+@ffi.Native<ffi.Pointer<TSLanguage> Function()>()
+external ffi.Pointer<TSLanguage> tp_ts_language_html();
+
+@ffi.Native<ffi.Pointer<TSLanguage> Function()>()
+external ffi.Pointer<TSLanguage> tp_ts_language_scss();
+
 /// /
 /// /* Section - Types */
 /// /

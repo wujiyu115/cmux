@@ -147,6 +147,19 @@ flutter:
     - assets/editor_languages/xml/
     - assets/editor_languages/toml/
     - assets/editor_languages/css/
+    - assets/editor_languages/lua/
+    - assets/editor_languages/c/
+    - assets/editor_languages/cpp/
+    - assets/editor_languages/java/
+    - assets/editor_languages/go/
+    - assets/editor_languages/csharp/
+    - assets/editor_languages/php/
+    - assets/editor_languages/ruby/
+    - assets/editor_languages/kotlin/
+    - assets/editor_languages/swift/
+    - assets/editor_languages/sql/
+    - assets/editor_languages/html/
+    - assets/editor_languages/scss/
     - assets/fonts/terminal/
 
 flutter_native_splash:

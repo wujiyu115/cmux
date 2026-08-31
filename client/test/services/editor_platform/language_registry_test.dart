@@ -6,10 +6,6 @@ void main() {
     expect(LanguageRegistry.builtins().resolve('/x/a.json')?.id, 'json');
   });
 
-  test('scss is plain text this phase', () {
-    expect(LanguageRegistry.builtins().resolve('/x/a.scss'), isNull);
-  });
-
   test('resolves first-wave extensions to their packs', () {
     final reg = LanguageRegistry.builtins();
     final cases = <String, String>{
@@ -29,10 +25,36 @@ void main() {
       '/x/a.sh': 'bash',
       '/x/a.bash': 'bash',
       '/x/a.xml': 'xml',
-      '/x/a.html': 'xml',
-      '/x/a.htm': 'xml',
+      '/x/a.html': 'html',
+      '/x/a.htm': 'html',
       '/x/a.toml': 'toml',
       '/x/a.css': 'css',
+      '/x/a.lua': 'lua',
+    };
+    cases.forEach((path, id) {
+      expect(reg.resolve(path)?.id, id, reason: '$path should resolve to $id');
+    });
+  });
+
+  test('resolves second-wave extensions to their packs', () {
+    final reg = LanguageRegistry.builtins();
+    final cases = <String, String>{
+      '/x/a.c': 'c',
+      '/x/a.h': 'c',
+      '/x/a.cpp': 'cpp',
+      '/x/a.cc': 'cpp',
+      '/x/a.cxx': 'cpp',
+      '/x/a.hpp': 'cpp',
+      '/x/a.java': 'java',
+      '/x/a.go': 'go',
+      '/x/a.cs': 'csharp',
+      '/x/a.php': 'php',
+      '/x/a.rb': 'ruby',
+      '/x/a.kt': 'kotlin',
+      '/x/a.kts': 'kotlin',
+      '/x/a.swift': 'swift',
+      '/x/a.sql': 'sql',
+      '/x/a.scss': 'scss',
     };
     cases.forEach((path, id) {
       expect(reg.resolve(path)?.id, id, reason: '$path should resolve to $id');

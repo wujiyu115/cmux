@@ -21,16 +21,40 @@ which checks out the pinned tags below and copies the needed files here.
 | tree-sitter-xml | https://github.com/tree-sitter-grammars/tree-sitter-xml | `v0.7.0` | `4b64dd3a03ec002258d6268d712fd93716d6ab57` |
 | tree-sitter-toml | https://github.com/tree-sitter-grammars/tree-sitter-toml | `v0.7.0` | `64b56832c2cffe41758f28e05c756a3a98d16f41` |
 | tree-sitter-css | https://github.com/tree-sitter/tree-sitter-css | `v0.23.2` | `c0d581e32d183a536731ed6c3a72758b27e20411` |
+| tree-sitter-lua | https://github.com/tree-sitter-grammars/tree-sitter-lua | `v0.5.0` | `10fe0054734eec83049514ea2e718b2a56acd0c9` |
+| tree-sitter-c | https://github.com/tree-sitter/tree-sitter-c | `v0.24.2` | `b780e47fc780ddc8da13afa35a3f4ed5c157823d` |
+| tree-sitter-cpp | https://github.com/tree-sitter/tree-sitter-cpp | `v0.23.4` | `f41e1a044c8a84ea9fa8577fdd2eab92ec96de02` |
+| tree-sitter-java | https://github.com/tree-sitter/tree-sitter-java | `v0.23.5` | `94703d5a6bed02b98e438d7cad1136c01a60ba2c` |
+| tree-sitter-go | https://github.com/tree-sitter/tree-sitter-go | `v0.25.0` | `1547678a9da59885853f5f5cc8a99cc203fa2e2c` |
+| tree-sitter-c-sharp | https://github.com/tree-sitter/tree-sitter-c-sharp | `v0.23.5` | `cac6d5fb595f5811a076336682d5d595ac1c9e85` |
+| tree-sitter-php | https://github.com/tree-sitter/tree-sitter-php | `v0.24.2` | `5b5627faaa290d89eb3d01b9bf47c3bb9e797dea` |
+| tree-sitter-ruby | https://github.com/tree-sitter/tree-sitter-ruby | `v0.23.1` | `71bd32fb7607035768799732addba884a37a6210` |
+| tree-sitter-kotlin | https://github.com/fwcd/tree-sitter-kotlin | `v0.3.8` | `e1a2d5ad1f61f5740677183cd4125bb071cd2f30` |
+| tree-sitter-swift | https://github.com/alex-pinkus/tree-sitter-swift | `0.7.3` | `b8b22bffbb3441780e6471665bacfb263741c86a` |
+| tree-sitter-sql | https://github.com/DerekStride/tree-sitter-sql | `v0.3.11` | `7b51ecda191d36b92f5a90a8d1bc3faef1c7b8b8` |
+| tree-sitter-html | https://github.com/tree-sitter/tree-sitter-html | `v0.23.2` | `5a5ca8551a179998360b4a4ca2c0f366a35acc03` |
+| tree-sitter-scss | https://github.com/tree-sitter-grammars/tree-sitter-scss | `v1.0.0` | `eb69c8f55ecc17235f43358c65ec644578554f92` |
 
 All grammar language ABIs are 14 or 15, within the core runtime's supported
 range (min 13, max 15). Every bundled grammar's external scanner is plain C, so
 they all link into the single C11 native asset.
 
-Note: this phase maps `.html`/`.htm` (and `.xml`) to the **xml** grammar, so no
-separate html grammar is vendored. `tree-sitter-typescript` is vendored via its
+Note: this phase maps `.html`/`.htm` to the dedicated **html** grammar (the
+earlier mapping to xml is gone). `tree-sitter-typescript` is vendored via its
 `tsx` grammar (a superset that also parses `.ts`/`.js`/`.jsx`).
 `tree-sitter-markdown` vendors only the block grammar (`tree-sitter-markdown/`,
-not the inline sub-package).
+not the inline sub-package). `tree-sitter-php` is a multi-grammar repo vendored
+via its `php` grammar (`php/src` + shared `common/scanner.h`).
+
+**tree-sitter-swift** and **tree-sitter-sql** publish no generated `parser.c`
+at any tag (their `src/` ships only `grammar.js` + `scanner.c`). Their vendored
+`parser.c`/`grammar.json`/`node-types.json` were generated locally with
+`tree-sitter-cli 0.25.6` (ABI 15, matching core v0.25.10) from the pinned
+commits above; `tool/fetch_grammars.sh` reproduces this via its
+GENERATED_GRAMMARS pass.
+
+**tree-sitter-scss** declares `"license": "MIT"` in its package.json but ships
+no LICENSE file; its `LICENSE` here records that declaration.
 
 When bumping a version: update the tag/ref in `tool/fetch_grammars.sh`, run it,
 then update the ref + SHA in the table above.
@@ -44,7 +68,7 @@ tree-sitter/
     include/tree_sitter/api.h   # public C API (ffigen entry point)
     src/                        # core runtime; lib.c is the unity build
 tree-sitter-<name>/             # json, dart, yaml, python, rust, bash,
-  LICENSE                       #   toml, css, markdown
+  LICENSE                       #   toml, css, lua, markdown
   src/
     parser.c                    # generated parser
     scanner.c                   # external scanner (C; json has none)

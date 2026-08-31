@@ -29,6 +29,16 @@ SIMPLE_GRAMMARS=(
   "bash|https://github.com/tree-sitter/tree-sitter-bash.git|v0.25.0"
   "toml|https://github.com/tree-sitter-grammars/tree-sitter-toml.git|v0.7.0"
   "css|https://github.com/tree-sitter/tree-sitter-css.git|v0.23.2"
+  "lua|https://github.com/tree-sitter-grammars/tree-sitter-lua.git|v0.5.0"
+  "c|https://github.com/tree-sitter/tree-sitter-c.git|v0.24.2"
+  "cpp|https://github.com/tree-sitter/tree-sitter-cpp.git|v0.23.4"
+  "java|https://github.com/tree-sitter/tree-sitter-java.git|v0.23.5"
+  "go|https://github.com/tree-sitter/tree-sitter-go.git|v0.25.0"
+  "c-sharp|https://github.com/tree-sitter/tree-sitter-c-sharp.git|v0.23.5"
+  "ruby|https://github.com/tree-sitter/tree-sitter-ruby.git|v0.23.1"
+  "kotlin|https://github.com/fwcd/tree-sitter-kotlin.git|v0.3.8"
+  "html|https://github.com/tree-sitter/tree-sitter-html.git|v0.23.2"
+  "scss|https://github.com/tree-sitter-grammars/tree-sitter-scss.git|v1.0.0"
 )
 
 # Multi-grammar repos where we vendor one sub-grammar plus a shared common/
@@ -39,6 +49,15 @@ SIMPLE_GRAMMARS=(
 COMMON_GRAMMARS=(
   "typescript|https://github.com/tree-sitter/tree-sitter-typescript.git|v0.23.2|tsx"
   "xml|https://github.com/tree-sitter-grammars/tree-sitter-xml.git|v0.7.0|xml"
+  "php|https://github.com/tree-sitter/tree-sitter-php.git|v0.24.2|php"
+)
+
+# Swift and SQL publish no generated parser.c at any tag — their src/ ships only
+# grammar.js + scanner.c. Generate parser.c with the pinned tree-sitter CLI
+# (tree-sitter-cli 0.25.6 matches core v0.25.10's ABI 15) before copying.
+GENERATED_GRAMMARS=(
+  "swift|https://github.com/alex-pinkus/tree-sitter-swift.git|0.7.3"
+  "sql|https://github.com/DerekStride/tree-sitter-sql.git|v0.3.11"
 )
 
 # Markdown ships two grammars in sub-packages; we vendor only the block grammar
@@ -89,7 +108,12 @@ for entry in "${SIMPLE_GRAMMARS[@]}"; do
   rm -rf "$dest/src"
   mkdir -p "$dest/src"
   cp -r "$WORK/tree-sitter-$name/src/." "$dest/src/"
-  cp "$WORK/tree-sitter-$name/LICENSE" "$dest/LICENSE"
+  # Most grammars ship `LICENSE`; some (e.g. lua) name it `LICENSE.md`.
+  if [[ -f "$WORK/tree-sitter-$name/LICENSE" ]]; then
+    cp "$WORK/tree-sitter-$name/LICENSE" "$dest/LICENSE"
+  else
+    cp "$WORK/tree-sitter-$name/LICENSE.md" "$dest/LICENSE"
+  fi
 done
 
 for entry in "${COMMON_GRAMMARS[@]}"; do
@@ -101,7 +125,27 @@ for entry in "${COMMON_GRAMMARS[@]}"; do
   mkdir -p "$dest/$subdir/src" "$dest/common"
   cp -r "$WORK/tree-sitter-$name/$subdir/src/." "$dest/$subdir/src/"
   cp "$WORK/tree-sitter-$name/common/scanner.h" "$dest/common/scanner.h"
-  cp "$WORK/tree-sitter-$name/LICENSE" "$dest/LICENSE"
+  if [[ -f "$WORK/tree-sitter-$name/LICENSE" ]]; then
+    cp "$WORK/tree-sitter-$name/LICENSE" "$dest/LICENSE"
+  else
+    cp "$WORK/tree-sitter-$name/LICENSE.md" "$dest/LICENSE"
+  fi
+done
+
+for entry in "${GENERATED_GRAMMARS[@]}"; do
+  IFS='|' read -r name repo ref <<<"$entry"
+  echo "Fetching tree-sitter-$name (generating parser.c via tree-sitter-cli)..."
+  clone_ref "$repo" "$ref" "$WORK/tree-sitter-$name"
+  (cd "$WORK/tree-sitter-$name" && npx -y tree-sitter-cli@0.25.6 generate)
+  dest="$THIRD_PARTY/tree-sitter-$name"
+  rm -rf "$dest/src"
+  mkdir -p "$dest/src"
+  cp -r "$WORK/tree-sitter-$name/src/." "$dest/src/"
+  if [[ -f "$WORK/tree-sitter-$name/LICENSE" ]]; then
+    cp "$WORK/tree-sitter-$name/LICENSE" "$dest/LICENSE"
+  else
+    cp "$WORK/tree-sitter-$name/LICENSE.md" "$dest/LICENSE"
+  fi
 done
 
 echo "Fetching tree-sitter-markdown ($MARKDOWN_SUBDIR)..."
