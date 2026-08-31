@@ -38,6 +38,7 @@ InMemoryFilesystem _fs() {
   fs.files['/repo/lib/main.dart'] = 'x';
   fs.files['/repo/lib/terminal_session.dart'] = 'x';
   fs.files['/repo/docs/README.md'] = 'x';
+  fs.files['/repo/docs/main.dart'] = 'x';
   return fs;
 }
 
@@ -122,6 +123,67 @@ void main() {
 
     expect(result.value, '/repo/docs/README.md');
     expect(find.byType(QuickOpenOverlay), findsNothing);
+  });
+
+  testWidgets('a path query disambiguates same-named files', (tester) async {
+    final fs = _fs();
+    final result = await _pumpDialog(
+      tester,
+      QuickOpenOverlay(
+        workspace: _workspace(),
+        filesystem: fs,
+        indexRegistry: QuickOpenIndexRegistry(),
+        mruRepository: QuickOpenMruRepository(fs: fs, path: '/mru.json'),
+      ),
+    );
+
+    await tester.enterText(find.byType(TextField), 'docs/main');
+    await tester.pump(const Duration(milliseconds: 150));
+
+    expect(find.text('main.dart'), findsOneWidget);
+    expect(find.text('docs/main.dart'), findsOneWidget);
+    expect(find.text('lib/main.dart'), findsNothing);
+
+    // The match landed on the path, so the subtitle is what gets highlighted
+    // while the basename stays plain.
+    List<TextSpan> spansOf(Text text) =>
+        (text.textSpan as TextSpan).children!.cast<TextSpan>();
+    final nameSpans = spansOf(tester.widget<Text>(find.text('main.dart')));
+    final pathSpans = spansOf(
+      tester.widget<Text>(find.text('docs/main.dart')),
+    );
+    expect(nameSpans.map((span) => span.style).toSet().length, 1);
+    expect(pathSpans.length, 'docs/main.dart'.length);
+    expect(
+      pathSpans.take('docs/main'.length).map((span) => span.style).toSet().length,
+      1,
+    );
+    expect(pathSpans.last.style, isNot(pathSpans.first.style));
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+
+    expect(result.value, '/repo/docs/main.dart');
+  });
+
+  testWidgets('a basename query lists every same-named file', (tester) async {
+    final fs = _fs();
+    await _pumpDialog(
+      tester,
+      QuickOpenOverlay(
+        workspace: _workspace(),
+        filesystem: fs,
+        indexRegistry: QuickOpenIndexRegistry(),
+        mruRepository: QuickOpenMruRepository(fs: fs, path: '/mru.json'),
+      ),
+    );
+
+    await tester.enterText(find.byType(TextField), 'main');
+    await tester.pump(const Duration(milliseconds: 150));
+
+    expect(find.text('main.dart'), findsNWidgets(2));
+    expect(find.text('lib/main.dart'), findsOneWidget);
+    expect(find.text('docs/main.dart'), findsOneWidget);
   });
 
   testWidgets('no matching files shows the empty state', (tester) async {

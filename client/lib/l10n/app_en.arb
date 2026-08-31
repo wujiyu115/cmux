@@ -924,7 +924,7 @@
   "shortcutsWorkspaceReopenClosed": "Reopen Closed Workspace Tab",
   "shortcutsWorkspaceSearch": "Search Workspace",
   "shortcutsQuickOpen": "Quick Open File",
-  "quickOpenSearchHint": "Type a file name…",
+  "quickOpenSearchHint": "Search by file name or path…",
   "quickOpenIndexing": "Indexing files…",
   "quickOpenRecent": "Recently opened",
   "quickOpenEmptyRecent": "Start typing to search files",

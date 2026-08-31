@@ -11,10 +11,10 @@ import '../../services/commands/shortcut_focus.dart';
 import '../../services/git/git_command_runner.dart';
 import '../../services/io/filesystem.dart';
 import '../../services/quick_open/quick_open_index.dart';
+import '../../services/quick_open/quick_open_matcher.dart';
 import '../../services/quick_open/quick_open_mru_repository.dart';
 import '../../services/storage/app_storage.dart';
 import '../../services/workbench/workbench_editor_opener.dart';
-import '../../utils/commands/fuzzy_match.dart';
 
 /// Process-lifetime index cache so a second Ctrl+P serves the previous
 /// listing instantly while a refresh runs in the background.
@@ -73,10 +73,11 @@ Future<void> showQuickOpenDialog(
 
 var _quickOpenDialogOpen = false;
 
-/// VS Code-style fuzzy filename launcher: a search field over a scrolling,
-/// keyboard-navigable file list. Empty query lists recently opened files;
-/// a query fuzzy-matches basenames across the workspace index. Pops the
-/// enclosing route with the chosen file's absolute path (or `null`).
+/// VS Code-style fuzzy file launcher: a search field over a scrolling,
+/// keyboard-navigable file list. Empty query lists recently opened files; a
+/// query fuzzy-matches basenames first, then workspace-relative paths so
+/// same-named files can be told apart. Pops the enclosing route with the
+/// chosen file's absolute path (or `null`).
 class QuickOpenOverlay extends StatefulWidget {
   const QuickOpenOverlay({
     super.key,
@@ -96,10 +97,15 @@ class QuickOpenOverlay extends StatefulWidget {
 }
 
 class _QuickOpenRow {
-  const _QuickOpenRow(this.entry, this.matchedIndexes);
+  const _QuickOpenRow(this.entry, this.match);
 
   final QuickOpenFileEntry entry;
-  final List<int> matchedIndexes;
+
+  /// Null for MRU rows (no query to highlight against).
+  final QuickOpenMatch? match;
+
+  List<int> matchedIndexesFor(QuickOpenMatchTarget target) =>
+      match?.target == target ? match!.indexes : const [];
 }
 
 class _ScoredRow {
@@ -186,14 +192,14 @@ class _QuickOpenOverlayState extends State<QuickOpenOverlay> {
   List<_QuickOpenRow> _computeRows() {
     final query = _query.trim();
     if (query.isEmpty) {
-      return [for (final entry in _recent) _QuickOpenRow(entry, const [])];
+      return [for (final entry in _recent) _QuickOpenRow(entry, null)];
     }
     final lowerQuery = query.toLowerCase();
     final scored = <_ScoredRow>[];
     for (final entry in _index.files) {
-      final match = fuzzyMatch(entry.name, lowerQuery);
+      final match = quickOpenMatch(entry, lowerQuery);
       if (match == null) continue;
-      scored.add(_ScoredRow(_QuickOpenRow(entry, match.indexes), match.score));
+      scored.add(_ScoredRow(_QuickOpenRow(entry, match), match.score));
     }
     scored.sort((a, b) {
       if (a.score != b.score) return b.score.compareTo(a.score);
@@ -507,17 +513,18 @@ class _ResultRow extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _HighlightedTitle(
-                        title: row.entry.name,
-                        matchedIndexes: row.matchedIndexes,
+                      _HighlightedText(
+                        text: row.entry.name,
+                        matchedIndexes: row.matchedIndexesFor(
+                          QuickOpenMatchTarget.name,
+                        ),
                       ),
-                      Text(
-                        row.entry.relativePath,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TpTextStyles.of(
-                          context,
-                        ).xsColored(cs.onSurfaceVariant),
+                      _HighlightedText(
+                        text: row.entry.relativePath,
+                        matchedIndexes: row.matchedIndexesFor(
+                          QuickOpenMatchTarget.relativePath,
+                        ),
+                        small: true,
                       ),
                     ],
                   ),
@@ -531,27 +538,36 @@ class _ResultRow extends StatelessWidget {
   }
 }
 
-/// Renders [title] with [matchedIndexes] emphasized (bolder + accent colour).
-class _HighlightedTitle extends StatelessWidget {
-  const _HighlightedTitle({required this.title, required this.matchedIndexes});
+/// Renders [text] with [matchedIndexes] emphasized (bolder + accent colour).
+class _HighlightedText extends StatelessWidget {
+  const _HighlightedText({
+    required this.text,
+    required this.matchedIndexes,
+    this.small = false,
+  });
 
-  final String title;
+  final String text;
   final List<int> matchedIndexes;
+  final bool small;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final styles = TpTextStyles.of(context);
-    final base = styles.smColored(cs.onSurface);
-    final highlight = styles.smSemiboldColored(cs.primary);
+    final base = small
+        ? styles.xsColored(cs.onSurfaceVariant)
+        : styles.smColored(cs.onSurface);
+    final highlight = small
+        ? styles.xsSemiboldColored(cs.primary)
+        : styles.smSemiboldColored(cs.primary);
     final matched = matchedIndexes.toSet();
 
     return Text.rich(
       TextSpan(
         children: [
-          for (var i = 0; i < title.length; i++)
+          for (var i = 0; i < text.length; i++)
             TextSpan(
-              text: title[i],
+              text: text[i],
               style: matched.contains(i) ? highlight : base,
             ),
         ],

@@ -1983,7 +1983,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get shortcutsQuickOpen => '快速打开文件';
 
   @override
-  String get quickOpenSearchHint => '输入文件名…';
+  String get quickOpenSearchHint => '输入文件名或路径…';
 
   @override
   String get quickOpenIndexing => '正在索引文件…';

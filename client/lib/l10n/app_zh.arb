@@ -826,7 +826,7 @@
   "shortcutsWorkspaceReopenClosed": "重新打开已关闭的工作区标签",
   "shortcutsWorkspaceSearch": "搜索工作区",
   "shortcutsQuickOpen": "快速打开文件",
-  "quickOpenSearchHint": "输入文件名…",
+  "quickOpenSearchHint": "输入文件名或路径…",
   "quickOpenIndexing": "正在索引文件…",
   "quickOpenRecent": "最近打开",
   "quickOpenEmptyRecent": "输入文件名开始搜索",

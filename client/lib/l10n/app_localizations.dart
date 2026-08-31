@@ -3833,7 +3833,7 @@ abstract class AppLocalizations {
   /// No description provided for @quickOpenSearchHint.
   ///
   /// In en, this message translates to:
-  /// **'Type a file name…'**
+  /// **'Search by file name or path…'**
   String get quickOpenSearchHint;
 
   /// No description provided for @quickOpenIndexing.

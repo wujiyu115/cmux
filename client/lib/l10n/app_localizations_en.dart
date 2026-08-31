@@ -2044,7 +2044,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shortcutsQuickOpen => 'Quick Open File';
 
   @override
-  String get quickOpenSearchHint => 'Type a file name…';
+  String get quickOpenSearchHint => 'Search by file name or path…';
 
   @override
   String get quickOpenIndexing => 'Indexing files…';
