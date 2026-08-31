@@ -79,7 +79,61 @@ void main() {
     });
   });
 
-  group('WslFilesystem stdout decoding', () {
+  group('WslFilesystem.createTempDir', () {
+    // Regression: a relative template made mktemp create the directory in
+    // wsl.exe's process cwd and return a *relative* path, which the phone
+    // then couldn't read back (e.g. `teampilot-upload-714Vzu/…`).
+    test('passes an absolute /tmp template and returns mktemp output', () async {
+      List<String>? capturedArgs;
+      final fs = WslFilesystem(
+        processRunner: (executable, arguments,
+            {stdoutEncoding, stderrEncoding}) async {
+          capturedArgs = arguments;
+          return ProcessResult(0, 0, '/tmp/teampilot-upload-714Vzu\n', '');
+        },
+      );
+
+      final dir = await fs.createTempDir(prefix: 'teampilot-upload-');
+
+      expect(capturedArgs, [
+        '--exec',
+        'mktemp',
+        '-d',
+        '--',
+        '/tmp/teampilot-upload-XXXXXX',
+      ]);
+      expect(dir, '/tmp/teampilot-upload-714Vzu');
+    });
+
+    test('honors an explicit parent', () async {
+      List<String>? capturedArgs;
+      final fs = WslFilesystem(
+        processRunner: (executable, arguments,
+            {stdoutEncoding, stderrEncoding}) async {
+          capturedArgs = arguments;
+          return ProcessResult(0, 0, '/var/cache/tmp-x1\n', '');
+        },
+      );
+
+      await fs.createTempDir(parent: '/var/cache');
+
+      expect(capturedArgs?.last, '/var/cache/tmpXXXXXX');
+    });
+
+    test('throws when mktemp fails', () async {
+      final fs = WslFilesystem(
+        processRunner: (_, __, {stdoutEncoding, stderrEncoding}) async =>
+            ProcessResult(0, 1, '', 'No such file or directory'),
+      );
+
+      await expectLater(
+        fs.createTempDir(),
+        throwsStateError,
+      );
+    });
+  });
+
+  group('WslFilesystem.stdout decoding', () {
     // Regression: `Process.run`'s default systemEncoding is the Windows console
     // codepage (GBK on zh-CN). wsl.exe always emits UTF-8, so a Chinese
     // filename in `find -printf %f` output came back as mojibake and the file

@@ -483,10 +483,12 @@ class RemoteFileStore {
 
   Future<String> createTempDir({String? prefix, String? parent}) async {
     final client = await _clientFactory.clientForStorage(_profile);
-    final template = '${prefix ?? 'tmp'}XXXXXX';
-    final cmd = parent != null
-        ? 'mktemp -d -p ${shellSingleQuote(parent)} $template'
-        : 'mktemp -d $template';
+    // Absolute template, same as WslFilesystem.createTempDir: a relative one
+    // lands the directory in the login shell's cwd and yields a relative path
+    // the caller cannot resolve.
+    final base = parent ?? '/tmp';
+    final template = '$base/${prefix ?? 'tmp'}XXXXXX';
+    final cmd = 'mktemp -d -- ${shellSingleQuote(template)}';
     final result = await client.runWithResult(cmd, stderr: false);
     if (sshRunFailed(result)) {
       throw StateError(

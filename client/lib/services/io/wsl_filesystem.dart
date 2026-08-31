@@ -331,13 +331,12 @@ class WslFilesystem implements Filesystem {
 
   @override
   Future<String> createTempDir({String? prefix, String? parent}) async {
-    final template = '${prefix ?? 'tmp'}XXXXXX';
-    final args = <String>['mktemp', '-d'];
-    if (parent != null) {
-      args.addAll(['-p', parent]);
-    }
-    args.add(template);
-    final result = await _run(args);
+    // The template must be absolute: a relative one makes mktemp create the
+    // directory in wsl.exe's process cwd (the app's launch dir under /mnt/…)
+    // and return a *relative* path, which callers then can't resolve.
+    final base = parent ?? '/tmp';
+    final template = pathContext.join(base, '${prefix ?? 'tmp'}XXXXXX');
+    final result = await _run(['mktemp', '-d', '--', template]);
     if (result.exitCode != 0) {
       throw StateError('mktemp failed (${result.exitCode}): ${result.stderr}');
     }
