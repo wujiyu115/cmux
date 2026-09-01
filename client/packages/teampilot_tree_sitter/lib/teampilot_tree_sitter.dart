@@ -98,6 +98,13 @@ class TsLanguage {
 
   /// The bundled SCSS grammar.
   static TsLanguage scss() => TsLanguage._(bindings.tp_ts_language_scss());
+
+  /// The bundled Dockerfile grammar.
+  static TsLanguage dockerfile() =>
+      TsLanguage._(bindings.tp_ts_language_dockerfile());
+
+  /// The bundled Makefile grammar.
+  static TsLanguage make() => TsLanguage._(bindings.tp_ts_language_make());
 }
 
 /// A parsed syntax tree (`TSTree *`). Call [dispose] when done.

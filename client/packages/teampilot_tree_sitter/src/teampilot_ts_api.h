@@ -43,6 +43,8 @@ FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_swift(void);
 FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_sql(void);
 FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_html(void);
 FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_scss(void);
+FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_dockerfile(void);
+FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_make(void);
 
 #ifdef __cplusplus
 }

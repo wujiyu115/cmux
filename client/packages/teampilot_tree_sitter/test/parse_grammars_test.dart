@@ -174,6 +174,20 @@ final _cases = <_GrammarCase>[
     '(rule_set) @rule',
     'rule',
   ),
+  _GrammarCase(
+    'dockerfile',
+    TsLanguage.dockerfile,
+    'FROM alpine\nRUN echo hi\n',
+    '(from_instruction) @from',
+    'from',
+  ),
+  _GrammarCase(
+    'make',
+    TsLanguage.make,
+    'all:\n\techo hi\n',
+    '(rule) @rule',
+    'rule',
+  ),
 ];
 
 void main() {

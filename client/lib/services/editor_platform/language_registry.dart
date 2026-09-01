@@ -156,6 +156,21 @@ class LanguageRegistry {
         grammarId: 'scss',
         highlightsAsset: 'assets/editor_languages/scss/highlights.scm',
       ),
+      // No-extension build files: matched by exact basename below.
+      LanguagePack(
+        id: 'dockerfile',
+        extensions: {'dockerfile'},
+        filenames: {'Dockerfile', 'dockerfile'},
+        grammarId: 'dockerfile',
+        highlightsAsset: 'assets/editor_languages/dockerfile/highlights.scm',
+      ),
+      LanguagePack(
+        id: 'make',
+        extensions: {'mk', 'mak'},
+        filenames: {'Makefile', 'makefile', 'GNUmakefile'},
+        grammarId: 'make',
+        highlightsAsset: 'assets/editor_languages/make/highlights.scm',
+      ),
     ]);
   }
 
@@ -165,19 +180,18 @@ class LanguageRegistry {
   List<LanguagePack> get packs => _packs;
 
   /// Looks up the pack for [path] by basename, then by lowercase extension
-  /// (without the leading dot). Compound suffixes fall back to inner segments:
-  /// `config.yaml.template` resolves via its `yaml` segment. Returns `null`
-  /// when no pack claims this path.
+  /// (without the leading dot). Compound suffixes fall back to inner segments,
+  /// re-checking [LanguagePack.filenames] at each step: `config.yaml.template`
+  /// resolves via its `yaml` segment, `Dockerfile.dev` via its `Dockerfile`
+  /// segment. Returns `null` when no pack claims this path.
   LanguagePack? resolve(String path) {
-    final basename = _basename(path);
-    for (final pack in _packs) {
-      if (pack.filenames.contains(basename)) {
-        return pack;
-      }
-    }
-
-    var current = basename;
+    var current = _basename(path);
     while (true) {
+      for (final pack in _packs) {
+        if (pack.filenames.contains(current)) {
+          return pack;
+        }
+      }
       final extension = _extension(current);
       if (extension == null) {
         return null;

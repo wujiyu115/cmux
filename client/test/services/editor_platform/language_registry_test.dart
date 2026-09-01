@@ -55,6 +55,9 @@ void main() {
       '/x/a.swift': 'swift',
       '/x/a.sql': 'sql',
       '/x/a.scss': 'scss',
+      '/x/a.mk': 'make',
+      '/x/a.mak': 'make',
+      '/x/a.dockerfile': 'dockerfile',
     };
     cases.forEach((path, id) {
       expect(reg.resolve(path)?.id, id, reason: '$path should resolve to $id');
@@ -88,7 +91,24 @@ void main() {
     expect(reg.resolve('/x/photo.png.orig'), isNull);
   });
 
+  test('resolves build-file basenames to their packs', () {
+    final reg = LanguageRegistry.builtins();
+    expect(reg.resolve('/x/Dockerfile')?.id, 'dockerfile');
+    expect(reg.resolve('/x/dockerfile')?.id, 'dockerfile');
+    expect(reg.resolve('/x/Makefile')?.id, 'make');
+    expect(reg.resolve('/x/makefile')?.id, 'make');
+    expect(reg.resolve('/x/GNUmakefile')?.id, 'make');
+  });
+
+  test('compound suffixes fall back to the inner basename', () {
+    final reg = LanguageRegistry.builtins();
+    expect(reg.resolve('/x/Dockerfile.dev')?.id, 'dockerfile');
+    expect(reg.resolve('/x/Dockerfile.prod')?.id, 'dockerfile');
+    expect(reg.resolve('/x/Makefile.in')?.id, 'make');
+    expect(reg.resolve('/x/makefile.dist')?.id, 'make');
+  });
+
   test('path with no extension resolves to null', () {
-    expect(LanguageRegistry.builtins().resolve('/x/Makefile'), isNull);
+    expect(LanguageRegistry.builtins().resolve('/x/README'), isNull);
   });
 }

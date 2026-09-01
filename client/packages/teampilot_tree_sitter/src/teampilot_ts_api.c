@@ -25,6 +25,8 @@ extern const TSLanguage *tree_sitter_swift(void);
 extern const TSLanguage *tree_sitter_sql(void);
 extern const TSLanguage *tree_sitter_html(void);
 extern const TSLanguage *tree_sitter_scss(void);
+extern const TSLanguage *tree_sitter_dockerfile(void);
+extern const TSLanguage *tree_sitter_make(void);
 
 FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_json(void) {
   return tree_sitter_json();
@@ -122,4 +124,12 @@ FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_html(void) {
 
 FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_scss(void) {
   return tree_sitter_scss();
+}
+
+FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_dockerfile(void) {
+  return tree_sitter_dockerfile();
+}
+
+FFI_PLUGIN_EXPORT const TSLanguage *tp_ts_language_make(void) {
+  return tree_sitter_make();
 }

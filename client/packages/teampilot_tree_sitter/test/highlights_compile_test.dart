@@ -36,6 +36,8 @@ final _packs = <String, TsLanguage Function()>{
   'sql': TsLanguage.sql,
   'html': TsLanguage.html,
   'scss': TsLanguage.scss,
+  'dockerfile': TsLanguage.dockerfile,
+  'make': TsLanguage.make,
 };
 
 void main() {

@@ -160,6 +160,8 @@ flutter:
     - assets/editor_languages/sql/
     - assets/editor_languages/html/
     - assets/editor_languages/scss/
+    - assets/editor_languages/dockerfile/
+    - assets/editor_languages/make/
     - assets/fonts/terminal/
 
 flutter_native_splash:

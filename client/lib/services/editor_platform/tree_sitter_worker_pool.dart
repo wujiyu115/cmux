@@ -361,6 +361,10 @@ TsLanguage? _languageFor(String grammarId) {
       return TsLanguage.html();
     case 'scss':
       return TsLanguage.scss();
+    case 'dockerfile':
+      return TsLanguage.dockerfile();
+    case 'make':
+      return TsLanguage.make();
     default:
       return null;
   }

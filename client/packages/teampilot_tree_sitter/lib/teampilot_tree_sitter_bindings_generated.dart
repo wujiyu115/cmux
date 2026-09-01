@@ -1527,6 +1527,12 @@ external ffi.Pointer<TSLanguage> tp_ts_language_html();
 @ffi.Native<ffi.Pointer<TSLanguage> Function()>()
 external ffi.Pointer<TSLanguage> tp_ts_language_scss();
 
+@ffi.Native<ffi.Pointer<TSLanguage> Function()>()
+external ffi.Pointer<TSLanguage> tp_ts_language_dockerfile();
+
+@ffi.Native<ffi.Pointer<TSLanguage> Function()>()
+external ffi.Pointer<TSLanguage> tp_ts_language_make();
+
 /// /
 /// /* Section - Types */
 /// /

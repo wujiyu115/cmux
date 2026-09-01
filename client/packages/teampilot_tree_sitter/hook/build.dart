@@ -71,6 +71,9 @@ void main(List<String> args) async {
         'src/bundled/html_scanner.c',
         'src/bundled/scss_parser.c',
         'src/bundled/scss_scanner.c',
+        'src/bundled/dockerfile_parser.c',
+        'src/bundled/dockerfile_scanner.c',
+        'src/bundled/make_parser.c',
         // typescript: the `tsx` grammar (parses .ts/.tsx/.js/.jsx).
         'src/bundled/tsx_parser.c',
         'src/bundled/tsx_scanner.c',
