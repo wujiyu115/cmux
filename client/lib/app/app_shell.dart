@@ -81,6 +81,7 @@ import '../services/commands/session_command_registrar.dart';
 import '../services/commands/shortcuts_ui_commands.dart';
 import '../services/commands/workspace_search_command_registrar.dart';
 import '../pages/home_workspace/workspace_chrome_commands.dart';
+import '../pages/home_workspace/home_workspace_route.dart';
 import '../services/app/connection_mode_service.dart';
 import '../services/storage/runtime_context.dart';
 import '../services/storage/runtime_context_resolver.dart';
@@ -675,8 +676,12 @@ Future<AppShell> buildAppShell({
           workspaceId: group.workspaceId,
           workspaceLabel: paneLabel,
           // Explicit: `ws:<paneId>` is not a session id, so the default
-          // session-location composition would build a dead route.
-          location: '/home-v2/workspace/${group.workspaceId}',
+          // session-location composition would build a dead route. Carry the
+          // pane id so the tap can select this pane's shell tab.
+          location: HomeWorkspaceRoute.paneLocation(
+            workspaceId: group.workspaceId,
+            paneId: paneId,
+          ),
         );
       }
       final session = s.sessions

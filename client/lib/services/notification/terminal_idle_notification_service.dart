@@ -6,6 +6,7 @@ import 'package:shared_ui/shared_ui.dart';
 import '../../cubits/session_preferences_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../models/app_notification.dart';
+import '../../pages/home_workspace/home_workspace_route.dart';
 import '../../router/app_router.dart';
 import '../../utils/logging/logger.dart';
 import '../terminal/workspace_terminal_registry.dart';
@@ -167,6 +168,7 @@ class TerminalIdleNotificationService {
         if (!notify) continue;
         becameIdle.add(
           _IdlePane(
+            paneId: id,
             attribution: group.paneAttribution(id),
             workspaceId: group.workspaceId,
             isActive: group.activeId == id,
@@ -185,7 +187,10 @@ class TerminalIdleNotificationService {
         : context.title;
     final payload = pane.workspaceId.isEmpty
         ? ''
-        : '/home-v2/workspace/${pane.workspaceId}';
+        : HomeWorkspaceRoute.paneLocation(
+            workspaceId: pane.workspaceId,
+            paneId: pane.paneId,
+          );
 
     _recorder()?.record(
       title: title,
@@ -229,11 +234,13 @@ class TerminalIdleNotificationService {
 /// A pane that just went idle, with the facts needed to attribute a notice.
 class _IdlePane {
   const _IdlePane({
+    required this.paneId,
     required this.attribution,
     required this.workspaceId,
     required this.isActive,
   });
 
+  final String paneId;
   final String attribution;
   final String workspaceId;
   final bool isActive;

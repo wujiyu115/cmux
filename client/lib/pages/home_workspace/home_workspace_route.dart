@@ -56,6 +56,32 @@ abstract final class HomeWorkspaceRoute {
     ).toString();
   }
 
+  /// Workspace-terminal pane id for workbench deep-link (`?pane=`).
+  static String? pane(String location) {
+    final raw = parse(location).queryParameters['pane']?.trim() ?? '';
+    return raw.isEmpty ? null : raw;
+  }
+
+  /// `/home-v2/workspace/:id?pane=:paneId` — focuses a workspace shell
+  /// terminal pane from OS notification taps (and other deep links).
+  static String paneLocation({
+    required String workspaceId,
+    required String paneId,
+  }) => Uri(
+    path: '/home-v2/workspace/$workspaceId',
+    queryParameters: {'pane': paneId},
+  ).toString();
+
+  /// Same path/query as [location] with `pane` removed (avoids re-focus loops).
+  static String locationWithoutPane(String location) {
+    final uri = parse(location);
+    final params = Map<String, String>.from(uri.queryParameters)..remove('pane');
+    return Uri(
+      path: uri.path,
+      queryParameters: params.isEmpty ? null : params,
+    ).toString();
+  }
+
   static WorkspaceConfigSection? workspaceConfigSection(String location) =>
       WorkspaceConfigSection.fromSegment(
         parse(location).queryParameters['section'],

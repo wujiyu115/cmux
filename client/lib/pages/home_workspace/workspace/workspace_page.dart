@@ -7,11 +7,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../cubits/chat_cubit.dart';
+import '../../../cubits/workbench/workbench_cubit.dart';
+import '../../../cubits/workbench/workbench_tab.dart';
 import '../../../l10n/l10n_extensions.dart';
 import '../../../models/app_session.dart';
 import '../../../models/workspace.dart';
 import '../../../pages/home_workspace/home_workspace_route.dart';
 import '../../../repositories/session_repository.dart';
+import '../../../services/terminal/workspace_terminal_registry.dart';
 import '../../../theme/workspace_surface_layers.dart';
 import '../../../utils/logging/logger.dart';
 import 'workspace_config_workspace.dart';
@@ -42,6 +45,8 @@ class _WorkspacePageState extends State<WorkspacePage> {
   bool _activationScheduled = false;
   String? _lastSyncedRouteSession;
   bool _sessionSyncScheduled = false;
+  String? _lastSyncedRoutePane;
+  bool _paneSyncScheduled = false;
 
   WorkspaceRouteActiveScope? _readScope(BuildContext context) {
     return context.getInheritedWidgetOfExactType<WorkspaceRouteActiveScope>();
@@ -76,6 +81,7 @@ class _WorkspacePageState extends State<WorkspacePage> {
     }
     _wasRouteActive = active;
     _syncSessionFromRoute();
+    _syncPaneFromRoute();
   }
 
   void _syncSessionFromRoute() {
@@ -144,6 +150,61 @@ class _WorkspacePageState extends State<WorkspacePage> {
   void _clearSessionQuery() {
     final current = GoRouterState.of(context).uri.toString();
     final next = HomeWorkspaceRoute.locationWithoutSession(current);
+    if (current == next) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (GoRouterState.of(context).uri.toString() != current) return;
+      context.go(next);
+    });
+  }
+
+  void _syncPaneFromRoute() {
+    final location = GoRouterState.of(context).uri.toString();
+    final paneId = HomeWorkspaceRoute.pane(location);
+    if (paneId == _lastSyncedRoutePane) return;
+    _lastSyncedRoutePane = paneId;
+    if (paneId == null) return;
+    if (_paneSyncScheduled) return;
+    _paneSyncScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _paneSyncScheduled = false;
+      if (!mounted) return;
+      _applyPaneFromRoute(paneId);
+    });
+  }
+
+  /// Selects the shell tab (surface) holding [paneId], then focuses the pane
+  /// itself, so notification taps land on the right terminal even when the
+  /// workspace holds several.
+  void _applyPaneFromRoute(String paneId) {
+    final located = context
+        .read<WorkspaceTerminalRegistry>()
+        .locatePane(paneId);
+    if (located == null || located.$1.workspaceId != widget.workspaceId) {
+      appLogger.w(
+        '[pane-deep-link] pane not found pane=$paneId '
+        'workspace=${widget.workspaceId}',
+      );
+      _clearPaneQuery();
+      return;
+    }
+    final (group, _) = located;
+    final surfaceId = group.surfaceForPane(paneId)?.id;
+    if (surfaceId == null) {
+      _clearPaneQuery();
+      return;
+    }
+    final workbench = context.read<WorkbenchCubit>();
+    final tab = WorkbenchTabId.shell(surfaceId);
+    workbench.ensureTab(widget.workspaceId, tab);
+    workbench.select(widget.workspaceId, tab);
+    group.activeId = paneId;
+    _clearPaneQuery();
+  }
+
+  void _clearPaneQuery() {
+    final current = GoRouterState.of(context).uri.toString();
+    final next = HomeWorkspaceRoute.locationWithoutPane(current);
     if (current == next) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;

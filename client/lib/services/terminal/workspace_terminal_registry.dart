@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 import '../../models/terminal_split.dart';
 import '../../models/terminal_surface.dart';
 import '../../models/workspace_terminal_session_spec.dart';
+import '../../pages/home_workspace/home_workspace_route.dart';
 import 'command_log_sink.dart';
 import 'shell_command_tracker.dart';
 import 'terminal_osc_notification_bridge.dart';
@@ -417,8 +418,14 @@ class WorkspaceTerminalGroup extends ChangeNotifier {
     if (factory != null) {
       final bridge = factory(
         attribution: () => paneAttribution(entry.id),
-        payload: () =>
-            workspaceId.isEmpty ? '' : '/home-v2/workspace/$workspaceId',
+        // Deep-link to this pane's shell tab so notification taps land on the
+        // right terminal even when the workspace holds several.
+        payload: () => workspaceId.isEmpty
+            ? ''
+            : HomeWorkspaceRoute.paneLocation(
+                workspaceId: workspaceId,
+                paneId: entry.id,
+              ),
       );
       entry.notificationBridge = bridge;
       session.bindOscNotifications(bridge);
