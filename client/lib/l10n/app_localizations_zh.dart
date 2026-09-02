@@ -634,6 +634,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get conversationName => '对话名称';
 
   @override
+  String get renameTerminalTab => '重命名终端';
+
+  @override
+  String get renameTerminalTabTitle => '重命名终端';
+
+  @override
+  String get terminalName => '终端名称';
+
+  @override
   String get closeTab => '关闭';
 
   @override

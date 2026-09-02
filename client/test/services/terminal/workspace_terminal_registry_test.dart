@@ -48,6 +48,32 @@ void main() {
       reg.disposeAll();
     });
 
+    test('paneAttribution prefers pane name, then renamed tab, then spec label', () {
+      final g = WorkspaceTerminalGroup();
+      final e = _add(g)..titleLabel = 'Local';
+      final surfaceId = g.surfaces.single.id;
+      expect(g.paneAttribution(e.id), 'Local');
+      g.renameSurface(surfaceId, 'Build server');
+      expect(g.paneAttribution(e.id), 'Build server');
+      g.renamePane(e.id, 'Run pane');
+      expect(g.paneAttribution(e.id), 'Run pane');
+      g.dispose();
+    });
+
+    test('locateSurface resolves across groups without creating one', () {
+      final reg = WorkspaceTerminalRegistry();
+      final a = reg.groupFor('A');
+      _add(a);
+      final surfaceId = a.surfaces.single.id;
+      final located = reg.locateSurface(surfaceId);
+      expect(located, isNotNull);
+      expect(identical(located!.$1, a), isTrue);
+      expect(located.$2.id, surfaceId);
+      expect(reg.locateSurface('missing'), isNull);
+      expect(reg.groupOf('B'), isNull);
+      reg.disposeAll();
+    });
+
     test('disposeWorkspace disposes entries and drops the group', () {
       final reg = WorkspaceTerminalRegistry();
       final a = reg.groupFor('A');

@@ -11,6 +11,8 @@ import '../../cubits/layout_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../models/app_session.dart';
 import '../../repositories/session_repository.dart';
+import '../../services/terminal/workspace_terminal_registry.dart';
+import '../../services/terminal/workspace_terminal_title_resolver.dart';
 import '../../theme/workspace_surface_layers.dart';
 import '../../utils/ui/app_keys.dart';
 import '../../utils/session/session_row_content.dart';
@@ -134,6 +136,7 @@ class WorkspaceShellTabRow extends StatelessWidget {
                     WorkspaceShellTabChip(
                       key: ValueKey(tabs[i].id),
                       sessionId: tabs[i].sessionId,
+                      shellSurfaceId: tabs[i].shellSurfaceId,
                       title: tabs[i].title,
                       working: tabs[i].working,
                       active: activeIndex >= 0 && i == activeIndex,
@@ -294,6 +297,7 @@ class WorkspaceShellTabChip extends StatefulWidget {
     required this.onTap,
     required this.onClose,
     this.sessionId,
+    this.shellSurfaceId,
     this.onCloseOthers,
     this.onCloseRight,
     this.onPin,
@@ -308,6 +312,9 @@ class WorkspaceShellTabChip extends StatefulWidget {
 
   final String title;
   final String? sessionId;
+
+  /// Shell-terminal surface behind this tab; enables rename + live title.
+  final String? shellSurfaceId;
   final bool working;
   final bool active;
   final bool preview;
@@ -334,8 +341,9 @@ class WorkspaceShellTabChipState extends State<WorkspaceShellTabChip> {
   /// [MouseRegion.onExit] and removes the button before [onSelected] runs.
   final _overflowMenuOpen = false;
 
-  /// Session tabs can be renamed; non-session chips (run panel) cannot.
-  bool get _renamable => widget.sessionId != null;
+  /// Session tabs rename through [ChatCubit]; shell-surface tabs through the
+  /// terminal registry. Other chips (run panel) cannot.
+  bool get _renamable => widget.sessionId != null || widget.shellSurfaceId != null;
 
   void _handleTabMenuSelection(String value) {
     if (value == 'rename') {
@@ -354,11 +362,17 @@ class WorkspaceShellTabChipState extends State<WorkspaceShellTabChip> {
   List<TpActionMenuSpec> _tabMenuSpecs(BuildContext menuContext) {
     final l10n = menuContext.l10n;
     return [
-      if (_renamable)
+      if (widget.sessionId != null)
         TpActionMenuSpec.item(
           value: 'rename',
           icon: Icons.drive_file_rename_outline,
           label: l10n.renameConversation,
+        ),
+      if (widget.shellSurfaceId != null)
+        TpActionMenuSpec.item(
+          value: 'rename',
+          icon: Icons.drive_file_rename_outline,
+          label: l10n.renameTerminalTab,
         ),
       if (widget.pinnable && widget.onPin != null)
         TpActionMenuSpec.item(
@@ -413,9 +427,23 @@ class WorkspaceShellTabChipState extends State<WorkspaceShellTabChip> {
   /// Renames the tab's session. Same dialog + cubit path as
   /// [SidebarSessionTile], so `session.json` and every other surface that reads
   /// the live title (including agent notifications) follow immediately.
+  ///
+  /// Shell-surface tabs rename in-memory through [WorkspaceTerminalGroup] —
+  /// surfaces are runtime state, so the name lives as long as the terminals do.
   Future<void> _showRenameDialog() async {
     final sessionId = widget.sessionId;
-    if (sessionId == null || !mounted) return;
+    if (sessionId != null) {
+      await _showSessionRenameDialog(sessionId);
+      return;
+    }
+    final surfaceId = widget.shellSurfaceId;
+    if (surfaceId != null) {
+      await _showShellSurfaceRenameDialog(surfaceId);
+    }
+  }
+
+  Future<void> _showSessionRenameDialog(String sessionId) async {
+    if (!mounted) return;
     final l10n = context.l10n;
     final repo = context.read<SessionRepository>();
     final chatCubit = context.read<ChatCubit>();
@@ -440,6 +468,30 @@ class WorkspaceShellTabChipState extends State<WorkspaceShellTabChip> {
     await chatCubit.renameSession(repo, sessionId, trimmed);
   }
 
+  Future<void> _showShellSurfaceRenameDialog(String surfaceId) async {
+    if (!mounted) return;
+    final l10n = context.l10n;
+    final registry = context.read<WorkspaceTerminalRegistry>();
+    final located = registry.locateSurface(surfaceId);
+    if (located == null) return;
+    final (group, surface) = located;
+    // Prefill the surface's own name, or the focused pane's label — not the
+    // "(2)"-numbered display title, so duplicate numbering is not baked in.
+    final base = surface.name.isNotEmpty
+        ? surface.name
+        : group.entryById(surface.focusedPaneId)?.titleLabel ?? '';
+    final name = await showTpTextPromptDialog(
+      context,
+      title: l10n.renameTerminalTabTitle,
+      initialText: base.trim().isEmpty ? widget.title : base,
+      labelText: l10n.terminalName,
+      confirmLabel: l10n.save,
+    );
+    final trimmed = name?.trim() ?? '';
+    if (trimmed.isEmpty || !mounted) return;
+    group.renameSurface(surfaceId, trimmed);
+  }
+
   void _showTabContextMenuAtChipCenter() {
     final box = context.findRenderObject();
     if (box is! RenderBox || !box.hasSize) return;
@@ -455,19 +507,48 @@ class WorkspaceShellTabChipState extends State<WorkspaceShellTabChip> {
 
   @override
   Widget build(BuildContext context) {
+    // Shell tabs re-resolve their title from the live surface group so a
+    // rename repaints immediately, the way session tabs re-select from
+    // [ChatCubit].
+    final surfaceId = widget.shellSurfaceId;
+    if (surfaceId != null) {
+      final group =
+          context.read<WorkspaceTerminalRegistry>().locateSurface(surfaceId)?.$1;
+      if (group != null) {
+        return ListenableBuilder(
+          listenable: group,
+          builder: (context, _) =>
+              _buildContent(context, title: _shellSurfaceTitle(group, surfaceId)),
+        );
+      }
+    }
+    return _buildContent(context, title: _projectedTitle(context));
+  }
+
+  String _shellSurfaceTitle(WorkspaceTerminalGroup group, String surfaceId) {
+    final surface = group.surfaceById(surfaceId);
+    if (surface == null) return widget.title;
+    return WorkspaceTerminalTitleResolver.surfaceTabTitle(
+      surface: surface,
+      siblings: group.surfaces,
+      entryFor: group.entryById,
+    );
+  }
+
+  String _projectedTitle(BuildContext context) {
+    final sessionId = widget.sessionId;
+    if (sessionId == null) return widget.title;
+    return context.select<ChatCubit, String>(
+      (c) => SessionRowContent.fromChatState(c.state, sessionId).titleForPaint,
+    );
+  }
+
+  Widget _buildContent(BuildContext context, {required String title}) {
     final sessionId = widget.sessionId;
     final working = sessionId == null
         ? widget.working
         : context.select<ChatCubit, bool>(
             (c) => c.state.workingSessionIds.contains(sessionId),
-          );
-    final title = sessionId == null
-        ? widget.title
-        : context.select<ChatCubit, String>(
-            (c) => SessionRowContent.fromChatState(
-              c.state,
-              sessionId,
-            ).titleForPaint,
           );
     final cs = Theme.of(context).colorScheme;
     final styles = TpTextStyles.of(context);

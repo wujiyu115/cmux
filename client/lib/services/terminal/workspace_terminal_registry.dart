@@ -458,11 +458,16 @@ class WorkspaceTerminalGroup extends ChangeNotifier {
   }
 
   /// `workspace · pane` label for notifications raised by [paneId]. Falls back
-  /// to whichever half is known; empty when neither is.
+  /// to whichever half is known; empty when neither is. Pane name precedence:
+  /// explicit pane name → renamed tab ([renameSurface]) → spec label.
   String paneAttribution(String paneId) {
     final surface = surfaceForPane(paneId);
+    final tabName = (surface?.name ?? '').trim();
     final paneName =
-        surface?.paneNames[paneId] ?? entryById(paneId)?.titleLabel ?? '';
+        surface?.paneNames[paneId] ??
+        (tabName.isNotEmpty ? tabName : null) ??
+        entryById(paneId)?.titleLabel ??
+        '';
     return [
       if (_workspaceLabel().trim().isNotEmpty) _workspaceLabel().trim(),
       if (paneName.trim().isNotEmpty) paneName.trim(),
@@ -521,6 +526,19 @@ class WorkspaceTerminalRegistry {
     for (final group in _groups.values) {
       final entry = group.entryById(id);
       if (entry != null) return (group, entry);
+    }
+    return null;
+  }
+
+  /// The group and surface owning [surfaceId], or null when no surface
+  /// matches. Non-creating, like [locatePane]; used to rename a shell tab
+  /// without knowing which workspace scope it belongs to.
+  (WorkspaceTerminalGroup, TerminalSurface)? locateSurface(String surfaceId) {
+    final id = surfaceId.trim();
+    if (id.isEmpty) return null;
+    for (final group in _groups.values) {
+      final surface = group.surfaceById(id);
+      if (surface != null) return (group, surface);
     }
     return null;
   }

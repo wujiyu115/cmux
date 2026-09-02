@@ -49,6 +49,7 @@ List<TabInfo> projectWorkbenchTabs({
         ),
         WorkbenchTabKind.shell => TabInfo(
           id: tab.id,
+          shellSurfaceId: tab.id,
           title: shellTitles[tab.id] ?? tab.id,
           icon: Icons.terminal_outlined,
           accentColor: sessionAccent,

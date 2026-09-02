@@ -9,6 +9,7 @@ class TabInfo {
     required this.id,
     required this.title,
     this.sessionId,
+    this.shellSurfaceId,
     this.working = false,
     this.icon = Icons.terminal_rounded,
     this.cli,
@@ -23,6 +24,10 @@ class TabInfo {
 
   /// When set, tab chip live-selects working + title from [ChatCubit].
   final String? sessionId;
+
+  /// Shell-terminal surface this tab shows; enables rename + live title from
+  /// the [WorkspaceTerminalRegistry] group that owns the surface.
+  final String? shellSurfaceId;
 
   /// Session has a member in a turn → show the working spinner left of title.
   final bool working;

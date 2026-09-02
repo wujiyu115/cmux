@@ -656,6 +656,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get conversationName => 'Conversation name';
 
   @override
+  String get renameTerminalTab => 'Rename terminal';
+
+  @override
+  String get renameTerminalTabTitle => 'Rename Terminal';
+
+  @override
+  String get terminalName => 'Terminal name';
+
+  @override
   String get closeTab => 'Close';
 
   @override

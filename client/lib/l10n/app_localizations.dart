@@ -1298,6 +1298,24 @@ abstract class AppLocalizations {
   /// **'Conversation name'**
   String get conversationName;
 
+  /// No description provided for @renameTerminalTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename terminal'**
+  String get renameTerminalTab;
+
+  /// No description provided for @renameTerminalTabTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename Terminal'**
+  String get renameTerminalTabTitle;
+
+  /// No description provided for @terminalName.
+  ///
+  /// In en, this message translates to:
+  /// **'Terminal name'**
+  String get terminalName;
+
   /// No description provided for @closeTab.
   ///
   /// In en, this message translates to:
