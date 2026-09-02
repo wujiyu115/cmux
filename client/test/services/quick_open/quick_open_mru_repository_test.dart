@@ -1,7 +1,28 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:teampilot/services/io/filesystem.dart';
 import 'package:teampilot/services/quick_open/quick_open_mru_repository.dart';
 
 import '../../support/in_memory_filesystem.dart';
+
+/// Batches existence checks like the WSL backend, counting calls so tests can
+/// assert [QuickOpenMruRepository.load] prefers one round trip over per-path
+/// stats.
+class _BatchingFilesystem extends InMemoryFilesystem implements FsBatchOps {
+  int existsManyCalls = 0;
+  bool failExistsMany = false;
+
+  @override
+  Future<FsStatAndBytes?> statAndReadBytes(String path, {int? maxBytes}) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<Map<String, bool>> existsMany(List<String> paths) async {
+    existsManyCalls++;
+    if (failExistsMany) throw StateError('boom');
+    return {for (final p in paths) p: files.containsKey(p)};
+  }
+}
 
 void main() {
   late InMemoryFilesystem fs;
@@ -59,5 +80,36 @@ void main() {
   test('corrupt file yields empty list, never throws', () async {
     fs.files['/quick-open-mru.json'] = 'not json at all';
     expect(await repo.load('/repo'), isEmpty);
+  });
+
+  test('load batches existence checks on batching backends', () async {
+    final batchFs = _BatchingFilesystem();
+    batchFs.ensureDir('/repo');
+    batchFs.files['/repo/a.dart'] = 'x';
+    batchFs.files['/repo/b.dart'] = 'x';
+    final batchRepo = QuickOpenMruRepository(
+      fs: batchFs,
+      path: '/quick-open-mru.json',
+    );
+    await batchRepo.touch('/repo', '/repo/a.dart');
+    await batchRepo.touch('/repo', '/repo/b.dart');
+    batchFs.existsManyCalls = 0;
+
+    expect(await batchRepo.load('/repo'), ['/repo/b.dart', '/repo/a.dart']);
+    expect(batchFs.existsManyCalls, 1);
+  });
+
+  test('load falls back to per-path stats when batching fails', () async {
+    final batchFs = _BatchingFilesystem();
+    batchFs.ensureDir('/repo');
+    batchFs.files['/repo/a.dart'] = 'x';
+    batchFs.failExistsMany = true;
+    final batchRepo = QuickOpenMruRepository(
+      fs: batchFs,
+      path: '/quick-open-mru.json',
+    );
+    await batchRepo.touch('/repo', '/repo/a.dart');
+
+    expect(await batchRepo.load('/repo'), ['/repo/a.dart']);
   });
 }

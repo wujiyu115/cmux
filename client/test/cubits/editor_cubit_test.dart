@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/widgets.dart';
@@ -292,6 +293,25 @@ void main() {
       EditorMessage.imageTooLarge,
     );
   });
+
+  test('openFile serves stat and content from one FsBatchOps round trip',
+      () async {
+    final fs = _BatchCountingFilesystem();
+    fs.files['/repo/a.txt'] = 'hello batch';
+    fs.files['/repo/empty.txt'] = '';
+    final cubit = EditorCubit(fs: fs);
+    addTearDown(cubit.close);
+
+    await cubit.openFile(ws, '/repo/a.txt');
+    await cubit.openFile(ws, '/repo/empty.txt');
+
+    expect(cubit.state.bucket(ws).openFilePaths, ['/repo/a.txt', '/repo/empty.txt']);
+    expect(cubit.controllerFor(ws, '/repo/a.txt')?.text, 'hello batch');
+    expect(cubit.controllerFor(ws, '/repo/empty.txt')?.text, '');
+    expect(fs.statAndReadCalls, 2);
+    expect(fs.statCalls, 0);
+    expect(fs.readCalls, 0);
+  });
 }
 
 class _GatedFilesystem extends InMemoryFilesystem {
@@ -303,5 +323,41 @@ class _GatedFilesystem extends InMemoryFilesystem {
   Future<FsStat> stat(String path) async {
     await _gate.future;
     return super.stat(path);
+  }
+}
+
+/// Counts which read paths [EditorCubit.openFile] takes, so tests can assert
+/// the batched round trip replaces the separate stat + read calls.
+class _BatchCountingFilesystem extends InMemoryFilesystem
+    implements FsBatchOps {
+  int statAndReadCalls = 0;
+  int statCalls = 0;
+  int readCalls = 0;
+
+  @override
+  Future<FsStat> stat(String path) async {
+    statCalls++;
+    return super.stat(path);
+  }
+
+  @override
+  Future<String?> readString(String path) async {
+    readCalls++;
+    return super.readString(path);
+  }
+
+  @override
+  Future<FsStatAndBytes?> statAndReadBytes(String path, {int? maxBytes}) async {
+    statAndReadCalls++;
+    final stat = await super.stat(path);
+    if (!stat.exists) return null;
+    final text = files[path];
+    if (text == null) return FsStatAndBytes(stat: stat);
+    return FsStatAndBytes(stat: stat, bytes: utf8.encode(text));
+  }
+
+  @override
+  Future<Map<String, bool>> existsMany(List<String> paths) async {
+    return {for (final p in paths) p: (await super.stat(p)).exists};
   }
 }

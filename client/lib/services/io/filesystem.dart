@@ -60,6 +60,34 @@ abstract interface class FsWatcher {
   FsTreeWatch watchTree(String path);
 }
 
+/// stat plus file content returned by a single [FsBatchOps] round trip.
+class FsStatAndBytes {
+  const FsStatAndBytes({required this.stat, this.bytes});
+
+  final FsStat stat;
+
+  /// File content; null when the file exists but its content could not be
+  /// read.
+  final List<int>? bytes;
+}
+
+/// Optional [Filesystem] capability for backends where each operation is a
+/// separate process spawn or network round trip (e.g. WSL, where every call
+/// pays a fixed ~350ms `wsl.exe` process-spend). Callers must feature-detect
+/// (`fs is FsBatchOps`) and fall back to the plain per-operation methods,
+/// exactly like [FsWatcher].
+abstract interface class FsBatchOps {
+  /// [Filesystem.stat] plus a full-file read in one round trip. Returns null
+  /// when [path] does not exist. [FsStatAndBytes.bytes] is null when the file
+  /// exists but its content could not be read. At most [maxBytes] bytes are
+  /// transferred when given.
+  Future<FsStatAndBytes?> statAndReadBytes(String path, {int? maxBytes});
+
+  /// Existence of every path in [paths] in one round trip. Throws on
+  /// transport failure; callers fall back to per-path [Filesystem.stat].
+  Future<Map<String, bool>> existsMany(List<String> paths);
+}
+
 abstract interface class Filesystem {
   p.Context get pathContext;
 

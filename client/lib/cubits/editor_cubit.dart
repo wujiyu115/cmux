@@ -1,3 +1,4 @@
+import 'dart:convert' show utf8;
 import 'dart:math' as math;
 import 'dart:typed_data';
 
@@ -352,7 +353,25 @@ class EditorCubit extends Cubit<EditorState> {
     );
 
     try {
-      final stat = await filesystem.stat(normalized);
+      // Backends that pay per-round-trip (WSL: one ~350ms wsl.exe spawn per
+      // call) serve stat and content in a single shot; others stat first so
+      // oversized files are rejected without reading them.
+      final FsStat stat;
+      List<int>? batchedBytes;
+      final batchFs =
+          filesystem is FsBatchOps ? filesystem as FsBatchOps : null;
+      if (batchFs != null) {
+        final maxBytes =
+            (isImage ? kEditorMaxImageBytes : kEditorMaxFileBytes) + 1;
+        final combined = await batchFs.statAndReadBytes(
+          normalized,
+          maxBytes: maxBytes,
+        );
+        stat = combined?.stat ?? const FsStat(kind: FsEntityKind.notFound);
+        batchedBytes = combined?.bytes;
+      } else {
+        stat = await filesystem.stat(normalized);
+      }
       if (!_stillLoading(workspaceId, normalized)) return;
       if (!stat.exists || !stat.isFile) {
         emit(_clearLoading(workspaceId, normalized, error: EditorMessage.fileNotFound));
@@ -372,7 +391,7 @@ class EditorCubit extends Cubit<EditorState> {
           return;
         }
 
-        final bytes = await filesystem.readBytes(normalized);
+        final bytes = batchedBytes ?? await filesystem.readBytes(normalized);
         if (!_stillLoading(workspaceId, normalized)) return;
         if (bytes == null) {
           emit(
@@ -431,7 +450,10 @@ class EditorCubit extends Cubit<EditorState> {
         return;
       }
 
-      final content = await filesystem.readString(normalized);
+      final content =
+          batchedBytes != null
+              ? utf8.decode(batchedBytes, allowMalformed: true)
+              : await filesystem.readString(normalized);
       if (!_stillLoading(workspaceId, normalized)) return;
       if (content == null) {
         emit(_clearLoading(workspaceId, normalized, error: EditorMessage.couldNotRead));

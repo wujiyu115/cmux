@@ -15,7 +15,7 @@ typedef ProcessRunner =
       Encoding? stderrEncoding,
     });
 
-class WslFilesystem implements Filesystem {
+class WslFilesystem implements Filesystem, FsBatchOps {
   WslFilesystem({String? distro, ProcessRunner? processRunner})
     : _distro = distro?.trim(),
       _processRunner = processRunner ?? _defaultProcessRunner;
@@ -81,7 +81,11 @@ class WslFilesystem implements Filesystem {
     // Pipe-delimited so file-type names with spaces parse cleanly.
     final result = await _run(['stat', '-c', '%F|%s|%Y', '--', path]);
     if (result.exitCode != 0) return const FsStat(kind: FsEntityKind.notFound);
-    final parts = (result.stdout as String).trim().split('|');
+    return _parseStatLine(result.stdout as String);
+  }
+
+  FsStat _parseStatLine(String line) {
+    final parts = line.trim().split('|');
     if (parts.length < 3) {
       return const FsStat(kind: FsEntityKind.notFound);
     }
@@ -146,6 +150,56 @@ class WslFilesystem implements Filesystem {
     } on Object {
       return null;
     }
+  }
+
+  /// One spawn serves stat and content together — every `wsl.exe` invocation
+  /// costs a fixed ~350ms process-spend, so merging them halves the editor's
+  /// open latency on WSL. `head -c` bounds the transfer so oversized files are
+  /// rejected from stat without piping their full content through the pipe.
+  @override
+  Future<FsStatAndBytes?> statAndReadBytes(String path, {int? maxBytes}) async {
+    final read = maxBytes == null
+        ? 'base64 -w0 -- "\$1"'
+        : 'head -c "\$3" -- "\$1" | base64 -w0';
+    final script = 'stat -c "\$2" -- "\$1" || exit 1\n'
+        '[ -r "\$1" ] || exit 2\n'
+        '$read';
+    final args = <String>['sh', '-c', script, 'sh', path, '%F|%s|%Y'];
+    if (maxBytes != null) args.add(maxBytes.toString());
+    final result = await _run(args);
+    final stdout = result.stdout as String;
+    final statLineEnd = stdout.indexOf('\n');
+    if (result.exitCode == 1 || statLineEnd < 0) return null;
+    final stat = _parseStatLine(stdout.substring(0, statLineEnd));
+    if (stat.kind == FsEntityKind.notFound) return null;
+    if (result.exitCode == 2) return FsStatAndBytes(stat: stat);
+    final encoded = stdout
+        .substring(statLineEnd + 1)
+        .replaceAll(RegExp(r'\s+'), '');
+    if (encoded.isEmpty) return FsStatAndBytes(stat: stat, bytes: const []);
+    try {
+      return FsStatAndBytes(stat: stat, bytes: base64.decode(encoded));
+    } on Object {
+      return FsStatAndBytes(stat: stat);
+    }
+  }
+
+  /// One spawn checks every path: one `y`/`n` character per input, in order.
+  @override
+  Future<Map<String, bool>> existsMany(List<String> paths) async {
+    if (paths.isEmpty) return const {};
+    const script =
+        'for f in "\$@"; do if [ -e "\$f" ]; then printf y; else printf n; fi; done';
+    final result = await _run(['sh', '-c', script, 'sh', ...paths]);
+    final flags = result.stdout as String;
+    if (result.exitCode != 0 || flags.length != paths.length) {
+      throw StateError(
+        'wsl existsMany failed (${result.exitCode}): ${result.stderr}',
+      );
+    }
+    return {
+      for (var i = 0; i < paths.length; i++) paths[i]: flags[i] == 'y',
+    };
   }
 
   Future<String> _collectStreamText(Stream<List<int>> stream) {

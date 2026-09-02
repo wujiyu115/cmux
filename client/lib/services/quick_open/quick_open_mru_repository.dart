@@ -68,11 +68,26 @@ class QuickOpenMruRepository {
     final paths = raw[root];
     if (paths == null || paths.isEmpty) return const [];
     final fs = _fs;
+    // WSL/SSH pay a process spawn (or round trip) per stat; batch the
+    // existence check when the backend supports it.
+    final batchFs = fs is FsBatchOps ? fs as FsBatchOps : null;
+    Map<String, bool>? exists;
+    if (batchFs != null) {
+      try {
+        exists = await batchFs.existsMany(paths);
+      } on Object {
+        exists = null; // Fall back to per-path stats.
+      }
+    }
     final existing = <String>[];
     for (final path in paths) {
       if (existing.length >= cap) break;
-      final stat = await fs.stat(path);
-      if (!stat.exists) continue;
+      if (exists != null) {
+        if (exists[path] != true) continue;
+      } else {
+        final stat = await fs.stat(path);
+        if (!stat.exists) continue;
+      }
       if (existing.contains(path)) continue;
       existing.add(path);
     }

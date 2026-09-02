@@ -27,8 +27,9 @@ final QuickOpenIndexRegistry _sharedIndexRegistry = QuickOpenIndexRegistry();
 
 /// Opens the quick-open dialog (Ctrl+P): sessions + files in one fuzzy
 /// launcher. Pops with the chosen [QuickOpenResult]; the MRU touch and editor
-/// open run *after* the pop so the opening editor does not fight the closing
-/// dialog (same ordering as the command palette).
+/// open run *after* the pop (both unawaited, so the dialog returns immediately
+/// and the closing dialog does not fight the opening editor — same ordering
+/// as the command palette).
 ///
 /// [filesystem] must be the work-plane filesystem of the machine hosting the
 /// workspace folders (WSL/SSH workspaces cannot be read through the app's
@@ -82,7 +83,10 @@ Future<void> showQuickOpenDialog(
       return;
     }
     final path = (result as QuickOpenFileResult).path;
-    await mru.touch(workspace.firstFolderPath, path);
+    // Fire-and-forget: the MRU rotation is a multi-spawn write on WSL/SSH and
+    // must not delay the editor open. A lost update between overlapping
+    // touches only reorders the recents list.
+    unawaited(mru.touch(workspace.firstFolderPath, path));
     if (!context.mounted) return;
     unawaited(
       opener.openFile(workspace.workspaceId, path, fs: fs, preview: true),

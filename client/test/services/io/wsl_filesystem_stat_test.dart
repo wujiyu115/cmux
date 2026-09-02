@@ -79,6 +79,144 @@ void main() {
     });
   });
 
+  group('WslFilesystem.statAndReadBytes', () {
+    test('returns stat and content from a single spawn', () async {
+      List<String>? capturedArgs;
+      const text = 'hello 中文 🚀';
+      final b64 = base64.encode(utf8.encode(text));
+      final fs = WslFilesystem(
+        processRunner: (executable, arguments,
+            {stdoutEncoding, stderrEncoding}) async {
+          expect(executable, 'wsl.exe');
+          capturedArgs = arguments;
+          return ProcessResult(0, 0, 'regular file|42|1700000000\n$b64', '');
+        },
+      );
+
+      final result = await fs.statAndReadBytes(
+        '/tmp/f.txt',
+        maxBytes: 100,
+      );
+
+      expect(capturedArgs!.sublist(0, 4), [
+        '--exec',
+        'sh',
+        '-c',
+        predicate<String>(
+          (script) =>
+              script.contains('stat -c "\$2" -- "\$1"') &&
+              script.contains('head -c "\$3" -- "\$1" | base64 -w0'),
+        ),
+      ]);
+      expect(capturedArgs!.sublist(4), [
+        'sh',
+        '/tmp/f.txt',
+        '%F|%s|%Y',
+        '100',
+      ]);
+      expect(result!.stat.kind, FsEntityKind.file);
+      expect(result.stat.size, 42);
+      expect(utf8.decode(result.bytes!), text);
+    });
+
+    test('omits the head cap when maxBytes is null', () async {
+      List<String>? capturedArgs;
+      final fs = WslFilesystem(
+        processRunner: (executable, arguments,
+            {stdoutEncoding, stderrEncoding}) async {
+          capturedArgs = arguments;
+          return ProcessResult(0, 0, 'regular file|1|1700000000\naGk=', '');
+        },
+      );
+
+      await fs.statAndReadBytes('/tmp/f.txt');
+
+      final script = capturedArgs![3];
+      expect(script, contains('base64 -w0 -- "\$1"'));
+      expect(script, isNot(contains('head')));
+      expect(capturedArgs!.length, 7); // no maxBytes positional
+    });
+
+    test('empty file yields empty bytes, not a failed read', () async {
+      final fs = WslFilesystem(
+        processRunner: (_, __, {stdoutEncoding, stderrEncoding}) async =>
+            ProcessResult(0, 0, 'regular empty file|0|1700000000\n', ''),
+      );
+
+      final result = await fs.statAndReadBytes('/tmp/empty.txt');
+
+      expect(result!.stat.kind, FsEntityKind.file);
+      expect(result.bytes, isEmpty);
+    });
+
+    test('missing file returns null', () async {
+      final fs = WslFilesystem(
+        processRunner: (_, __, {stdoutEncoding, stderrEncoding}) async =>
+            ProcessResult(0, 1, '', 'No such file'),
+      );
+
+      expect(
+        await fs.statAndReadBytes('/missing', maxBytes: 10),
+        isNull,
+      );
+    });
+
+    test('unreadable file returns stat with null bytes', () async {
+      final fs = WslFilesystem(
+        processRunner: (_, __, {stdoutEncoding, stderrEncoding}) async =>
+            ProcessResult(0, 2, 'regular file|6|1700000000\n', 'denied'),
+      );
+
+      final result = await fs.statAndReadBytes('/tmp/noperm', maxBytes: 10);
+
+      expect(result!.stat.kind, FsEntityKind.file);
+      expect(result.bytes, isNull);
+    });
+  });
+
+  group('WslFilesystem.existsMany', () {
+    test('checks every path in a single spawn', () async {
+      List<String>? capturedArgs;
+      final fs = WslFilesystem(
+        processRunner: (executable, arguments,
+            {stdoutEncoding, stderrEncoding}) async {
+          expect(executable, 'wsl.exe');
+          capturedArgs = arguments;
+          return ProcessResult(0, 0, 'yny', '');
+        },
+      );
+
+      final result = await fs.existsMany(['/a', '/b', '/c']);
+
+      final script = capturedArgs![3];
+      expect(script, contains('[ -e "\$f" ]'));
+      expect(capturedArgs!.sublist(4), ['sh', '/a', '/b', '/c']);
+      expect(result, {'/a': true, '/b': false, '/c': true});
+    });
+
+    test('empty input returns empty without spawning', () async {
+      final fs = WslFilesystem(
+        processRunner: (_, __, {stdoutEncoding, stderrEncoding}) async {
+          fail('must not spawn for an empty path list');
+        },
+      );
+
+      expect(await fs.existsMany(const []), isEmpty);
+    });
+
+    test('flag/output length mismatch throws', () async {
+      final fs = WslFilesystem(
+        processRunner: (_, __, {stdoutEncoding, stderrEncoding}) async =>
+            ProcessResult(0, 0, 'y', ''),
+      );
+
+      await expectLater(
+        fs.existsMany(['/a', '/b']),
+        throwsStateError,
+      );
+    });
+  });
+
   group('WslFilesystem.createTempDir', () {
     // Regression: a relative template made mktemp create the directory in
     // wsl.exe's process cwd and return a *relative* path, which the phone
