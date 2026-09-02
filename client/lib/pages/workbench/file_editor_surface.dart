@@ -21,6 +21,7 @@ import '../../services/workbench/workbench_editor_opener.dart';
 import '../../services/workspace/workspace_tools_scope.dart';
 import '../../theme/app_markdown_style_sheet.dart';
 import '../../theme/workspace_surface_layers.dart';
+import '../../widgets/workbench/code_find_panel.dart';
 import '../../widgets/workbench/file_diff_surface_toggle.dart';
 import '../../widgets/workbench/markdown_view_mode_toggle.dart';
 import 'file_editor_image_preview.dart';
@@ -256,12 +257,19 @@ class _CodeEditorPane extends StatefulWidget {
 class _CodeEditorPaneState extends State<_CodeEditorPane> {
   final _menuOpen = ValueNotifier(false);
 
+  /// Find/replace state for this pane. Owned here (not by re-editor) so it
+  /// survives editor rebuilds; re-editor only disposes controllers it created
+  /// itself.
+  late final CodeFindController _findController =
+      CodeFindController(widget.controller);
+
   void _setMenuOpen(bool value) {
     if (mounted) _menuOpen.value = value;
   }
 
   @override
   void dispose() {
+    _findController.dispose();
     _menuOpen.dispose();
     super.dispose();
   }
@@ -275,6 +283,9 @@ class _CodeEditorPaneState extends State<_CodeEditorPane> {
           ValueKey(widget.path),
       controller: widget.controller,
       readOnly: widget.readOnly,
+      findController: _findController,
+      findBuilder: (context, controller, readOnly) =>
+          CodeFindPanel(controller: controller, readOnly: readOnly),
       toolbarController: FileEditorContextMenuController(
         onMenuOpenChanged: _setMenuOpen,
         workspaceId: widget.workspaceId,

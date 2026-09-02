@@ -1,13 +1,15 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_alacritty/flutter_alacritty.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../cubits/chat_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../models/app_session.dart';
 import '../../repositories/session_repository.dart';
+import '../../services/commands/command_bus.dart';
+import '../../services/commands/content_find_command_registrar.dart';
 import '../../services/terminal/terminal_clipboard_image_paste.dart';
 import '../../services/terminal/terminal_session.dart';
 import '../../services/terminal/terminal_uri_opener.dart';
@@ -61,8 +63,28 @@ class _ChatWorkbenchRunningTerminalState
   final GlobalKey<TerminalViewState> _terminalViewKey =
       GlobalKey<TerminalViewState>();
 
+  /// Content find (Mod+F) claim, held while this terminal's subtree has focus
+  /// so the shortcut always targets the focused terminal. Released on blur —
+  /// identity-guarded, so a stale release never clobbers another surface's
+  /// claim.
+  VoidCallback? _contentFindDisposer;
+
+  void _setContentFindClaim(bool active) {
+    if (active) {
+      if (_contentFindDisposer != null) return;
+      _contentFindDisposer = claimContentFindCommand(
+        context.read<CommandBus>(),
+        () => widget.onFindVisibleChanged(true),
+      );
+    } else {
+      _contentFindDisposer?.call();
+      _contentFindDisposer = null;
+    }
+  }
+
   @override
   void dispose() {
+    _contentFindDisposer?.call();
     _menuOpen.dispose();
     super.dispose();
   }
@@ -114,22 +136,26 @@ class _ChatWorkbenchRunningTerminalState
 
   @override
   Widget build(BuildContext context) {
-    return TerminalFindShortcuts(
-      findVisible: widget.findVisible,
-      onToggleFind: () => widget.onFindVisibleChanged(true),
-      onFindNext: () {
-        widget.terminalController.searchNext();
-        widget.onControllerSearchChanged();
-      },
-      onFindPrevious: () {
-        widget.terminalController.searchPrev();
-        widget.onControllerSearchChanged();
-      },
-      onCloseFind: () {
-        widget.terminalController.searchClear();
-        widget.onFindVisibleChanged(false);
-      },
-      child: Stack(
+    return Focus(
+      canRequestFocus: false,
+      skipTraversal: true,
+      onFocusChange: _setContentFindClaim,
+      child: TerminalFindShortcuts(
+        findVisible: widget.findVisible,
+        onToggleFind: () => widget.onFindVisibleChanged(true),
+        onFindNext: () {
+          widget.terminalController.searchNext();
+          widget.onControllerSearchChanged();
+        },
+        onFindPrevious: () {
+          widget.terminalController.searchPrev();
+          widget.onControllerSearchChanged();
+        },
+        onCloseFind: () {
+          widget.terminalController.searchClear();
+          widget.onFindVisibleChanged(false);
+        },
+        child: Stack(
         children: [
             TerminalMirrorTakeoverScope(
               session: widget.session,
@@ -201,6 +227,7 @@ class _ChatWorkbenchRunningTerminalState
             ),
           ],
         ),
+      ),
     );
   }
 }

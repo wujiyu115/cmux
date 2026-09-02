@@ -5,7 +5,9 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_ui/shared_ui.dart';
 
+import '../../cubits/chat_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
+import '../../models/app_session.dart';
 import '../../models/workspace.dart';
 import '../../services/commands/shortcut_focus.dart';
 import '../../services/git/git_command_runner.dart';
@@ -15,14 +17,18 @@ import '../../services/quick_open/quick_open_matcher.dart';
 import '../../services/quick_open/quick_open_mru_repository.dart';
 import '../../services/storage/app_storage.dart';
 import '../../services/workbench/workbench_editor_opener.dart';
+import '../../utils/commands/fuzzy_match.dart';
+import '../../utils/session/workspace_sessions.dart';
+import '../home_workspace/workspace/workspace_session_actions.dart';
 
 /// Process-lifetime index cache so a second Ctrl+P serves the previous
 /// listing instantly while a refresh runs in the background.
 final QuickOpenIndexRegistry _sharedIndexRegistry = QuickOpenIndexRegistry();
 
-/// Opens the quick-open dialog (Ctrl+P). Pops with the chosen absolute path;
-/// the MRU touch and editor open run *after* the pop so the opening editor
-/// does not fight the closing dialog (same ordering as the command palette).
+/// Opens the quick-open dialog (Ctrl+P): sessions + files in one fuzzy
+/// launcher. Pops with the chosen [QuickOpenResult]; the MRU touch and editor
+/// open run *after* the pop so the opening editor does not fight the closing
+/// dialog (same ordering as the command palette).
 ///
 /// [filesystem] must be the work-plane filesystem of the machine hosting the
 /// workspace folders (WSL/SSH workspaces cannot be read through the app's
@@ -51,16 +57,31 @@ Future<void> showQuickOpenDialog(
       registry.gitRunner = gitRunner;
     }
     final mru = mruRepository ?? QuickOpenMruRepository(fs: fs);
-    final path = await showDialog<String>(
+    final chatCubit = context.read<ChatCubit>();
+    final fallback = context.l10n.defaultNewChatSessionTitle;
+    final sessions = sessionsForWorkspace(
+      workspace,
+      chatCubit.state.sessions,
+    );
+    final result = await showDialog<QuickOpenResult>(
       context: context,
       builder: (_) => QuickOpenOverlay(
         workspace: workspace,
         filesystem: fs,
         indexRegistry: registry,
         mruRepository: mru,
+        sessions: sessions,
+        emptyTitleFallback: fallback,
       ),
     );
-    if (path == null) return;
+    if (result == null) return;
+    if (result is QuickOpenSessionResult) {
+      if (!context.mounted) return;
+      // Same open path as the sidebar (worktree sync, needs-you jump).
+      await openWorkspaceSessionTab(context, workspace, result.session);
+      return;
+    }
+    final path = (result as QuickOpenFileResult).path;
     await mru.touch(workspace.firstFolderPath, path);
     if (!context.mounted) return;
     unawaited(
@@ -73,11 +94,31 @@ Future<void> showQuickOpenDialog(
 
 var _quickOpenDialogOpen = false;
 
-/// VS Code-style fuzzy file launcher: a search field over a scrolling,
-/// keyboard-navigable file list. Empty query lists recently opened files; a
-/// query fuzzy-matches basenames first, then workspace-relative paths so
+/// What the user picked from the quick-open list.
+sealed class QuickOpenResult {
+  const QuickOpenResult();
+}
+
+/// A file to open in the editor.
+class QuickOpenFileResult extends QuickOpenResult {
+  const QuickOpenFileResult(this.path);
+
+  final String path;
+}
+
+/// A conversation session to open as a workbench tab.
+class QuickOpenSessionResult extends QuickOpenResult {
+  const QuickOpenSessionResult(this.session);
+
+  final AppSession session;
+}
+
+/// VS Code-style fuzzy launcher over the workspace's sessions and files: a
+/// search field over a scrolling, keyboard-navigable list. Empty query lists
+/// recent sessions then recently opened files; a query fuzzy-matches session
+/// titles and file basenames first, then workspace-relative paths so
 /// same-named files can be told apart. Pops the enclosing route with the
-/// chosen file's absolute path (or `null`).
+/// chosen [QuickOpenResult] (or `null`).
 class QuickOpenOverlay extends StatefulWidget {
   const QuickOpenOverlay({
     super.key,
@@ -85,24 +126,45 @@ class QuickOpenOverlay extends StatefulWidget {
     required this.filesystem,
     required this.indexRegistry,
     required this.mruRepository,
+    required this.sessions,
+    required this.emptyTitleFallback,
   });
 
   final Workspace workspace;
   final Filesystem filesystem;
   final QuickOpenIndexRegistry indexRegistry;
   final QuickOpenMruRepository mruRepository;
+  final List<AppSession> sessions;
+  final String emptyTitleFallback;
 
   @override
   State<QuickOpenOverlay> createState() => _QuickOpenOverlayState();
 }
 
+/// One selectable row: either a session or a file entry.
 class _QuickOpenRow {
-  const _QuickOpenRow(this.entry, this.match);
+  const _QuickOpenRow.session(this.session, this.label, this.sessionMatch)
+    : entry = null,
+      match = null;
+  const _QuickOpenRow.file(this.entry, this.match)
+    : session = null,
+      label = null,
+      sessionMatch = null;
 
-  final QuickOpenFileEntry entry;
+  final AppSession? session;
+  final QuickOpenFileEntry? entry;
 
-  /// Null for MRU rows (no query to highlight against).
+  /// Session rows: resolved display title. File rows: null.
+  final String? label;
+
+  /// File match (null for MRU rows); session title highlight indexes.
   final QuickOpenMatch? match;
+  final List<int>? sessionMatch;
+
+  bool get isSession => session != null;
+
+  /// Single label for scoring / sorting regardless of row kind.
+  String get sortLabel => isSession ? label! : entry!.name;
 
   List<int> matchedIndexesFor(QuickOpenMatchTarget target) =>
       match?.target == target ? match!.indexes : const [];
@@ -121,6 +183,7 @@ class _QuickOpenOverlayState extends State<QuickOpenOverlay> {
   late final FocusNode _searchFocus = FocusNode(onKeyEvent: _handleKey);
   static const double _rowExtent = 64;
   static const int _maxResultRows = 50;
+  static const int _maxRecentSessions = 8;
   static const Duration _debounce = Duration(milliseconds: 100);
 
   String _query = '';
@@ -189,24 +252,44 @@ class _QuickOpenOverlayState extends State<QuickOpenOverlay> {
     );
   }
 
+  /// Empty query: recent sessions first, then recently opened files. Query:
+  /// sessions + files fuzzy-matched and ranked together (sessions compete on
+  /// title, files on basename then path).
   List<_QuickOpenRow> _computeRows() {
     final query = _query.trim();
     if (query.isEmpty) {
-      return [for (final entry in _recent) _QuickOpenRow(entry, null)];
+      final recentSessions = widget.sessions.take(_maxRecentSessions);
+      return [
+        for (final session in recentSessions)
+          _QuickOpenRow.session(
+            session,
+            session.resolveDisplayTitle(widget.emptyTitleFallback),
+            null,
+          ),
+        for (final entry in _recent) _QuickOpenRow.file(entry, null),
+      ];
     }
     final lowerQuery = query.toLowerCase();
     final scored = <_ScoredRow>[];
+    for (final session in widget.sessions) {
+      final title = session.resolveDisplayTitle(widget.emptyTitleFallback);
+      final match = fuzzyMatch(title, lowerQuery);
+      if (match == null) continue;
+      scored.add(
+        _ScoredRow(_QuickOpenRow.session(session, title, match.indexes), match.score),
+      );
+    }
     for (final entry in _index.files) {
       final match = quickOpenMatch(entry, lowerQuery);
       if (match == null) continue;
-      scored.add(_ScoredRow(_QuickOpenRow(entry, match), match.score));
+      scored.add(_ScoredRow(_QuickOpenRow.file(entry, match), match.score));
     }
     scored.sort((a, b) {
       if (a.score != b.score) return b.score.compareTo(a.score);
-      final aLen = a.row.entry.relativePath.length;
-      final bLen = b.row.entry.relativePath.length;
+      final aLen = a.row.sortLabel.length;
+      final bLen = b.row.sortLabel.length;
       if (aLen != bLen) return aLen.compareTo(bLen);
-      return a.row.entry.relativePath.compareTo(b.row.entry.relativePath);
+      return a.row.sortLabel.compareTo(b.row.sortLabel);
     });
     return [for (final s in scored.take(_maxResultRows)) s.row];
   }
@@ -253,12 +336,16 @@ class _QuickOpenOverlayState extends State<QuickOpenOverlay> {
 
   void _openSelected() {
     if (_selectedIndex < 0 || _selectedIndex >= _rows.length) return;
-    Navigator.of(context).pop(_rows[_selectedIndex].entry.path);
+    _openAt(_selectedIndex);
   }
 
   void _openAt(int index) {
     if (index < 0 || index >= _rows.length) return;
-    Navigator.of(context).pop(_rows[index].entry.path);
+    final row = _rows[index];
+    final QuickOpenResult result = row.isSession
+        ? QuickOpenSessionResult(row.session!)
+        : QuickOpenFileResult(row.entry!.path);
+    Navigator.of(context).pop(result);
   }
 
   /// Runs on the search field's own focus node, so arrow / Enter / Escape are
@@ -292,7 +379,9 @@ class _QuickOpenOverlayState extends State<QuickOpenOverlay> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final showRecentHeader = _query.trim().isEmpty && _recent.isNotEmpty;
+    final emptyQuery = _query.trim().isEmpty;
+    final showSessionHeader = emptyQuery && widget.sessions.isNotEmpty;
+    final showRecentHeader = emptyQuery && _recent.isNotEmpty;
     if (_selectedIndex >= _rows.length) {
       _selectedIndex = _rows.isEmpty ? 0 : _rows.length - 1;
     }
@@ -319,6 +408,16 @@ class _QuickOpenOverlayState extends State<QuickOpenOverlay> {
                 },
               ),
               const SizedBox(height: 12),
+              if (showSessionHeader)
+                Padding(
+                  padding: const EdgeInsets.only(left: 6, bottom: 6),
+                  child: Text(
+                    l10n.quickOpenRecentSessions,
+                    style: TpTextStyles.of(context).xsSemiboldColored(
+                      Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
               if (showRecentHeader)
                 Padding(
                   padding: const EdgeInsets.only(left: 6, bottom: 6),
@@ -504,36 +603,63 @@ class _ResultRow extends StatelessWidget {
             child: Row(
               children: [
                 Icon(
-                  Icons.insert_drive_file_outlined,
+                  row.isSession
+                      ? Icons.terminal_rounded
+                      : Icons.insert_drive_file_outlined,
                   size: 16,
                   color: cs.onSurfaceVariant,
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _HighlightedText(
-                        text: row.entry.name,
-                        matchedIndexes: row.matchedIndexesFor(
-                          QuickOpenMatchTarget.name,
-                        ),
-                      ),
-                      _HighlightedText(
-                        text: row.entry.relativePath,
-                        matchedIndexes: row.matchedIndexesFor(
-                          QuickOpenMatchTarget.relativePath,
-                        ),
-                        small: true,
-                      ),
-                    ],
-                  ),
+                  child: row.isSession
+                      ? _SessionRowContent(row: row)
+                      : _FileRowContent(row: row),
                 ),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _SessionRowContent extends StatelessWidget {
+  const _SessionRowContent({required this.row});
+
+  final _QuickOpenRow row;
+
+  @override
+  Widget build(BuildContext context) {
+    return _HighlightedText(
+      text: row.label!,
+      matchedIndexes: row.sessionMatch ?? const [],
+    );
+  }
+}
+
+class _FileRowContent extends StatelessWidget {
+  const _FileRowContent({required this.row});
+
+  final _QuickOpenRow row;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _HighlightedText(
+          text: row.entry!.name,
+          matchedIndexes: row.matchedIndexesFor(QuickOpenMatchTarget.name),
+        ),
+        _HighlightedText(
+          text: row.entry!.relativePath,
+          matchedIndexes: row.matchedIndexesFor(
+            QuickOpenMatchTarget.relativePath,
+          ),
+          small: true,
+        ),
+      ],
     );
   }
 }

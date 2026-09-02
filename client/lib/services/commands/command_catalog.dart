@@ -59,25 +59,25 @@ abstract final class CommandCatalog {
       titleL10nKey: 'shortcutsWorkspaceReopenClosed',
     ),
     CommandDefinition(
-      id: CommandIds.workspaceSearch,
-      category: CommandCategory.navigation,
-      defaultChords: [
-        KeyChord(key: 'f', mods: [KeyChordMod.mod]),
-        KeyChord.doubleTapShift(),
-      ],
-      when: ShortcutWhen.hasWorkspace,
-      terminalPassthrough: true,
-      titleL10nKey: 'shortcutsWorkspaceSearch',
-    ),
-    CommandDefinition(
       id: CommandIds.quickOpen,
       category: CommandCategory.navigation,
       defaultChords: [
         KeyChord(key: 'p', mods: [KeyChordMod.mod]),
+        KeyChord.doubleTapShift(),
       ],
       when: ShortcutWhen.hasWorkspace,
       terminalPassthrough: true,
       titleL10nKey: 'shortcutsQuickOpen',
+    ),
+    CommandDefinition(
+      id: CommandIds.contentFind,
+      category: CommandCategory.navigation,
+      defaultChords: [
+        KeyChord(key: 'f', mods: [KeyChordMod.mod]),
+      ],
+      when: ShortcutWhen.hasWorkspace,
+      terminalPassthrough: true,
+      titleL10nKey: 'shortcutsContentFind',
     ),
 
     // Workbench strip tabs

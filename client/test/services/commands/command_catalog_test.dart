@@ -14,7 +14,8 @@ void main() {
     final ids = CommandCatalog.v1.map((c) => c.id).toSet();
     expect(ids, containsAll([
       CommandIds.workspaceNextTab,
-      CommandIds.workspaceSearch,
+      CommandIds.quickOpen,
+      CommandIds.contentFind,
       CommandIds.stripNextTab,
       CommandIds.sessionCloseTab,
       CommandIds.zoomIn,
@@ -24,28 +25,29 @@ void main() {
     ]));
   });
 
-  test('workspace search defaults to Mod+F and double Shift', () {
-    final def = CommandCatalog.v1.singleWhere(
-      (c) => c.id == CommandIds.workspaceSearch,
-    );
-    expect(def.defaultChords, [
-      KeyChord(key: 'f', mods: [KeyChordMod.mod]),
-      KeyChord.doubleTapShift(),
-    ]);
-    expect(def.when, ShortcutWhen.hasWorkspace);
-    expect(def.terminalPassthrough, isTrue);
-  });
-
-  test('quick open defaults to Mod+P and resolves its title', () {
+  test('quick open defaults to Mod+P plus double-tap Shift', () {
     final def = CommandCatalog.v1.singleWhere(
       (c) => c.id == CommandIds.quickOpen,
     );
     expect(def.defaultChords, [
       KeyChord(key: 'p', mods: [KeyChordMod.mod]),
+      KeyChord.doubleTapShift(),
     ]);
     expect(def.when, ShortcutWhen.hasWorkspace);
     expect(def.terminalPassthrough, isTrue);
     expect(def.titleL10nKey, 'shortcutsQuickOpen');
+  });
+
+  test('content find is Mod+F, terminal passthrough, hasWorkspace', () {
+    final def = CommandCatalog.v1.singleWhere(
+      (c) => c.id == CommandIds.contentFind,
+    );
+    expect(def.defaultChords, [
+      KeyChord(key: 'f', mods: [KeyChordMod.mod]),
+    ]);
+    expect(def.when, ShortcutWhen.hasWorkspace);
+    expect(def.terminalPassthrough, isTrue);
+    expect(def.titleL10nKey, 'shortcutsContentFind');
   });
 
   test('strip next tab defaults to explicit ctrl+tab', () {

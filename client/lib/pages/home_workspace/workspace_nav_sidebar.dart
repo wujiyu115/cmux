@@ -108,7 +108,7 @@ class _WorkspaceNavSidebarState extends State<WorkspaceNavSidebar> {
                     controller: _searchController,
                     onChanged: (value) => setState(() => _query = value),
                     decoration: InputDecoration(
-                      hintText: l10n.shortcutsWorkspaceSearch,
+                      hintText: l10n.workspaceNavSearchHint,
                       prefixIcon: Icon(
                         Icons.search_rounded,
                         size: context.tpIconSizes.sm,

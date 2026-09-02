@@ -15,6 +15,6 @@ const List<String> kWorkbenchWelcomeCommandIds = [
   CommandIds.sessionNewTab,
   CommandIds.togglePanel,
   CommandIds.toggleSidebar,
-  CommandIds.workspaceSearch,
+  CommandIds.quickOpen,
   CommandIds.showCheatsheet,
 ];

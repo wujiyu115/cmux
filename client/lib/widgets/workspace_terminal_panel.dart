@@ -18,6 +18,7 @@ import '../models/workspace_terminal_session_spec.dart';
 import '../pages/command_history/command_history_dialog.dart';
 import '../pages/command_log/command_log_dialog.dart';
 import '../services/commands/command_bus.dart';
+import '../services/commands/content_find_command_registrar.dart';
 import '../services/commands/terminal_split_command_registrar.dart';
 import '../services/ssh/ssh_profile_connection_coordinator.dart';
 import '../services/terminal/terminal_clipboard_image_paste.dart';
@@ -145,6 +146,11 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
   CommandBus? _splitCommandBus;
   VoidCallback? _splitCommandsDisposer;
 
+  /// Content find (Mod+F) is also claimed on focus, but — unlike the split
+  /// commands — released on blur, because the editor pane handles its own
+  /// Ctrl/Cmd+F via re-editor and must not race a lingering terminal claim.
+  VoidCallback? _contentFindDisposer;
+
   List<WorkspaceFolder> get _folders =>
       WorkspaceToolsScope.maybeOf(context)?.effectiveFolders ?? const [];
 
@@ -219,6 +225,8 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
     widget.holdHandle?._unbind(this);
     _splitCommandsDisposer?.call();
     _splitCommandsDisposer = null;
+    _contentFindDisposer?.call();
+    _contentFindDisposer = null;
     unawaited(_sshReconnectSub?.cancel());
     for (final target in _registeredHoldTargets.values) {
       _coordinator?.unregister(target);
@@ -761,6 +769,20 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
     _splitCommandsDisposer = registerTerminalSplitCommands(bus, this);
   }
 
+  /// Claims/releases content find (Mod+F) for this panel's terminal. Claim on
+  /// focus, release on blur (identity-guarded, so a stale release never
+  /// clobbers another surface's claim).
+  void _setContentFindClaim(bool active) {
+    if (active) {
+      if (_contentFindDisposer != null) return;
+      final bus = _splitCommandBus ??= context.read<CommandBus>();
+      _contentFindDisposer = claimContentFindCommand(bus, _openFind);
+    } else {
+      _contentFindDisposer?.call();
+      _contentFindDisposer = null;
+    }
+  }
+
   @override
   void splitRight() => unawaited(_splitActiveSurface(SplitAxis.vertical));
 
@@ -962,6 +984,7 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
       skipTraversal: true,
       onFocusChange: (hasFocus) {
         if (hasFocus) _claimSplitCommands();
+        _setContentFindClaim(hasFocus);
       },
       child: ColoredBox(
         key: AppKeys.workspaceTerminalPanel,

@@ -452,24 +452,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workbenchStripNewMenuTooltip => '新建';
 
   @override
-  String get workspaceSearchTitle => '搜索';
-
-  @override
-  String get workspaceSearchHint => '搜索会话和文件';
-
-  @override
-  String get workspaceSearchFilesSection => '文件';
-
-  @override
-  String get workspaceSearchSearching => '正在搜索文件…';
-
-  @override
-  String get workspaceSearchNoResults => '没有匹配结果';
-
-  @override
-  String get workspaceSearchFilesTruncated => '还有更多文件，请细化搜索';
-
-  @override
   String get homeWorkspaceOpenWorkspaceInNewTab => '在新标签页中打开';
 
   @override
@@ -938,6 +920,39 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get editorFileReadOnly => '文件为只读';
+
+  @override
+  String get editorFindHint => '查找';
+
+  @override
+  String get editorReplaceHint => '替换为';
+
+  @override
+  String get editorFindToggleReplace => '切换替换';
+
+  @override
+  String get editorFindPrevious => '上一个匹配';
+
+  @override
+  String get editorFindNext => '下一个匹配';
+
+  @override
+  String get editorFindClose => '关闭查找';
+
+  @override
+  String get editorFindReplace => '替换';
+
+  @override
+  String get editorFindReplaceAll => '全部替换';
+
+  @override
+  String get editorFindNoResults => '无结果';
+
+  @override
+  String get editorFindCaseSensitive => '区分大小写';
+
+  @override
+  String get editorFindRegex => '正则表达式';
 
   @override
   String editorSaveFailed(String error) {
@@ -1977,25 +1992,31 @@ class AppLocalizationsZh extends AppLocalizations {
   String get shortcutsWorkspaceReopenClosed => '重新打开已关闭的工作区标签';
 
   @override
-  String get shortcutsWorkspaceSearch => '搜索工作区';
+  String get shortcutsQuickOpen => '快速打开';
 
   @override
-  String get shortcutsQuickOpen => '快速打开文件';
+  String get shortcutsContentFind => '在文件或终端中查找';
 
   @override
-  String get quickOpenSearchHint => '输入文件名或路径…';
+  String get quickOpenSearchHint => '搜索会话或文件…';
 
   @override
   String get quickOpenIndexing => '正在索引文件…';
 
   @override
+  String get quickOpenRecentSessions => '最近会话';
+
+  @override
+  String get workspaceNavSearchHint => '搜索工作区';
+
+  @override
   String get quickOpenRecent => '最近打开';
 
   @override
-  String get quickOpenEmptyRecent => '输入文件名开始搜索';
+  String get quickOpenEmptyRecent => '输入以搜索会话或文件';
 
   @override
-  String get quickOpenNoResults => '没有匹配的文件';
+  String get quickOpenNoResults => '没有匹配的会话或文件';
 
   @override
   String quickOpenTruncated(int count) {

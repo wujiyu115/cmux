@@ -950,42 +950,6 @@ abstract class AppLocalizations {
   /// **'New'**
   String get workbenchStripNewMenuTooltip;
 
-  /// No description provided for @workspaceSearchTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Search'**
-  String get workspaceSearchTitle;
-
-  /// No description provided for @workspaceSearchHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Search sessions and files'**
-  String get workspaceSearchHint;
-
-  /// No description provided for @workspaceSearchFilesSection.
-  ///
-  /// In en, this message translates to:
-  /// **'Files'**
-  String get workspaceSearchFilesSection;
-
-  /// No description provided for @workspaceSearchSearching.
-  ///
-  /// In en, this message translates to:
-  /// **'Searching files…'**
-  String get workspaceSearchSearching;
-
-  /// No description provided for @workspaceSearchNoResults.
-  ///
-  /// In en, this message translates to:
-  /// **'No matches'**
-  String get workspaceSearchNoResults;
-
-  /// No description provided for @workspaceSearchFilesTruncated.
-  ///
-  /// In en, this message translates to:
-  /// **'More files match — refine your search'**
-  String get workspaceSearchFilesTruncated;
-
   /// No description provided for @homeWorkspaceOpenWorkspaceInNewTab.
   ///
   /// In en, this message translates to:
@@ -1879,6 +1843,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'File is read-only'**
   String get editorFileReadOnly;
+
+  /// No description provided for @editorFindHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Find'**
+  String get editorFindHint;
+
+  /// No description provided for @editorReplaceHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace with'**
+  String get editorReplaceHint;
+
+  /// No description provided for @editorFindToggleReplace.
+  ///
+  /// In en, this message translates to:
+  /// **'Toggle replace'**
+  String get editorFindToggleReplace;
+
+  /// No description provided for @editorFindPrevious.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous match'**
+  String get editorFindPrevious;
+
+  /// No description provided for @editorFindNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next match'**
+  String get editorFindNext;
+
+  /// No description provided for @editorFindClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close find'**
+  String get editorFindClose;
+
+  /// No description provided for @editorFindReplace.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace'**
+  String get editorFindReplace;
+
+  /// No description provided for @editorFindReplaceAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace all'**
+  String get editorFindReplaceAll;
+
+  /// No description provided for @editorFindNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No results'**
+  String get editorFindNoResults;
+
+  /// No description provided for @editorFindCaseSensitive.
+  ///
+  /// In en, this message translates to:
+  /// **'Match case'**
+  String get editorFindCaseSensitive;
+
+  /// No description provided for @editorFindRegex.
+  ///
+  /// In en, this message translates to:
+  /// **'Regular expression'**
+  String get editorFindRegex;
 
   /// No description provided for @editorSaveFailed.
   ///
@@ -3818,22 +3848,22 @@ abstract class AppLocalizations {
   /// **'Reopen Closed Workspace Tab'**
   String get shortcutsWorkspaceReopenClosed;
 
-  /// No description provided for @shortcutsWorkspaceSearch.
-  ///
-  /// In en, this message translates to:
-  /// **'Search Workspace'**
-  String get shortcutsWorkspaceSearch;
-
   /// No description provided for @shortcutsQuickOpen.
   ///
   /// In en, this message translates to:
-  /// **'Quick Open File'**
+  /// **'Quick Open'**
   String get shortcutsQuickOpen;
+
+  /// No description provided for @shortcutsContentFind.
+  ///
+  /// In en, this message translates to:
+  /// **'Find in File or Terminal'**
+  String get shortcutsContentFind;
 
   /// No description provided for @quickOpenSearchHint.
   ///
   /// In en, this message translates to:
-  /// **'Search by file name or path…'**
+  /// **'Search sessions or files…'**
   String get quickOpenSearchHint;
 
   /// No description provided for @quickOpenIndexing.
@@ -3841,6 +3871,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Indexing files…'**
   String get quickOpenIndexing;
+
+  /// No description provided for @quickOpenRecentSessions.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent sessions'**
+  String get quickOpenRecentSessions;
+
+  /// No description provided for @workspaceNavSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search workspaces'**
+  String get workspaceNavSearchHint;
 
   /// No description provided for @quickOpenRecent.
   ///
@@ -3851,13 +3893,13 @@ abstract class AppLocalizations {
   /// No description provided for @quickOpenEmptyRecent.
   ///
   /// In en, this message translates to:
-  /// **'Start typing to search files'**
+  /// **'Start typing to search sessions or files'**
   String get quickOpenEmptyRecent;
 
   /// No description provided for @quickOpenNoResults.
   ///
   /// In en, this message translates to:
-  /// **'No matching files'**
+  /// **'No matching sessions or files'**
   String get quickOpenNoResults;
 
   /// No description provided for @quickOpenTruncated.

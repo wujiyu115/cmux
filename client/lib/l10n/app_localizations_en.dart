@@ -472,25 +472,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workbenchStripNewMenuTooltip => 'New';
 
   @override
-  String get workspaceSearchTitle => 'Search';
-
-  @override
-  String get workspaceSearchHint => 'Search sessions and files';
-
-  @override
-  String get workspaceSearchFilesSection => 'Files';
-
-  @override
-  String get workspaceSearchSearching => 'Searching files…';
-
-  @override
-  String get workspaceSearchNoResults => 'No matches';
-
-  @override
-  String get workspaceSearchFilesTruncated =>
-      'More files match — refine your search';
-
-  @override
   String get homeWorkspaceOpenWorkspaceInNewTab => 'Open in new tab';
 
   @override
@@ -973,6 +954,39 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get editorFileReadOnly => 'File is read-only';
+
+  @override
+  String get editorFindHint => 'Find';
+
+  @override
+  String get editorReplaceHint => 'Replace with';
+
+  @override
+  String get editorFindToggleReplace => 'Toggle replace';
+
+  @override
+  String get editorFindPrevious => 'Previous match';
+
+  @override
+  String get editorFindNext => 'Next match';
+
+  @override
+  String get editorFindClose => 'Close find';
+
+  @override
+  String get editorFindReplace => 'Replace';
+
+  @override
+  String get editorFindReplaceAll => 'Replace all';
+
+  @override
+  String get editorFindNoResults => 'No results';
+
+  @override
+  String get editorFindCaseSensitive => 'Match case';
+
+  @override
+  String get editorFindRegex => 'Regular expression';
 
   @override
   String editorSaveFailed(String error) {
@@ -2038,25 +2052,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shortcutsWorkspaceReopenClosed => 'Reopen Closed Workspace Tab';
 
   @override
-  String get shortcutsWorkspaceSearch => 'Search Workspace';
+  String get shortcutsQuickOpen => 'Quick Open';
 
   @override
-  String get shortcutsQuickOpen => 'Quick Open File';
+  String get shortcutsContentFind => 'Find in File or Terminal';
 
   @override
-  String get quickOpenSearchHint => 'Search by file name or path…';
+  String get quickOpenSearchHint => 'Search sessions or files…';
 
   @override
   String get quickOpenIndexing => 'Indexing files…';
 
   @override
+  String get quickOpenRecentSessions => 'Recent sessions';
+
+  @override
+  String get workspaceNavSearchHint => 'Search workspaces';
+
+  @override
   String get quickOpenRecent => 'Recently opened';
 
   @override
-  String get quickOpenEmptyRecent => 'Start typing to search files';
+  String get quickOpenEmptyRecent => 'Start typing to search sessions or files';
 
   @override
-  String get quickOpenNoResults => 'No matching files';
+  String get quickOpenNoResults => 'No matching sessions or files';
 
   @override
   String quickOpenTruncated(int count) {

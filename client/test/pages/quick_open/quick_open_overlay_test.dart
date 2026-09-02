@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_ui/shared_ui.dart';
 import 'package:teampilot/l10n/app_localizations.dart';
+import 'package:teampilot/models/app_session.dart';
 import 'package:teampilot/models/workspace.dart';
 import 'package:teampilot/models/workspace_folder.dart';
 import 'package:teampilot/pages/quick_open/quick_open_overlay.dart';
@@ -31,6 +32,13 @@ Workspace _workspace() => Workspace(
   createdAt: 0,
 );
 
+AppSession _session(String id, String display) => AppSession(
+  sessionId: id,
+  workspaceId: 'w1',
+  display: display,
+  createdAt: 0,
+);
+
 InMemoryFilesystem _fs() {
   final fs = InMemoryFilesystem();
   fs.ensureDir('/repo/lib');
@@ -42,8 +50,21 @@ InMemoryFilesystem _fs() {
   return fs;
 }
 
+QuickOpenOverlay _overlay(
+  InMemoryFilesystem fs, {
+  QuickOpenMruRepository? mru,
+  List<AppSession> sessions = const [],
+}) => QuickOpenOverlay(
+  workspace: _workspace(),
+  filesystem: fs,
+  indexRegistry: QuickOpenIndexRegistry(),
+  mruRepository: mru ?? QuickOpenMruRepository(fs: fs, path: '/mru.json'),
+  sessions: sessions,
+  emptyTitleFallback: 'New chat',
+);
+
 class _DialogResult {
-  String? value;
+  QuickOpenResult? value;
 }
 
 /// Pumps a button that shows [overlay] in a dialog route; the returned holder
@@ -55,7 +76,7 @@ Future<_DialogResult> _pumpDialog(WidgetTester tester, Widget overlay) async {
       Builder(
         builder: (context) => TextButton(
           onPressed: () async {
-            result.value = await showDialog<String>(
+            result.value = await showDialog<QuickOpenResult>(
               context: context,
               builder: (_) => overlay,
             );
@@ -76,15 +97,7 @@ void main() {
     final mru = QuickOpenMruRepository(fs: fs, path: '/mru.json');
     await mru.touch('/repo', '/repo/lib/main.dart');
 
-    final result = await _pumpDialog(
-      tester,
-      QuickOpenOverlay(
-        workspace: _workspace(),
-        filesystem: fs,
-        indexRegistry: QuickOpenIndexRegistry(),
-        mruRepository: mru,
-      ),
-    );
+    final result = await _pumpDialog(tester, _overlay(fs, mru: mru));
 
     expect(find.text('Recently opened'), findsOneWidget);
     expect(find.text('main.dart'), findsOneWidget);
@@ -92,22 +105,62 @@ void main() {
 
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pumpAndSettle();
-    expect(result.value, '/repo/lib/main.dart');
+    expect(result.value, isA<QuickOpenFileResult>());
+    expect((result.value! as QuickOpenFileResult).path, '/repo/lib/main.dart');
+  });
+
+  testWidgets('empty query lists recent sessions above recent files', (
+    tester,
+  ) async {
+    final fs = _fs();
+    final mru = QuickOpenMruRepository(fs: fs, path: '/mru.json');
+    await mru.touch('/repo', '/repo/lib/main.dart');
+
+    final result = await _pumpDialog(
+      tester,
+      _overlay(fs, mru: mru, sessions: [_session('s1', 'Deploy fix')]),
+    );
+
+    expect(find.text('Recent sessions'), findsOneWidget);
+    expect(find.text('Recently opened'), findsOneWidget);
+    expect(find.text('Deploy fix'), findsOneWidget);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    expect(result.value, isA<QuickOpenSessionResult>());
+    expect(
+      (result.value! as QuickOpenSessionResult).session.sessionId,
+      's1',
+    );
+  });
+
+  testWidgets('a query fuzzy-matches session titles', (tester) async {
+    final fs = _fs();
+    final result = await _pumpDialog(
+      tester,
+      _overlay(fs, sessions: [_session('s1', 'Deploy fix'), _session('s2', 'Notes')]),
+    );
+
+    await tester.enterText(find.byType(TextField), 'dep');
+    await tester.pump(const Duration(milliseconds: 150));
+
+    expect(find.text('Deploy fix'), findsOneWidget);
+    expect(find.text('Notes'), findsNothing);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    expect(result.value, isA<QuickOpenSessionResult>());
+    expect(
+      (result.value! as QuickOpenSessionResult).session.sessionId,
+      's1',
+    );
   });
 
   testWidgets('typing filters by fuzzy match and Enter opens the file', (
     tester,
   ) async {
     final fs = _fs();
-    final result = await _pumpDialog(
-      tester,
-      QuickOpenOverlay(
-        workspace: _workspace(),
-        filesystem: fs,
-        indexRegistry: QuickOpenIndexRegistry(),
-        mruRepository: QuickOpenMruRepository(fs: fs, path: '/mru.json'),
-      ),
-    );
+    final result = await _pumpDialog(tester, _overlay(fs));
     expect(result.value, isNull); // not closed yet
 
     await tester.enterText(find.byType(TextField), 'read');
@@ -121,21 +174,13 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pumpAndSettle();
 
-    expect(result.value, '/repo/docs/README.md');
+    expect((result.value! as QuickOpenFileResult).path, '/repo/docs/README.md');
     expect(find.byType(QuickOpenOverlay), findsNothing);
   });
 
   testWidgets('a path query disambiguates same-named files', (tester) async {
     final fs = _fs();
-    final result = await _pumpDialog(
-      tester,
-      QuickOpenOverlay(
-        workspace: _workspace(),
-        filesystem: fs,
-        indexRegistry: QuickOpenIndexRegistry(),
-        mruRepository: QuickOpenMruRepository(fs: fs, path: '/mru.json'),
-      ),
-    );
+    final result = await _pumpDialog(tester, _overlay(fs));
 
     await tester.enterText(find.byType(TextField), 'docs/main');
     await tester.pump(const Duration(milliseconds: 150));
@@ -163,20 +208,12 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pumpAndSettle();
 
-    expect(result.value, '/repo/docs/main.dart');
+    expect((result.value! as QuickOpenFileResult).path, '/repo/docs/main.dart');
   });
 
   testWidgets('a basename query lists every same-named file', (tester) async {
     final fs = _fs();
-    await _pumpDialog(
-      tester,
-      QuickOpenOverlay(
-        workspace: _workspace(),
-        filesystem: fs,
-        indexRegistry: QuickOpenIndexRegistry(),
-        mruRepository: QuickOpenMruRepository(fs: fs, path: '/mru.json'),
-      ),
-    );
+    await _pumpDialog(tester, _overlay(fs));
 
     await tester.enterText(find.byType(TextField), 'main');
     await tester.pump(const Duration(milliseconds: 150));
@@ -188,33 +225,17 @@ void main() {
 
   testWidgets('no matching files shows the empty state', (tester) async {
     final fs = _fs();
-    await _pumpDialog(
-      tester,
-      QuickOpenOverlay(
-        workspace: _workspace(),
-        filesystem: fs,
-        indexRegistry: QuickOpenIndexRegistry(),
-        mruRepository: QuickOpenMruRepository(fs: fs, path: '/mru.json'),
-      ),
-    );
+    await _pumpDialog(tester, _overlay(fs));
 
     await tester.enterText(find.byType(TextField), 'zzzz');
     await tester.pump(const Duration(milliseconds: 150));
 
-    expect(find.text('No matching files'), findsOneWidget);
+    expect(find.text('No matching sessions or files'), findsOneWidget);
   });
 
   testWidgets('Esc closes without opening', (tester) async {
     final fs = _fs();
-    final result = await _pumpDialog(
-      tester,
-      QuickOpenOverlay(
-        workspace: _workspace(),
-        filesystem: fs,
-        indexRegistry: QuickOpenIndexRegistry(),
-        mruRepository: QuickOpenMruRepository(fs: fs, path: '/mru.json'),
-      ),
-    );
+    final result = await _pumpDialog(tester, _overlay(fs));
 
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
@@ -230,15 +251,7 @@ void main() {
     addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
 
     final fs = _fs();
-    await _pumpDialog(
-      tester,
-      QuickOpenOverlay(
-        workspace: _workspace(),
-        filesystem: fs,
-        indexRegistry: QuickOpenIndexRegistry(),
-        mruRepository: QuickOpenMruRepository(fs: fs, path: '/mru.json'),
-      ),
-    );
+    await _pumpDialog(tester, _overlay(fs));
 
     await tester.enterText(find.byType(TextField), 'read');
     await tester.pump(const Duration(milliseconds: 150));

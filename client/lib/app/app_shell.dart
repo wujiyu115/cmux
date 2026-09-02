@@ -79,7 +79,6 @@ import '../services/commands/quick_open_command_registrar.dart';
 import '../services/commands/run_command_registrar.dart';
 import '../services/commands/session_command_registrar.dart';
 import '../services/commands/shortcuts_ui_commands.dart';
-import '../services/commands/workspace_search_command_registrar.dart';
 import '../pages/home_workspace/workspace_chrome_commands.dart';
 import '../pages/home_workspace/home_workspace_route.dart';
 import '../services/app/connection_mode_service.dart';
@@ -181,7 +180,6 @@ class AppShell {
     required this.shortcutCubit,
     required this.workspaceChromeCommands,
     required this.runCommandHost,
-    required this.workspaceSearchHost,
     required this.quickOpenHost,
     required this.uiZoomBaseline,
   });
@@ -236,7 +234,6 @@ class AppShell {
   final ShortcutCubit shortcutCubit;
   final WorkspaceChromeCommands workspaceChromeCommands;
   final RunCommandHost runCommandHost;
-  final WorkspaceSearchHost workspaceSearchHost;
   final QuickOpenHost quickOpenHost;
   final UiZoomBaseline uiZoomBaseline;
 }
@@ -456,13 +453,11 @@ Future<AppShell> buildAppShell({
   final shortcutCubit = ShortcutCubit();
   final workspaceChromeCommands = WorkspaceChromeCommands();
   final runCommandHost = RunCommandHost();
-  final workspaceSearchHost = WorkspaceSearchHost();
   final quickOpenHost = QuickOpenHost();
   final uiZoomBaseline = UiZoomBaseline();
   registerShortcutsUiCommands(commandBus);
   registerCommandPaletteCommand(commandBus);
   registerRunCommands(commandBus, runCommandHost);
-  registerWorkspaceSearchCommands(commandBus, workspaceSearchHost);
   registerQuickOpenCommands(commandBus, quickOpenHost);
 
   final transportFactory = TerminalTransportFactory(
@@ -1273,7 +1268,6 @@ Future<AppShell> buildAppShell({
     shortcutCubit: shortcutCubit,
     workspaceChromeCommands: workspaceChromeCommands,
     runCommandHost: runCommandHost,
-    workspaceSearchHost: workspaceSearchHost,
     quickOpenHost: quickOpenHost,
     uiZoomBaseline: uiZoomBaseline,
   );

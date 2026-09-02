@@ -13,8 +13,8 @@ import '../../../models/workspace.dart';
 import '../../../models/workspace_folder.dart';
 import '../../../services/commands/quick_open_command_registrar.dart';
 import '../../../services/commands/run_command_registrar.dart';
-import '../../../services/commands/workspace_search_command_registrar.dart';
 import '../../../services/git/git_command_runner.dart';
+import '../../../services/quick_open/quick_open_mru_repository.dart';
 import '../../../services/storage/app_storage.dart';
 import '../../../services/workspace/workspace_run_registry.dart';
 import '../../../services/workspace/workspace_tools_scope.dart';
@@ -28,7 +28,6 @@ import '../../chat_page.dart';
 import '../../quick_open/quick_open_overlay.dart';
 import '../../workspace_ide/workspace_ide_shell.dart';
 import 'workspace_route_active_scope.dart';
-import 'workspace_search_dialog.dart';
 import 'workspace_session_actions.dart';
 import 'workspace_tools_scope_sync.dart';
 
@@ -52,9 +51,7 @@ class _WorkspaceSplitPaneState extends State<WorkspaceSplitPane> {
   final _terminalHold = WorkspaceTerminalHoldHandle();
   RunCubit? _boundRunCubit;
   RunCommandHost? _runCommandHost;
-  WorkspaceSearchHost? _workspaceSearchHost;
   QuickOpenHost? _quickOpenHost;
-  late final void Function() _openWorkspaceSearch = _openSearch;
   late final void Function() _openQuickOpen = _openQuickOpenNow;
 
   /// Guards the empty-workspace auto-terminal so it fires once per empty
@@ -65,10 +62,8 @@ class _WorkspaceSplitPaneState extends State<WorkspaceSplitPane> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     _runCommandHost = context.read<RunCommandHost>();
-    _workspaceSearchHost = context.read<WorkspaceSearchHost>();
     _quickOpenHost = context.read<QuickOpenHost>();
     _syncRunCommandHost();
-    _syncWorkspaceSearchHost();
     _syncQuickOpenHost();
   }
 
@@ -80,14 +75,8 @@ class _WorkspaceSplitPaneState extends State<WorkspaceSplitPane> {
       host.unbind(cubit);
     }
     _boundRunCubit = null;
-    _workspaceSearchHost?.unbind(_openWorkspaceSearch);
     _quickOpenHost?.unbind(_openQuickOpen);
     super.dispose();
-  }
-
-  void _openSearch() {
-    if (!mounted) return;
-    unawaited(showWorkspaceSearchDialog(context, workspace: widget.workspace));
   }
 
   void _openQuickOpenNow() {
@@ -102,11 +91,25 @@ class _WorkspaceSplitPaneState extends State<WorkspaceSplitPane> {
         : widget.workspace.folders.first.targetId;
     final targetContext = scopeState.runtimeContextForTarget(targetId);
     final fs = targetContext?.filesystem ?? AppStorage.fs;
+    // The MRU store must live on the same plane as the work-plane filesystem:
+    // the repository's default path is a host-native AppData path that a
+    // WSL/SSH filesystem cannot address.
+    final mru =
+        targetContext == null
+            ? null
+            : QuickOpenMruRepository(
+              fs: fs,
+              path: fs.pathContext.join(
+                targetContext.appDataRoot,
+                'quick-open-mru.json',
+              ),
+            );
     unawaited(
       showQuickOpenDialog(
         context,
         workspace: widget.workspace,
         filesystem: fs,
+        mruRepository: mru,
         gitRunner: targetContext == null
             ? null
             : gitCommandRunnerForContext(targetContext),
@@ -158,17 +161,6 @@ class _WorkspaceSplitPaneState extends State<WorkspaceSplitPane> {
         ),
       );
     });
-  }
-
-  void _syncWorkspaceSearchHost() {
-    final host = _workspaceSearchHost;
-    if (host == null) return;
-    final routeActive = WorkspaceRouteActiveScope.routeActiveOf(context);
-    if (routeActive) {
-      host.bind(_openWorkspaceSearch);
-    } else {
-      host.unbind(_openWorkspaceSearch);
-    }
   }
 
   void _syncQuickOpenHost() {
