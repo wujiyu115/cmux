@@ -13,6 +13,8 @@ import '../../models/workspace_accent.dart';
 import '../../models/workspace_group.dart';
 import '../../models/workspace_tab_ref.dart';
 import '../../repositories/session_repository.dart';
+import '../../services/terminal/workspace_shell_connector.dart';
+import '../../services/terminal/workspace_terminal_registry.dart';
 import '../../theme/workspace_accent_palette.dart';
 import '../../theme/workspace_surface_layers.dart';
 import '../../utils/workspace/workspace_display_name.dart';
@@ -232,21 +234,85 @@ class _WorkspaceNavSidebarState extends State<WorkspaceNavSidebar> {
 }
 
 /// Agent-status indicator for one workspace row: aggregates the seat map over
-/// this workspace's sessions (ChatCubit) and paints the matching glyph.
+/// this workspace's sessions (ChatCubit) and its shell-terminal panes
+/// (registered as `ws:<paneId>` seats), painting the matching glyph.
 /// Collapsed to zero width when idle so the row layout is unchanged.
-class _WorkspaceAgentStatusBadge extends StatelessWidget {
+class _WorkspaceAgentStatusBadge extends StatefulWidget {
   const _WorkspaceAgentStatusBadge({required this.workspaceId});
 
   final String workspaceId;
+
+  @override
+  State<_WorkspaceAgentStatusBadge> createState() =>
+      _WorkspaceAgentStatusBadgeState();
+}
+
+class _WorkspaceAgentStatusBadgeState
+    extends State<_WorkspaceAgentStatusBadge> {
+  WorkspaceTerminalRegistry? _terminals;
+  VoidCallback? _terminalsSub;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    WorkspaceTerminalRegistry? terminals;
+    try {
+      terminals = context.read<WorkspaceTerminalRegistry>();
+    } on ProviderNotFoundException {
+      terminals = null; // Harnesses may mount the sidebar without one.
+    }
+    if (identical(terminals, _terminals)) return;
+    _detachTerminals();
+    _terminals = terminals;
+    // Registry notifications can fire synchronously during another widget's
+    // build (e.g. groupFor creating a group); defer the rebuild to frame end.
+    final sub = _terminalsSub = terminals == null
+        ? null
+        : () {
+            if (!mounted) return;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) setState(() {});
+            });
+          };
+    if (terminals != null && sub != null) {
+      terminals.changes.addListener(sub);
+    }
+  }
+
+  @override
+  void dispose() {
+    _detachTerminals();
+    super.dispose();
+  }
+
+  void _detachTerminals() {
+    final terminals = _terminals;
+    final sub = _terminalsSub;
+    if (terminals != null && sub != null) {
+      terminals.changes.removeListener(sub);
+    }
+    _terminals = null;
+    _terminalsSub = null;
+  }
 
   @override
   Widget build(BuildContext context) {
     final sessionIds = context.select<ChatCubit, Set<String>>(
       (cubit) => {
         for (final s in cubit.state.sessions)
-          if (s.workspaceId == workspaceId) s.sessionId,
+          if (s.workspaceId == widget.workspaceId) s.sessionId,
       },
     );
+    // Shell-terminal panes report agent status as `ws:<paneId>` seats; fold
+    // them in so an agent running in a workspace shell terminal (rather than
+    // a session tab) also lights the row.
+    final terminals = _terminals;
+    final group = terminals?.groupOf(widget.workspaceId);
+    if (group != null) {
+      sessionIds.addAll(
+        group.entries.map((e) => WorkspaceShellConnector.seatIdFor(e.id)),
+      );
+    }
     final status = context.select<AgentAttentionCubit, WorkspaceAgentStatus>(
       (cubit) => cubit.state.workspaceAgentStatus(sessionIds),
     );

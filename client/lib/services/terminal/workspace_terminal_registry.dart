@@ -530,6 +530,12 @@ class WorkspaceTerminalRegistry {
   /// only.
   String Function(String workspaceId)? workspaceLabelResolver;
 
+  /// The group for [workspaceId] without creating one, or null when this
+  /// workspace tracks no terminals. Read-only consumers (status badges) must
+  /// prefer this over the side-effecting [groupFor].
+  WorkspaceTerminalGroup? groupOf(String workspaceId) =>
+      _groups[workspaceId];
+
   WorkspaceTerminalGroup groupFor(String workspaceId) =>
       _groups.putIfAbsent(workspaceId, () {
         final group = WorkspaceTerminalGroup(

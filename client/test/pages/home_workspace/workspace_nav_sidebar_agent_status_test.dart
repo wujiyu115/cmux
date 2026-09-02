@@ -7,9 +7,13 @@ import 'package:teampilot/cubits/workspace_groups_cubit.dart';
 import 'package:teampilot/l10n/app_localizations.dart';
 import 'package:teampilot/models/app_session.dart';
 import 'package:teampilot/models/workspace.dart';
+import 'package:teampilot/models/workspace_terminal_session_spec.dart';
 import 'package:teampilot/pages/home_workspace/workspace_nav_sidebar.dart';
 import 'package:teampilot/services/agent_status/agent_attention_state.dart';
 import 'package:teampilot/services/agent_status/agent_status_event.dart';
+import 'package:teampilot/services/terminal/terminal_session.dart';
+import 'package:teampilot/services/terminal/workspace_shell_connector.dart';
+import 'package:teampilot/services/terminal/workspace_terminal_registry.dart';
 import 'package:teampilot/widgets/session_working_spinner.dart';
 import 'package:teampilot/widgets/workspace_agent_status_indicator.dart';
 
@@ -34,12 +38,27 @@ void main() {
     tearDownTestAppStorage();
   });
 
-  Future<void> pumpSidebar(WidgetTester tester) async {
+  Future<void> pumpSidebar(
+    WidgetTester tester, {
+    WorkspaceTerminalRegistry? terminalRegistry,
+  }) async {
     tester.view.physicalSize = const Size(1280, 800);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
+    Widget sidebar = WorkspaceNavSidebar(
+      location: '/home-v2',
+      openTabs: const [],
+      onHomeTap: () {},
+      onCloseTab: (_) {},
+    );
+    if (terminalRegistry != null) {
+      sidebar = RepositoryProvider<WorkspaceTerminalRegistry>.value(
+        value: terminalRegistry,
+        child: sidebar,
+      );
+    }
     await tester.pumpWidget(
       MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -52,12 +71,7 @@ void main() {
               BlocProvider<AgentAttentionCubit>.value(value: attentionCubit),
               BlocProvider<WorkspaceGroupsCubit>.value(value: groupsCubit),
             ],
-            child: WorkspaceNavSidebar(
-              location: '/home-v2',
-              openTabs: const [],
-              onHomeTap: () {},
-              onCloseTab: (_) {},
-            ),
+            child: sidebar,
           ),
         ),
       ),
@@ -191,6 +205,70 @@ void main() {
     expect(find.byType(SessionWorkingSpinner), findsOneWidget);
 
     attentionCubit.clearSeat(sessionId: 'session-a', memberId: 'm1');
+    await tester.pump();
+    expect(find.byType(SessionWorkingSpinner), findsNothing);
+  });
+
+  testWidgets('shell-terminal seat lights only its workspace row', (
+    tester,
+  ) async {
+    seedWorkspaces();
+    final registry = WorkspaceTerminalRegistry();
+    addTearDown(registry.disposeAll);
+    final entry = registry.groupFor('ws-a').addEntry(
+      cwd: '/tmp',
+      spec: const WorkspaceTerminalLocalSpec('/bin/bash'),
+      session: TerminalSession(
+        executable: '/bin/bash',
+        validateLaunch: false,
+        parseExecutable: false,
+      ),
+      select: true,
+    );
+    final seatId = WorkspaceShellConnector.seatIdFor(entry.id);
+    attentionCubit.applyEvent(
+      sessionId: seatId,
+      memberId: seatId,
+      event: const AgentStatusEvent(state: AgentSeatAttention.working),
+      skipPermissions: false,
+    );
+    await pumpSidebar(tester, terminalRegistry: registry);
+
+    expect(find.byType(SessionWorkingSpinner), findsOneWidget);
+  });
+
+  testWidgets('shell-terminal seat stops lighting the row after pane close', (
+    tester,
+  ) async {
+    seedWorkspaces();
+    final registry = WorkspaceTerminalRegistry();
+    addTearDown(registry.disposeAll);
+    final group = registry.groupFor('ws-a');
+    final entry = group.addEntry(
+      cwd: '/tmp',
+      spec: const WorkspaceTerminalLocalSpec('/bin/bash'),
+      session: TerminalSession(
+        executable: '/bin/bash',
+        validateLaunch: false,
+        parseExecutable: false,
+      ),
+      select: true,
+    );
+    final seatId = WorkspaceShellConnector.seatIdFor(entry.id);
+    attentionCubit.applyEvent(
+      sessionId: seatId,
+      memberId: seatId,
+      event: const AgentStatusEvent(state: AgentSeatAttention.working),
+      skipPermissions: false,
+    );
+    await pumpSidebar(tester, terminalRegistry: registry);
+    expect(find.byType(SessionWorkingSpinner), findsOneWidget);
+
+    group.removeEntry(entry.id);
+    // The badge rebuilds from a post-frame callback (registry notifications
+    // can fire mid-build), so pump twice: once to run the callback, once to
+    // render the setState it schedules.
+    await tester.pump();
     await tester.pump();
     expect(find.byType(SessionWorkingSpinner), findsNothing);
   });
