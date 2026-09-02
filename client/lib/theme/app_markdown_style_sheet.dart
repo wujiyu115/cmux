@@ -8,6 +8,13 @@ List<TextStyle> appMarkdownTextStyles(ThemeData theme) {
   return buildAppCompiledMarkdownStyle(theme).textStylesForWarmup;
 }
 
+/// CJK-safe line height for markdown text. The bundled Noto Sans SC measures
+/// ~1.43–1.46em natural ascent+descent, so the design system's 1.25/1.35
+/// multipliers compress line boxes below the glyph metrics and Chinese text
+/// overlaps line to line. 1.5 keeps every markdown style above the natural
+/// metrics of the CJK fonts in the fallback chains.
+const double _markdownLineHeight = 1.5;
+
 /// Host [CompiledMarkdownStyle] bound to [TpTextStyles] + [TpFontTheme].
 ///
 /// Uses only warmup-covered size/weight variants — no ad-hoc sizes that miss
@@ -24,6 +31,7 @@ CompiledMarkdownStyle buildAppCompiledMarkdownStyle(
   TextStyle withUi(TextStyle style) => style.copyWith(
     fontFamily: fonts.uiFontFamily,
     fontFamilyFallback: fonts.uiFontFamilyFallback,
+    height: _markdownLineHeight,
   );
 
   final body = withUi(styles.md);
@@ -34,7 +42,10 @@ CompiledMarkdownStyle buildAppCompiledMarkdownStyle(
     fontFamilyFallback: fonts.monoFontFamilyFallback,
     backgroundColor: muted.withValues(alpha: 0.55),
   );
-  final codeBlock = styles.mono.copyWith(color: scheme.onSurface);
+  final codeBlock = styles.mono.copyWith(
+    color: scheme.onSurface,
+    height: _markdownLineHeight,
+  );
 
   return CompiledMarkdownStyle(
     body: body,
