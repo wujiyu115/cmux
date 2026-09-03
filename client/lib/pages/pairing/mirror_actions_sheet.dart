@@ -6,7 +6,7 @@ import 'pairing_sheet_parts.dart';
 /// One action from [showMirrorActionsSheet].
 enum MirrorAction { gitDiff, scrollToLatest }
 
-/// The mirror nav bar's second-level sheet: what the trailing diff icon opens.
+/// The mirror nav bar's second-level sheet: what the trailing more icon opens.
 ///
 /// A sheet rather than inline nav actions because a 52px row is the easiest
 /// target a phone offers, and because the git-diff entry needs the changed-file

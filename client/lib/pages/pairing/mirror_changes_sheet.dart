@@ -253,8 +253,8 @@ class MirrorChangesAction extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final action = PairingNavAction(
       key: AppKeys.pairingMirrorChangesButton,
-      icon: Icons.difference_outlined,
-      tooltip: context.l10n.gitChanges,
+      icon: Icons.more_horiz,
+      tooltip: context.l10n.mirrorActionsTitle,
       iconSize: 22,
       onTap: onTap,
     );

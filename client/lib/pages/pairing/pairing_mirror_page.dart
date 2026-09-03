@@ -243,7 +243,7 @@ class _PairingMirrorPageState extends State<PairingMirrorPage>
     _controller.clearSelection();
   }
 
-  /// Second-level menu behind the nav bar's diff icon: git changes for the
+  /// Second-level menu behind the nav bar's more icon: git changes for the
   /// mirrored pane's repo, or a jump back to the live edge of the scrollback.
   Future<void> _showActionsMenu() async {
     final action = await showMirrorActionsSheet(
