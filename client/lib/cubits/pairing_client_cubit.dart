@@ -270,6 +270,12 @@ class PairingClientCubit extends Cubit<PairingClientState> {
   int _reconnectAttempt = 0;
   int _generation = 0;
 
+  /// A resume probe is awaiting its pong. Guards against a second resume (a
+  /// quick background-foreground flip) starting a second probe — or worse,
+  /// falling through to the immediate-reconnect branch on the connection the
+  /// first probe is still validating.
+  bool _resumeProbeInFlight = false;
+
   /// Stage the client last reported as in-flight; a thrown connect fails *this*
   /// one, which is what makes the rail's failure attribution correct.
   int? _activeStageIndex;
@@ -455,17 +461,67 @@ class PairingClientCubit extends Cubit<PairingClientState> {
     _reconnectTimer = Timer(delay, () => unawaited(_reconnectNow()));
   }
 
-  /// Retries immediately, resetting the backoff. Called when the app returns to
-  /// the foreground: the socket almost certainly died while it was away, and the
-  /// user is looking at the screen right now.
+  /// Retries immediately, resetting the backoff. Called when the app returns
+  /// to the foreground: the socket often died while the OS froze the process,
+  /// but not always — so when a connection is still held, one application-layer
+  /// probe ([_probeOnResume]) decides between keeping it and rebuilding it.
   void onAppResumed() {
     if (isClosed || !_wantsConnection) return;
-    if (!state.reconnecting && _client != null) return;
+    final client = _client;
+    if (!state.reconnecting && client != null) {
+      final established = state.phase == PairingClientPhase.connected ||
+          state.phase == PairingClientPhase.mirroring;
+      // Mid-handshake (the confirm screens): leave the in-flight connect alone
+      // — a probe now would be dropped by the half-open channel and read as
+      // death, aborting a connect that was about to succeed.
+      if (!established) return;
+      if (!_resumeProbeInFlight) unawaited(_probeOnResume(client));
+      return;
+    }
     _reconnectAttempt = 0;
     _reconnectTimer?.cancel();
     if (!state.reconnecting) {
       emit(state.copyWith(reconnecting: true));
     }
+    unawaited(_reconnectNow());
+  }
+
+  /// One [PairingClient.ping] settles whether the connection survived the
+  /// suspend: an answer keeps it (and the mirror) exactly as it was, silence
+  /// means the socket died without a FIN ever reaching the frozen event loop —
+  /// so recovery starts here and now instead of on a backoff timer the user
+  /// cannot see.
+  Future<void> _probeOnResume(PairingClient client) async {
+    _resumeProbeInFlight = true;
+    // Flagged for the probe's duration: it makes _onDisconnected's guard
+    // swallow a death event that flushes mid-probe, so that event cannot stack
+    // a second recovery on the one this probe starts itself.
+    emit(state.copyWith(reconnecting: true));
+    bool alive;
+    try {
+      alive = await client.ping();
+    } finally {
+      _resumeProbeInFlight = false;
+    }
+    if (isClosed || !_wantsConnection) return;
+    if (alive) {
+      _appendLog('Connection alive after resume');
+      emit(state.copyWith(reconnecting: false));
+      return;
+    }
+    _appendLog('Connection lost after resume — reconnecting…');
+    // The socket's late onDone is suppressed (see above), so the mirror state
+    // must be staged here exactly as _onDisconnected would have.
+    _resumeCatalogId = state.activeCatalogId;
+    _activeSubscription = null;
+    emit(
+      state.copyWith(
+        reconnecting: true,
+        notice: PairingNotice.connectionLost,
+      ),
+    );
+    _reconnectAttempt = 0;
+    _reconnectTimer?.cancel();
     unawaited(_reconnectNow());
   }
 

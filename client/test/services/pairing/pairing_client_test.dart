@@ -171,6 +171,29 @@ void main() {
     });
   });
 
+  group('PairingClient.ping', () {
+    test('reports false when nothing answers within the budget', () {
+      fakeAsync((async) {
+        final client = PairingClient(
+          connector: (_) => throw StateError('unused'),
+          portProbe: (_, _) async => false,
+        );
+        addTearDown(client.close);
+
+        // No channel was ever established, so the ping frame is dropped and
+        // the request can only end in silence — the frozen-socket shape a
+        // resume probe has to recognize.
+        bool? alive;
+        unawaited(client.ping().then((v) => alive = v));
+        async.elapse(PairingClient.pingTimeout - const Duration(milliseconds: 1));
+        expect(alive, isNull);
+        async.elapse(const Duration(milliseconds: 1));
+        async.flushMicrotasks();
+        expect(alive, isFalse);
+      });
+    });
+  });
+
   group('PairingClient disconnect signal', () {
     test('a socket that dies before auth is reported by connect, not as a drop',
         () async {

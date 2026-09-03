@@ -253,6 +253,12 @@ class PairingClient {
   /// Budget for a request the host answers from its own memory.
   static const _defaultRpcTimeout = Duration(seconds: 10);
 
+  /// How long a resume probe waits for the host's pong before declaring the
+  /// connection dead. A healthy LAN round trip is milliseconds; the cost of a
+  /// false negative is tearing down a live connection and remounting the
+  /// mirror, so the budget stays generous over snappy.
+  static const pingTimeout = Duration(seconds: 3);
+
   final _log = StreamController<String>.broadcast();
   Stream<String> get log => _log.stream;
 
@@ -594,6 +600,26 @@ class PairingClient {
   /// Credit-window receipts for in-flight uploads. Broadcast because each
   /// upload attaches its own filtered listener.
   Stream<PairingUploadAck> get uploadAcks => _uploadAcks.stream;
+
+  /// Probes the host with a one-round-trip RPC answered from its own memory.
+  ///
+  /// Used on app resume to validate a connection that was frozen with the
+  /// process: any answer — including an older desktop's `unknown method: ping`
+  /// error reply — proves the encrypted channel still works, so the phone can
+  /// keep the connection (and its mirror) instead of rebuilding both for
+  /// nothing. Returns false only when nothing came back within
+  /// [pingTimeout], which after a suspend means the socket died silently.
+  Future<bool> ping() async {
+    try {
+      await _rpc('ping', const {}, pingTimeout);
+      return true;
+    } on TimeoutException {
+      return false;
+    } on Object {
+      // The host answered with an error — the channel is alive.
+      return true;
+    }
+  }
 
   Future<List<PairingSessionSummary>> listSessions() async {
     final result = await _rpc('session.list');

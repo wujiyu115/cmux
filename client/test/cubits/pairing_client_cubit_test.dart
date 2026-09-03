@@ -63,6 +63,21 @@ class _FakePairingClient extends PairingClient {
   void pushAgentNotice(PairingAgentNotice notice) =>
       _agentNoticeCtrl.add(notice);
 
+  /// What the resume probe should report. [pingGate], when set, parks the
+  /// probe's answer until the test completes it, so a socket-death event can
+  /// be flushed mid-probe.
+  bool pingSucceeds = true;
+  Completer<bool>? pingGate;
+  int pingCalls = 0;
+
+  @override
+  Future<bool> ping() async {
+    pingCalls++;
+    final gate = pingGate;
+    if (gate != null) return gate.future;
+    return pingSucceeds;
+  }
+
   /// Whether the cubit still holds its agent-notice subscription. The fake's
   /// controller is closed by [close], so "did the cubit cancel?" has to be read
   /// off the listener count rather than by pushing after teardown.
@@ -1076,6 +1091,9 @@ void main() {
       cubit.onAppResumed();
       await Future<void>.delayed(Duration.zero);
 
+      // A death the phone already knows about goes straight to the retry — no
+      // probe on a socket that is already known dead.
+      expect(clients.first.pingCalls, 0);
       expect(cubit.state.reconnecting, isFalse);
       expect(cubit.state.notice, PairingNotice.reconnected);
       expect(cubit.state.phase, PairingClientPhase.mirroring);
@@ -1143,13 +1161,95 @@ void main() {
       expect(cubit.state.phase, PairingClientPhase.idle);
     });
 
-    test('resume on a healthy connection does nothing', () async {
+    test('resume probes a healthy connection and keeps it', () async {
       final cubit = await connected();
+      await cubit.openSession('ws:p1');
+      final generationBefore = cubit.state.connectGeneration;
+      final subscriptionBefore = cubit.activeSubscription;
 
       cubit.onAppResumed();
       await Future<void>.delayed(Duration.zero);
 
+      // The host answered: the connection, the subscription, and the mirror
+      // stay exactly as they were — no rebuild, no generation bump.
       expect(clients, hasLength(1));
+      expect(clients.last.pingCalls, 1);
+      expect(cubit.state.reconnecting, isFalse);
+      expect(cubit.state.phase, PairingClientPhase.mirroring);
+      expect(cubit.state.connectGeneration, generationBefore);
+      expect(cubit.activeSubscription, same(subscriptionBefore));
+    });
+
+    test('resume reconnects immediately when the probe hears silence',
+        () async {
+      final cubit = await connected();
+      await cubit.openSession('ws:p1');
+      final generationBefore = cubit.state.connectGeneration;
+      // The socket died while the process was frozen: no onDone ever arrived,
+      // so only the probe's silence betrays it.
+      clients.last.pingSucceeds = false;
+
+      cubit.onAppResumed();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(clients, hasLength(2));
+      expect(cubit.state.reconnecting, isFalse);
+      expect(cubit.state.notice, PairingNotice.reconnected);
+      expect(cubit.state.phase, PairingClientPhase.mirroring);
+      expect(cubit.state.activeCatalogId, 'ws:p1');
+      expect(cubit.state.connectGeneration, greaterThan(generationBefore));
+      expect(clients.last.subscribed, ['ws:p1']);
+    });
+
+    test('a death event flushed mid-probe does not stack a second recovery',
+        () async {
+      final cubit = await connected();
+      await cubit.openSession('ws:p1');
+      final gate = Completer<bool>();
+      clients.last.pingGate = gate;
+
+      cubit.onAppResumed();
+      // The frozen socket's onDone finally flushes while the probe is still
+      // waiting. The probe owns the recovery, so this must not log, clear the
+      // mirror, or schedule anything on its own.
+      clients.last.pushDisconnected();
+      await Future<void>.delayed(Duration.zero);
+      expect(cubit.state.reconnecting, isTrue);
+      expect(cubit.state.phase, PairingClientPhase.mirroring);
+      expect(cubit.activeSubscription, isNotNull);
+      expect(
+        cubit.state.logs.where((l) => l.contains('Connection lost')),
+        isEmpty,
+      );
+
+      gate.complete(false);
+      await Future<void>.delayed(Duration.zero);
+
+      // Exactly one loss was ever logged — the probe's — and exactly one
+      // recovery ran.
+      expect(
+        cubit.state.logs.where((l) => l.contains('Connection lost')).length,
+        1,
+      );
+      expect(clients, hasLength(2));
+      expect(cubit.state.reconnecting, isFalse);
+      expect(cubit.state.phase, PairingClientPhase.mirroring);
+    });
+
+    test('resume while pairing a new host leaves the in-flight flow alone',
+        () async {
+      final cubit = await connected();
+
+      // Still wants the old connection (wantsConnection stays true) but is
+      // mid-confirm on a new one — a probe would hit the half-open channel and
+      // misread it as death.
+      cubit.beginPairing(_makeOffer());
+      cubit.onAppResumed();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(cubit.state.phase, PairingClientPhase.confirmAwaiting);
+      expect(clients, hasLength(1));
+      expect(clients.last.pingCalls, 0);
       expect(cubit.state.reconnecting, isFalse);
     });
 

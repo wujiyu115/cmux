@@ -302,6 +302,16 @@ void main() {
     expect(frame.data['error'], contains('unknown method'));
   });
 
+  test('ping replies pong, correlated by id', () {
+    // The phone's resume probe rides on this: any answer — including an older
+    // host's unknown-method error — proves the channel is alive, so the reply
+    // must carry the id back.
+    handler.handle(PairingCodec.decode(_json({'id': 42, 'method': 'ping'})));
+    final frame = decodeLast() as JsonFrame;
+    expect(frame.data['id'], 42);
+    expect((frame.data['result'] as Map)['pong'], isTrue);
+  });
+
   test('after dispose no frames are produced', () {
     handler.dispose();
     handler.handle(
