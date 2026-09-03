@@ -247,6 +247,20 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitNotARepository => '当前文件夹不是 Git 仓库';
 
   @override
+  String get gitDiff => 'Git diff';
+
+  @override
+  String get mirrorActionsTitle => '终端操作';
+
+  @override
+  String get mirrorScrollToLatest => '滚动到最新位置';
+
+  @override
+  String mirrorActionChangedCount(int count) {
+    return '$count 个更改';
+  }
+
+  @override
   String get gitNotInstalled => '未找到 Git。安装 Git 后即可使用源代码管理。';
 
   @override

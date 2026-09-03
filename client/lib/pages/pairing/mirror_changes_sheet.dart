@@ -236,8 +236,8 @@ class _Badge extends StatelessWidget {
   }
 }
 
-/// Nav-bar entry point for [showMirrorChangesSheet], with the changed-file count
-/// as a badge.
+/// Nav-bar entry point for the mirror's [showMirrorActionsSheet], with the
+/// changed-file count as a badge.
 ///
 /// [count] null means "unknown" (not a repository, or the host could not be
 /// asked) and shows a bare icon — deliberately not `0`, which would claim the

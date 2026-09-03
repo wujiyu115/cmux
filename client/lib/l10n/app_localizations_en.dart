@@ -260,6 +260,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gitNotARepository => 'This folder is not a Git repository';
 
   @override
+  String get gitDiff => 'Git diff';
+
+  @override
+  String get mirrorActionsTitle => 'Terminal actions';
+
+  @override
+  String get mirrorScrollToLatest => 'Scroll to latest';
+
+  @override
+  String mirrorActionChangedCount(int count) {
+    return '$count changed';
+  }
+
+  @override
   String get gitNotInstalled =>
       'Git was not found. Install Git to use source control.';
 

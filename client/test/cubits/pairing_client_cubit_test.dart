@@ -1210,4 +1210,43 @@ void main() {
       expect(fake.disconnectedHasListener, isFalse);
     });
   });
+
+  group('PairingClientState.mirroredPaneTitle', () {
+    const panes = [
+      PairingSessionNode(
+        workspaceId: 'wsA',
+        title: '编译 release win',
+        subtitle: '',
+        live: true,
+        paneId: 'p1',
+        catalogId: 'ws:p1',
+      ),
+      PairingSessionNode(
+        workspaceId: 'wsA',
+        title: '',
+        subtitle: '',
+        live: true,
+        paneId: 'p2',
+        catalogId: 'ws:p2',
+      ),
+    ];
+
+    PairingClientState stateFor(String? catalogId) => PairingClientState(
+      workspaces: [_wsNode(panes: panes)],
+      activeCatalogId: catalogId,
+    );
+
+    test('uses the live pane title matching the active catalog id', () {
+      expect(stateFor('ws:p1').mirroredPaneTitle, '编译 release win');
+    });
+
+    test('falls back to the workspace title for an untitled pane', () {
+      expect(stateFor('ws:p2').mirroredPaneTitle, 'Workspace A');
+    });
+
+    test('null when nothing is mirrored or the tree lacks the pane', () {
+      expect(stateFor(null).mirroredPaneTitle, isNull);
+      expect(stateFor('ws:gone').mirroredPaneTitle, isNull);
+    });
+  });
 }

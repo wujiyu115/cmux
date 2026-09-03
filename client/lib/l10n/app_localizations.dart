@@ -572,6 +572,30 @@ abstract class AppLocalizations {
   /// **'This folder is not a Git repository'**
   String get gitNotARepository;
 
+  /// No description provided for @gitDiff.
+  ///
+  /// In en, this message translates to:
+  /// **'Git diff'**
+  String get gitDiff;
+
+  /// No description provided for @mirrorActionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Terminal actions'**
+  String get mirrorActionsTitle;
+
+  /// No description provided for @mirrorScrollToLatest.
+  ///
+  /// In en, this message translates to:
+  /// **'Scroll to latest'**
+  String get mirrorScrollToLatest;
+
+  /// No description provided for @mirrorActionChangedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} changed'**
+  String mirrorActionChangedCount(int count);
+
   /// No description provided for @gitNotInstalled.
   ///
   /// In en, this message translates to:

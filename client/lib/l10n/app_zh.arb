@@ -79,6 +79,15 @@
   "gitChanges": "更改",
   "gitNoChanges": "没有更改",
   "gitNotARepository": "当前文件夹不是 Git 仓库",
+  "gitDiff": "Git diff",
+  "mirrorActionsTitle": "终端操作",
+  "mirrorScrollToLatest": "滚动到最新位置",
+  "mirrorActionChangedCount": "{count} 个更改",
+  "@mirrorActionChangedCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "gitNotInstalled": "未找到 Git。安装 Git 后即可使用源代码管理。",
   "gitCommit": "提交",
   "gitCommitMessageHint": "消息（提交到 \"{branch}\"）",

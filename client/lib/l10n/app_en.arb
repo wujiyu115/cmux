@@ -82,6 +82,15 @@
   "gitChanges": "Changes",
   "gitNoChanges": "No changes",
   "gitNotARepository": "This folder is not a Git repository",
+  "gitDiff": "Git diff",
+  "mirrorActionsTitle": "Terminal actions",
+  "mirrorScrollToLatest": "Scroll to latest",
+  "mirrorActionChangedCount": "{count} changed",
+  "@mirrorActionChangedCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "gitNotInstalled": "Git was not found. Install Git to use source control.",
   "gitCommit": "Commit",
   "gitCommitMessageHint": "Message (commit to \"{branch}\")",

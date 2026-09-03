@@ -19,12 +19,11 @@ import '../../services/terminal/keyboard_inset_pty_hold.dart';
 import '../../services/terminal/terminal_fonts.dart';
 import '../../services/terminal/terminal_layout_coordinator.dart';
 import '../../services/terminal/terminal_theme_mapper.dart';
-import '../../theme/app_fonts.dart';
-import '../../theme/app_typography_scale.dart';
 import '../../utils/logging/logger_utils.dart';
 import '../../utils/shell_quote.dart';
 import '../../utils/ui/app_keys.dart';
 import 'mobile_toolbar/mobile_bottom_slot.dart';
+import 'mirror_actions_sheet.dart';
 import 'mirror_changes_sheet.dart';
 import 'mirror_selection_bar.dart';
 import 'mirror_terminal_stack.dart';
@@ -91,10 +90,6 @@ class _PairingMirrorPageState extends State<PairingMirrorPage>
   /// Borrowed from the pairing shell — the page only ever stops it, never
   /// closes it. Captured here because [dispose] cannot `context.read`.
   late final VoiceInputCubit _voice;
-
-  /// Last geometry the host acknowledged, shown in the nav bar so a mismatched
-  /// mirror (phone rotated, desktop resized) is visible rather than mysterious.
-  ({int cols, int rows})? _geometry;
 
   @override
   void initState() {
@@ -248,6 +243,24 @@ class _PairingMirrorPageState extends State<PairingMirrorPage>
     _controller.clearSelection();
   }
 
+  /// Second-level menu behind the nav bar's diff icon: git changes for the
+  /// mirrored pane's repo, or a jump back to the live edge of the scrollback.
+  Future<void> _showActionsMenu() async {
+    final action = await showMirrorActionsSheet(
+      context,
+      changeCount: _changeCount.value,
+    );
+    if (!mounted || action == null) return;
+    switch (action) {
+      case MirrorAction.gitDiff:
+        unawaited(
+          showMirrorChangesSheet(context, context.read<PairingClientCubit>()),
+        );
+      case MirrorAction.scrollToLatest:
+        unawaited(_controller.scrollToBottom());
+    }
+  }
+
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
@@ -278,10 +291,14 @@ class _PairingMirrorPageState extends State<PairingMirrorPage>
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final typography = context.appTypography;
     final cubit = context.read<PairingClientCubit>();
-    final geometry = _geometry;
+    // The desktop's tab label for the mirrored pane, not the OSC title the
+    // running program last set (a bare cwd basename like `flutter_alacritty`).
+    // Renames on the desktop flow through here live; the OSC title is only the
+    // fallback for a tree that does not know this pane.
+    final paneTitle = context.select<PairingClientCubit, String?>(
+      (c) => c.state.mirroredPaneTitle,
+    );
     // The same theme the desktop pane passes, so the mirror renders the app's
     // terminal colours instead of the engine's built-in defaults.
     final terminalTheme = _resolveTerminalTheme();
@@ -303,7 +320,7 @@ class _PairingMirrorPageState extends State<PairingMirrorPage>
               ValueListenableBuilder<String>(
                 valueListenable: _engine.title,
                 builder: (context, title, _) => PairingNavBar(
-                  title: title,
+                  title: paneTitle ?? title,
                   onBack: cubit.leaveMirror,
                   // Changed files are reachable from *here* rather than only
                   // from the workspace list: the reader is watching an agent
@@ -316,19 +333,9 @@ class _PairingMirrorPageState extends State<PairingMirrorPage>
                         valueListenable: _changeCount,
                         builder: (context, count, _) => MirrorChangesAction(
                           count: count,
-                          onTap: () => showMirrorChangesSheet(context, cubit),
+                          onTap: () => _showActionsMenu(),
                         ),
                       ),
-                      if (geometry != null)
-                        Text(
-                          '${geometry.cols}×${geometry.rows}',
-                          textAlign: TextAlign.right,
-                          style: appMonoTextStyle(
-                            context,
-                            fontSize: typography.bodySmall,
-                            color: cs.onSurfaceVariant,
-                          ),
-                        ),
                     ],
                   ),
                 ),
@@ -367,14 +374,7 @@ class _PairingMirrorPageState extends State<PairingMirrorPage>
                       // Zero padding so the grid fills the full phone width; the
                       // resolver's sub-cell remainder is the only inset left.
                       padding: EdgeInsets.zero,
-                      onPtyResize: (columns, rows) {
-                        cubit.sendResize(columns, rows);
-                        if (geometry?.cols == columns &&
-                            geometry?.rows == rows) {
-                          return;
-                        }
-                        setState(() => _geometry = (cols: columns, rows: rows));
-                      },
+                      onPtyResize: cubit.sendResize,
                     ),
                   ),
                   // A phone has no Ctrl+Shift+C and no right-click menu, so the

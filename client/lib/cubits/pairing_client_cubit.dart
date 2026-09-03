@@ -205,6 +205,22 @@ class PairingClientState extends Equatable {
     reconnecting,
     connectGeneration,
   ];
+
+  /// Title of the mirrored pane as the workspace tree knows it — the desktop's
+  /// tab label (renames included), not whatever OSC title the running program
+  /// last set. Null while the tree does not know the active pane yet.
+  String? get mirroredPaneTitle {
+    final catalogId = activeCatalogId;
+    if (catalogId == null) return null;
+    for (final ws in workspaces) {
+      for (final pane in ws.panes) {
+        if (pane.live && pane.catalogId == catalogId) {
+          return pane.title.isEmpty ? ws.title : pane.title;
+        }
+      }
+    }
+    return null;
+  }
 }
 
 /// Drives [PairingClient] and persists paired desktops. UI reads [state] and,
