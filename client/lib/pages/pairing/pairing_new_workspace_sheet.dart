@@ -308,7 +308,7 @@ class _PairingNewWorkspaceSheetState extends State<_PairingNewWorkspaceSheet> {
                   ),
                   const SizedBox(height: 10),
                   PairingBlockButton(
-                    outlined: true,
+                    variant: PairingButtonVariant.quiet,
                     onPressed:
                         _submitting ? null : () => Navigator.of(context).pop(),
                     child: Text(l10n.cancel),

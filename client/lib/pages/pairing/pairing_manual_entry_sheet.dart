@@ -6,6 +6,7 @@ import '../../services/pairing/pairing_offer.dart';
 import '../../theme/app_fonts.dart';
 import '../../theme/app_typography_scale.dart';
 import '../../utils/ui/app_keys.dart';
+import 'pairing_block_button.dart';
 
 /// Manual pairing-code entry, as a bottom sheet rather than a dialog: the field
 /// is a long mono payload and the keyboard covers half the screen, so anchoring
@@ -95,10 +96,13 @@ class _PairingManualEntrySheetState extends State<_PairingManualEntrySheet> {
                 Text(error, style: styles.smColored(cs.error)),
               ],
               SizedBox(height: spacing.md),
-              TpButton(onPressed: _submit, child: Text(l10n.pairingPair)),
+              PairingBlockButton(
+                onPressed: _submit,
+                child: Text(l10n.pairingPair),
+              ),
               SizedBox(height: spacing.xs),
-              TpButton(
-                variant: TpButtonVariant.ghost,
+              PairingBlockButton(
+                variant: PairingButtonVariant.quiet,
                 onPressed: () => Navigator.of(context).pop(),
                 child: Text(l10n.cancel),
               ),

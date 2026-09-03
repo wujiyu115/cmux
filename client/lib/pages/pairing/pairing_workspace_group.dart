@@ -82,7 +82,7 @@ class _PairingWorkspaceGroupState extends State<PairingWorkspaceGroup> {
               ),
               child: PairingBlockButton(
                 key: AppKeys.pairingOpenTerminalButton(workspace.workspaceId),
-                outlined: true,
+                variant: PairingButtonVariant.outlined,
                 onPressed: () => widget.onOpenNode(
                   PairingSessionNode(
                     workspaceId: workspace.workspaceId,
@@ -91,21 +91,13 @@ class _PairingWorkspaceGroupState extends State<PairingWorkspaceGroup> {
                     live: false,
                   ),
                 ),
-                // Overridden per call site, not on PairingBlockButton: the
-                // primary "scan to pair" action shares that component and keeps
-                // its prototype 18/600. This one sits inside a workspace row, so
-                // it takes the terminal rank's size.
+                // "Open" reads as "show me the one that is there" once rows
+                // are listed above the button, so a workspace with panes gets
+                // the additive label instead.
                 child: Text(
-                  // "Open" reads as "show me the one that is there" once rows
-                  // are listed above the button, so a workspace with panes gets
-                  // the additive label instead.
                   workspace.panes.isEmpty
                       ? l10n.pairingOpenTerminalHere
                       : l10n.pairingNewTerminalHere,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                  ),
                 ),
               ),
             ),

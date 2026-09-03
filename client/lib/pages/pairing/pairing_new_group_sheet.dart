@@ -183,7 +183,7 @@ class _PairingNewGroupSheetState extends State<_PairingNewGroupSheet> {
                   ),
                   const SizedBox(height: 10),
                   PairingBlockButton(
-                    outlined: true,
+                    variant: PairingButtonVariant.quiet,
                     onPressed:
                         _submitting ? null : () => Navigator.of(context).pop(),
                     child: Text(l10n.cancel),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_ui/shared_ui.dart';
 
+import 'pairing_block_button.dart';
+
 /// Viewfinder chrome drawn over the camera: a 232pt reticle plus a success ring.
 ///
 /// Purely decorative and wrapped in [IgnorePointer] by the caller's stack order
@@ -143,9 +145,9 @@ class PairingScanSheet extends StatelessWidget {
               children: [
                 Text(hint, style: TpTextStyles.of(context).mutedSm),
                 SizedBox(height: spacing.sm),
-                TpButton(
+                PairingBlockButton(
                   key: manualButtonKey,
-                  variant: TpButtonVariant.secondary,
+                  variant: PairingButtonVariant.secondary,
                   onPressed: onManualEntry,
                   child: Text(manualLabel),
                 ),

@@ -5,6 +5,7 @@ import '../../cubits/pairing_client_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../services/pairing/pairing_client.dart';
 import '../../theme/app_fonts.dart';
+import 'pairing_block_button.dart';
 import 'pairing_nav_bar.dart';
 
 /// Full-screen browser over the paired desktop's directories, used to pick an
@@ -161,7 +162,7 @@ class _PairingRemoteDirBrowserPageState
                   spacing.lg,
                   spacing.md,
                 ),
-                child: TpButton(
+                child: PairingBlockButton(
                   onPressed: () => Navigator.of(context).pop(listing.path),
                   child: Text(l10n.pairingSelectThisFolder),
                 ),

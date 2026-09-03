@@ -9,6 +9,7 @@ import '../../theme/app_fonts.dart';
 import '../../theme/app_typography_scale.dart';
 import '../../utils/ui/app_keys.dart';
 import 'connection_log_view.dart';
+import 'pairing_block_button.dart';
 import 'pairing_host_glyph.dart';
 import 'pairing_nav_bar.dart';
 import 'pairing_stage_steps.dart';
@@ -220,7 +221,7 @@ class _Footer extends StatelessWidget {
               else if (!connecting)
                 Text(l10n.pairingReadyHint, style: styles.mutedSm),
               if (!connecting) SizedBox(height: spacing.md),
-              TpButton(
+              PairingBlockButton(
                 key: AppKeys.pairingConnectButton,
                 onPressed: connecting ? null : onConnect,
                 child: connecting
@@ -239,9 +240,9 @@ class _Footer extends StatelessWidget {
                     : Text(isError ? l10n.pairingRetry : l10n.pairingConnect),
               ),
               SizedBox(height: spacing.xs),
-              TpButton(
+              PairingBlockButton(
                 key: AppKeys.pairingConfirmCancelButton,
-                variant: TpButtonVariant.ghost,
+                variant: PairingButtonVariant.quiet,
                 onPressed: onCancel,
                 child: Text(l10n.cancel),
               ),

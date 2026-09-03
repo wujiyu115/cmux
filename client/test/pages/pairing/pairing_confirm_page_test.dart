@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_ui/shared_ui.dart';
 import 'package:teampilot/cubits/pairing_client_cubit.dart';
 import 'package:teampilot/l10n/app_localizations.dart';
+import 'package:teampilot/pages/pairing/pairing_block_button.dart';
 import 'package:teampilot/pages/pairing/pairing_confirm_page.dart';
 import 'package:teampilot/repositories/pairing_settings_repository.dart';
 import 'package:teampilot/services/pairing/pairing_client.dart';
@@ -101,7 +101,7 @@ void main() {
     expect(find.text('Connect'), findsNothing);
     expect(find.text('Retry'), findsNothing);
     // The primary button stays in place but is disabled mid-connect.
-    final button = tester.widget<TpButton>(
+    final button = tester.widget<PairingBlockButton>(
       find.byKey(AppKeys.pairingConnectButton),
     );
     expect(button.onPressed, isNull);
