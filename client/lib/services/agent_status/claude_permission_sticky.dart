@@ -1,5 +1,6 @@
 import 'agent_attention_state.dart';
 import 'agent_status_event.dart';
+import 'agent_status_normalizer.dart' show isAskUserQuestionTool;
 
 /// Orca `shouldKeepClaudePermissionVisible`: keep sticky waiting unless the
 /// next hook resumes the approved tool or carries an explicit user prompt.
@@ -17,6 +18,17 @@ bool shouldKeepClaudePermissionVisible(
   final nextHook = next.hookEventName?.trim() ?? '';
   if (prevHook.isEmpty || nextHook.isEmpty) return false;
   if (next.hasExplicitPrompt) return false;
+  // Qoder surfaces AskUserQuestion as PreToolUse + PermissionRequest (both
+  // waiting) and the answer as a PostToolUse whose tool_input is amended with
+  // the answers. The resume match below can never see that: the
+  // PermissionRequest carries no tool_use_id, and the PreToolUse's id cannot
+  // be inherited (inheritance requires the preceding event to be working).
+  // The pending question completing is itself the all-clear.
+  if (isAskUserQuestionTool(previous.toolName) &&
+      nextHook == 'PostToolUse' &&
+      isAskUserQuestionTool(next.toolName)) {
+    return false;
+  }
   if (isClaudePermissionResumingApprovedTool(previous, next)) return false;
   // Why: Claude can run subagents concurrently in one seat. Keep permission
   // sticky unless the next hook has a source-level execution id that the

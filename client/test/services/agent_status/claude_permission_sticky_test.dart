@@ -5,22 +5,25 @@ import 'package:teampilot/services/agent_status/claude_permission_sticky.dart';
 
 void main() {
   group('shouldKeepClaudePermissionVisible', () {
-    test('keeps waiting when another subagent reports different tool activity', () {
-      final previous = AgentStatusEvent(
-        state: AgentSeatAttention.waiting,
-        hookEventName: 'PermissionRequest',
-        toolName: 'Bash',
-        toolInput: 'rm -rf /tmp/orca-subagent-repro',
-      );
-      final next = AgentStatusEvent(
-        state: AgentSeatAttention.working,
-        hookEventName: 'PreToolUse',
-        toolName: 'Read',
-        toolInput: '/tmp/other-subagent.txt',
-        toolUseId: 'toolu-other',
-      );
-      expect(shouldKeepClaudePermissionVisible(previous, next), isTrue);
-    });
+    test(
+      'keeps waiting when another subagent reports different tool activity',
+      () {
+        final previous = AgentStatusEvent(
+          state: AgentSeatAttention.waiting,
+          hookEventName: 'PermissionRequest',
+          toolName: 'Bash',
+          toolInput: 'rm -rf /tmp/orca-subagent-repro',
+        );
+        final next = AgentStatusEvent(
+          state: AgentSeatAttention.working,
+          hookEventName: 'PreToolUse',
+          toolName: 'Read',
+          toolInput: '/tmp/other-subagent.txt',
+          toolUseId: 'toolu-other',
+        );
+        expect(shouldKeepClaudePermissionVisible(previous, next), isTrue);
+      },
+    );
 
     test('keeps waiting when matching tool has no execution id', () {
       final previous = AgentStatusEvent(
@@ -91,6 +94,42 @@ void main() {
       expect(shouldKeepClaudePermissionVisible(previous, next), isFalse);
     });
 
+    test('clears when the pending AskUserQuestion completes (Qoder flow)', () {
+      // Qoder: PermissionRequest carries no tool_use_id and the answer amends
+      // tool_input, so neither the id nor the input resume match can fire.
+      final previous = AgentStatusEvent(
+        state: AgentSeatAttention.waiting,
+        hookEventName: 'PermissionRequest',
+        toolName: 'AskUserQuestion',
+        toolInput: '{"questions":[...]}',
+      );
+      final next = AgentStatusEvent(
+        state: AgentSeatAttention.working,
+        hookEventName: 'PostToolUse',
+        toolName: 'AskUserQuestion',
+        toolInput: '{"questions":[...],"answers":{...}}',
+        toolUseId: 'toolu-question',
+      );
+      expect(shouldKeepClaudePermissionVisible(previous, next), isFalse);
+    });
+
+    test('keeps waiting while a question is pending and other tools run', () {
+      final previous = AgentStatusEvent(
+        state: AgentSeatAttention.waiting,
+        hookEventName: 'PermissionRequest',
+        toolName: 'AskUserQuestion',
+        toolInput: '{"questions":[...]}',
+      );
+      final next = AgentStatusEvent(
+        state: AgentSeatAttention.working,
+        hookEventName: 'PreToolUse',
+        toolName: 'Read',
+        toolInput: '/tmp/other.txt',
+        toolUseId: 'toolu-other',
+      );
+      expect(shouldKeepClaudePermissionVisible(previous, next), isTrue);
+    });
+
     test('keeps when another same-type subagent runs same tool', () {
       final previous = AgentStatusEvent(
         state: AgentSeatAttention.waiting,
@@ -114,21 +153,27 @@ void main() {
   });
 
   group('shouldInheritClaudeToolUseIdForPermission', () {
-    test('inherits tool_use_id from matching PreToolUse onto PermissionRequest', () {
-      final previous = AgentStatusEvent(
-        state: AgentSeatAttention.working,
-        hookEventName: 'PreToolUse',
-        toolName: 'Bash',
-        toolInput: 'echo hi',
-        toolUseId: 'toolu-1',
-      );
-      final next = AgentStatusEvent(
-        state: AgentSeatAttention.waiting,
-        hookEventName: 'PermissionRequest',
-        toolName: 'Bash',
-        toolInput: 'echo hi',
-      );
-      expect(shouldInheritClaudeToolUseIdForPermission(previous, next), isTrue);
-    });
+    test(
+      'inherits tool_use_id from matching PreToolUse onto PermissionRequest',
+      () {
+        final previous = AgentStatusEvent(
+          state: AgentSeatAttention.working,
+          hookEventName: 'PreToolUse',
+          toolName: 'Bash',
+          toolInput: 'echo hi',
+          toolUseId: 'toolu-1',
+        );
+        final next = AgentStatusEvent(
+          state: AgentSeatAttention.waiting,
+          hookEventName: 'PermissionRequest',
+          toolName: 'Bash',
+          toolInput: 'echo hi',
+        );
+        expect(
+          shouldInheritClaudeToolUseIdForPermission(previous, next),
+          isTrue,
+        );
+      },
+    );
   });
 }

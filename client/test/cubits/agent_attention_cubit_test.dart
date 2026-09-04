@@ -268,7 +268,9 @@ void main() {
         skipPermissions: false,
       );
       expect(
-        c.state.seats[agentSeatKey(sessionId: 's1', memberId: 'm1')]
+        c
+            .state
+            .seats[agentSeatKey(sessionId: 's1', memberId: 'm1')]
             ?.lastEvent
             ?.toolUseId,
         'toolu-1',
@@ -312,6 +314,96 @@ void main() {
       expect(
         c.state.attentionFor(sessionId: 's1', memberId: 'm1'),
         AgentSeatAttention.working,
+      );
+    });
+
+    test('Qoder AskUserQuestion flow: answer resumes working, not stuck', () {
+      final c = _cubit();
+      // Mid-turn tool activity.
+      c.applyEvent(
+        sessionId: 's1',
+        memberId: 'm1',
+        event: const AgentStatusEvent(
+          state: AgentSeatAttention.working,
+          hookEventName: 'PostToolUse',
+          toolName: 'Bash',
+          toolUseId: 'toolu-bash',
+        ),
+        skipPermissions: false,
+      );
+      // Qoder asks: PreToolUse:AskUserQuestion → waiting (with tool_use_id).
+      c.applyEvent(
+        sessionId: 's1',
+        memberId: 'm1',
+        event: const AgentStatusEvent(
+          state: AgentSeatAttention.waiting,
+          hookEventName: 'PreToolUse',
+          toolName: 'AskUserQuestion',
+          toolInput: '{"questions":[...]}',
+          toolUseId: 'toolu-question',
+        ),
+        skipPermissions: false,
+      );
+      expect(
+        c.state.attentionFor(sessionId: 's1', memberId: 'm1'),
+        AgentSeatAttention.waiting,
+      );
+      // PermissionRequest → waiting, no tool_use_id (inheritance cannot fire:
+      // the previous event is waiting, not working).
+      c.applyEvent(
+        sessionId: 's1',
+        memberId: 'm1',
+        event: const AgentStatusEvent(
+          state: AgentSeatAttention.waiting,
+          hookEventName: 'PermissionRequest',
+          toolName: 'AskUserQuestion',
+          toolInput: '{"questions":[...]}',
+        ),
+        skipPermissions: false,
+      );
+      expect(
+        c.state.attentionFor(sessionId: 's1', memberId: 'm1'),
+        AgentSeatAttention.waiting,
+      );
+      // User answered: PostToolUse:AskUserQuestion with amended input must
+      // clear sticky waiting (regression: it used to be swallowed, pinning
+      // the seat for the rest of the turn).
+      c.applyEvent(
+        sessionId: 's1',
+        memberId: 'm1',
+        event: const AgentStatusEvent(
+          state: AgentSeatAttention.working,
+          hookEventName: 'PostToolUse',
+          toolName: 'AskUserQuestion',
+          toolInput: '{"questions":[...],"answers":{...}}',
+          toolUseId: 'toolu-question',
+        ),
+        skipPermissions: false,
+      );
+      expect(
+        c.state.attentionFor(sessionId: 's1', memberId: 'm1'),
+        AgentSeatAttention.working,
+      );
+      // Subsequent tool activity keeps the seat working.
+      c.applyEvent(
+        sessionId: 's1',
+        memberId: 'm1',
+        event: const AgentStatusEvent(
+          state: AgentSeatAttention.working,
+          hookEventName: 'PreToolUse',
+          toolName: 'Read',
+          toolInput: 'lib/main.dart',
+          toolUseId: 'toolu-read',
+        ),
+        skipPermissions: false,
+      );
+      expect(
+        c.state.attentionFor(sessionId: 's1', memberId: 'm1'),
+        AgentSeatAttention.working,
+      );
+      expect(
+        c.state.workspaceAgentStatus({'s1'}),
+        WorkspaceAgentStatus.working,
       );
     });
 
@@ -380,7 +472,10 @@ void main() {
           event: const AgentStatusEvent(state: AgentSeatAttention.working),
           skipPermissions: false,
         );
-        expect(c.state.workspaceAgentStatus(const {}), WorkspaceAgentStatus.none);
+        expect(
+          c.state.workspaceAgentStatus(const {}),
+          WorkspaceAgentStatus.none,
+        );
       });
 
       test('single session maps each seat state', () {
@@ -431,52 +526,58 @@ void main() {
         );
       });
 
-      test('priority waiting > working > interrupted > done across sessions', () {
-        final c = _cubit();
-        c.applyEvent(
-          sessionId: 's1',
-          memberId: 'm1',
-          event: const AgentStatusEvent(state: AgentSeatAttention.done),
-          skipPermissions: false,
-        );
-        c.applyEvent(
-          sessionId: 's2',
-          memberId: 'm1',
-          event: const AgentStatusEvent(
-            state: AgentSeatAttention.done,
-            interrupted: true,
-          ),
-          skipPermissions: false,
-        );
-        c.applyEvent(
-          sessionId: 's3',
-          memberId: 'm1',
-          event: const AgentStatusEvent(state: AgentSeatAttention.working),
-          skipPermissions: false,
-        );
-        const ids = {'s1', 's2', 's3'};
-        expect(c.state.workspaceAgentStatus(ids), WorkspaceAgentStatus.working);
-        c.applyEvent(
-          sessionId: 's4',
-          memberId: 'm1',
-          event: const AgentStatusEvent(state: AgentSeatAttention.waiting),
-          skipPermissions: false,
-        );
-        expect(
-          c.state.workspaceAgentStatus({...ids, 's4'}),
-          WorkspaceAgentStatus.waiting,
-        );
-        // Without the interrupted session, done still wins over none but not
-        // over working.
-        expect(
-          c.state.workspaceAgentStatus({'s1', 's3'}),
-          WorkspaceAgentStatus.working,
-        );
-        expect(
-          c.state.workspaceAgentStatus({'s1'}),
-          WorkspaceAgentStatus.done,
-        );
-      });
+      test(
+        'priority waiting > working > interrupted > done across sessions',
+        () {
+          final c = _cubit();
+          c.applyEvent(
+            sessionId: 's1',
+            memberId: 'm1',
+            event: const AgentStatusEvent(state: AgentSeatAttention.done),
+            skipPermissions: false,
+          );
+          c.applyEvent(
+            sessionId: 's2',
+            memberId: 'm1',
+            event: const AgentStatusEvent(
+              state: AgentSeatAttention.done,
+              interrupted: true,
+            ),
+            skipPermissions: false,
+          );
+          c.applyEvent(
+            sessionId: 's3',
+            memberId: 'm1',
+            event: const AgentStatusEvent(state: AgentSeatAttention.working),
+            skipPermissions: false,
+          );
+          const ids = {'s1', 's2', 's3'};
+          expect(
+            c.state.workspaceAgentStatus(ids),
+            WorkspaceAgentStatus.working,
+          );
+          c.applyEvent(
+            sessionId: 's4',
+            memberId: 'm1',
+            event: const AgentStatusEvent(state: AgentSeatAttention.waiting),
+            skipPermissions: false,
+          );
+          expect(
+            c.state.workspaceAgentStatus({...ids, 's4'}),
+            WorkspaceAgentStatus.waiting,
+          );
+          // Without the interrupted session, done still wins over none but not
+          // over working.
+          expect(
+            c.state.workspaceAgentStatus({'s1', 's3'}),
+            WorkspaceAgentStatus.working,
+          );
+          expect(
+            c.state.workspaceAgentStatus({'s1'}),
+            WorkspaceAgentStatus.done,
+          );
+        },
+      );
 
       test('ignores seats from other workspaces sessions', () {
         final c = _cubit();
@@ -486,10 +587,7 @@ void main() {
           event: const AgentStatusEvent(state: AgentSeatAttention.waiting),
           skipPermissions: false,
         );
-        expect(
-          c.state.workspaceAgentStatus({'s1'}),
-          WorkspaceAgentStatus.none,
-        );
+        expect(c.state.workspaceAgentStatus({'s1'}), WorkspaceAgentStatus.none);
       });
 
       test('stale seats are ignored', () {
@@ -502,10 +600,7 @@ void main() {
           skipPermissions: false,
         );
         now = now.add(const Duration(minutes: 31));
-        expect(
-          c.state.workspaceAgentStatus({'s1'}),
-          WorkspaceAgentStatus.none,
-        );
+        expect(c.state.workspaceAgentStatus({'s1'}), WorkspaceAgentStatus.none);
       });
     });
   });
