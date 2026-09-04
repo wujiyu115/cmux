@@ -78,7 +78,7 @@ class QuickOpenIndexRegistry {
 
   final _indexes = <Object, Future<QuickOpenIndex>>{};
   final _settled = <Object>{};
-  final _refreshes = <Future<void>>[];
+  final _pendingRefreshes = <Object, Future<QuickOpenIndex?>>{};
 
   Future<QuickOpenIndex> load(Filesystem fs, String root, {int? maxFiles}) {
     if (root.isEmpty) return Future.value(const QuickOpenIndex.empty());
@@ -89,12 +89,7 @@ class QuickOpenIndexRegistry {
       // listing is still in flight, racing dialogs share it instead of piling
       // on duplicate re-lists.
       if (_settled.contains(key)) {
-        final refresh = _listIndex(fs, root, maxFiles ?? this.maxFiles)
-            .then((index) {
-              _indexes[key] = Future.value(index);
-            })
-            .catchError((Object _) {});
-        _refreshes.add(refresh);
+        _kickRefresh(fs, root, maxFiles ?? this.maxFiles, key);
       }
       return cached;
     }
@@ -114,6 +109,31 @@ class QuickOpenIndexRegistry {
         throw error;
       },
     );
+  }
+
+  /// Freshest listing for (fs, root): waits for a revalidation kicked by
+  /// [load] when one is still in flight (null when it fails), otherwise
+  /// completes with the current cached listing. Lets a long-lived dialog swap
+  /// its stale view for the revalidated one without reopening.
+  Future<QuickOpenIndex?> latestIndex(Filesystem fs, String root) {
+    final pending = _pendingRefreshes[(fs, root)];
+    if (pending != null) return pending;
+    return _indexes[(fs, root)] ?? Future.value(null);
+  }
+
+  /// Kicks a background re-list that replaces the cache entry on success.
+  /// A refresh already in flight is reused, so rapid reopens share one
+  /// listing instead of stacking duplicates.
+  void _kickRefresh(Filesystem fs, String root, int maxFiles, Object key) {
+    if (_pendingRefreshes.containsKey(key)) return;
+    final refresh = _listIndex(fs, root, maxFiles)
+        .then<QuickOpenIndex?>((index) {
+          _indexes[key] = Future.value(index);
+          return index;
+        })
+        .catchError((Object _) => null);
+    _pendingRefreshes[key] = refresh;
+    unawaited(refresh.whenComplete(() => _pendingRefreshes.remove(key)));
   }
 
   static const List<String> _gitListFilesArgs = [
@@ -224,11 +244,63 @@ class QuickOpenIndexRegistry {
     return false;
   }
 
-  /// Test seam: awaits every background refresh kicked so far.
+  /// Test seam: awaits every background refresh still in flight.
   @visibleForTesting
   Future<void> drainRefreshesForTest() async {
-    final pending = List.of(_refreshes);
-    _refreshes.clear();
-    await Future.wait(pending);
+    await Future.wait(List.of(_pendingRefreshes.values));
   }
+}
+
+/// Normalizes candidate quick-open roots: drops empty entries and duplicates,
+/// then drops any root nested inside another kept root so a session cwd inside
+/// a workspace folder does not double-list its files. Order is preserved —
+/// the first root is the primary one (its entries render unprefixed).
+List<String> normalizeQuickOpenRoots(List<String> roots, p.Context ctx) {
+  final kept = <String>[];
+  for (final raw in roots) {
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) continue;
+    final path = ctx.normalize(trimmed);
+    if (kept.contains(path)) continue;
+    if (kept.any((k) => ctx.isWithin(k, path))) continue;
+    kept.removeWhere((k) => ctx.isWithin(path, k));
+    kept.add(path);
+  }
+  return kept;
+}
+
+/// Merges per-root indexes into one launcher index. Entries under the primary
+/// root (first of [roots]) keep their root-relative path; entries from other
+/// roots are prefixed with the root's basename so same-named files stay
+/// distinguishable (VS Code multi-root style). [indexesByRoot] is keyed by the
+/// normalized root path.
+QuickOpenIndex mergeQuickOpenIndexes({
+  required List<String> roots,
+  required Map<String, QuickOpenIndex> indexesByRoot,
+  required p.Context ctx,
+}) {
+  if (roots.isEmpty) return const QuickOpenIndex.empty();
+  final files = <QuickOpenFileEntry>[];
+  var truncated = false;
+  for (var i = 0; i < roots.length; i++) {
+    final root = roots[i];
+    final index = indexesByRoot[root];
+    if (index == null) continue;
+    truncated = truncated || index.truncated;
+    if (i == 0) {
+      files.addAll(index.files);
+      continue;
+    }
+    final prefix = ctx.basename(root);
+    files.addAll([
+      for (final entry in index.files)
+        QuickOpenFileEntry(
+          path: entry.path,
+          name: entry.name,
+          relativePath: ctx.join(prefix, entry.relativePath),
+        ),
+    ]);
+  }
+  files.sort((a, b) => a.relativePath.compareTo(b.relativePath));
+  return QuickOpenIndex(files: files, truncated: truncated);
 }

@@ -38,6 +38,11 @@ final QuickOpenIndexRegistry _sharedIndexRegistry = QuickOpenIndexRegistry();
 /// [gitRunner], when provided, is the work-plane git runner for the machine
 /// hosting [workspace]'s folders; the index then prefers `git ls-files` so
 /// .gitignore rules hold, falling back to the recursive listing otherwise.
+///
+/// [indexRoots] overrides the folders to index (defaults to the workspace's
+/// first folder). Pass the tools-scope roots — session cwd / worktree plus
+/// the workspace folders on the active target — so quick open searches what
+/// the file tree shows.
 Future<void> showQuickOpenDialog(
   BuildContext context, {
   required Workspace workspace,
@@ -45,6 +50,7 @@ Future<void> showQuickOpenDialog(
   GitCommandRunner? gitRunner,
   QuickOpenIndexRegistry? indexRegistry,
   QuickOpenMruRepository? mruRepository,
+  List<String>? indexRoots,
 }) async {
   if (_quickOpenDialogOpen) return;
   _quickOpenDialogOpen = true;
@@ -60,15 +66,13 @@ Future<void> showQuickOpenDialog(
     final mru = mruRepository ?? QuickOpenMruRepository(fs: fs);
     final chatCubit = context.read<ChatCubit>();
     final fallback = context.l10n.defaultNewChatSessionTitle;
-    final sessions = sessionsForWorkspace(
-      workspace,
-      chatCubit.state.sessions,
-    );
+    final sessions = sessionsForWorkspace(workspace, chatCubit.state.sessions);
     final result = await showDialog<QuickOpenResult>(
       context: context,
       builder: (_) => QuickOpenOverlay(
         workspace: workspace,
         filesystem: fs,
+        indexRoots: indexRoots ?? [workspace.firstFolderPath],
         indexRegistry: registry,
         mruRepository: mru,
         sessions: sessions,
@@ -128,6 +132,7 @@ class QuickOpenOverlay extends StatefulWidget {
     super.key,
     required this.workspace,
     required this.filesystem,
+    this.indexRoots,
     required this.indexRegistry,
     required this.mruRepository,
     required this.sessions,
@@ -136,6 +141,11 @@ class QuickOpenOverlay extends StatefulWidget {
 
   final Workspace workspace;
   final Filesystem filesystem;
+
+  /// Folders to index; defaults to [Workspace.firstFolderPath]. Extra roots
+  /// (worktree session cwd, additional folders) are indexed too, matching the
+  /// file tree's mounted roots.
+  final List<String>? indexRoots;
   final QuickOpenIndexRegistry indexRegistry;
   final QuickOpenMruRepository mruRepository;
   final List<AppSession> sessions;
@@ -198,6 +208,12 @@ class _QuickOpenOverlayState extends State<QuickOpenOverlay> {
   List<_QuickOpenRow> _rows = const [];
   Timer? _debounceTimer;
 
+  late final List<String> _roots = normalizeQuickOpenRoots(
+    widget.indexRoots ?? [widget.workspace.firstFolderPath],
+    widget.filesystem.pathContext,
+  );
+  final Map<String, QuickOpenIndex> _rootIndexes = {};
+
   @override
   void initState() {
     super.initState();
@@ -214,19 +230,54 @@ class _QuickOpenOverlayState extends State<QuickOpenOverlay> {
     super.dispose();
   }
 
+  /// Serves the (possibly stale) cached listing per root immediately, then
+  /// swaps in each root's revalidated listing when it lands — so files
+  /// created after the cached listing show up in the *open* dialog instead of
+  /// only on the next Ctrl+P.
   Future<void> _loadIndex() async {
+    if (_roots.isEmpty) {
+      if (!mounted) return;
+      setState(() => _indexLoading = false);
+      return;
+    }
+    await Future.wait([for (final root in _roots) _loadRootIndex(root)]);
+    _publishMergedIndex();
+    for (final root in _roots) {
+      unawaited(_applyLatestIndex(root));
+    }
+  }
+
+  Future<void> _loadRootIndex(String root) async {
     QuickOpenIndex index;
     try {
-      index = await widget.indexRegistry.load(
-        widget.filesystem,
-        widget.workspace.firstFolderPath,
-      );
+      index = await widget.indexRegistry.load(widget.filesystem, root);
     } on Object {
       index = const QuickOpenIndex.empty();
     }
+    _rootIndexes[root] = index;
+  }
+
+  Future<void> _applyLatestIndex(String root) async {
+    QuickOpenIndex? latest;
+    try {
+      latest = await widget.indexRegistry.latestIndex(widget.filesystem, root);
+    } on Object {
+      latest = null;
+    }
+    if (!mounted || latest == null) return;
+    if (identical(_rootIndexes[root], latest)) return;
+    _rootIndexes[root] = latest;
+    _publishMergedIndex();
+  }
+
+  void _publishMergedIndex() {
     if (!mounted) return;
     setState(() {
-      _index = index;
+      _index = mergeQuickOpenIndexes(
+        roots: _roots,
+        indexesByRoot: _rootIndexes,
+        ctx: widget.filesystem.pathContext,
+      );
       _indexLoading = false;
       _rows = _computeRows();
     });
@@ -245,6 +296,18 @@ class _QuickOpenOverlayState extends State<QuickOpenOverlay> {
 
   QuickOpenFileEntry _entryForPath(String path) {
     final ctx = widget.filesystem.pathContext;
+    for (var i = 0; i < _roots.length; i++) {
+      final root = _roots[i];
+      if (!ctx.isWithin(root, path)) continue;
+      final relative = ctx.relative(path, from: root);
+      return QuickOpenFileEntry(
+        path: path,
+        name: ctx.basename(path),
+        relativePath: i == 0
+            ? relative
+            : ctx.join(ctx.basename(root), relative),
+      );
+    }
     final root = widget.workspace.firstFolderPath;
     final relative = ctx.isWithin(root, path)
         ? ctx.relative(path, from: root)
@@ -280,7 +343,10 @@ class _QuickOpenOverlayState extends State<QuickOpenOverlay> {
       final match = fuzzyMatch(title, lowerQuery);
       if (match == null) continue;
       scored.add(
-        _ScoredRow(_QuickOpenRow.session(session, title, match.indexes), match.score),
+        _ScoredRow(
+          _QuickOpenRow.session(session, title, match.indexes),
+          match.score,
+        ),
       );
     }
     for (final entry in _index.files) {

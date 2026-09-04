@@ -86,29 +86,40 @@ class _WorkspaceSplitPaneState extends State<WorkspaceSplitPane> {
         .read<WorkspaceToolsScopeRegistry>()
         .cubitFor(tabScopeId: widget.tabScopeId, lifecycle: lifecycle)
         .state;
-    final targetId = widget.workspace.folders.isEmpty
-        ? WorkspaceFolder.localTargetId
-        : widget.workspace.folders.first.targetId;
-    final targetContext = scopeState.runtimeContextForTarget(targetId);
+    // Follow the active tools plane — the same target and roots the file tree
+    // mounts — so quick open indexes what the user sees, including a worktree
+    // session's cwd instead of only the workspace's first folder.
+    final activeTargetId =
+        scopeState.tools?.targetId ??
+        (widget.workspace.folders.isEmpty
+            ? WorkspaceFolder.localTargetId
+            : widget.workspace.folders.first.targetId);
+    final targetContext = scopeState.runtimeContextForTarget(activeTargetId);
     final fs = targetContext?.filesystem ?? AppStorage.fs;
+    final indexRoots = [
+      for (final folder in widget.workspace.folders)
+        if (folder.targetId == activeTargetId) folder.path,
+      ...scopeState.roots,
+    ].where((path) => path.trim().isNotEmpty).toList();
     // The MRU store must live on the same plane as the work-plane filesystem:
     // the repository's default path is a host-native AppData path that a
     // WSL/SSH filesystem cannot address.
-    final mru =
-        targetContext == null
-            ? null
-            : QuickOpenMruRepository(
-              fs: fs,
-              path: fs.pathContext.join(
-                targetContext.appDataRoot,
-                'quick-open-mru.json',
-              ),
-            );
+    final mru = targetContext == null
+        ? null
+        : QuickOpenMruRepository(
+            fs: fs,
+            path: fs.pathContext.join(
+              targetContext.appDataRoot,
+              'quick-open-mru.json',
+            ),
+          );
     unawaited(
       showQuickOpenDialog(
         context,
         workspace: widget.workspace,
         filesystem: fs,
+        // Empty → let the dialog fall back to the workspace's first folder.
+        indexRoots: indexRoots.isEmpty ? null : indexRoots,
         mruRepository: mru,
         gitRunner: targetContext == null
             ? null

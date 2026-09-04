@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:teampilot/services/git/git_command_runner.dart';
@@ -122,6 +124,57 @@ void main() {
       expect(third.files.map((e) => e.name), contains('new_file.md'));
     },
   );
+
+  test('latestIndex waits for the in-flight refresh, then serves it', () async {
+    final registry = QuickOpenIndexRegistry();
+    await registry.load(fs, '/repo');
+    fs.files['/repo/new_file.md'] = 'x';
+
+    final stale = await registry.load(fs, '/repo');
+    expect(stale.files.map((e) => e.name), isNot(contains('new_file.md')));
+
+    final latest = await registry.latestIndex(fs, '/repo');
+    expect(latest!.files.map((e) => e.name), contains('new_file.md'));
+  });
+
+  test('latestIndex is null for a root with no cache entry', () async {
+    final registry = QuickOpenIndexRegistry();
+    expect(await registry.latestIndex(fs, '/repo'), isNull);
+  });
+
+  test(
+    'latestIndex serves the cold listing itself while it is in flight',
+    () async {
+      final registry = QuickOpenIndexRegistry();
+      final cold = registry.load(fs, '/repo');
+      final latest = await registry.latestIndex(fs, '/repo');
+      expect(latest, isNotNull);
+      expect(await cold, same(latest));
+    },
+  );
+
+  test('a second load while a refresh is in flight reuses it', () async {
+    var listings = 0;
+    final gate = Completer<void>();
+    final registry = QuickOpenIndexRegistry(
+      lister: (path) {
+        listings++;
+        if (listings == 1) return fs.listDirRecursive(path);
+        return gate.future.then((_) => fs.listDirRecursive(path));
+      },
+    );
+    await registry.load(fs, '/repo');
+    fs.files['/repo/new_file.md'] = 'x';
+
+    registry.load(fs, '/repo'); // kicks the refresh (listing 2, gated)
+    registry.load(fs, '/repo'); // refresh in flight → must not stack a third
+    gate.complete();
+    await registry.drainRefreshesForTest();
+    expect(listings, 2);
+
+    final served = await registry.load(fs, '/repo');
+    expect(served.files.map((e) => e.name), contains('new_file.md'));
+  });
 
   test('different root loads separately', () async {
     fs.ensureDir('/other');
@@ -280,5 +333,91 @@ void main() {
         expect(entry.path, r'C:\repo\lib\main.dart');
       },
     );
+  });
+
+  group('multi-root helpers', () {
+    test('normalizeQuickOpenRoots drops empties, dupes and nested roots', () {
+      expect(
+        normalizeQuickOpenRoots([
+          '/repo',
+          '',
+          '  ',
+          '/repo',
+          '/repo/lib',
+          '/wt',
+        ], fs.pathContext),
+        ['/repo', '/wt'],
+      );
+    });
+
+    test(
+      'normalizeQuickOpenRoots keeps the outer root when it comes later',
+      () {
+        expect(
+          normalizeQuickOpenRoots(['/repo/lib', '/repo'], fs.pathContext),
+          ['/repo'],
+        );
+      },
+    );
+
+    test('normalizeQuickOpenRoots normalizes separators', () {
+      final ctx = p.Context(style: p.Style.windows);
+      expect(
+        normalizeQuickOpenRoots([r'C:\repo\', r'C:\repo\lib', r'C:\wt'], ctx),
+        [r'C:\repo', r'C:\wt'],
+      );
+    });
+
+    QuickOpenFileEntry makeEntry(String path, String relative) =>
+        QuickOpenFileEntry(
+          path: path,
+          name: fs.pathContext.basename(relative),
+          relativePath: relative,
+        );
+
+    test('mergeQuickOpenIndexes prefixes secondary roots, sorts by path', () {
+      final merged = mergeQuickOpenIndexes(
+        roots: ['/repo', '/wt/feature-x'],
+        indexesByRoot: {
+          '/repo': QuickOpenIndex(
+            truncated: false,
+            files: [
+              makeEntry('/repo/README.md', 'README.md'),
+              makeEntry('/repo/lib/main.dart', 'lib/main.dart'),
+            ],
+          ),
+          '/wt/feature-x': QuickOpenIndex(
+            truncated: false,
+            files: [
+              makeEntry(
+                '/wt/feature-x/lib/brand_new.dart',
+                'lib/brand_new.dart',
+              ),
+            ],
+          ),
+        },
+        ctx: fs.pathContext,
+      );
+      expect(merged.files.map((e) => e.relativePath).toList(), [
+        'README.md',
+        'feature-x/lib/brand_new.dart',
+        'lib/main.dart',
+      ]);
+      expect(merged.files[1].path, '/wt/feature-x/lib/brand_new.dart');
+      expect(merged.files[1].name, 'brand_new.dart');
+      expect(merged.truncated, isFalse);
+    });
+
+    test('mergeQuickOpenIndexes ors truncation and skips missing roots', () {
+      final merged = mergeQuickOpenIndexes(
+        roots: ['/repo', '/missing', '/wt'],
+        indexesByRoot: {
+          '/repo': const QuickOpenIndex(files: [], truncated: true),
+        },
+        ctx: fs.pathContext,
+      );
+      expect(merged.files, isEmpty);
+      expect(merged.truncated, isTrue);
+    });
   });
 }

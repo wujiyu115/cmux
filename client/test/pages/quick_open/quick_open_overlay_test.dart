@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -53,11 +55,14 @@ InMemoryFilesystem _fs() {
 QuickOpenOverlay _overlay(
   InMemoryFilesystem fs, {
   QuickOpenMruRepository? mru,
+  QuickOpenIndexRegistry? indexRegistry,
+  List<String>? indexRoots,
   List<AppSession> sessions = const [],
 }) => QuickOpenOverlay(
   workspace: _workspace(),
   filesystem: fs,
-  indexRegistry: QuickOpenIndexRegistry(),
+  indexRoots: indexRoots,
+  indexRegistry: indexRegistry ?? QuickOpenIndexRegistry(),
   mruRepository: mru ?? QuickOpenMruRepository(fs: fs, path: '/mru.json'),
   sessions: sessions,
   emptyTitleFallback: 'New chat',
@@ -128,17 +133,17 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pumpAndSettle();
     expect(result.value, isA<QuickOpenSessionResult>());
-    expect(
-      (result.value! as QuickOpenSessionResult).session.sessionId,
-      's1',
-    );
+    expect((result.value! as QuickOpenSessionResult).session.sessionId, 's1');
   });
 
   testWidgets('a query fuzzy-matches session titles', (tester) async {
     final fs = _fs();
     final result = await _pumpDialog(
       tester,
-      _overlay(fs, sessions: [_session('s1', 'Deploy fix'), _session('s2', 'Notes')]),
+      _overlay(
+        fs,
+        sessions: [_session('s1', 'Deploy fix'), _session('s2', 'Notes')],
+      ),
     );
 
     await tester.enterText(find.byType(TextField), 'dep');
@@ -150,10 +155,7 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pumpAndSettle();
     expect(result.value, isA<QuickOpenSessionResult>());
-    expect(
-      (result.value! as QuickOpenSessionResult).session.sessionId,
-      's1',
-    );
+    expect((result.value! as QuickOpenSessionResult).session.sessionId, 's1');
   });
 
   testWidgets('typing filters by fuzzy match and Enter opens the file', (
@@ -194,13 +196,15 @@ void main() {
     List<TextSpan> spansOf(Text text) =>
         (text.textSpan as TextSpan).children!.cast<TextSpan>();
     final nameSpans = spansOf(tester.widget<Text>(find.text('main.dart')));
-    final pathSpans = spansOf(
-      tester.widget<Text>(find.text('docs/main.dart')),
-    );
+    final pathSpans = spansOf(tester.widget<Text>(find.text('docs/main.dart')));
     expect(nameSpans.map((span) => span.style).toSet().length, 1);
     expect(pathSpans.length, 'docs/main.dart'.length);
     expect(
-      pathSpans.take('docs/main'.length).map((span) => span.style).toSet().length,
+      pathSpans
+          .take('docs/main'.length)
+          .map((span) => span.style)
+          .toSet()
+          .length,
       1,
     );
     expect(pathSpans.last.style, isNot(pathSpans.first.style));
@@ -231,6 +235,78 @@ void main() {
     await tester.pump(const Duration(milliseconds: 150));
 
     expect(find.text('No matching sessions or files'), findsOneWidget);
+  });
+
+  testWidgets(
+    'a file created after the cached listing appears in the open dialog',
+    (tester) async {
+      final fs = _fs();
+      // Gate the background revalidation so the stale view is observable.
+      final gate = Completer<void>();
+      var listings = 0;
+      final registry = QuickOpenIndexRegistry(
+        lister: (path) {
+          listings++;
+          if (listings == 1) return fs.listDirRecursive(path);
+          return gate.future.then((_) => fs.listDirRecursive(path));
+        },
+      );
+      await registry.load(fs, '/repo'); // warm the cache
+      fs.files['/repo/lib/brand_new.dart'] = 'x';
+
+      await _pumpDialog(tester, _overlay(fs, indexRegistry: registry));
+
+      await tester.enterText(find.byType(TextField), 'brand_new');
+      await tester.pump(const Duration(milliseconds: 150));
+      // Stale view served first: the new file is missing…
+      expect(find.text('brand_new.dart'), findsNothing);
+
+      // …then the revalidation lands and the open dialog updates itself.
+      gate.complete();
+      await tester.pumpAndSettle();
+      expect(find.text('brand_new.dart'), findsOneWidget);
+      expect(find.text('lib/brand_new.dart'), findsOneWidget);
+    },
+  );
+
+  testWidgets('files under an extra root (worktree) are searchable', (
+    tester,
+  ) async {
+    final fs = _fs();
+    fs.ensureDir('/wt/feature-x/lib');
+    fs.files['/wt/feature-x/lib/brand_new.dart'] = 'x';
+
+    await _pumpDialog(
+      tester,
+      _overlay(fs, indexRoots: ['/repo', '/wt/feature-x']),
+    );
+
+    await tester.enterText(find.byType(TextField), 'brand_new');
+    await tester.pump(const Duration(milliseconds: 150));
+
+    expect(find.text('brand_new.dart'), findsOneWidget);
+    expect(find.text('feature-x/lib/brand_new.dart'), findsOneWidget);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('recent files under an extra root show the prefixed path', (
+    tester,
+  ) async {
+    final fs = _fs();
+    fs.ensureDir('/wt/feature-x/lib');
+    fs.files['/wt/feature-x/lib/brand_new.dart'] = 'x';
+    final mru = QuickOpenMruRepository(fs: fs, path: '/mru.json');
+    await mru.touch('/repo', '/wt/feature-x/lib/brand_new.dart');
+
+    await _pumpDialog(
+      tester,
+      _overlay(fs, mru: mru, indexRoots: ['/repo', '/wt/feature-x']),
+    );
+
+    expect(find.text('brand_new.dart'), findsOneWidget);
+    expect(find.text('feature-x/lib/brand_new.dart'), findsOneWidget);
   });
 
   testWidgets('Esc closes without opening', (tester) async {
