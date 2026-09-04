@@ -19,10 +19,10 @@ import '../../support/fake_stt_provider.dart';
 
 /// A stand-in photo picker. Returns whatever [next] is set to and counts calls.
 class _FakePicker {
-  PickedMedia? next;
+  List<PickedMedia> next = const [];
   int calls = 0;
 
-  Future<PickedMedia?> pick() async {
+  Future<List<PickedMedia>> pick() async {
     calls++;
     return next;
   }
@@ -137,7 +137,7 @@ void main() {
   });
 
   testWidgets('tapping the attach button invokes the picker', (t) async {
-    picker.next = null; // Backing out of the sheet returns to idle.
+    picker.next = const []; // Backing out of the sheet returns to idle.
     await pump(t);
     await t.tap(find.byKey(AppKeys.mobileComposerAttachButton));
     await t.pump();
@@ -147,7 +147,7 @@ void main() {
 
   /// Taps attach and drives the cubit to `uploading` with the upload held open.
   Future<void> startUpload(WidgetTester t) async {
-    picker.next = smallImage();
+    picker.next = [smallImage()];
     await pump(t);
     await t.tap(find.byKey(AppKeys.mobileComposerAttachButton));
     // picking → uploading; the upload future is held open by the completer.
@@ -171,19 +171,32 @@ void main() {
     expect(find.byKey(AppKeys.mobileComposerAttachButton), findsNothing);
   });
 
-  testWidgets('shows the percentage and byte figures while uploading',
-      (t) async {
+  testWidgets('shows the percentage and byte figures while uploading', (
+    t,
+  ) async {
     // A video can take minutes on a LAN; the ring alone cannot tell a slow
-    // transfer from a stalled one.
-    await startUpload(t);
+    // transfer from a stalled one. The figures come from the batch counters,
+    // so the picked file's claimed length is the 10 MiB the ticks report
+    // against.
+    picker.next = [
+      PickedMedia(
+        filename: 'clip.mp4',
+        source: _HugeSource(10 * 1024 * 1024),
+      ),
+    ];
+    await pump(t);
+    await t.tap(find.byKey(AppKeys.mobileComposerAttachButton));
+    await t.pump();
+    await t.pump();
     uploader.onProgress?.call(5 * 1024 * 1024, 10 * 1024 * 1024);
     await t.pump();
 
     expect(find.text('50% · 5/10 MB'), findsOneWidget);
   });
 
-  testWidgets('the uploading chip cancels, and cancelling drops the key',
-      (t) async {
+  testWidgets('the uploading chip cancels, and cancelling drops the key', (
+    t,
+  ) async {
     await startUpload(t);
     expect(
       find.byKey(AppKeys.mobileComposerCancelUploadButton),
@@ -213,13 +226,13 @@ void main() {
       upload: ({required filename, required source, onProgress}) async =>
           '/Users/me/proj/photo.jpg',
     );
-    picker.next = smallImage();
+    picker.next = [smallImage()];
     await pump(t);
     // Collect into a variable rather than awaiting paths.first: paths is an
     // async broadcast stream, so a missing emit should fail the assert, not
     // hang the test on a future that never completes.
-    String? emitted;
-    final sub = upload.paths.listen((p) => emitted = p);
+    final emitted = <String>[];
+    final sub = upload.paths.listen(emitted.add);
     addTearDown(sub.cancel);
     await t.tap(find.byKey(AppKeys.mobileComposerAttachButton));
     await t.pump();
@@ -227,16 +240,40 @@ void main() {
     await t.pump();
     // The mirror page is what quotes and inserts this; here we only assert the
     // host's path reaches the stream. shell_quote_test covers the quoting.
-    expect(emitted, '/Users/me/proj/photo.jpg');
+    expect(emitted, ['/Users/me/proj/photo.jpg']);
+  });
+
+  testWidgets('a multi pick emits one path per file, in pick order', (t) async {
+    await upload.close();
+    upload = MediaUploadCubit(
+      pickMedia: picker.pick,
+      upload: ({required filename, required source, onProgress}) async =>
+          '/Users/me/proj/$filename',
+    );
+    picker.next = [
+      PickedMedia(filename: 'a.png', source: MemoryUploadSource(Uint8List(4))),
+      PickedMedia(filename: 'b.mp4', source: MemoryUploadSource(Uint8List(6))),
+    ];
+    await pump(t);
+    final emitted = <String>[];
+    final sub = upload.paths.listen(emitted.add);
+    addTearDown(sub.cancel);
+    await t.tap(find.byKey(AppKeys.mobileComposerAttachButton));
+    await t.pump();
+    await t.pump();
+    await t.pump();
+    expect(emitted, ['/Users/me/proj/a.png', '/Users/me/proj/b.mp4']);
   });
 
   testWidgets('an oversized image names the image cap', (t) async {
     // The local guard trips before any transfer, and the number now travels with
     // the failure rather than being a default on the messenger.
-    picker.next = PickedMedia(
-      filename: 'huge.png',
-      source: MemoryUploadSource(Uint8List(26 * 1024 * 1024)),
-    );
+    picker.next = [
+      PickedMedia(
+        filename: 'huge.png',
+        source: MemoryUploadSource(Uint8List(26 * 1024 * 1024)),
+      ),
+    ];
     await pump(t);
     await t.tap(find.byKey(AppKeys.mobileComposerAttachButton));
     await t.pump();
@@ -245,10 +282,9 @@ void main() {
   });
 
   testWidgets('an oversized video names the video cap', (t) async {
-    picker.next = PickedMedia(
-      filename: 'huge.mp4',
-      source: _HugeSource(513 * 1024 * 1024),
-    );
+    picker.next = [
+      PickedMedia(filename: 'huge.mp4', source: _HugeSource(513 * 1024 * 1024)),
+    ];
     await pump(t);
     await t.tap(find.byKey(AppKeys.mobileComposerAttachButton));
     await t.pump();
@@ -257,7 +293,7 @@ void main() {
   });
 
   testWidgets('an unsupported type raises its snack bar', (t) async {
-    picker.next = smallImage();
+    picker.next = [smallImage()];
     uploader.error = const PairingUploadException('unsupported_type');
     await pump(t);
     await t.tap(find.byKey(AppKeys.mobileComposerAttachButton));
@@ -268,7 +304,7 @@ void main() {
   });
 
   testWidgets('any other failure raises the generic snack bar', (t) async {
-    picker.next = smallImage();
+    picker.next = [smallImage()];
     uploader.error = const PairingUploadException('boom');
     await pump(t);
     await t.tap(find.byKey(AppKeys.mobileComposerAttachButton));

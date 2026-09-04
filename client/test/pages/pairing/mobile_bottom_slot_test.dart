@@ -46,7 +46,7 @@ void main() {
     // The composer now requires an MediaUploadCubit in scope; this suite never
     // exercises uploads, so the callbacks are inert.
     upload = MediaUploadCubit(
-      pickMedia: () async => null,
+      pickMedia: () async => const [],
       upload: ({required filename, required source, onProgress}) async => '',
     );
     // The slot forwards these to the composer; the mirror page owns them, so

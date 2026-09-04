@@ -194,11 +194,14 @@ class _PairingMirrorPageState extends State<PairingMirrorPage>
     );
   }
 
-  /// One gallery pick — image or video, same sheet.
+  /// One gallery pick, as many files as the sheet allows — images and videos
+  /// together, uploaded one at a time by the cubit.
   ///
-  /// `pickMedia` rather than a separate video button: one tap, one sheet, and the
-  /// phone's own picker already distinguishes the two. It requires iOS 14, which
-  /// is why the deployment target was raised.
+  /// `pickMultipleMedia` rather than a separate video button: one tap, one
+  /// sheet, and the phone's own picker already distinguishes the two kinds and
+  /// allows multi-select (PHPicker on iOS, the photo picker / GET_CONTENT on
+  /// Android). It requires iOS 14, which is why the deployment target was
+  /// raised.
   ///
   /// The only place `image_picker` is used, so the cubit takes plain callbacks and
   /// stays testable. [XFile.name] is already a bare filename with no directory
@@ -212,22 +215,36 @@ class _PairingMirrorPageState extends State<PairingMirrorPage>
   /// `requestFullMetadata: false` skips the iOS photo-library permission prompt
   /// (PHPicker needs none) and costs nothing here: no resize or re-encode is
   /// requested either way.
-  Future<PickedMedia?> _pickMedia() async {
-    final picked = await ImagePicker().pickMedia(requestFullMetadata: false);
-    if (picked == null) {
+  Future<List<PickedMedia>> _pickMedia() async {
+    final picked = await ImagePicker().pickMultipleMedia(
+      requestFullMetadata: false,
+    );
+    if (picked.isEmpty) {
       // Also what a platform picker that fails to return a path looks like, so
-      // it is worth a line: on the cubit side a null pick is silent (it means
+      // it is worth a line: on the cubit side an empty pick is silent (it means
       // "user backed out"), which makes a broken picker indistinguishable from
       // a cancelled one.
       AppLogger.instance.i('Media pick returned nothing');
-      return null;
+      return const [];
     }
-    final source = await FileUploadSource.open(picked.path);
-    AppLogger.instance.i(
-      'Media picked: name=${picked.name} bytes=${source.length} '
-      'mime=${picked.mimeType} path=${picked.path}',
-    );
-    return PickedMedia(filename: picked.name, source: source);
+    final media = <PickedMedia>[];
+    try {
+      for (final file in picked) {
+        final source = await FileUploadSource.open(file.path);
+        AppLogger.instance.i(
+          'Media picked: name=${file.name} bytes=${source.length} '
+          'mime=${file.mimeType} path=${file.path}',
+        );
+        media.add(PickedMedia(filename: file.name, source: source));
+      }
+    } on Object {
+      // A later file failing to open must not leak the handles already taken.
+      for (final opened in media) {
+        await opened.source.close();
+      }
+      rethrow;
+    }
+    return media;
   }
 
   /// Copies the touch selection to the system clipboard and clears it.

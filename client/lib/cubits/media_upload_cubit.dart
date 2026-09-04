@@ -11,10 +11,12 @@ import '../utils/logging/logger_utils.dart';
 /// Where a media upload is in its lifecycle.
 ///
 /// [picking] covers the photo-sheet window; [uploading] covers the chunked
-/// transfer, during which [MediaUploadState.progress] advances so the button
-/// can repaint per acknowledged megabyte. [cancelling] exists so the button can
-/// stop being tappable and stop reporting a progress figure that is no longer
-/// going anywhere.
+/// transfers of the whole picked batch (its counters span the batch, so the
+/// ring is one 0→100% sweep across the files), during which
+/// [MediaUploadState.progress] advances so the button can repaint per
+/// acknowledged megabyte. [cancelling] exists so the button can stop being
+/// tappable and stop reporting a progress figure that is no longer going
+/// anywhere.
 enum MediaUploadStatus { idle, picking, uploading, cancelling }
 
 /// Why an upload failed. An enum so no user-facing string lives in the cubit.
@@ -104,9 +106,7 @@ MediaUploadFailure _failureForCode(
     case 'too_large':
       return _tooLarge(filename, caps);
     case 'unsupported_type':
-      return const MediaUploadFailure(
-        MediaUploadFailureReason.unsupportedType,
-      );
+      return const MediaUploadFailure(MediaUploadFailureReason.unsupportedType);
     default:
       return const MediaUploadFailure(MediaUploadFailureReason.failed);
   }
@@ -121,8 +121,10 @@ MediaUploadFailure _tooLarge(String filename, PairingUploadCaps caps) {
   );
 }
 
-/// Orchestrates picking one image or video and uploading it over the pairing
-/// channel, one upload at a time.
+/// Orchestrates picking one or more images or videos and uploading them over
+/// the pairing channel — one batch at a time, one file at a time within the
+/// batch, so peak memory stays at one in-flight chunk no matter how many files
+/// were picked.
 ///
 /// Recognized paths and failures leave as broadcast streams rather than state:
 /// both are one-shot events (a path is written into a `TextEditingController`
@@ -135,26 +137,28 @@ MediaUploadFailure _tooLarge(String filename, PairingUploadCaps caps) {
 /// cheap.
 class MediaUploadCubit extends Cubit<MediaUploadState> {
   MediaUploadCubit({
-    required Future<PickedMedia?> Function() pickMedia,
+    required Future<List<PickedMedia>> Function() pickMedia,
     required Future<String> Function({
       required String filename,
       required UploadSource source,
       void Function(int sent, int total)? onProgress,
-    }) upload,
+    })
+    upload,
     void Function()? cancelUpload,
     PairingUploadCaps caps = const PairingUploadCaps(),
-  })  : _pickMedia = pickMedia,
-        _upload = upload,
-        _cancelUpload = cancelUpload,
-        _caps = caps,
-        super(const MediaUploadState.idle());
+  }) : _pickMedia = pickMedia,
+       _upload = upload,
+       _cancelUpload = cancelUpload,
+       _caps = caps,
+       super(const MediaUploadState.idle());
 
-  final Future<PickedMedia?> Function() _pickMedia;
+  final Future<List<PickedMedia>> Function() _pickMedia;
   final Future<String> Function({
     required String filename,
     required UploadSource source,
     void Function(int sent, int total)? onProgress,
-  }) _upload;
+  })
+  _upload;
 
   /// Tells the transport to stop. Optional so a consumer that never shows a
   /// cancel affordance need not wire one.
@@ -181,28 +185,37 @@ class MediaUploadCubit extends Cubit<MediaUploadState> {
   /// One event per upload failure, mapped to copy by the UI.
   Stream<MediaUploadFailure> get failures => _failures.stream;
 
-  /// Stops the upload in flight. A no-op unless one is actually running.
+  /// Set by [cancel] and by the in-flight upload ending in
+  /// [PairingUploadCancelled]: everything in the batch after the file being
+  /// sent is skipped. The user asked to stop, and files not yet sent are files
+  /// they no longer want sent. Cleared when the next batch starts.
+  bool _abortBatch = false;
+
+  /// Stops the batch in flight. A no-op unless one is actually running.
   ///
-  /// Emits no failure event: cancelling is a user action, like backing out of the
-  /// photo sheet, so it must not raise a snackbar. The in-flight upload future
-  /// throws [PairingUploadCancelled], which [pickAndUpload] swallows.
+  /// Emits no failure event: cancelling is a user action, like backing out of
+  /// the photo sheet, so it must not raise a snackbar. The in-flight upload
+  /// future throws [PairingUploadCancelled], which [pickAndUpload] both
+  /// swallows and treats as its cue to skip the files still queued.
   void cancel() {
     if (isClosed) return;
     if (state.status != MediaUploadStatus.uploading) return;
     emit(state.copyWith(status: MediaUploadStatus.cancelling));
+    _abortBatch = true;
     _cancelUpload?.call();
   }
 
-  /// Picks a photo or video and uploads it. A no-op if closed or if an upload is
-  /// already in flight — only one runs at a time; use [cancel] to stop it.
+  /// Picks photos or videos and uploads them one at a time, in pick order. A
+  /// no-op if closed or if a batch is already in flight — only one runs at a
+  /// time; use [cancel] to stop it.
   Future<void> pickAndUpload() async {
     if (isClosed) return;
     if (state.status != MediaUploadStatus.idle) return;
 
     emit(const MediaUploadState(status: MediaUploadStatus.picking));
-    final PickedMedia? media;
+    final List<PickedMedia> picked;
     try {
-      media = await _pickMedia();
+      picked = await _pickMedia();
     } on Object catch (e, st) {
       // The picker throwing must not escape: `pickAndUpload` is called from an
       // `onTap` and nobody awaits it, so an exception here used to leave the
@@ -210,79 +223,138 @@ class MediaUploadCubit extends Cubit<MediaUploadState> {
       // the single-flight guard below, an attach button dead for the rest of the
       // session.
       AppLogger.instance.w('Media pick failed', error: e, stackTrace: st);
-      _failures.add(const MediaUploadFailure(MediaUploadFailureReason.failed));
-      if (!isClosed) emit(const MediaUploadState.idle());
+      if (!isClosed) {
+        _failures.add(
+          const MediaUploadFailure(MediaUploadFailureReason.failed),
+        );
+        emit(const MediaUploadState.idle());
+      }
       return;
     }
-    // Every path from here on must close the source, or a RandomAccessFile leaks
-    // — a real OS handle on iOS. The `finally` covers the upload; the two early
-    // returns below have to do it themselves.
+    // Every path from here on must close every source, or RandomAccessFiles
+    // leak — real OS handles on iOS. The loop's `finally` covers each uploaded
+    // file; the early returns, the local rejects and the skipped tail of a
+    // cancelled batch have to do it themselves.
     if (isClosed) {
-      await media?.source.close();
+      for (final media in picked) {
+        await media.source.close();
+      }
       return;
     }
     // Backing out of the photo sheet is not a failure — no snackbar.
-    if (media == null) {
+    if (picked.isEmpty) {
       emit(const MediaUploadState.idle());
       return;
     }
 
-    final total = media.source.length;
-    // Check locally before the round trip so the user hears about an oversized
-    // file immediately rather than after a wasted begin. A null cap means the
-    // extension is not allowed at all — the host would say so anyway, but not
-    // after uploading it first.
-    final cap = _caps.maxBytesFor(media.filename);
-    if (cap == null) {
-      await media.source.close();
-      _failures.add(
-        const MediaUploadFailure(MediaUploadFailureReason.unsupportedType),
-      );
-      emit(const MediaUploadState.idle());
-      return;
+    // Local rejects happen before the first byte moves: the user hears about an
+    // oversized file immediately rather than after everything ahead of it has
+    // uploaded, and the progress total below only counts files that will
+    // actually send. Identical rejects collapse into one event — five oversized
+    // videos picked together are one sentence, not five snackbars queued four
+    // seconds apart.
+    final batch = <PickedMedia>[];
+    final rejects =
+        <
+          (MediaUploadFailureReason, UploadMediaKind?, int?),
+          MediaUploadFailure
+        >{};
+    for (final media in picked) {
+      // A null cap means the extension is not allowed at all — the host would
+      // say so anyway, but not after uploading it first.
+      final cap = _caps.maxBytesFor(media.filename);
+      if (cap == null) {
+        await media.source.close();
+        rejects[(MediaUploadFailureReason.unsupportedType, null, null)] ??=
+            const MediaUploadFailure(MediaUploadFailureReason.unsupportedType);
+        continue;
+      }
+      if (media.source.length > cap) {
+        await media.source.close();
+        final failure = _tooLarge(media.filename, _caps);
+        rejects[(failure.reason, failure.kind, failure.limitBytes)] ??= failure;
+        continue;
+      }
+      batch.add(media);
     }
-    if (total > cap) {
-      await media.source.close();
-      _failures.add(_tooLarge(media.filename, _caps));
-      emit(const MediaUploadState.idle());
-      return;
+    if (!isClosed) {
+      for (final failure in rejects.values) {
+        _failures.add(failure);
+      }
     }
-
-    emit(
-      MediaUploadState(
-        status: MediaUploadStatus.uploading,
-        sentBytes: 0,
-        totalBytes: total,
-      ),
-    );
-    try {
-      final path = await _upload(
-        filename: media.filename,
-        source: media.source,
-        onProgress: (sent, total) {
-          if (!isClosed) {
-            emit(state.copyWith(sentBytes: sent, totalBytes: total));
-          }
-        },
-      );
-      if (!isClosed) _paths.add(path);
-    } on PairingUploadCancelled {
-      // The user stopped it. No failure event, no log — this is not an error.
-    } on PairingUploadException catch (e, st) {
-      _failures.add(_failureForCode(e.code, media.filename, _caps));
-      AppLogger.instance.w(
-        'Media upload rejected: ${e.code}',
-        error: e,
-        stackTrace: st,
-      );
-    } on Object catch (e, st) {
-      _failures.add(const MediaUploadFailure(MediaUploadFailureReason.failed));
-      AppLogger.instance.w('Media upload failed', error: e, stackTrace: st);
-    } finally {
-      await media.source.close();
-      // State returns to idle before anything else, or the button spins forever.
+    // An empty batch (or a cubit that closed during validation) falls through
+    // to the loop below, which closes each remaining source itself.
+    if (batch.isEmpty) {
       if (!isClosed) emit(const MediaUploadState.idle());
+      return;
     }
+
+    _abortBatch = false;
+    var totalBytes = 0;
+    for (final media in batch) {
+      totalBytes += media.source.length;
+    }
+    var doneBytes = 0;
+    for (final media in batch) {
+      if (_abortBatch || isClosed) {
+        await media.source.close();
+        continue;
+      }
+      emit(
+        MediaUploadState(
+          status: MediaUploadStatus.uploading,
+          sentBytes: doneBytes,
+          totalBytes: totalBytes,
+        ),
+      );
+      try {
+        final path = await _upload(
+          filename: media.filename,
+          source: media.source,
+          onProgress: (sent, total) {
+            if (!isClosed) {
+              emit(
+                state.copyWith(
+                  sentBytes: doneBytes + sent,
+                  totalBytes: totalBytes,
+                ),
+              );
+            }
+          },
+        );
+        if (!isClosed) _paths.add(path);
+      } on PairingUploadCancelled {
+        // The user stopped it. No failure event, no log — this is not an error.
+        _abortBatch = true;
+      } on PairingUploadException catch (e, st) {
+        // One file being refused must not sentence the rest: the host rejected
+        // *this* file, and the next one is a different file.
+        if (!isClosed) {
+          _failures.add(_failureForCode(e.code, media.filename, _caps));
+        }
+        AppLogger.instance.w(
+          'Media upload rejected: ${e.code}',
+          error: e,
+          stackTrace: st,
+        );
+      } on Object catch (e, st) {
+        if (!isClosed) {
+          _failures.add(
+            const MediaUploadFailure(MediaUploadFailureReason.failed),
+          );
+        }
+        AppLogger.instance.w('Media upload failed', error: e, stackTrace: st);
+      } finally {
+        await media.source.close();
+        // Counted even when the file failed or was cancelled: the ring is the
+        // batch's, and this file is finished whatever happened to it.
+        doneBytes += media.source.length;
+      }
+    }
+    // State returns to idle only after the last file, not between files — a
+    // mid-batch idle would read as "done" and let a double-tap start a second
+    // batch under the first.
+    if (!isClosed) emit(const MediaUploadState.idle());
   }
 
   @override

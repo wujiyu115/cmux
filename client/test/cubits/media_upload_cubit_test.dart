@@ -13,13 +13,19 @@ void main() {
 
   /// Small, unequal caps so a test can tell which one was applied.
   const caps = PairingUploadCaps(imageMaxBytes: 100, videoMaxBytes: 300);
-  late PickedMedia? picked;
+  late List<PickedMedia> picked;
   late Object? pickError;
   late Object? uploadError;
+
+  /// Filenames the fake upload refuses — per-file, unlike [uploadError] which
+  /// fails everything, so a batch can fail in the middle and keep going.
+  late Set<String> failUploadFor;
   late int uploadCalls;
+  late List<String> uploadNames;
+  late int maxInFlight;
+  int inFlight = 0;
   late List<int> progressTicks;
   late int cancelCalls;
-  late String uploadedPath;
   late void Function(void Function(int, int)? onProgress)? driveProgress;
 
   MediaUploadCubit build() {
@@ -38,10 +44,24 @@ void main() {
             void Function(int sent, int total)? onProgress,
           }) async {
             uploadCalls++;
-            final error = uploadError;
-            if (error != null) throw error;
-            driveProgress?.call(onProgress);
-            return uploadedPath;
+            uploadNames.add(filename);
+            inFlight++;
+            if (inFlight > maxInFlight) maxInFlight = inFlight;
+            try {
+              // A real transfer takes turns on the event loop; without this the
+              // fake resolves synchronously and nothing can observe whether two
+              // uploads ever ran at once.
+              await Future<void>.delayed(Duration.zero);
+              if (failUploadFor.contains(filename)) {
+                throw const PairingUploadException('boom');
+              }
+              final error = uploadError;
+              if (error != null) throw error;
+              driveProgress?.call(onProgress);
+              return '/home/dev/app/$filename';
+            } finally {
+              inFlight--;
+            }
           },
     );
     cubit.paths.listen(paths.add);
@@ -53,16 +73,21 @@ void main() {
     paths = [];
     failures = [];
     uploadCalls = 0;
+    uploadNames = [];
+    maxInFlight = 0;
+    inFlight = 0;
     cancelCalls = 0;
     progressTicks = [];
+    failUploadFor = {};
     uploadError = null;
     pickError = null;
-    uploadedPath = '/home/dev/app/photo.jpg';
     driveProgress = null;
-    picked = PickedMedia(
-      filename: 'photo.jpg',
-      source: MemoryUploadSource(Uint8List.fromList(List.filled(10, 1))),
-    );
+    picked = [
+      PickedMedia(
+        filename: 'photo.jpg',
+        source: MemoryUploadSource(Uint8List.fromList(List.filled(10, 1))),
+      ),
+    ];
   });
 
   test('starts idle with no progress', () {
@@ -83,8 +108,9 @@ void main() {
   });
 
   test('a cancelled pick uploads nothing and reports no failure', () async {
-    // Backing out of the photo sheet is not an error.
-    picked = null;
+    // Backing out of the photo sheet is not an error — an empty pick, now that
+    // the picker hands back a list.
+    picked = const [];
     final cubit = build();
     await cubit.pickAndUpload();
     expect(uploadCalls, 0);
@@ -96,10 +122,12 @@ void main() {
   test('refuses an oversized image without a round trip', () async {
     // Checking locally means the user hears about it immediately instead of
     // after a wasted begin.
-    picked = PickedMedia(
-      filename: 'huge.png',
-      source: MemoryUploadSource(Uint8List.fromList(List.filled(101, 1))),
-    );
+    picked = [
+      PickedMedia(
+        filename: 'huge.png',
+        source: MemoryUploadSource(Uint8List.fromList(List.filled(101, 1))),
+      ),
+    ];
     final cubit = build();
     await cubit.pickAndUpload();
     await Future<void>.delayed(Duration.zero);
@@ -113,10 +141,12 @@ void main() {
   test('accepts a video larger than the image cap', () async {
     // The whole point of per-kind caps: a 200-byte clip passes where a 200-byte
     // photo would not.
-    picked = PickedMedia(
-      filename: 'clip.mp4',
-      source: MemoryUploadSource(Uint8List(200)),
-    );
+    picked = [
+      PickedMedia(
+        filename: 'clip.mp4',
+        source: MemoryUploadSource(Uint8List(200)),
+      ),
+    ];
     final cubit = build();
     await cubit.pickAndUpload();
     await Future<void>.delayed(Duration.zero);
@@ -126,10 +156,12 @@ void main() {
   });
 
   test('refuses an oversized video and names the video cap', () async {
-    picked = PickedMedia(
-      filename: 'clip.mp4',
-      source: MemoryUploadSource(Uint8List(301)),
-    );
+    picked = [
+      PickedMedia(
+        filename: 'clip.mp4',
+        source: MemoryUploadSource(Uint8List(301)),
+      ),
+    ];
     final cubit = build();
     await cubit.pickAndUpload();
     await Future<void>.delayed(Duration.zero);
@@ -142,7 +174,7 @@ void main() {
 
   test('refuses a disallowed extension without a round trip', () async {
     final source = _TrackingSource(4);
-    picked = PickedMedia(filename: 'notes.txt', source: source);
+    picked = [PickedMedia(filename: 'notes.txt', source: source)];
     final cubit = build();
     await cubit.pickAndUpload();
     await Future<void>.delayed(Duration.zero);
@@ -191,16 +223,18 @@ void main() {
     }
   });
 
-  test('maps a non-protocol error to a generic failure and returns to idle',
-      () async {
-    uploadError = StateError('socket died');
-    final cubit = build();
-    await cubit.pickAndUpload();
-    await Future<void>.delayed(Duration.zero);
-    expect(failures.single.reason, MediaUploadFailureReason.failed);
-    expect(cubit.state.status, MediaUploadStatus.idle);
-    await cubit.close();
-  });
+  test(
+    'maps a non-protocol error to a generic failure and returns to idle',
+    () async {
+      uploadError = StateError('socket died');
+      final cubit = build();
+      await cubit.pickAndUpload();
+      await Future<void>.delayed(Duration.zero);
+      expect(failures.single.reason, MediaUploadFailureReason.failed);
+      expect(cubit.state.status, MediaUploadStatus.idle);
+      await cubit.close();
+    },
+  );
 
   test('tracks progress while uploading', () async {
     driveProgress = (onProgress) {
@@ -247,13 +281,199 @@ void main() {
   });
 
   test('ignores a second request while one is in flight', () async {
-    // One upload at a time; cancelling would need another protocol frame.
+    // One batch at a time; cancelling would need another protocol frame.
     final cubit = build();
     final first = cubit.pickAndUpload();
     await cubit.pickAndUpload();
     await first;
     expect(uploadCalls, 1);
     await cubit.close();
+  });
+
+  group('multi pick batches', () {
+    test(
+      'uploads one file at a time, in pick order, one path per file',
+      () async {
+        picked = [
+          PickedMedia(
+            filename: 'a.png',
+            source: MemoryUploadSource(Uint8List(10)),
+          ),
+          PickedMedia(
+            filename: 'b.png',
+            source: MemoryUploadSource(Uint8List(10)),
+          ),
+          PickedMedia(
+            filename: 'c.mp4',
+            source: MemoryUploadSource(Uint8List(20)),
+          ),
+        ];
+        final cubit = build();
+        await cubit.pickAndUpload();
+        await Future<void>.delayed(Duration.zero);
+        expect(uploadNames, ['a.png', 'b.png', 'c.mp4']);
+        expect(
+          maxInFlight,
+          1,
+          reason: 'sequential uploads keep peak memory at one file',
+        );
+        expect(paths, [
+          '/home/dev/app/a.png',
+          '/home/dev/app/b.png',
+          '/home/dev/app/c.mp4',
+        ]);
+        expect(cubit.state.status, MediaUploadStatus.idle);
+        await cubit.close();
+      },
+    );
+
+    test('one failed upload does not stop the rest of the batch', () async {
+      picked = [
+        PickedMedia(
+          filename: 'a.png',
+          source: MemoryUploadSource(Uint8List(10)),
+        ),
+        PickedMedia(
+          filename: 'b.png',
+          source: MemoryUploadSource(Uint8List(10)),
+        ),
+        PickedMedia(
+          filename: 'c.png',
+          source: MemoryUploadSource(Uint8List(10)),
+        ),
+      ];
+      failUploadFor = {'b.png'};
+      final cubit = build();
+      await cubit.pickAndUpload();
+      await Future<void>.delayed(Duration.zero);
+      expect(uploadNames, ['a.png', 'b.png', 'c.png']);
+      expect(paths, ['/home/dev/app/a.png', '/home/dev/app/c.png']);
+      expect(failures.single.reason, MediaUploadFailureReason.failed);
+      expect(cubit.state.status, MediaUploadStatus.idle);
+      await cubit.close();
+    });
+
+    test(
+      'an oversized pick is refused locally while the rest still upload',
+      () async {
+        final huge = _TrackingSource(101);
+        picked = [
+          PickedMedia(filename: 'huge.png', source: huge),
+          PickedMedia(
+            filename: 'photo.jpg',
+            source: MemoryUploadSource(Uint8List(10)),
+          ),
+        ];
+        final cubit = build();
+        await cubit.pickAndUpload();
+        await Future<void>.delayed(Duration.zero);
+        expect(failures.single.reason, MediaUploadFailureReason.tooLarge);
+        expect(uploadCalls, 1);
+        expect(paths, ['/home/dev/app/photo.jpg']);
+        expect(huge.closed, isTrue);
+        await cubit.close();
+      },
+    );
+
+    test('identical local rejects collapse into one failure event', () async {
+      // Two oversized images and one oversized video picked together: one
+      // image sentence and one video sentence — not three snackbars, and not
+      // two identical image snackbars queued four seconds apart.
+      final first = _TrackingSource(101);
+      final second = _TrackingSource(101);
+      final video = _TrackingSource(301);
+      picked = [
+        PickedMedia(filename: 'huge1.png', source: first),
+        PickedMedia(filename: 'huge2.png', source: second),
+        PickedMedia(filename: 'huge.mp4', source: video),
+      ];
+      final cubit = build();
+      final statuses = <MediaUploadStatus>[];
+      final sub = cubit.stream.listen((s) => statuses.add(s.status));
+      await cubit.pickAndUpload();
+      await Future<void>.delayed(Duration.zero);
+      await sub.cancel();
+      expect(failures.map((f) => f.kind), [
+        UploadMediaKind.image,
+        UploadMediaKind.video,
+      ]);
+      expect(uploadCalls, 0);
+      // Never entered uploading: nothing sent, so no bytes were ever counted.
+      expect(statuses, [MediaUploadStatus.picking, MediaUploadStatus.idle]);
+      expect([first.closed, second.closed, video.closed], everyElement(isTrue));
+      await cubit.close();
+    });
+
+    test('progress aggregates across the batch', () async {
+      picked = [
+        PickedMedia(
+          filename: 'a.png',
+          source: MemoryUploadSource(Uint8List(10)),
+        ),
+        PickedMedia(
+          filename: 'b.png',
+          source: MemoryUploadSource(Uint8List(10)),
+        ),
+      ];
+      driveProgress = (onProgress) {
+        onProgress?.call(4, 10);
+        onProgress?.call(10, 10);
+      };
+      final cubit = build();
+      final uploading = <MediaUploadState>[];
+      final sub = cubit.stream.listen((s) {
+        if (s.status == MediaUploadStatus.uploading) uploading.add(s);
+      });
+      await cubit.pickAndUpload();
+      await Future<void>.delayed(Duration.zero);
+      await sub.cancel();
+      // File A sweeps 0 → 10 of 20; file B picks up at 10 and closes the ring.
+      expect(uploading.map((s) => s.sentBytes), [0, 4, 10, 10, 14, 20]);
+      expect(uploading.every((s) => s.totalBytes == 20), isTrue);
+      await cubit.close();
+    });
+
+    test('cancel skips the files not yet sent', () async {
+      final a = _TrackingSource(10);
+      final b = _TrackingSource(10);
+      final c = _TrackingSource(10);
+      final uploadStarted = Completer<void>();
+      final held = Completer<String>();
+      final sent = <String>[];
+      late MediaUploadCubit cubit;
+      cubit = MediaUploadCubit(
+        pickMedia: () async => [
+          PickedMedia(filename: 'a.png', source: a),
+          PickedMedia(filename: 'b.png', source: b),
+          PickedMedia(filename: 'c.png', source: c),
+        ],
+        cancelUpload: () => held.completeError(const PairingUploadCancelled()),
+        upload: ({required filename, required source, onProgress}) {
+          sent.add(filename);
+          uploadStarted.complete();
+          return held.future;
+        },
+      );
+      cubit.paths.listen(paths.add);
+      cubit.failures.listen(failures.add);
+
+      final done = cubit.pickAndUpload();
+      await uploadStarted.future;
+      expect(cubit.state.status, MediaUploadStatus.uploading);
+
+      cubit.cancel();
+      expect(cubit.state.status, MediaUploadStatus.cancelling);
+
+      await done;
+      await Future<void>.delayed(Duration.zero);
+      expect(sent, ['a.png'], reason: 'b and c were never started');
+      expect(cubit.state.status, MediaUploadStatus.idle);
+      expect(failures, isEmpty, reason: 'the user did this on purpose');
+      expect(paths, isEmpty);
+      // The skipped files still have to surrender their handles.
+      expect([a.closed, b.closed, c.closed], everyElement(isTrue));
+      await cubit.close();
+    });
   });
 
   group('cancel', () {
@@ -306,7 +526,7 @@ void main() {
     // A leaked RandomAccessFile is a real OS handle on iOS, and the reject path
     // is the easiest one to forget.
     final source = _TrackingSource(101);
-    picked = PickedMedia(filename: 'huge.png', source: source);
+    picked = [PickedMedia(filename: 'huge.png', source: source)];
     final cubit = build();
     await cubit.pickAndUpload();
     await Future<void>.delayed(Duration.zero);
@@ -316,7 +536,7 @@ void main() {
 
   test('closes the source after a successful upload', () async {
     final source = _TrackingSource(10);
-    picked = PickedMedia(filename: 'photo.jpg', source: source);
+    picked = [PickedMedia(filename: 'photo.jpg', source: source)];
     final cubit = build();
     await cubit.pickAndUpload();
     expect(source.closed, isTrue);
