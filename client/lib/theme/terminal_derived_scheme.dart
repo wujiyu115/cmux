@@ -55,11 +55,7 @@ Color lightenTerminalColor(Color color, double amount) {
   final argb = color.toARGB32();
   int up(int channel) =>
       math.min(255, (channel + (255 - channel) * amount).toInt());
-  return _rgb(
-    up((argb >> 16) & 0xFF),
-    up((argb >> 8) & 0xFF),
-    up(argb & 0xFF),
-  );
+  return _rgb(up((argb >> 16) & 0xFF), up((argb >> 8) & 0xFF), up(argb & 0xFF));
 }
 
 /// Linear channel mix, `t` = how far from [a] toward [b] (`Blend`, `:206`).
@@ -92,7 +88,8 @@ Color pickTerminalAccent(CmuxTerminalTheme theme) {
 
 /// Text colour that reads on [background] — cmux's `accentFg` rule
 /// (`AppThemeService.cs:47`): near-black on bright fills, white otherwise.
-Color terminalOnColor(Color background) => terminalPerceivedLuminance(background) > 140
+Color terminalOnColor(Color background) =>
+    terminalPerceivedLuminance(background) > 140
     ? const Color(0xFF1A1A1A)
     : const Color(0xFFFFFFFF);
 
@@ -245,6 +242,34 @@ ColorScheme terminalDerivedColorScheme(CmuxTerminalTheme theme) {
     shadow: const Color(0xFF000000),
     scrim: const Color(0xFF000000),
   );
+}
+
+/// The resolved terminal theme the active [ThemeData] was derived from.
+///
+/// Attached by `app_theme.dart` only on the terminal-derived branch (colour
+/// preset [kTerminalDerivedPresetId] with a theme whose luminance matches the
+/// brightness), so its presence on a context means "this chrome is this
+/// terminal theme". Consumers — e.g. the code editor's syntax palette — read
+/// it via `Theme.of(context).extension<TerminalThemeExtension>()` and fall
+/// back to their own palette when absent.
+@immutable
+class TerminalThemeExtension extends ThemeExtension<TerminalThemeExtension> {
+  const TerminalThemeExtension(this.theme);
+
+  final CmuxTerminalTheme theme;
+
+  @override
+  TerminalThemeExtension copyWith({CmuxTerminalTheme? theme}) =>
+      TerminalThemeExtension(theme ?? this.theme);
+
+  @override
+  TerminalThemeExtension lerp(
+    ThemeExtension<TerminalThemeExtension>? other,
+    double t,
+  ) {
+    if (other is! TerminalThemeExtension) return this;
+    return t < 0.5 ? this : other;
+  }
 }
 
 /// Resolves a [CmuxTerminalTheme] from a `LayoutPreferences.terminalThemeMode`

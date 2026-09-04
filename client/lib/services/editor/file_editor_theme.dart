@@ -4,6 +4,7 @@ import 'package:re_editor/re_editor.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 import '../../theme/app_typography_scale.dart';
+import '../../theme/terminal_derived_scheme.dart';
 import '../../theme/workspace_surface_layers.dart';
 import '../editor_platform/editor_syntax_theme.dart';
 
@@ -125,14 +126,7 @@ const kEditorTextBasenames = {
 /// Maximum file size loaded into the editor (bytes).
 const kEditorMaxFileBytes = 2 * 1024 * 1024;
 
-const kEditorImageExtensions = {
-  'png',
-  'jpg',
-  'jpeg',
-  'gif',
-  'webp',
-  'bmp',
-};
+const kEditorImageExtensions = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'};
 
 /// Max image bytes loaded for in-app preview (separate from text editor cap).
 const kEditorMaxImageBytes = 25 * 1024 * 1024;
@@ -174,7 +168,14 @@ CodeEditorStyle codeEditorStyleFor(
   final cs = Theme.of(context).colorScheme;
   final fonts = context.tpFonts;
   final textScaler = MediaQuery.textScalerOf(context);
-  final theme = EditorSyntaxTheme.forBrightness(Theme.of(context).brightness);
+  // When the whole UI scheme is terminal-derived, paint syntax from the same
+  // theme's ANSI palette; otherwise the fixed atom-one palettes.
+  final terminalTheme = Theme.of(
+    context,
+  ).extension<TerminalThemeExtension>()?.theme;
+  final theme = terminalTheme == null
+      ? EditorSyntaxTheme.forBrightness(Theme.of(context).brightness)
+      : EditorSyntaxTheme.fromTerminalTheme(terminalTheme);
   return CodeEditorStyle(
     fontSize: textScaler.scale(fileEditorFontSize(context)),
     fontHeight: 1.35,

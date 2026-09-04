@@ -117,7 +117,10 @@ FlexSchemeColor _flexSchemeColors(
 }
 
 /// Primary accent for branding (e.g. logo gradient) for the given preset.
-Color logoGradientStartFor(String presetId, [CmuxTerminalTheme? terminalTheme]) {
+Color logoGradientStartFor(
+  String presetId, [
+  CmuxTerminalTheme? terminalTheme,
+]) {
   final p = _palette(presetId, terminalTheme);
   return p.logoPrimary ?? p.primary;
 }
@@ -147,6 +150,7 @@ Color themePresetSwatchSecondary(
 
 const _subThemes = FlexSubThemesData(
   defaultRadius: 10,
+
   /// Match [TpControlMetrics.radiusBase] — rounded rect, not stadium/pill.
   filledButtonRadius: 8,
   outlinedButtonRadius: 8,
@@ -235,6 +239,7 @@ ThemeData buildLightTheme([
       fonts: fonts,
       // Terminal foreground is already the intended text colour.
       softenForeground: false,
+      terminalTheme: terminalTheme,
     );
   }
   return _applyTypography(
@@ -269,6 +274,7 @@ ThemeData buildDarkTheme([
       iconScale: iconScale,
       fonts: fonts,
       softenForeground: false,
+      terminalTheme: terminalTheme,
     );
   }
   return _applyTypography(
@@ -329,6 +335,7 @@ List<ThemeExtension<dynamic>> _appThemeExtensions({
   required TextTheme textTheme,
   required TpFontTheme fontTheme,
   required AppTypographyTheme typographyTheme,
+  CmuxTerminalTheme? terminalTheme,
 }) {
   final bootstrap = flexTheme.copyWith(
     textTheme: textTheme,
@@ -338,6 +345,9 @@ List<ThemeExtension<dynamic>> _appThemeExtensions({
     fontTheme,
     typographyTheme,
     buildAppAiMessageTheme(bootstrap),
+    // Present only when the whole scheme is terminal-derived; the code editor
+    // reads it to paint syntax colours from the same palette.
+    if (terminalTheme != null) TerminalThemeExtension(terminalTheme),
   ];
 }
 
@@ -355,6 +365,7 @@ ThemeData _applyTypography(
   AppTypographyScale? iconScale,
   ResolvedFonts? fonts,
   bool softenForeground = true,
+  CmuxTerminalTheme? terminalTheme,
 }) {
   if (softenForeground) {
     flexTheme = _withSoftenedForeground(flexTheme);
@@ -396,13 +407,17 @@ ThemeData _applyTypography(
     return flexTheme.copyWith(
       visualDensity: VisualDensity.compact,
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      iconTheme: TpIconSizes.iconTheme(scheme, scale: resolvedIconScale.multiplier),
+      iconTheme: TpIconSizes.iconTheme(
+        scheme,
+        scale: resolvedIconScale.multiplier,
+      ),
       textTheme: textTheme,
       extensions: _appThemeExtensions(
         flexTheme: flexTheme,
         textTheme: textTheme,
         fontTheme: fontTheme,
         typographyTheme: typographyTheme,
+        terminalTheme: terminalTheme,
       ),
       dialogTheme: buildTpDialogTheme(
         colorScheme: scheme,
@@ -452,7 +467,10 @@ ThemeData _applyTypography(
   return flexTheme.copyWith(
     visualDensity: VisualDensity.compact,
     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-    iconTheme: TpIconSizes.iconTheme(scheme, scale: resolvedIconScale.multiplier),
+    iconTheme: TpIconSizes.iconTheme(
+      scheme,
+      scale: resolvedIconScale.multiplier,
+    ),
     textTheme: mergedTextTheme,
     primaryTextTheme: primaryTextTheme,
     extensions: _appThemeExtensions(
@@ -460,6 +478,7 @@ ThemeData _applyTypography(
       textTheme: mergedTextTheme,
       fontTheme: fontTheme,
       typographyTheme: typographyTheme,
+      terminalTheme: terminalTheme,
     ),
     dialogTheme: buildTpDialogTheme(
       colorScheme: scheme,

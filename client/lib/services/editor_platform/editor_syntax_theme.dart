@@ -2,6 +2,9 @@ import 'dart:ui' show Brightness;
 
 import 'package:flutter/painting.dart';
 
+import '../../theme/terminal/cmux_terminal_theme.dart';
+import '../../theme/terminal_derived_scheme.dart';
+
 /// TextMate-style scope → [TextStyle] lookup for tree-sitter highlight
 /// captures (e.g. `keyword.control`, `string.escape`), aligned with the
 /// app's existing atom-one-dark / atom-one-light look. Language packs stay
@@ -22,6 +25,73 @@ class EditorSyntaxTheme {
     return brightness == Brightness.dark
         ? EditorSyntaxTheme.atomOneDark()
         : EditorSyntaxTheme.atomOneLight();
+  }
+
+  /// Palette derived from a terminal theme's ANSI slots, so the code editor
+  /// paints the same hues the terminal does (used when the UI scheme itself
+  /// is terminal-derived; see `TerminalThemeExtension`).
+  ///
+  /// Scope → slot mapping mirrors the atom-one structure: keywords take
+  /// ANSI 5 (magenta), strings ANSI 2 (green), numbers / builtins ANSI 3
+  /// (yellow), functions ANSI 4 (blue), types and constants ANSI 6 (cyan),
+  /// tags and labels ANSI 1 (red), attributes ANSI 2. Comments are the
+  /// foreground dimmed toward the background. A slot that sits too close to
+  /// the theme background is nudged toward the foreground (then replaced by
+  /// it) so a monochrome-ish theme cannot render a scope invisible.
+  factory EditorSyntaxTheme.fromTerminalTheme(CmuxTerminalTheme theme) {
+    final background = theme.background;
+    final foreground = theme.foreground;
+
+    Color readable(Color color) {
+      if (terminalColorDistance(color, background) >=
+          _kMinSyntaxContrastDistance) {
+        return color;
+      }
+      final nudged = blendTerminalColor(color, foreground, 0.5);
+      return terminalColorDistance(nudged, background) >=
+              _kMinSyntaxContrastDistance
+          ? nudged
+          : foreground;
+    }
+
+    Color ansi(int index) => readable(theme.ansi[index]);
+    final comment = readable(blendTerminalColor(foreground, background, 0.42));
+
+    return EditorSyntaxTheme._(<String, TextStyle>{
+      'comment': TextStyle(color: comment, fontStyle: FontStyle.italic),
+
+      'keyword': TextStyle(color: ansi(5)),
+      'operator': TextStyle(color: foreground),
+
+      'string': TextStyle(color: ansi(2)),
+      'string.escape': TextStyle(color: ansi(6)),
+
+      'number': TextStyle(color: ansi(3)),
+      'constant': TextStyle(color: ansi(6)),
+      'constant.builtin': TextStyle(color: ansi(6)),
+
+      'property': TextStyle(color: ansi(3)),
+      'variable': TextStyle(color: foreground),
+      'variable.builtin': TextStyle(color: ansi(3)),
+      'variable.parameter': TextStyle(color: foreground),
+
+      'function': TextStyle(color: ansi(4)),
+      'function.builtin': TextStyle(color: ansi(3)),
+      'constructor': TextStyle(color: ansi(3)),
+
+      'type': TextStyle(color: ansi(6)),
+      'type.builtin': TextStyle(color: ansi(3)),
+
+      'tag': TextStyle(color: ansi(1)),
+      'tag.attribute': TextStyle(color: ansi(2)),
+      'attribute': TextStyle(color: ansi(2)),
+      'label': TextStyle(color: ansi(1)),
+
+      'punctuation': TextStyle(color: foreground),
+
+      'emphasis': const TextStyle(fontStyle: FontStyle.italic),
+      'strong': const TextStyle(fontWeight: FontWeight.bold),
+    });
   }
 
   final Map<String, TextStyle> _scopes;
@@ -52,6 +122,12 @@ class EditorSyntaxTheme {
 
 // Colors copied from `re_highlight`'s atom-one-dark.dart / atom-one-light.dart
 // so tree-sitter captures paint the same palette as the previous highlighter.
+
+/// Minimum RGB distance a terminal-derived syntax colour keeps from the
+/// theme background before it is nudged toward the foreground (see
+/// [EditorSyntaxTheme.fromTerminalTheme]).
+const double _kMinSyntaxContrastDistance = 60;
+
 const _kDarkForeground = Color(0xffabb2bf);
 const _kDarkComment = Color(0xff5c6370);
 const _kDarkKeyword = Color(0xffc678dd);
