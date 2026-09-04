@@ -2300,6 +2300,42 @@ abstract class AppLocalizations {
   /// **'Command log'**
   String get workspaceTerminalCommandLog;
 
+  /// No description provided for @workspaceTerminalResumeSessions.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume CLI session'**
+  String get workspaceTerminalResumeSessions;
+
+  /// No description provided for @workspaceTerminalResumeSessionsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No CLI sessions for this directory'**
+  String get workspaceTerminalResumeSessionsEmpty;
+
+  /// No description provided for @agentCliFamilyClaude.
+  ///
+  /// In en, this message translates to:
+  /// **'Claude Code'**
+  String get agentCliFamilyClaude;
+
+  /// No description provided for @agentCliFamilyQoder.
+  ///
+  /// In en, this message translates to:
+  /// **'Qoder'**
+  String get agentCliFamilyQoder;
+
+  /// No description provided for @agentCliFamilyCodex.
+  ///
+  /// In en, this message translates to:
+  /// **'Codex'**
+  String get agentCliFamilyCodex;
+
+  /// No description provided for @agentCliFamilyOpencode.
+  ///
+  /// In en, this message translates to:
+  /// **'OpenCode'**
+  String get agentCliFamilyOpencode;
+
   /// No description provided for @commandLogTitle.
   ///
   /// In en, this message translates to:

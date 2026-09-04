@@ -61,6 +61,7 @@ import 'services/workspace/workspace_run_registry.dart';
 import 'services/workspace/workspace_worktree_registry.dart';
 import 'services/terminal/workspace_shell_connector.dart';
 import 'services/terminal/workspace_terminal_registry.dart';
+import 'services/cli/sessions/agent_cli_session_service.dart';
 import 'services/terminal/workspace_terminal_run_service.dart';
 import 'services/notification/desktop_system_notifier.dart';
 import 'services/notification/notification_recorder.dart';
@@ -740,6 +741,9 @@ Future<void> _bootStartup() async {
                 ),
                 RepositoryProvider<WorkspaceTerminalRunService>.value(
                   value: shell.workspaceTerminalRunService,
+                ),
+                RepositoryProvider<AgentCliSessionService>.value(
+                  value: shell.agentCliSessions,
                 ),
                 RepositoryProvider<GitRepoStore>.value(
                   value: shell.gitRepoStore,

@@ -20,6 +20,9 @@ import '../pages/command_log/command_log_dialog.dart';
 import '../services/commands/command_bus.dart';
 import '../services/commands/content_find_command_registrar.dart';
 import '../services/commands/terminal_split_command_registrar.dart';
+import '../services/cli/sessions/agent_cli_session_service.dart';
+import '../services/cli/sessions/agent_cli_sessions.dart';
+import '../services/session/launch_command_builder.dart';
 import '../services/ssh/ssh_profile_connection_coordinator.dart';
 import '../services/terminal/terminal_clipboard_image_paste.dart';
 import '../services/terminal/terminal_layout_coordinator.dart';
@@ -28,6 +31,7 @@ import '../services/terminal/terminal_layout_coordinator.dart';
 import '../services/terminal/terminal_layout_presets.dart' as layout_presets;
 import '../services/terminal/terminal_theme_mapper.dart';
 import '../services/terminal/terminal_uri_opener.dart';
+import '../services/terminal/terminal_session_link_providers.dart';
 import '../services/host/host_interactive_shell.dart';
 import '../services/terminal/workspace_shell_connector.dart';
 import '../services/terminal/workspace_terminal_connect_coordinator.dart';
@@ -42,6 +46,7 @@ import 'terminal/terminal_split_view.dart';
 import 'terminal_find_bar.dart';
 import 'workspace_terminal/workspace_terminal_body_kind.dart';
 import 'workspace_terminal/workspace_terminal_empty_pane.dart';
+import 'workspace_terminal/workspace_terminal_resume_menu.dart';
 import 'workspace_terminal/workspace_terminal_view.dart';
 
 /// Debug label for the workspace panel's stable [GlobalKey<TerminalViewState>].
@@ -641,7 +646,40 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
         if (mounted) setState(() {});
       },
       onShowCommandLog: showCommandLog,
+      onShowAgentSessions: (position) =>
+          unawaited(_showAgentSessionsMenu(position)),
       isZoomed: surface.zoomedPaneId != null,
+    );
+  }
+
+  /// Opens the resumable agent-CLI sessions menu anchored at the toolbar
+  /// button, scoped to the focused pane's runtime target and directory.
+  Future<void> _showAgentSessionsMenu(Offset globalPosition) async {
+    final entry = _activeEntry;
+    if (entry == null) return;
+    final target = _connector.runtimeTargetFor(entry.spec);
+    final osc7 = entry.session.engine.workingDir.value;
+    final directory = switch (target.kind) {
+      // Local panes parse OSC 7 through the host-native path semantics.
+      RuntimeKind.local =>
+        TerminalSessionLinkProviders.parseOsc7Cwd(osc7) ?? entry.cwd,
+      // WSL/SSH panes report POSIX paths the Windows-native parser would
+      // mangle, and a WSL pane's launch cwd is a Windows path needing the
+      // /mnt/<drive> conversion.
+      RuntimeKind.wsl =>
+        posixDirectoryFromOsc7(osc7) ??
+            LaunchCommandBuilder.windowsPathToWsl(entry.cwd) ??
+            entry.cwd,
+      RuntimeKind.ssh => posixDirectoryFromOsc7(osc7) ?? entry.cwd,
+    };
+    if (directory.trim().isEmpty) return;
+    await showWorkspaceTerminalResumeMenu(
+      context: context,
+      globalPosition: globalPosition,
+      service: context.read<AgentCliSessionService>(),
+      target: target,
+      directory: directory,
+      onRun: (command) => _writeToActivePane(command, submit: true),
     );
   }
 

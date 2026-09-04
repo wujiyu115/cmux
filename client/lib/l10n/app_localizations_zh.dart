@@ -1156,6 +1156,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workspaceTerminalCommandLog => '命令日志';
 
   @override
+  String get workspaceTerminalResumeSessions => '恢复 CLI 会话';
+
+  @override
+  String get workspaceTerminalResumeSessionsEmpty => '此目录没有 CLI 会话';
+
+  @override
+  String get agentCliFamilyClaude => 'Claude Code';
+
+  @override
+  String get agentCliFamilyQoder => 'Qoder';
+
+  @override
+  String get agentCliFamilyCodex => 'Codex';
+
+  @override
+  String get agentCliFamilyOpencode => 'OpenCode';
+
+  @override
   String get commandLogTitle => '命令日志';
 
   @override

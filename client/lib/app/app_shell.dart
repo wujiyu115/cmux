@@ -98,6 +98,7 @@ import '../services/notification/mobile_agent_notice_presenter.dart';
 import '../services/notification/notification_recorder.dart';
 import '../services/notification/terminal_idle_notification_service.dart';
 import '../services/terminal/command_log_sink.dart';
+import '../services/cli/sessions/agent_cli_session_service.dart';
 import '../services/session/session_lifecycle_service.dart';
 import '../services/ssh/ssh_client_factory.dart';
 import '../services/ssh/ssh_connection_events.dart';
@@ -155,6 +156,7 @@ class AppShell {
     required this.workspaceShellConnector,
     required this.workspaceTerminalSessionOps,
     required this.workspaceTerminalRunService,
+    required this.agentCliSessions,
     required this.gitRepoStore,
     required this.workspaceFileTreeStore,
     required this.workspaceWorktreeRegistry,
@@ -210,6 +212,7 @@ class AppShell {
   final WorkspaceShellConnector workspaceShellConnector;
   final WorkspaceTerminalSessionOps workspaceTerminalSessionOps;
   final WorkspaceTerminalRunService workspaceTerminalRunService;
+  final AgentCliSessionService agentCliSessions;
   final GitRepoStore gitRepoStore;
   final WorkspaceFileTreeStore workspaceFileTreeStore;
   final WorkspaceWorktreeRegistry workspaceWorktreeRegistry;
@@ -415,6 +418,10 @@ Future<AppShell> buildAppShell({
     await runtimeContextRegistry.rebindHome(defaultTargetResolver());
     AppStorage.bindHome(runtimeContextRegistry.home());
   };
+
+  final agentCliSessions = AgentCliSessionService(
+    resolveContext: runtimeContextRegistry.forTarget,
+  );
 
   sessionLifecycleService = SessionLifecycleService(
     storageRootsResolver: () async => AppStorage.context,
@@ -1243,6 +1250,7 @@ Future<AppShell> buildAppShell({
     workspaceShellConnector: workspaceShellConnector,
     workspaceTerminalSessionOps: workspaceTerminalSessionOps,
     workspaceTerminalRunService: workspaceTerminalRunService,
+    agentCliSessions: agentCliSessions,
     gitRepoStore: gitRepoStore,
     workspaceFileTreeStore: workspaceFileTreeStore,
     workspaceWorktreeRegistry: workspaceWorktreeRegistry,

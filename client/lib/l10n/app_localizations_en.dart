@@ -1193,6 +1193,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workspaceTerminalCommandLog => 'Command log';
 
   @override
+  String get workspaceTerminalResumeSessions => 'Resume CLI session';
+
+  @override
+  String get workspaceTerminalResumeSessionsEmpty =>
+      'No CLI sessions for this directory';
+
+  @override
+  String get agentCliFamilyClaude => 'Claude Code';
+
+  @override
+  String get agentCliFamilyQoder => 'Qoder';
+
+  @override
+  String get agentCliFamilyCodex => 'Codex';
+
+  @override
+  String get agentCliFamilyOpencode => 'OpenCode';
+
+  @override
   String get commandLogTitle => 'Command log';
 
   @override

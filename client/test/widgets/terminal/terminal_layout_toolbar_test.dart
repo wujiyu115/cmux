@@ -13,6 +13,7 @@ void main() {
     VoidCallback? onEqualize,
     VoidCallback? onToggleZoom,
     VoidCallback? onShowCommandLog,
+    void Function(Offset globalPosition)? onShowAgentSessions,
     bool isZoomed = false,
   }) async {
     await tester.pumpWidget(
@@ -27,6 +28,7 @@ void main() {
             onEqualize: onEqualize ?? () {},
             onToggleZoom: onToggleZoom ?? () {},
             onShowCommandLog: onShowCommandLog ?? () {},
+            onShowAgentSessions: onShowAgentSessions,
             isZoomed: isZoomed,
           ),
         ),
@@ -87,6 +89,30 @@ void main() {
 
     await tester.tap(find.byTooltip(l10n.workspaceTerminalCommandLog));
     expect(opened, 1);
+  });
+
+  testWidgets('agent sessions button reports its anchor position', (
+    tester,
+  ) async {
+    final positions = <Offset>[];
+    final l10n = await pumpToolbar(
+      tester,
+      onShowAgentSessions: positions.add,
+    );
+
+    await tester.tap(find.byTooltip(l10n.workspaceTerminalResumeSessions));
+    await tester.pump();
+
+    expect(positions, hasLength(1));
+    expect(positions.single.dx, greaterThan(0));
+    expect(positions.single.dy, greaterThan(0));
+  });
+
+  testWidgets('agent sessions button hides without a callback', (
+    tester,
+  ) async {
+    final l10n = await pumpToolbar(tester);
+    expect(find.byTooltip(l10n.workspaceTerminalResumeSessions), findsNothing);
   });
 
   testWidgets('preset menu emits the chosen preset enum', (tester) async {

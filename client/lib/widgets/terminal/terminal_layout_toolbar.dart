@@ -18,6 +18,7 @@ class TerminalLayoutToolbar extends StatelessWidget {
     required this.onEqualize,
     required this.onToggleZoom,
     required this.onShowCommandLog,
+    this.onShowAgentSessions,
     this.isZoomed = false,
     super.key,
   });
@@ -30,6 +31,10 @@ class TerminalLayoutToolbar extends StatelessWidget {
 
   /// Opens the command log window (the cmux "list" toolbar button).
   final VoidCallback onShowCommandLog;
+
+  /// Opens the resumable agent-CLI sessions menu anchored at the button.
+  /// Null hides the button (e.g. tests and harnesses without the service).
+  final void Function(Offset globalPosition)? onShowAgentSessions;
 
   /// Whether the active surface currently has a zoomed pane (drives the icon).
   final bool isZoomed;
@@ -84,6 +89,8 @@ class TerminalLayoutToolbar extends StatelessWidget {
             tooltip: l10n.workspaceTerminalCommandLog,
             onTap: onShowCommandLog,
           ),
+          if (onShowAgentSessions != null)
+            _AgentSessionsMenuButton(onShow: onShowAgentSessions!),
           const SizedBox(width: 4),
         ],
       ),
@@ -94,6 +101,34 @@ class TerminalLayoutToolbar extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
         child: TpSeparator(axis: Axis.vertical),
       );
+}
+
+/// Agent-CLI sessions button: hands its anchor position (bottom-left of the
+/// button) to [onShow], which opens the resumable-sessions menu there.
+class _AgentSessionsMenuButton extends StatelessWidget {
+  const _AgentSessionsMenuButton({required this.onShow});
+
+  final void Function(Offset globalPosition) onShow;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Builder(
+      builder: (buttonContext) {
+        return TpIconButton(
+          icon: Icons.history,
+          compact: true,
+          size: TpIconButton.kCompactSize,
+          tooltip: l10n.workspaceTerminalResumeSessions,
+          onTap: () {
+            final box = buttonContext.findRenderObject() as RenderBox?;
+            if (box == null) return;
+            onShow(box.localToGlobal(box.size.bottomLeft(Offset.zero)));
+          },
+        );
+      },
+    );
+  }
 }
 
 /// Layout-preset popup: opens a [TpActionMenu] anchored at the button and
