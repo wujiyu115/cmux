@@ -168,21 +168,30 @@ CodeEditorStyle codeEditorStyleFor(
   final cs = Theme.of(context).colorScheme;
   final fonts = context.tpFonts;
   final textScaler = MediaQuery.textScalerOf(context);
-  // When the whole UI scheme is terminal-derived, paint syntax from the same
-  // theme's ANSI palette; otherwise the fixed atom-one palettes.
+  // Syntax colours follow the active terminal theme's ANSI palette on every
+  // colour preset (not only the terminal-derived one), as long as its
+  // luminance matches the editor — a light terminal theme in a dark UI would
+  // paint unreadable scopes. Chrome stays preset-derived regardless.
+  final brightness = Theme.of(context).brightness;
   final terminalTheme = Theme.of(
     context,
   ).extension<TerminalThemeExtension>()?.theme;
-  final theme = terminalTheme == null
-      ? EditorSyntaxTheme.forBrightness(Theme.of(context).brightness)
-      : EditorSyntaxTheme.fromTerminalTheme(terminalTheme);
+  final editorBackground = backgroundColor ?? cs.workspaceCode;
+  final theme =
+      terminalTheme != null &&
+          terminalTheme.isLightByLuminance == (brightness == Brightness.light)
+      ? EditorSyntaxTheme.fromTerminalTheme(
+          terminalTheme,
+          background: editorBackground,
+        )
+      : EditorSyntaxTheme.forBrightness(brightness);
   return CodeEditorStyle(
     fontSize: textScaler.scale(fileEditorFontSize(context)),
     fontHeight: 1.35,
     fontFamily: fonts.monoFontFamily,
     fontFamilyFallback: fonts.monoFontFamilyFallback,
     textColor: cs.onSurface,
-    backgroundColor: backgroundColor ?? cs.workspaceCode,
+    backgroundColor: editorBackground,
     selectionColor: cs.primary.withValues(alpha: 0.28),
     highlightColor: cs.tertiary.withValues(alpha: 0.35),
     cursorColor: cs.primary,

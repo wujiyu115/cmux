@@ -63,6 +63,46 @@ void main() {
     expect(style.textColor, const Color(0xFFD0D4DC));
   });
 
+  testWidgets('fixed presets also paint syntax from the ANSI palette', (
+    tester,
+  ) async {
+    // The chrome stays preset-derived, but syntax follows the terminal theme.
+    final terminalTheme = _darkTheme();
+    final style = await _pumpStyle(
+      tester,
+      buildDarkTheme(
+        'forest',
+        AppTypographyScale.standard,
+        null,
+        null,
+        terminalTheme,
+      ),
+    );
+    expect(style.syntaxTheme!['keyword']?.color, terminalTheme.ansi[5]);
+    expect(style.syntaxTheme!['string']?.color, terminalTheme.ansi[2]);
+    expect(style.backgroundColor, isNot(terminalTheme.background));
+  });
+
+  testWidgets('a brightness-mismatched terminal theme falls back to atom-one', (
+    tester,
+  ) async {
+    final terminalTheme = _darkTheme();
+    final style = await _pumpStyle(
+      tester,
+      buildLightTheme(
+        'forest',
+        AppTypographyScale.standard,
+        null,
+        null,
+        terminalTheme,
+      ),
+    );
+    expect(
+      style.syntaxTheme!['keyword']?.color,
+      EditorSyntaxTheme.atomOneLight().asStyleMap()['keyword']?.color,
+    );
+  });
+
   testWidgets('fixed presets keep the atom-one palette', (tester) async {
     final style = await _pumpStyle(tester, buildDarkTheme('amber'));
     expect(

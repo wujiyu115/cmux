@@ -256,6 +256,9 @@ ThemeData buildLightTheme([
     typographyScale: typographyScale,
     iconScale: iconScale,
     fonts: fonts,
+    // Fixed preset: chrome stays palette-driven, but the extension still
+    // carries the terminal theme so editor syntax can follow it.
+    terminalTheme: terminalTheme,
   );
 }
 
@@ -293,6 +296,9 @@ ThemeData buildDarkTheme([
     typographyScale: typographyScale,
     iconScale: iconScale,
     fonts: fonts,
+    // Fixed preset: chrome stays palette-driven, but the extension still
+    // carries the terminal theme so editor syntax can follow it.
+    terminalTheme: terminalTheme,
   );
 }
 
@@ -341,13 +347,19 @@ List<ThemeExtension<dynamic>> _appThemeExtensions({
     textTheme: textTheme,
     extensions: [fontTheme, typographyTheme],
   );
+  // Attached whenever a terminal theme is active and its luminance fits this
+  // brightness slot — on the terminal-derived preset (chrome + syntax follow
+  // it) and on the fixed presets (only syntax consumers follow it). Absent on
+  // a mismatch so a light terminal theme never leaks into a dark UI.
+  final syntaxTheme =
+      terminalTheme != null &&
+      terminalTheme.isLightByLuminance ==
+          (flexTheme.brightness == Brightness.light);
   return [
     fontTheme,
     typographyTheme,
     buildAppAiMessageTheme(bootstrap),
-    // Present only when the whole scheme is terminal-derived; the code editor
-    // reads it to paint syntax colours from the same palette.
-    if (terminalTheme != null) TerminalThemeExtension(terminalTheme),
+    if (syntaxTheme) TerminalThemeExtension(terminalTheme),
   ];
 }
 

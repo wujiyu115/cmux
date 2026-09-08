@@ -45,7 +45,7 @@ void main() {
     expect(light.extension<TerminalThemeExtension>(), isNull);
   });
 
-  test('fixed presets never carry the extension', () {
+  test('fixed presets carry the extension when luminance matches', () {
     final theme = _darkTheme();
     final amber = buildDarkTheme(
       'amber',
@@ -54,6 +54,24 @@ void main() {
       null,
       theme,
     );
+    // Chrome stays amber; only syntax consumers follow the terminal theme.
+    expect(amber.extension<TerminalThemeExtension>()?.theme, same(theme));
+  });
+
+  test('fixed presets omit the extension on luminance mismatch', () {
+    final theme = _darkTheme();
+    final light = buildLightTheme(
+      'amber',
+      AppTypographyScale.standard,
+      null,
+      null,
+      theme,
+    );
+    expect(light.extension<TerminalThemeExtension>(), isNull);
+  });
+
+  test('fixed presets without a terminal theme carry no extension', () {
+    final amber = buildDarkTheme('amber', AppTypographyScale.standard);
     expect(amber.extension<TerminalThemeExtension>(), isNull);
   });
 

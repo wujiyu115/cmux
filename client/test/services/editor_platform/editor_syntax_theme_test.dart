@@ -162,6 +162,22 @@ void main() {
       expect(string, blendColors(background, foreground));
     });
 
+    test('contrast is measured against the passed editor background', () {
+      // Slot sits near the terminal background (would be nudged by default)
+      // but far from the fixed-preset editor fill the syntax paints on — so
+      // with [background] supplied it must stay untouched.
+      final ansi = distinctAnsi()..[2] = const Color(0xFF181C22);
+      final theme = EditorSyntaxTheme.fromTerminalTheme(
+        terminalTheme(ansi: ansi),
+      );
+      final withEditorBackground = EditorSyntaxTheme.fromTerminalTheme(
+        terminalTheme(ansi: ansi),
+        background: const Color(0xFF50545E),
+      );
+      expect(theme.styleFor('string')?.color, isNot(ansi[2]));
+      expect(withEditorBackground.styleFor('string')?.color, ansi[2]);
+    });
+
     test(
       'a slot still unreadable after the nudge falls back to foreground',
       () {

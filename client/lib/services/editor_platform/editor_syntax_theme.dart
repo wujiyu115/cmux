@@ -28,34 +28,38 @@ class EditorSyntaxTheme {
   }
 
   /// Palette derived from a terminal theme's ANSI slots, so the code editor
-  /// paints the same hues the terminal does (used when the UI scheme itself
-  /// is terminal-derived; see `TerminalThemeExtension`).
+  /// paints the same hues the terminal does (see `TerminalThemeExtension`).
   ///
   /// Scope → slot mapping mirrors the atom-one structure: keywords take
   /// ANSI 5 (magenta), strings ANSI 2 (green), numbers / builtins ANSI 3
   /// (yellow), functions ANSI 4 (blue), types and constants ANSI 6 (cyan),
   /// tags and labels ANSI 1 (red), attributes ANSI 2. Comments are the
   /// foreground dimmed toward the background. A slot that sits too close to
-  /// the theme background is nudged toward the foreground (then replaced by
-  /// it) so a monochrome-ish theme cannot render a scope invisible.
-  factory EditorSyntaxTheme.fromTerminalTheme(CmuxTerminalTheme theme) {
-    final background = theme.background;
+  /// [background] — the surface the syntax actually paints on, which on a
+  /// fixed colour preset is the preset-derived editor fill, not the terminal
+  /// background — is nudged toward the foreground (then replaced by it) so a
+  /// monochrome-ish theme cannot render a scope invisible.
+  factory EditorSyntaxTheme.fromTerminalTheme(
+    CmuxTerminalTheme theme, {
+    Color? background,
+  }) {
+    final background_ = background ?? theme.background;
     final foreground = theme.foreground;
 
     Color readable(Color color) {
-      if (terminalColorDistance(color, background) >=
+      if (terminalColorDistance(color, background_) >=
           _kMinSyntaxContrastDistance) {
         return color;
       }
       final nudged = blendTerminalColor(color, foreground, 0.5);
-      return terminalColorDistance(nudged, background) >=
+      return terminalColorDistance(nudged, background_) >=
               _kMinSyntaxContrastDistance
           ? nudged
           : foreground;
     }
 
     Color ansi(int index) => readable(theme.ansi[index]);
-    final comment = readable(blendTerminalColor(foreground, background, 0.42));
+    final comment = readable(blendTerminalColor(foreground, background_, 0.42));
 
     return EditorSyntaxTheme._(<String, TextStyle>{
       'comment': TextStyle(color: comment, fontStyle: FontStyle.italic),

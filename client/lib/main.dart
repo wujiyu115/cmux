@@ -852,15 +852,14 @@ class TeamPilotApp extends StatelessWidget {
           useCustomTerminalColors: prefs.useCustomTerminalColors,
           terminalColorOverrides: prefs.terminalColorOverrides,
           // Value key over the (unmodifiable, freshly built) override map so the
-          // record keeps `==` semantics and only the terminal preset rebuilds
-          // themes when a slot colour changes.
-          terminalThemeKey: colorPreset == kTerminalDerivedPresetId
-              ? uiTerminalThemeCacheKey(
-                  mode: prefs.terminalThemeMode,
-                  useCustomColors: prefs.useCustomTerminalColors,
-                  colorOverrides: prefs.terminalColorOverrides,
-                )
-              : 0,
+          // record keeps `==` semantics; the themes rebuild on every preset
+          // because the fixed presets carry the terminal theme in
+          // [TerminalThemeExtension] for editor syntax too.
+          terminalThemeKey: uiTerminalThemeCacheKey(
+            mode: prefs.terminalThemeMode,
+            useCustomColors: prefs.useCustomTerminalColors,
+            colorOverrides: prefs.terminalColorOverrides,
+          ),
         );
       },
       builder: (context, themeBundle) {
@@ -910,13 +909,13 @@ class _TeamPilotMaterialApp extends StatefulWidget {
   final String uiFontId;
   final String monoFontId;
 
-  /// Terminal colour-scheme prefs — only consumed when [colorPreset] is
-  /// [kTerminalDerivedPresetId], where the UI scheme is derived from them.
+  /// Terminal colour-scheme prefs — the `terminal` preset derives the whole UI
+  /// scheme from them; the fixed presets only use them for editor syntax.
   final String terminalThemeMode;
   final bool useCustomTerminalColors;
   final Map<String, int> terminalColorOverrides;
 
-  /// Value fingerprint of the three fields above; `0` for the fixed presets.
+  /// Value fingerprint of the three fields above.
   final int terminalThemeKey;
   final String savedLocale;
 
@@ -1002,16 +1001,16 @@ class _TeamPilotMaterialAppState extends State<_TeamPilotMaterialApp> {
     _cachedUiFontId = _sessionUiFontId;
     _cachedMonoFontId = _sessionMonoFontId;
     _cachedTerminalThemeKey = widget.terminalThemeKey;
-    // Null for the fixed presets and for the legacy adaptive / classicDark /
-    // highContrast terminal modes (nothing to derive from) — both fall back to
-    // the palette path inside [buildLightTheme] / [buildDarkTheme].
-    final terminalTheme = widget.colorPreset == kTerminalDerivedPresetId
-        ? resolveUiTerminalTheme(
-            mode: widget.terminalThemeMode,
-            useCustomColors: widget.useCustomTerminalColors,
-            colorOverrides: widget.terminalColorOverrides,
-          )
-        : null;
+    // Null for the legacy adaptive / classicDark / highContrast terminal modes
+    // (nothing to follow) — those fall back to the palette path inside
+    // [buildLightTheme] / [buildDarkTheme] and the atom-one syntax palettes.
+    // Resolved on every preset: the terminal-derived preset derives the whole
+    // scheme from it, the fixed presets only attach it for editor syntax.
+    final terminalTheme = resolveUiTerminalTheme(
+      mode: widget.terminalThemeMode,
+      useCustomColors: widget.useCustomTerminalColors,
+      colorOverrides: widget.terminalColorOverrides,
+    );
     _lightTheme = buildLightTheme(
       widget.colorPreset,
       textScale,

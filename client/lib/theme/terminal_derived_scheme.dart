@@ -244,14 +244,14 @@ ColorScheme terminalDerivedColorScheme(CmuxTerminalTheme theme) {
   );
 }
 
-/// The resolved terminal theme the active [ThemeData] was derived from.
+/// The active terminal theme, with the user's per-slot overrides applied.
 ///
-/// Attached by `app_theme.dart` only on the terminal-derived branch (colour
-/// preset [kTerminalDerivedPresetId] with a theme whose luminance matches the
-/// brightness), so its presence on a context means "this chrome is this
-/// terminal theme". Consumers — e.g. the code editor's syntax palette — read
-/// it via `Theme.of(context).extension<TerminalThemeExtension>()` and fall
-/// back to their own palette when absent.
+/// Attached by `app_theme.dart` whenever a terminal theme is resolvable and
+/// its luminance matches the theme's brightness — on the terminal-derived
+/// preset the chrome is painted from it, and on the fixed presets only syntax
+/// consumers follow it. Consumers — e.g. the code editor's syntax palette —
+/// read it via `Theme.of(context).extension<TerminalThemeExtension>()` and
+/// fall back to their own palette when absent.
 @immutable
 class TerminalThemeExtension extends ThemeExtension<TerminalThemeExtension> {
   const TerminalThemeExtension(this.theme);
