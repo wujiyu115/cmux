@@ -36,8 +36,10 @@ class FsChangeEvent {
 /// Callers must [close] the watch when done so the native subscription is
 /// cancelled before a replacement watch is started.
 class FsTreeWatch {
-  const FsTreeWatch({required this.events, required Future<void> Function() close})
-    : _close = close;
+  const FsTreeWatch({
+    required this.events,
+    required Future<void> Function() close,
+  }) : _close = close;
 
   final Stream<FsChangeEvent> events;
   final Future<void> Function() _close;
@@ -82,6 +84,14 @@ abstract interface class FsBatchOps {
   /// exists but its content could not be read. At most [maxBytes] bytes are
   /// transferred when given.
   Future<FsStatAndBytes?> statAndReadBytes(String path, {int? maxBytes});
+
+  /// [statAndReadBytes] for every path in [paths] in one round trip. Missing
+  /// paths map to null. Throws on transport failure so callers can fall back
+  /// to per-file [statAndReadBytes].
+  Future<Map<String, FsStatAndBytes?>> statAndReadBytesMany(
+    List<String> paths, {
+    int? maxBytesPerFile,
+  });
 
   /// Existence of every path in [paths] in one round trip. Throws on
   /// transport failure; callers fall back to per-path [Filesystem.stat].

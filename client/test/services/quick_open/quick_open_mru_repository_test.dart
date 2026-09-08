@@ -17,6 +17,14 @@ class _BatchingFilesystem extends InMemoryFilesystem implements FsBatchOps {
   }
 
   @override
+  Future<Map<String, FsStatAndBytes?>> statAndReadBytesMany(
+    List<String> paths, {
+    int? maxBytesPerFile,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
   Future<Map<String, bool>> existsMany(List<String> paths) async {
     existsManyCalls++;
     if (failExistsMany) throw StateError('boom');

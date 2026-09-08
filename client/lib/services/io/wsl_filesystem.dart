@@ -161,7 +161,8 @@ class WslFilesystem implements Filesystem, FsBatchOps {
     final read = maxBytes == null
         ? 'base64 -w0 -- "\$1"'
         : 'head -c "\$3" -- "\$1" | base64 -w0';
-    final script = 'stat -c "\$2" -- "\$1" || exit 1\n'
+    final script =
+        'stat -c "\$2" -- "\$1" || exit 1\n'
         '[ -r "\$1" ] || exit 2\n'
         '$read';
     final args = <String>['sh', '-c', script, 'sh', path, '%F|%s|%Y'];
@@ -184,6 +185,80 @@ class WslFilesystem implements Filesystem, FsBatchOps {
     }
   }
 
+  /// [statAndReadBytes] for many paths in one spawn. Each path emits exactly
+  /// two lines: the stat line (empty when the path is missing) and the
+  /// base64-encoded head (empty when unreadable). `base64 -w0` output never
+  /// contains newlines, so the pairing survives arbitrary head content.
+  @override
+  Future<Map<String, FsStatAndBytes?>> statAndReadBytesMany(
+    List<String> paths, {
+    int? maxBytesPerFile,
+  }) async {
+    if (paths.isEmpty) return const {};
+    // The stat format stays inside the script's double quotes: it reaches
+    // wsl.exe as one argv element, never through a login shell that would
+    // split the `|` into a pipe (see `_args`).
+    final script =
+        'max="\$1"; shift\n'
+        'for f in "\$@"; do\n'
+        '  s=\$(stat -c "%F|%s|%Y" -- "\$f" 2>/dev/null) || s=""\n'
+        '  printf "%s\\n" "\$s"\n'
+        '  if [ -n "\$s" ] && [ -r "\$f" ]; then\n'
+        '    if [ -n "\$max" ]; then\n'
+        '      head -c "\$max" -- "\$f" 2>/dev/null | base64 -w0\n'
+        '    else\n'
+        '      base64 -w0 -- "\$f" 2>/dev/null\n'
+        '    fi\n'
+        '  fi\n'
+        '  printf "\\n"\n'
+        'done';
+    final args = <String>[
+      'sh',
+      '-c',
+      script,
+      'sh',
+      maxBytesPerFile?.toString() ?? '',
+      ...paths,
+    ];
+    final result = await _run(args);
+    if (result.exitCode != 0) {
+      throw StateError(
+        'wsl statAndReadBytesMany failed (${result.exitCode}): '
+        '${result.stderr}',
+      );
+    }
+    final lines = (result.stdout as String)
+        .split('\n')
+        .map(
+          (line) =>
+              line.endsWith('\r') ? line.substring(0, line.length - 1) : line,
+        )
+        .toList();
+    if (lines.isNotEmpty && lines.last.isEmpty) lines.removeLast();
+    if (lines.length != paths.length * 2) {
+      throw StateError(
+        'wsl statAndReadBytesMany framing mismatch: '
+        '${lines.length} lines for ${paths.length} paths',
+      );
+    }
+    return {
+      for (var i = 0; i < paths.length; i++)
+        paths[i]: _parseStatAndHeadLine(lines[i * 2], lines[i * 2 + 1]),
+    };
+  }
+
+  FsStatAndBytes? _parseStatAndHeadLine(String statLine, String encoded) {
+    final stat = _parseStatLine(statLine);
+    if (stat.kind == FsEntityKind.notFound) return null;
+    final collapsed = encoded.replaceAll(RegExp(r'\s+'), '');
+    if (collapsed.isEmpty) return FsStatAndBytes(stat: stat, bytes: const []);
+    try {
+      return FsStatAndBytes(stat: stat, bytes: base64.decode(collapsed));
+    } on Object {
+      return FsStatAndBytes(stat: stat);
+    }
+  }
+
   /// One spawn checks every path: one `y`/`n` character per input, in order.
   @override
   Future<Map<String, bool>> existsMany(List<String> paths) async {
@@ -197,9 +272,7 @@ class WslFilesystem implements Filesystem, FsBatchOps {
         'wsl existsMany failed (${result.exitCode}): ${result.stderr}',
       );
     }
-    return {
-      for (var i = 0; i < paths.length; i++) paths[i]: flags[i] == 'y',
-    };
+    return {for (var i = 0; i < paths.length; i++) paths[i]: flags[i] == 'y'};
   }
 
   Future<String> _collectStreamText(Stream<List<int>> stream) {
@@ -249,11 +322,7 @@ class WslFilesystem implements Filesystem, FsBatchOps {
   }
 
   @override
-  Future<List<int>?> readBytesRange(
-    String path,
-    int offset,
-    int length,
-  ) async {
+  Future<List<int>?> readBytesRange(String path, int offset, int length) async {
     final quoted = RemoteFileStore.shellSingleQuote(path);
     final result = await _run([
       'sh',

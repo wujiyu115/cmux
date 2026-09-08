@@ -2336,6 +2336,18 @@ abstract class AppLocalizations {
   /// **'OpenCode'**
   String get agentCliFamilyOpencode;
 
+  /// No description provided for @agentCliFamilyOhMyPi.
+  ///
+  /// In en, this message translates to:
+  /// **'Oh My Pi'**
+  String get agentCliFamilyOhMyPi;
+
+  /// No description provided for @agentCliSessionsAllAgents.
+  ///
+  /// In en, this message translates to:
+  /// **'All agents'**
+  String get agentCliSessionsAllAgents;
+
   /// No description provided for @commandLogTitle.
   ///
   /// In en, this message translates to:

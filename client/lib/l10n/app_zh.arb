@@ -475,6 +475,8 @@
   "agentCliFamilyQoder": "Qoder",
   "agentCliFamilyCodex": "Codex",
   "agentCliFamilyOpencode": "OpenCode",
+  "agentCliFamilyOhMyPi": "Oh My Pi",
+  "agentCliSessionsAllAgents": "全部 Agent",
   "commandLogTitle": "命令日志",
   "commandLogRefresh": "刷新",
   "commandLogOpenFolder": "打开日志目录",

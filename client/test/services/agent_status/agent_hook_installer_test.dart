@@ -40,20 +40,22 @@ void main() {
     String? scriptPath,
     String? windowsScriptPath,
     Filesystem? filesystem,
-  }) =>
-      AgentHookInstaller(
-        target: target,
-        scriptPath: scriptPath ?? '${tmp.path}/agent-hooks/claude-hook.sh',
-        windowsScriptPath: windowsScriptPath,
-        settingsPath:
-            settingsPath ??
-            switch (target) {
-              AgentHookTarget.claude => '${tmp.path}/.claude/settings.json',
-              AgentHookTarget.qoder => '${tmp.path}/.qoder/settings.json',
-              AgentHookTarget.codex => '${tmp.path}/.codex/hooks.json',
-            },
-        filesystem: filesystem,
-      );
+  }) => AgentHookInstaller(
+    target: target,
+    scriptPath: scriptPath ?? '${tmp.path}/agent-hooks/claude-hook.sh',
+    windowsScriptPath: windowsScriptPath,
+    settingsPath:
+        settingsPath ??
+        switch (target) {
+          AgentHookTarget.claude => '${tmp.path}/.claude/settings.json',
+          AgentHookTarget.qoder => '${tmp.path}/.qoder/settings.json',
+          AgentHookTarget.codex => '${tmp.path}/.codex/hooks.json',
+          AgentHookTarget.ohMyPi =>
+            '${tmp.path}/.omp/agent/hooks/pre/'
+                '$agentHookOmpFileName',
+        },
+    filesystem: filesystem,
+  );
 
   Map<String, dynamic> readSettings(String path) =>
       jsonDecode(File(path).readAsStringSync()) as Map<String, dynamic>;
@@ -190,12 +192,15 @@ void main() {
 
       final settingsPath = '${tmp.path}/.qoder/settings.json';
       for (final event in _fullEvents) {
-        expect(groupsFor(settingsPath, event), isNotEmpty,
-            reason: '$event missing');
+        expect(
+          groupsFor(settingsPath, event),
+          isNotEmpty,
+          reason: '$event missing',
+        );
       }
-      final entry = ((groupsFor(settingsPath, 'PreToolUse').last['hooks']
-              as List)
-          .first) as Map;
+      final entry =
+          ((groupsFor(settingsPath, 'PreToolUse').last['hooks'] as List).first)
+              as Map;
       expect(entry['command'], installer.hookCommand);
       expect(entry.containsKey('commandWindows'), isFalse);
       expect(
@@ -298,8 +303,10 @@ void main() {
       final settingsPath = '${tmp.path}/.codex/hooks.json';
       final entry =
           (((readSettings(settingsPath)['hooks'] as Map)['Stop'] as List)
-                  .last['hooks'] as List)
-              .first as Map;
+                          .last['hooks']
+                      as List)
+                  .first
+              as Map;
       expect(entry['command'], installer.hookCommand);
       expect(entry.containsKey('commandWindows'), isFalse);
       // The .cmd forwarder is host-only; a distro never gets one.
@@ -351,40 +358,122 @@ void main() {
     });
   });
 
-  group('forWslDistro', () {
-    test(
-        'writes each target\'s settings inside the distro via the injected fs',
-        () async {
-      final fs = InMemoryFilesystem();
-      const appDataRoot = '/home/u/.local/share/com.hhoa.teampilot';
-      const script = '$appDataRoot/agent-hooks/claude-hook.sh';
+  group('ohMyPi target', () {
+    test('forHost resolves the module under the omp agent dir', () {
+      final installer = AgentHookInstaller.forHost(
+        target: AgentHookTarget.ohMyPi,
+        hostAppDataRoot: '/host/app',
+      );
+      expect(installer, isNotNull);
+      // omp discovers hook modules from <agentDir>/hooks/pre/; unlike the other
+      // targets nothing lands in the TeamPilot agent-hooks dir.
+      expect(
+        installer!.scriptPath,
+        endsWith('.omp/agent/hooks/pre/$agentHookOmpFileName'),
+      );
+      expect(installer.scriptPath, isNot(contains('/host/app/agent-hooks')));
+      // The module file is the whole install; the settings path is the module.
+      expect(installer.settingsPath, installer.scriptPath);
+      expect(installer.windowsScriptPath, isNull);
+      expect(installer.scriptBody, agentHookOmpScriptBody);
+    });
 
-      for (final target in AgentHookTarget.values) {
+    test(
+      'install writes only the module — no settings merge, no .bak',
+      () async {
+        final fs = InMemoryFilesystem();
+        await AgentHookInstaller(
+          target: AgentHookTarget.ohMyPi,
+          scriptPath: '/home/u/.omp/agent/hooks/pre/$agentHookOmpFileName',
+          settingsPath: '/home/u/.omp/agent/hooks/pre/$agentHookOmpFileName',
+          filesystem: fs,
+          scriptBody: agentHookOmpScriptBody,
+        ).install();
+
+        expect(
+          fs.files['/home/u/.omp/agent/hooks/pre/$agentHookOmpFileName'],
+          agentHookOmpScriptBody,
+        );
+        expect(fs.files.length, 1);
+        expect(fs.files.keys.where((p) => p.endsWith('.bak')), isEmpty);
+      },
+    );
+
+    test(
+      'forWslDistro writes the module into the distro ~/.omp tree',
+      () async {
+        final fs = InMemoryFilesystem();
         await AgentHookInstaller.forWslDistro(
-          target: target,
+          target: AgentHookTarget.ohMyPi,
           distro: 'Ubuntu',
           distroHome: '/home/u',
-          distroAppDataRoot: appDataRoot,
+          distroAppDataRoot: '/home/u/.local/share/com.hhoa.teampilot',
           filesystem: fs,
         ).install();
-      }
 
-      expect(fs.files[script], isNotNull);
-      expect(fs.files['/home/u/.claude/settings.json'], isNotNull);
-      expect(fs.files['/home/u/.qoder/settings.json'], isNotNull);
-      expect(fs.files['/home/u/.codex/hooks.json'], isNotNull);
+        const module = '/home/u/.omp/agent/hooks/pre/$agentHookOmpFileName';
+        expect(fs.files[module], agentHookOmpScriptBody);
+        // No settings file was created anywhere in the distro home.
+        expect(fs.files.keys.where((p) => p.endsWith('.json')), isEmpty);
+      },
+    );
 
-      // The command must be a POSIX path valid *inside* the distro, and a
-      // distro never needs the Windows cmd forwarder.
-      final codexRoot =
-          jsonDecode(fs.files['/home/u/.codex/hooks.json']!) as Map;
-      final entry =
-          ((((codexRoot['hooks'] as Map)['Stop'] as List).last as Map)['hooks']
-                  as List)
-              .first as Map;
-      expect(entry['command'], 'sh "$script"');
-      expect(entry.containsKey('commandWindows'), isFalse);
+    test('module body maps omp events onto Claude-shaped payloads', () {
+      expect(agentHookOmpScriptBody, contains('"session_stop"'));
+      expect(agentHookOmpScriptBody, contains('"agent_end"'));
+      expect(agentHookOmpScriptBody, contains('"tool_approval_requested"'));
+      // `ask` is renamed so the normalizer's waiting path fires.
+      expect(agentHookOmpScriptBody, contains('"AskUserQuestion"'));
+      // Interrupt + subagent + continuation filters.
+      expect(agentHookOmpScriptBody, contains('willContinue'));
+      expect(agentHookOmpScriptBody, contains('getSessionFile'));
+      // WSL interop fallback, same trick as the sh forwarder.
+      expect(
+        agentHookOmpScriptBody,
+        contains('/mnt/c/Windows/System32/curl.exe'),
+      );
+      // The spawn must be awaited, or omp's exit kills the request mid-flight.
+      expect(agentHookOmpScriptBody, contains('await p.exited'));
     });
+  });
+
+  group('forWslDistro', () {
+    test(
+      'writes each target\'s settings inside the distro via the injected fs',
+      () async {
+        final fs = InMemoryFilesystem();
+        const appDataRoot = '/home/u/.local/share/com.hhoa.teampilot';
+        const script = '$appDataRoot/agent-hooks/claude-hook.sh';
+
+        for (final target in AgentHookTarget.values) {
+          await AgentHookInstaller.forWslDistro(
+            target: target,
+            distro: 'Ubuntu',
+            distroHome: '/home/u',
+            distroAppDataRoot: appDataRoot,
+            filesystem: fs,
+          ).install();
+        }
+
+        expect(fs.files[script], isNotNull);
+        expect(fs.files['/home/u/.claude/settings.json'], isNotNull);
+        expect(fs.files['/home/u/.qoder/settings.json'], isNotNull);
+        expect(fs.files['/home/u/.codex/hooks.json'], isNotNull);
+
+        // The command must be a POSIX path valid *inside* the distro, and a
+        // distro never needs the Windows cmd forwarder.
+        final codexRoot =
+            jsonDecode(fs.files['/home/u/.codex/hooks.json']!) as Map;
+        final entry =
+            ((((codexRoot['hooks'] as Map)['Stop'] as List).last
+                            as Map)['hooks']
+                        as List)
+                    .first
+                as Map;
+        expect(entry['command'], 'sh "$script"');
+        expect(entry.containsKey('commandWindows'), isFalse);
+      },
+    );
 
     test('distro body reaches the host gateway through Windows curl.exe', () {
       // WSL2 NAT: the distro's own 127.0.0.1 is not the host's, and the gateway
@@ -401,8 +490,12 @@ void main() {
 
   group('forHost', () {
     test('resolves each target to its own settings file', () {
+      // ohMyPi resolves against the omp config dir, not the app-data root —
+      // its own group below covers it.
+      final settingsTargets = AgentHookTarget.values
+          .where((t) => t != AgentHookTarget.ohMyPi);
       final byTarget = <AgentHookTarget, AgentHookInstaller?>{};
-      for (final target in AgentHookTarget.values) {
+      for (final target in settingsTargets) {
         byTarget[target] = AgentHookInstaller.forHost(
           target: target,
           hostAppDataRoot: '/host/app',
@@ -482,8 +575,7 @@ void main() {
     });
   });
 
-  test('strips managed groups written under a different app-data root',
-      () async {
+  test('strips managed groups written under a different app-data root', () async {
     // Regression: the needle used to be the full scriptPath, so entries from an
     // earlier root were never recognised and piled up on every reinstall.
     final fs = InMemoryFilesystem();
@@ -527,28 +619,32 @@ void main() {
     expect(commands.where((c) => c.contains('claude-hook.sh')), hasLength(1));
   });
 
-  test('reinstall replaces our codex commandWindows entry, not duplicates it',
-      () async {
-    final cmdPath = '${tmp.path}/agent-hooks/codex-hook.cmd';
-    final installer = installerFor(
-      AgentHookTarget.codex,
-      windowsScriptPath: cmdPath,
-    );
-    await installer.install();
-    await installer.install();
+  test(
+    'reinstall replaces our codex commandWindows entry, not duplicates it',
+    () async {
+      final cmdPath = '${tmp.path}/agent-hooks/codex-hook.cmd';
+      final installer = installerFor(
+        AgentHookTarget.codex,
+        windowsScriptPath: cmdPath,
+      );
+      await installer.install();
+      await installer.install();
 
-    final settingsPath = '${tmp.path}/.codex/hooks.json';
-    final entries = groupsFor(settingsPath, 'Stop')
-        .expand((g) => (g['hooks'] as List))
-        .map((h) => h as Map)
-        .toList();
-    expect(
-      entries.where((e) => (e['command'] as String).contains('claude-hook.sh')),
-      hasLength(1),
-    );
-    expect(
-      entries.where((e) => e['commandWindows'] == '"$cmdPath"'),
-      hasLength(1),
-    );
-  });
+      final settingsPath = '${tmp.path}/.codex/hooks.json';
+      final entries = groupsFor(
+        settingsPath,
+        'Stop',
+      ).expand((g) => (g['hooks'] as List)).map((h) => h as Map).toList();
+      expect(
+        entries.where(
+          (e) => (e['command'] as String).contains('claude-hook.sh'),
+        ),
+        hasLength(1),
+      );
+      expect(
+        entries.where((e) => e['commandWindows'] == '"$cmdPath"'),
+        hasLength(1),
+      );
+    },
+  );
 }

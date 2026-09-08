@@ -25,10 +25,20 @@ const codexHookCmdFileName = 'codex-hook.cmd';
 
 /// Agent CLIs the installer manages hooks for.
 ///
-/// All three report Claude-Code-shaped payloads on stdin (`hook_event_name`,
-/// `tool_name`, `is_interrupt`, …), so [AgentStatusNormalizer] decodes them
-/// through a single Claude-family path — no per-target normalization.
-enum AgentHookTarget { claude, qoder, codex }
+/// Claude, Qoder, and Codex report Claude-Code-shaped payloads on stdin
+/// (`hook_event_name`, `tool_name`, `is_interrupt`, …), so
+/// [AgentStatusNormalizer] decodes them through a single Claude-family path —
+/// no per-target normalization. oh-my-pi instead runs TS extension modules
+/// discovered from `~/.omp/agent/hooks/pre/`; its module emits the same
+/// Claude-Code-shaped payloads, so it rides the same normalizer path too —
+/// but it needs no settings merge, just the module file on disk.
+enum AgentHookTarget { claude, qoder, codex, ohMyPi }
+
+/// Fixed file name of the managed oh-my-pi hook module, dropped into
+/// `~/.omp/agent/hooks/pre/` (with the `pre` dir created as needed). Same
+/// naming rationale as [agentHookScriptFileName]: a recognisable marker for
+/// our own files.
+const agentHookOmpFileName = 'teampilot-status.ts';
 
 /// One hook event the installer manages in the target CLI's settings file.
 ///
@@ -151,6 +161,30 @@ class AgentHookInstaller {
     Filesystem? filesystem,
   }) {
     if (hostAppDataRoot.trim().isEmpty) return null;
+    if (target == AgentHookTarget.ohMyPi) {
+      final home = _homeDir();
+      if (home == null) return null;
+      // omp discovers hook modules from <agentDir>/hooks/pre/; the agent dir is
+      // profile-scoped (~/.omp/profiles/<n>/agent) but PI_CONFIG_DIR overrides
+      // the root, so honor it like CLAUDE_CONFIG_DIR / CODEX_HOME.
+      final configRoot = Platform.environment['PI_CONFIG_DIR']?.trim();
+      final agentDir = (configRoot != null && configRoot.isNotEmpty)
+          ? configRoot
+          : '$home/.omp/agent';
+      final modulePath = _join(
+        _join(_join(agentDir, 'hooks'), 'pre'),
+        agentHookOmpFileName,
+      );
+      return AgentHookInstaller(
+        target: target,
+        // Reuse scriptPath as the hook module destination; omp reads it
+        // directly, so there is no settings file to merge into.
+        scriptPath: modulePath,
+        settingsPath: modulePath,
+        filesystem: filesystem,
+        scriptBody: agentHookOmpScriptBody,
+      );
+    }
     final settingsPath = switch (target) {
       AgentHookTarget.claude => _joinOrNull(
         resolveClaudeConfigDir(),
@@ -158,14 +192,14 @@ class AgentHookInstaller {
       ),
       AgentHookTarget.qoder => _joinOrNull(_qoderHostDir(), 'settings.json'),
       AgentHookTarget.codex => _joinOrNull(_codexHomeDir(), 'hooks.json'),
+      AgentHookTarget.ohMyPi => null,
     };
     if (settingsPath == null) return null;
     final scriptDir = _join(hostAppDataRoot, 'agent-hooks');
     return AgentHookInstaller(
       target: target,
       scriptPath: _join(scriptDir, agentHookScriptFileName),
-      windowsScriptPath:
-          target == AgentHookTarget.codex && Platform.isWindows
+      windowsScriptPath: target == AgentHookTarget.codex && Platform.isWindows
           ? _join(scriptDir, codexHookCmdFileName)
           : null,
       settingsPath: settingsPath,
@@ -185,10 +219,21 @@ class AgentHookInstaller {
     required String distroAppDataRoot,
     Filesystem? filesystem,
   }) {
+    if (target == AgentHookTarget.ohMyPi) {
+      final agentDir = '$distroHome/.omp/agent';
+      return AgentHookInstaller(
+        target: target,
+        scriptPath: '$agentDir/hooks/pre/$agentHookOmpFileName',
+        settingsPath: '$agentDir/hooks/pre/$agentHookOmpFileName',
+        filesystem: filesystem ?? WslFilesystem(distro: distro),
+        scriptBody: agentHookOmpScriptBody,
+      );
+    }
     final settingsPath = switch (target) {
       AgentHookTarget.claude => '$distroHome/.claude/settings.json',
       AgentHookTarget.qoder => '$distroHome/.qoder/settings.json',
       AgentHookTarget.codex => '$distroHome/.codex/hooks.json',
+      AgentHookTarget.ohMyPi => '',
     };
     return AgentHookInstaller(
       target: target,
@@ -238,10 +283,11 @@ class AgentHookInstaller {
   /// Idempotent: (re)writes the forwarder script(s) and merges the managed
   /// hook groups into the CLI settings. Best-effort — logs and swallows
   /// failures so a bootstrap can never be blocked by a missing/locked settings
-  /// file.
+  /// file. oh-my-pi has no settings to merge: the module file *is* the install.
   Future<void> install() async {
     try {
       await _writeFile(scriptPath, scriptBody);
+      if (target == AgentHookTarget.ohMyPi) return;
       final cmdPath = windowsScriptPath;
       if (cmdPath != null) {
         await _writeFile(cmdPath, normalizeCmdScriptEndings(codexHookCmdBody));
@@ -308,12 +354,13 @@ class AgentHookInstaller {
   }
 
   /// Codex has no `StopFailure` event (its event set otherwise maps 1:1).
+  /// oh-my-pi never reaches here — its module file is written whole.
   static List<_ManagedHookEvent> _eventsFor(AgentHookTarget target) =>
       switch (target) {
         AgentHookTarget.claude || AgentHookTarget.qoder => _managedEvents,
-        AgentHookTarget.codex => _managedEvents
-            .where((event) => event.name != 'StopFailure')
-            .toList(),
+        AgentHookTarget.codex =>
+          _managedEvents.where((event) => event.name != 'StopFailure').toList(),
+        AgentHookTarget.ohMyPi => const [],
       };
 
   Map<String, Object?> _buildGroup(_ManagedHookEvent event) {
@@ -405,7 +452,8 @@ exit 0
 
 /// Forwarder for the machine the app runs on — plain `curl` on the same host as
 /// the gateway.
-const agentHookHostScriptBody = '$_scriptPrologue'
+const agentHookHostScriptBody =
+    '$_scriptPrologue'
     'curl$_scriptRequest';
 
 /// Forwarder for inside a WSL distro.
@@ -444,4 +492,113 @@ exit /b 0
 :teampilot_drain
 "%SystemRoot%\System32\more.com" >nul 2>&1
 exit /b 0
+''';
+
+/// oh-my-pi hook module, written to `~/.omp/agent/hooks/pre/teampilot-status.ts`.
+///
+/// omp (a Bun app) discovers TS extension modules from that dir and binds the
+/// default export's `pi.on(...)` handlers to the runtime event bus — there is
+/// no settings file to merge into, the module file *is* the install. Reference
+/// copy kept next to this file as `agent_hook_omp_body.ts`; keep both in sync.
+///
+/// Same contract as the sh forwarder: seat identity from the PTY env, no-op
+/// without it. Event mapping (validated against real omp):
+/// - `agent_start` → UserPromptSubmit (working, explicit)
+/// - `tool_call`/`tool_result` → PreToolUse/PostToolUse (working); omp's
+///   clarifying-question tool `ask` is renamed AskUserQuestion → waiting
+/// - `tool_approval_requested` → PermissionRequest (waiting)
+/// - `session_stop` → Stop (done). Fires only for the root agent — subagents
+///   are excluded by omp itself — so it is the primary done edge.
+/// - `agent_end` → Stop (done), but only when not a scheduled continuation
+///   (`willContinue`) and not a subagent (its session file lives inside a
+///   parent's artifacts dir). Covers user-interrupted turns, where omp skips
+///   session_stop entirely.
+///
+/// The WSL `curl.exe` interop fallback mirrors the sh forwarder; on the host
+/// (or macOS/Linux) it uses plain `fetch`. The spawn is awaited — a
+/// fire-and-forget child dies with the omp process before the request
+/// completes.
+const agentHookOmpScriptBody =
+    r'''// TeamPilot agent-status forwarder (managed — do not edit).
+const url = process.env.TEAMPILOT_AGENT_STATUS_URL;
+const seatSession = process.env.TEAMPILOT_SESSION;
+const seatMember = process.env.TEAMPILOT_MEMBER;
+
+export default function (pi) {
+	if (!url || !seatSession || !seatMember) return;
+
+	// WSL2 NAT cannot reach the Windows loopback gateway. Windows curl.exe,
+	// invoked through WSL interop, performs the request on the host network
+	// stack — same trick as the sh forwarder in claude-hook.sh.
+	let curl = null;
+	try {
+		const exe = "/mnt/c/Windows/System32/curl.exe";
+		if (process.platform === "linux" && require("node:fs").existsSync(exe)) curl = exe;
+	} catch {}
+
+	const post = async (body) => {
+		const payload = JSON.stringify(body);
+		try {
+			if (curl) {
+				const p = Bun.spawn({
+					cmd: [
+						curl, "-sS", "--connect-timeout", "1", "--max-time", "3",
+						"-H", `X-Session: ${seatSession}`,
+						"-H", `X-Member: ${seatMember}`,
+						"-H", "Content-Type: application/json",
+						"--data-binary", payload, url,
+					],
+					stdout: "ignore",
+					stderr: "ignore",
+				});
+				await p.exited;
+			} else {
+				await fetch(url, {
+					method: "POST",
+					headers: {
+						"X-Session": seatSession,
+						"X-Member": seatMember,
+						"Content-Type": "application/json",
+					},
+					body: payload,
+					signal: AbortSignal.timeout(3000),
+				});
+			}
+		} catch {}
+	};
+
+	// omp event -> Claude-Code-shaped payload the TeamPilot normalizer reads.
+	pi.on("agent_start", () => post({ hook_event_name: "UserPromptSubmit" }));
+	pi.on("tool_call", (event) => post({
+		hook_event_name: "PreToolUse",
+		tool_name: event?.toolName === "ask" ? "AskUserQuestion" : event?.toolName,
+		tool_input: event?.input,
+		tool_use_id: event?.toolCallId,
+	}));
+	pi.on("tool_result", (event) => post({
+		hook_event_name: "PostToolUse",
+		tool_name: event?.toolName,
+		tool_input: event?.input,
+		tool_use_id: event?.toolCallId,
+	}));
+	pi.on("tool_approval_requested", (event) => post({
+		hook_event_name: "PermissionRequest",
+		tool_name: event?.toolName,
+		tool_use_id: event?.toolCallId,
+	}));
+	// Main-agent settle; subagents never fire session_stop.
+	pi.on("session_stop", () => post({ hook_event_name: "Stop" }));
+	// Interrupt coverage: an aborted turn settles without session_stop, but the
+	// root agent_end still fires. willContinue marks a scheduled continuation,
+	// and subagent bindings are recognized by their session file living inside
+	// a parent artifacts dir (<parent>.jsonl -> <parent>/<child>.jsonl).
+	pi.on("agent_end", (event, ctx) => {
+		if (event?.willContinue) return;
+		try {
+			const file = ctx?.sessionManager?.getSessionFile?.();
+			if (file && require("node:fs").existsSync(require("node:path").dirname(file) + ".jsonl")) return;
+		} catch {}
+		post({ hook_event_name: "Stop" });
+	});
+}
 ''';

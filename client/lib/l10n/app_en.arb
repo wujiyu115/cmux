@@ -509,6 +509,8 @@
   "agentCliFamilyQoder": "Qoder",
   "agentCliFamilyCodex": "Codex",
   "agentCliFamilyOpencode": "OpenCode",
+  "agentCliFamilyOhMyPi": "Oh My Pi",
+  "agentCliSessionsAllAgents": "All agents",
   "commandLogTitle": "Command log",
   "commandLogRefresh": "Refresh",
   "commandLogOpenFolder": "Open log folder",

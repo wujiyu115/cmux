@@ -1212,6 +1212,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get agentCliFamilyOpencode => 'OpenCode';
 
   @override
+  String get agentCliFamilyOhMyPi => 'Oh My Pi';
+
+  @override
+  String get agentCliSessionsAllAgents => 'All agents';
+
+  @override
   String get commandLogTitle => 'Command log';
 
   @override

@@ -174,6 +174,95 @@ void main() {
     });
   });
 
+  group('WslFilesystem.statAndReadBytesMany', () {
+    test('returns stat and head per path from a single spawn', () async {
+      List<String>? capturedArgs;
+      const text = 'hello 中文 🚀';
+      final b64 = base64.encode(utf8.encode(text));
+      // Two paths: one present, one missing. Each path emits a stat line
+      // plus a base64 line; the missing path contributes two empty lines.
+      final stdoutText = 'regular file|42|1700000000\n$b64\n\n\n';
+      final fs = WslFilesystem(
+        processRunner: (executable, arguments,
+            {stdoutEncoding, stderrEncoding}) async {
+          expect(executable, 'wsl.exe');
+          capturedArgs = arguments;
+          return ProcessResult(0, 0, stdoutText, '');
+        },
+      );
+
+      final result = await fs.statAndReadBytesMany(
+        ['/tmp/f.txt', '/tmp/missing.jsonl'],
+        maxBytesPerFile: 100,
+      );
+
+      final script = capturedArgs![3];
+      expect(script, contains('for f in "\$@"'));
+      expect(
+        script,
+        contains('head -c "\$max" -- "\$f" 2>/dev/null | base64 -w0'),
+      );
+      expect(capturedArgs!.sublist(4), [
+        'sh',
+        '100',
+        '/tmp/f.txt',
+        '/tmp/missing.jsonl',
+      ]);
+      expect(result.length, 2);
+      final present = result['/tmp/f.txt']!;
+      expect(present.stat.kind, FsEntityKind.file);
+      expect(present.stat.size, 42);
+      expect(utf8.decode(present.bytes!), text);
+      expect(result['/tmp/missing.jsonl'], isNull);
+    });
+
+    test('empty head (missing or unreadable) maps to empty bytes', () async {
+      final fs = WslFilesystem(
+        processRunner: (_, __, {stdoutEncoding, stderrEncoding}) async =>
+            ProcessResult(0, 0, 'regular empty file|0|1700000000\n\n', ''),
+      );
+
+      final result = await fs.statAndReadBytesMany(['/tmp/empty'], maxBytesPerFile: 8);
+
+      expect(result['/tmp/empty']!.stat.kind, FsEntityKind.file);
+      expect(result['/tmp/empty']!.bytes, isEmpty);
+    });
+
+    test('empty input returns empty without spawning', () async {
+      final fs = WslFilesystem(
+        processRunner: (_, __, {stdoutEncoding, stderrEncoding}) async {
+          fail('must not spawn for an empty path list');
+        },
+      );
+
+      expect(await fs.statAndReadBytesMany(const []), isEmpty);
+    });
+
+    test('a nonzero exit throws so callers can fall back', () async {
+      final fs = WslFilesystem(
+        processRunner: (_, __, {stdoutEncoding, stderrEncoding}) async =>
+            ProcessResult(0, 1, '', 'wsl broke'),
+      );
+
+      await expectLater(
+        fs.statAndReadBytesMany(['/a'], maxBytesPerFile: 8),
+        throwsStateError,
+      );
+    });
+
+    test('line-count mismatch throws', () async {
+      final fs = WslFilesystem(
+        processRunner: (_, __, {stdoutEncoding, stderrEncoding}) async =>
+            ProcessResult(0, 0, 'regular file|1|1700000000\naGk=\n', ''),
+      );
+
+      await expectLater(
+        fs.statAndReadBytesMany(['/a', '/b'], maxBytesPerFile: 8),
+        throwsStateError,
+      );
+    });
+  });
+
   group('WslFilesystem.existsMany', () {
     test('checks every path in a single spawn', () async {
       List<String>? capturedArgs;

@@ -110,8 +110,7 @@ class CodexAgentCliSessionAdapter implements AgentCliSessionAdapter {
       extension: '.jsonl',
     );
     // Filenames embed the creation timestamp, so a path sort is a time sort.
-    final sorted = allFiles.toList()
-      ..sort((a, b) => b.compareTo(a));
+    final sorted = allFiles.toList()..sort((a, b) => b.compareTo(a));
     final newest = _newestByDayDirs(sorted, io.maxFileReads);
     if (newest.isEmpty) return const [];
 
@@ -125,7 +124,8 @@ class CodexAgentCliSessionAdapter implements AgentCliSessionAdapter {
           AgentCliSessionRecord(
             family: family,
             sessionId:
-                _sessionIdFromMeta(head.bytes) ?? sessionIdOfFileName(head.path),
+                _sessionIdFromMeta(head.bytes) ??
+                sessionIdOfFileName(head.path),
             updatedAt: head.mtime,
           ),
     ];
@@ -133,7 +133,10 @@ class CodexAgentCliSessionAdapter implements AgentCliSessionAdapter {
 
   /// Newest-first paths, capped to [maxFiles] and the newest [maxDayDirs]
   /// distinct `Y/M/D` prefixes.
-  List<String> _newestByDayDirs(List<String> sortedRelativePaths, int maxFiles) {
+  List<String> _newestByDayDirs(
+    List<String> sortedRelativePaths,
+    int maxFiles,
+  ) {
     final picked = <String>[];
     final seenDays = <String>{};
     for (final rel in sortedRelativePaths) {
@@ -183,14 +186,10 @@ class OpencodeAgentCliSessionAdapter implements AgentCliSessionAdapter {
     );
     return [
       for (final head in heads)
-        if (_parse(head.bytes)
-            case final json?
+        if (_parse(head.bytes) case final json?
             when json['id'] is String &&
                 json['directory'] is String &&
-                sameCliDirectory(
-                  json['directory']! as String,
-                  query.directory,
-                ))
+                sameCliDirectory(json['directory']! as String, query.directory))
           AgentCliSessionRecord(
             family: family,
             sessionId: json['id']! as String,
@@ -215,6 +214,121 @@ class OpencodeAgentCliSessionAdapter implements AgentCliSessionAdapter {
     if (updated is! int) return null;
     return DateTime.fromMillisecondsSinceEpoch(updated, isUtc: true);
   }
+}
+
+/// `~/.omp/agent/sessions/<mungedCwd>/<timestamp>_<sessionId>.jsonl` (oh-my-pi,
+/// binary `omp`). The file leads with a `title` record (rewritten in place, so
+/// the live title is always on line 1) and a `session` record carrying the
+/// session id and cwd.
+class OhMyPiAgentCliSessionAdapter implements AgentCliSessionAdapter {
+  const OhMyPiAgentCliSessionAdapter();
+
+  @override
+  AgentCliFamily get family => AgentCliFamily.ohMyPi;
+
+  /// The title and session records lead the file and the first user prompt
+  /// lands within the first few hundred bytes; long turns and tool traffic
+  /// come later, so a small head is enough.
+  static const int headBytes = 8192;
+
+  @override
+  Future<List<AgentCliSessionRecord>> listSessions(
+    AgentCliSessionQuery query,
+  ) async {
+    final io = AgentCliSessionIo(query.context.filesystem);
+    final path = query.context.filesystem.pathContext;
+    final munged = _sessionDirName(query.directory, query.context.home);
+    if (munged == null || munged.isEmpty) return const [];
+
+    final sessionsRoot = path.join(
+      query.context.home,
+      '.omp',
+      'agent',
+      'sessions',
+    );
+    var projectDirName = munged;
+    var files = await io.listJsonlFiles(path.join(sessionsRoot, munged));
+    if (files.isEmpty) {
+      // Windows drive-letter casing, same rationale as the Claude store.
+      final siblings = await io.listDir(sessionsRoot);
+      final alt = siblings
+          .where(
+            (e) =>
+                e.isDirectory &&
+                e.name.toLowerCase() == munged.toLowerCase() &&
+                e.name != munged,
+          )
+          .firstOrNull;
+      if (alt != null) {
+        projectDirName = alt.name;
+        files = await io.listJsonlFiles(path.join(sessionsRoot, alt.name));
+      }
+    }
+    if (files.isEmpty) return const [];
+
+    final heads = await io.readHeads(
+      files.map((name) => path.join(sessionsRoot, projectDirName, name)),
+      headBytes: headBytes,
+    );
+    return [
+      for (final head in heads)
+        if (ohMyPiSessionRecord(head.bytes, head.path) case final record?)
+          record,
+    ];
+  }
+
+  /// oh-my-pi keys sessions by the munged cwd but strips the home prefix
+  /// first, keeping the separator: `/home/u/git/x` is stored under
+  /// `-git-x`, while `/tmp/x` stays `-tmp-x`. Verified against the real
+  /// `~/.omp/agent/sessions` layout.
+  static String? _sessionDirName(String directory, String? home) {
+    final trimmed = directory.trim();
+    final h = home?.trim();
+    if (h != null && h.isNotEmpty) {
+      if (trimmed == h) return null;
+      if (trimmed.startsWith('$h/')) {
+        return mungeDirectory(trimmed.substring(h.length));
+      }
+    }
+    return mungeDirectory(trimmed);
+  }
+}
+
+/// One resumable record from an oh-my-pi session head: the `session` record's
+/// id (falling back to the filename's `<timestamp>_` suffix) plus the title.
+AgentCliSessionRecord? ohMyPiSessionRecord(List<int> bytes, String filePath) {
+  final lines = _jsonLines(bytes);
+  String? sessionId;
+  String? title;
+  for (final line in lines) {
+    switch (line['type']) {
+      case 'session':
+        final id = line['id'];
+        if (id is String && id.isNotEmpty) sessionId ??= id;
+      case 'title':
+        title ??= shortTitle(line['title']);
+      case 'message':
+        if (title != null) continue;
+        final message = line['message'];
+        if (message is Map<String, Object?> && message['role'] == 'user') {
+          title ??= shortTitle(_firstUserPrompt(message));
+        }
+    }
+  }
+  sessionId ??= _ohMyPiSessionIdFromFileName(filePath);
+  if (sessionId == null) return null;
+  return AgentCliSessionRecord(
+    family: AgentCliFamily.ohMyPi,
+    sessionId: sessionId,
+    title: title,
+  );
+}
+
+/// `<timestamp>_<sessionId>.jsonl` → the id part after the first underscore.
+String? _ohMyPiSessionIdFromFileName(String filePath) {
+  final base = sessionIdOfFileName(filePath);
+  final underscore = base.indexOf('_');
+  return underscore > 0 ? base.substring(underscore + 1) : null;
 }
 
 // ---------------------------------------------------------------------------
@@ -255,7 +369,8 @@ class AgentCliSessionIo {
   /// Files with [extension] anywhere under [root], as `/`-separated relative
   /// paths. One recursive listing covers the whole store, which keeps
   /// batched backends at a single spawn for discovery.
-  Future<Set<String>> listFilesRecursive(String root, {
+  Future<Set<String>> listFilesRecursive(
+    String root, {
     required String extension,
   }) async {
     try {
@@ -302,9 +417,28 @@ class AgentCliSessionIo {
       return heads;
     }
 
-    // Batched backend: the stat and the head arrive in one spawn per file.
+    // Batched backend: stat and head of every candidate in one round trip
+    // when the backend supports it, falling back to one spawn per file.
+    final batched = candidates.take(maxFileReads).toList();
+    try {
+      final results = await (fs as FsBatchOps).statAndReadBytesMany(
+        batched,
+        maxBytesPerFile: headBytes,
+      );
+      return [
+        for (final path in batched)
+          if (results[path] case final head? when head.stat.isFile)
+            AgentCliSessionHead(
+              path: path,
+              mtime: head.stat.mtime,
+              bytes: head.bytes ?? const [],
+            ),
+      ];
+    } on Object {
+      // Multi-read unsupported or transport failure — per-file reads below.
+    }
     final heads = <AgentCliSessionHead>[];
-    for (final path in candidates.take(maxFileReads)) {
+    for (final path in batched) {
       final result = await (fs as FsBatchOps).statAndReadBytes(
         path,
         maxBytes: headBytes,
@@ -351,11 +485,8 @@ class AgentCliSessionHead {
   final DateTime? mtime;
   final List<int> bytes;
 
-  AgentCliSessionHead copyWith({List<int>? bytes}) => AgentCliSessionHead(
-    path: path,
-    mtime: mtime,
-    bytes: bytes ?? this.bytes,
-  );
+  AgentCliSessionHead copyWith({List<int>? bytes}) =>
+      AgentCliSessionHead(path: path, mtime: mtime, bytes: bytes ?? this.bytes);
 }
 
 // ---------------------------------------------------------------------------
@@ -443,8 +574,9 @@ String? shortTitle(Object? raw) {
 /// regex instead of full-line JSON parsing.
 String? _sessionIdFromMeta(List<int> bytes) {
   final text = utf8.decode(bytes, allowMalformed: true);
-  final match = RegExp(r'"(?:session_id|id)":"((?:[^"\\]|\\.)*)"')
-      .firstMatch(text);
+  final match = RegExp(
+    r'"(?:session_id|id)":"((?:[^"\\]|\\.)*)"',
+  ).firstMatch(text);
   if (match == null) return null;
   return _unescapeJsonString(match.group(1)!);
 }
