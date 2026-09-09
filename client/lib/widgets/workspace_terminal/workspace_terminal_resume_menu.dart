@@ -55,6 +55,9 @@ Future<void> showWorkspaceTerminalResumeMenu({
       context: context,
       globalPosition: globalPosition,
       popUpAnimationStyle: const AnimationStyle(duration: Duration.zero),
+      // Session titles are long task summaries; the default 160/320 box
+      // ellipsizes them into noise.
+      minWidth: 320,
       specs: agentCliSessionMenuSpecs(context, family, sessions),
     );
     if (!context.mounted) return;
