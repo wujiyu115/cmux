@@ -15,7 +15,7 @@ typedef ProcessRunner =
       Encoding? stderrEncoding,
     });
 
-class WslFilesystem implements Filesystem, FsBatchOps {
+class WslFilesystem implements Filesystem, FsBatchOps, FsSymlinkLister {
   WslFilesystem({String? distro, ProcessRunner? processRunner})
     : _distro = distro?.trim(),
       _processRunner = processRunner ?? _defaultProcessRunner;
@@ -78,8 +78,10 @@ class WslFilesystem implements Filesystem, FsBatchOps {
 
   @override
   Future<FsStat> stat(String path) async {
-    // Pipe-delimited so file-type names with spaces parse cleanly.
-    final result = await _run(['stat', '-c', '%F|%s|%Y', '--', path]);
+    // Pipe-delimited so file-type names with spaces parse cleanly. -L
+    // dereferences symlinks so a linked directory reports as a directory
+    // (matches the local backend; a dangling link reports notFound).
+    final result = await _run(['stat', '-L', '-c', '%F|%s|%Y', '--', path]);
     if (result.exitCode != 0) return const FsStat(kind: FsEntityKind.notFound);
     return _parseStatLine(result.stdout as String);
   }
@@ -355,13 +357,16 @@ class WslFilesystem implements Filesystem, FsBatchOps {
 
   @override
   Future<List<FsDirEntry>> listDir(String path) async {
+    // -L resolves symlink targets so a linked directory reports %y=d and is
+    // expandable in the tree. GNU find drops dangling links under -L; the
+    // non-zero exit they cause must not discard the valid entries.
     final result = await _run([
       'sh',
       '-lc',
-      'find ${RemoteFileStore.shellSingleQuote(path)} -mindepth 1 -maxdepth 1 '
-          r'-printf "%f\t%y\n"',
+      'find -L ${RemoteFileStore.shellSingleQuote(path)} -mindepth 1 '
+          r'-maxdepth 1 -printf "%f\t%y\n"',
     ]);
-    if (result.exitCode != 0) return const [];
+    if ((result.stdout as String).trim().isEmpty) return const [];
     final lines = (result.stdout as String).split('\n');
     return [
       for (final line in lines)
@@ -441,6 +446,55 @@ class WslFilesystem implements Filesystem, FsBatchOps {
       r'%P\t%y\n',
     ]);
     if (result.exitCode != 0) return const [];
+    final lines = (result.stdout as String).split('\n');
+    return [
+      for (final line in lines)
+        if (line.trim().isNotEmpty)
+          FsDirEntry(
+            name: line.split('\t').first,
+            isDirectory: line.split('\t').last == 'd',
+          ),
+    ];
+  }
+
+  @override
+  Future<List<String>> listSymlinkedDirs(String root) async {
+    // `-xtype d` tests the *dereferenced* type of a `-type l` match, i.e.
+    // links whose target is a directory. GNU find (WSL distros ship GNU);
+    // anything else yields a non-zero exit → empty list.
+    final result = await _run([
+      'find',
+      root,
+      '-mindepth',
+      '1',
+      '-type',
+      'l',
+      '-xtype',
+      'd',
+      '-print',
+    ]);
+    if (result.exitCode != 0) return const [];
+    return [
+      for (final line in (result.stdout as String).split('\n'))
+        if (line.trim().isNotEmpty) line.trim(),
+    ];
+  }
+
+  @override
+  Future<List<FsDirEntry>> listDirRecursiveFollowLinks(String path) async {
+    // -L follows symlinks; GNU find detects loops itself and reports the
+    // loop point once. Dangling links are dropped with a non-zero exit, so
+    // only empty stdout means failure.
+    final result = await _run([
+      'find',
+      '-L',
+      path,
+      '-mindepth',
+      '1',
+      '-printf',
+      r'%P\t%y\n',
+    ]);
+    if ((result.stdout as String).trim().isEmpty) return const [];
     final lines = (result.stdout as String).split('\n');
     return [
       for (final line in lines)

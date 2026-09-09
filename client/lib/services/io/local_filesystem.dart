@@ -5,7 +5,8 @@ import 'package:path/path.dart' as p;
 import '../../utils/lock_pool.dart';
 import 'filesystem.dart';
 
-class LocalFilesystem implements Filesystem, FsWatcher {
+class LocalFilesystem
+    implements Filesystem, FsWatcher, FsSymlinkLister {
   LocalFilesystem({p.Context? pathContext})
     : pathContext = pathContext ?? p.context;
 
@@ -422,6 +423,57 @@ class LocalFilesystem implements Filesystem, FsWatcher {
           isDirectory: _entryIsDirectory(entity),
         ),
       );
+    }
+    return entries;
+  }
+
+  @override
+  Future<List<String>> listSymlinkedDirs(String root) async {
+    final dir = Directory(root);
+    if (!await dir.exists()) return const [];
+    final links = <String>[];
+    try {
+      await for (final entity in dir.list(
+        recursive: true,
+        followLinks: false,
+      )) {
+        if (entity is! Link) continue;
+        // typeSync with followLinks resolves the target kind; dangling links
+        // report notFound and are skipped.
+        if (FileSystemEntity.typeSync(
+              entity.path,
+              followLinks: true,
+            ) !=
+            FileSystemEntityType.directory) {
+          continue;
+        }
+        links.add(entity.path);
+      }
+    } on FileSystemException {
+      return const [];
+    }
+    return links;
+  }
+
+  @override
+  Future<List<FsDirEntry>> listDirRecursiveFollowLinks(String path) async {
+    final dir = Directory(path);
+    if (!await dir.exists()) return const [];
+    final entries = <FsDirEntry>[];
+    try {
+      // `followLinks: true` — the SDK's recursive listing detects link cycles
+      // (a cyclic link is reported once as a Link and not followed).
+      await for (final entity in dir.list(recursive: true, followLinks: true)) {
+        entries.add(
+          FsDirEntry(
+            name: pathContext.relative(entity.path, from: path),
+            isDirectory: entity is Directory,
+          ),
+        );
+      }
+    } on FileSystemException {
+      // A dangling or unreadable link mid-walk surfaces as an error; keep
+      // whatever was collected.
     }
     return entries;
   }

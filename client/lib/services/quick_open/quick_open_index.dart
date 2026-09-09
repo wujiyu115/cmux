@@ -149,9 +149,110 @@ class QuickOpenIndexRegistry {
     String root,
     int maxFiles,
   ) async {
+    final base = await _listIndexBase(fs, root, maxFiles);
+    return _supplementSymlinkedDirs(fs, root, base, maxFiles);
+  }
+
+  Future<QuickOpenIndex> _listIndexBase(
+    Filesystem fs,
+    String root,
+    int maxFiles,
+  ) async {
     final gitIndex = await _listIndexViaGit(fs, root, maxFiles);
     if (gitIndex != null) return gitIndex;
     return _listIndexRecursive(fs, root, maxFiles);
+  }
+
+  /// Neither the git source (`git ls-files` never follows links) nor the
+  /// recursive fallback descends into directory symlinks. When the backend
+  /// can enumerate them ([FsSymlinkLister]), index each linked tree under the
+  /// link's own path so those files are searchable — the same entries the
+  /// file tree shows. Directory-link rows reported by the base listing as
+  /// (unopenable) files are dropped in favor of the link's contents.
+  Future<QuickOpenIndex> _supplementSymlinkedDirs(
+    Filesystem fs,
+    String root,
+    QuickOpenIndex base,
+    int maxFiles,
+  ) async {
+    if (base.truncated) return base;
+    // Local pattern match keeps the promoted type in scope.
+    final FsSymlinkLister lister;
+    if (fs case final FsSymlinkLister candidate) {
+      lister = candidate;
+    } else {
+      return base;
+    }
+    final List<String> linkDirs;
+    try {
+      linkDirs = await lister.listSymlinkedDirs(root);
+    } on Object {
+      return base;
+    }
+    if (linkDirs.isEmpty) return base;
+
+    final ctx = fs.pathContext;
+    final normalizedRoot = ctx.normalize(root);
+    final linkDirSet = {
+      for (final link in linkDirs) ctx.normalize(link),
+    };
+    // Git reports a directory link itself as a file entry; opening it would
+    // fail, so replace it with the link's indexed contents below.
+    final files = [
+      for (final entry in base.files)
+        if (!linkDirSet.contains(ctx.normalize(entry.path))) entry,
+    ];
+    final seen = {
+      for (final entry in base.files) entry.path,
+    };
+    var truncated = false;
+
+    final linkedTrees = await Future.wait([
+      for (final link in linkDirs) _listLinkedTree(lister, link),
+    ]);
+    for (final tree in linkedTrees) {
+      if (tree == null) continue;
+      final linkPrefix = ctx.relative(
+        ctx.normalize(tree.linkDir),
+        from: normalizedRoot,
+      );
+      for (final entry in tree.entries) {
+        if (files.length >= maxFiles) {
+          truncated = true;
+          break;
+        }
+        if (entry.isDirectory) continue;
+        if (_isIgnored(entry.name, ctx)) continue;
+        if (_isIgnored(linkPrefix, ctx)) continue;
+        final relative = ctx.join(linkPrefix, entry.name);
+        final path = ctx.join(normalizedRoot, relative);
+        if (seen.contains(path)) continue;
+        seen.add(path);
+        files.add(
+          QuickOpenFileEntry(
+            path: path,
+            name: ctx.basename(relative),
+            relativePath: relative,
+          ),
+        );
+      }
+      if (truncated) break;
+    }
+
+    files.sort((a, b) => a.relativePath.compareTo(b.relativePath));
+    return QuickOpenIndex(files: files, truncated: truncated || base.truncated);
+  }
+
+  Future<({String linkDir, List<FsDirEntry> entries})?> _listLinkedTree(
+    FsSymlinkLister lister,
+    String linkDir,
+  ) async {
+    try {
+      final entries = await lister.listDirRecursiveFollowLinks(linkDir);
+      return (linkDir: linkDir, entries: entries);
+    } on Object {
+      return null;
+    }
   }
 
   /// Gitignore-aware source: `git ls-files` over tracked plus untracked,

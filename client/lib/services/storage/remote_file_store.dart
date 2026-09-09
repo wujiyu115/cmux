@@ -193,11 +193,29 @@ class RemoteFileStore {
     final sftp = await _ensureConnected();
     final resolved = await expandHome(path);
     final names = await sftp.listdir(resolved);
-    return [
-      for (final n in names)
-        if (n.filename != '.' && n.filename != '..')
-          RemoteDirEntry(name: n.filename, isDirectory: n.attr.isDirectory),
-    ];
+    final entries = <RemoteDirEntry>[];
+    for (final n in names) {
+      if (n.filename == '.' || n.filename == '..') continue;
+      var isDirectory = n.attr.isDirectory;
+      if (!isDirectory && n.attr.isSymbolicLink) {
+        // readdir attrs are lstat-shaped: resolve the target kind per link so
+        // linked directories expand in the tree. One extra round trip per
+        // link; dangling links stay file-typed.
+        try {
+          final target = await sftp.readlink(
+            p.posix.join(resolved, n.filename),
+          );
+          final absoluteTarget = p.posix.isAbsolute(target)
+              ? target
+              : p.posix.normalize(p.posix.join(resolved, target));
+          isDirectory = (await sftp.stat(absoluteTarget)).isDirectory;
+        } on SftpStatusError {
+          isDirectory = false;
+        }
+      }
+      entries.add(RemoteDirEntry(name: n.filename, isDirectory: isDirectory));
+    }
+    return entries;
   }
 
   Future<void> writeBytes(String path, Uint8List bytes) async {
@@ -428,6 +446,43 @@ class RemoteFileStore {
     );
     if (sshRunFailed(result)) return const [];
     final out = utf8.decode(result.stdout, allowMalformed: true);
+    final entries = <RemoteDirEntry>[];
+    for (final line in out.split('\n')) {
+      if (line.trim().isEmpty) continue;
+      final parts = line.split('\t');
+      if (parts.length < 2) continue;
+      entries.add(
+        RemoteDirEntry(name: parts.first, isDirectory: parts.last == 'd'),
+      );
+    }
+    return entries;
+  }
+
+  /// Absolute paths of directory symlinks under [root] (empty when the remote
+  /// `find` lacks `-xtype`, e.g. BSD/macOS, or the command fails).
+  Future<List<String>> listSymlinkedDirPaths(String root) async {
+    final out = await runRemoteCommand(
+      'find ${shellSingleQuote(root)} -mindepth 1 -type l -xtype d -print',
+    );
+    return [
+      for (final line in out.split('\n'))
+        if (line.trim().isNotEmpty) line.trim(),
+    ];
+  }
+
+  /// [listDirectoryEntriesRecursive] with symlinks followed; GNU find
+  /// detects link loops itself. Dangling links can force a non-zero exit
+  /// with valid output, so only empty stdout means failure.
+  Future<List<RemoteDirEntry>> listDirectoryEntriesRecursiveFollowLinks(
+    String path,
+  ) async {
+    final client = await _clientFactory.clientForStorage(_profile);
+    final result = await client.runWithResult(
+      'find -L ${shellSingleQuote(path)} -mindepth 1 -printf "%P\\t%y\\n"',
+      stderr: false,
+    );
+    final out = utf8.decode(result.stdout, allowMalformed: true);
+    if (out.trim().isEmpty) return const [];
     final entries = <RemoteDirEntry>[];
     for (final line in out.split('\n')) {
       if (line.trim().isEmpty) continue;

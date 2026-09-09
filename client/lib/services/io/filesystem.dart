@@ -98,6 +98,27 @@ abstract interface class FsBatchOps {
   Future<Map<String, bool>> existsMany(List<String> paths);
 }
 
+/// Optional [Filesystem] capability for backends that can enumerate
+/// directory symlinks and list through them safely. Callers feature-detect
+/// with `fs is FsSymlinkLister` and fall back to the plain non-following
+/// methods, exactly like [FsWatcher] / [FsBatchOps].
+///
+/// Windows directory junctions count as symlinks here.
+abstract interface class FsSymlinkLister {
+  /// Absolute paths of symlinks under [root] whose target is a directory.
+  ///
+  /// The scan itself does not follow links, so it cannot loop. Backends
+  /// without a native primitive (e.g. a non-GNU remote `find`) return an
+  /// empty list rather than throwing.
+  Future<List<String>> listSymlinkedDirs(String root);
+
+  /// [Filesystem.listDirRecursive] with symlinks followed.
+  ///
+  /// Implementations must detect and skip link cycles. Directory symlinks
+  /// report the target's type (directory); file symlinks report as files.
+  Future<List<FsDirEntry>> listDirRecursiveFollowLinks(String path);
+}
+
 abstract interface class Filesystem {
   p.Context get pathContext;
 

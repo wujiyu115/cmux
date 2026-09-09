@@ -42,9 +42,11 @@ void main() {
 
       final stat = await fs.stat('/tmp/partial.bin');
 
+      // -L dereferences symlinks so linked directories stat as directories.
       expect(capturedArgs, [
         '--exec',
         'stat',
+        '-L',
         '-c',
         '%F|%s|%Y',
         '--',
@@ -56,6 +58,15 @@ void main() {
         stat.mtime,
         DateTime.fromMillisecondsSinceEpoch(1700000000 * 1000),
       );
+    });
+
+    test('dereferences a directory symlink via -L', () async {
+      final fs = WslFilesystem(
+        processRunner: (_, __, {stdoutEncoding, stderrEncoding}) async =>
+            ProcessResult(0, 0, 'directory|4096|1700000000\n', ''),
+      );
+      final stat = await fs.stat('/repo/linked');
+      expect(stat.kind, FsEntityKind.directory);
     });
 
     test('returns notFound when stat fails', () async {
@@ -416,6 +427,175 @@ void main() {
         await fs.readSymlinkTarget('/home/u/link'),
         '/home/u/共享文件/链接目标',
       );
+    });
+  });
+
+  group('WslFilesystem symlink support', () {
+    test('listDir follows links and reports linked dirs as directories',
+        () async {
+      List<String>? capturedArgs;
+      final fs = WslFilesystem(
+        processRunner: (executable, arguments,
+            {stdoutEncoding, stderrEncoding}) async {
+          capturedArgs = arguments;
+          return ProcessResult(0, 0, 'README.md\tf\nlinked\td\n', '');
+        },
+      );
+
+      final entries = await fs.listDir('/repo');
+
+      expect(capturedArgs, [
+        '--exec',
+        'sh',
+        '-lc',
+        "find -L '/repo' -mindepth 1 -maxdepth 1 -printf \"%f\\t%y\\n\"",
+      ]);
+      expect(entries, hasLength(2));
+      expect(entries.singleWhere((e) => e.name == 'linked').isDirectory,
+          isTrue);
+    });
+
+    test('listDir keeps valid entries when a dangling link forces exit 1',
+        () async {
+      final fs = WslFilesystem(
+        processRunner: (_, __, {stdoutEncoding, stderrEncoding}) async =>
+            ProcessResult(
+          0,
+          1,
+          'README.md\tf\n',
+          'find: ‘/repo/broken’: No such file or directory',
+        ),
+      );
+
+      final entries = await fs.listDir('/repo');
+      expect(entries.map((e) => e.name), ['README.md']);
+    });
+
+    test('listDir returns empty when stdout is empty regardless of exit',
+        () async {
+      final fs = WslFilesystem(
+        processRunner: (_, __, {stdoutEncoding, stderrEncoding}) async =>
+            ProcessResult(0, 1, '', 'find: permission denied'),
+      );
+
+      expect(await fs.listDir('/repo'), isEmpty);
+    });
+
+    test('listSymlinkedDirs runs GNU find with -type l -xtype d', () async {
+      List<String>? capturedArgs;
+      final fs = WslFilesystem(
+        processRunner: (executable, arguments,
+            {stdoutEncoding, stderrEncoding}) async {
+          capturedArgs = arguments;
+          return ProcessResult(0, 0, '/repo/linked\n', '');
+        },
+      );
+
+      final links = await fs.listSymlinkedDirs('/repo');
+
+      expect(capturedArgs, [
+        '--exec',
+        'find',
+        '/repo',
+        '-mindepth',
+        '1',
+        '-type',
+        'l',
+        '-xtype',
+        'd',
+        '-print',
+      ]);
+      expect(links, ['/repo/linked']);
+    });
+
+    test('listSymlinkedDirs degrades to empty on non-GNU find', () async {
+      final fs = WslFilesystem(
+        processRunner: (_, __, {stdoutEncoding, stderrEncoding}) async =>
+            ProcessResult(0, 1, '', 'find: invalid predicate `-xtype\''),
+      );
+
+      expect(await fs.listSymlinkedDirs('/repo'), isEmpty);
+    });
+
+    test('listDirRecursiveFollowLinks runs find -L', () async {
+      List<String>? capturedArgs;
+      final fs = WslFilesystem(
+        processRunner: (executable, arguments,
+            {stdoutEncoding, stderrEncoding}) async {
+          capturedArgs = arguments;
+          return ProcessResult(0, 0, 'guide.md\tf\nsub\tf\n', '');
+        },
+      );
+
+      final entries = await fs.listDirRecursiveFollowLinks('/repo/linked');
+
+      expect(capturedArgs, [
+        '--exec',
+        'find',
+        '-L',
+        '/repo/linked',
+        '-mindepth',
+        '1',
+        '-printf',
+        '%P\\t%y\\n',
+      ]);
+      expect(entries, hasLength(2));
+      expect(entries.singleWhere((e) => e.name == 'guide.md').isDirectory,
+          isFalse);
+    });
+
+    test(
+        'listDirRecursiveFollowLinks tolerates non-zero exit with output '
+        '(dangling links)', () async {
+      final fs = WslFilesystem(
+        processRunner: (_, __, {stdoutEncoding, stderrEncoding}) async =>
+            ProcessResult(
+          0,
+          1,
+          'guide.md\tf\n',
+          'find: ‘/repo/linked/broken’: No such file or directory',
+        ),
+      );
+
+      final entries = await fs.listDirRecursiveFollowLinks('/repo/linked');
+      expect(entries.map((e) => e.name), ['guide.md']);
+    });
+
+    test('listDirRecursiveFollowLinks returns empty on empty stdout',
+        () async {
+      final fs = WslFilesystem(
+        processRunner: (_, __, {stdoutEncoding, stderrEncoding}) async =>
+            ProcessResult(0, 1, '', 'find: cannot access'),
+      );
+
+      expect(await fs.listDirRecursiveFollowLinks('/repo/linked'), isEmpty);
+    });
+
+    test('listDirRecursive stays non-following (agent CLI session listing)',
+        () async {
+      List<String>? capturedArgs;
+      final fs = WslFilesystem(
+        processRunner: (executable, arguments,
+            {stdoutEncoding, stderrEncoding}) async {
+          capturedArgs = arguments;
+          return ProcessResult(0, 0, 'session-a\td\nlink\td\n', '');
+        },
+      );
+
+      final entries = await fs.listDirRecursive('/sessions');
+
+      // No -L: session stores contain inheritance dir-links that must each be
+      // reported once, not followed into their targets.
+      expect(capturedArgs, [
+        '--exec',
+        'find',
+        '/sessions',
+        '-mindepth',
+        '1',
+        '-printf',
+        '%P\\t%y\\n',
+      ]);
+      expect(entries, hasLength(2));
     });
   });
 }

@@ -1,7 +1,7 @@
 import 'package:path/path.dart' as p;
 import 'package:teampilot/services/io/filesystem.dart';
 
-class InMemoryFilesystem implements Filesystem {
+class InMemoryFilesystem implements Filesystem, FsSymlinkLister {
   InMemoryFilesystem({p.Context? pathContext})
     : pathContext = pathContext ?? p.Context(style: p.Style.posix);
 
@@ -270,6 +270,92 @@ class InMemoryFilesystem implements Filesystem {
     final fullPath = pathContext.join(base, name);
     directories.add(fullPath);
     return fullPath;
+  }
+
+  @override
+  Future<List<String>> listSymlinkedDirs(String root) async {
+    final results = <String>[];
+    for (final link in symlinks.keys) {
+      if (!pathContext.isWithin(root, link)) continue;
+      if ((await _resolveTarget(link)).stat.isDirectory) results.add(link);
+    }
+    return results;
+  }
+
+  @override
+  Future<List<FsDirEntry>> listDirRecursiveFollowLinks(String path) async {
+    final entries = <String, bool>{};
+    final visited = <String>{};
+    await _collectFollowEntries(path, path, entries, visited, 0);
+    return [
+      for (final e in entries.entries)
+        FsDirEntry(name: e.key, isDirectory: e.value),
+    ];
+  }
+
+  /// Resolves a symlink entry to its absolute target path and the target's
+  /// stat; broken links stat as notFound. Non-link paths return themselves.
+  Future<({String absolute, FsStat stat})> _resolveTarget(
+    String linkPath,
+  ) async {
+    var current = linkPath;
+    for (var depth = 0; depth < 8; depth++) {
+      final target = symlinks[current];
+      if (target == null) break;
+      current = pathContext.isAbsolute(target)
+          ? pathContext.normalize(target)
+          : pathContext.normalize(
+              pathContext.join(pathContext.dirname(current), target),
+            );
+    }
+    return (absolute: current, stat: await stat(current));
+  }
+
+  /// Physical directory backing a walk path: its resolved target when it is
+  /// a link, else the path itself.
+  Future<String> _physicalDir(String path) async {
+    if (!symlinks.containsKey(path)) return path;
+    final resolved = await _resolveTarget(path);
+    return resolved.stat.isDirectory ? resolved.absolute : path;
+  }
+
+  /// Walks [dir] (a display path, possibly a link), reporting children under
+  /// display paths rooted at [root]. [visited] holds physical directories
+  /// already walked, so link cycles terminate.
+  Future<void> _collectFollowEntries(
+    String root,
+    String dir,
+    Map<String, bool> entries,
+    Set<String> visited,
+    int depth,
+  ) async {
+    if (depth > 16) return;
+    final physicalDir = await _physicalDir(dir);
+    if (!visited.add(pathContext.normalize(physicalDir))) return;
+    final children = await listDir(physicalDir);
+    for (final child in children) {
+      final displayChild = pathContext.join(dir, child.name);
+      final physicalChild = pathContext.join(physicalDir, child.name);
+      var isDirectory = child.isDirectory;
+      if (!isDirectory && symlinks.containsKey(physicalChild)) {
+        final resolved = await _resolveTarget(physicalChild);
+        if (resolved.stat.isDirectory) {
+          isDirectory = true;
+        } else if (!resolved.stat.exists) {
+          continue; // dangling link: dropped, like find -L
+        }
+      }
+      entries[pathContext.relative(displayChild, from: root)] = isDirectory;
+      if (isDirectory) {
+        await _collectFollowEntries(
+          root,
+          displayChild,
+          entries,
+          visited,
+          depth + 1,
+        );
+      }
+    }
   }
 
   @override

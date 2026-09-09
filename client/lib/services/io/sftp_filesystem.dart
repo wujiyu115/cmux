@@ -4,7 +4,7 @@ import 'package:path/path.dart' as p;
 import '../storage/remote_file_store.dart';
 import 'filesystem.dart';
 
-class SftpFilesystem implements Filesystem {
+class SftpFilesystem implements Filesystem, FsSymlinkLister {
   SftpFilesystem(this.store);
 
   final RemoteFileStore store;
@@ -118,6 +118,30 @@ class SftpFilesystem implements Filesystem {
   Future<List<FsDirEntry>> listDirRecursive(String path) async {
     try {
       final entries = await store.listDirectoryEntriesRecursive(path);
+      return [
+        for (final entry in entries)
+          FsDirEntry(name: entry.name, isDirectory: entry.isDirectory),
+      ];
+    } on Object {
+      return const [];
+    }
+  }
+
+  @override
+  Future<List<String>> listSymlinkedDirs(String root) async {
+    try {
+      return await store.listSymlinkedDirPaths(root);
+    } on Object {
+      return const [];
+    }
+  }
+
+  @override
+  Future<List<FsDirEntry>> listDirRecursiveFollowLinks(String path) async {
+    try {
+      final entries = await store.listDirectoryEntriesRecursiveFollowLinks(
+        path,
+      );
       return [
         for (final entry in entries)
           FsDirEntry(name: entry.name, isDirectory: entry.isDirectory),

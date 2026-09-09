@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:teampilot/services/git/git_command_runner.dart';
+import 'package:teampilot/services/io/filesystem.dart';
 import 'package:teampilot/services/quick_open/quick_open_index.dart';
 
 import '../../support/in_memory_filesystem.dart';
@@ -23,6 +24,110 @@ class _FakeGitRunner implements GitCommandRunner {
     if (error != null) throw error!;
     return result!;
   }
+}
+
+/// Minimal [Filesystem] without [FsSymlinkLister]: the registry must fall
+/// back to the plain non-following listing for such backends.
+class _PlainFilesystem implements Filesystem {
+  final files = <String, String>{};
+  final dirs = <String>{};
+
+  @override
+  p.Context get pathContext => p.Context(style: p.Style.posix);
+
+  @override
+  Future<FsStat> stat(String path) async {
+    if (files.containsKey(path)) {
+      return FsStat(kind: FsEntityKind.file, size: files[path]!.length);
+    }
+    if (dirs.contains(path)) return const FsStat(kind: FsEntityKind.directory);
+    return const FsStat(kind: FsEntityKind.notFound);
+  }
+
+  @override
+  Future<void> ensureDir(String path) async => dirs.add(path);
+
+  @override
+  Future<void> removeRecursive(String path) async {}
+
+  @override
+  Future<void> rename(String from, String to) async {}
+
+  @override
+  Future<String?> readString(String path) async => files[path];
+
+  @override
+  Future<List<int>?> readBytes(String path) async =>
+      files[path]?.codeUnits;
+
+  @override
+  Future<void> writeString(String path, String content) async =>
+      files[path] = content;
+
+  @override
+  Future<void> writeBytes(String path, List<int> bytes) async {}
+
+  @override
+  Future<List<int>?> readBytesRange(String path, int offset, int length) async {
+    final all = files[path]?.codeUnits;
+    if (all == null) return null;
+    final end = (offset + length).clamp(0, all.length);
+    return all.sublist(offset.clamp(0, all.length), end);
+  }
+
+  @override
+  Future<void> appendBytes(String path, List<int> bytes) async {}
+
+  @override
+  Future<void> atomicWrite(String path, String content) async {}
+
+  @override
+  Future<List<FsDirEntry>> listDir(String path) async => [
+    for (final key in {...files.keys, ...dirs})
+      if (pathContext.dirname(key) == path)
+        FsDirEntry(
+          name: pathContext.basename(key),
+          isDirectory: dirs.contains(key),
+        ),
+  ];
+
+  @override
+  Future<bool> createSymlink({
+    required String target,
+    required String linkPath,
+  }) async => false;
+
+  @override
+  Future<String?> readSymlinkTarget(String linkPath) async => null;
+
+  @override
+  Future<String?> resolveSymlink(String path) async => path;
+
+  @override
+  Future<void> copyTree({
+    required String source,
+    required String destination,
+  }) async {}
+
+  @override
+  Future<void> copyFile(String source, String destination) async {}
+
+  @override
+  Future<List<FsDirEntry>> listDirRecursive(String path) async => [
+    for (final key in files.keys)
+      if (key == path || pathContext.isWithin(path, key))
+        FsDirEntry(
+          name: pathContext.relative(key, from: path),
+          isDirectory: false,
+        ),
+  ];
+
+  @override
+  Future<String> createTempDir({String? prefix, String? parent}) async =>
+      '/tmp/x';
+
+  @override
+  Future<void> appendString(String path, String content) async {}
 }
 
 void main() {
@@ -333,6 +438,97 @@ void main() {
         expect(entry.path, r'C:\repo\lib\main.dart');
       },
     );
+  });
+
+  group('directory symlink support', () {
+    setUp(() {
+      fs.ensureDir('/external/docs');
+      fs.files['/external/docs/guide.md'] = 'x';
+      fs.files['/external/docs/notes.txt'] = 'x';
+    });
+
+    test('recursive path indexes files under a linked directory', () async {
+      await fs.createSymlink(target: '/external/docs', linkPath: '/repo/linked');
+      final registry = QuickOpenIndexRegistry();
+      final index = await registry.load(fs, '/repo');
+
+      expect(
+        index.files.map((e) => e.relativePath),
+        allOf([
+          contains('linked/guide.md'),
+          contains('linked/notes.txt'),
+          contains('README.md'),
+        ]),
+      );
+      final entry = index.files.firstWhere(
+        (e) => e.relativePath == 'linked/guide.md',
+      );
+      expect(entry.path, '/repo/linked/guide.md');
+      expect(entry.name, 'guide.md');
+    });
+
+    test('git path indexes linked contents and drops the dir-link row', () async {
+      await fs.createSymlink(target: '/external/docs', linkPath: '/repo/linked');
+      final runner = _FakeGitRunner(
+        result: const GitCommandResult(
+          // git reports the directory link itself as a tracked entry.
+          exitCode: 0,
+          stdout: 'README.md\x00linked\x00',
+          stderr: '',
+        ),
+      );
+      final registry = QuickOpenIndexRegistry(gitRunner: runner);
+      final index = await registry.load(fs, '/repo');
+
+      final paths = index.files.map((e) => e.relativePath).toList();
+      expect(paths, contains('README.md'));
+      expect(paths, contains('linked/guide.md'));
+      expect(paths, contains('linked/notes.txt'));
+      // The unopenable link row itself is replaced by its contents.
+      expect(paths, isNot(contains('linked')));
+    });
+
+    test('a symlink cycle terminates and still indexes the tree', () async {
+      await fs.createSymlink(target: '/repo', linkPath: '/repo/loop');
+      final registry = QuickOpenIndexRegistry();
+      final index = await registry.load(fs, '/repo');
+
+      // The loop link's own row resolves into the tree's files; no hang.
+      expect(index.files.map((e) => e.relativePath), contains('README.md'));
+      expect(index.files.map((e) => e.relativePath), contains('lib/main.dart'));
+    });
+
+    test('ignore rules apply to linked paths', () async {
+      fs.ensureDir('/external/pkg');
+      fs.files['/external/pkg/index.js'] = 'x';
+      await fs.createSymlink(target: '/external/pkg', linkPath: '/repo/node_modules/link');
+      final registry = QuickOpenIndexRegistry();
+      final index = await registry.load(fs, '/repo');
+
+      for (final path in index.files.map((e) => e.relativePath)) {
+        expect(path.startsWith('node_modules/'), isFalse);
+      }
+    });
+
+    test('linked entries respect the maxFiles cap', () async {
+      for (var i = 0; i < 4; i++) {
+        fs.files['/external/docs/extra$i.txt'] = 'x';
+      }
+      await fs.createSymlink(target: '/external/docs', linkPath: '/repo/linked');
+      final registry = QuickOpenIndexRegistry();
+      final index = await registry.load(fs, '/repo', maxFiles: 5);
+      expect(index.files.length, 5);
+      expect(index.truncated, isTrue);
+    });
+
+    test('backends without the capability keep the legacy listing', () async {
+      await fs.createSymlink(target: '/external/docs', linkPath: '/repo/linked');
+      final plain = _PlainFilesystem();
+      plain.files['/repo/README.md'] = 'x';
+      final registry = QuickOpenIndexRegistry();
+      final index = await registry.load(plain, '/repo');
+      expect(index.files.map((e) => e.relativePath), ['README.md']);
+    });
   });
 
   group('multi-root helpers', () {
