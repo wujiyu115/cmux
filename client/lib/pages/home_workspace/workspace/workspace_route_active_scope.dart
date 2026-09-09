@@ -21,7 +21,14 @@ class WorkspaceRouteActiveScope extends InheritedWidget {
   final WorkspaceConfigSection? configSection;
 
   static WorkspaceRouteActiveScope? maybeOf(BuildContext context) {
-    return context.getInheritedWidgetOfExactType<WorkspaceRouteActiveScope>();
+    // `dependOn…`, not `get…`: callers read this from build /
+    // didChangeDependencies and rely on being re-run when the slot's active
+    // state flips. The bare lookup registered no dependency, so kept-alive
+    // tabs never observed their own deactivation/reactivation (stale
+    // quick-open / run-command host bindings, dead reactivation syncs).
+    return context.dependOnInheritedWidgetOfExactType<
+      WorkspaceRouteActiveScope
+    >();
   }
 
   static bool routeActiveOf(BuildContext context) {

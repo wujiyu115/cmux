@@ -158,7 +158,9 @@ class _WorkspaceToolsScopeSyncState extends State<WorkspaceToolsScopeSync> {
   }
 
   void _scheduleSync() {
-    if (!_routeActive) return;
+    // No route-active read here: initState calls this before the element may
+    // depend on inherited widgets. [_sync] re-checks (and registers the
+    // dependency) inside the post-frame callback.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) unawaited(_sync(context.read<ChatCubit>()));
     });
