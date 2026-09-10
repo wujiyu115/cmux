@@ -160,17 +160,39 @@ class WslFilesystem implements Filesystem, FsBatchOps, FsSymlinkLister {
   /// costs a fixed ~350ms process-spend, so merging them halves the editor's
   /// open latency on WSL. `head -c` bounds the transfer so oversized files are
   /// rejected from stat without piping their full content through the pipe.
+  /// [tailBytes] adds the file's last bytes as a second output line.
   @override
-  Future<FsStatAndBytes?> statAndReadBytes(String path, {int? maxBytes}) async {
-    final read = maxBytes == null
-        ? 'base64 -w0 -- "\$1"'
-        : 'head -c "\$3" -- "\$1" | base64 -w0';
+  Future<FsStatAndBytes?> statAndReadBytes(
+    String path, {
+    int? maxBytes,
+    int? tailBytes,
+  }) async {
+    final tail = maxBytes != null && tailBytes != null && tailBytes > 0
+        ? tailBytes
+        : null;
     final script =
         'stat -c "\$2" -- "\$1" || exit 1\n'
         '[ -r "\$1" ] || exit 2\n'
-        '$read';
-    final args = <String>['sh', '-c', script, 'sh', path, '%F|%s|%Y'];
-    if (maxBytes != null) args.add(maxBytes.toString());
+        'if [ -n "\$3" ]; then\n'
+        '  head -c "\$3" -- "\$1" | base64 -w0\n'
+        'else\n'
+        '  base64 -w0 -- "\$1"\n'
+        'fi\n'
+        'printf "\\n"\n'
+        'if [ -n "\$3" ] && [ -n "\$4" ]; then\n'
+        '  tail -c "\$4" -- "\$1" | base64 -w0\n'
+        '  printf "\\n"\n'
+        'fi';
+    final args = <String>[
+      'sh',
+      '-c',
+      script,
+      'sh',
+      path,
+      '%F|%s|%Y',
+      maxBytes?.toString() ?? '',
+      tail?.toString() ?? '',
+    ];
     final result = await _run(args);
     final stdout = result.stdout as String;
     final statLineEnd = stdout.indexOf('\n');
@@ -178,32 +200,38 @@ class WslFilesystem implements Filesystem, FsBatchOps, FsSymlinkLister {
     final stat = _parseStatLine(stdout.substring(0, statLineEnd));
     if (stat.kind == FsEntityKind.notFound) return null;
     if (result.exitCode == 2) return FsStatAndBytes(stat: stat);
-    final encoded = stdout
-        .substring(statLineEnd + 1)
-        .replaceAll(RegExp(r'\s+'), '');
-    if (encoded.isEmpty) return FsStatAndBytes(stat: stat, bytes: const []);
-    try {
-      return FsStatAndBytes(stat: stat, bytes: base64.decode(encoded));
-    } on Object {
-      return FsStatAndBytes(stat: stat);
-    }
+    final lines = _outputLines(stdout.substring(statLineEnd + 1));
+    return FsStatAndBytes(
+      stat: stat,
+      bytes: lines.isEmpty ? const [] : _decodeB64Line(lines[0]),
+      tailBytes: tail == null || lines.length < 2
+          ? null
+          : _decodeB64Line(lines[1]),
+    );
   }
 
   /// [statAndReadBytes] for many paths in one spawn. Each path emits exactly
-  /// two lines: the stat line (empty when the path is missing) and the
-  /// base64-encoded head (empty when unreadable). `base64 -w0` output never
-  /// contains newlines, so the pairing survives arbitrary head content.
+  /// two lines — the stat line (empty when the path is missing) and the
+  /// base64-encoded head (empty when unreadable) — plus a third base64 tail
+  /// line when [tailBytesPerFile] is given. `base64 -w0` output never
+  /// contains newlines, so the pairing survives arbitrary file content.
   @override
   Future<Map<String, FsStatAndBytes?>> statAndReadBytesMany(
     List<String> paths, {
     int? maxBytesPerFile,
+    int? tailBytesPerFile,
   }) async {
     if (paths.isEmpty) return const {};
+    final tail = maxBytesPerFile != null &&
+            tailBytesPerFile != null &&
+            tailBytesPerFile > 0
+        ? tailBytesPerFile
+        : null;
     // The stat format stays inside the script's double quotes: it reaches
     // wsl.exe as one argv element, never through a login shell that would
     // split the `|` into a pipe (see `_args`).
     final script =
-        'max="\$1"; shift\n'
+        'max="\$1"; tail="\$2"; shift 2\n'
         'for f in "\$@"; do\n'
         '  s=\$(stat -c "%F|%s|%Y" -- "\$f" 2>/dev/null) || s=""\n'
         '  printf "%s\\n" "\$s"\n'
@@ -215,6 +243,12 @@ class WslFilesystem implements Filesystem, FsBatchOps, FsSymlinkLister {
         '    fi\n'
         '  fi\n'
         '  printf "\\n"\n'
+        '  if [ -n "\$tail" ]; then\n'
+        '    if [ -n "\$s" ] && [ -r "\$f" ]; then\n'
+        '      tail -c "\$tail" -- "\$f" 2>/dev/null | base64 -w0\n'
+        '    fi\n'
+        '    printf "\\n"\n'
+        '  fi\n'
         'done';
     final args = <String>[
       'sh',
@@ -222,6 +256,7 @@ class WslFilesystem implements Filesystem, FsBatchOps, FsSymlinkLister {
       script,
       'sh',
       maxBytesPerFile?.toString() ?? '',
+      tail?.toString() ?? '',
       ...paths,
     ];
     final result = await _run(args);
@@ -231,15 +266,9 @@ class WslFilesystem implements Filesystem, FsBatchOps, FsSymlinkLister {
         '${result.stderr}',
       );
     }
-    final lines = (result.stdout as String)
-        .split('\n')
-        .map(
-          (line) =>
-              line.endsWith('\r') ? line.substring(0, line.length - 1) : line,
-        )
-        .toList();
-    if (lines.isNotEmpty && lines.last.isEmpty) lines.removeLast();
-    if (lines.length != paths.length * 2) {
+    final lines = _outputLines(result.stdout as String);
+    final linesPerPath = tail == null ? 2 : 3;
+    if (lines.length != paths.length * linesPerPath) {
       throw StateError(
         'wsl statAndReadBytesMany framing mismatch: '
         '${lines.length} lines for ${paths.length} paths',
@@ -247,20 +276,50 @@ class WslFilesystem implements Filesystem, FsBatchOps, FsSymlinkLister {
     }
     return {
       for (var i = 0; i < paths.length; i++)
-        paths[i]: _parseStatAndHeadLine(lines[i * 2], lines[i * 2 + 1]),
+        paths[i]: _parseStatAndHeadLine(
+          lines[i * linesPerPath],
+          lines[i * linesPerPath + 1],
+          tailEncoded: tail == null ? null : lines[i * linesPerPath + 2],
+        ),
     };
   }
 
-  FsStatAndBytes? _parseStatAndHeadLine(String statLine, String encoded) {
+  /// Splits wsl.exe stdout into lines, dropping the one trailing newline the
+  /// scripts emit after the last line.
+  static List<String> _outputLines(String text) {
+    final lines = text
+        .split('\n')
+        .map(
+          (line) =>
+              line.endsWith('\r') ? line.substring(0, line.length - 1) : line,
+        )
+        .toList();
+    if (lines.isNotEmpty && lines.last.isEmpty) lines.removeLast();
+    return lines;
+  }
+
+  static List<int>? _decodeB64Line(String encoded) {
+    final collapsed = encoded.replaceAll(RegExp(r'\s+'), '');
+    if (collapsed.isEmpty) return const [];
+    try {
+      return base64.decode(collapsed);
+    } on Object {
+      return null;
+    }
+  }
+
+  FsStatAndBytes? _parseStatAndHeadLine(
+    String statLine,
+    String encoded, {
+    String? tailEncoded,
+  }) {
     final stat = _parseStatLine(statLine);
     if (stat.kind == FsEntityKind.notFound) return null;
-    final collapsed = encoded.replaceAll(RegExp(r'\s+'), '');
-    if (collapsed.isEmpty) return FsStatAndBytes(stat: stat, bytes: const []);
-    try {
-      return FsStatAndBytes(stat: stat, bytes: base64.decode(collapsed));
-    } on Object {
-      return FsStatAndBytes(stat: stat);
-    }
+    return FsStatAndBytes(
+      stat: stat,
+      bytes: _decodeB64Line(encoded),
+      tailBytes: tailEncoded == null ? null : _decodeB64Line(tailEncoded),
+    );
   }
 
   /// One spawn checks every path: one `y`/`n` character per input, in order.

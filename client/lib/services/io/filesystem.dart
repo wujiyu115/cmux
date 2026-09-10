@@ -64,13 +64,17 @@ abstract interface class FsWatcher {
 
 /// stat plus file content returned by a single [FsBatchOps] round trip.
 class FsStatAndBytes {
-  const FsStatAndBytes({required this.stat, this.bytes});
+  const FsStatAndBytes({required this.stat, this.bytes, this.tailBytes});
 
   final FsStat stat;
 
-  /// File content; null when the file exists but its content could not be
-  /// read.
+  /// File content from offset 0; null when the file exists but its content
+  /// could not be read.
   final List<int>? bytes;
+
+  /// Content of the file's last bytes when a tail window was requested; null
+  /// when no tail was requested or it could not be read.
+  final List<int>? tailBytes;
 }
 
 /// Optional [Filesystem] capability for backends where each operation is a
@@ -82,15 +86,23 @@ abstract interface class FsBatchOps {
   /// [Filesystem.stat] plus a full-file read in one round trip. Returns null
   /// when [path] does not exist. [FsStatAndBytes.bytes] is null when the file
   /// exists but its content could not be read. At most [maxBytes] bytes are
-  /// transferred when given.
-  Future<FsStatAndBytes?> statAndReadBytes(String path, {int? maxBytes});
+  /// transferred when given; [tailBytes] additionally transfers the file's
+  /// last bytes (ignored when [maxBytes] is null — the whole file already
+  /// came back).
+  Future<FsStatAndBytes?> statAndReadBytes(
+    String path, {
+    int? maxBytes,
+    int? tailBytes,
+  });
 
   /// [statAndReadBytes] for every path in [paths] in one round trip. Missing
   /// paths map to null. Throws on transport failure so callers can fall back
-  /// to per-file [statAndReadBytes].
+  /// to per-file [statAndReadBytes]. [tailBytesPerFile] additionally reads
+  /// each file's last bytes (ignored when [maxBytesPerFile] is null).
   Future<Map<String, FsStatAndBytes?>> statAndReadBytesMany(
     List<String> paths, {
     int? maxBytesPerFile,
+    int? tailBytesPerFile,
   });
 
   /// Existence of every path in [paths] in one round trip. Throws on

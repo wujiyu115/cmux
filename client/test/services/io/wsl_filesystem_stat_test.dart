@@ -124,6 +124,7 @@ void main() {
         '/tmp/f.txt',
         '%F|%s|%Y',
         '100',
+        '',
       ]);
       expect(result!.stat.kind, FsEntityKind.file);
       expect(result.stat.size, 42);
@@ -142,10 +143,42 @@ void main() {
 
       await fs.statAndReadBytes('/tmp/f.txt');
 
+      // The script keeps both branches; an empty head cap ($3) selects the
+      // full-file read.
       final script = capturedArgs![3];
       expect(script, contains('base64 -w0 -- "\$1"'));
-      expect(script, isNot(contains('head')));
-      expect(capturedArgs!.length, 7); // no maxBytes positional
+      expect(capturedArgs!.sublist(4), [
+        'sh',
+        '/tmp/f.txt',
+        '%F|%s|%Y',
+        '',
+        '',
+      ]);
+    });
+
+    test('returns head and tail from a single spawn', () async {
+      const head = 'abc 中文';
+      const tail = '奥特曼联动交付';
+      final stdoutText =
+          'regular file|6500000|1700000000\n'
+          '${base64.encode(utf8.encode(head))}\n'
+          '${base64.encode(utf8.encode(tail))}\n';
+      final fs = WslFilesystem(
+        processRunner: (executable, arguments,
+            {stdoutEncoding, stderrEncoding}) async {
+          expect(executable, 'wsl.exe');
+          return ProcessResult(0, 0, stdoutText, '');
+        },
+      );
+
+      final result = await fs.statAndReadBytes(
+        '/tmp/f.jsonl',
+        maxBytes: 100,
+        tailBytes: 50,
+      );
+
+      expect(utf8.decode(result!.bytes!), head);
+      expect(utf8.decode(result.tailBytes!), tail);
     });
 
     test('empty file yields empty bytes, not a failed read', () async {
@@ -216,6 +249,7 @@ void main() {
       expect(capturedArgs!.sublist(4), [
         'sh',
         '100',
+        '',
         '/tmp/f.txt',
         '/tmp/missing.jsonl',
       ]);
@@ -224,6 +258,46 @@ void main() {
       expect(present.stat.kind, FsEntityKind.file);
       expect(present.stat.size, 42);
       expect(utf8.decode(present.bytes!), text);
+      expect(result['/tmp/missing.jsonl'], isNull);
+    });
+
+    test('returns head and tail per path from a single spawn', () async {
+      List<String>? capturedArgs;
+      const head = 'hello 中文 🚀';
+      const tail = '奥特曼联动交付';
+      final headB64 = base64.encode(utf8.encode(head));
+      final tailB64 = base64.encode(utf8.encode(tail));
+      final stdoutText =
+          'regular file|6500000|1700000000\n$headB64\n$tailB64\n'
+          '\n\n\n';
+      final fs = WslFilesystem(
+        processRunner: (executable, arguments,
+            {stdoutEncoding, stderrEncoding}) async {
+          expect(executable, 'wsl.exe');
+          capturedArgs = arguments;
+          return ProcessResult(0, 0, stdoutText, '');
+        },
+      );
+
+      final result = await fs.statAndReadBytesMany(
+        ['/tmp/f.jsonl', '/tmp/missing.jsonl'],
+        maxBytesPerFile: 100,
+        tailBytesPerFile: 100,
+      );
+
+      final script = capturedArgs![3];
+      expect(script, contains('tail -c "\$tail" -- "\$f" 2>/dev/null | base64 -w0'));
+      expect(capturedArgs!.sublist(4), [
+        'sh',
+        '100',
+        '100',
+        '/tmp/f.jsonl',
+        '/tmp/missing.jsonl',
+      ]);
+      final present = result['/tmp/f.jsonl']!;
+      expect(utf8.decode(present.bytes!), head);
+      expect(utf8.decode(present.tailBytes!), tail);
+      // The missing path contributes three empty lines.
       expect(result['/tmp/missing.jsonl'], isNull);
     });
 

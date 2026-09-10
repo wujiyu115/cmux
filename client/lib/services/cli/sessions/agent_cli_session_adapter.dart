@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import '../../io/filesystem.dart';
+import '../../io/sftp_filesystem.dart';
 import '../../storage/runtime_context.dart';
 import 'agent_cli_sessions.dart';
 
@@ -38,6 +39,10 @@ class ClaudeStyleAgentCliSessionAdapter implements AgentCliSessionAdapter {
   /// hook/system metadata before the first user prompt or title line.
   static const int headBytes = 16384;
 
+  /// Tail read per file: title records are appended as a session evolves, so
+  /// the live title sits near EOF — far beyond the head in long sessions.
+  static const int tailBytes = 16384;
+
   @override
   Future<List<AgentCliSessionRecord>> listSessions(
     AgentCliSessionQuery query,
@@ -71,13 +76,14 @@ class ClaudeStyleAgentCliSessionAdapter implements AgentCliSessionAdapter {
     final heads = await io.readHeads(
       files.map((name) => path.join(projectsDir, projectDirName, name)),
       headBytes: headBytes,
+      tailBytes: tailBytes,
     );
     return [
       for (final head in heads)
         AgentCliSessionRecord(
           family: family,
           sessionId: sessionIdOfFileName(head.path),
-          title: claudeStyleTitle(head.bytes),
+          title: claudeStyleTitle(head.bytes, tailBytes: head.tailBytes),
           updatedAt: head.mtime,
         ),
     ];
@@ -385,24 +391,38 @@ class AgentCliSessionIo {
     }
   }
 
-  /// Stat + first [headBytes] of up to [maxFileReads] paths, newest first by
-  /// mtime when the backend exposes it.
+  /// Stat + first [headBytes] (and last [tailBytes] when > 0) of the newest
+  /// session files among [paths], newest first by mtime.
+  ///
+  /// Truncation happens only AFTER the mtime sort: directory order is
+  /// unrelated to recency, so cutting candidates first would silently drop
+  /// the newest sessions. Tail reads are skipped on SFTP, where every read is
+  /// a network round trip and the non-batched scan budget barely covers the
+  /// head reads.
   Future<List<AgentCliSessionHead>> readHeads(
     Iterable<String> paths, {
     required int headBytes,
+    int tailBytes = 0,
   }) async {
     final candidates = paths.toList();
     if (candidates.isEmpty) return const [];
+    final tailCap = tailBytes > 0 && fs is! SftpFilesystem ? tailBytes : 0;
 
     if (!batches) {
-      // Local/SFTP stats are cheap: stat the newest-looking subset, keep the
-      // newest [maxFileReads] of them.
+      // Local/SFTP stats: stat the newest-looking subset, keep the newest
+      // [maxFileReads] of them, then read head + tail of the survivors.
       final stats = <AgentCliSessionHead>[];
       for (final path in candidates.take(maxStatCalls)) {
         try {
           final stat = await fs.stat(path);
           if (stat.isFile) {
-            stats.add(AgentCliSessionHead(path: path, mtime: stat.mtime));
+            stats.add(
+              AgentCliSessionHead(
+                path: path,
+                mtime: stat.mtime,
+                size: stat.size,
+              ),
+            );
           }
         } on Object {
           // Missing/unreadable file — skip.
@@ -412,43 +432,55 @@ class AgentCliSessionIo {
       final heads = <AgentCliSessionHead>[];
       for (final stat in stats.take(maxFileReads)) {
         final bytes = await _readHead(stat.path, headBytes);
-        heads.add(stat.copyWith(bytes: bytes));
+        final tail = await _readTail(stat, headBytes, tailCap);
+        heads.add(stat.copyWith(bytes: bytes, tailBytes: tail));
       }
       return heads;
     }
 
-    // Batched backend: stat and head of every candidate in one round trip
-    // when the backend supports it, falling back to one spawn per file.
-    final batched = candidates.take(maxFileReads).toList();
+    // Batched backend: stat + head + tail of every candidate in one round
+    // trip (still a single spawn), then keep the newest [maxFileReads]. The
+    // candidate list is capped at [maxStatCalls] for spawn argv length.
+    final batched = candidates.take(maxStatCalls).toList();
     try {
       final results = await (fs as FsBatchOps).statAndReadBytesMany(
         batched,
         maxBytesPerFile: headBytes,
+        tailBytesPerFile: tailCap > 0 ? tailCap : null,
       );
-      return [
+      final heads = [
         for (final path in batched)
           if (results[path] case final head? when head.stat.isFile)
             AgentCliSessionHead(
               path: path,
               mtime: head.stat.mtime,
+              size: head.stat.size,
               bytes: head.bytes ?? const [],
+              tailBytes: head.tailBytes ?? const [],
             ),
-      ];
+      ]..sort(_newestFirst);
+      return heads.take(maxFileReads).toList();
     } on Object {
       // Multi-read unsupported or transport failure — per-file reads below.
     }
+    // Degraded fallback: sorting would need a stat per candidate, but each
+    // per-file call is its own spawn, so the readdir-order cap stays to bound
+    // the latency.
     final heads = <AgentCliSessionHead>[];
-    for (final path in batched) {
+    for (final path in batched.take(maxFileReads)) {
       final result = await (fs as FsBatchOps).statAndReadBytes(
         path,
         maxBytes: headBytes,
+        tailBytes: tailCap > 0 ? tailCap : null,
       );
       if (result == null || !result.stat.isFile) continue;
       heads.add(
         AgentCliSessionHead(
           path: path,
           mtime: result.stat.mtime,
+          size: result.stat.size,
           bytes: result.bytes ?? const [],
+          tailBytes: result.tailBytes ?? const [],
         ),
       );
     }
@@ -471,22 +503,51 @@ class AgentCliSessionIo {
       return const [];
     }
   }
+
+  /// Last [tailBytes] of a file already covered by a [headBytes] head read;
+  /// empty when the whole file fits in the head or the size is unknown.
+  Future<List<int>> _readTail(
+    AgentCliSessionHead stat,
+    int headBytes,
+    int tailBytes,
+  ) async {
+    final size = stat.size;
+    if (tailBytes <= 0 || size == null || size <= headBytes) return const [];
+    final offset = size > tailBytes ? size - tailBytes : 0;
+    try {
+      return await fs.readBytesRange(stat.path, offset, tailBytes) ?? const [];
+    } on Object {
+      return const [];
+    }
+  }
 }
 
-/// Stat + head bytes for one session file.
+/// Stat + head/tail bytes for one session file.
 class AgentCliSessionHead {
   const AgentCliSessionHead({
     required this.path,
     required this.mtime,
+    this.size,
     this.bytes = const [],
+    this.tailBytes = const [],
   });
 
   final String path;
   final DateTime? mtime;
+  final int? size;
   final List<int> bytes;
+  final List<int> tailBytes;
 
-  AgentCliSessionHead copyWith({List<int>? bytes}) =>
-      AgentCliSessionHead(path: path, mtime: mtime, bytes: bytes ?? this.bytes);
+  AgentCliSessionHead copyWith({
+    List<int>? bytes,
+    List<int>? tailBytes,
+  }) => AgentCliSessionHead(
+    path: path,
+    mtime: mtime,
+    size: size,
+    bytes: bytes ?? this.bytes,
+    tailBytes: tailBytes ?? this.tailBytes,
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -499,28 +560,29 @@ String sessionIdOfFileName(String filePath) {
   return dot <= 0 ? base : base.substring(0, dot);
 }
 
-/// Title for Claude-style JSONL, strongest signal first regardless of line
-/// order: user rename > generated title > compact summary > first prompt.
-String? claudeStyleTitle(List<int> bytes) {
-  final lines = _jsonLines(bytes);
-  String? firstMatch(List<String> types) {
-    for (final type in types) {
-      for (final line in lines) {
-        if (line['type'] != type) continue;
-        final Object? raw = switch (type) {
-          'custom-title' => line['customTitle'],
-          'ai-title' => line['aiTitle'],
-          _ => line['summary'],
-        };
-        final title = shortTitle(raw);
-        if (title != null) return title;
-      }
+/// Title for Claude-style JSONL, strongest signal first: user rename >
+/// generated title > compact summary > first prompt. Title records are
+/// appended as a session evolves, so within each kind the LAST record wins —
+/// pass the file tail in [tailBytes], where the recent records live.
+String? claudeStyleTitle(List<int> bytes, {List<int> tailBytes = const []}) {
+  final lines = _jsonLines(bytes).followedBy(_jsonLines(tailBytes));
+  String? lastOfType(String type) {
+    String? title;
+    for (final line in lines) {
+      if (line['type'] != type) continue;
+      final Object? raw = switch (type) {
+        'custom-title' => line['customTitle'],
+        'ai-title' => line['aiTitle'],
+        _ => line['summary'],
+      };
+      title = shortTitle(raw) ?? title;
     }
-    return null;
+    return title;
   }
 
-  final titled = firstMatch(const ['custom-title', 'ai-title', 'summary']);
-  if (titled != null) return titled;
+  for (final type in const ['custom-title', 'ai-title', 'summary']) {
+    if (lastOfType(type) case final title?) return title;
+  }
   for (final line in lines) {
     if (line['type'] == 'user') {
       final title = shortTitle(_firstUserPrompt(line['message']));

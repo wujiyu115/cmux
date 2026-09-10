@@ -12,7 +12,11 @@ class _BatchingFilesystem extends InMemoryFilesystem implements FsBatchOps {
   bool failExistsMany = false;
 
   @override
-  Future<FsStatAndBytes?> statAndReadBytes(String path, {int? maxBytes}) {
+  Future<FsStatAndBytes?> statAndReadBytes(
+    String path, {
+    int? maxBytes,
+    int? tailBytes,
+  }) {
     throw UnimplementedError();
   }
 
@@ -20,6 +24,7 @@ class _BatchingFilesystem extends InMemoryFilesystem implements FsBatchOps {
   Future<Map<String, FsStatAndBytes?>> statAndReadBytesMany(
     List<String> paths, {
     int? maxBytesPerFile,
+    int? tailBytesPerFile,
   }) {
     throw UnimplementedError();
   }

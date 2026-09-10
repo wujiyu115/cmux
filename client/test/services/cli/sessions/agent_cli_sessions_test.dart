@@ -238,6 +238,93 @@ void main() {
       expect(records.single.title, '降级读取的会话');
       expect(fs.statAndReadBytesCalls, 1);
     });
+
+    test('batched backend keeps the newest sessions beyond the read cap', () async {
+      final fs = _BatchingInMemoryFilesystem();
+      const dir = '/home/u/.claude/projects/-home-u-proj';
+      // Directory (insertion) order puts the newest file last — beyond the
+      // maxFileReads(6) truncation point. Truncating before the mtime sort
+      // would drop it entirely.
+      for (var i = 0; i < 8; i++) {
+        final sessionPath = '$dir/s$i.jsonl';
+        await fs.writeBytes(
+          sessionPath,
+          utf8.encode('{"type":"user","message":{"role":"user","content":"会话 $i"}}\n'),
+        );
+        fs.mtimes[sessionPath] = DateTime.utc(2026, 9, 1 + i);
+      }
+
+      final records =
+          await const ClaudeStyleAgentCliSessionAdapter(
+            family: AgentCliFamily.claude,
+            homeDotDir: '.claude',
+          ).listSessions(
+            AgentCliSessionQuery(
+              context: _context(fs),
+              directory: '/home/u/proj',
+            ),
+          );
+
+      expect(records.map((r) => r.sessionId), [
+        's7', 's6', 's5', 's4', 's3', 's2',
+      ]);
+      // All eight candidates stat in the one batched round trip.
+      expect(fs.statAndReadBytesManyCalls, 1);
+    });
+
+    test('title follows the latest custom-title appended near EOF', () async {
+      final fs = _BatchingInMemoryFilesystem();
+      const dir = '/home/u/.claude/projects/-home-u-proj';
+      // A long session: the head carries a stale generated title while the
+      // user rename (custom-title) sits at EOF, far beyond the head window.
+      final buffer = StringBuffer()
+        ..write('{"type":"ai-title","aiTitle":"过期的自动标题"}\n')
+        ..write('{"type":"user","message":{"role":"user","content":"开头的问题"}}\n');
+      while (buffer.length < 64 * 1024) {
+        buffer.write('{"type":"user","message":{"role":"user","content":"后续对话"}}\n');
+      }
+      buffer.write('{"type":"custom-title","customTitle":"奥特曼联动交付"}\n');
+      await fs.writeBytes('$dir/big.jsonl', utf8.encode(buffer.toString()));
+
+      final records =
+          await const ClaudeStyleAgentCliSessionAdapter(
+            family: AgentCliFamily.claude,
+            homeDotDir: '.claude',
+          ).listSessions(
+            AgentCliSessionQuery(
+              context: _context(fs),
+              directory: '/home/u/proj',
+            ),
+          );
+
+      expect(records.single.title, '奥特曼联动交付');
+    });
+
+    test('local backend reads the tail for the latest title', () async {
+      final fs = InMemoryFilesystem();
+      const dir = '/home/u/.claude/projects/-home-u-proj';
+      final buffer = StringBuffer()
+        ..write('{"type":"ai-title","aiTitle":"过期的自动标题"}\n')
+        ..write('{"type":"user","message":{"role":"user","content":"开头的问题"}}\n');
+      while (buffer.length < 64 * 1024) {
+        buffer.write('{"type":"user","message":{"role":"user","content":"后续对话"}}\n');
+      }
+      buffer.write('{"type":"custom-title","customTitle":"奥特曼联动交付"}\n');
+      await fs.writeBytes('$dir/big.jsonl', utf8.encode(buffer.toString()));
+
+      final records =
+          await const ClaudeStyleAgentCliSessionAdapter(
+            family: AgentCliFamily.claude,
+            homeDotDir: '.claude',
+          ).listSessions(
+            AgentCliSessionQuery(
+              context: _context(fs),
+              directory: '/home/u/proj',
+            ),
+          );
+
+      expect(records.single.title, '奥特曼联动交付');
+    });
   });
 
   group('CodexAgentCliSessionAdapter', () {
@@ -679,21 +766,39 @@ class _BatchingInMemoryFilesystem extends InMemoryFilesystem
   int statAndReadBytesCalls = 0;
   bool failStatAndReadBytesMany = false;
 
+  /// Injected mtimes — the in-memory stat has none, but the batched path
+  /// sorts by them before truncating.
+  final Map<String, DateTime> mtimes = {};
+
   @override
-  Future<FsStatAndBytes?> statAndReadBytes(String path, {int? maxBytes}) async {
+  Future<FsStat> stat(String path) async {
+    final base = await super.stat(path);
+    final mtime = mtimes[path];
+    if (mtime == null || !base.exists) return base;
+    return FsStat(kind: base.kind, size: base.size, mtime: mtime);
+  }
+
+  @override
+  Future<FsStatAndBytes?> statAndReadBytes(
+    String path, {
+    int? maxBytes,
+    int? tailBytes,
+  }) async {
     statAndReadBytesCalls++;
-    return _statAndRead(path, maxBytes);
+    return _statAndRead(path, maxBytes, tailBytes);
   }
 
   @override
   Future<Map<String, FsStatAndBytes?>> statAndReadBytesMany(
     List<String> paths, {
     int? maxBytesPerFile,
+    int? tailBytesPerFile,
   }) async {
     statAndReadBytesManyCalls++;
     if (failStatAndReadBytesMany) throw StateError('batch transport failed');
     return {
-      for (final path in paths) path: await _statAndRead(path, maxBytesPerFile),
+      for (final path in paths)
+        path: await _statAndRead(path, maxBytesPerFile, tailBytesPerFile),
     };
   }
 
@@ -702,7 +807,11 @@ class _BatchingInMemoryFilesystem extends InMemoryFilesystem
     return {for (final p in paths) p: (await stat(p)).exists};
   }
 
-  Future<FsStatAndBytes?> _statAndRead(String path, int? maxBytes) async {
+  Future<FsStatAndBytes?> _statAndRead(
+    String path,
+    int? maxBytes,
+    int? tailBytes,
+  ) async {
     final stat = await this.stat(path);
     if (!stat.exists) return null;
     final bytes = await readBytes(path);
@@ -710,6 +819,11 @@ class _BatchingInMemoryFilesystem extends InMemoryFilesystem
     return FsStatAndBytes(
       stat: stat,
       bytes: maxBytes == null ? bytes : bytes.take(maxBytes).toList(),
+      tailBytes: maxBytes == null || tailBytes == null
+          ? null
+          : bytes.sublist(
+              bytes.length > tailBytes ? bytes.length - tailBytes : 0,
+            ),
     );
   }
 }

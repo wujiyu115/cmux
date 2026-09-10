@@ -347,7 +347,11 @@ class _BatchCountingFilesystem extends InMemoryFilesystem
   }
 
   @override
-  Future<FsStatAndBytes?> statAndReadBytes(String path, {int? maxBytes}) async {
+  Future<FsStatAndBytes?> statAndReadBytes(
+    String path, {
+    int? maxBytes,
+    int? tailBytes,
+  }) async {
     statAndReadCalls++;
     final stat = await super.stat(path);
     if (!stat.exists) return null;
@@ -360,6 +364,7 @@ class _BatchCountingFilesystem extends InMemoryFilesystem
   Future<Map<String, FsStatAndBytes?>> statAndReadBytesMany(
     List<String> paths, {
     int? maxBytesPerFile,
+    int? tailBytesPerFile,
   }) async {
     return {
       for (final path in paths)
