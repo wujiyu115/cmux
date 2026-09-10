@@ -42,8 +42,11 @@ class _FakeFilesystem implements Filesystem {
   Future<void> writeBytes(String path, List<int> bytes) async {}
 
   @override
-  Future<List<int>?> readBytesRange(String path, int offset, int length) async =>
-      [];
+  Future<List<int>?> readBytesRange(
+    String path,
+    int offset,
+    int length,
+  ) async => [];
 
   @override
   Future<void> appendBytes(String path, List<int> bytes) async {}
@@ -105,6 +108,36 @@ void main() {
     expect(cubit.state.expandedPaths, isEmpty);
 
     // Let the in-flight directory load finish before closing the cubit.
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    await cubit.close();
+  });
+
+  test('retained list scroll offset survives state publishes', () async {
+    final root = p.normalize('/proj');
+    final cubit = FileTreeCubit(
+      fs: _FakeFilesystem({
+        root: [const FsDirEntry(name: 'src', isDirectory: true)],
+      }),
+    );
+
+    cubit.setListScrollOffset(480);
+    expect(cubit.retainedListScrollOffset, 480);
+
+    // Non-finite / negative values collapse to 0.
+    cubit.setListScrollOffset(-12);
+    expect(cubit.retainedListScrollOffset, 0);
+    cubit.setListScrollOffset(double.nan);
+    expect(cubit.retainedListScrollOffset, 0);
+
+    cubit.setListScrollOffset(480);
+    await cubit.setRoot(root);
+    cubit.toggleExpand(p.join(root, 'src'));
+    cubit.setFilter('main');
+    cubit.setFilter('');
+    // The offset is deliberately not part of state: the publishes above must
+    // not reset it, so a remounted panel can restore the viewport.
+    expect(cubit.retainedListScrollOffset, 480);
+
     await Future<void>.delayed(const Duration(milliseconds: 20));
     await cubit.close();
   });

@@ -150,6 +150,21 @@ class FileTreeCubit extends Cubit<FileTreeState> {
 
   RuntimeContext? workContextFor(String path) => _mountFor(path)?.workContext;
 
+  /// Retained file-tree list scroll offset (logical pixels).
+  ///
+  /// The panel's [ScrollController] is view state and dies on every remount
+  /// (tab switches swap the right-tools subtree); keeping the offset here — on
+  /// the cubit retained by `WorkspaceFileTreeStore` — lets the panel restore
+  /// the viewport when it mounts again. Deliberately outside [state]: scroll
+  /// ticks must not republish tree state or rebuild row selectors.
+  double retainedListScrollOffset = 0;
+
+  /// Records the list scroll offset for a later restore. Non-finite or
+  /// negative values collapse to `0`.
+  void setListScrollOffset(double offset) {
+    retainedListScrollOffset = offset.isFinite && offset > 0 ? offset : 0;
+  }
+
   @override
   Future<void> close() {
     _filterDebounceTimer?.cancel();
