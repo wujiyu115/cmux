@@ -79,6 +79,18 @@ abstract final class CommandCatalog {
       terminalPassthrough: true,
       titleL10nKey: 'shortcutsContentFind',
     ),
+    // Editor go-to-line (VSCode-style Ctrl/Cmd+G); claimed by the focused
+    // editor pane, silent no-op while no editor owns focus.
+    CommandDefinition(
+      id: CommandIds.editorGotoLine,
+      category: CommandCategory.navigation,
+      defaultChords: [
+        KeyChord(key: 'g', mods: [KeyChordMod.mod]),
+      ],
+      when: ShortcutWhen.hasWorkspace,
+      terminalPassthrough: true,
+      titleL10nKey: 'shortcutsEditorGotoLine',
+    ),
 
     // Workbench strip tabs
     CommandDefinition(

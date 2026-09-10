@@ -7,6 +7,7 @@ abstract final class CommandIds {
   static const String workspaceReopenClosed = 'workbench.workspace.reopenClosed';
   static const String quickOpen = 'workbench.quickOpen';
   static const String contentFind = 'workbench.workspace.search';
+  static const String editorGotoLine = 'workbench.editor.gotoLine';
 
   // Workbench strip tabs (session / file / diff / shell / run)
   static const String stripNextTab = 'workbench.strip.nextTab';

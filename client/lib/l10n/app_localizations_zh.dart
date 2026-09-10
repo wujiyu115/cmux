@@ -924,6 +924,17 @@ class AppLocalizationsZh extends AppLocalizations {
   String get editorNotReady => '编辑器未就绪';
 
   @override
+  String get editorGotoLineTitle => '跳转到行';
+
+  @override
+  String editorGotoLineRangeHint(int total) {
+    return '输入 1 到 $total 之间的行号';
+  }
+
+  @override
+  String get editorGotoLineSubmit => '跳转';
+
+  @override
   String get editorBinaryFileHint => '二进制文件将使用系统默认应用打开。';
 
   @override
@@ -2043,6 +2054,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get shortcutsContentFind => '在文件或终端中查找';
+
+  @override
+  String get shortcutsEditorGotoLine => '跳转到编辑器行号';
 
   @override
   String get quickOpenSearchHint => '搜索会话或文件…';

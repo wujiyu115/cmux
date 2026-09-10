@@ -393,6 +393,16 @@
   "editorUnsavedChangesDiscardMultiple": "放弃 {count} 个文件中的未保存修改？",
   "editorDiscard": "放弃",
   "editorNotReady": "编辑器未就绪",
+  "editorGotoLineTitle": "跳转到行",
+  "editorGotoLineRangeHint": "输入 1 到 {total} 之间的行号",
+  "@editorGotoLineRangeHint": {
+    "placeholders": {
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "editorGotoLineSubmit": "跳转",
   "editorBinaryFileHint": "二进制文件将使用系统默认应用打开。",
   "editorFileNotFound": "找不到文件",
   "editorFileTooLarge": "文件过大，无法在 TeamPilot 中编辑（上限 2 MB）。",
@@ -851,6 +861,7 @@
   "shortcutsWorkspaceReopenClosed": "重新打开已关闭的工作区标签",
   "shortcutsQuickOpen": "快速打开",
   "shortcutsContentFind": "在文件或终端中查找",
+  "shortcutsEditorGotoLine": "跳转到编辑器行号",
   "quickOpenSearchHint": "搜索会话或文件…",
   "quickOpenIndexing": "正在索引文件…",
   "quickOpenRecentSessions": "最近会话",

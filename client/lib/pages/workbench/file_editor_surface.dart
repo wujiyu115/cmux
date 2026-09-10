@@ -11,6 +11,8 @@ import '../../cubits/editor_cubit.dart';
 import '../../cubits/workbench/workbench_cubit.dart';
 import '../../cubits/workbench/workbench_tab.dart';
 import '../../l10n/l10n_extensions.dart';
+import '../../services/commands/command_bus.dart';
+import '../../services/commands/editor_goto_line_command_registrar.dart';
 import '../../services/editor/file_editor_theme.dart';
 import '../../services/editor/file_editor_toolbar.dart';
 import '../../services/editor/markdown_preview_link_handler.dart';
@@ -25,6 +27,7 @@ import '../../widgets/workbench/code_find_panel.dart';
 import '../../widgets/workbench/file_diff_surface_toggle.dart';
 import '../../widgets/workbench/markdown_view_mode_toggle.dart';
 import 'file_editor_image_preview.dart';
+import 'editor_goto_line_dialog.dart';
 
 /// Center-pane file editor for one path (no inner tab bar).
 class FileEditorSurface extends StatelessWidget {
@@ -263,12 +266,45 @@ class _CodeEditorPaneState extends State<_CodeEditorPane> {
   late final CodeFindController _findController =
       CodeFindController(widget.controller);
 
+  /// Go-to-line (Mod+G) claim, held while this pane's subtree has focus so the
+  /// shortcut always targets the focused editor — kept-alive workspace tabs
+  /// can leave several panes mounted offstage.
+  VoidCallback? _gotoLineDisposer;
+  bool _gotoLineOpen = false;
+
   void _setMenuOpen(bool value) {
     if (mounted) _menuOpen.value = value;
   }
 
+  void _setGotoLineClaim(bool active) {
+    if (active) {
+      if (_gotoLineDisposer != null) return;
+      _gotoLineDisposer = claimEditorGotoLineCommand(
+        context.read<CommandBus>(),
+        _openGotoLine,
+      );
+    } else {
+      _gotoLineDisposer?.call();
+      _gotoLineDisposer = null;
+    }
+  }
+
+  void _openGotoLine() {
+    if (_gotoLineOpen || !mounted) return;
+    _gotoLineOpen = true;
+    unawaited(
+      showEditorGotoLineDialog(
+        context,
+        controller: widget.controller,
+      ).whenComplete(() {
+        if (mounted) _gotoLineOpen = false;
+      }),
+    );
+  }
+
   @override
   void dispose() {
+    _gotoLineDisposer?.call();
     _findController.dispose();
     _menuOpen.dispose();
     super.dispose();
@@ -309,7 +345,13 @@ class _CodeEditorPaneState extends State<_CodeEditorPane> {
             );
           },
     );
-    return codeEditor;
+    return Focus(
+      // Focus observer only: claim Mod+G while the editor subtree has focus.
+      canRequestFocus: false,
+      skipTraversal: true,
+      onFocusChange: _setGotoLineClaim,
+      child: codeEditor,
+    );
   }
 }
 

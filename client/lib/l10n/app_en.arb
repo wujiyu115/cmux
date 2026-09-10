@@ -413,6 +413,16 @@
   },
   "editorDiscard": "Discard",
   "editorNotReady": "Editor not ready",
+  "editorGotoLineTitle": "Go to Line",
+  "editorGotoLineRangeHint": "Enter a line number between 1 and {total}",
+  "@editorGotoLineRangeHint": {
+    "placeholders": {
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "editorGotoLineSubmit": "Go",
   "editorBinaryFileHint": "Binary files open with the system default app.",
   "editorFileNotFound": "File not found",
   "editorFileTooLarge": "File is too large to edit in TeamPilot (max 2 MB).",
@@ -949,6 +959,7 @@
   "shortcutsWorkspaceReopenClosed": "Reopen Closed Workspace Tab",
   "shortcutsQuickOpen": "Quick Open",
   "shortcutsContentFind": "Find in File or Terminal",
+  "shortcutsEditorGotoLine": "Go to Line in Editor",
   "quickOpenSearchHint": "Search sessions or files…",
   "quickOpenIndexing": "Indexing files…",
   "quickOpenRecentSessions": "Recent sessions",

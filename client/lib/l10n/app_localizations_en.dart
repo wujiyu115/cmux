@@ -955,6 +955,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get editorNotReady => 'Editor not ready';
 
   @override
+  String get editorGotoLineTitle => 'Go to Line';
+
+  @override
+  String editorGotoLineRangeHint(int total) {
+    return 'Enter a line number between 1 and $total';
+  }
+
+  @override
+  String get editorGotoLineSubmit => 'Go';
+
+  @override
   String get editorBinaryFileHint =>
       'Binary files open with the system default app.';
 
@@ -2104,6 +2115,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shortcutsContentFind => 'Find in File or Terminal';
+
+  @override
+  String get shortcutsEditorGotoLine => 'Go to Line in Editor';
 
   @override
   String get quickOpenSearchHint => 'Search sessions or files…';

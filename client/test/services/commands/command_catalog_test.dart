@@ -50,6 +50,19 @@ void main() {
     expect(def.titleL10nKey, 'shortcutsContentFind');
   });
 
+  test('editor goto line is Mod+G, navigation, hasWorkspace, passthrough', () {
+    final def = CommandCatalog.v1.singleWhere(
+      (c) => c.id == CommandIds.editorGotoLine,
+    );
+    expect(def.defaultChords, [
+      KeyChord(key: 'g', mods: [KeyChordMod.mod]),
+    ]);
+    expect(def.category, CommandCategory.navigation);
+    expect(def.when, ShortcutWhen.hasWorkspace);
+    expect(def.terminalPassthrough, isTrue);
+    expect(def.titleL10nKey, 'shortcutsEditorGotoLine');
+  });
+
   test('strip next tab defaults to explicit ctrl+tab', () {
     final def = CommandCatalog.v1.singleWhere(
       (c) => c.id == CommandIds.stripNextTab,

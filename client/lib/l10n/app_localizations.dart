@@ -1844,6 +1844,24 @@ abstract class AppLocalizations {
   /// **'Editor not ready'**
   String get editorNotReady;
 
+  /// No description provided for @editorGotoLineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Line'**
+  String get editorGotoLineTitle;
+
+  /// No description provided for @editorGotoLineRangeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a line number between 1 and {total}'**
+  String editorGotoLineRangeHint(int total);
+
+  /// No description provided for @editorGotoLineSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Go'**
+  String get editorGotoLineSubmit;
+
   /// No description provided for @editorBinaryFileHint.
   ///
   /// In en, this message translates to:
@@ -3949,6 +3967,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Find in File or Terminal'**
   String get shortcutsContentFind;
+
+  /// No description provided for @shortcutsEditorGotoLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Line in Editor'**
+  String get shortcutsEditorGotoLine;
 
   /// No description provided for @quickOpenSearchHint.
   ///
