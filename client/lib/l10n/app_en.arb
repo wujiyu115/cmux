@@ -49,6 +49,8 @@
   "markdownOpenModeRemember": "Remember last",
   "markdownViewToggleSource": "Source",
   "markdownViewTogglePreview": "Preview",
+  "editorPreviewTabsTitle": "Editor preview tabs",
+  "editorPreviewTabsDescription": "On: single-click opens reuse one preview tab. Off: every open gets its own tab.",
   "themePresetGraphite": "Graphite",
   "themePresetOcean": "Ocean",
   "themePresetViolet": "Violet",

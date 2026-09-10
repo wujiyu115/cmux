@@ -168,6 +168,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get markdownViewTogglePreview => 'Preview';
 
   @override
+  String get editorPreviewTabsTitle => 'Editor preview tabs';
+
+  @override
+  String get editorPreviewTabsDescription =>
+      'On: single-click opens reuse one preview tab. Off: every open gets its own tab.';
+
+  @override
   String get themePresetGraphite => 'Graphite';
 
   @override

@@ -216,4 +216,7 @@ class LayoutCubit extends Cubit<LayoutState> {
 
   Future<void> setMarkdownOpenMode(MarkdownOpenMode mode) =>
       _save(state.preferences.copyWith(markdownOpenMode: mode));
+
+  Future<void> setEditorPreviewTabs(bool enabled) =>
+      _save(state.preferences.copyWith(editorPreviewTabs: enabled));
 }

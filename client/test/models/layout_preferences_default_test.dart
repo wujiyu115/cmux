@@ -253,4 +253,20 @@ void main() {
       MarkdownOpenMode.preview,
     );
   });
+
+  test('editorPreviewTabs defaults on and round-trips', () {
+    expect(const LayoutPreferences().editorPreviewTabs, isTrue);
+    expect(LayoutPreferences.fromJson(const {}).editorPreviewTabs, isTrue);
+    final off = const LayoutPreferences().copyWith(editorPreviewTabs: false);
+    expect(off.editorPreviewTabs, isFalse);
+    expect(
+      LayoutPreferences.fromJson(off.toJson()).editorPreviewTabs,
+      isFalse,
+    );
+    expect(
+      LayoutPreferences.fromJson(const {'editorPreviewTabs': false})
+          .editorPreviewTabs,
+      isFalse,
+    );
+  });
 }

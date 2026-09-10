@@ -104,6 +104,7 @@ void main() {
           workbench: WorkbenchCubit(),
           markdownViewModes: MarkdownViewModeStore(),
           readMarkdownOpenMode: () => MarkdownOpenMode.preview,
+          readEditorPreviewTabs: () => true,
         ),
         child: buildTestApp(
           sessionPreferencesCubit: sessionCubit,

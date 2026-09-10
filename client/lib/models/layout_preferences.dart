@@ -66,6 +66,7 @@ class LayoutPreferences {
     this.workspaceTerminalVisible = false,
     this.workspaceTerminalHeight = defaultWorkspaceTerminalHeight,
     this.markdownOpenMode = MarkdownOpenMode.preview,
+    this.editorPreviewTabs = true,
   });
 
   factory LayoutPreferences.fromJson(Map<String, Object?> json) {
@@ -136,6 +137,7 @@ class LayoutPreferences {
       markdownOpenMode:
           _enumValue(MarkdownOpenMode.values, json['markdownOpenMode']) ??
           MarkdownOpenMode.preview,
+      editorPreviewTabs: json['editorPreviewTabs'] as bool? ?? true,
     ).withAtLeastOneToolVisible();
   }
 
@@ -203,6 +205,10 @@ class LayoutPreferences {
   final double workspaceTerminalHeight;
   final MarkdownOpenMode markdownOpenMode;
 
+  /// Whether single-click opens reuse the shared preview tab slot. When false
+  /// every open pins its own tab (VSCode `enablePreview: false`).
+  final bool editorPreviewTabs;
+
   LayoutPreferences copyWith({
     LayoutPreset? preset,
     WorkspaceEntryMode? workspaceEntryMode,
@@ -231,6 +237,7 @@ class LayoutPreferences {
     bool? workspaceTerminalVisible,
     double? workspaceTerminalHeight,
     MarkdownOpenMode? markdownOpenMode,
+    bool? editorPreviewTabs,
   }) {
     return LayoutPreferences(
       preset: preset ?? this.preset,
@@ -293,6 +300,7 @@ class LayoutPreferences {
             double.infinity,
           ),
       markdownOpenMode: markdownOpenMode ?? this.markdownOpenMode,
+      editorPreviewTabs: editorPreviewTabs ?? this.editorPreviewTabs,
     ).withAtLeastOneToolVisible();
   }
 
@@ -326,6 +334,7 @@ class LayoutPreferences {
       workspaceTerminalVisible: workspaceTerminalVisible,
       workspaceTerminalHeight: workspaceTerminalHeight,
       markdownOpenMode: markdownOpenMode,
+      editorPreviewTabs: editorPreviewTabs,
     );
   }
 
@@ -358,6 +367,7 @@ class LayoutPreferences {
       'workspaceTerminalVisible': workspaceTerminalVisible,
       'workspaceTerminalHeight': workspaceTerminalHeight,
       'markdownOpenMode': markdownOpenMode.name,
+      'editorPreviewTabs': editorPreviewTabs,
     };
   }
 }

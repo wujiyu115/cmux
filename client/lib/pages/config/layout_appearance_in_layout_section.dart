@@ -201,6 +201,17 @@ class LayoutAppearanceInLayoutSection extends StatelessWidget {
                   showDividerBelow: true,
                 ),
                 TpPreferenceRow(
+                  title: l10n.editorPreviewTabsTitle,
+                  subtitle: l10n.editorPreviewTabsDescription,
+                  trailing: Switch(
+                    value: context.select<LayoutCubit, bool>(
+                      (c) => c.state.preferences.editorPreviewTabs,
+                    ),
+                    onChanged: controller.setEditorPreviewTabs,
+                  ),
+                  showDividerBelow: true,
+                ),
+                TpPreferenceRow(
                   title: l10n.language,
                   subtitle: l10n.languageDescription,
                   trailing: TpCompactSelect<String>(

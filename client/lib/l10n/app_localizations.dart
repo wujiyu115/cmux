@@ -392,6 +392,18 @@ abstract class AppLocalizations {
   /// **'Preview'**
   String get markdownViewTogglePreview;
 
+  /// No description provided for @editorPreviewTabsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Editor preview tabs'**
+  String get editorPreviewTabsTitle;
+
+  /// No description provided for @editorPreviewTabsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'On: single-click opens reuse one preview tab. Off: every open gets its own tab.'**
+  String get editorPreviewTabsDescription;
+
   /// No description provided for @themePresetGraphite.
   ///
   /// In en, this message translates to:

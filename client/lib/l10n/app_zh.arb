@@ -49,6 +49,8 @@
   "markdownOpenModeRemember": "记住上次",
   "markdownViewToggleSource": "源码",
   "markdownViewTogglePreview": "预览",
+  "editorPreviewTabsTitle": "编辑器预览标签页",
+  "editorPreviewTabsDescription": "开启：单击打开的文件复用同一个预览标签页。关闭：每次打开都固定为独立标签页。",
   "themePresetGraphite": "石墨",
   "themePresetOcean": "海洋",
   "themePresetViolet": "紫罗兰",

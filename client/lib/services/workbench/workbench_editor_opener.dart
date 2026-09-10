@@ -16,10 +16,12 @@ class WorkbenchEditorOpener {
     required WorkbenchCubit workbench,
     required this.markdownViewModes,
     required MarkdownOpenMode Function() readMarkdownOpenMode,
+    required bool Function() readEditorPreviewTabs,
     ChatCubit? chat,
   }) : _editor = editor,
        _workbench = workbench,
        _readMarkdownOpenMode = readMarkdownOpenMode,
+       _readEditorPreviewTabs = readEditorPreviewTabs,
        _chat = chat;
 
   final EditorCubit _editor;
@@ -27,6 +29,12 @@ class WorkbenchEditorOpener {
   final ChatCubit? _chat;
   final MarkdownViewModeStore markdownViewModes;
   final MarkdownOpenMode Function() _readMarkdownOpenMode;
+  final bool Function() _readEditorPreviewTabs;
+
+  /// Preview opens only reuse the shared preview slot while the
+  /// editor-preview-tabs preference is on; otherwise every open pins a tab.
+  bool _previewEffective(bool preview) =>
+      preview && _readEditorPreviewTabs();
 
   Future<void> openFile(
     String workspaceId,
@@ -48,7 +56,7 @@ class WorkbenchEditorOpener {
     final replaced = _workbench.ensureTab(
       workspaceId,
       tab,
-      preview: preview,
+      preview: _previewEffective(preview),
     );
     _closeReplaced(workspaceId, replaced);
     await _editor.openFile(workspaceId, normalized, fs: fs);
@@ -75,7 +83,7 @@ class WorkbenchEditorOpener {
     final replaced = _workbench.ensureTab(
       workspaceId,
       tab,
-      preview: preview,
+      preview: _previewEffective(preview),
     );
     _closeReplaced(workspaceId, replaced);
   }

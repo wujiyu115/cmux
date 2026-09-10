@@ -24,6 +24,7 @@ void main() {
       workbench: workbench,
       markdownViewModes: modes,
       readMarkdownOpenMode: () => MarkdownOpenMode.preview,
+      readEditorPreviewTabs: () => true,
     );
 
     await handleMarkdownPreviewLink(

@@ -157,6 +157,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get markdownViewTogglePreview => '预览';
 
   @override
+  String get editorPreviewTabsTitle => '编辑器预览标签页';
+
+  @override
+  String get editorPreviewTabsDescription =>
+      '开启：单击打开的文件复用同一个预览标签页。关闭：每次打开都固定为独立标签页。';
+
+  @override
   String get themePresetGraphite => '石墨';
 
   @override

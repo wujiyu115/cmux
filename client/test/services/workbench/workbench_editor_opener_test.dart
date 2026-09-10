@@ -25,6 +25,7 @@ void main() {
       workbench: workbench,
       markdownViewModes: MarkdownViewModeStore(),
       readMarkdownOpenMode: () => MarkdownOpenMode.preview,
+      readEditorPreviewTabs: () => true,
     );
     final pending = opener.openFile('ws', '/repo/a.txt');
     await Future<void>.delayed(Duration.zero);
@@ -54,6 +55,7 @@ void main() {
       workbench: workbench,
       markdownViewModes: MarkdownViewModeStore(),
       readMarkdownOpenMode: () => MarkdownOpenMode.preview,
+      readEditorPreviewTabs: () => true,
     );
     final pending = opener.openFile('ws', '/repo/a.png');
     await Future<void>.delayed(Duration.zero);
@@ -62,6 +64,65 @@ void main() {
     gate.complete();
     await pending;
     expect(editor.bytesFor('ws', '/repo/a.png'), isNotNull);
+  });
+
+  test('preview opens replace the shared preview slot when enabled', () async {
+    final fs = InMemoryFilesystem()
+      ..files['/repo/a.txt'] = 'hello'
+      ..files['/repo/b.txt'] = 'world';
+    final editor = EditorCubit(fs: fs);
+    final workbench = WorkbenchCubit();
+    addTearDown(editor.close);
+    addTearDown(workbench.close);
+
+    final opener = WorkbenchEditorOpener(
+      editor: editor,
+      workbench: workbench,
+      markdownViewModes: MarkdownViewModeStore(),
+      readMarkdownOpenMode: () => MarkdownOpenMode.preview,
+      readEditorPreviewTabs: () => true,
+    );
+
+    await opener.openFile('ws', '/repo/a.txt');
+    await opener.openFile('ws', '/repo/b.txt');
+
+    final bucket = workbench.state.bucket('ws');
+    expect(bucket.tabOrder, [
+      WorkbenchTabId.file('/repo/b.txt'),
+    ]);
+    expect(editor.state.bucket('ws').openFilePaths, ['/repo/b.txt']);
+  });
+
+  test('preview tabs disabled pins every open as its own tab', () async {
+    final fs = InMemoryFilesystem()
+      ..files['/repo/a.txt'] = 'hello'
+      ..files['/repo/b.txt'] = 'world';
+    final editor = EditorCubit(fs: fs);
+    final workbench = WorkbenchCubit();
+    addTearDown(editor.close);
+    addTearDown(workbench.close);
+
+    final opener = WorkbenchEditorOpener(
+      editor: editor,
+      workbench: workbench,
+      markdownViewModes: MarkdownViewModeStore(),
+      readMarkdownOpenMode: () => MarkdownOpenMode.preview,
+      readEditorPreviewTabs: () => false,
+    );
+
+    await opener.openFile('ws', '/repo/a.txt');
+    await opener.openFile('ws', '/repo/b.txt');
+
+    final bucket = workbench.state.bucket('ws');
+    expect(bucket.tabOrder, [
+      WorkbenchTabId.file('/repo/a.txt'),
+      WorkbenchTabId.file('/repo/b.txt'),
+    ]);
+    expect(bucket.previewTabIds, isEmpty);
+    expect(
+      editor.state.bucket('ws').openFilePaths,
+      containsAll(['/repo/a.txt', '/repo/b.txt']),
+    );
   });
 }
 

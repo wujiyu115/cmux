@@ -17,4 +17,17 @@ void main() {
     await cubit.setThemeMode('dark');
     expect(cubit.state.preferences.themeMode, 'dark');
   });
+
+  test('setEditorPreviewTabs persists and reloads', () async {
+    final prefs = await SharedPreferences.getInstance();
+    final cubit = LayoutCubit(repository: LayoutRepository(prefs));
+    await cubit.load();
+
+    await cubit.setEditorPreviewTabs(false);
+    expect(cubit.state.preferences.editorPreviewTabs, isFalse);
+
+    final reloaded = LayoutCubit(repository: LayoutRepository(prefs));
+    await reloaded.load();
+    expect(reloaded.state.preferences.editorPreviewTabs, isFalse);
+  });
 }

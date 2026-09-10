@@ -825,6 +825,7 @@ Future<AppShell> buildAppShell({
     chat: chatCubit,
     markdownViewModes: markdownViewModes,
     readMarkdownOpenMode: () => layoutCubit.state.preferences.markdownOpenMode,
+    readEditorPreviewTabs: () => layoutCubit.state.preferences.editorPreviewTabs,
   );
   final resolvedShellLauncher = WorkbenchShellLauncher(
     workbench: workbenchCubit,
