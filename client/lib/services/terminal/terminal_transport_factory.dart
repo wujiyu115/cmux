@@ -60,7 +60,7 @@ class TerminalTransportFactory {
     required int rows,
     Map<String, String>? environment,
   }) async {
-    final pty = Pty.start(
+    final pty = await Pty.startAsync(
       executable,
       arguments: arguments,
       workingDirectory: workingDirectory,

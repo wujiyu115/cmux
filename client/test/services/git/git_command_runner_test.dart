@@ -79,6 +79,34 @@ void main() {
       expect(probeCmd, isNot(contains('command -v git >/dev/null')));
     });
 
+    test('isAvailable probes once per distro across runner instances', () async {
+      // The probe shells into the distro; repeating it on every disk poll
+      // multiplied wsl.exe spawns while WSL process creation was saturated.
+      var probes = 0;
+      Future<ProcessResult> fakeRunner(
+        String exe,
+        List<String> args, {
+        Encoding? stdoutEncoding,
+        Encoding? stderrEncoding,
+      }) async {
+        probes++;
+        return ProcessResult(0, 0, '/usr/bin/git\n', '');
+      }
+
+      final ubuntu = WslGitCommandRunner(distro: 'Ubuntu', wslRunner: fakeRunner);
+      final ubuntuAgain = WslGitCommandRunner(
+        distro: 'Ubuntu',
+        wslRunner: fakeRunner,
+      );
+      final debian = WslGitCommandRunner(distro: 'Debian', wslRunner: fakeRunner);
+
+      expect(await ubuntu.isAvailable, isTrue);
+      expect(await ubuntuAgain.isAvailable, isTrue);
+      expect(await debian.isAvailable, isTrue);
+
+      expect(probes, 2);
+    });
+
     test('runInDirectory invokes wsl.exe git -C', () async {
       final calls = <List<String>>[];
       final runner = WslGitCommandRunner(

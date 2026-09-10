@@ -37,6 +37,7 @@ class GitService {
   static void debugResetExecutableCache() {
     LocalGitCommandRunner.debugResetExecutableCache();
     RemoteGitCommandRunner.debugResetAvailabilityCache();
+    WslGitCommandRunner.debugResetAvailabilityCache();
   }
 
   Future<bool> get isAvailable => _runner.isAvailable;

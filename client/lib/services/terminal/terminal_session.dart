@@ -47,6 +47,7 @@ class TerminalSession {
     this.usesRemoteTransport = false,
     this.parseExecutable = true,
     this.startupDeadline = const Duration(seconds: 15),
+    this.spawnDeadline = const Duration(minutes: 3),
     this.confirmFallback = const Duration(milliseconds: 150),
     TransportStarter? transportStarter,
     int scrollbackLines = 10000,
@@ -83,6 +84,7 @@ class TerminalSession {
           activityTracker: activityTracker,
           defaultExecutable: executable,
           startupDeadline: startupDeadline,
+          spawnDeadline: spawnDeadline,
           confirmFallback: confirmFallback,
           validateLaunch: validateLaunch,
           transportStarter: transportStarter,
@@ -109,6 +111,11 @@ class TerminalSession {
   final bool usesRemoteTransport;
   final bool parseExecutable;
   final Duration startupDeadline;
+
+  /// Budget for the PTY spawn itself. Much longer than [startupDeadline]:
+  /// WSL process-creation saturation stalls `CreateProcessW` for tens of
+  /// seconds while the spawn still eventually succeeds.
+  final Duration spawnDeadline;
   final Duration confirmFallback;
 
   final TerminalEngine engine;
@@ -426,18 +433,14 @@ class TerminalSession {
       inheritHostEnvironment: plan.inheritHostEnvironment,
     );
 
-    if (!_validateBeforeSpawn(plan.executable, plan.workingDirectory)) {
+    // PATH lookup for bare executable names must NOT run here: the sync
+    // validator spawns `where.exe` with Process.runSync on the UI thread, and
+    // under WSL process-creation saturation that CreateProcess blocked the
+    // main isolate for 20-60+ s (new-terminal freeze). The launch controller
+    // re-validates asynchronously (isolate-backed) in _startTransport.
+    if (!plan.usesRemoteTransport &&
+        !_validateBeforeSpawn(plan.executable, plan.workingDirectory)) {
       return;
-    }
-    if (!plan.usesRemoteTransport) {
-      final validationError = CliExecutableValidator.validateLaunch(
-        executable: plan.executable,
-        workingDirectory: plan.workingDirectory,
-      );
-      if (validationError != null) {
-        _launch.failLaunch(validationError);
-        return;
-      }
     }
 
     _inputPipeline.installWorkspaceShell();

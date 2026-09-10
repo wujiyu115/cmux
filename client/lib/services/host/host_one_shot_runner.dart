@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:dartssh2/dartssh2.dart';
 
 import 'host_one_shot_runner.dart';
+import 'isolate_process_run.dart';
 
 export 'host_run_request.dart';
 export 'host_run_result.dart';
@@ -43,7 +44,7 @@ class LocalHostOneShotRunner implements HostOneShotRunner {
     Encoding? stdoutEncoding,
     Encoding? stderrEncoding,
   }) {
-    return Process.run(
+    return isolateProcessRun(
       executable,
       arguments,
       workingDirectory: workingDirectory,

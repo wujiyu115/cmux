@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:isolate';
 
 /// Enumerates installed WSL distributions on Windows via `wsl.exe -l -q`.
 ///
@@ -12,11 +13,16 @@ abstract final class WslDistroLookup {
     if (!Platform.isWindows) return const [];
     try {
       // `-l -q` prints one distro name per line. wsl.exe emits UTF-16LE with a
-      // trailing NUL per code unit; read raw bytes and drop the zero bytes.
-      final result = await Process.run(
-        'wsl.exe',
-        const ['-l', '-q'],
-        stdoutEncoding: null,
+      // trailing NUL per code unit; read raw bytes (encoding: null) and drop
+      // the zero bytes. Runs on a helper isolate: CreateProcess can queue for
+      // tens of seconds when WSL process creation saturates.
+      final result = await Isolate.run(
+        () => Process.runSync(
+          'wsl.exe',
+          const ['-l', '-q'],
+          stdoutEncoding: null,
+          stderrEncoding: null,
+        ),
       );
       if (result.exitCode != 0) return const [];
       final bytes = (result.stdout as List<int>)

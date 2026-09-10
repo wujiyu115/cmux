@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:dartssh2/dartssh2.dart';
 
@@ -115,17 +114,32 @@ class WslGitCommandRunner implements GitCommandRunner {
     String? distro,
     ProcessRunner? wslRunner,
     HostOneShotRunner? hostRunner,
-  }) : _host =
+  }) : _distro = distro?.trim(),
+       _host =
            hostRunner ??
            WslHostOneShotRunner(
              distro: distro,
-             processRunner: _hostProcessRunnerFrom(wslRunner ?? Process.run),
+             processRunner: _hostProcessRunnerFrom(
+               wslRunner ?? cliToolDefaultProcessRun,
+             ),
            );
 
+  final String? _distro;
   final HostOneShotRunner _host;
 
+  /// Identifies the distro so the availability probe is cached per distro
+  /// (a distro without git must not poison the cache for other distros).
+  /// The probe shells into the distro, so it is not cheap enough to repeat on
+  /// every poll.
+  static final Map<String, Future<bool>> _availableByDistro = {};
+
+  static void debugResetAvailabilityCache() => _availableByDistro.clear();
+
   @override
-  Future<bool> get isAvailable async {
+  Future<bool> get isAvailable =>
+      _availableByDistro[_distro ?? ''] ??= _probeAvailability();
+
+  Future<bool> _probeAvailability() async {
     final result = await _host.run(
       const HostRunRequest(
         executable: 'sh',

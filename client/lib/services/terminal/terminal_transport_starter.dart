@@ -26,7 +26,10 @@ Future<TerminalTransport> defaultTransportStarter(
   Map<String, String>? environment,
 }) async {
   final spawnExecutable = CliToolLocator.resolveSpawnExecutable(executable);
-  final pty = Pty.start(
+  // startAsync: the CreateProcessW inside pty_create stalls for tens of
+  // seconds under WSL process-creation saturation and must stay off the UI
+  // thread (new-terminal freeze).
+  final pty = await Pty.startAsync(
     spawnExecutable,
     arguments: arguments,
     workingDirectory: workingDirectory,

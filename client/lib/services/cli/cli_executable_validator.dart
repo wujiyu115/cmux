@@ -2,6 +2,7 @@ import 'dart:io';
 
 import '../host/host_executable_locator.dart';
 import '../host/host_execution_environment.dart';
+import '../host/isolate_process_run.dart';
 import '../storage/app_storage.dart';
 import 'cli_invocation.dart';
 
@@ -57,6 +58,9 @@ class CliExecutableValidator {
   }
 
   /// Synchronous variant kept for call sites that cannot be made async.
+  /// WSL invocations skip the PATH lookup like [validateLaunchPathLookupAsync]
+  /// — the sync `where.exe` spawn blocks the UI thread for tens of seconds
+  /// under WSL process-creation saturation.
   static String? validateLaunch({
     required String executable,
     required String workingDirectory,
@@ -68,6 +72,7 @@ class CliExecutableValidator {
     if (fastError != null) return fastError;
 
     final invocation = CliInvocation.fromExecutable(executable);
+    if (invocation.usesWsl) return null;
     return _validatePathLookupSync(invocation.executable);
   }
 
@@ -120,7 +125,7 @@ class CliExecutableValidator {
     final cliName = cliDisplayName(executable);
     final cmd = _pathLocator().whichCommand;
     try {
-      final result = await Process.run(cmd, [executable]);
+      final result = await isolateProcessRun(cmd, [executable]);
       if (result.exitCode != 0) {
         return _formatMessage(
           '$cliName executable not found on PATH',

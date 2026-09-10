@@ -36,6 +36,7 @@ final class TerminalLaunchController {
     required this.defaultExecutable,
     required this.startupDeadline,
     required this.confirmFallback,
+    this.spawnDeadline = const Duration(minutes: 3),
     required this.validateLaunch,
     TransportStarter? transportStarter,
     int scrollbackLines = 10000,
@@ -48,6 +49,14 @@ final class TerminalLaunchController {
   final TerminalActivityTracker activityTracker;
   final String defaultExecutable;
   final Duration startupDeadline;
+
+  /// Budget for the process spawn itself (PTY creation), armed from
+  /// [beginStartup] until the transport exists. WSL process-creation
+  /// saturation can stall `CreateProcessW` inside `pty_create` for tens of
+  /// seconds (observed 69 s) while the app stays responsive — the spawn
+  /// still succeeds, so this is deliberately far longer than
+  /// [startupDeadline], which takes over once the transport is up.
+  final Duration spawnDeadline;
   final Duration confirmFallback;
   final bool validateLaunch;
   final TransportStarter _transportStarter;
@@ -209,7 +218,7 @@ final class TerminalLaunchController {
     _startupExecutable = executable;
     _phase = TerminalLaunchPhase.spawning;
     _startFailed = false;
-    _armStartupDeadline();
+    _armStartupDeadline(spawnDeadline);
   }
 
   void spawnTransport({
@@ -398,11 +407,14 @@ final class TerminalLaunchController {
     _flushPendingPtyResize();
     _confirmFallbackTimer?.cancel();
     _confirmFallbackTimer = Timer(confirmFallback, _confirmProcessStarted);
+    // Transport exists: swap the long OS-saturation spawn budget for the
+    // short no-output budget.
+    _armStartupDeadline(startupDeadline);
   }
 
-  void _armStartupDeadline() {
+  void _armStartupDeadline(Duration deadline) {
     _startupDeadlineTimer?.cancel();
-    _startupDeadlineTimer = Timer(startupDeadline, _onStartupDeadline);
+    _startupDeadlineTimer = Timer(deadline, _onStartupDeadline);
   }
 
   void _onStartupDeadline() {

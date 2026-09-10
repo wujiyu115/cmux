@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 import '../host/host_executable_locator.dart';
 import '../host/host_execution_environment.dart';
 import '../host/host_login_shell_lookup.dart';
+import '../host/isolate_process_run.dart';
 import '../storage/runtime_context.dart';
 import '../storage/app_storage.dart';
 
@@ -23,7 +24,7 @@ Future<ProcessResult> cliToolDefaultProcessRun(
   Encoding? stdoutEncoding,
   Encoding? stderrEncoding,
 }) {
-  return Process.run(
+  return isolateProcessRun(
     executable,
     arguments,
     stdoutEncoding: stdoutEncoding ?? systemEncoding,

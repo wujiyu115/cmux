@@ -5,6 +5,9 @@ import 'dart:typed_data';
 
 import 'package:flutter_alacritty/links/terminal_link_provider.dart';
 import 'package:flutter_alacritty/links/url_link_provider.dart';
+import 'package:fake_async/fake_async.dart';
+import 'package:teampilot/models/runtime_target.dart';
+import 'package:teampilot/models/workspace_shell_launch_plan.dart';
 import 'package:teampilot/services/terminal/file_path_link_provider.dart';
 import 'package:teampilot/services/terminal/terminal_export.dart';
 import 'package:teampilot/services/terminal/terminal_session.dart';
@@ -195,7 +198,7 @@ void main() {
     var failed = false;
     final session = TerminalSession(
       executable: _ptyTestExecutable,
-      startupDeadline: const Duration(milliseconds: 80),
+      spawnDeadline: const Duration(milliseconds: 80),
       transportStarter:
           (
             executable, {
@@ -784,6 +787,192 @@ void main() {
       capturedEnvironment!.keys,
       contains(anyOf('SystemRoot', 'windir', 'WINDIR')),
     );
+  });
+
+  group('connectWorkspaceShell validation', () {
+    // Regression (new-terminal freeze): connectWorkspaceShell used to run the
+    // sync CliExecutableValidator.validateLaunch, whose PATH lookup spawns
+    // `where.exe` with Process.runSync on the UI thread. Under WSL
+    // process-creation saturation that CreateProcess blocked the main isolate
+    // for 20-60+ s. PATH validation now happens only in the launch
+    // controller's async (isolate-backed) path; a WSL plan must reach the
+    // transport starter without a synchronous lookup.
+    test('wsl plan reaches transport without sync PATH lookup', () async {
+      final handle = _FakeTransport();
+      String? capturedExecutable;
+      final session = TerminalSession(
+        executable: 'wsl.exe',
+        validateLaunch: true,
+        transportStarter:
+            (
+              executable, {
+              required arguments,
+              required workingDirectory,
+              required columns,
+              required rows,
+              environment,
+            }) {
+              capturedExecutable = executable;
+              return Future.value(handle);
+            },
+      );
+      addTearDown(() async {
+        session.dispose();
+        await handle.outputController.close();
+      });
+
+      session.connectWorkspaceShell(
+        plan: WorkspaceShellLaunchPlan(
+          executable: 'wsl.exe',
+          arguments: const ['--exec', '/bin/zsh'],
+          workingDirectory: '/home/user',
+          useWslPaths: true,
+          inheritHostEnvironment: true,
+          runtimeTarget: RuntimeTarget.wsl('Ubuntu'),
+          usesRemoteTransport: false,
+        ),
+      );
+      session.onViewportResize(80, 24);
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+
+      expect(capturedExecutable, 'wsl.exe');
+      expect(session.isRunning, isTrue);
+    });
+
+    test('missing local absolute path fails fast without transport', () async {
+      var transportStarted = false;
+      final missing = Platform.isWindows
+          ? r'C:\definitely\not\here\missing-cli.exe'
+          : '/definitely/not/here/missing-cli';
+      final session = TerminalSession(
+        executable: missing,
+        validateLaunch: true,
+        transportStarter:
+            (
+              executable, {
+              required arguments,
+              required workingDirectory,
+              required columns,
+              required rows,
+              environment,
+            }) {
+              transportStarted = true;
+              return Future.value(_FakeTransport());
+            },
+      );
+      addTearDown(session.dispose);
+
+      session.connectWorkspaceShell(
+        plan: WorkspaceShellLaunchPlan(
+          executable: missing,
+          arguments: const [],
+          workingDirectory: Directory.systemTemp.path,
+          useWslPaths: false,
+          inheritHostEnvironment: true,
+          runtimeTarget: RuntimeTarget.local(),
+          usesRemoteTransport: false,
+        ),
+      );
+      session.onViewportResize(80, 24);
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+
+      expect(transportStarted, isFalse);
+    });
+  });
+
+  group('spawn deadline', () {
+    // Regression (WSL new-terminal spawn timeout): a single 15 s
+    // startupDeadline used to cover the PTY spawn itself. WSL
+    // process-creation saturation stalls `CreateProcessW` inside pty_create
+    // for 20-70 s while the app stays responsive and the spawn still
+    // succeeds, so the deadline killed launches that would have worked
+    // ("Failed to start CLI: spawn timed out"). The spawn phase now gets
+    // its own, much longer budget; startupDeadline only takes over once the
+    // transport exists.
+    WorkspaceShellLaunchPlan wslPlan() => WorkspaceShellLaunchPlan(
+      executable: 'wsl.exe',
+      arguments: const ['--exec', '/bin/zsh'],
+      workingDirectory: '/home/user',
+      useWslPaths: true,
+      inheritHostEnvironment: true,
+      runtimeTarget: RuntimeTarget.wsl('Ubuntu'),
+      usesRemoteTransport: false,
+    );
+
+    TerminalSession spawnSession(
+      Future<TerminalTransport> Function() spawn, {
+      Duration spawnDeadline = const Duration(minutes: 3),
+    }) => TerminalSession(
+      executable: 'wsl.exe',
+      validateLaunch: false,
+      startupDeadline: const Duration(seconds: 15),
+      spawnDeadline: spawnDeadline,
+      transportStarter:
+          (
+            executable, {
+            required arguments,
+            required workingDirectory,
+            required columns,
+            required rows,
+            environment,
+          }) => spawn(),
+    );
+
+    test('slow spawn outlives startupDeadline and still starts', () {
+      fakeAsync((async) {
+        final handle = _FakeTransport();
+        final spawn = Completer<TerminalTransport>();
+        final session = spawnSession(() => spawn.future);
+        String? failureMessage;
+        session.connectWorkspaceShell(
+          plan: wslPlan(),
+          onProcessFailed: (message) => failureMessage = message,
+        );
+        session.onViewportResize(80, 24);
+
+        // Past the old single 15 s deadline, before the spawn completes.
+        async.elapse(const Duration(seconds: 30));
+        expect(failureMessage, isNull, reason: 'spawn budget must exceed 15 s');
+        expect(session.isConnecting, isTrue);
+
+        spawn.complete(handle);
+        async.elapse(const Duration(milliseconds: 200));
+        expect(session.isRunning, isTrue);
+        expect(failureMessage, isNull);
+
+        session.dispose();
+      });
+    });
+
+    test('spawn exceeding spawnDeadline fails and discards late transport', () {
+      fakeAsync((async) {
+        final handle = _FakeTransport();
+        final spawn = Completer<TerminalTransport>();
+        final session = spawnSession(
+          () => spawn.future,
+          spawnDeadline: const Duration(seconds: 5),
+        );
+        String? failureMessage;
+        session.connectWorkspaceShell(
+          plan: wslPlan(),
+          onProcessFailed: (message) => failureMessage = message,
+        );
+        session.onViewportResize(80, 24);
+
+        async.elapse(const Duration(seconds: 6));
+        expect(failureMessage, contains('spawn timed out'));
+        expect(session.isRunning, isFalse);
+
+        // The spawn completing after the deadline must not resurrect the
+        // failed session: the late transport is closed on arrival.
+        spawn.complete(handle);
+        async.elapse(const Duration(milliseconds: 200));
+        expect(handle.closed, isTrue);
+        expect(session.isRunning, isFalse);
+
+        session.dispose();
+      });
+    });
   });
 
   group('linkProviders', () {

@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 import 'package:path/path.dart' as p;
 
 import '../host/host_wsl_argv.dart';
+import '../host/isolate_process_run.dart';
 import '../storage/remote_file_store.dart';
 import 'filesystem.dart';
 
@@ -35,7 +37,7 @@ class WslFilesystem implements Filesystem, FsBatchOps, FsSymlinkLister {
     Encoding? stdoutEncoding,
     Encoding? stderrEncoding,
   }) {
-    return Process.run(
+    return isolateProcessRun(
       executable,
       arguments,
       stdoutEncoding: stdoutEncoding,
@@ -277,10 +279,6 @@ class WslFilesystem implements Filesystem, FsBatchOps, FsSymlinkLister {
     return {for (var i = 0; i < paths.length; i++) paths[i]: flags[i] == 'y'};
   }
 
-  Future<String> _collectStreamText(Stream<List<int>> stream) {
-    return stream.transform(const Utf8Decoder()).join();
-  }
-
   Future<void> _pipeBase64ToFile(
     String path,
     String encoded, {
@@ -289,23 +287,29 @@ class WslFilesystem implements Filesystem, FsBatchOps, FsSymlinkLister {
     await ensureDir(pathContext.dirname(path));
     final quotedPath = RemoteFileStore.shellSingleQuote(path);
     final op = append ? '>>' : '>';
-    final process = await Process.start(
-      'wsl.exe',
-      _args(['sh', '-lc', 'base64 -d $op $quotedPath']),
-    );
-    final stderrFuture = _collectStreamText(process.stderr);
-    unawaited(process.stdout.drain());
+    final wslArgs = _args(['sh', '-lc', 'base64 -d $op $quotedPath']);
     final payload = utf8.encode(encoded);
-    const chunkSize = 64 * 1024;
-    for (var offset = 0; offset < payload.length; offset += chunkSize) {
-      final end = offset + chunkSize < payload.length
-          ? offset + chunkSize
-          : payload.length;
-      process.stdin.add(payload.sublist(offset, end));
-    }
-    await process.stdin.close();
-    final exitCode = await process.exitCode;
-    final stderr = await stderrFuture;
+    // Runs on a helper isolate: wsl.exe's CreateProcess can queue for tens of
+    // seconds when WSL process creation saturates, which would freeze the UI
+    // isolate if spawned here.
+    final (exitCode, stderr) = await Isolate.run(() async {
+      final process = await Process.start('wsl.exe', wslArgs);
+      final stderrFuture = process.stderr
+          .transform(const Utf8Decoder())
+          .join();
+      unawaited(process.stdout.drain());
+      const chunkSize = 64 * 1024;
+      for (var offset = 0; offset < payload.length; offset += chunkSize) {
+        final end = offset + chunkSize < payload.length
+            ? offset + chunkSize
+            : payload.length;
+        process.stdin.add(payload.sublist(offset, end));
+      }
+      await process.stdin.close();
+      final code = await process.exitCode;
+      final err = await stderrFuture;
+      return (code, err);
+    });
     if (exitCode != 0) {
       throw StateError('wsl write failed ($exitCode): $stderr');
     }
