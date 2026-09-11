@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:path/path.dart' as p;
 import 'package:re_editor/re_editor.dart';
 import 'package:shared_ui/shared_ui.dart';
@@ -15,19 +14,17 @@ import '../../services/commands/command_bus.dart';
 import '../../services/commands/editor_goto_line_command_registrar.dart';
 import '../../services/editor/file_editor_theme.dart';
 import '../../services/editor/file_editor_toolbar.dart';
-import '../../services/editor/markdown_preview_link_handler.dart';
 import '../../services/editor/markdown_view_mode_store.dart';
 import '../../services/editor_platform/document_session.dart';
 import '../../services/editor_platform/editor_viewport_token_binder.dart';
 import '../../services/workbench/workbench_editor_opener.dart';
-import '../../services/workspace/workspace_tools_scope.dart';
-import '../../theme/app_markdown_style_sheet.dart';
 import '../../theme/workspace_surface_layers.dart';
 import '../../widgets/workbench/code_find_panel.dart';
 import '../../widgets/workbench/file_diff_surface_toggle.dart';
 import '../../widgets/workbench/markdown_view_mode_toggle.dart';
 import 'file_editor_image_preview.dart';
 import 'editor_goto_line_dialog.dart';
+import 'markdown_preview_pane.dart';
 
 /// Center-pane file editor for one path (no inner tab bar).
 class FileEditorSurface extends StatelessWidget {
@@ -223,7 +220,7 @@ class _FileEditorBody extends StatelessWidget {
       builder: (context, _) {
         final mode = opener.markdownViewModes.modeFor(path);
         if (mode == MarkdownViewMode.preview) {
-          return _MarkdownPreviewPane(
+          return MarkdownPreviewPane(
             workspaceId: workspaceId,
             path: path,
             controller: controller,
@@ -266,6 +263,57 @@ class _CodeEditorPaneState extends State<_CodeEditorPane> {
   late final CodeFindController _findController =
       CodeFindController(widget.controller);
 
+  /// Captured in [initState] so scroll listeners keep a valid reference after
+  /// the element starts deactivating.
+  late final EditorCubit _editor;
+
+  /// External scroll anchors: the pane is unmounted when its tab is
+  /// de-selected, so re-editor's internal controller would drop the viewport
+  /// offset. We own the controllers, seed them with the last persisted offset,
+  /// and write every pixel change back into [EditorCubit].
+  late final ScrollController _verticalScroller;
+  late final ScrollController _horizontalScroller;
+  late final CodeScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _editor = context.read<EditorCubit>();
+    final anchors = _editor.codeScrollOffsetFor(
+      widget.workspaceId,
+      widget.path,
+    );
+    _verticalScroller = ScrollController(
+      initialScrollOffset: anchors.vertical,
+    );
+    _horizontalScroller = ScrollController(
+      initialScrollOffset: anchors.horizontal,
+    );
+    _verticalScroller.addListener(_persistScroll);
+    _horizontalScroller.addListener(_persistScroll);
+    _scrollController = CodeScrollController(
+      verticalScroller: _verticalScroller,
+      horizontalScroller: _horizontalScroller,
+    );
+  }
+
+  void _persistScroll() {
+    if (_verticalScroller.hasClients) {
+      _editor.setCodeScrollOffset(
+        widget.workspaceId,
+        widget.path,
+        vertical: _verticalScroller.position.pixels,
+      );
+    }
+    if (_horizontalScroller.hasClients) {
+      _editor.setCodeScrollOffset(
+        widget.workspaceId,
+        widget.path,
+        horizontal: _horizontalScroller.position.pixels,
+      );
+    }
+  }
+
   /// Go-to-line (Mod+G) claim, held while this pane's subtree has focus so the
   /// shortcut always targets the focused editor — kept-alive workspace tabs
   /// can leave several panes mounted offstage.
@@ -305,6 +353,13 @@ class _CodeEditorPaneState extends State<_CodeEditorPane> {
   @override
   void dispose() {
     _gotoLineDisposer?.call();
+    _verticalScroller.removeListener(_persistScroll);
+    _horizontalScroller.removeListener(_persistScroll);
+    // CodeScrollController.dispose only unbinds the editor key; the injected
+    // ScrollControllers are ours to release.
+    _scrollController.dispose();
+    _verticalScroller.dispose();
+    _horizontalScroller.dispose();
     _findController.dispose();
     _menuOpen.dispose();
     super.dispose();
@@ -320,6 +375,7 @@ class _CodeEditorPaneState extends State<_CodeEditorPane> {
       controller: widget.controller,
       readOnly: widget.readOnly,
       findController: _findController,
+      scrollController: _scrollController,
       findBuilder: (context, controller, readOnly) =>
           CodeFindPanel(controller: controller, readOnly: readOnly),
       toolbarController: FileEditorContextMenuController(
@@ -351,85 +407,6 @@ class _CodeEditorPaneState extends State<_CodeEditorPane> {
       skipTraversal: true,
       onFocusChange: _setGotoLineClaim,
       child: codeEditor,
-    );
-  }
-}
-
-class _MarkdownPreviewPane extends StatefulWidget {
-  const _MarkdownPreviewPane({
-    required this.workspaceId,
-    required this.path,
-    required this.controller,
-  });
-
-  final String workspaceId;
-  final String path;
-  final CodeLineEditingController controller;
-
-  @override
-  State<_MarkdownPreviewPane> createState() => _MarkdownPreviewPaneState();
-}
-
-class _MarkdownPreviewPaneState extends State<_MarkdownPreviewPane> {
-  late String _data = widget.controller.text;
-
-  @override
-  void initState() {
-    super.initState();
-    widget.controller.addListener(_onControllerChanged);
-  }
-
-  @override
-  void didUpdateWidget(_MarkdownPreviewPane oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.controller != widget.controller) {
-      oldWidget.controller.removeListener(_onControllerChanged);
-      _data = widget.controller.text;
-      widget.controller.addListener(_onControllerChanged);
-    }
-  }
-
-  @override
-  void dispose() {
-    widget.controller.removeListener(_onControllerChanged);
-    super.dispose();
-  }
-
-  void _onControllerChanged() {
-    final next = widget.controller.text;
-    // Ignore selection-only controller notifies — rebuilding MarkdownBody /
-    // SelectionArea mid-drag jumps the scroll back toward the document head.
-    if (next == _data) return;
-    setState(() => _data = next);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final opener = context.read<WorkbenchEditorOpener>();
-    final roots = WorkspaceToolsScope.maybeOf(context)?.roots ?? const [];
-    // SelectionArea must sit *inside* the scroll content. As an ancestor it
-    // enables edge auto-scroll while selecting, which yanks long previews to
-    // the top (flutter/flutter#110917).
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-      child: SelectionArea(
-        child: MarkdownBody(
-          data: _data,
-          styleSheet: buildAppMarkdownStyleSheet(Theme.of(context)),
-          selectable: false,
-          onTapLink: (text, href, title) {
-            unawaited(
-              handleMarkdownPreviewLink(
-                href: href,
-                markdownFilePath: widget.path,
-                workspaceId: widget.workspaceId,
-                workspaceRoots: roots,
-                opener: opener,
-              ),
-            );
-          },
-        ),
-      ),
     );
   }
 }

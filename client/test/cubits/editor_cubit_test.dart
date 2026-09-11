@@ -380,6 +380,76 @@ void main() {
     expect(fs.statAndReadCalls, 2);
     expect(fs.readCalls, 0);
   });
+
+  test('code scroll anchors round-trip per file and sanitize bad values',
+      () async {
+    final fs = InMemoryFilesystem();
+    fs.files['/repo/a.txt'] = 'a';
+    fs.files['/repo/b.txt'] = 'b';
+    final cubit = EditorCubit(fs: fs);
+    addTearDown(cubit.close);
+
+    await cubit.openFile(ws, '/repo/a.txt');
+    await cubit.openFile(ws, '/repo/b.txt');
+
+    expect(cubit.codeScrollOffsetFor(ws, '/repo/a.txt'),
+        (vertical: 0.0, horizontal: 0.0));
+
+    cubit.setCodeScrollOffset(ws, '/repo/a.txt', vertical: 600);
+    expect(cubit.codeScrollOffsetFor(ws, '/repo/a.txt'),
+        (vertical: 600.0, horizontal: 0.0));
+
+    cubit.setCodeScrollOffset(ws, '/repo/a.txt', horizontal: 80);
+    expect(cubit.codeScrollOffsetFor(ws, '/repo/a.txt'),
+        (vertical: 600.0, horizontal: 80.0));
+
+    // Independent per file.
+    expect(cubit.codeScrollOffsetFor(ws, '/repo/b.txt'),
+        (vertical: 0.0, horizontal: 0.0));
+
+    // Non-finite / negative values fall back to zero.
+    cubit.setCodeScrollOffset(ws, '/repo/a.txt', vertical: -12);
+    expect(cubit.codeScrollOffsetFor(ws, '/repo/a.txt').vertical, 0.0);
+    cubit.setCodeScrollOffset(ws, '/repo/a.txt', vertical: double.nan);
+    expect(cubit.codeScrollOffsetFor(ws, '/repo/a.txt').vertical, 0.0);
+    cubit.setCodeScrollOffset(ws, '/repo/a.txt', horizontal: double.infinity);
+    expect(cubit.codeScrollOffsetFor(ws, '/repo/a.txt').horizontal, 0.0);
+  });
+
+  test('scroll anchors do not emit and reset when the file closes',
+      () async {
+    final fs = InMemoryFilesystem();
+    fs.files['/repo/a.txt'] = 'a';
+    final cubit = EditorCubit(fs: fs);
+    addTearDown(cubit.close);
+
+    await cubit.openFile(ws, '/repo/a.txt');
+    cubit.setMarkdownPreviewScrollOffset(ws, '/repo/a.txt', 300);
+
+    final stateBefore = cubit.state;
+    cubit.setCodeScrollOffset(ws, '/repo/a.txt', vertical: 600);
+    cubit.setCodeScrollOffset(ws, '/repo/a.txt', horizontal: 80);
+    cubit.setMarkdownPreviewScrollOffset(ws, '/repo/a.txt', 300);
+    expect(identical(cubit.state, stateBefore), isTrue);
+
+    // Markdown preview anchors live apart from code anchors.
+    expect(cubit.markdownPreviewScrollOffsetFor(ws, '/repo/a.txt'), 300.0);
+    expect(cubit.codeScrollOffsetFor(ws, '/repo/a.txt').vertical, 600.0);
+
+    cubit.closeFile(ws, '/repo/a.txt', force: true);
+    expect(cubit.codeScrollOffsetFor(ws, '/repo/a.txt'),
+        (vertical: 0.0, horizontal: 0.0));
+    expect(cubit.markdownPreviewScrollOffsetFor(ws, '/repo/a.txt'), 0.0);
+
+    // Setting on a closed file is a no-op, not a crash.
+    cubit.setCodeScrollOffset(ws, '/repo/a.txt', vertical: 99);
+    expect(cubit.codeScrollOffsetFor(ws, '/repo/a.txt').vertical, 0.0);
+
+    // Reopening starts from the top again.
+    await cubit.openFile(ws, '/repo/a.txt');
+    expect(cubit.codeScrollOffsetFor(ws, '/repo/a.txt'),
+        (vertical: 0.0, horizontal: 0.0));
+  });
 }
 
 class _GatedFilesystem extends InMemoryFilesystem {

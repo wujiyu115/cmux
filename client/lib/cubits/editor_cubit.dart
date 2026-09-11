@@ -165,6 +165,13 @@ class _OpenFileHandle {
   /// Stable per-file identity for the [CodeEditor] element.
   final GlobalKey editorKey = GlobalKey(debugLabel: 'file-editor');
 
+  /// Retained scroll anchors so the pane restores its viewport when the file
+  /// tab is re-selected. Dies with the handle; deliberately outside [state] —
+  /// scroll ticks must not republish editor state.
+  double codeScrollVertical = 0;
+  double codeScrollHorizontal = 0;
+  double markdownPreviewScrollVertical = 0;
+
   void attachListener() {
     _listener ??= () {
       final newText = controller.text;
@@ -301,6 +308,54 @@ class EditorCubit extends Cubit<EditorState> {
   /// request tokens for newly visible lines. Null for plain text / not open.
   DocumentSession? documentSessionFor(String workspaceId, String path) =>
       _handles[_handleKey(workspaceId, path)]?.session;
+
+  /// Last persisted code-editor viewport offset for an open file, restored
+  /// when its tab is re-mounted.
+  ({double vertical, double horizontal}) codeScrollOffsetFor(
+    String workspaceId,
+    String path,
+  ) {
+    final handle = _handles[_handleKey(workspaceId, path)];
+    return (
+      vertical: handle?.codeScrollVertical ?? 0,
+      horizontal: handle?.codeScrollHorizontal ?? 0,
+    );
+  }
+
+  /// Persists the code-editor viewport offset. Does not emit: called on every
+  /// scroll tick.
+  void setCodeScrollOffset(
+    String workspaceId,
+    String path, {
+    double? vertical,
+    double? horizontal,
+  }) {
+    final handle = _handles[_handleKey(workspaceId, path)];
+    if (handle == null) return;
+    if (vertical != null) handle.codeScrollVertical = _sanitizeOffset(vertical);
+    if (horizontal != null) {
+      handle.codeScrollHorizontal = _sanitizeOffset(horizontal);
+    }
+  }
+
+  /// Last persisted markdown-preview scroll offset for an open file.
+  double markdownPreviewScrollOffsetFor(String workspaceId, String path) =>
+      _handles[_handleKey(workspaceId, path)]?.markdownPreviewScrollVertical ??
+      0;
+
+  /// Persists the markdown-preview scroll offset. Does not emit: called on
+  /// every scroll tick.
+  void setMarkdownPreviewScrollOffset(
+    String workspaceId,
+    String path,
+    double offset,
+  ) {
+    final handle = _handles[_handleKey(workspaceId, path)];
+    if (handle == null) return;
+    handle.markdownPreviewScrollVertical = _sanitizeOffset(offset);
+  }
+
+  double _sanitizeOffset(double value) => value.isFinite && value > 0 ? value : 0;
 
   bool isReadOnly(String workspaceId, String path) =>
       state.bucket(workspaceId).readOnlyPaths.contains(path);
