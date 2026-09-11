@@ -174,7 +174,7 @@ abstract final class TerminalUriOpener {
   }
 
   static bool _shouldOpenInEditor(String path) =>
-      isEditorOpenableFilePath(path);
+      isWorkbenchOpenableFilePath(path);
 
   static Future<bool> _openFilePath(String path) async {
     if (path.isEmpty) return false;

@@ -131,6 +131,24 @@ const kEditorImageExtensions = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'};
 /// Max image bytes loaded for in-app preview (separate from text editor cap).
 const kEditorMaxImageBytes = 25 * 1024 * 1024;
 
+/// Extensions we refuse to open in the editor without sniffing content.
+///
+/// Everything outside [kEditorTextExtensions] / [kEditorImageExtensions] /
+/// this set is treated as *maybe text* and content-sniffed on open
+/// ([bytesSeemBinary]), so custom text formats (`.sproto`, `.td`, …) open
+/// fine while real binaries still fall through to the system default app.
+const kEditorBinaryExtensions = {
+  'exe', 'dll', 'so', 'dylib', 'o', 'a', 'lib', 'bin', 'obj', 'class',
+  'jar', 'war', 'apk', 'dmg', 'msi', 'deb', 'rpm', 'wasm',
+  'zip', 'tar', 'gz', 'tgz', 'bz2', 'xz', '7z', 'rar', 'zst', 'iso',
+  'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'odt', 'ods', 'odp',
+  'mp3', 'wav', 'flac', 'ogg', 'm4a', 'aac', 'wma',
+  'mp4', 'mkv', 'avi', 'mov', 'webm', 'wmv', 'flv',
+  'psd', 'ai', 'ico', 'tiff',
+  'ttf', 'otf', 'woff', 'woff2', 'eot',
+  'sqlite', 'db', 'pyc', 'pyo',
+};
+
 /// Whether [filePath] should open in the in-app text editor.
 ///
 /// Compound suffixes fall back to inner segments: `config.yaml.template` is a
@@ -153,8 +171,38 @@ bool isImagePreviewPath(String filePath) {
   return ext.isNotEmpty && kEditorImageExtensions.contains(ext);
 }
 
+bool isKnownBinaryFilePath(String filePath) {
+  final ext = p.extension(filePath).replaceFirst('.', '').toLowerCase();
+  return ext.isNotEmpty && kEditorBinaryExtensions.contains(ext);
+}
+
+/// Leading bytes inspected by [bytesSeemBinary] (VSCode sniffs the same 512).
+const kEditorBinarySniffBytes = 512;
+
+/// Whether content looks binary: any NUL byte in the leading bytes.
+///
+/// UTF-8 / ASCII text never contains NUL. UTF-16 text does, but the editor
+/// cannot decode UTF-16 anyway, so routing it to the system default app is
+/// the correct outcome here.
+bool bytesSeemBinary(List<int> bytes) {
+  final limit = bytes.length < kEditorBinarySniffBytes
+      ? bytes.length
+      : kEditorBinarySniffBytes;
+  for (var i = 0; i < limit; i++) {
+    if (bytes[i] == 0) return true;
+  }
+  return false;
+}
+
+/// Whether [filePath] may open in the workbench center pane.
+///
+/// Known-text and image extensions open directly; unknown extensions are
+/// optimistic (content sniffing in [EditorCubit.openFile] decides), so only
+/// [kEditorBinaryExtensions] falls through to the system default app.
 bool isWorkbenchOpenableFilePath(String filePath) =>
-    isEditorOpenableFilePath(filePath) || isImagePreviewPath(filePath);
+    isEditorOpenableFilePath(filePath) ||
+    isImagePreviewPath(filePath) ||
+    !isKnownBinaryFilePath(filePath);
 
 /// Editor monospace size from [AppTypographyTheme.mono].
 double fileEditorFontSize(BuildContext context) => context.appTypography.mono;

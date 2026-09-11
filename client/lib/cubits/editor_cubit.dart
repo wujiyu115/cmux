@@ -339,7 +339,10 @@ class EditorCubit extends Cubit<EditorState> {
     }
 
     final isImage = isImagePreviewPath(normalized);
-    if (!isImage && !isEditorOpenableFilePath(normalized)) {
+    // Unknown extensions stay optimistic here and get content-sniffed after
+    // the read below; only known-binary extensions are rejected up front.
+    final needsSniff = !isImage && !isEditorOpenableFilePath(normalized);
+    if (needsSniff && isKnownBinaryFilePath(normalized)) {
       emit(state.copyWith(snackbarMessage: EditorMessage.binaryFile));
       return;
     }
@@ -448,6 +451,24 @@ class EditorCubit extends Cubit<EditorState> {
       if (size > kEditorMaxFileBytes) {
         emit(_clearLoading(workspaceId, normalized, error: EditorMessage.fileTooLarge));
         return;
+      }
+
+      if (needsSniff) {
+        final raw = batchedBytes ?? await filesystem.readBytes(normalized);
+        if (!_stillLoading(workspaceId, normalized)) return;
+        if (raw == null) {
+          emit(
+            _clearLoading(workspaceId, normalized, error: EditorMessage.couldNotRead),
+          );
+          return;
+        }
+        if (bytesSeemBinary(raw)) {
+          emit(
+            _clearLoading(workspaceId, normalized, error: EditorMessage.binaryFile),
+          );
+          return;
+        }
+        batchedBytes = raw;
       }
 
       final content =

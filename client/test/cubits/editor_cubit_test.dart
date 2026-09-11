@@ -312,6 +312,74 @@ void main() {
     expect(fs.statCalls, 0);
     expect(fs.readCalls, 0);
   });
+
+  test('openFile opens unknown extensions whose content is text', () async {
+    final fs = InMemoryFilesystem();
+    fs.files['/repo/hall.sproto'] = '.person { name 1 }';
+    fs.files['/repo/schema.td'] = 'abyss_war {}';
+    final cubit = EditorCubit(fs: fs);
+    addTearDown(cubit.close);
+
+    await cubit.openFile(ws, '/repo/hall.sproto');
+    await cubit.openFile(ws, '/repo/schema.td');
+
+    expect(
+      cubit.state.bucket(ws).openFilePaths,
+      ['/repo/hall.sproto', '/repo/schema.td'],
+    );
+    expect(cubit.controllerFor(ws, '/repo/hall.sproto')?.text,
+        '.person { name 1 }');
+    expect(cubit.controllerFor(ws, '/repo/schema.td')?.text, 'abyss_war {}');
+  });
+
+  test('openFile rejects unknown extensions whose content is binary',
+      () async {
+    final fs = InMemoryFilesystem();
+    fs.byteFiles['/repo/blob.xyz'] = [0x89, 0x50, 0x4E, 0x00, 0x0D];
+    final cubit = EditorCubit(fs: fs);
+    addTearDown(cubit.close);
+
+    await cubit.openFile(ws, '/repo/blob.xyz');
+
+    expect(cubit.state.bucket(ws).openFilePaths, isEmpty);
+    expect(cubit.controllerFor(ws, '/repo/blob.xyz'), isNull);
+    expect(cubit.state.bucket(ws).errorByPath['/repo/blob.xyz'],
+        EditorMessage.binaryFile);
+    expect(cubit.state.snackbarMessage, EditorMessage.binaryFile);
+  });
+
+  test('openFile rejects known binary extensions without reading', () async {
+    final fs = _BatchCountingFilesystem();
+    fs.byteFiles['/repo/app.zip'] = [0x50, 0x4B, 0x03, 0x04];
+    final cubit = EditorCubit(fs: fs);
+    addTearDown(cubit.close);
+
+    await cubit.openFile(ws, '/repo/app.zip');
+
+    expect(cubit.state.bucket(ws).openFilePaths, isEmpty);
+    expect(cubit.state.bucket(ws).errorByPath['/repo/app.zip'], isNull);
+    expect(cubit.state.snackbarMessage, EditorMessage.binaryFile);
+    expect(fs.statAndReadCalls, 0);
+    expect(fs.statCalls, 0);
+  });
+
+  test('openFile sniffs unknown extensions from the batched read', () async {
+    final fs = _BatchCountingFilesystem();
+    fs.files['/repo/notes.custom'] = 'sniffed text';
+    fs.byteFiles['/repo/data.custom'] = [0x00, 0x01, 0x02];
+    final cubit = EditorCubit(fs: fs);
+    addTearDown(cubit.close);
+
+    await cubit.openFile(ws, '/repo/notes.custom');
+    await cubit.openFile(ws, '/repo/data.custom');
+
+    expect(cubit.state.bucket(ws).openFilePaths, ['/repo/notes.custom']);
+    expect(cubit.controllerFor(ws, '/repo/notes.custom')?.text, 'sniffed text');
+    expect(cubit.state.bucket(ws).errorByPath['/repo/data.custom'],
+        EditorMessage.binaryFile);
+    expect(fs.statAndReadCalls, 2);
+    expect(fs.readCalls, 0);
+  });
 }
 
 class _GatedFilesystem extends InMemoryFilesystem {
@@ -356,8 +424,9 @@ class _BatchCountingFilesystem extends InMemoryFilesystem
     final stat = await super.stat(path);
     if (!stat.exists) return null;
     final text = files[path];
-    if (text == null) return FsStatAndBytes(stat: stat);
-    return FsStatAndBytes(stat: stat, bytes: utf8.encode(text));
+    final bytes = byteFiles[path];
+    if (text == null && bytes == null) return FsStatAndBytes(stat: stat);
+    return FsStatAndBytes(stat: stat, bytes: bytes ?? utf8.encode(text!));
   }
 
   @override

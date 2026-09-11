@@ -41,7 +41,7 @@ Future<void> handleMarkdownPreviewLink({
     }
   }
 
-  if (!isEditorOpenableFilePath(candidate)) return;
+  if (isKnownBinaryFilePath(candidate)) return;
   final normalized = ctx.normalize(candidate);
   final underWorkspace = workspaceRoots.any((root) {
     if (root.isEmpty) return false;
