@@ -33,6 +33,12 @@ class WorkspaceChromeCommands {
   /// still surfaces on the desktop. `null` while no `HomeShell` is mounted.
   void Function(String workspaceId, {bool activate})? openWorkspaceTab;
 
+  /// Closes the workspace tab for [workspaceId] without recording it as
+  /// recently closed. Used by remote pairing deletion so a workspace a phone
+  /// deleted never reappears in the reopen list. `null` while no `HomeShell`
+  /// is mounted.
+  void Function(String workspaceId)? closeWorkspaceTab;
+
   /// Number of open workspace title-bar tabs; `0` while no `HomeShell` is
   /// mounted.
   int openTabCount = 0;
@@ -45,6 +51,7 @@ class WorkspaceChromeCommands {
     closeActiveWorkspaceTab = null;
     reopenClosedWorkspaceTab = null;
     openWorkspaceTab = null;
+    closeWorkspaceTab = null;
     openTabCount = 0;
   }
 }

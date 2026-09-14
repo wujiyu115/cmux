@@ -183,6 +183,30 @@ class _FakePairingClient extends PairingClient {
     return 'g-new';
   }
 
+  final List<String> deletedWorkspaces = [];
+
+  /// When set, `workspace.delete` throws this instead of succeeding — how a
+  /// host that predates the method answers.
+  String? deleteWorkspaceError;
+
+  @override
+  Future<void> deleteWorkspace(String workspaceId) async {
+    final failure = deleteWorkspaceError;
+    if (failure != null) throw Exception(failure);
+    deletedWorkspaces.add(workspaceId);
+  }
+
+  final List<String> closedTerminals = [];
+
+  String? closeTerminalError;
+
+  @override
+  Future<void> closeTerminal(String paneId) async {
+    final failure = closeTerminalError;
+    if (failure != null) throw Exception(failure);
+    closedTerminals.add(paneId);
+  }
+
   @override
   Future<PairingActivateResult> activateSession({
     required String workspaceId,
@@ -430,6 +454,85 @@ void main() {
       );
 
       expect(cubit.state.activeHostName, 'Studio');
+    });
+
+    test('retry after a failed reconnect redials the same desktop', () async {
+      final desktop = const PairedDesktop(
+        id: 'd1',
+        name: 'Studio',
+        wsUrls: ['ws://x'],
+        hostPublicKeyB64: 'pk',
+        deviceToken: 't',
+      );
+      final cubit = PairingClientCubit(
+        settings: InMemoryPairingSettingsRepository(),
+        clientFactory: () => _FakePairingClient(connectError: Exception('x')),
+      );
+      addTearDown(cubit.close);
+
+      await cubit.connectToDesktop(desktop);
+      expect(cubit.state.phase, PairingClientPhase.error);
+
+      // The retry button's call: no offer survives a reconnect-path failure,
+      // so this must fall back to redialing rather than returning silently.
+      final dials = expectLater(
+        cubit.stream.map((s) => s.phase),
+        emitsThrough(PairingClientPhase.confirmConnecting),
+      );
+      await cubit.confirmPairing();
+      await dials;
+
+      expect(cubit.state.phase, PairingClientPhase.error);
+      expect(cubit.state.activeHostName, 'Studio');
+      expect(cubit.state.logs.where((l) => l.contains('Error')), isNotEmpty);
+    });
+
+    test('retry after a failed reconnect connects when the host answers',
+        () async {
+      const desktop = PairedDesktop(
+        id: 'd1',
+        name: 'Studio',
+        wsUrls: ['ws://x'],
+        hostPublicKeyB64: 'pk',
+        deviceToken: 't',
+      );
+      // First dial fails, every later one succeeds — the "host came back"
+      // shape the retry button exists for.
+      var dial = 0;
+      final cubit = PairingClientCubit(
+        settings: InMemoryPairingSettingsRepository(),
+        clientFactory: () => dial++ == 0
+            ? _FakePairingClient(connectError: Exception('down'))
+            : _FakePairingClient(),
+      );
+      addTearDown(cubit.close);
+
+      await cubit.connectToDesktop(desktop);
+      expect(cubit.state.phase, PairingClientPhase.error);
+
+      await cubit.confirmPairing();
+
+      expect(cubit.state.phase, PairingClientPhase.connected);
+    });
+
+    test('retry with no offer and no attempted desktop is a no-op', () async {
+      final cubit = PairingClientCubit(
+        settings: InMemoryPairingSettingsRepository(),
+      );
+      addTearDown(cubit.close);
+
+      // Error with no offer and no _lastDesktop: nothing to redial, and the
+      // call must not emit or throw.
+      cubit.emit(
+        const PairingClientState(
+          phase: PairingClientPhase.error,
+          error: 'boom',
+        ),
+      );
+      final before = cubit.state;
+      await cubit.confirmPairing();
+
+      expect(identical(cubit.state, before), isTrue);
     });
 
     test('restoreDesktop puts back a removed desktop once', () async {
@@ -802,6 +905,77 @@ void main() {
       final result = await cubit.createGroup('Frontend');
       expect(result.ok, isFalse);
       expect(result.error, isNotEmpty);
+    });
+
+    test('deleteWorkspace forwards the id and refreshes the tree', () async {
+      final fake = _FakePairingClient();
+      final cubit = PairingClientCubit(
+        settings: InMemoryPairingSettingsRepository(),
+        clientFactory: () => fake,
+      );
+      addTearDown(cubit.close);
+      cubit.beginPairing(_makeOffer());
+      await cubit.confirmPairing();
+      expect(fake.listWorkspacesCalls, 1);
+
+      final result = await cubit.deleteWorkspace('wsA');
+      expect(result.ok, isTrue);
+      expect(fake.deletedWorkspaces, ['wsA']);
+      expect(fake.listWorkspacesCalls, 2);
+    });
+
+    test('closeTerminal forwards the pane id and refreshes the tree', () async {
+      final fake = _FakePairingClient();
+      final cubit = PairingClientCubit(
+        settings: InMemoryPairingSettingsRepository(),
+        clientFactory: () => fake,
+      );
+      addTearDown(cubit.close);
+      cubit.beginPairing(_makeOffer());
+      await cubit.confirmPairing();
+      expect(fake.listWorkspacesCalls, 1);
+
+      final result = await cubit.closeTerminal('p1');
+      expect(result.ok, isTrue);
+      expect(fake.closedTerminals, ['p1']);
+      expect(fake.listWorkspacesCalls, 2);
+    });
+
+    test('a refused delete carries the host reason, not a bare failure',
+        () async {
+      final fake = _FakePairingClient()
+        ..deleteWorkspaceError = 'unknown method: workspace.delete'
+        ..closeTerminalError = 'unknown method: terminal.close';
+      final cubit = PairingClientCubit(
+        settings: InMemoryPairingSettingsRepository(),
+        clientFactory: () => fake,
+      );
+      addTearDown(cubit.close);
+      cubit.beginPairing(_makeOffer());
+      await cubit.confirmPairing();
+
+      final result = await cubit.deleteWorkspace('wsA');
+      expect(result.ok, isFalse);
+      expect(result.error, contains('unknown method'));
+
+      final closeResult = await cubit.closeTerminal('p1');
+      expect(closeResult.ok, isFalse);
+      expect(closeResult.error, contains('unknown method'));
+    });
+
+    test('deleting while disconnected fails without throwing', () async {
+      final cubit = PairingClientCubit(
+        settings: InMemoryPairingSettingsRepository(),
+      );
+      addTearDown(cubit.close);
+
+      final workspaceResult = await cubit.deleteWorkspace('wsA');
+      expect(workspaceResult.ok, isFalse);
+      expect(workspaceResult.error, isNotEmpty);
+
+      final paneResult = await cubit.closeTerminal('p1');
+      expect(paneResult.ok, isFalse);
+      expect(paneResult.error, isNotEmpty);
     });
 
     test('removeDesktop drops it from state and storage', () async {

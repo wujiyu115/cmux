@@ -36,6 +36,8 @@ class PairingConnection {
     PairingDirBrowser? dirBrowser,
     PairingWorkspaceCreator? workspaceCreator,
     PairingGroupCreator? groupCreator,
+    PairingWorkspaceDeleter? workspaceDeleter,
+    PairingPaneCloser? paneCloser,
     PairingGroupIndexProvider? groupIndex,
     PairingTargetIndexProvider? targetIndex,
     PairingGitChangesProvider? gitChanges,
@@ -54,6 +56,8 @@ class PairingConnection {
        _dirBrowser = dirBrowser,
        _workspaceCreator = workspaceCreator,
        _groupCreator = groupCreator,
+       _workspaceDeleter = workspaceDeleter,
+       _paneCloser = paneCloser,
        _groupIndex = groupIndex,
        _targetIndex = targetIndex,
        _gitChanges = gitChanges,
@@ -73,6 +77,8 @@ class PairingConnection {
   final PairingDirBrowser? _dirBrowser;
   final PairingWorkspaceCreator? _workspaceCreator;
   final PairingGroupCreator? _groupCreator;
+  final PairingWorkspaceDeleter? _workspaceDeleter;
+  final PairingPaneCloser? _paneCloser;
   final PairingGroupIndexProvider? _groupIndex;
   final PairingTargetIndexProvider? _targetIndex;
   final PairingGitChangesProvider? _gitChanges;
@@ -204,6 +210,8 @@ class PairingConnection {
       dirBrowser: _dirBrowser,
       workspaceCreator: _workspaceCreator,
       groupCreator: _groupCreator,
+      workspaceDeleter: _workspaceDeleter,
+      paneCloser: _paneCloser,
       groupIndex: _groupIndex,
       targetIndex: _targetIndex,
       gitChanges: _gitChanges,

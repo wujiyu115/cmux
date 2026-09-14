@@ -839,6 +839,17 @@ class PairingClient {
     return id;
   }
 
+  /// Asks the desktop to delete a workspace — record, sessions and every
+  /// terminal in it. Idempotent host-side: an unknown id is already deleted.
+  Future<void> deleteWorkspace(String workspaceId) async {
+    await _rpc('workspace.delete', {'workspaceId': workspaceId});
+  }
+
+  /// Asks the desktop to close one terminal pane. Idempotent host-side.
+  Future<void> closeTerminal(String paneId) async {
+    await _rpc('terminal.close', {'paneId': paneId});
+  }
+
   Future<PairingSubscription> subscribe(String catalogId) async {
     final result = await _rpc('terminal.subscribe', {'catalogId': catalogId});
     final sub = result['sub'] as int;

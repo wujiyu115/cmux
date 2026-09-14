@@ -79,6 +79,8 @@ class AppKeys {
   static const pairingManualEntrySheet = Key('pairing-manual-entry-sheet');
   static const pairingManualEntryField = Key('pairing-manual-entry-field');
   static const pairingNetworkStrip = Key('pairing-network-strip');
+  static const pairingDeleteSheet = Key('pairing-delete-sheet');
+  static const pairingDeleteConfirmButton = Key('pairing-delete-confirm');
   static const mobileSettingsButton = Key('mobile-settings-button');
   static const mobileSettingsPage = Key('mobile-settings-page');
   static const mobileToolbar = Key('mobile-toolbar');

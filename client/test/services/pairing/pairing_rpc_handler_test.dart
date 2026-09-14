@@ -877,4 +877,168 @@ void main() {
       expect(result['groupId'], 'g-new');
     });
   });
+
+  group('workspace.delete', () {
+    test('unsupported when no deleter is injected', () async {
+      handler.handle(
+        PairingCodec.decode(_json({
+          'id': 1,
+          'method': 'workspace.delete',
+          'params': {'workspaceId': 'wsA'},
+        })),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect((decodeLast() as JsonFrame).data['error'], contains('unsupported'));
+    });
+
+    test('requires a non-empty workspaceId', () async {
+      handler = PairingRpcHandler(
+        catalog: catalog,
+        send: sent.add,
+        uploadOpener: noopUploadOpener,
+        workspaceDeleter: (_) async {},
+      );
+      handler.handle(
+        PairingCodec.decode(_json({
+          'id': 1,
+          'method': 'workspace.delete',
+          'params': {'workspaceId': ''},
+        })),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        (decodeLast() as JsonFrame).data['error'],
+        contains('requires workspaceId'),
+      );
+    });
+
+    test('forwards the workspaceId and replies ok', () async {
+      String? got;
+      handler = PairingRpcHandler(
+        catalog: catalog,
+        send: sent.add,
+        uploadOpener: noopUploadOpener,
+        workspaceDeleter: (workspaceId) async {
+          got = workspaceId;
+        },
+      );
+      handler.handle(
+        PairingCodec.decode(_json({
+          'id': 2,
+          'method': 'workspace.delete',
+          'params': {'workspaceId': 'wsA'},
+        })),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      expect(got, 'wsA');
+      final result = (decodeLast() as JsonFrame).data['result'] as Map;
+      expect(result['ok'], isTrue);
+    });
+
+    test('a throwing deleter surfaces as an error reply', () async {
+      handler = PairingRpcHandler(
+        catalog: catalog,
+        send: sent.add,
+        uploadOpener: noopUploadOpener,
+        workspaceDeleter: (_) async {
+          throw Exception('disk on fire');
+        },
+      );
+      handler.handle(
+        PairingCodec.decode(_json({
+          'id': 3,
+          'method': 'workspace.delete',
+          'params': {'workspaceId': 'wsA'},
+        })),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        (decodeLast() as JsonFrame).data['error'],
+        contains('workspace.delete failed'),
+      );
+    });
+  });
+
+  group('terminal.close', () {
+    test('unsupported when no closer is injected', () async {
+      handler.handle(
+        PairingCodec.decode(_json({
+          'id': 1,
+          'method': 'terminal.close',
+          'params': {'paneId': 'p1'},
+        })),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect((decodeLast() as JsonFrame).data['error'], contains('unsupported'));
+    });
+
+    test('requires a non-empty paneId', () async {
+      handler = PairingRpcHandler(
+        catalog: catalog,
+        send: sent.add,
+        uploadOpener: noopUploadOpener,
+        paneCloser: (_) async {},
+      );
+      handler.handle(
+        PairingCodec.decode(_json({
+          'id': 1,
+          'method': 'terminal.close',
+          'params': {'paneId': ''},
+        })),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        (decodeLast() as JsonFrame).data['error'],
+        contains('requires paneId'),
+      );
+    });
+
+    test('forwards the paneId and replies ok', () async {
+      String? got;
+      handler = PairingRpcHandler(
+        catalog: catalog,
+        send: sent.add,
+        uploadOpener: noopUploadOpener,
+        paneCloser: (paneId) async {
+          got = paneId;
+        },
+      );
+      handler.handle(
+        PairingCodec.decode(_json({
+          'id': 2,
+          'method': 'terminal.close',
+          'params': {'paneId': 'p1'},
+        })),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      expect(got, 'p1');
+      final result = (decodeLast() as JsonFrame).data['result'] as Map;
+      expect(result['ok'], isTrue);
+    });
+
+    test('a throwing closer surfaces as an error reply', () async {
+      handler = PairingRpcHandler(
+        catalog: catalog,
+        send: sent.add,
+        uploadOpener: noopUploadOpener,
+        paneCloser: (_) async {
+          throw Exception('pane stuck');
+        },
+      );
+      handler.handle(
+        PairingCodec.decode(_json({
+          'id': 3,
+          'method': 'terminal.close',
+          'params': {'paneId': 'p1'},
+        })),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        (decodeLast() as JsonFrame).data['error'],
+        contains('terminal.close failed'),
+      );
+    });
+  });
 }

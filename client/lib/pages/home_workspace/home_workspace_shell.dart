@@ -157,6 +157,7 @@ class _HomeShellState extends State<HomeShell> {
       ..closeActiveWorkspaceTab = _closeActiveWorkspaceTab
       ..reopenClosedWorkspaceTab = _reopenClosedWorkspaceTab
       ..openWorkspaceTab = _openWorkspaceExternally
+      ..closeWorkspaceTab = _closeWorkspaceExternally
       ..openTabCount = _openTabs.length;
   }
 
@@ -166,6 +167,15 @@ class _HomeShellState extends State<HomeShell> {
   void _openWorkspaceExternally(String workspaceId, {bool activate = true}) {
     if (!mounted || workspaceId.trim().isEmpty) return;
     _openWorkspace(workspaceId, activate: activate);
+  }
+
+  /// Handler for [WorkspaceChromeCommands.closeWorkspaceTab]. Same outside-the-
+  /// tree origin (remote pairing deletion) and same [mounted] guard. Skips the
+  /// recently-closed record: the workspace no longer exists, so reopening it
+  /// would land on the missing-workspace page.
+  void _closeWorkspaceExternally(String workspaceId) {
+    if (!mounted || workspaceId.trim().isEmpty) return;
+    unawaited(_closeTab(workspaceId, recordClosed: false));
   }
 
   void _nextWorkspaceTab() {
@@ -309,7 +319,9 @@ class _HomeShellState extends State<HomeShell> {
     await _reloadRecentlyClosed();
   }
 
-  Future<void> _closeTab(String tabKey) async {
+  /// [recordClosed] is false for remote pairing deletion: the workspace was
+  /// deleted host-side, so it must not land in the reopen list.
+  Future<void> _closeTab(String tabKey, {bool recordClosed = true}) async {
     final tab = _openTabs.where((t) => t.tabKey == tabKey).firstOrNull;
     if (tab == null) return;
     final workspaces = context.read<ChatCubit>().state.workspaces;
@@ -325,17 +337,19 @@ class _HomeShellState extends State<HomeShell> {
     }
     final idx = _openTabs.indexWhere((t) => t.tabKey == tabKey);
     if (idx < 0) return;
-    await _closedWorkspacesStore.recordClosed(
-      HomeClosedWorkspaceEntry.fromTab(
-        tab,
-        displayName: workspace?.effectiveDisplay ?? tab.workspaceId,
-        primaryPath: workspace?.firstFolderPath ?? '',
-        topology: workspace == null
-            ? null
-            : workspaceTopologyOf(workspace.folders),
-      ),
-    );
-    if (!mounted) return;
+    if (recordClosed) {
+      await _closedWorkspacesStore.recordClosed(
+        HomeClosedWorkspaceEntry.fromTab(
+          tab,
+          displayName: workspace?.effectiveDisplay ?? tab.workspaceId,
+          primaryPath: workspace?.firstFolderPath ?? '',
+          topology: workspace == null
+              ? null
+              : workspaceTopologyOf(workspace.folders),
+        ),
+      );
+      if (!mounted) return;
+    }
     final activeTab = WorkspaceTabRef.fromLocation(widget.location);
     final wasActive = activeTab?.tabKey == tabKey;
     final next = [..._openTabs]..removeAt(idx);

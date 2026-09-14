@@ -139,6 +139,15 @@ typedef PairingWorkspaceCreator =
 /// bootstrap.
 typedef PairingGroupCreator = Future<String> Function(String name);
 
+/// Deletes a workspace host-side — the record, its sessions and every live
+/// terminal in it. Unknown ids are a no-op (the desired end state already
+/// holds). Injected from bootstrap.
+typedef PairingWorkspaceDeleter = Future<void> Function(String workspaceId);
+
+/// Closes one live terminal pane host-side. Unknown pane ids are a no-op.
+/// Injected from bootstrap.
+typedef PairingPaneCloser = Future<void> Function(String paneId);
+
 /// Enumerates the desktop's workspace groups so `workspace.list` can advertise
 /// them. Injected from bootstrap.
 typedef PairingGroupIndexProvider =

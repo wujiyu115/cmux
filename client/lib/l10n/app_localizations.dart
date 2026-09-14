@@ -5594,6 +5594,36 @@ abstract class AppLocalizations {
   /// **'Could not create the workspace.'**
   String get pairingWorkspaceCreateFailed;
 
+  /// No description provided for @pairingDeleteWorkspaceMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Deletes all sessions and terminals of \"{name}\" on the desktop too. This cannot be undone.'**
+  String pairingDeleteWorkspaceMessage(Object name);
+
+  /// No description provided for @pairingCloseTerminal.
+  ///
+  /// In en, this message translates to:
+  /// **'Close terminal'**
+  String get pairingCloseTerminal;
+
+  /// No description provided for @pairingCloseTerminalMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Close \"{name}\"? The process running in it will be terminated.'**
+  String pairingCloseTerminalMessage(Object name);
+
+  /// No description provided for @pairingDeleteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete failed'**
+  String get pairingDeleteFailed;
+
+  /// No description provided for @pairingDeleting.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleting…'**
+  String get pairingDeleting;
+
   /// No description provided for @pairingNewWorkspaceFolderLabel.
   ///
   /// In en, this message translates to:

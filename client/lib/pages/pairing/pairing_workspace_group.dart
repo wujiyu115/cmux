@@ -19,11 +19,19 @@ class PairingWorkspaceGroup extends StatefulWidget {
     required this.workspace,
     required this.activatingKey,
     required this.onOpenNode,
+    required this.onDeleteWorkspace,
+    required this.onDeleteNode,
   });
 
   final PairingWorkspaceNode workspace;
   final String? activatingKey;
   final ValueChanged<PairingSessionNode> onOpenNode;
+
+  /// Long-press on the workspace header — opens the delete-workspace sheet.
+  final ValueChanged<PairingWorkspaceNode> onDeleteWorkspace;
+
+  /// Long-press on a terminal row — opens the close-pane sheet.
+  final ValueChanged<PairingSessionNode> onDeleteNode;
 
   @override
   State<PairingWorkspaceGroup> createState() => _PairingWorkspaceGroupState();
@@ -57,6 +65,7 @@ class _PairingWorkspaceGroupState extends State<PairingWorkspaceGroup> {
             expanded: _expanded,
             liveCount: liveCount,
             onTap: () => setState(() => _expanded = !_expanded),
+            onLongPress: () => widget.onDeleteWorkspace(workspace),
           ),
           // Built only while open, matching the ExpansionTile behaviour this
           // replaced: a collapsed workspace costs nothing.
@@ -65,6 +74,7 @@ class _PairingWorkspaceGroupState extends State<PairingWorkspaceGroup> {
               workspace: workspace,
               activatingKey: widget.activatingKey,
               onOpenNode: widget.onOpenNode,
+              onDeleteNode: widget.onDeleteNode,
             ),
           // Shown whether or not something is already running: with no panes it
           // is the only way to get a mirrorable terminal in a dormant workspace
@@ -113,12 +123,16 @@ class _Summary extends StatelessWidget {
     required this.expanded,
     required this.liveCount,
     required this.onTap,
+    required this.onLongPress,
   });
 
   final PairingWorkspaceNode workspace;
   final bool expanded;
   final int liveCount;
   final VoidCallback onTap;
+
+  /// Long-press opens the delete-workspace sheet; tap stays expand/collapse.
+  final VoidCallback onLongPress;
 
   @override
   Widget build(BuildContext context) {
@@ -130,6 +144,7 @@ class _Summary extends StatelessWidget {
     return InkWell(
       key: AppKeys.pairingWorkspaceHeader(workspace.workspaceId),
       onTap: onTap,
+      onLongPress: onLongPress,
       child: ConstrainedBox(
         constraints: const BoxConstraints(minHeight: 56),
         child: Padding(
@@ -203,11 +218,13 @@ class _Body extends StatelessWidget {
     required this.workspace,
     required this.activatingKey,
     required this.onOpenNode,
+    required this.onDeleteNode,
   });
 
   final PairingWorkspaceNode workspace;
   final String? activatingKey;
   final ValueChanged<PairingSessionNode> onOpenNode;
+  final ValueChanged<PairingSessionNode> onDeleteNode;
 
   @override
   Widget build(BuildContext context) {
@@ -221,6 +238,7 @@ class _Body extends StatelessWidget {
             node: pane,
             busy: activatingKey == pane.nodeKey,
             onTap: () => onOpenNode(pane),
+            onLongPress: () => onDeleteNode(pane),
           ),
         SizedBox(height: context.tpSpacing.sm),
       ],

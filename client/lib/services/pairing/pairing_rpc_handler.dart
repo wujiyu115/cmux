@@ -59,6 +59,8 @@ class PairingRpcHandler {
     PairingDirBrowser? dirBrowser,
     PairingWorkspaceCreator? workspaceCreator,
     PairingGroupCreator? groupCreator,
+    PairingWorkspaceDeleter? workspaceDeleter,
+    PairingPaneCloser? paneCloser,
     PairingGroupIndexProvider? groupIndex,
     PairingTargetIndexProvider? targetIndex,
     PairingGitChangesProvider? gitChanges,
@@ -78,6 +80,8 @@ class PairingRpcHandler {
        _dirBrowser = dirBrowser,
        _workspaceCreator = workspaceCreator,
        _groupCreator = groupCreator,
+       _workspaceDeleter = workspaceDeleter,
+       _paneCloser = paneCloser,
        _groupIndex = groupIndex,
        _targetIndex = targetIndex,
        _gitChanges = gitChanges,
@@ -104,6 +108,8 @@ class PairingRpcHandler {
   final PairingDirBrowser? _dirBrowser;
   final PairingWorkspaceCreator? _workspaceCreator;
   final PairingGroupCreator? _groupCreator;
+  final PairingWorkspaceDeleter? _workspaceDeleter;
+  final PairingPaneCloser? _paneCloser;
   final PairingGroupIndexProvider? _groupIndex;
   final PairingTargetIndexProvider? _targetIndex;
   final PairingGitChangesProvider? _gitChanges;
@@ -150,6 +156,11 @@ class PairingRpcHandler {
         _createWorkspace(id, params);
       case 'group.create':
         _createGroup(id, params);
+      case 'workspace.delete':
+        // Async like workspace.create: the deleter awaits disk + sessions.
+        unawaited(_deleteWorkspace(id, params));
+      case 'terminal.close':
+        unawaited(_closeTerminal(id, params));
       case 'session.activate':
         _activate(id, params);
       case 'terminal.subscribe':
@@ -323,7 +334,7 @@ class PairingRpcHandler {
     _replyResult(id, {'workspaceId': workspaceId});
   }
 
-  /// Creates a workspace group host-side and returns its id.
+  /// Creates a workspace group host-side and returns the id.
   Future<void> _createGroup(Object? id, Map<String, Object?> params) async {
     final creator = _groupCreator;
     if (creator == null) {
@@ -344,6 +355,53 @@ class PairingRpcHandler {
     }
     if (_disposed) return;
     _replyResult(id, {'groupId': groupId});
+  }
+
+  /// Deletes a workspace host-side. The provider treats unknown ids as a
+  /// no-op, so this is idempotent — a reply race with a second delete lands
+  /// as a plain `ok`.
+  Future<void> _deleteWorkspace(Object? id, Map<String, Object?> params) async {
+    final deleter = _workspaceDeleter;
+    if (deleter == null) {
+      _replyError(id, 'workspace.delete unsupported');
+      return;
+    }
+    final workspaceId = params['workspaceId'];
+    if (workspaceId is! String || workspaceId.isEmpty) {
+      _replyError(id, 'workspace.delete requires workspaceId');
+      return;
+    }
+    try {
+      await deleter(workspaceId);
+    } on Object catch (e) {
+      _replyError(id, 'workspace.delete failed: $e');
+      return;
+    }
+    if (_disposed) return;
+    _replyResult(id, const {'ok': true});
+  }
+
+  /// Closes one terminal pane host-side. Unknown pane ids are the provider's
+  /// no-op, mirroring [_deleteWorkspace]'s idempotence.
+  Future<void> _closeTerminal(Object? id, Map<String, Object?> params) async {
+    final closer = _paneCloser;
+    if (closer == null) {
+      _replyError(id, 'terminal.close unsupported');
+      return;
+    }
+    final paneId = params['paneId'];
+    if (paneId is! String || paneId.isEmpty) {
+      _replyError(id, 'terminal.close requires paneId');
+      return;
+    }
+    try {
+      await closer(paneId);
+    } on Object catch (e) {
+      _replyError(id, 'terminal.close failed: $e');
+      return;
+    }
+    if (_disposed) return;
+    _replyResult(id, const {'ok': true});
   }
 
   /// Opens/reuses a terminal host-side, then waits (bounded) for it to appear

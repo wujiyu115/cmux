@@ -1230,6 +1230,21 @@
   "pairingCreating": "创建中…",
   "pairingGroupCreateFailed": "无法创建分组。",
   "pairingWorkspaceCreateFailed": "无法创建工作区。",
+  "pairingDeleteWorkspaceMessage": "将删除“{name}”的所有会话与终端，桌面端同步移除。此操作不可撤销。",
+  "@pairingDeleteWorkspaceMessage": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "pairingCloseTerminal": "关闭终端",
+  "pairingCloseTerminalMessage": "关闭“{name}”？其中运行的进程将终止。",
+  "@pairingCloseTerminalMessage": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "pairingDeleteFailed": "删除失败",
+  "pairingDeleting": "删除中…",
   "pairingNewWorkspaceFolderLabel": "文件夹",
   "pairingNewWorkspaceNameLabel": "名称",
   "pairingNewWorkspaceNameHint": "默认使用文件夹名",

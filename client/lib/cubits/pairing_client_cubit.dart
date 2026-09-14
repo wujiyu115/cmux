@@ -310,9 +310,18 @@ class PairingClientCubit extends Cubit<PairingClientState> {
   }
 
   /// Confirms the pending offer and runs the full connect + auth flow.
+  ///
+  /// Also the retry button's entry point: a failed reconnect leaves no offer
+  /// behind, so a null offer falls back to redialing [_lastDesktop] — without
+  /// this the retry tap is a silent no-op on the error screen.
   Future<void> confirmPairing() async {
     final offer = state.pendingOffer;
-    if (offer == null) return;
+    if (offer == null) {
+      if (state.phase == PairingClientPhase.error && _lastDesktop != null) {
+        await connectToDesktop(_lastDesktop!);
+      }
+      return;
+    }
     _activeStageIndex = null;
     emit(
       state.copyWith(
@@ -362,6 +371,12 @@ class PairingClientCubit extends Cubit<PairingClientState> {
 
   /// Reconnects to an already-paired desktop using its stored device token.
   Future<void> connectToDesktop(PairedDesktop desktop) async {
+    // Stamped before the dial, not after: a failed attempt must still leave
+    // [_lastDesktop] pointing at the desktop the user tried, so the error
+    // screen's retry has something to redial. Safe because background
+    // reconnect (_reconnectNow) is gated on _wantsConnection, which only a
+    // successful connect sets.
+    _lastDesktop = desktop;
     _activeStageIndex = null;
     emit(
       state.copyWith(
@@ -384,7 +399,6 @@ class PairingClientCubit extends Cubit<PairingClientState> {
             deviceId: desktop.id,
           )
           .timeout(connectTimeout);
-      _lastDesktop = desktop;
       _wantsConnection = true;
       await _enterConnected(result.hostName);
       await _persistDesktop(
@@ -725,6 +739,41 @@ class PairingClientCubit extends Cubit<PairingClientState> {
       return PairingCallResult.ok(id);
     } on Object catch (e) {
       _appendLog('Create group failed: $e');
+      return PairingCallResult.failed('$e');
+    }
+  }
+
+  /// Asks the desktop to delete a workspace, then refreshes so it disappears
+  /// from the tree. The host's `session.changed` push usually refreshes first;
+  /// the explicit refresh covers hosts that push before the delete settles.
+  Future<PairingCallResult<void>> deleteWorkspace(String workspaceId) async {
+    final client = _client;
+    if (client == null) {
+      return const PairingCallResult<void>.failed('not connected');
+    }
+    try {
+      await client.deleteWorkspace(workspaceId);
+      await refreshWorkspaces();
+      return const PairingCallResult<void>.ok(null);
+    } on Object catch (e) {
+      _appendLog('Delete workspace failed: $e');
+      return PairingCallResult.failed('$e');
+    }
+  }
+
+  /// Asks the desktop to close one terminal pane, then refreshes so its row
+  /// disappears. Same double-refresh reasoning as [deleteWorkspace].
+  Future<PairingCallResult<void>> closeTerminal(String paneId) async {
+    final client = _client;
+    if (client == null) {
+      return const PairingCallResult<void>.failed('not connected');
+    }
+    try {
+      await client.closeTerminal(paneId);
+      await refreshWorkspaces();
+      return const PairingCallResult<void>.ok(null);
+    } on Object catch (e) {
+      _appendLog('Close terminal failed: $e');
       return PairingCallResult.failed('$e');
     }
   }

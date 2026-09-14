@@ -3013,6 +3013,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pairingWorkspaceCreateFailed => 'Could not create the workspace.';
 
   @override
+  String pairingDeleteWorkspaceMessage(Object name) {
+    return 'Deletes all sessions and terminals of \"$name\" on the desktop too. This cannot be undone.';
+  }
+
+  @override
+  String get pairingCloseTerminal => 'Close terminal';
+
+  @override
+  String pairingCloseTerminalMessage(Object name) {
+    return 'Close \"$name\"? The process running in it will be terminated.';
+  }
+
+  @override
+  String get pairingDeleteFailed => 'Delete failed';
+
+  @override
+  String get pairingDeleting => 'Deleting…';
+
+  @override
   String get pairingNewWorkspaceFolderLabel => 'Folder';
 
   @override

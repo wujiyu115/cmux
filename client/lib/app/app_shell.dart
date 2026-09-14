@@ -1028,6 +1028,24 @@ Future<AppShell> buildAppShell({
     Future<String> pairingCreateGroup(String name) =>
         workspaceGroupsCubit.addGroup(name);
 
+    // Delete a workspace over the same path the desktop's own delete action
+    // takes, then reap the per-workscope state the desktop shell keeps: the
+    // live-terminal group (whose disposal pushes `session.changed`, so every
+    // paired phone drops it from its list) and the workspace tab (closed
+    // without a recently-closed record — the workspace no longer exists).
+    Future<void> pairingDeleteWorkspace(String workspaceId) async {
+      await chatCubit.deleteWorkspace(sessionRepo, workspaceId);
+      workspaceTerminalRegistry.disposeWorkspace(workspaceId);
+      workspaceChromeCommands.closeWorkspaceTab?.call(workspaceId);
+    }
+
+    // Close one pane exactly as the desktop terminal panel's own close button
+    // does; the registry pushes `session.changed` on the same notify chain.
+    Future<void> pairingClosePane(String paneId) async {
+      final located = workspaceTerminalRegistry.locatePane(paneId);
+      if (located != null) located.$1.removeEntry(paneId);
+    }
+
     // Host-side activation: hand the phone a live pane to mirror. An already
     // running pane is reused; anything else opens this workspace's default
     // terminal, which is also how a workspace with nothing running becomes
@@ -1175,6 +1193,8 @@ Future<AppShell> buildAppShell({
       dirBrowser: pairingDirBrowser.browse,
       workspaceCreator: pairingCreateWorkspace,
       groupCreator: pairingCreateGroup,
+      workspaceDeleter: pairingDeleteWorkspace,
+      paneCloser: pairingClosePane,
       groupIndex: pairingGroupIndex,
       targetIndex: pairingTargetIndex,
       gitChanges: pairingGitChanges,

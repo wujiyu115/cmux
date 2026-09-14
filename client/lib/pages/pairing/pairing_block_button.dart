@@ -21,11 +21,16 @@ class PairingBlockButton extends StatelessWidget {
     required this.child,
     required this.onPressed,
     this.variant = PairingButtonVariant.filled,
+    this.destructive = false,
   });
 
   final Widget child;
   final VoidCallback? onPressed;
   final PairingButtonVariant variant;
+
+  /// Fills with the error colour instead of primary — the destructive confirm
+  /// in a delete sheet, matching the desktop delete dialog's error FilledButton.
+  final bool destructive;
 
   @override
   Widget build(BuildContext context) {
@@ -55,10 +60,14 @@ class PairingBlockButton extends StatelessWidget {
       onPressed: onPressed,
       style: switch (variant) {
         PairingButtonVariant.filled => base.copyWith(
-          backgroundColor: WidgetStatePropertyAll(cs.primary),
-          foregroundColor: WidgetStatePropertyAll(cs.onPrimary),
+          backgroundColor: WidgetStatePropertyAll(
+            destructive ? cs.error : cs.primary,
+          ),
+          foregroundColor: WidgetStatePropertyAll(
+            destructive ? cs.onError : cs.onPrimary,
+          ),
           overlayColor: WidgetStatePropertyAll(
-            cs.onPrimary.withValues(alpha: 0.12),
+            (destructive ? cs.onError : cs.onPrimary).withValues(alpha: 0.12),
           ),
         ),
         PairingButtonVariant.secondary => base.copyWith(

@@ -1363,6 +1363,21 @@
   "pairingCreating": "Creating…",
   "pairingGroupCreateFailed": "Could not create the group.",
   "pairingWorkspaceCreateFailed": "Could not create the workspace.",
+  "pairingDeleteWorkspaceMessage": "Deletes all sessions and terminals of \"{name}\" on the desktop too. This cannot be undone.",
+  "@pairingDeleteWorkspaceMessage": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "pairingCloseTerminal": "Close terminal",
+  "pairingCloseTerminalMessage": "Close \"{name}\"? The process running in it will be terminated.",
+  "@pairingCloseTerminalMessage": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "pairingDeleteFailed": "Delete failed",
+  "pairingDeleting": "Deleting…",
   "pairingNewWorkspaceFolderLabel": "Folder",
   "pairingNewWorkspaceNameLabel": "Name",
   "pairingNewWorkspaceNameHint": "Defaults to the folder name",

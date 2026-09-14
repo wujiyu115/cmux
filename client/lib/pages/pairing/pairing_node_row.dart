@@ -12,17 +12,22 @@ import '../../utils/ui/app_keys.dart';
 ///
 /// While the host is waking a dormant node the trailing block becomes the
 /// progress affordance and the row stops accepting taps.
+///
+/// Long-press offers the destructive action (close the pane host-side); taps
+/// keep their open-mirror meaning.
 class PairingNodeRow extends StatelessWidget {
   const PairingNodeRow({
     super.key,
     required this.node,
     required this.busy,
     required this.onTap,
+    this.onLongPress,
   });
 
   final PairingSessionNode node;
   final bool busy;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
@@ -47,6 +52,7 @@ class PairingNodeRow extends StatelessWidget {
     return InkWell(
       key: AppKeys.pairingSessionNode(node.nodeKey),
       onTap: busy ? null : onTap,
+      onLongPress: busy ? null : onLongPress,
       borderRadius: BorderRadius.circular(spacing.sm),
       child: ConstrainedBox(
         constraints: const BoxConstraints(minHeight: 56),

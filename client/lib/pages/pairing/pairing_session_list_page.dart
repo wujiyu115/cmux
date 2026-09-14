@@ -8,6 +8,7 @@ import '../../services/pairing/pairing_client.dart';
 import '../../theme/app_fonts.dart';
 import '../../theme/app_typography_scale.dart';
 import '../../utils/ui/app_keys.dart';
+import 'pairing_delete_sheet.dart';
 import 'pairing_nav_bar.dart';
 import 'pairing_new_group_sheet.dart';
 import 'pairing_new_workspace_sheet.dart';
@@ -68,7 +69,7 @@ class PairingSessionListPage extends StatelessWidget {
                             child: Center(child: Text(l10n.pairingNoWorkspaces)),
                           )
                         else
-                          ..._buildTree(state, cubit),
+                          ..._buildTree(context, state, cubit),
                       ],
                     ),
                   ),
@@ -123,14 +124,18 @@ class PairingSessionListPage extends StatelessWidget {
   /// Flat when the host advertises no groups (preserves the original list);
   /// otherwise folds workspaces under a collapsible section per group, with any
   /// ungrouped / orphaned workspaces in a trailing section.
-  List<Widget> _buildTree(PairingClientState state, PairingClientCubit cubit) {
+  List<Widget> _buildTree(
+    BuildContext context,
+    PairingClientState state,
+    PairingClientCubit cubit,
+  ) {
     final workspaces = state.workspaces;
     final groups = [...state.groups]..sort((a, b) => a.order.compareTo(b.order));
 
     if (groups.isEmpty) {
       return [
         for (final workspace in workspaces)
-          _workspaceTile(state, workspace, cubit),
+          _workspaceTile(context, state, workspace, cubit),
       ];
     }
 
@@ -146,7 +151,7 @@ class PairingSessionListPage extends StatelessWidget {
           title: group.name,
           count: members.length,
           children: [
-            for (final w in members) _workspaceTile(state, w, cubit),
+            for (final w in members) _workspaceTile(context, state, w, cubit),
           ],
         ),
       );
@@ -161,7 +166,7 @@ class PairingSessionListPage extends StatelessWidget {
           title: null,
           count: orphans.length,
           children: [
-            for (final w in orphans) _workspaceTile(state, w, cubit),
+            for (final w in orphans) _workspaceTile(context, state, w, cubit),
           ],
         ),
       );
@@ -170,6 +175,7 @@ class PairingSessionListPage extends StatelessWidget {
   }
 
   Widget _workspaceTile(
+    BuildContext context,
     PairingClientState state,
     PairingWorkspaceNode ws,
     PairingClientCubit cubit,
@@ -178,6 +184,12 @@ class PairingSessionListPage extends StatelessWidget {
       workspace: ws,
       activatingKey: state.activatingKey,
       onOpenNode: cubit.activateAndOpen,
+      // Long-press is the destructive affordance: tap keeps its meaning, so
+      // nothing accidental can delete a workspace.
+      onDeleteWorkspace: (workspace) =>
+          showPairingDeleteWorkspaceSheet(context, cubit, workspace),
+      onDeleteNode: (node) =>
+          showPairingCloseTerminalSheet(context, cubit, node),
     );
   }
 }

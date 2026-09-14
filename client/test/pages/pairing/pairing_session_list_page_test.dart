@@ -17,6 +17,20 @@ class _TestCubit extends PairingClientCubit {
   Future<void> activateAndOpen(PairingSessionNode node) async {
     activated.add(node);
   }
+
+  final List<String> deletedWorkspaces = [];
+  @override
+  Future<PairingCallResult<void>> deleteWorkspace(String workspaceId) async {
+    deletedWorkspaces.add(workspaceId);
+    return const PairingCallResult<void>.ok(null);
+  }
+
+  final List<String> closedTerminals = [];
+  @override
+  Future<PairingCallResult<void>> closeTerminal(String paneId) async {
+    closedTerminals.add(paneId);
+    return const PairingCallResult<void>.ok(null);
+  }
 }
 
 const _pane = PairingSessionNode(
@@ -227,5 +241,99 @@ void main() {
     await tester.pump();
 
     expect(cubit.state.phase, PairingClientPhase.idle);
+  });
+
+  testWidgets('long-pressing a workspace header offers delete; confirm '
+      'forwards the id', (tester) async {
+    cubit.set(
+      const PairingClientState(
+        phase: PairingClientPhase.connected,
+        activeHostName: 'Studio',
+        workspaces: [_wsA],
+      ),
+    );
+    await pump(tester);
+
+    await tester.longPress(find.byKey(AppKeys.pairingWorkspaceHeader('wsA')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(AppKeys.pairingDeleteSheet), findsOneWidget);
+    expect(find.text('Delete Workspace'), findsOneWidget);
+    expect(cubit.deletedWorkspaces, isEmpty);
+
+    await tester.tap(find.byKey(AppKeys.pairingDeleteConfirmButton));
+    await tester.pumpAndSettle();
+
+    expect(cubit.deletedWorkspaces, ['wsA']);
+    expect(find.byKey(AppKeys.pairingDeleteSheet), findsNothing);
+  });
+
+  testWidgets('long-pressing a terminal row offers close; confirm forwards '
+      'the pane id', (tester) async {
+    cubit.set(
+      const PairingClientState(
+        phase: PairingClientPhase.connected,
+        activeHostName: 'Studio',
+        workspaces: [_wsA],
+      ),
+    );
+    await pump(tester);
+    await tester.tap(find.byKey(AppKeys.pairingWorkspaceHeader('wsA')));
+    await tester.pumpAndSettle();
+
+    await tester.longPress(find.byKey(AppKeys.pairingSessionNode('ws:p1')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(AppKeys.pairingDeleteSheet), findsOneWidget);
+    expect(find.text('Close terminal'), findsOneWidget);
+    expect(cubit.closedTerminals, isEmpty);
+
+    await tester.tap(find.byKey(AppKeys.pairingDeleteConfirmButton));
+    await tester.pumpAndSettle();
+
+    expect(cubit.closedTerminals, ['p1']);
+    expect(find.byKey(AppKeys.pairingDeleteSheet), findsNothing);
+  });
+
+  testWidgets('cancelling the delete sheet forwards nothing', (tester) async {
+    cubit.set(
+      const PairingClientState(
+        phase: PairingClientPhase.connected,
+        activeHostName: 'Studio',
+        workspaces: [_wsA],
+      ),
+    );
+    await pump(tester);
+
+    await tester.longPress(find.byKey(AppKeys.pairingWorkspaceHeader('wsA')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(AppKeys.pairingDeleteSheet), findsOneWidget);
+
+    // The quiet cancel button under the destructive confirm.
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(AppKeys.pairingDeleteSheet), findsNothing);
+    expect(cubit.deletedWorkspaces, isEmpty);
+    expect(cubit.closedTerminals, isEmpty);
+  });
+
+  testWidgets('tapping a workspace header never deletes — long-press only',
+      (tester) async {
+    cubit.set(
+      const PairingClientState(
+        phase: PairingClientPhase.connected,
+        activeHostName: 'Studio',
+        workspaces: [_wsA],
+      ),
+    );
+    await pump(tester);
+
+    await tester.tap(find.byKey(AppKeys.pairingWorkspaceHeader('wsA')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(AppKeys.pairingDeleteSheet), findsNothing);
+    expect(cubit.deletedWorkspaces, isEmpty);
   });
 }

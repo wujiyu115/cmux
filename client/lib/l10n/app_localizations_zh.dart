@@ -2913,6 +2913,25 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pairingWorkspaceCreateFailed => '无法创建工作区。';
 
   @override
+  String pairingDeleteWorkspaceMessage(Object name) {
+    return '将删除“$name”的所有会话与终端，桌面端同步移除。此操作不可撤销。';
+  }
+
+  @override
+  String get pairingCloseTerminal => '关闭终端';
+
+  @override
+  String pairingCloseTerminalMessage(Object name) {
+    return '关闭“$name”？其中运行的进程将终止。';
+  }
+
+  @override
+  String get pairingDeleteFailed => '删除失败';
+
+  @override
+  String get pairingDeleting => '删除中…';
+
+  @override
   String get pairingNewWorkspaceFolderLabel => '文件夹';
 
   @override
