@@ -10,12 +10,11 @@ import '../../../cubits/run_cubit.dart';
 import '../../../cubits/workbench/workbench_cubit.dart';
 import '../../../cubits/worktree_cubit.dart';
 import '../../../models/workspace.dart';
-import '../../../models/workspace_folder.dart';
 import '../../../services/commands/quick_open_command_registrar.dart';
 import '../../../services/commands/run_command_registrar.dart';
 import '../../../services/git/git_command_runner.dart';
 import '../../../services/quick_open/quick_open_mru_repository.dart';
-import '../../../services/storage/app_storage.dart';
+import '../../../services/quick_open/quick_open_prewarm.dart';
 import '../../../services/workspace/workspace_run_registry.dart';
 import '../../../services/workspace/workspace_tools_scope.dart';
 import '../../../services/workspace/workspace_tools_scope_registry.dart';
@@ -89,26 +88,19 @@ class _WorkspaceSplitPaneState extends State<WorkspaceSplitPane> {
     // Follow the active tools plane — the same target and roots the file tree
     // mounts — so quick open indexes what the user sees, including a worktree
     // session's cwd instead of only the workspace's first folder.
-    final activeTargetId =
-        scopeState.tools?.targetId ??
-        (widget.workspace.folders.isEmpty
-            ? WorkspaceFolder.localTargetId
-            : widget.workspace.folders.first.targetId);
-    final targetContext = scopeState.runtimeContextForTarget(activeTargetId);
-    final fs = targetContext?.filesystem ?? AppStorage.fs;
-    final indexRoots = [
-      for (final folder in widget.workspace.folders)
-        if (folder.targetId == activeTargetId) folder.path,
-      ...scopeState.roots,
-    ].where((path) => path.trim().isNotEmpty).toList();
+    final plane = resolveQuickOpenPlane(
+      workspace: widget.workspace,
+      scopeState: scopeState,
+    );
+    final targetContext = plane.targetContext;
     // The MRU store must live on the same plane as the work-plane filesystem:
     // the repository's default path is a host-native AppData path that a
     // WSL/SSH filesystem cannot address.
     final mru = targetContext == null
         ? null
         : QuickOpenMruRepository(
-            fs: fs,
-            path: fs.pathContext.join(
+            fs: plane.filesystem,
+            path: plane.filesystem.pathContext.join(
               targetContext.appDataRoot,
               'quick-open-mru.json',
             ),
@@ -117,9 +109,9 @@ class _WorkspaceSplitPaneState extends State<WorkspaceSplitPane> {
       showQuickOpenDialog(
         context,
         workspace: widget.workspace,
-        filesystem: fs,
+        filesystem: plane.filesystem,
         // Empty → let the dialog fall back to the workspace's first folder.
-        indexRoots: indexRoots.isEmpty ? null : indexRoots,
+        indexRoots: plane.indexRoots.isEmpty ? null : plane.indexRoots,
         mruRepository: mru,
         gitRunner: targetContext == null
             ? null

@@ -131,6 +131,25 @@ class _PlainFilesystem implements Filesystem {
   Future<void> appendString(String path, String content) async {}
 }
 
+/// Counts symlink scans so tests can observe when [_scanSymlinkedDirs] runs
+/// relative to the (possibly gated) base listing.
+class _CountingSymlinkFs extends InMemoryFilesystem {
+  int symlinkScans = 0;
+
+  @override
+  Future<List<String>> listSymlinkedDirs(String root) {
+    symlinkScans++;
+    return super.listSymlinkedDirs(root);
+  }
+}
+
+class _FailingSymlinkScanFs extends InMemoryFilesystem {
+  @override
+  Future<List<String>> listSymlinkedDirs(String root) async {
+    throw StateError('find failed');
+  }
+}
+
 void main() {
   late InMemoryFilesystem fs;
 
@@ -321,6 +340,114 @@ void main() {
     fail = false;
     final index = await registry.load(fs, '/repo');
     expect(index.files, isNotEmpty);
+  });
+
+  group('prewarm', () {
+    test('cold root fills the cache once; repeat prewarms never re-list', () async {
+      var listings = 0;
+      final registry = QuickOpenIndexRegistry(
+        lister: (path) {
+          listings++;
+          return fs.listDirRecursive(path);
+        },
+      );
+      await registry.prewarm(fs, '/repo');
+      await registry.prewarm(fs, '/repo');
+      await registry.drainRefreshesForTest();
+      expect(listings, 1);
+      // The warmed entry is what the dialog's load serves.
+      final index = await registry.load(fs, '/repo');
+      expect(index.files.map((e) => e.name), contains('main.dart'));
+    });
+
+    test('warm entry: prewarm does not kick a revalidation', () async {
+      var listings = 0;
+      final registry = QuickOpenIndexRegistry(
+        lister: (path) {
+          listings++;
+          return fs.listDirRecursive(path);
+        },
+      );
+      await registry.load(fs, '/repo');
+      await registry.drainRefreshesForTest();
+      expect(listings, 1);
+
+      await registry.prewarm(fs, '/repo');
+      await registry.prewarm(fs, '/repo');
+      await registry.drainRefreshesForTest();
+      expect(listings, 1);
+    });
+
+    test('prewarm and load racing the cold listing share one future', () async {
+      var listings = 0;
+      final gate = Completer<void>();
+      final registry = QuickOpenIndexRegistry(
+        lister: (path) {
+          listings++;
+          return gate.future.then((_) => fs.listDirRecursive(path));
+        },
+      );
+      final prewarmed = registry.prewarm(fs, '/repo');
+      final loaded = registry.load(fs, '/repo');
+      gate.complete();
+      await Future.wait([prewarmed, loaded]);
+      expect(listings, 1);
+    });
+
+    test('prewarm failure is not cached: the next load retries', () async {
+      var fail = true;
+      final registry = QuickOpenIndexRegistry(
+        lister: (path) {
+          if (fail) throw StateError('boom');
+          return fs.listDirRecursive(path);
+        },
+      );
+      await expectLater(registry.prewarm(fs, '/repo'), throwsStateError);
+      fail = false;
+      final index = await registry.load(fs, '/repo');
+      expect(index.files, isNotEmpty);
+    });
+
+    test('prewarm keys by dirs rules like load', () async {
+      var listings = 0;
+      final registry = QuickOpenIndexRegistry(
+        lister: (path) {
+          listings++;
+          return fs.listDirRecursive(path);
+        },
+      );
+      await registry.prewarm(
+        fs,
+        '/repo',
+        dirs: WorkspaceIndexDirs(excluded: ['lib']),
+      );
+      await registry.prewarm(fs, '/repo');
+      await registry.drainRefreshesForTest();
+      expect(listings, 2);
+
+      final excluded = await registry.latestIndex(
+        fs,
+        '/repo',
+        dirs: WorkspaceIndexDirs(excluded: ['lib']),
+      );
+      expect(
+        excluded!.files.map((e) => e.relativePath),
+        isNot(contains('lib/main.dart')),
+      );
+    });
+
+    test('empty root prewarms nothing', () async {
+      var listings = 0;
+      final registry = QuickOpenIndexRegistry(
+        lister: (path) {
+          listings++;
+          return fs.listDirRecursive(path);
+        },
+      );
+      await registry.prewarm(fs, '');
+      await registry.drainRefreshesForTest();
+      expect(listings, 0);
+    });
   });
 
   group('gitignore-aware listing via git ls-files', () {
@@ -673,6 +800,45 @@ void main() {
       plain.files['/repo/README.md'] = 'x';
       final registry = QuickOpenIndexRegistry();
       final index = await registry.load(plain, '/repo');
+      expect(index.files.map((e) => e.relativePath), ['README.md']);
+    });
+
+    test('the symlink scan starts before the base listing completes', () async {
+      final scanFs = _CountingSymlinkFs();
+      scanFs.ensureDir('/repo');
+      scanFs.ensureDir('/external/docs');
+      scanFs.files['/repo/README.md'] = 'x';
+      scanFs.files['/external/docs/guide.md'] = 'x';
+      await scanFs.createSymlink(
+        target: '/external/docs',
+        linkPath: '/repo/linked',
+      );
+
+      final baseGate = Completer<void>();
+      final registry = QuickOpenIndexRegistry(
+        lister: (path) =>
+            baseGate.future.then((_) => scanFs.listDirRecursive(path)),
+      );
+      final loading = registry.load(scanFs, '/repo');
+      await Future<void>.delayed(Duration.zero);
+      // Sequential order would leave the scan waiting behind the gated base
+      // listing; the concurrent scan has already run.
+      expect(scanFs.symlinkScans, 1);
+
+      baseGate.complete();
+      final index = await loading;
+      expect(
+        index.files.map((e) => e.relativePath),
+        allOf([contains('README.md'), contains('linked/guide.md')]),
+      );
+    });
+
+    test('a failed symlink scan leaves the base listing intact', () async {
+      final scanFs = _FailingSymlinkScanFs();
+      scanFs.ensureDir('/repo');
+      scanFs.files['/repo/README.md'] = 'x';
+      final registry = QuickOpenIndexRegistry();
+      final index = await registry.load(scanFs, '/repo');
       expect(index.files.map((e) => e.relativePath), ['README.md']);
     });
   });

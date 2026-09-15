@@ -122,6 +122,22 @@ class QuickOpenIndexRegistry {
     );
   }
 
+  /// Warms a cold cache entry without ever revalidating a warm one: unlike
+  /// [load] there is no stale-while-revalidate kick, so background prewarms
+  /// (tools-scope sync) cannot trigger full re-lists of roots the dialog
+  /// already serves. Errors propagate like [load]'s.
+  Future<void> prewarm(
+    Filesystem fs,
+    String root, {
+    int? maxFiles,
+    WorkspaceIndexDirs? dirs,
+  }) {
+    if (root.isEmpty) return Future.value();
+    final key = (fs, root, dirs ?? const WorkspaceIndexDirs.empty());
+    if (_indexes.containsKey(key)) return Future.value();
+    return load(fs, root, maxFiles: maxFiles, dirs: dirs);
+  }
+
   /// Freshest listing for (fs, root): waits for a revalidation kicked by
   /// [load] when one is still in flight (null when it fails), otherwise
   /// completes with the current cached listing. Lets a long-lived dialog swap
@@ -173,8 +189,38 @@ class QuickOpenIndexRegistry {
     WorkspaceIndexDirs dirs,
   ) async {
     final rules = QuickOpenDirRules(dirs);
+    // The symlink scan is an independent remote round trip (a full `find` on
+    // wsl/ssh); start it before awaiting the base listing so the two spawn
+    // chains overlap instead of serializing.
+    final symlinkScan = _scanSymlinkedDirs(fs, root);
     final base = await _listIndexBase(fs, root, maxFiles, rules);
-    return _supplementSymlinkedDirs(fs, root, base, maxFiles, rules);
+    return _supplementSymlinkedDirs(
+      fs,
+      root,
+      base,
+      maxFiles,
+      rules,
+      symlinkScan: await symlinkScan,
+    );
+  }
+
+  /// Symlinked-directory scan for [_listIndex]: the backend's lister plus its
+  /// link list, or null when the backend cannot enumerate links, the scan
+  /// failed, or there are no directory links — the base listing then stands.
+  Future<({FsSymlinkLister lister, List<String> linkDirs})?> _scanSymlinkedDirs(
+    Filesystem fs,
+    String root,
+  ) async {
+    if (fs case final FsSymlinkLister lister) {
+      try {
+        final linkDirs = await lister.listSymlinkedDirs(root);
+        if (linkDirs.isEmpty) return null;
+        return (lister: lister, linkDirs: linkDirs);
+      } on Object {
+        return null;
+      }
+    }
+    return null;
   }
 
   Future<QuickOpenIndex> _listIndexBase(
@@ -199,23 +245,14 @@ class QuickOpenIndexRegistry {
     String root,
     QuickOpenIndex base,
     int maxFiles,
-    QuickOpenDirRules rules,
-  ) async {
+    QuickOpenDirRules rules, {
+    required ({FsSymlinkLister lister, List<String> linkDirs})? symlinkScan,
+  }) async {
     if (base.truncated) return base;
-    // Local pattern match keeps the promoted type in scope.
-    final FsSymlinkLister lister;
-    if (fs case final FsSymlinkLister candidate) {
-      lister = candidate;
-    } else {
-      return base;
-    }
-    final List<String> linkDirs;
-    try {
-      linkDirs = await lister.listSymlinkedDirs(root);
-    } on Object {
-      return base;
-    }
-    if (linkDirs.isEmpty) return base;
+    final scan = symlinkScan;
+    if (scan == null) return base;
+    final lister = scan.lister;
+    final linkDirs = scan.linkDirs;
 
     final ctx = fs.pathContext;
     final normalizedRoot = ctx.normalize(root);

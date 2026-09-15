@@ -15,16 +15,13 @@ import '../../services/io/filesystem.dart';
 import '../../services/quick_open/quick_open_index.dart';
 import '../../services/quick_open/quick_open_matcher.dart';
 import '../../services/quick_open/quick_open_mru_repository.dart';
+import '../../services/quick_open/quick_open_prewarm.dart';
 import '../../services/quick_open/top_scored.dart';
 import '../../services/storage/app_storage.dart';
 import '../../services/workbench/workbench_editor_opener.dart';
 import '../../utils/commands/fuzzy_match.dart';
 import '../../utils/session/workspace_sessions.dart';
 import '../home_workspace/workspace/workspace_session_actions.dart';
-
-/// Process-lifetime index cache so a second Ctrl+P serves the previous
-/// listing instantly while a refresh runs in the background.
-final QuickOpenIndexRegistry _sharedIndexRegistry = QuickOpenIndexRegistry();
 
 /// Opens the quick-open dialog (Ctrl+P): sessions + files in one fuzzy
 /// launcher. Pops with the chosen [QuickOpenResult]; the MRU touch and editor
@@ -58,7 +55,7 @@ Future<void> showQuickOpenDialog(
   try {
     final opener = context.read<WorkbenchEditorOpener>();
     final fs = filesystem ?? AppStorage.fs;
-    final registry = indexRegistry ?? _sharedIndexRegistry;
+    final registry = indexRegistry ?? sharedQuickOpenIndexRegistry;
     if (gitRunner != null) {
       // The shared registry keeps its (fs, root) cache across dialogs, so the
       // runner is updated in place instead of replacing the registry.

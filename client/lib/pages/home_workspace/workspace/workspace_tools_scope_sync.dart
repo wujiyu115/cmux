@@ -10,6 +10,7 @@ import '../../../models/workspace.dart';
 import '../../../models/workspace_folder.dart';
 import '../../../services/git/git_command_runner.dart';
 import '../../../services/git/git_worktree_service.dart';
+import '../../../services/quick_open/quick_open_prewarm.dart';
 import '../../../services/storage/runtime_context.dart';
 import '../../../services/workspace/workspace_tools_scope.dart';
 import '../../../utils/workspace/workspace_path_utils.dart';
@@ -95,6 +96,15 @@ class _WorkspaceToolsScopeSyncState extends State<WorkspaceToolsScopeSync> {
 
     final tools = scopeCubit.state.tools;
     if (tools == null) return;
+    // Fill the quick-open index cache off the critical path so the first
+    // Ctrl+P serves a warm index instead of awaiting the full remote listing
+    // (the prewarm skips roots the shared registry already serves).
+    unawaited(
+      prewarmQuickOpenIndex(
+        workspace: widget.workspace,
+        scopeState: scopeCubit.state,
+      ),
+    );
     // Git worktree list is per storage target; bind only with the runner for
     // this tools plane (never a default local runner against a remote path).
     // Session cwd selection uses WorktreeCubit.syncCurrentForSessionPath.
