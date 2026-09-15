@@ -109,9 +109,9 @@ class _FileTreePanelState extends State<FileTreePanel> {
         message: context.l10n.fileTreeRevealFailed,
         variant: TpToastVariant.error,
       );
-      return;
     }
-    _scheduleRevealScroll();
+    // Scrolling is state-driven: the reveal BlocListener in [build] reacts to
+    // the revealPath change this call just published.
   }
 
   void _scheduleRevealScroll([int attempt = 0]) {
@@ -207,7 +207,7 @@ class _FileTreePanelState extends State<FileTreePanel> {
     final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
 
-    return BlocProvider.value(
+    final tree = BlocProvider.value(
       value: _cubit,
       child: BlocListener<FileTreeCubit, FileTreeState>(
         listenWhen: (previous, next) =>
@@ -383,6 +383,17 @@ class _FileTreePanelState extends State<FileTreePanel> {
           ),
         ),
       ),
+    );
+
+    return BlocListener<FileTreeCubit, FileTreeState>(
+      bloc: _cubit,
+      // Any revealPath change (panel button, editor tab menu, …) scrolls the
+      // target row into view once its ancestor expansion lands; the clear
+      // after scrolling re-fires this but [_scheduleRevealScroll] no-ops on a
+      // null target.
+      listenWhen: (previous, next) => previous.revealPath != next.revealPath,
+      listener: (context, state) => _scheduleRevealScroll(),
+      child: tree,
     );
   }
 

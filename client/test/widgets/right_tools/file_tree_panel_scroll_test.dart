@@ -143,4 +143,37 @@ void main() {
     await cubit.close();
     await workbench.close();
   });
+
+  // Regression: the editor tab menu's "Reveal in file tree" ends at
+  // FileTreeCubit.revealPath with no panel-side call, so the scroll must be
+  // driven by the revealPath state change itself.
+  testWidgets('revealPath alone scrolls the target row into view', (
+    tester,
+  ) async {
+    final cubit = await _warmCubit(_fs());
+    final workbench = WorkbenchCubit();
+
+    await tester.pumpWidget(_host(cubit, workbench));
+    await tester.pump();
+    await tester.pump();
+    expect(_listController(tester).offset, 0);
+
+    final ok = await cubit.revealPath('/repo/file55.txt');
+    expect(ok, isTrue);
+    // Listener fires post-frame; then the 280ms scroll animation runs.
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(_listController(tester).offset, greaterThan(0));
+    final row = find.text('file55.txt');
+    expect(row, findsOneWidget);
+    final listRect = tester.getRect(find.byType(ListView));
+    final rowRect = tester.getRect(row);
+    expect(rowRect.top, greaterThanOrEqualTo(listRect.top));
+    expect(rowRect.bottom, lessThanOrEqualTo(listRect.bottom));
+    // Scroll-into-view consumed the pending reveal.
+    expect(cubit.state.revealPath, isNull);
+    await cubit.close();
+    await workbench.close();
+  });
 }
