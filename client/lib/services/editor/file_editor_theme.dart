@@ -102,6 +102,8 @@ const kEditorTextExtensions = {
   'lock',
   'patch',
   'diff',
+  'td',
+  'sproto',
 };
 
 /// Extensionless files that are still plain text (checked case-insensitively).

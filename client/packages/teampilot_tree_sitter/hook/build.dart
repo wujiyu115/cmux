@@ -74,6 +74,8 @@ void main(List<String> args) async {
         'src/bundled/dockerfile_parser.c',
         'src/bundled/dockerfile_scanner.c',
         'src/bundled/make_parser.c',
+        'src/bundled/td_parser.c',
+        'src/bundled/sproto_parser.c',
         // typescript: the `tsx` grammar (parses .ts/.tsx/.js/.jsx).
         'src/bundled/tsx_parser.c',
         'src/bundled/tsx_scanner.c',
@@ -122,6 +124,8 @@ void main(List<String> args) async {
         'third_party/tree-sitter-typescript/tsx/src',
         'third_party/tree-sitter-xml/xml/src',
         'third_party/tree-sitter-markdown/src',
+        'third_party/tree-sitter-td/src',
+        'third_party/tree-sitter-sproto/src',
         'src',
       ],
     );

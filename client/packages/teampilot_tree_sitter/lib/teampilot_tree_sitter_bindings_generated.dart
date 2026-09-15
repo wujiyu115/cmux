@@ -1533,6 +1533,12 @@ external ffi.Pointer<TSLanguage> tp_ts_language_dockerfile();
 @ffi.Native<ffi.Pointer<TSLanguage> Function()>()
 external ffi.Pointer<TSLanguage> tp_ts_language_make();
 
+@ffi.Native<ffi.Pointer<TSLanguage> Function()>()
+external ffi.Pointer<TSLanguage> tp_ts_language_td();
+
+@ffi.Native<ffi.Pointer<TSLanguage> Function()>()
+external ffi.Pointer<TSLanguage> tp_ts_language_sproto();
+
 /// /
 /// /* Section - Types */
 /// /

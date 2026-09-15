@@ -24,7 +24,9 @@ void main() {
     expect(isWorkbenchOpenableFilePath('/a/Dockerfile.dev'), isTrue);
     expect(isEditorOpenableFilePath('/a/x.png'), isFalse);
     expect(isEditorOpenableFilePath('/a/x.svg'), isTrue);
-    expect(isEditorOpenableFilePath('/a/hall.sproto'), isFalse);
+    // sproto is a bundled text language; unknown extensions stay rejected.
+    expect(isEditorOpenableFilePath('/a/hall.sproto'), isTrue);
+    expect(isEditorOpenableFilePath('/a/x.unknownext'), isFalse);
     expect(isWorkbenchOpenableFilePath('/a/x.pdf'), isFalse);
     expect(isWorkbenchOpenableFilePath('/a/x.zip'), isFalse);
     expect(isWorkbenchOpenableFilePath('/a/archive.tar.gz'), isFalse);

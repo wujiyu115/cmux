@@ -105,6 +105,14 @@ class TsLanguage {
 
   /// The bundled Makefile grammar.
   static TsLanguage make() => TsLanguage._(bindings.tp_ts_language_make());
+
+  /// The bundled TD grammar (the MongoDB type-check DSL, see
+  /// wujiyu115/vscode-td).
+  static TsLanguage td() => TsLanguage._(bindings.tp_ts_language_td());
+
+  /// The bundled sproto grammar (cloudwu/sproto protocol DSL, see
+  /// ilylia/sproto-support).
+  static TsLanguage sproto() => TsLanguage._(bindings.tp_ts_language_sproto());
 }
 
 /// A parsed syntax tree (`TSTree *`). Call [dispose] when done.

@@ -171,6 +171,20 @@ class LanguageRegistry {
         grammarId: 'make',
         highlightsAsset: 'assets/editor_languages/make/highlights.scm',
       ),
+      // The TD type-check DSL (MongoDB schema language per wujiyu115/vscode-td).
+      LanguagePack(
+        id: 'td',
+        extensions: {'td'},
+        grammarId: 'td',
+        highlightsAsset: 'assets/editor_languages/td/highlights.scm',
+      ),
+      // The sproto protocol DSL (cloudwu/sproto, per ilylia/sproto-support).
+      LanguagePack(
+        id: 'sproto',
+        extensions: {'sproto'},
+        grammarId: 'sproto',
+        highlightsAsset: 'assets/editor_languages/sproto/highlights.scm',
+      ),
     ]);
   }
 

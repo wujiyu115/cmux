@@ -58,6 +58,8 @@ void main() {
       '/x/a.mk': 'make',
       '/x/a.mak': 'make',
       '/x/a.dockerfile': 'dockerfile',
+      '/x/a.td': 'td',
+      '/x/a.sproto': 'sproto',
     };
     cases.forEach((path, id) {
       expect(reg.resolve(path)?.id, id, reason: '$path should resolve to $id');

@@ -37,6 +37,18 @@ which checks out the pinned tags below and copies the needed files here.
 | tree-sitter-dockerfile | https://github.com/camdencheek/tree-sitter-dockerfile | `v0.2.0` | `868e44ce378deb68aac902a9db68ff82d2299dd0` |
 | tree-sitter-make | https://github.com/alemuller/tree-sitter-make | `a4b9187417d6be349ee5fd4b6e77b4172c6827dd` | `a4b9187417d6be349ee5fd4b6e77b4172c6827dd` |
 
+**tree-sitter-td** is not vendored from a remote repo: its `grammar.js` is
+authored here (semantics from wujiyu115/vscode-td's `td.tmLanguage`, validated
+against real schemas). Regenerate its `src/parser.c` with
+`npx -y tree-sitter-cli@0.25.6 generate` from
+`third_party/tree-sitter-td/`.
+
+**tree-sitter-sproto** is likewise authored here (semantics from
+ilylia/sproto-support's `sproto.tmLanguage.json` plus the `double` /
+`integer(2)` / `*Type(key)` extensions seen in real schemas; its `LICENSE`
+carries sproto-support's MIT notice). Regenerate with the same command from
+`third_party/tree-sitter-sproto/`.
+
 All grammar language ABIs are 14 or 15, within the core runtime's supported
 range (min 13, max 15). Every bundled grammar's external scanner is plain C, so
 they all link into the single C11 native asset.

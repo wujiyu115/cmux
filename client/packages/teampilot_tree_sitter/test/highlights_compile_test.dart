@@ -38,6 +38,8 @@ final _packs = <String, TsLanguage Function()>{
   'scss': TsLanguage.scss,
   'dockerfile': TsLanguage.dockerfile,
   'make': TsLanguage.make,
+  'td': TsLanguage.td,
+  'sproto': TsLanguage.sproto,
 };
 
 void main() {
