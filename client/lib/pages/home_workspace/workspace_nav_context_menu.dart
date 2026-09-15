@@ -10,6 +10,7 @@ import '../../repositories/session_repository.dart';
 import '../../services/terminal/workspace_terminal_launch_catalog.dart';
 import 'workspace_accent_picker.dart';
 import 'workspace_actions.dart';
+import 'workspace_quick_open_scope_dialog.dart';
 
 /// Right-click / long-press menu for a workspace row in the nav sidebar
 /// (图 12): rename, icon, default terminal, move-to-group, accent, close,
@@ -39,10 +40,21 @@ Future<void> showWorkspaceNavContextMenu({
       ),
       const TpActionMenuSpec.divider(),
       TpActionMenuSpec.item(
+        value: 'folders',
+        icon: Icons.folder_shared_outlined,
+        label: l10n.workspaceFoldersSectionTitle,
+      ),
+      TpActionMenuSpec.item(
         value: 'terminal',
         icon: Icons.terminal_rounded,
         label: l10n.workspaceDefaultTerminal,
       ),
+      TpActionMenuSpec.item(
+        value: 'sandbox',
+        icon: Icons.security_outlined,
+        label: l10n.rootSandboxEnvOptInTitle,
+      ),
+      const TpActionMenuSpec.divider(),
       TpActionMenuSpec.item(
         value: 'group',
         icon: Icons.folder_outlined,
@@ -52,6 +64,11 @@ Future<void> showWorkspaceNavContextMenu({
         value: 'accent',
         icon: Icons.palette_outlined,
         label: l10n.workspaceAccentColor,
+      ),
+      TpActionMenuSpec.item(
+        value: 'scope',
+        icon: Icons.manage_search_outlined,
+        label: l10n.workspaceQuickOpenScope,
       ),
       const TpActionMenuSpec.divider(),
       if (closable)
@@ -78,12 +95,18 @@ Future<void> showWorkspaceNavContextMenu({
         context.read<SessionRepository>(),
         workspace,
       );
+    case 'folders':
+      await showWorkspaceFoldersDialog(context, workspace);
     case 'terminal':
       await _pickDefaultTerminal(context, position, workspace);
+    case 'sandbox':
+      await showWorkspaceRootSandboxDialog(context, workspace);
     case 'group':
       await _pickGroup(context, position, workspace);
     case 'accent':
       await _pickAccent(context, workspace);
+    case 'scope':
+      await editWorkspaceQuickOpenScope(context, workspace);
     case 'close':
       onClose();
     case 'delete':

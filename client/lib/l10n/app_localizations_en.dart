@@ -626,6 +626,57 @@ class AppLocalizationsEn extends AppLocalizations {
       'This directory is already in the workspace.';
 
   @override
+  String get workspaceQuickOpenScope => 'Quick-open search scope';
+
+  @override
+  String get workspaceQuickOpenScopeSubtitle =>
+      'Ctrl+P indexes the workspace folders. Exclude large directories from the index, or restore subdirectories under an excluded one. Paths are relative to the workspace folder.';
+
+  @override
+  String get workspaceQuickOpenScopeExcludedTitle => 'Excluded directories';
+
+  @override
+  String get workspaceQuickOpenScopeExcludedHint =>
+      'These directories never enter the quick-open index.';
+
+  @override
+  String get workspaceQuickOpenScopeIncludedTitle => 'Restored directories';
+
+  @override
+  String get workspaceQuickOpenScopeIncludedHint =>
+      'Subdirectories under an excluded directory that stay searchable.';
+
+  @override
+  String get workspaceQuickOpenScopeEmpty => 'Nothing configured yet.';
+
+  @override
+  String get workspaceQuickOpenScopeAddPathHint =>
+      'Relative path, e.g. common/convertor';
+
+  @override
+  String get workspaceQuickOpenScopeBrowse => 'Browse';
+
+  @override
+  String get workspaceQuickOpenScopeDuplicate =>
+      'This directory is already in the list.';
+
+  @override
+  String get workspaceQuickOpenScopeOrphanInclude =>
+      'Not under any excluded directory — this rule has no effect.';
+
+  @override
+  String get workspaceQuickOpenScopeIncludeMatchesExclude =>
+      'Identical to an excluded directory — it stays excluded.';
+
+  @override
+  String get workspaceQuickOpenScopeOutsideRoot =>
+      'The picked directory is outside the workspace folder.';
+
+  @override
+  String get workspaceQuickOpenScopeNoFolder =>
+      'The workspace has no folder to browse.';
+
+  @override
   String get remoteDirectoryBrowserTitle => 'Browse remote directory';
 
   @override

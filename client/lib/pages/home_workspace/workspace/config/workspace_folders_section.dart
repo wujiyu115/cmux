@@ -21,6 +21,7 @@ class WorkspaceFoldersSection extends StatefulWidget {
   const WorkspaceFoldersSection({
     required this.workspace,
     this.lockTargets = false,
+    this.embedded = false,
     super.key,
   });
 
@@ -28,6 +29,10 @@ class WorkspaceFoldersSection extends StatefulWidget {
 
   /// Personal launch identity cannot reassign folder machines.
   final bool lockTargets;
+
+  /// Renders the bare editor (no [TpCard] / section header) for embedding in
+  /// a dialog whose header already carries the section title.
+  final bool embedded;
 
   @override
   State<WorkspaceFoldersSection> createState() =>
@@ -140,6 +145,35 @@ class _WorkspaceFoldersSectionState extends State<WorkspaceFoldersSection> {
 
     _ensureDeadTargetsChecked(live.folders);
 
+    final editor = WorkspaceFoldersEditor(
+      folders: folders,
+      enabled: !_saving,
+      lockTargets: widget.lockTargets,
+      deadTargetIds: _deadTargetIds,
+      onRemapDeadTarget: _remapDeadTarget,
+      onChanged: _persist,
+    );
+    if (widget.embedded) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (_saving) const Padding(padding: EdgeInsets.only(bottom: 8), child: LinearProgressIndicator()),
+          Text(
+            workspaceFoldersEditorHint(
+              l10n,
+              live.folders,
+              lockTargets: widget.lockTargets,
+            ),
+            style: TpTextStyles.of(context).xsColored(
+              Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 12),
+          editor,
+        ],
+      );
+    }
+
     return TpCard.outlined(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -157,14 +191,7 @@ class _WorkspaceFoldersSectionState extends State<WorkspaceFoldersSection> {
               lockTargets: widget.lockTargets,
             ),
             showDividerBelow: false,
-            body: WorkspaceFoldersEditor(
-              folders: folders,
-              enabled: !_saving,
-              lockTargets: widget.lockTargets,
-              deadTargetIds: _deadTargetIds,
-              onRemapDeadTarget: _remapDeadTarget,
-              onChanged: _persist,
-            ),
+            body: editor,
           ),
         ],
       ),

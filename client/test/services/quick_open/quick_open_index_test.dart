@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
+import 'package:teampilot/models/workspace_index_dirs.dart';
 import 'package:teampilot/services/git/git_command_runner.dart';
 import 'package:teampilot/services/io/filesystem.dart';
 import 'package:teampilot/services/quick_open/quick_open_index.dart';
@@ -472,6 +473,117 @@ void main() {
         expect(entry.path, r'C:\repo\lib\main.dart');
       },
     );
+  });
+
+  group('index dir rules', () {
+    test('recursive path: exclude drops a subtree, include carves it back', () async {
+      final registry = QuickOpenIndexRegistry();
+      final index = await registry.load(
+        fs,
+        '/repo',
+        dirs: WorkspaceIndexDirs(
+          excluded: ['lib'],
+          included: ['lib/src'],
+        ),
+      );
+
+      final paths = index.files.map((e) => e.relativePath).toSet();
+      expect(paths, contains('lib/src/terminal_session.dart'));
+      expect(paths, isNot(contains('lib/main.dart')));
+      expect(paths, contains('README.md'));
+    });
+
+    test('recursive path: include overrides the built-in ignores', () async {
+      final registry = QuickOpenIndexRegistry();
+      final index = await registry.load(
+        fs,
+        '/repo',
+        dirs: WorkspaceIndexDirs(included: ['node_modules']),
+      );
+
+      expect(
+        index.files.map((e) => e.relativePath),
+        contains('node_modules/pkg/index.js'),
+      );
+    });
+
+    test('git path: user rules apply, built-in ignores do not', () async {
+      final runner = _FakeGitRunner(
+        result: const GitCommandResult(
+          exitCode: 0,
+          stdout:
+              'README.md\x00lib/main.dart\x00lib/src/terminal_session.dart\x00'
+              'node_modules/pkg/index.js\x00',
+          stderr: '',
+        ),
+      );
+      final registry = QuickOpenIndexRegistry(gitRunner: runner);
+      final index = await registry.load(
+        fs,
+        '/repo',
+        dirs: WorkspaceIndexDirs(
+          excluded: ['lib'],
+          included: ['lib/src'],
+        ),
+      );
+
+      final paths = index.files.map((e) => e.relativePath).toSet();
+      // node_modules is a built-in ignore but git reported the file as
+      // tracked — the git source applies user rules only.
+      expect(paths, {
+        'README.md',
+        'lib/src/terminal_session.dart',
+        'node_modules/pkg/index.js',
+      });
+    });
+
+    test('excluded files do not consume the maxFiles quota', () async {
+      final stdout = [
+        for (final path in [
+          'ex/a.txt',
+          'ex/b.txt',
+          'ex/c.txt',
+          'keep/d.txt',
+          'keep/e.txt',
+        ])
+          '$path\x00',
+      ].join();
+      final runner = _FakeGitRunner(
+        result: GitCommandResult(exitCode: 0, stdout: stdout, stderr: ''),
+      );
+      final registry = QuickOpenIndexRegistry(gitRunner: runner);
+      final index = await registry.load(
+        fs,
+        '/repo',
+        maxFiles: 3,
+        dirs: WorkspaceIndexDirs(excluded: ['ex']),
+      );
+
+      expect(index.files.map((e) => e.relativePath).toList(), [
+        'keep/d.txt',
+        'keep/e.txt',
+      ]);
+      expect(index.truncated, isFalse);
+    });
+
+    test('different rules cache separately from the rule-free listing', () async {
+      final registry = QuickOpenIndexRegistry();
+      final excluded = await registry.load(
+        fs,
+        '/repo',
+        dirs: WorkspaceIndexDirs(excluded: ['lib']),
+      );
+      final unfiltered = await registry.load(fs, '/repo');
+
+      expect(
+        excluded.files.map((e) => e.relativePath),
+        isNot(contains('lib/main.dart')),
+      );
+      expect(
+        unfiltered.files.map((e) => e.relativePath),
+        contains('lib/main.dart'),
+      );
+    });
   });
 
   group('directory symlink support', () {

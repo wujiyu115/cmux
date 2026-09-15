@@ -605,6 +605,49 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workspaceDirectoryAlreadyAdded => '该目录已在工作区中。';
 
   @override
+  String get workspaceQuickOpenScope => '快速打开搜索范围';
+
+  @override
+  String get workspaceQuickOpenScopeSubtitle =>
+      'Ctrl+P 会索引工作区目录。可将大目录排除出索引，或把排除目录下的子目录恢复为可搜索。路径相对工作区目录填写。';
+
+  @override
+  String get workspaceQuickOpenScopeExcludedTitle => '排除目录';
+
+  @override
+  String get workspaceQuickOpenScopeExcludedHint => '这些目录不会进入快速打开索引。';
+
+  @override
+  String get workspaceQuickOpenScopeIncludedTitle => '恢复搜索目录';
+
+  @override
+  String get workspaceQuickOpenScopeIncludedHint => '排除目录下仍然可以搜索的子目录。';
+
+  @override
+  String get workspaceQuickOpenScopeEmpty => '暂未配置。';
+
+  @override
+  String get workspaceQuickOpenScopeAddPathHint => '相对路径，如 common/convertor';
+
+  @override
+  String get workspaceQuickOpenScopeBrowse => '浏览';
+
+  @override
+  String get workspaceQuickOpenScopeDuplicate => '该目录已在列表中。';
+
+  @override
+  String get workspaceQuickOpenScopeOrphanInclude => '不在任何排除目录下，此规则不会生效。';
+
+  @override
+  String get workspaceQuickOpenScopeIncludeMatchesExclude => '与排除目录相同，仍会被排除。';
+
+  @override
+  String get workspaceQuickOpenScopeOutsideRoot => '所选目录不在工作区目录内。';
+
+  @override
+  String get workspaceQuickOpenScopeNoFolder => '工作区没有可浏览的目录。';
+
+  @override
   String get remoteDirectoryBrowserTitle => '浏览远程目录';
 
   @override

@@ -1238,6 +1238,90 @@ abstract class AppLocalizations {
   /// **'This directory is already in the workspace.'**
   String get workspaceDirectoryAlreadyAdded;
 
+  /// No description provided for @workspaceQuickOpenScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick-open search scope'**
+  String get workspaceQuickOpenScope;
+
+  /// No description provided for @workspaceQuickOpenScopeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ctrl+P indexes the workspace folders. Exclude large directories from the index, or restore subdirectories under an excluded one. Paths are relative to the workspace folder.'**
+  String get workspaceQuickOpenScopeSubtitle;
+
+  /// No description provided for @workspaceQuickOpenScopeExcludedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Excluded directories'**
+  String get workspaceQuickOpenScopeExcludedTitle;
+
+  /// No description provided for @workspaceQuickOpenScopeExcludedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'These directories never enter the quick-open index.'**
+  String get workspaceQuickOpenScopeExcludedHint;
+
+  /// No description provided for @workspaceQuickOpenScopeIncludedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Restored directories'**
+  String get workspaceQuickOpenScopeIncludedTitle;
+
+  /// No description provided for @workspaceQuickOpenScopeIncludedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Subdirectories under an excluded directory that stay searchable.'**
+  String get workspaceQuickOpenScopeIncludedHint;
+
+  /// No description provided for @workspaceQuickOpenScopeEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing configured yet.'**
+  String get workspaceQuickOpenScopeEmpty;
+
+  /// No description provided for @workspaceQuickOpenScopeAddPathHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Relative path, e.g. common/convertor'**
+  String get workspaceQuickOpenScopeAddPathHint;
+
+  /// No description provided for @workspaceQuickOpenScopeBrowse.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse'**
+  String get workspaceQuickOpenScopeBrowse;
+
+  /// No description provided for @workspaceQuickOpenScopeDuplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'This directory is already in the list.'**
+  String get workspaceQuickOpenScopeDuplicate;
+
+  /// No description provided for @workspaceQuickOpenScopeOrphanInclude.
+  ///
+  /// In en, this message translates to:
+  /// **'Not under any excluded directory — this rule has no effect.'**
+  String get workspaceQuickOpenScopeOrphanInclude;
+
+  /// No description provided for @workspaceQuickOpenScopeIncludeMatchesExclude.
+  ///
+  /// In en, this message translates to:
+  /// **'Identical to an excluded directory — it stays excluded.'**
+  String get workspaceQuickOpenScopeIncludeMatchesExclude;
+
+  /// No description provided for @workspaceQuickOpenScopeOutsideRoot.
+  ///
+  /// In en, this message translates to:
+  /// **'The picked directory is outside the workspace folder.'**
+  String get workspaceQuickOpenScopeOutsideRoot;
+
+  /// No description provided for @workspaceQuickOpenScopeNoFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'The workspace has no folder to browse.'**
+  String get workspaceQuickOpenScopeNoFolder;
+
   /// No description provided for @remoteDirectoryBrowserTitle.
   ///
   /// In en, this message translates to:

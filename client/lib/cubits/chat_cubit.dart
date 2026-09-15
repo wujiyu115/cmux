@@ -10,6 +10,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../models/workspace.dart';
 import '../models/workspace_accent.dart';
 import '../models/workspace_folder.dart';
+import '../models/workspace_index_dirs.dart';
 import '../models/app_session.dart';
 import '../models/workspace_icon_picker_result.dart';
 import '../models/workspace_icon_ref.dart';
@@ -601,6 +602,7 @@ class ChatCubit extends Cubit<ChatState>
     bool clearAccent = false,
     String? defaultShell,
     bool clearDefaultShell = false,
+    WorkspaceIndexDirs? indexDirRules,
   }) async {
     _emitSnapshot(
       await _dataStore.updateWorkspaceMetadata(
@@ -614,6 +616,7 @@ class ChatCubit extends Cubit<ChatState>
         clearAccent: clearAccent,
         defaultShell: defaultShell,
         clearDefaultShell: clearDefaultShell,
+        indexDirRules: indexDirRules,
       ),
     );
   }

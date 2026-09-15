@@ -3,9 +3,11 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 
+import '../../models/workspace_index_dirs.dart';
 import '../../utils/logging/logger_utils.dart';
 import '../git/git_command_runner.dart';
 import '../io/filesystem.dart';
+import 'quick_open_dir_rules.dart';
 
 /// One indexed file: absolute [path], display basename [name], and
 /// [relativePath] from the workspace root (result subtitle).
@@ -52,20 +54,6 @@ class QuickOpenIndex {
   final bool truncated;
 }
 
-/// Directory names whose contents are pure noise for quick-open.
-const _ignoredDirNames = {
-  '.git',
-  '.hg',
-  '.svn',
-  'node_modules',
-  '.dart_tool',
-  'build',
-  '.idea',
-  '.gradle',
-  '.next',
-  'dist',
-};
-
 typedef QuickOpenLister = Future<List<FsDirEntry>> Function(String path);
 
 /// Per-(Filesystem, root) index cache with stale-while-revalidate semantics.
@@ -97,20 +85,26 @@ class QuickOpenIndexRegistry {
   final _settled = <Object>{};
   final _pendingRefreshes = <Object, Future<QuickOpenIndex?>>{};
 
-  Future<QuickOpenIndex> load(Filesystem fs, String root, {int? maxFiles}) {
+  Future<QuickOpenIndex> load(
+    Filesystem fs,
+    String root, {
+    int? maxFiles,
+    WorkspaceIndexDirs? dirs,
+  }) {
     if (root.isEmpty) return Future.value(const QuickOpenIndex.empty());
-    final key = (fs, root);
+    final rules = dirs ?? const WorkspaceIndexDirs.empty();
+    final key = (fs, root, rules);
     final cached = _indexes[key];
     if (cached != null) {
       // Stale-while-revalidate — but only for a settled entry: while the first
       // listing is still in flight, racing dialogs share it instead of piling
       // on duplicate re-lists.
       if (_settled.contains(key)) {
-        _kickRefresh(fs, root, maxFiles ?? this.maxFiles, key);
+        _kickRefresh(fs, root, maxFiles ?? this.maxFiles, rules, key);
       }
       return cached;
     }
-    final fresh = _listIndex(fs, root, maxFiles ?? this.maxFiles);
+    final fresh = _listIndex(fs, root, maxFiles ?? this.maxFiles, rules);
     _indexes[key] = fresh;
     // A failed listing must not poison the cache for the app's lifetime.
     unawaited(
@@ -132,18 +126,29 @@ class QuickOpenIndexRegistry {
   /// [load] when one is still in flight (null when it fails), otherwise
   /// completes with the current cached listing. Lets a long-lived dialog swap
   /// its stale view for the revalidated one without reopening.
-  Future<QuickOpenIndex?> latestIndex(Filesystem fs, String root) {
-    final pending = _pendingRefreshes[(fs, root)];
+  Future<QuickOpenIndex?> latestIndex(
+    Filesystem fs,
+    String root, {
+    WorkspaceIndexDirs? dirs,
+  }) {
+    final key = (fs, root, dirs ?? const WorkspaceIndexDirs.empty());
+    final pending = _pendingRefreshes[key];
     if (pending != null) return pending;
-    return _indexes[(fs, root)] ?? Future.value(null);
+    return _indexes[key] ?? Future.value(null);
   }
 
   /// Kicks a background re-list that replaces the cache entry on success.
   /// A refresh already in flight is reused, so rapid reopens share one
   /// listing instead of stacking duplicates.
-  void _kickRefresh(Filesystem fs, String root, int maxFiles, Object key) {
+  void _kickRefresh(
+    Filesystem fs,
+    String root,
+    int maxFiles,
+    WorkspaceIndexDirs rules,
+    Object key,
+  ) {
     if (_pendingRefreshes.containsKey(key)) return;
-    final refresh = _listIndex(fs, root, maxFiles)
+    final refresh = _listIndex(fs, root, maxFiles, rules)
         .then<QuickOpenIndex?>((index) {
           _indexes[key] = Future.value(index);
           return index;
@@ -165,19 +170,22 @@ class QuickOpenIndexRegistry {
     Filesystem fs,
     String root,
     int maxFiles,
+    WorkspaceIndexDirs dirs,
   ) async {
-    final base = await _listIndexBase(fs, root, maxFiles);
-    return _supplementSymlinkedDirs(fs, root, base, maxFiles);
+    final rules = QuickOpenDirRules(dirs);
+    final base = await _listIndexBase(fs, root, maxFiles, rules);
+    return _supplementSymlinkedDirs(fs, root, base, maxFiles, rules);
   }
 
   Future<QuickOpenIndex> _listIndexBase(
     Filesystem fs,
     String root,
     int maxFiles,
+    QuickOpenDirRules rules,
   ) async {
-    final gitIndex = await _listIndexViaGit(fs, root, maxFiles);
+    final gitIndex = await _listIndexViaGit(fs, root, maxFiles, rules);
     if (gitIndex != null) return gitIndex;
-    return _listIndexRecursive(fs, root, maxFiles);
+    return _listIndexRecursive(fs, root, maxFiles, rules);
   }
 
   /// Neither the git source (`git ls-files` never follows links) nor the
@@ -191,6 +199,7 @@ class QuickOpenIndexRegistry {
     String root,
     QuickOpenIndex base,
     int maxFiles,
+    QuickOpenDirRules rules,
   ) async {
     if (base.truncated) return base;
     // Local pattern match keeps the promoted type in scope.
@@ -239,9 +248,8 @@ class QuickOpenIndexRegistry {
           break;
         }
         if (entry.isDirectory) continue;
-        if (_isIgnored(entry.name, ctx)) continue;
-        if (_isIgnored(linkPrefix, ctx)) continue;
         final relative = ctx.join(linkPrefix, entry.name);
+        if (!rules.allows(relative)) continue;
         final path = ctx.join(normalizedRoot, relative);
         if (seen.contains(path)) continue;
         seen.add(path);
@@ -280,6 +288,7 @@ class QuickOpenIndexRegistry {
     Filesystem fs,
     String root,
     int maxFiles,
+    QuickOpenDirRules rules,
   ) async {
     final runner = gitRunner;
     if (runner == null) return null;
@@ -312,16 +321,20 @@ class QuickOpenIndexRegistry {
         // git always prints POSIX separators; the recursive fallback yields the
         // backend's native ones — normalize so both sources feed identical paths.
         final relative = ctx.joinAll(raw.split('/'));
-        files.add(
-          QuickOpenFileEntry(
-            path: ctx.join(root, relative),
-            name: ctx.basename(relative),
-            relativePath: relative,
-          ),
-        );
-        if (files.length >= maxFiles) {
-          truncated = true;
-          break;
+        // User rules only (git already honored .gitignore); the filter must
+        // precede the cap check so a large exclude list cannot eat the quota.
+        if (rules.allowsUser(relative)) {
+          files.add(
+            QuickOpenFileEntry(
+              path: ctx.join(root, relative),
+              name: ctx.basename(relative),
+              relativePath: relative,
+            ),
+          );
+          if (files.length >= maxFiles) {
+            truncated = true;
+            break;
+          }
         }
       }
       if (end < 0) break;
@@ -335,6 +348,7 @@ class QuickOpenIndexRegistry {
     Filesystem fs,
     String root,
     int maxFiles,
+    QuickOpenDirRules rules,
   ) async {
     final lister = _listerOverride ?? fs.listDirRecursive;
     final entries = await lister(root);
@@ -344,7 +358,8 @@ class QuickOpenIndexRegistry {
     for (final entry in entries) {
       if (entry.isDirectory) continue;
       final relative = entry.name;
-      if (_isIgnored(relative, ctx)) continue;
+      // Filter before the cap check: an excluded subtree must not consume quota.
+      if (!rules.allows(relative)) continue;
       files.add(
         QuickOpenFileEntry(
           path: ctx.join(root, relative),
@@ -359,17 +374,6 @@ class QuickOpenIndexRegistry {
     }
     files.sort((a, b) => a.relativePath.compareTo(b.relativePath));
     return QuickOpenIndex(files: files, truncated: truncated);
-  }
-
-  /// Drops any path segment that starts with `.` or sits under an ignored
-  /// directory. [relative] uses the backend's own separators.
-  bool _isIgnored(String relative, p.Context ctx) {
-    final segments = ctx.split(relative);
-    for (final segment in segments) {
-      if (segment.startsWith('.')) return true;
-      if (_ignoredDirNames.contains(segment)) return true;
-    }
-    return false;
   }
 
   /// Test seam: awaits every background refresh still in flight.

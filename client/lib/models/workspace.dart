@@ -4,6 +4,7 @@ import '../utils/workspace/workspace_path_utils.dart';
 import 'workspace_accent.dart';
 import 'workspace_folder.dart';
 import 'workspace_icon_ref.dart';
+import 'workspace_index_dirs.dart';
 import 'workspace_topology.dart';
 
 @immutable
@@ -21,6 +22,7 @@ class Workspace {
     this.groupId = '',
     this.accent,
     this.defaultShell,
+    this.indexDirRules = const WorkspaceIndexDirs.empty(),
   });
 
   factory Workspace({
@@ -36,6 +38,7 @@ class Workspace {
     String groupId = '',
     WorkspaceAccentPreset? accent,
     String? defaultShell,
+    WorkspaceIndexDirs indexDirRules = const WorkspaceIndexDirs.empty(),
   }) {
     return Workspace._(
       workspaceId: workspaceId,
@@ -50,6 +53,7 @@ class Workspace {
       groupId: groupId,
       accent: accent,
       defaultShell: defaultShell,
+      indexDirRules: indexDirRules,
     );
   }
 
@@ -73,6 +77,7 @@ class Workspace {
       defaultShell: (json['defaultShell'] as String?)?.trim().isNotEmpty == true
           ? (json['defaultShell'] as String).trim()
           : null,
+      indexDirRules: WorkspaceIndexDirs.fromJson(json['indexDirRules']),
     );
   }
 
@@ -95,6 +100,9 @@ class Workspace {
 
   /// Default terminal shell (executable path or special id); null = global default.
   final String? defaultShell;
+
+  /// Quick-open index directory rules (exclude + include carve-outs).
+  final WorkspaceIndexDirs indexDirRules;
 
   String get firstFolderPath => folders.isEmpty ? '' : folders.first.path;
   List<String> get extraFolderPaths => folders.length <= 1
@@ -168,6 +176,7 @@ class Workspace {
     bool clearAccent = false,
     String? defaultShell,
     bool clearDefaultShell = false,
+    WorkspaceIndexDirs? indexDirRules,
   }) {
     return Workspace(
       workspaceId: workspaceId ?? this.workspaceId,
@@ -182,6 +191,7 @@ class Workspace {
       groupId: groupId ?? this.groupId,
       accent: clearAccent ? null : (accent ?? this.accent),
       defaultShell: clearDefaultShell ? null : (defaultShell ?? this.defaultShell),
+      indexDirRules: indexDirRules ?? this.indexDirRules,
     );
   }
 
@@ -199,6 +209,7 @@ class Workspace {
       if (groupId.isNotEmpty) 'groupId': groupId,
       if (accent case final a?) 'accent': a.toJson(),
       if (defaultShell case final s?) 'defaultShell': s,
+      if (!indexDirRules.isEmpty) 'indexDirRules': indexDirRules.toJson(),
     };
   }
 
@@ -218,7 +229,8 @@ class Workspace {
             rootSandboxEnvOptIn == other.rootSandboxEnvOptIn &&
             groupId == other.groupId &&
             accent == other.accent &&
-            defaultShell == other.defaultShell;
+            defaultShell == other.defaultShell &&
+            indexDirRules == other.indexDirRules;
   }
 
   @override
@@ -235,6 +247,7 @@ class Workspace {
     groupId,
     accent,
     defaultShell,
+    indexDirRules,
   );
 }
 

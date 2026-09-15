@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:teampilot/models/app_session.dart';
 import 'package:teampilot/models/workspace_icon_ref.dart';
 import 'package:teampilot/models/workspace_folder.dart';
+import 'package:teampilot/models/workspace_index_dirs.dart';
 import 'package:teampilot/repositories/session_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -186,6 +187,34 @@ void main() {
     );
     final loaded = await repo.loadWorkspaces();
     expect(loaded.single.rootSandboxEnvOptIn, isTrue);
+  });
+
+  test('updateWorkspaceMetadata persists indexDirRules', () async {
+    final tmp = await Directory.systemTemp.createTemp('fs_session_repo_');
+    addTearDown(() => tmp.deleteSync(recursive: true));
+
+    final repo = SessionRepository(rootDir: tmp.path);
+    final p = await repo.createWorkspace([WorkspaceFolder(path: '/base')]);
+    expect(p.indexDirRules.isEmpty, isTrue);
+
+    final rules = WorkspaceIndexDirs(
+      excluded: ['common'],
+      included: ['common/convertor'],
+    );
+    await repo.updateWorkspaceMetadata(
+      p.workspaceId,
+      indexDirRules: rules,
+    );
+    final loaded = await repo.loadWorkspaces();
+    expect(loaded.single.indexDirRules, rules);
+
+    // Clearing round-trips too (null keeps the existing rules instead).
+    await repo.updateWorkspaceMetadata(
+      p.workspaceId,
+      indexDirRules: const WorkspaceIndexDirs.empty(),
+    );
+    final cleared = await repo.loadWorkspaces();
+    expect(cleared.single.indexDirRules.isEmpty, isTrue);
   });
 
   test('applyWorkspaceIcon persists preset and auto icons', () async {

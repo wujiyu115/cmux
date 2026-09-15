@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 import '../../models/workspace_folder.dart';
 import '../../models/workspace.dart';
 import '../../models/workspace_accent.dart';
+import '../../models/workspace_index_dirs.dart';
 import '../../models/app_session.dart';
 import '../../models/workspace_icon_ref.dart';
 import '../../models/cli_tool.dart';
@@ -228,6 +229,7 @@ class SessionDataStore {
     bool clearAccent = false,
     String? defaultShell,
     bool clearDefaultShell = false,
+    WorkspaceIndexDirs? indexDirRules,
   }) async {
     await repo.updateWorkspaceMetadata(
       workspaceId,
@@ -239,6 +241,7 @@ class SessionDataStore {
       clearAccent: clearAccent,
       defaultShell: defaultShell,
       clearDefaultShell: clearDefaultShell,
+      indexDirRules: indexDirRules,
     );
     return loadWorkspaceData(repo);
   }

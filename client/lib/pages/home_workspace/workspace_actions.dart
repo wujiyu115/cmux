@@ -12,6 +12,8 @@ import '../../models/workspace.dart';
 import '../../repositories/session_repository.dart';
 import '../../utils/debounce/debounce.dart';
 import '../../utils/workspace/workspace_display_name.dart';
+import 'workspace/config/workspace_folders_section.dart';
+import 'workspace/root_sandbox_env_opt_in_tile.dart';
 
 /// Whether [location] is the workbench route for [workspaceId].
 bool isViewingWorkspaceRoute(String location, String workspaceId) {
@@ -139,6 +141,74 @@ Future<void> confirmDeleteWorkspace(
                 child: Text(l10n.delete),
               ),
             ],
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+/// Edits the workspace's directories + machines in a dialog. Edits apply on
+/// change (same editor the manage view hosts), so the dialog carries no save
+/// action — close dismisses once the last change has settled.
+Future<void> showWorkspaceFoldersDialog(
+  BuildContext context,
+  Workspace workspace,
+) async {
+  await showDialog<void>(
+    context: context,
+    builder: (ctx) => TpDialog(
+      maxWidth: 680,
+      maxHeight: 560,
+      child: TpDialogPinnedLayout(
+        header: TpDialogHeader(
+          title: context.l10n.workspaceFoldersSectionTitle,
+          onClose: () => Navigator.of(ctx).pop(),
+        ),
+        body: WorkspaceFoldersSection(
+          workspace: workspace,
+          lockTargets: true,
+          embedded: true,
+        ),
+      ),
+    ),
+  );
+}
+
+/// Workspace-scoped root sandbox env opt-in in a dialog. The toggle applies
+/// immediately (with the trust-boundary confirm), mirroring the manage tile.
+Future<void> showWorkspaceRootSandboxDialog(
+  BuildContext context,
+  Workspace workspace,
+) async {
+  final l10n = context.l10n;
+  final live = context.read<ChatCubit>().state.workspaces.firstWhere(
+        (w) => w.workspaceId == workspace.workspaceId,
+        orElse: () => workspace,
+      );
+  await showDialog<void>(
+    context: context,
+    builder: (ctx) => TpDialog(
+      maxWidth: 560,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TpDialogHeader(
+            title: l10n.rootSandboxEnvOptInTitle,
+            onClose: () => Navigator.of(ctx).pop(),
+          ),
+          RootSandboxEnvOptInTile(
+            workspaceLabel: live.localizedName(l10n),
+            optedIn: live.rootSandboxEnvOptIn,
+            showDividerBelow: false,
+            onChanged: (next) {
+              context.read<ChatCubit>().updateWorkspaceMetadata(
+                    context.read<SessionRepository>(),
+                    live.workspaceId,
+                    rootSandboxEnvOptIn: next,
+                  );
+            },
           ),
         ],
       ),

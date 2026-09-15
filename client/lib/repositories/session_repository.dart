@@ -7,6 +7,7 @@ import 'package:uuid/uuid.dart';
 import '../models/workspace.dart';
 import '../models/workspace_accent.dart';
 import '../models/workspace_folder.dart';
+import '../models/workspace_index_dirs.dart';
 import '../models/app_session.dart';
 import '../models/session_continue_overrides.dart';
 import '../models/cli_tool.dart';
@@ -310,6 +311,7 @@ class SessionRepository {
     bool clearAccent = false,
     String? defaultShell,
     bool clearDefaultShell = false,
+    WorkspaceIndexDirs? indexDirRules,
   }) async {
     final fs = await _fs();
     final existing = await _readManifest(fs, workspaceId);
@@ -327,6 +329,7 @@ class SessionRepository {
       clearAccent: clearAccent,
       defaultShell: defaultShell,
       clearDefaultShell: clearDefaultShell,
+      indexDirRules: indexDirRules ?? existing.indexDirRules,
       updatedAt: now,
     );
     await _writeManifest(fs, updated);

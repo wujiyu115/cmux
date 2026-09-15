@@ -262,7 +262,11 @@ class _QuickOpenOverlayState extends State<QuickOpenOverlay> {
   Future<void> _loadRootIndex(String root) async {
     QuickOpenIndex index;
     try {
-      index = await widget.indexRegistry.load(widget.filesystem, root);
+      index = await widget.indexRegistry.load(
+        widget.filesystem,
+        root,
+        dirs: widget.workspace.indexDirRules,
+      );
     } on Object {
       index = const QuickOpenIndex.empty();
     }
@@ -272,7 +276,11 @@ class _QuickOpenOverlayState extends State<QuickOpenOverlay> {
   Future<void> _applyLatestIndex(String root) async {
     QuickOpenIndex? latest;
     try {
-      latest = await widget.indexRegistry.latestIndex(widget.filesystem, root);
+      latest = await widget.indexRegistry.latestIndex(
+        widget.filesystem,
+        root,
+        dirs: widget.workspace.indexDirRules,
+      );
     } on Object {
       latest = null;
     }
