@@ -267,6 +267,15 @@
   "workspaceQuickOpenScopeIncludeMatchesExclude": "Identical to an excluded directory — it stays excluded.",
   "workspaceQuickOpenScopeOutsideRoot": "The picked directory is outside the workspace folder.",
   "workspaceQuickOpenScopeNoFolder": "The workspace has no folder to browse.",
+  "workspaceQuickOpenScopeAutoSave": "Changes save immediately.",
+  "workspaceQuickOpenScopeSaveFailed": "Couldn't save the search scope: {error}",
+  "@workspaceQuickOpenScopeSaveFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "remoteDirectoryBrowserTitle": "Browse remote directory",
   "remoteDirectoryBrowserUpOneLevel": "Up one level",
   "remoteDirectoryBrowserUseThisDirectory": "Use this directory",

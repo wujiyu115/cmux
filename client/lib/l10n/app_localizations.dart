@@ -1322,6 +1322,18 @@ abstract class AppLocalizations {
   /// **'The workspace has no folder to browse.'**
   String get workspaceQuickOpenScopeNoFolder;
 
+  /// No description provided for @workspaceQuickOpenScopeAutoSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes save immediately.'**
+  String get workspaceQuickOpenScopeAutoSave;
+
+  /// No description provided for @workspaceQuickOpenScopeSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save the search scope: {error}'**
+  String workspaceQuickOpenScopeSaveFailed(String error);
+
   /// No description provided for @remoteDirectoryBrowserTitle.
   ///
   /// In en, this message translates to:

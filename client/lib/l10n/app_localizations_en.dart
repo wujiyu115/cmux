@@ -677,6 +677,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'The workspace has no folder to browse.';
 
   @override
+  String get workspaceQuickOpenScopeAutoSave => 'Changes save immediately.';
+
+  @override
+  String workspaceQuickOpenScopeSaveFailed(String error) {
+    return 'Couldn\'t save the search scope: $error';
+  }
+
+  @override
   String get remoteDirectoryBrowserTitle => 'Browse remote directory';
 
   @override

@@ -648,6 +648,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workspaceQuickOpenScopeNoFolder => '工作区没有可浏览的目录。';
 
   @override
+  String get workspaceQuickOpenScopeAutoSave => '改动会立即保存。';
+
+  @override
+  String workspaceQuickOpenScopeSaveFailed(String error) {
+    return '保存搜索范围失败：$error';
+  }
+
+  @override
   String get remoteDirectoryBrowserTitle => '浏览远程目录';
 
   @override

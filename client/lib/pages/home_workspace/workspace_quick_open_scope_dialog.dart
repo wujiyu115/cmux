@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_ui/shared_ui.dart';
@@ -11,38 +13,24 @@ import '../../repositories/session_repository.dart';
 import '../../services/storage/workspace_directory_picker.dart';
 import '../../utils/workspace/workspace_path_picker.dart';
 
-/// Opens the quick-open search-scope editor for [workspace] and persists the
-/// result. Rules are workspace-root-relative; the shared registry re-keys its
-/// index cache on them, so the next Ctrl+P honors the new scope.
+/// Opens the quick-open search-scope editor for [workspace]. Every add /
+/// remove persists immediately through [ChatCubit.updateWorkspaceMetadata] —
+/// closing the dialog never discards a change (the dialog has no save
+/// action). Rules are workspace-root-relative; the shared index registry
+/// re-keys its cache on them, so the next Ctrl+P honors the new scope.
 Future<void> editWorkspaceQuickOpenScope(
   BuildContext context,
   Workspace workspace,
-) async {
-  final next = await showWorkspaceQuickOpenScopeDialog(
-    context,
-    workspace: workspace,
-  );
-  if (next == null || !context.mounted) return;
-  await context.read<ChatCubit>().updateWorkspaceMetadata(
-    context.read<SessionRepository>(),
-    workspace.workspaceId,
-    indexDirRules: next,
-  );
-}
-
-/// Dual-list editor over [Workspace.indexDirs]: excluded directories leave the
-/// Ctrl+P index, restored (included) directories carve subtrees back out of an
-/// exclude. Pops with the next [WorkspaceIndexDirs] on save, `null` on cancel.
-Future<WorkspaceIndexDirs?> showWorkspaceQuickOpenScopeDialog(
-  BuildContext context, {
-  required Workspace workspace,
-}) {
-  return showDialog<WorkspaceIndexDirs>(
+) {
+  return showDialog<void>(
     context: context,
     builder: (_) => _QuickOpenScopeDialog(workspace: workspace),
   );
 }
 
+/// Dual-list editor over [Workspace.indexDirRules]: excluded directories leave
+/// the Ctrl+P index, restored (included) directories carve subtrees back out of
+/// an exclude.
 class _QuickOpenScopeDialog extends StatefulWidget {
   const _QuickOpenScopeDialog({required this.workspace});
 
@@ -69,6 +57,44 @@ class _QuickOpenScopeDialogState extends State<_QuickOpenScopeDialog> {
     super.dispose();
   }
 
+  /// Applies [mutate] to the local lists and persists the result. On a failed
+  /// persist the local lists roll back to their pre-change state, so the rows
+  /// always mirror what actually reached disk. [onPersisted] runs only after a
+  /// successful write (used to clear the add-input after its row is durable).
+  Future<void> _mutate(void Function() mutate, {VoidCallback? onPersisted}) async {
+    final beforeExcluded = List.of(_excluded);
+    final beforeIncluded = List.of(_included);
+    setState(mutate);
+    try {
+      await context.read<ChatCubit>().updateWorkspaceMetadata(
+        context.read<SessionRepository>(),
+        widget.workspace.workspaceId,
+        indexDirRules: WorkspaceIndexDirs(
+          excluded: _excluded,
+          included: _included,
+        ),
+      );
+      onPersisted?.call();
+    } on Object catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _excluded
+          ..clear()
+          ..addAll(beforeExcluded);
+        _included
+          ..clear()
+          ..addAll(beforeIncluded);
+      });
+      AppToast.show(
+        context,
+        message: context.l10n.workspaceQuickOpenScopeSaveFailed(
+          error.toString(),
+        ),
+        variant: TpToastVariant.error,
+      );
+    }
+  }
+
   void _addRule({required bool include}) {
     final controller = include ? _includeController : _excludeController;
     final path = normalizeIndexDirRule(controller.text);
@@ -83,19 +109,23 @@ class _QuickOpenScopeDialogState extends State<_QuickOpenScopeDialog> {
       );
       return;
     }
-    setState(() {
-      (include ? _included : _excluded).add(path);
-      controller.clear();
-    });
+    unawaited(
+      _mutate(
+        () => (include ? _included : _excluded).add(path),
+        onPersisted: controller.clear,
+      ),
+    );
   }
 
   void _removeRule(String path, {required bool include}) {
-    setState(() => (include ? _included : _excluded).remove(path));
+    unawaited(
+      _mutate(() => (include ? _included : _excluded).remove(path)),
+    );
   }
 
-  /// Browses the primary folder's machine and fills the section's input with
-  /// the picked directory's root-relative path (hand-adding stays available —
-  /// browsing a subtree that was never committed to disk also works this way).
+  /// Browses the primary folder's machine and adds the picked directory's
+  /// root-relative path straight to the section's list (typed input stays
+  /// available for subtrees not on disk).
   Future<void> _browse({required bool include}) async {
     final folders = widget.workspace.folders;
     if (folders.isEmpty || folders.first.path.trim().isEmpty) {
@@ -139,13 +169,15 @@ class _QuickOpenScopeDialogState extends State<_QuickOpenScopeDialog> {
       return;
     }
     if (relative.isEmpty || !mounted) return;
-    (include ? _includeController : _excludeController).text = relative;
-  }
-
-  void _save() {
-    Navigator.of(context).pop(
-      WorkspaceIndexDirs(excluded: _excluded, included: _included),
-    );
+    if (_excluded.contains(relative) || _included.contains(relative)) {
+      AppToast.show(
+        context,
+        message: context.l10n.workspaceQuickOpenScopeDuplicate,
+        variant: TpToastVariant.warning,
+      );
+      return;
+    }
+    await _mutate(() => (include ? _included : _excluded).add(relative));
   }
 
   @override
@@ -165,6 +197,13 @@ class _QuickOpenScopeDialogState extends State<_QuickOpenScopeDialog> {
             Text(
               l10n.workspaceQuickOpenScopeSubtitle,
               style: TpTextStyles.of(context).smColored(
+                Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              l10n.workspaceQuickOpenScopeAutoSave,
+              style: TpTextStyles.of(context).xsColored(
                 Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
@@ -189,15 +228,6 @@ class _QuickOpenScopeDialogState extends State<_QuickOpenScopeDialog> {
               onRemove: (path) => _removeRule(path, include: true),
               warningFor: _includeWarning,
             ),
-          ],
-        ),
-        footer: TpDialogActions(
-          children: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(l10n.cancel),
-            ),
-            FilledButton(onPressed: _save, child: Text(l10n.save)),
           ],
         ),
       ),

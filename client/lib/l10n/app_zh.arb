@@ -264,6 +264,15 @@
   "workspaceQuickOpenScopeIncludeMatchesExclude": "与排除目录相同，仍会被排除。",
   "workspaceQuickOpenScopeOutsideRoot": "所选目录不在工作区目录内。",
   "workspaceQuickOpenScopeNoFolder": "工作区没有可浏览的目录。",
+  "workspaceQuickOpenScopeAutoSave": "改动会立即保存。",
+  "workspaceQuickOpenScopeSaveFailed": "保存搜索范围失败：{error}",
+  "@workspaceQuickOpenScopeSaveFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "remoteDirectoryBrowserTitle": "浏览远程目录",
   "remoteDirectoryBrowserUpOneLevel": "上一级",
   "remoteDirectoryBrowserUseThisDirectory": "使用此目录",
