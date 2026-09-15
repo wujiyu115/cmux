@@ -680,6 +680,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workspaceQuickOpenScopeAutoSave => 'Changes save immediately.';
 
   @override
+  String get workspaceQuickOpenScopeExport => 'Export';
+
+  @override
+  String get workspaceQuickOpenScopeImport => 'Import';
+
+  @override
+  String get workspaceQuickOpenScopeExportSuccess => 'Search scope exported.';
+
+  @override
+  String get workspaceQuickOpenScopeExportFailed =>
+      'Couldn\'t export the search scope.';
+
+  @override
+  String get workspaceQuickOpenScopeImportSuccess => 'Search scope imported.';
+
+  @override
+  String get workspaceQuickOpenScopeImportInvalid =>
+      'Not a valid search-scope file.';
+
+  @override
   String workspaceQuickOpenScopeSaveFailed(String error) {
     return 'Couldn\'t save the search scope: $error';
   }

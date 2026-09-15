@@ -651,6 +651,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workspaceQuickOpenScopeAutoSave => '改动会立即保存。';
 
   @override
+  String get workspaceQuickOpenScopeExport => '导出';
+
+  @override
+  String get workspaceQuickOpenScopeImport => '导入';
+
+  @override
+  String get workspaceQuickOpenScopeExportSuccess => '搜索范围已导出。';
+
+  @override
+  String get workspaceQuickOpenScopeExportFailed => '导出搜索范围失败。';
+
+  @override
+  String get workspaceQuickOpenScopeImportSuccess => '搜索范围已导入。';
+
+  @override
+  String get workspaceQuickOpenScopeImportInvalid => '不是有效的搜索范围文件。';
+
+  @override
   String workspaceQuickOpenScopeSaveFailed(String error) {
     return '保存搜索范围失败：$error';
   }

@@ -265,6 +265,12 @@
   "workspaceQuickOpenScopeOutsideRoot": "所选目录不在工作区目录内。",
   "workspaceQuickOpenScopeNoFolder": "工作区没有可浏览的目录。",
   "workspaceQuickOpenScopeAutoSave": "改动会立即保存。",
+  "workspaceQuickOpenScopeExport": "导出",
+  "workspaceQuickOpenScopeImport": "导入",
+  "workspaceQuickOpenScopeExportSuccess": "搜索范围已导出。",
+  "workspaceQuickOpenScopeExportFailed": "导出搜索范围失败。",
+  "workspaceQuickOpenScopeImportSuccess": "搜索范围已导入。",
+  "workspaceQuickOpenScopeImportInvalid": "不是有效的搜索范围文件。",
   "workspaceQuickOpenScopeSaveFailed": "保存搜索范围失败：{error}",
   "@workspaceQuickOpenScopeSaveFailed": {
     "placeholders": {

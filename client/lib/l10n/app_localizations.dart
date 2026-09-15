@@ -1328,6 +1328,42 @@ abstract class AppLocalizations {
   /// **'Changes save immediately.'**
   String get workspaceQuickOpenScopeAutoSave;
 
+  /// No description provided for @workspaceQuickOpenScopeExport.
+  ///
+  /// In en, this message translates to:
+  /// **'Export'**
+  String get workspaceQuickOpenScopeExport;
+
+  /// No description provided for @workspaceQuickOpenScopeImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Import'**
+  String get workspaceQuickOpenScopeImport;
+
+  /// No description provided for @workspaceQuickOpenScopeExportSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Search scope exported.'**
+  String get workspaceQuickOpenScopeExportSuccess;
+
+  /// No description provided for @workspaceQuickOpenScopeExportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t export the search scope.'**
+  String get workspaceQuickOpenScopeExportFailed;
+
+  /// No description provided for @workspaceQuickOpenScopeImportSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Search scope imported.'**
+  String get workspaceQuickOpenScopeImportSuccess;
+
+  /// No description provided for @workspaceQuickOpenScopeImportInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Not a valid search-scope file.'**
+  String get workspaceQuickOpenScopeImportInvalid;
+
   /// No description provided for @workspaceQuickOpenScopeSaveFailed.
   ///
   /// In en, this message translates to:

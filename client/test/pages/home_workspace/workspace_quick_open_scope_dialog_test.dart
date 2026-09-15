@@ -1,5 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,6 +15,51 @@ import 'package:teampilot/models/workspace_folder.dart';
 import 'package:teampilot/models/workspace_index_dirs.dart';
 import 'package:teampilot/pages/home_workspace/workspace_quick_open_scope_dialog.dart';
 import 'package:teampilot/repositories/session_repository.dart';
+import 'package:teampilot/widgets/app_toast/app_toast.dart';
+
+/// Stands in for the plugin's platform channel: [savePath]/[pickPath] are the
+/// "user's" dialog answers and [lastSaveFileName] records the offered name.
+class _FakeFilePicker extends FilePicker {
+  String? savePath;
+  String? pickPath;
+  String? lastSaveFileName;
+
+  @override
+  Future<String?> saveFile({
+    String? dialogTitle,
+    String? fileName,
+    String? initialDirectory,
+    FileType type = FileType.any,
+    List<String>? allowedExtensions,
+    Uint8List? bytes,
+    bool lockParentWindow = false,
+  }) async {
+    lastSaveFileName = fileName;
+    return savePath;
+  }
+
+  @override
+  Future<FilePickerResult?> pickFiles({
+    String? dialogTitle,
+    String? initialDirectory,
+    FileType type = FileType.any,
+    List<String>? allowedExtensions,
+    Function(FilePickerStatus)? onFileLoading,
+    bool allowCompression = true,
+    int compressionQuality = 30,
+    bool allowMultiple = false,
+    bool withData = false,
+    bool withReadStream = false,
+    bool lockParentWindow = false,
+    bool readSequential = false,
+  }) async {
+    final path = pickPath;
+    if (path == null) return null;
+    return FilePickerResult([
+      PlatformFile(name: 'search-scope.json', path: path, size: 0),
+    ]);
+  }
+}
 
 /// Records scope-dialog persists instead of hitting disk, so the dialog
 /// behavior tests run in plain fake async. [failNextWith] makes the next
@@ -117,6 +166,21 @@ void main() {
 
   setUpAll(() async {
     l10n = await AppLocalizations.delegate.load(const Locale('en'));
+  });
+
+  // FilePicker.platform is a global static normally set by plugin
+  // registration; capture-and-restore keeps the fake scoped to one test.
+  FilePicker? originalFilePicker;
+  setUp(() {
+    try {
+      originalFilePicker = FilePicker.platform;
+    } on Object {
+      originalFilePicker = null;
+    }
+  });
+  tearDown(() {
+    final original = originalFilePicker;
+    if (original != null) FilePicker.platform = original;
   });
 
   Finder addField(int index) =>
@@ -278,5 +342,164 @@ void main() {
     expect(find.text('common'), findsOneWidget);
 
     await _closeDialog(tester);
+  });
+
+  // Export/import drive real file IO through dart:io, so they run inside
+  // runAsync (the repo's established pattern) with a short real delay letting
+  // the pending write/read complete before the next frame.
+  testWidgets('export writes the current rules to the picked file', (
+    tester,
+  ) async {
+    await tester.runAsync(() async {
+      final tmp = await Directory.systemTemp.createTemp('scope_export_');
+      addTearDown(() => tmp.deleteSync(recursive: true));
+      final targetPath = '${tmp.path}/search-scope.json';
+      final picker = _FakeFilePicker()..savePath = targetPath;
+      FilePicker.platform = picker;
+
+      await _pumpDialog(
+        tester,
+        initial: WorkspaceIndexDirs(
+          excluded: ['common'],
+          included: ['common/convertor'],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.file_upload_outlined));
+      await tester.pump();
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      await tester.pump();
+
+      final decoded = jsonDecode(await File(targetPath).readAsString());
+      expect(decoded, {
+        'excluded': ['common'],
+        'included': ['common/convertor'],
+      });
+      // No display name set → first folder's basename seeds the default name.
+      expect(picker.lastSaveFileName, 'repo-search-scope.json');
+      expect(
+        find.text(l10n.workspaceQuickOpenScopeExportSuccess),
+        findsOneWidget,
+      );
+      // The toast engine tears its overlay entry down on a real timer (exit
+      // animation + removal delay ≈ 250ms); fake pumps can't advance it inside
+      // runAsync, so wait it out — a stale entry would swallow the next test's
+      // toast into a dead overlay.
+      AppToast.dismiss();
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+      await tester.pump();
+
+      await _closeDialog(tester);
+    });
+  });
+
+  testWidgets('export aborted in the save dialog writes nothing', (
+    tester,
+  ) async {
+    await tester.runAsync(() async {
+      final picker = _FakeFilePicker(); // saveFile answers null (aborted)
+      FilePicker.platform = picker;
+
+      await _pumpDialog(tester, initial: WorkspaceIndexDirs(excluded: ['a']));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.file_upload_outlined));
+      await tester.pump();
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      await tester.pump();
+
+      expect(picker.lastSaveFileName, 'repo-search-scope.json');
+      expect(
+        find.text(l10n.workspaceQuickOpenScopeExportSuccess),
+        findsNothing,
+      );
+
+      await _closeDialog(tester);
+    });
+  });
+
+  testWidgets('import replaces both lists and persists immediately', (
+    tester,
+  ) async {
+    await tester.runAsync(() async {
+      final tmp = await Directory.systemTemp.createTemp('scope_import_');
+      addTearDown(() => tmp.deleteSync(recursive: true));
+      final sourcePath = '${tmp.path}/search-scope.json';
+      File(sourcePath).writeAsStringSync(
+        jsonEncode({
+          'excluded': ['logs', 'build'],
+          'included': ['logs/sub'],
+        }),
+      );
+      final picker = _FakeFilePicker()..pickPath = sourcePath;
+      FilePicker.platform = picker;
+
+      final chat = await _pumpDialog(
+        tester,
+        initial: WorkspaceIndexDirs(excluded: ['common']),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.file_download_outlined));
+      await tester.pump();
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      await tester.pump();
+
+      expect(find.text('logs'), findsOneWidget);
+      expect(find.text('build'), findsOneWidget);
+      expect(find.text('logs/sub'), findsOneWidget);
+      expect(find.text('common'), findsNothing);
+      expect(chat.savedRules, [
+        WorkspaceIndexDirs(excluded: ['logs', 'build'], included: ['logs/sub']),
+      ]);
+      expect(
+        find.text(l10n.workspaceQuickOpenScopeImportSuccess),
+        findsOneWidget,
+      );
+      // Same engine teardown wait as the export test above.
+      AppToast.dismiss();
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+      await tester.pump();
+
+      await _closeDialog(tester);
+    });
+  });
+
+  testWidgets('importing a non-scope file is rejected without persisting', (
+    tester,
+  ) async {
+    await tester.runAsync(() async {
+      final tmp = await Directory.systemTemp.createTemp('scope_import_bad_');
+      addTearDown(() => tmp.deleteSync(recursive: true));
+      final sourcePath = '${tmp.path}/search-scope.json';
+      File(sourcePath).writeAsStringSync('{"keybindings": {}}');
+      final picker = _FakeFilePicker()..pickPath = sourcePath;
+      FilePicker.platform = picker;
+
+      final chat = await _pumpDialog(
+        tester,
+        initial: WorkspaceIndexDirs(excluded: ['common']),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.file_download_outlined));
+      await tester.pump();
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      await tester.pump();
+
+      expect(find.text('common'), findsOneWidget);
+      expect(chat.savedRules, isEmpty);
+      expect(
+        find.text(l10n.workspaceQuickOpenScopeImportInvalid),
+        findsOneWidget,
+      );
+      // Same engine teardown wait as the export test above.
+      AppToast.dismiss();
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+      await tester.pump();
+
+      await _closeDialog(tester);
+    });
   });
 }
