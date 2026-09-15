@@ -7,8 +7,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_ui/shared_ui.dart';
 import 'package:teampilot/widgets/app_toast/app_toast.dart';
 
+import '../../cubits/chat_cubit.dart';
 import '../../cubits/file_tree_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
+import '../../models/workspace_index_dirs.dart';
+import '../../repositories/session_repository.dart';
 import '../../services/editor/file_editor_theme.dart';
 import '../../services/io/runtime_folder_opener.dart';
 import '../../services/io/system_folder_opener.dart';
@@ -34,6 +37,14 @@ abstract final class FileTreeContextMenu {
     final ctx = cubit.fs.pathContext;
     final parentDir = isDirectory ? targetPath : ctx.dirname(targetPath);
     final canPaste = cubit.state.clipboard != null;
+    final mount = cubit.mountFor(targetPath);
+    String? rootRelative;
+    if (mount != null) {
+      rootRelative = mount.filesystem.pathContext.relative(
+        targetPath,
+        from: mount.path,
+      );
+    }
     final specs = <TpActionMenuSpec>[
       TpActionMenuSpec.item(
         value: 'new_file',
@@ -86,6 +97,23 @@ abstract final class FileTreeContextMenu {
         icon: Icons.copy,
         label: l10n.fileTreeCopyPath,
       ),
+      if (rootRelative != null)
+        TpActionMenuSpec.item(
+          value: 'copy_relative_path',
+          icon: Icons.subdirectory_arrow_right_rounded,
+          label: l10n.fileTreeCopyRelativePath,
+        ),
+      if (isDirectory && mount != null)
+        TpActionMenuSpec.item(
+          value: 'search_scope',
+          icon: Icons.manage_search_outlined,
+          label: l10n.fileTreeSearchScope,
+          trailing: Icon(
+            Icons.chevron_right_rounded,
+            size: 16,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
       if (desktopShellActions) ...[
         TpActionMenuSpec.item(
           value: 'file_manager',
@@ -157,6 +185,48 @@ abstract final class FileTreeContextMenu {
         if (!isDirectory) _openFileExternally(targetPath);
       case 'copy_path':
         await Clipboard.setData(ClipboardData(text: targetPath));
+        if (context.mounted) {
+          AppToast.show(
+            context,
+            message: context.l10n.pathCopied(targetPath),
+            variant: TpToastVariant.success,
+          );
+        }
+      case 'copy_relative_path':
+        final relative = rootRelative == '.' ? targetName : rootRelative!;
+        await Clipboard.setData(ClipboardData(text: relative));
+        if (context.mounted) {
+          AppToast.show(
+            context,
+            message: context.l10n.pathCopied(relative),
+            variant: TpToastVariant.success,
+          );
+        }
+      case 'search_scope':
+        final sub = await showTpActionMenuFromSpecsAtTap<String>(
+          context: context,
+          tapDetails: tapDetails,
+          specs: [
+            TpActionMenuSpec.item(
+              value: 'exclude',
+              icon: Icons.visibility_off_outlined,
+              label: l10n.fileTreeSearchScopeExclude,
+            ),
+            TpActionMenuSpec.item(
+              value: 'include',
+              icon: Icons.visibility_outlined,
+              label: l10n.fileTreeSearchScopeInclude,
+            ),
+          ],
+        );
+        if (sub == null || !context.mounted) return;
+        await _applySearchScopeRule(
+          context,
+          cubit: cubit,
+          workspaceId: workspaceId,
+          targetPath: targetPath,
+          include: sub == 'include',
+        );
       case 'file_manager':
         await _openInFileManager(
           targetPath,
@@ -361,6 +431,74 @@ abstract final class FileTreeContextMenu {
       AppToast.show(
         context,
         message: context.l10n.fileTreeOpenInTerminalFailed,
+        variant: TpToastVariant.error,
+      );
+    }
+  }
+
+  /// Adds the workspace-root-relative rule for [targetPath] to the quick-open
+  /// search scope (excluded, or included to carve back under an exclude) and
+  /// persists it immediately — same chain the scope dialog uses.
+  static Future<void> _applySearchScopeRule(
+    BuildContext context, {
+    required FileTreeCubit cubit,
+    required String workspaceId,
+    required String targetPath,
+    required bool include,
+  }) async {
+    final l10n = context.l10n;
+    final mount = cubit.mountFor(targetPath);
+    if (mount == null) return;
+    final ctx = mount.filesystem.pathContext;
+    final rule = normalizeIndexDirRule(
+      ctx.relative(targetPath, from: mount.path),
+    );
+    if (rule.isEmpty) {
+      AppToast.show(
+        context,
+        message: l10n.fileTreeSearchScopeRootNotAllowed,
+        variant: TpToastVariant.warning,
+      );
+      return;
+    }
+
+    final chat = context.read<ChatCubit>();
+    final matches = chat.state.workspaces.where(
+      (w) => w.workspaceId == workspaceId,
+    );
+    if (matches.isEmpty) return;
+    final rules = matches.first.indexDirRules;
+    if (rules.excluded.contains(rule) || rules.included.contains(rule)) {
+      AppToast.show(
+        context,
+        message: l10n.workspaceQuickOpenScopeDuplicate,
+        variant: TpToastVariant.warning,
+      );
+      return;
+    }
+
+    final next = include
+        ? WorkspaceIndexDirs(excluded: rules.excluded, included: [...rules.included, rule])
+        : WorkspaceIndexDirs(excluded: [...rules.excluded, rule], included: rules.included);
+    try {
+      await chat.updateWorkspaceMetadata(
+        context.read<SessionRepository>(),
+        workspaceId,
+        indexDirRules: next,
+      );
+      if (!context.mounted) return;
+      AppToast.show(
+        context,
+        message: include
+            ? l10n.fileTreeSearchScopeIncluded(rule)
+            : l10n.fileTreeSearchScopeExcluded(rule),
+        variant: TpToastVariant.success,
+      );
+    } on Object catch (error) {
+      if (!context.mounted) return;
+      AppToast.show(
+        context,
+        message: l10n.workspaceQuickOpenScopeSaveFailed(error.toString()),
         variant: TpToastVariant.error,
       );
     }

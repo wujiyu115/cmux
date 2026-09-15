@@ -500,6 +500,27 @@
   "fileTreeRenameTitle": "Rename",
   "fileTreeOpenInFileManager": "Reveal in File Manager",
   "fileTreeOpenInTerminal": "Open in Terminal",
+  "fileTreeCopyRelativePath": "Copy relative path",
+  "fileTreeSearchScope": "Search scope",
+  "fileTreeSearchScopeExclude": "Exclude from search scope",
+  "fileTreeSearchScopeInclude": "Add to search scope",
+  "fileTreeSearchScopeRootNotAllowed": "The workspace root itself can't be a search-scope rule.",
+  "fileTreeSearchScopeExcluded": "Excluded from search scope: {path}",
+  "@fileTreeSearchScopeExcluded": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "fileTreeSearchScopeIncluded": "Added to search scope: {path}",
+  "@fileTreeSearchScopeIncluded": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
   "fileTreePasteDone": "Pasted",
   "fileTreeFileCreated": "File created",
   "fileTreeFolderCreated": "Folder created",

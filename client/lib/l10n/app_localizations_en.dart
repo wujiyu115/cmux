@@ -1153,6 +1153,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fileTreeOpenInTerminal => 'Open in Terminal';
 
   @override
+  String get fileTreeCopyRelativePath => 'Copy relative path';
+
+  @override
+  String get fileTreeSearchScope => 'Search scope';
+
+  @override
+  String get fileTreeSearchScopeExclude => 'Exclude from search scope';
+
+  @override
+  String get fileTreeSearchScopeInclude => 'Add to search scope';
+
+  @override
+  String get fileTreeSearchScopeRootNotAllowed =>
+      'The workspace root itself can\'t be a search-scope rule.';
+
+  @override
+  String fileTreeSearchScopeExcluded(String path) {
+    return 'Excluded from search scope: $path';
+  }
+
+  @override
+  String fileTreeSearchScopeIncluded(String path) {
+    return 'Added to search scope: $path';
+  }
+
+  @override
   String get fileTreePasteDone => 'Pasted';
 
   @override

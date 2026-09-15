@@ -466,6 +466,27 @@
   "fileTreeRenameTitle": "重命名",
   "fileTreeOpenInFileManager": "在文件管理器中打开",
   "fileTreeOpenInTerminal": "在终端中打开",
+  "fileTreeCopyRelativePath": "复制相对路径",
+  "fileTreeSearchScope": "搜索范围",
+  "fileTreeSearchScopeExclude": "排除出搜索范围",
+  "fileTreeSearchScopeInclude": "添加到搜索范围",
+  "fileTreeSearchScopeRootNotAllowed": "工作区根目录本身不能作为搜索范围规则。",
+  "fileTreeSearchScopeExcluded": "已排除出搜索范围：{path}",
+  "@fileTreeSearchScopeExcluded": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "fileTreeSearchScopeIncluded": "已添加到搜索范围：{path}",
+  "@fileTreeSearchScopeIncluded": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
   "fileTreePasteDone": "已粘贴",
   "fileTreeFileCreated": "已创建文件",
   "fileTreeFolderCreated": "已创建文件夹",

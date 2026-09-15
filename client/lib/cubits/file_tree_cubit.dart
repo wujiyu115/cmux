@@ -206,6 +206,11 @@ class FileTreeCubit extends Cubit<FileTreeState> {
     return best;
   }
 
+  /// Mount that owns [path] — the deepest workspace-root mount containing it.
+  /// Context-menu actions use it to turn absolute row paths into
+  /// workspace-root-relative values.
+  FileTreeRootMount? mountFor(String path) => _mountFor(path);
+
   bool _mountMapsEqual(
     Map<String, FileTreeRootMount> a,
     Map<String, FileTreeRootMount> b,

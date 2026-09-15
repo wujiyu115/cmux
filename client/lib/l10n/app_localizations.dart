@@ -2198,6 +2198,48 @@ abstract class AppLocalizations {
   /// **'Open in Terminal'**
   String get fileTreeOpenInTerminal;
 
+  /// No description provided for @fileTreeCopyRelativePath.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy relative path'**
+  String get fileTreeCopyRelativePath;
+
+  /// No description provided for @fileTreeSearchScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Search scope'**
+  String get fileTreeSearchScope;
+
+  /// No description provided for @fileTreeSearchScopeExclude.
+  ///
+  /// In en, this message translates to:
+  /// **'Exclude from search scope'**
+  String get fileTreeSearchScopeExclude;
+
+  /// No description provided for @fileTreeSearchScopeInclude.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to search scope'**
+  String get fileTreeSearchScopeInclude;
+
+  /// No description provided for @fileTreeSearchScopeRootNotAllowed.
+  ///
+  /// In en, this message translates to:
+  /// **'The workspace root itself can\'t be a search-scope rule.'**
+  String get fileTreeSearchScopeRootNotAllowed;
+
+  /// No description provided for @fileTreeSearchScopeExcluded.
+  ///
+  /// In en, this message translates to:
+  /// **'Excluded from search scope: {path}'**
+  String fileTreeSearchScopeExcluded(String path);
+
+  /// No description provided for @fileTreeSearchScopeIncluded.
+  ///
+  /// In en, this message translates to:
+  /// **'Added to search scope: {path}'**
+  String fileTreeSearchScopeIncluded(String path);
+
   /// No description provided for @fileTreePasteDone.
   ///
   /// In en, this message translates to:

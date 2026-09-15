@@ -1111,6 +1111,31 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fileTreeOpenInTerminal => '在终端中打开';
 
   @override
+  String get fileTreeCopyRelativePath => '复制相对路径';
+
+  @override
+  String get fileTreeSearchScope => '搜索范围';
+
+  @override
+  String get fileTreeSearchScopeExclude => '排除出搜索范围';
+
+  @override
+  String get fileTreeSearchScopeInclude => '添加到搜索范围';
+
+  @override
+  String get fileTreeSearchScopeRootNotAllowed => '工作区根目录本身不能作为搜索范围规则。';
+
+  @override
+  String fileTreeSearchScopeExcluded(String path) {
+    return '已排除出搜索范围：$path';
+  }
+
+  @override
+  String fileTreeSearchScopeIncluded(String path) {
+    return '已添加到搜索范围：$path';
+  }
+
+  @override
   String get fileTreePasteDone => '已粘贴';
 
   @override
