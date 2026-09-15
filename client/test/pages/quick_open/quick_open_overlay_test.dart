@@ -227,6 +227,39 @@ void main() {
     expect(find.text('docs/main.dart'), findsOneWidget);
   });
 
+  testWidgets('more than 50 matches cap at 50 rows, ranked best-first', (
+    tester,
+  ) async {
+    // Every file ties on score for query 'a' (word-start hit at index 0), so
+    // the tie-break is shorter label then lexicographic: a0..a9 (8 chars)
+    // before a10..a54 (9 chars), dropping the last five of the 55.
+    final fs = InMemoryFilesystem();
+    fs.ensureDir('/repo/f');
+    for (var i = 0; i < 55; i++) {
+      fs.files['/repo/f/a$i.dart'] = 'x';
+    }
+    final result = await _pumpDialog(tester, _overlay(fs));
+
+    await tester.enterText(find.byType(TextField), 'a');
+    await tester.pump(const Duration(milliseconds: 150));
+
+    final list = tester.widget<ListView>(find.byType(ListView));
+    final delegate = list.childrenDelegate as SliverChildBuilderDelegate;
+    expect(delegate.childCount, 50);
+    expect(find.text('a0.dart'), findsOneWidget);
+
+    // Arrow to the last kept row and open it: the 50th-best file survives,
+    // the five worse ones (a50..a54) never enter the list.
+    for (var i = 0; i < 49; i++) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    }
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+
+    expect((result.value! as QuickOpenFileResult).path, '/repo/f/a49.dart');
+  });
+
   testWidgets('no matching files shows the empty state', (tester) async {
     final fs = _fs();
     await _pumpDialog(tester, _overlay(fs));

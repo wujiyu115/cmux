@@ -35,8 +35,49 @@ const int _pathMatchPenalty = 10;
 /// the replacement is one-to-one, so [QuickOpenMatch.indexes] stay valid
 /// against the unnormalized path. Returns `null` when neither matches.
 QuickOpenMatch? quickOpenMatch(QuickOpenFileEntry entry, String lowerQuery) {
+  return quickOpenMatchLowered(
+    entry,
+    lowerQuery,
+    normalizeQuickOpenSeparators(lowerQuery),
+  );
+}
+
+/// Hot-loop prescreen over large indexes: the exact score [quickOpenMatch]
+/// would produce, without allocating highlight indexes. [lowerQuery] is the
+/// plain lowercase query and [lowerQueryPath] its separator-normalized form —
+/// both computed once per keystroke by the caller. Null when neither the
+/// basename nor the path can match.
+int? quickOpenMatchScore(
+  QuickOpenFileEntry entry,
+  String lowerQuery,
+  String lowerQueryPath,
+) {
   if (lowerQuery.isEmpty) return null;
-  final nameMatch = fuzzyMatch(entry.name, lowerQuery);
+  final nameScore = fuzzyMatchScoreLowered(
+    entry.name,
+    entry.lowerName,
+    lowerQuery,
+  );
+  if (nameScore != null) return nameScore;
+  final pathScore = fuzzyMatchScoreLowered(
+    entry.relativePath,
+    entry.lowerRelativePath,
+    lowerQueryPath,
+  );
+  if (pathScore == null) return null;
+  return pathScore - _pathMatchPenalty;
+}
+
+/// Full match with highlight indexes — spend only on the rows that survived
+/// [quickOpenMatchScore]; takes the same precomputed query forms and produces
+/// the same score.
+QuickOpenMatch? quickOpenMatchLowered(
+  QuickOpenFileEntry entry,
+  String lowerQuery,
+  String lowerQueryPath,
+) {
+  if (lowerQuery.isEmpty) return null;
+  final nameMatch = fuzzyMatchLowered(entry.name, entry.lowerName, lowerQuery);
   if (nameMatch != null) {
     return QuickOpenMatch(
       score: nameMatch.score,
@@ -44,9 +85,10 @@ QuickOpenMatch? quickOpenMatch(QuickOpenFileEntry entry, String lowerQuery) {
       indexes: nameMatch.indexes,
     );
   }
-  final pathMatch = fuzzyMatch(
-    _normalizeSeparators(entry.relativePath),
-    _normalizeSeparators(lowerQuery),
+  final pathMatch = fuzzyMatchLowered(
+    entry.relativePath,
+    entry.lowerRelativePath,
+    lowerQueryPath,
   );
   if (pathMatch == null) return null;
   return QuickOpenMatch(
@@ -55,5 +97,3 @@ QuickOpenMatch? quickOpenMatch(QuickOpenFileEntry entry, String lowerQuery) {
     indexes: pathMatch.indexes,
   );
 }
-
-String _normalizeSeparators(String value) => value.replaceAll(r'\', '/');

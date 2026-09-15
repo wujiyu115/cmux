@@ -188,6 +188,23 @@ void main() {
     expect(entry.name, 'main.dart');
   });
 
+  test('entry lowercase cache: lowerName and normalized lowerRelativePath', () {
+    final entry = QuickOpenFileEntry(
+      path: r'C:\repo\Docs\README.MD',
+      name: 'README.MD',
+      relativePath: r'Docs\README.MD',
+    );
+    expect(entry.lowerName, 'readme.md');
+    expect(entry.lowerRelativePath, 'docs/readme.md');
+    // Originals are untouched.
+    expect(entry.name, 'README.MD');
+    expect(entry.relativePath, r'Docs\README.MD');
+  });
+
+  test('default maxFiles is 200000', () {
+    expect(QuickOpenIndexRegistry().maxFiles, 200000);
+  });
+
   test('cap: index truncated beyond maxFiles', () async {
     for (var i = 0; i < 10; i++) {
       fs.files['/repo/file$i.txt'] = 'x';
@@ -416,6 +433,23 @@ void main() {
       final index = await registry.load(fs, '/repo', maxFiles: 5);
       expect(index.files, hasLength(5));
       expect(index.truncated, isTrue);
+    });
+
+    test('git listing tolerates stdout without a trailing NUL', () async {
+      final runner = _FakeGitRunner(
+        result: const GitCommandResult(
+          exitCode: 0,
+          stdout: 'lib/main.dart\x00README.md',
+          stderr: '',
+        ),
+      );
+      final registry = QuickOpenIndexRegistry(gitRunner: runner);
+      final index = await registry.load(fs, '/repo');
+      expect(index.files.map((e) => e.relativePath).toList(), [
+        'README.md',
+        'lib/main.dart',
+      ]);
+      expect(index.truncated, isFalse);
     });
 
     test(

@@ -15,6 +15,7 @@ import '../../services/io/filesystem.dart';
 import '../../services/quick_open/quick_open_index.dart';
 import '../../services/quick_open/quick_open_matcher.dart';
 import '../../services/quick_open/quick_open_mru_repository.dart';
+import '../../services/quick_open/top_scored.dart';
 import '../../services/storage/app_storage.dart';
 import '../../services/workbench/workbench_editor_opener.dart';
 import '../../utils/commands/fuzzy_match.dart';
@@ -177,18 +178,29 @@ class _QuickOpenRow {
 
   bool get isSession => session != null;
 
-  /// Single label for scoring / sorting regardless of row kind.
-  String get sortLabel => isSession ? label! : entry!.name;
-
   List<int> matchedIndexesFor(QuickOpenMatchTarget target) =>
       match?.target == target ? match!.indexes : const [];
 }
 
-class _ScoredRow {
-  const _ScoredRow(this.row, this.score);
+/// Prescreen payload for the bounded top-N scan: either a fully matched
+/// session (they are few, so they match up front) or a file entry still
+/// awaiting its full match for highlighting.
+sealed class _QuickOpenCandidate {
+  const _QuickOpenCandidate();
+}
 
-  final _QuickOpenRow row;
-  final int score;
+class _SessionCandidate extends _QuickOpenCandidate {
+  const _SessionCandidate(this.session, this.title, this.match);
+
+  final AppSession session;
+  final String title;
+  final FuzzyMatch match;
+}
+
+class _FileCandidate extends _QuickOpenCandidate {
+  const _FileCandidate(this.entry);
+
+  final QuickOpenFileEntry entry;
 }
 
 class _QuickOpenOverlayState extends State<QuickOpenOverlay> {
@@ -322,6 +334,11 @@ class _QuickOpenOverlayState extends State<QuickOpenOverlay> {
   /// Empty query: recent sessions first, then recently opened files. Query:
   /// sessions + files fuzzy-matched and ranked together (sessions compete on
   /// title, files on basename then path).
+  ///
+  /// Files are prescreened with the allocation-free score match; only the
+  /// rows that survive the bounded top-N get a full match for highlighting —
+  /// the per-keystroke scan over large indexes allocates nothing for rejected
+  /// candidates.
   List<_QuickOpenRow> _computeRows() {
     final query = _query.trim();
     if (query.isEmpty) {
@@ -337,31 +354,44 @@ class _QuickOpenOverlayState extends State<QuickOpenOverlay> {
       ];
     }
     final lowerQuery = query.toLowerCase();
-    final scored = <_ScoredRow>[];
+    final lowerQueryPath = normalizeQuickOpenSeparators(lowerQuery);
+    final top = TopScored<_QuickOpenCandidate>(capacity: _maxResultRows);
     for (final session in widget.sessions) {
       final title = session.resolveDisplayTitle(widget.emptyTitleFallback);
       final match = fuzzyMatch(title, lowerQuery);
       if (match == null) continue;
-      scored.add(
-        _ScoredRow(
-          _QuickOpenRow.session(session, title, match.indexes),
-          match.score,
-        ),
-      );
+      top.add(_SessionCandidate(session, title, match), match.score, title);
     }
     for (final entry in _index.files) {
-      final match = quickOpenMatch(entry, lowerQuery);
-      if (match == null) continue;
-      scored.add(_ScoredRow(_QuickOpenRow.file(entry, match), match.score));
+      final score = quickOpenMatchScore(entry, lowerQuery, lowerQueryPath);
+      if (score == null) continue;
+      if (!top.wouldAccept(score, entry.name)) continue;
+      top.add(_FileCandidate(entry), score, entry.name);
     }
-    scored.sort((a, b) {
-      if (a.score != b.score) return b.score.compareTo(a.score);
-      final aLen = a.row.sortLabel.length;
-      final bLen = b.row.sortLabel.length;
-      if (aLen != bLen) return aLen.compareTo(bLen);
-      return a.row.sortLabel.compareTo(b.row.sortLabel);
-    });
-    return [for (final s in scored.take(_maxResultRows)) s.row];
+    final rows = <_QuickOpenRow>[];
+    for (final candidate in top.toSortedList()) {
+      switch (candidate) {
+        case _SessionCandidate():
+          rows.add(
+            _QuickOpenRow.session(
+              candidate.session,
+              candidate.title,
+              candidate.match.indexes,
+            ),
+          );
+        case _FileCandidate():
+          final match = quickOpenMatchLowered(
+            candidate.entry,
+            lowerQuery,
+            lowerQueryPath,
+          );
+          // The prescreen already proved a match; null is unreachable.
+          if (match != null) {
+            rows.add(_QuickOpenRow.file(candidate.entry, match));
+          }
+      }
+    }
+    return rows;
   }
 
   void _onQueryChanged(String value) {

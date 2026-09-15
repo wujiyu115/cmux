@@ -11,16 +11,33 @@ import '../io/filesystem.dart';
 /// [relativePath] from the workspace root (result subtitle).
 @immutable
 class QuickOpenFileEntry {
-  const QuickOpenFileEntry({
+  QuickOpenFileEntry({
     required this.path,
     required this.name,
     required this.relativePath,
-  });
+  }) : lowerName = name.toLowerCase(),
+       lowerRelativePath = normalizeQuickOpenSeparators(
+         relativePath.toLowerCase(),
+       );
 
   final String path;
   final String name;
   final String relativePath;
+
+  /// Lowercase [name], computed once per entry and cached — the hot
+  /// per-keystroke match loop must not re-lowercase the whole index.
+  final String lowerName;
+
+  /// Lowercase [relativePath] with separators normalized to `/` — exactly
+  /// what the path-fallback match runs against.
+  final String lowerRelativePath;
 }
+
+/// Normalizes `\` separators to `/` (one-to-one, so match indexes stay valid
+/// against the original string) — shared by the entry lowercase cache above
+/// and the query forms the caller precomputes once per keystroke.
+String normalizeQuickOpenSeparators(String value) =>
+    value.contains(r'\') ? value.replaceAll(r'\', '/') : value;
 
 /// A snapshot of the workspace's openable files.
 @immutable
@@ -64,7 +81,7 @@ class QuickOpenIndexRegistry {
   QuickOpenIndexRegistry({
     QuickOpenLister? lister,
     this.gitRunner,
-    this.maxFiles = 50000,
+    this.maxFiles = 200000,
   }) : _listerOverride = lister;
 
   final QuickOpenLister? _listerOverride;
@@ -283,22 +300,32 @@ class QuickOpenIndexRegistry {
     final ctx = fs.pathContext;
     final files = <QuickOpenFileEntry>[];
     var truncated = false;
-    for (final raw in result.stdout.split('\x00')) {
-      if (raw.isEmpty) continue;
-      // git always prints POSIX separators; the recursive fallback yields the
-      // backend's native ones — normalize so both sources feed identical paths.
-      final relative = ctx.joinAll(raw.split('/'));
-      files.add(
-        QuickOpenFileEntry(
-          path: ctx.join(root, relative),
-          name: ctx.basename(relative),
-          relativePath: relative,
-        ),
-      );
-      if (files.length >= maxFiles) {
-        truncated = true;
-        break;
+    // Manual NUL-split with an early exit: a monorepo listing can dwarf the
+    // cap, and `split` would materialize every filename before the break.
+    var cursor = 0;
+    while (true) {
+      final end = result.stdout.indexOf('\x00', cursor);
+      final raw = end < 0
+          ? result.stdout.substring(cursor)
+          : result.stdout.substring(cursor, end);
+      if (raw.isNotEmpty) {
+        // git always prints POSIX separators; the recursive fallback yields the
+        // backend's native ones — normalize so both sources feed identical paths.
+        final relative = ctx.joinAll(raw.split('/'));
+        files.add(
+          QuickOpenFileEntry(
+            path: ctx.join(root, relative),
+            name: ctx.basename(relative),
+            relativePath: relative,
+          ),
+        );
+        if (files.length >= maxFiles) {
+          truncated = true;
+          break;
+        }
       }
+      if (end < 0) break;
+      cursor = end + 1;
     }
     files.sort((a, b) => a.relativePath.compareTo(b.relativePath));
     return QuickOpenIndex(files: files, truncated: truncated);

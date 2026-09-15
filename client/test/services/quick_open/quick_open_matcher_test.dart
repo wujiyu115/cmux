@@ -63,4 +63,73 @@ void main() {
     expect(pathHit.target, QuickOpenMatchTarget.relativePath);
     expect(nameHit.score, greaterThan(pathHit.score));
   });
+
+  group('prescreen (quickOpenMatchScore / quickOpenMatchLowered)', () {
+    final entries = [
+      _entry('read/read.dart'),
+      _entry('lib/main.dart'),
+      _entry('docs/session.dart'),
+      _entry('x/dread.dart'),
+      QuickOpenFileEntry(
+        path: r'C:\repo\lib\main.dart',
+        name: 'main.dart',
+        relativePath: r'lib\main.dart',
+      ),
+    ];
+    final queries = [
+      'read',
+      'libmain',
+      'lib/main',
+      'docsses',
+      'dread',
+      'zzz',
+      '',
+    ];
+
+    test('the prescreen score equals the full match score', () {
+      for (final entry in entries) {
+        for (final query in queries) {
+          final full = quickOpenMatch(entry, query);
+          final score = quickOpenMatchScore(
+            entry,
+            query,
+            normalizeQuickOpenSeparators(query),
+          );
+          expect(
+            score,
+            full?.score,
+            reason: '${entry.relativePath} vs "$query"',
+          );
+        }
+      }
+    });
+
+    test('quickOpenMatchLowered reproduces quickOpenMatch', () {
+      for (final entry in entries) {
+        for (final query in queries) {
+          final full = quickOpenMatch(entry, query);
+          final lowered = quickOpenMatchLowered(
+            entry,
+            query,
+            normalizeQuickOpenSeparators(query),
+          );
+          expect(
+            lowered?.score,
+            full?.score,
+            reason: '${entry.relativePath} vs "$query"',
+          );
+          expect(
+            lowered?.target,
+            full?.target,
+            reason: '${entry.relativePath} vs "$query"',
+          );
+          expect(
+            lowered?.indexes,
+            full?.indexes,
+            reason: '${entry.relativePath} vs "$query"',
+          );
+        }
+      }
+    });
+  });
 }

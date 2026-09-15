@@ -36,4 +36,58 @@ void main() {
       expect(match.score, 0);
     });
   });
+
+  group('lowered and score-only variants', () {
+    final targets = [
+      'main_file_search.dart',
+      'Terminal',
+      'xfile_search',
+      'xxbcyy',
+      r'lib\main.dart',
+      'readME',
+    ];
+    final queries = ['mfs', 'trm', 'fs', 'bc', 'lib/main', 'readme', 'zzz', ''];
+
+    test('fuzzyMatchLowered reproduces fuzzyMatch (score and indexes)', () {
+      for (final target in targets) {
+        for (final query in queries) {
+          final base = fuzzyMatch(target, query);
+          final lowered = fuzzyMatchLowered(
+            target,
+            target.toLowerCase(),
+            query,
+          );
+          expect(lowered?.score, base?.score, reason: '$target vs "$query"');
+          expect(lowered?.indexes, base?.indexes, reason: '$target vs "$query"');
+        }
+      }
+    });
+
+    test('fuzzyMatchScoreLowered reproduces the fuzzyMatch score', () {
+      for (final target in targets) {
+        for (final query in queries) {
+          final base = fuzzyMatch(target, query);
+          expect(
+            fuzzyMatchScoreLowered(target, target.toLowerCase(), query),
+            base?.score,
+            reason: '$target vs "$query"',
+          );
+        }
+      }
+    });
+
+    test('a caller-supplied lowerTarget may be pre-normalized', () {
+      // Path matching normalizes separators before matching; the lowered
+      // variants must not care where that normalization happened.
+      final target = r'lib\main.dart';
+      expect(
+        fuzzyMatchLowered(target, 'lib/main.dart', 'lib/main')?.indexes,
+        [0, 1, 2, 3, 4, 5, 6, 7],
+      );
+      expect(
+        fuzzyMatchScoreLowered(target, 'lib/main.dart', 'lib/main'),
+        fuzzyMatchLowered(target, 'lib/main.dart', 'lib/main')?.score,
+      );
+    });
+  });
 }
