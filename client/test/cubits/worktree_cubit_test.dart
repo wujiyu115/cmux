@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:teampilot/cubits/worktree_cubit.dart';
 import 'package:teampilot/models/git_worktree.dart';
@@ -59,13 +61,27 @@ class _DelayedPrefsStore extends WorktreeUiPrefsStore {
   }
 }
 
-GitWorktree _wt(String p, {bool main = false}) => GitWorktree(
-  path: p,
-  branch: 'refs/heads/x',
-  head: 'h',
-  isBare: false,
-  isMainWorktree: main,
-);
+class _GatedLister implements WorktreeLister {
+  var calls = 0;
+  var gate = Completer<void>();
+  List<GitWorktree> worktrees = const [];
+
+  @override
+  Future<List<GitWorktree>> list(String repoPath) async {
+    calls++;
+    await gate.future;
+    return worktrees;
+  }
+}
+
+GitWorktree _wt(String p, {bool main = false, String branch = 'refs/heads/x'}) =>
+    GitWorktree(
+      path: p,
+      branch: branch,
+      head: 'h',
+      isBare: false,
+      isMainWorktree: main,
+    );
 
 void main() {
   test('load without lister throws StateError', () {
@@ -367,6 +383,131 @@ void main() {
       expect(cubit.state.currentWorktreePath, '/wt/a');
     },
   );
+
+  test(
+    'refresh re-lists past the snapshot cache after a disk-side branch switch',
+    () async {
+      var mainBranch = 'refs/heads/old';
+      final lister = _CountingLister(
+        (_) => [
+          _wt('/repo', main: true, branch: mainBranch),
+          _wt('/wt/a', branch: 'refs/heads/dev'),
+        ],
+      );
+      final store = WorkspaceWorktreeStore();
+      final cubit = WorktreeCubit(
+        lister: lister,
+        workspaceId: 'w1',
+        worktreeStore: store,
+      );
+      await cubit.load('/repo');
+      expect(lister.calls, 1);
+      expect(cubit.state.worktrees.first.shortBranch, 'old');
+
+      mainBranch = 'refs/heads/new';
+      await cubit.load('/repo'); // snapshot cache hit — no re-list
+      expect(lister.calls, 1);
+      expect(cubit.state.worktrees.first.shortBranch, 'old');
+
+      await cubit.refresh();
+      expect(lister.calls, 2);
+      expect(cubit.state.worktrees.first.shortBranch, 'new');
+      // The snapshot cache is refreshed too, so a later reopen sees the new
+      // branch without another spawn.
+      expect(store.peek('w1', '/repo')!.worktrees.first.shortBranch, 'new');
+      await cubit.close();
+    },
+  );
+
+  test(
+    'refresh coalesces a burst into one in-flight listing plus one trailing',
+    () async {
+      final lister = _GatedLister()
+        ..worktrees = [_wt('/repo', main: true), _wt('/wt/a')];
+      lister.gate.complete();
+      final cubit = WorktreeCubit(lister: lister);
+      await cubit.load('/repo');
+      expect(lister.calls, 1);
+
+      lister.gate = Completer<void>();
+      final first = cubit.refresh();
+      final second = cubit.refresh();
+      await Future<void>.delayed(Duration.zero);
+      // Only the first refresh spawned; the second is queued, not racing.
+      expect(lister.calls, 2);
+
+      lister.gate.complete();
+      await Future.wait([first, second]);
+      // One trailing run catches up — not a listing per burst call.
+      expect(lister.calls, 3);
+      await cubit.close();
+    },
+  );
+
+  test('refresh keeps the previous list when the listing fails', () async {
+    var fail = false;
+    final lister = _CountingLister((_) {
+      if (fail) throw StateError('listing failed');
+      return [_wt('/repo', main: true), _wt('/wt/a')];
+    });
+    final cubit = WorktreeCubit(lister: lister);
+    await cubit.load('/repo');
+
+    fail = true;
+    await cubit.refresh();
+    expect(cubit.state.worktrees, hasLength(2));
+    expect(cubit.state.loading, isFalse);
+    await cubit.close();
+  });
+
+  test('warm refresh does not flash the loading skeleton', () async {
+    final lister = _GatedLister()
+      ..worktrees = [_wt('/repo', main: true), _wt('/wt/a')];
+    lister.gate.complete();
+    final cubit = WorktreeCubit(lister: lister);
+    await cubit.load('/repo');
+
+    lister.gate = Completer<void>();
+    final states = <WorktreeState>[];
+    final sub = cubit.stream.listen(states.add);
+    final done = cubit.refresh();
+    await Future<void>.delayed(Duration.zero);
+    lister.gate.complete();
+    await done;
+    // Broadcast delivery lands a hop after refresh() resolves; yield before
+    // cancelling so the listener sees the final state.
+    await Future<void>.delayed(Duration.zero);
+    await sub.cancel();
+
+    expect(states, isNotEmpty);
+    expect(states.where((s) => s.loading), isEmpty);
+    await cubit.close();
+  });
+
+  test('refresh is skipped while the initial load is still in flight', () async {
+    final lister = _GatedLister()
+      ..worktrees = [_wt('/repo', main: true), _wt('/wt/a')];
+    final cubit = WorktreeCubit(lister: lister);
+    final initial = cubit.load('/repo');
+    await Future<void>.delayed(Duration.zero);
+
+    await cubit.refresh(); // no-op: the initial load publishes fresher data
+    expect(lister.calls, 1);
+
+    lister.gate.complete();
+    await initial;
+    expect(lister.calls, 1);
+    expect(cubit.state.worktrees, hasLength(2));
+    await cubit.close();
+  });
+
+  test('refresh on a cubit with no project is a no-op', () async {
+    final lister = _CountingLister((_) => const []);
+    final cubit = WorktreeCubit(lister: lister);
+    await cubit.refresh();
+    expect(lister.calls, 0);
+    await cubit.close();
+  });
 }
 
 class _RepoDelayedLister implements WorktreeLister {

@@ -7,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../cubits/file_tree_cubit.dart';
 import '../../cubits/file_tree_root_mount.dart';
+import '../../cubits/worktree_cubit.dart';
 import '../../services/file_tree/workspace_file_tree_store.dart';
 import '../../services/git/git_repo_store.dart';
 import '../../services/io/workspace_fs_watcher.dart';
@@ -401,6 +402,7 @@ class _RightToolsLifecycleHostState extends State<RightToolsLifecycleHost> {
 
     if (needsFileTree) _warmFileTree();
     if (needsGit) _warmGit();
+    _refreshWorktrees();
 
     if (widget.preferences.needsDiskSideEffects) {
       _fsWatcher?.resume();
@@ -416,6 +418,7 @@ class _RightToolsLifecycleHostState extends State<RightToolsLifecycleHost> {
     if (widget.preferences.gitVisible) {
       _warmGit();
     }
+    _refreshWorktrees();
   }
 
   void _onDiskPoll() {
@@ -425,6 +428,7 @@ class _RightToolsLifecycleHostState extends State<RightToolsLifecycleHost> {
     if (widget.preferences.gitVisible) {
       _warmGit();
     }
+    _refreshWorktrees();
   }
 
   void _refreshFileTree(Set<String> changedDirs) {
@@ -458,6 +462,20 @@ class _RightToolsLifecycleHostState extends State<RightToolsLifecycleHost> {
     final tools = _scope?.tools?.context;
     if (tools == null) return;
     context.read<GitRepoStore>().refreshAll(_scope!.roots, workContext: tools);
+  }
+
+  /// The worktree breadcrumb above the tool tabs shows live branch names; a
+  /// `git checkout` in the terminal only surfaces via a forced re-list.
+  void _refreshWorktrees() {
+    WorktreeCubit? cubit;
+    try {
+      cubit = context.read<WorktreeCubit>();
+    } on Object {
+      // [WorktreeCubit] lives under the split pane, not above every
+      // right-tools host.
+      return;
+    }
+    unawaited(cubit.refresh());
   }
 
   void _pokeOnTurnEnd() => _fsWatcher?.poke();

@@ -157,30 +157,7 @@ class _RightToolsToolViewsState extends State<RightToolsToolViews> {
       views: _cachedViews!,
       scopeId: widget.toolsScopeId,
     );
-    final branchLabel = _optionalWorktreeBranch(context);
-    if (branchLabel == null) return panel;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _WorktreeBreadcrumb(branch: branchLabel),
-        Expanded(child: panel),
-      ],
-    );
-  }
-
-  String? _optionalWorktreeBranch(BuildContext context) {
-    try {
-      final state = context.read<WorktreeCubit>().state;
-      if (!state.hasMultipleWorktrees) return null;
-      for (final w in state.worktrees) {
-        if (workspacePathsEqual(w.path, state.currentWorktreePath)) {
-          return w.shortBranch;
-        }
-      }
-    } on Object {
-      // [WorktreeCubit] lives under the split pane, not above the right tools host.
-    }
-    return null;
+    return _WorktreeBranchBar(panel: panel);
   }
 
   List<ToolView> _buildViews(BuildContext context) {
@@ -216,6 +193,58 @@ class _RightToolsToolViewsState extends State<RightToolsToolViews> {
     }
 
     return views;
+  }
+}
+
+/// Current-worktree branch label above the tool tabs. Subscribes to
+/// [WorktreeCubit] itself: the tool views are cached, so the outer build does
+/// not re-run when the worktree list changes (e.g. after `git checkout` in
+/// the terminal) — only this label needs to repaint.
+class _WorktreeBranchBar extends StatelessWidget {
+  const _WorktreeBranchBar({required this.panel});
+
+  final Widget panel;
+
+  @override
+  Widget build(BuildContext context) {
+    final cubit = _maybeWorktreeCubit(context);
+    if (cubit == null) return panel;
+    return BlocBuilder<WorktreeCubit, WorktreeState>(
+      bloc: cubit,
+      buildWhen: (previous, next) =>
+          _currentBranch(previous) != _currentBranch(next),
+      builder: (context, state) {
+        final branch = _currentBranch(state);
+        if (branch == null) return panel;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _WorktreeBreadcrumb(branch: branch),
+            Expanded(child: panel),
+          ],
+        );
+      },
+    );
+  }
+
+  static WorktreeCubit? _maybeWorktreeCubit(BuildContext context) {
+    try {
+      return context.read<WorktreeCubit>();
+    } on Object {
+      // [WorktreeCubit] lives under the split pane, not above the right
+      // tools host.
+      return null;
+    }
+  }
+
+  static String? _currentBranch(WorktreeState state) {
+    if (!state.hasMultipleWorktrees) return null;
+    for (final w in state.worktrees) {
+      if (workspacePathsEqual(w.path, state.currentWorktreePath)) {
+        return w.shortBranch;
+      }
+    }
+    return null;
   }
 }
 

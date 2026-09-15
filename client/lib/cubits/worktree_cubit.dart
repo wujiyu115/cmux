@@ -168,6 +168,11 @@ class WorktreeCubit extends Cubit<WorktreeState> {
   bool _hydrated = false;
   int _loadGeneration = 0;
 
+  /// True while a [refresh] chain is executing; a concurrent call sets
+  /// [_refreshQueued] so exactly one trailing run catches up afterward.
+  bool _refreshInFlight = false;
+  bool _refreshQueued = false;
+
   /// Repo paths that have completed at least one [load] in this cubit (including
   /// empty / non-git results). Used so landing [selectProject] can skip a
   /// duplicate probe for the already-active project.
@@ -228,7 +233,13 @@ class WorktreeCubit extends Cubit<WorktreeState> {
   ///
   /// When [WorkspaceWorktreeStore] already has a snapshot for this repo
   /// (including an empty non-git result), skips spawning `git worktree list`.
-  Future<void> load(String repoPath, {String? preferCurrentPath}) async {
+  /// [force] bypasses that snapshot so disk-side changes (e.g. a `git
+  /// checkout` run in the terminal) become visible.
+  Future<void> load(
+    String repoPath, {
+    String? preferCurrentPath,
+    bool force = false,
+  }) async {
     final lister = _lister;
     if (lister == null) {
       throw StateError(
@@ -239,12 +250,18 @@ class WorktreeCubit extends Cubit<WorktreeState> {
     final generation = ++_loadGeneration;
     final requestedRepo = normalizeWorkspacePath(repoPath.trim());
 
-    emit(state.copyWith(repoPath: requestedRepo, loading: true));
+    // Only the first load for a repo paints the skeleton; reloading a repo
+    // this cubit already listed keeps the previous list on screen (no
+    // indeterminate flash while a background refresh runs).
+    if (!_listedRepos.contains(requestedRepo) ||
+        !workspacePathsEqual(state.repoPath, requestedRepo)) {
+      emit(state.copyWith(repoPath: requestedRepo, loading: true));
+    }
 
     final hydrating = !_hydrated && workspaceId.isNotEmpty;
-    final cached = workspaceId.isNotEmpty
-        ? _worktreeStore?.peek(workspaceId, requestedRepo)
-        : null;
+    final cached = force || workspaceId.isEmpty
+        ? null
+        : _worktreeStore?.peek(workspaceId, requestedRepo);
     final prefFuture = hydrating
         ? _prefsStore.prefsFor(workspaceId)
         : Future<WorktreeUiPref?>.value(null);
@@ -288,6 +305,42 @@ class WorktreeCubit extends Cubit<WorktreeState> {
     if (workspaceId.isNotEmpty) {
       // Always remember, including empty lists for non-git folders.
       _worktreeStore?.remember(workspaceId, requestedRepo, list);
+    }
+  }
+
+  /// Re-runs `git worktree list` for the current project, bypassing the
+  /// [WorkspaceWorktreeStore] snapshot: disk-side changes (e.g. a `git
+  /// checkout` run in the terminal) are otherwise invisible until the next
+  /// target rebind or app restart. Coalesced — at most one listing runs at a
+  /// time, with one trailing run if calls arrived while busy. A failed listing
+  /// keeps the previous list.
+  Future<void> refresh() async {
+    if (_refreshInFlight) {
+      _refreshQueued = true;
+      return;
+    }
+    _refreshInFlight = true;
+    try {
+      await _runRefresh();
+    } finally {
+      _refreshInFlight = false;
+      if (_refreshQueued) {
+        _refreshQueued = false;
+        await refresh();
+      }
+    }
+  }
+
+  Future<void> _runRefresh() async {
+    final lister = _lister;
+    final repo = state.repoPath;
+    // An in-flight initial load publishes fresher data than a forced re-list
+    // would; skipping also avoids a duplicate `git worktree list`.
+    if (lister == null || repo.isEmpty || state.loading) return;
+    try {
+      await load(repo, force: true);
+    } on Object {
+      // Background refresh — transient failures keep the previous list.
     }
   }
 
