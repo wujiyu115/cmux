@@ -77,4 +77,23 @@ void main() {
     expect(tabs[1].title, 'r2');
     expect(tabs[1].working, isFalse);
   });
+
+  test('file and diff tabs carry their path for reveal-in-file-tree', () {
+    final tabs = projectWorkbenchTabs(
+      tabOrder: [
+        WorkbenchTabId.file('/tmp/a.dart'),
+        WorkbenchTabId.diff('/tmp/b.dart', source: WorkbenchDiffSource.staged),
+        WorkbenchTabId.session('s1'),
+      ],
+      sessionTitles: const {'s1': 'One'},
+      sessionWorking: const {},
+      sessionCli: const {},
+      editorBucket: const WorkspaceEditorBucket(),
+      previewTabIds: const {},
+    );
+
+    expect(tabs[0].filePath, '/tmp/a.dart');
+    expect(tabs[1].filePath, '/tmp/b.dart');
+    expect(tabs[2].filePath, isNull);
+  });
 }

@@ -10,6 +10,7 @@ class TabInfo {
     required this.title,
     this.sessionId,
     this.shellSurfaceId,
+    this.filePath,
     this.working = false,
     this.icon = Icons.terminal_rounded,
     this.cli,
@@ -28,6 +29,9 @@ class TabInfo {
   /// Shell-terminal surface this tab shows; enables rename + live title from
   /// the [WorkspaceTerminalRegistry] group that owns the surface.
   final String? shellSurfaceId;
+
+  /// File path behind an editor tab; enables "reveal in file tree".
+  final String? filePath;
 
   /// Session has a member in a turn → show the working spinner left of title.
   final bool working;

@@ -18,6 +18,7 @@ class WorkspaceShell extends StatelessWidget {
     required this.child,
     this.showHeader = true,
     this.tabs = const [],
+    this.workspaceId,
     this.activeTabIndex = 0,
     this.onTabSelected,
     this.onTabClosed,
@@ -42,6 +43,9 @@ class WorkspaceShell extends StatelessWidget {
   final Widget child;
   final bool showHeader;
   final List<TabInfo> tabs;
+
+  /// Workspace the tabs belong to; file tabs use it for "reveal in file tree".
+  final String? workspaceId;
   final int activeTabIndex;
   final ValueChanged<int>? onTabSelected;
   final ValueChanged<int>? onTabClosed;
@@ -127,6 +131,7 @@ class WorkspaceShell extends StatelessWidget {
         if (tabs.isNotEmpty || showNewChatButton)
           WorkspaceShellTabRow(
             tabs: tabs,
+            workspaceId: workspaceId,
             activeIndex: activeTabIndex,
             onTabSelected: onTabSelected,
             onTabClosed: onTabClosed,

@@ -38,12 +38,14 @@ List<TabInfo> projectWorkbenchTabs({
         WorkbenchTabKind.file => TabInfo(
           id: tab.id,
           title: _fileTitle(tab.id, editorBucket),
+          filePath: tab.id,
           icon: Icons.description_outlined,
           preview: previewTabIds.contains(tab),
         ),
         WorkbenchTabKind.diff => TabInfo(
           id: tab.id,
           title: _diffTitle(tab, editorBucket),
+          filePath: tab.diffAbsolutePath,
           icon: Icons.difference_outlined,
           preview: previewTabIds.contains(tab),
         ),

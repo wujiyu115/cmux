@@ -454,6 +454,7 @@
   "editorFindRegex": "正则表达式",
   "editorSaveFailed": "保存失败：{error}",
   "fileTreeRevealActiveFile": "定位当前文件",
+  "fileTreeRevealInTree": "在文件树中定位",
   "fileTreeRefresh": "刷新",
   "fileTreeShowFilter": "显示筛选",
   "fileTreeHideFilter": "隐藏筛选",

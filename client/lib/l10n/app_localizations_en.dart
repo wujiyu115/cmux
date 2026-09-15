@@ -1117,6 +1117,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fileTreeRevealActiveFile => 'Reveal active file';
 
   @override
+  String get fileTreeRevealInTree => 'Reveal in file tree';
+
+  @override
   String get fileTreeRefresh => 'Refresh';
 
   @override

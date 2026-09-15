@@ -11,6 +11,7 @@ import '../../cubits/layout_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../models/app_session.dart';
 import '../../repositories/session_repository.dart';
+import '../../services/file_tree/file_tree_reveal.dart';
 import '../../services/terminal/workspace_terminal_registry.dart';
 import '../../services/terminal/workspace_terminal_title_resolver.dart';
 import '../../theme/workspace_surface_layers.dart';
@@ -18,6 +19,7 @@ import '../../utils/ui/app_keys.dart';
 import '../../utils/session/session_row_content.dart';
 import '../../widgets/tab_close_button.dart';
 import '../../widgets/session_working_spinner.dart';
+import '../../widgets/app_toast/app_toast.dart';
 import 'workspace_shell_models.dart';
 
 /// Sidebar + right-tools visibility toggles for the workspace IDE shell.
@@ -92,6 +94,7 @@ class WorkspaceShellTabRow extends StatelessWidget {
     super.key,
     required this.tabs,
     required this.activeIndex,
+    this.workspaceId,
     this.onTabSelected,
     this.onTabClosed,
     this.onTabCloseOthers,
@@ -104,6 +107,9 @@ class WorkspaceShellTabRow extends StatelessWidget {
 
   final List<TabInfo> tabs;
   final int activeIndex;
+
+  /// Workspace the tabs belong to; file tabs use it for "reveal in file tree".
+  final String? workspaceId;
   final ValueChanged<int>? onTabSelected;
   final ValueChanged<int>? onTabClosed;
   final ValueChanged<int>? onTabCloseOthers;
@@ -137,6 +143,8 @@ class WorkspaceShellTabRow extends StatelessWidget {
                       key: ValueKey(tabs[i].id),
                       sessionId: tabs[i].sessionId,
                       shellSurfaceId: tabs[i].shellSurfaceId,
+                      filePath: tabs[i].filePath,
+                      workspaceId: workspaceId,
                       title: tabs[i].title,
                       working: tabs[i].working,
                       active: activeIndex >= 0 && i == activeIndex,
@@ -298,6 +306,8 @@ class WorkspaceShellTabChip extends StatefulWidget {
     required this.onClose,
     this.sessionId,
     this.shellSurfaceId,
+    this.filePath,
+    this.workspaceId,
     this.onCloseOthers,
     this.onCloseRight,
     this.onPin,
@@ -315,6 +325,13 @@ class WorkspaceShellTabChip extends StatefulWidget {
 
   /// Shell-terminal surface behind this tab; enables rename + live title.
   final String? shellSurfaceId;
+
+  /// File path behind this editor tab; enables "reveal in file tree".
+  final String? filePath;
+
+  /// Workspace this tab belongs to; pairs with [filePath] for revealing the
+  /// file in the workspace file tree.
+  final String? workspaceId;
   final bool working;
   final bool active;
   final bool preview;
@@ -348,6 +365,8 @@ class WorkspaceShellTabChipState extends State<WorkspaceShellTabChip> {
   void _handleTabMenuSelection(String value) {
     if (value == 'rename') {
       unawaited(_showRenameDialog());
+    } else if (value == 'reveal_in_tree') {
+      unawaited(_revealInFileTree());
     } else if (value == 'pin') {
       widget.onPin?.call();
     } else if (value == 'close') {
@@ -373,6 +392,12 @@ class WorkspaceShellTabChipState extends State<WorkspaceShellTabChip> {
           value: 'rename',
           icon: Icons.drive_file_rename_outline,
           label: l10n.renameTerminalTab,
+        ),
+      if (widget.filePath != null && widget.workspaceId != null)
+        TpActionMenuSpec.item(
+          value: 'reveal_in_tree',
+          icon: Icons.my_location_outlined,
+          label: l10n.fileTreeRevealInTree,
         ),
       if (widget.pinnable && widget.onPin != null)
         TpActionMenuSpec.item(
@@ -422,6 +447,25 @@ class WorkspaceShellTabChipState extends State<WorkspaceShellTabChip> {
     );
     if (!mounted || selected == null) return;
     _handleTabMenuSelection(selected);
+  }
+
+  /// Reveals the editor tab's file in the workspace file tree, making the
+  /// right-tools panel visible first when it was hidden.
+  Future<void> _revealInFileTree() async {
+    final workspaceId = widget.workspaceId;
+    final filePath = widget.filePath;
+    if (workspaceId == null || filePath == null || !mounted) return;
+    final ok = await revealFileInWorkspaceTree(
+      context,
+      workspaceId: workspaceId,
+      filePath: filePath,
+    );
+    if (!mounted || ok) return;
+    AppToast.show(
+      context,
+      message: context.l10n.fileTreeRevealFailed,
+      variant: TpToastVariant.error,
+    );
   }
 
   /// Renames the tab's session. Same dialog + cubit path as

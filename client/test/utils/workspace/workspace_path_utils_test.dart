@@ -109,6 +109,44 @@ void main() {
     expect(workspaceMetadataKeys('/tmp/work'), ['/tmp/work']);
   });
 
+  group('relativePathWithinRoots', () {
+    test('returns path under its longest containing root', () {
+      expect(
+        relativePathWithinRoots(
+          ['/repo', '/repo/static'],
+          '/repo/static/schema/role.td',
+        ),
+        'schema/role.td',
+      );
+      expect(
+        relativePathWithinRoots(['/repo'], '/repo/static/schema/role.td'),
+        'static/schema/role.td',
+      );
+      expect(
+        relativePathWithinRoots(['/repo', '/repo/static'], '/repo/static/a.td'),
+        'a.td',
+      );
+    });
+
+    test('root itself maps to empty and direct child to its bare name', () {
+      expect(relativePathWithinRoots(['/repo'], '/repo'), '');
+      expect(relativePathWithinRoots(['/repo'], '/repo/role.td'), 'role.td');
+    });
+
+    test('returns null when no root contains the path', () {
+      expect(relativePathWithinRoots(['/repo'], '/other/role.td'), isNull);
+      expect(relativePathWithinRoots([], '/repo/role.td'), isNull);
+    });
+
+    test('converts Windows separators to forward slashes', () {
+      if (!Platform.isWindows) return;
+      expect(
+        relativePathWithinRoots([r'C:\repo'], r'C:\repo\static\role.td'),
+        'static/role.td',
+      );
+    });
+  });
+
   group('worktreeRepoPathForToolsTarget', () {
     const folders = [
       WorkspaceFolder(path: '/local/repo', targetId: WorkspaceFolder.localTargetId),

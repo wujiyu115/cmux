@@ -74,6 +74,32 @@ String? owningWorkspaceFolderForPath(
   return bestPath;
 }
 
+/// Path of [path] relative to the longest root in [roots] that contains it,
+/// with `/` separators. `null` when no root contains [path]; empty when [path]
+/// IS a root; the bare name when it sits directly under a root.
+String? relativePathWithinRoots(List<String> roots, String path) {
+  // Compare with `/` separators only: on Windows native storage both sides
+  // normalize to `\`, which would defeat the prefix checks below.
+  final normalized = normalizeWorkspacePath(path.trim()).replaceAll('\\', '/');
+  if (normalized.isEmpty) return null;
+
+  String? bestRoot;
+  var bestLen = -1;
+  for (final root in roots) {
+    final nRoot = normalizeWorkspacePath(root).replaceAll('\\', '/');
+    if (nRoot.isEmpty) continue;
+    final within = normalized == nRoot ||
+        normalized.startsWith(nRoot.endsWith('/') ? nRoot : '$nRoot/');
+    if (within && nRoot.length > bestLen) {
+      bestRoot = nRoot;
+      bestLen = nRoot.length;
+    }
+  }
+  if (bestRoot == null) return null;
+  final rel = normalized.substring(bestRoot.length);
+  return rel.startsWith('/') ? rel.substring(1) : rel;
+}
+
 /// Git repo path to load after the tools plane switches to [activeTargetId].
 String worktreeRepoPathForToolsTarget({
   required List<WorkspaceFolder> folders,

@@ -481,6 +481,7 @@
     }
   },
   "fileTreeRevealActiveFile": "Reveal active file",
+  "fileTreeRevealInTree": "Reveal in file tree",
   "fileTreeRefresh": "Refresh",
   "fileTreeShowFilter": "Show file filter",
   "fileTreeHideFilter": "Hide file filter",

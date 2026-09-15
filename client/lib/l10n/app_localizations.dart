@@ -2126,6 +2126,12 @@ abstract class AppLocalizations {
   /// **'Reveal active file'**
   String get fileTreeRevealActiveFile;
 
+  /// No description provided for @fileTreeRevealInTree.
+  ///
+  /// In en, this message translates to:
+  /// **'Reveal in file tree'**
+  String get fileTreeRevealInTree;
+
   /// No description provided for @fileTreeRefresh.
   ///
   /// In en, this message translates to:

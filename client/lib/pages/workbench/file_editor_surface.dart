@@ -18,7 +18,9 @@ import '../../services/editor/markdown_view_mode_store.dart';
 import '../../services/editor_platform/document_session.dart';
 import '../../services/editor_platform/editor_viewport_token_binder.dart';
 import '../../services/workbench/workbench_editor_opener.dart';
+import '../../services/workspace/workspace_tools_scope.dart';
 import '../../theme/workspace_surface_layers.dart';
+import '../../utils/workspace/workspace_path_utils.dart';
 import '../../widgets/workbench/code_find_panel.dart';
 import '../../widgets/workbench/file_diff_surface_toggle.dart';
 import '../../widgets/workbench/markdown_view_mode_toggle.dart';
@@ -90,6 +92,17 @@ class _FileEditorToolbar extends StatelessWidget {
       (c) => c.isReadOnly(workspaceId, path),
     );
     final name = p.basename(path);
+    final cs = Theme.of(context).colorScheme;
+    // Muted directory breadcrumb beside the file name so same-named files in
+    // different folders are distinguishable once opened.
+    final scope = WorkspaceToolsScope.maybeOf(context);
+    final relative = scope == null
+        ? null
+        : relativePathWithinRoots(scope.roots, path);
+    // Show only the directory part: the file name itself is already bold.
+    final relativeDir = relative == null || relative == name
+        ? null
+        : p.posix.dirname(relative);
     final canToggleDiff = gitCubitForAbsolutePath(context, path) != null;
     final isMarkdown = isMarkdownEditorPath(path);
     final opener = context.read<WorkbenchEditorOpener>();
@@ -100,11 +113,33 @@ class _FileEditorToolbar extends StatelessWidget {
         child: Row(
           children: [
             Expanded(
-              child: Text(
-                dirty ? '$name •' : name,
-                style: TpTextStyles.of(context).mdSemibold,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              child: Tooltip(
+                message: relative ?? path,
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        dirty ? '$name •' : name,
+                        style: TpTextStyles.of(context).mdSemibold,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (relativeDir != null && relativeDir != '.') ...[
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          relativeDir,
+                          style: TpTextStyles.of(context).xsColored(
+                            cs.onSurfaceVariant.withValues(alpha: 0.8),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ),
             if (!readOnly) ...[

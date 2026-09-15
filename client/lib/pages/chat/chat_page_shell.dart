@@ -288,6 +288,7 @@ class _ChatWorkspaceShell extends StatelessWidget {
 
                 return WorkspaceShell(
                   showHeader: false,
+                  workspaceId: workspaceId,
                   breadcrumb: 'Personal / Chat / Shell chat workbench',
                   title: 'Shell chat workbench',
                   subtitle: 'personal workspace / shell wrapper mode',
