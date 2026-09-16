@@ -111,6 +111,27 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fontMonoDescription => '终端、编辑器与 diff。重启后生效。';
 
   @override
+  String get monoFontSizeTitle => '等宽字号';
+
+  @override
+  String get monoFontSizeDescription => '终端、编辑器与 diff 的字号倍率，相对文字大小。';
+
+  @override
+  String get monoFontSizeSmall => '小';
+
+  @override
+  String get monoFontSizeStandard => '标准';
+
+  @override
+  String get monoFontSizeLarge => '大';
+
+  @override
+  String get monoFontSizeCustom => '自定义';
+
+  @override
+  String get monoFontSizeCustomHint => '70–160';
+
+  @override
   String get fontChangeAppliesOnRestart => '字体已保存，重启 TeamPilot 后生效。';
 
   @override

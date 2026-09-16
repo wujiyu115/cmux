@@ -120,6 +120,28 @@ class AppLocalizationsEn extends AppLocalizations {
       'Terminal, editor, and diffs. Takes effect after restart.';
 
   @override
+  String get monoFontSizeTitle => 'Monospace font size';
+
+  @override
+  String get monoFontSizeDescription =>
+      'Font size for terminal, editor, and diffs, relative to text size.';
+
+  @override
+  String get monoFontSizeSmall => 'Small';
+
+  @override
+  String get monoFontSizeStandard => 'Standard';
+
+  @override
+  String get monoFontSizeLarge => 'Large';
+
+  @override
+  String get monoFontSizeCustom => 'Custom';
+
+  @override
+  String get monoFontSizeCustomHint => '70–160';
+
+  @override
   String get fontChangeAppliesOnRestart =>
       'Font saved. Restart TeamPilot to apply.';
 

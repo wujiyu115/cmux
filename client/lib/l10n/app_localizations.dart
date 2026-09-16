@@ -302,6 +302,48 @@ abstract class AppLocalizations {
   /// **'Terminal, editor, and diffs. Takes effect after restart.'**
   String get fontMonoDescription;
 
+  /// No description provided for @monoFontSizeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Monospace font size'**
+  String get monoFontSizeTitle;
+
+  /// No description provided for @monoFontSizeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Font size for terminal, editor, and diffs, relative to text size.'**
+  String get monoFontSizeDescription;
+
+  /// No description provided for @monoFontSizeSmall.
+  ///
+  /// In en, this message translates to:
+  /// **'Small'**
+  String get monoFontSizeSmall;
+
+  /// No description provided for @monoFontSizeStandard.
+  ///
+  /// In en, this message translates to:
+  /// **'Standard'**
+  String get monoFontSizeStandard;
+
+  /// No description provided for @monoFontSizeLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'Large'**
+  String get monoFontSizeLarge;
+
+  /// No description provided for @monoFontSizeCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get monoFontSizeCustom;
+
+  /// No description provided for @monoFontSizeCustomHint.
+  ///
+  /// In en, this message translates to:
+  /// **'70–160'**
+  String get monoFontSizeCustomHint;
+
   /// No description provided for @fontChangeAppliesOnRestart.
   ///
   /// In en, this message translates to:

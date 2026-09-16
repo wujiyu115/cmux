@@ -63,6 +63,7 @@ class LayoutPreferences {
     this.locale = '',
     this.uiFontId = FontCatalog.defaultUiId,
     this.monoFontId = FontCatalog.defaultMonoId,
+    this.monoFontScale = kDefaultMonoFontScale,
     this.workspaceTerminalVisible = false,
     this.workspaceTerminalHeight = defaultWorkspaceTerminalHeight,
     this.markdownOpenMode = MarkdownOpenMode.preview,
@@ -128,6 +129,9 @@ class LayoutPreferences {
       locale: json['locale'] as String? ?? '',
       uiFontId: normalizeUiFontId(json['uiFontId'] as String?),
       monoFontId: normalizeMonoFontId(json['monoFontId'] as String?),
+      monoFontScale: clampMonoFontScale(
+        _doubleValue(json['monoFontScale'], fallback: kDefaultMonoFontScale),
+      ),
       workspaceTerminalVisible:
           json['workspaceTerminalVisible'] as bool? ?? false,
       workspaceTerminalHeight: _doubleValue(
@@ -200,6 +204,10 @@ class LayoutPreferences {
   final String uiFontId;
   final String monoFontId;
 
+  /// Relative size multiplier for monospace faces (terminal + editor + diffs);
+  /// see [clampMonoFontScale] for the allowed range.
+  final double monoFontScale;
+
   /// Legacy bottom-dock flag kept for JSON compat; layout always treats as false.
   final bool workspaceTerminalVisible;
   final double workspaceTerminalHeight;
@@ -234,6 +242,7 @@ class LayoutPreferences {
     String? locale,
     String? uiFontId,
     String? monoFontId,
+    double? monoFontScale,
     bool? workspaceTerminalVisible,
     double? workspaceTerminalHeight,
     MarkdownOpenMode? markdownOpenMode,
@@ -292,6 +301,9 @@ class LayoutPreferences {
       monoFontId: monoFontId == null
           ? this.monoFontId
           : normalizeMonoFontId(monoFontId),
+      monoFontScale: monoFontScale == null
+          ? this.monoFontScale
+          : clampMonoFontScale(monoFontScale),
       workspaceTerminalVisible:
           workspaceTerminalVisible ?? this.workspaceTerminalVisible,
       workspaceTerminalHeight:
@@ -331,6 +343,7 @@ class LayoutPreferences {
       locale: locale,
       uiFontId: uiFontId,
       monoFontId: monoFontId,
+      monoFontScale: monoFontScale,
       workspaceTerminalVisible: workspaceTerminalVisible,
       workspaceTerminalHeight: workspaceTerminalHeight,
       markdownOpenMode: markdownOpenMode,
@@ -364,6 +377,7 @@ class LayoutPreferences {
       'locale': locale,
       'uiFontId': uiFontId,
       'monoFontId': monoFontId,
+      'monoFontScale': monoFontScale,
       'workspaceTerminalVisible': workspaceTerminalVisible,
       'workspaceTerminalHeight': workspaceTerminalHeight,
       'markdownOpenMode': markdownOpenMode.name,

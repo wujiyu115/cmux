@@ -208,6 +208,9 @@ class LayoutCubit extends Cubit<LayoutState> {
   Future<void> setMonoFontId(String id) =>
       _save(state.preferences.copyWith(monoFontId: normalizeMonoFontId(id)));
 
+  Future<void> setMonoFontScale(double scale) =>
+      _save(state.preferences.copyWith(monoFontScale: scale));
+
   /// No-op: bottom dock removed; keep method for callers / prefs compat.
   Future<void> setWorkspaceTerminalVisible(bool visible) => Future.value();
 

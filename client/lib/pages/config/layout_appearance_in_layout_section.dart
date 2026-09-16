@@ -10,6 +10,7 @@ import '../../theme/app_typography_scale.dart';
 import '../../theme/font_catalog.dart';
 import '../../utils/ui/app_keys.dart';
 import '../../widgets/settings/font_preference_setting.dart';
+import '../../widgets/settings/mono_font_size_setting.dart';
 import '../../widgets/settings/theme_color_preset_picker.dart';
 import '../../widgets/settings/typography_scale_setting.dart';
 
@@ -31,6 +32,7 @@ class LayoutAppearanceInLayoutSection extends StatelessWidget {
         double,
         String,
         String,
+        double,
         String,
         double,
         String,
@@ -50,6 +52,7 @@ class LayoutAppearanceInLayoutSection extends StatelessWidget {
           state.preferences.typographyScaleCustomMultiplier,
           normalizeUiFontId(state.preferences.uiFontId),
           normalizeMonoFontId(state.preferences.monoFontId),
+          state.preferences.monoFontScale,
           normalizeTypographyScale(state.preferences.uiZoomScale),
           state.preferences.uiZoomCustomMultiplier,
           languagePreferenceUiValue(state.preferences.locale),
@@ -63,6 +66,7 @@ class LayoutAppearanceInLayoutSection extends StatelessWidget {
           typographyCustomMultiplier,
           uiFontId,
           monoFontId,
+          monoFontScale,
           uiZoomScale,
           uiZoomCustomMultiplier,
           langValue,
@@ -159,6 +163,15 @@ class LayoutAppearanceInLayoutSection extends StatelessWidget {
                     role: FontRole.mono,
                     value: monoFontId,
                     onChanged: controller.setMonoFontId,
+                  ),
+                  showDividerBelow: true,
+                ),
+                TpPreferenceRow(
+                  title: l10n.monoFontSizeTitle,
+                  subtitle: l10n.monoFontSizeDescription,
+                  trailing: MonoFontSizeSetting(
+                    scale: monoFontScale,
+                    onChanged: controller.setMonoFontScale,
                   ),
                   showDividerBelow: true,
                 ),

@@ -29,6 +29,18 @@ const double kTypographyCustomMultiplierMin = 0.5;
 const double kTypographyCustomMultiplierMax = 2.0;
 const double kDefaultTypographyCustomMultiplier = 1.0;
 
+/// Relative size multiplier for monospace faces (terminal + code editor +
+/// diffs) on top of the UI text scale. Independent of [multiplier] so mono
+/// size can be tuned without touching chrome density.
+const double kMonoFontScaleMin = 0.7;
+const double kMonoFontScaleMax = 1.6;
+const double kDefaultMonoFontScale = 1.0;
+const double kMonoFontScaleSmall = 0.85;
+const double kMonoFontScaleLarge = 1.15;
+
+double clampMonoFontScale(double value) =>
+    value.clamp(kMonoFontScaleMin, kMonoFontScaleMax);
+
 /// Final-effective **interface zoom** clamp (whole-UI [UiZoom]).
 const double kUiZoomMin = 0.5;
 const double kUiZoomMax = 1.5;
@@ -139,6 +151,7 @@ final class AppTypographyScale {
   const AppTypographyScale({
     this.multiplier = 1.0,
     this.terminalMultiplier = 1.0,
+    this.monoFontScale = kDefaultMonoFontScale,
   });
 
   /// Default scale used by [buildLightTheme] / [buildDarkTheme].
@@ -160,6 +173,11 @@ final class AppTypographyScale {
   /// columns (a 15% larger face drops an 80-column phone view to ~40), so the
   /// host passes the inverse here and terminal glyphs stay put.
   final double terminalMultiplier;
+
+  /// User preference scaling monospace faces (terminal, editor, diffs).
+  /// Unlike [terminalMultiplier] this is a deliberate user size choice, so it
+  /// applies everywhere mono text renders — terminal included.
+  final double monoFontScale;
 
   // --- Base sizes at multiplier 1.0 (Material 3 type scale) ---
 
@@ -193,8 +211,9 @@ final class AppTypographyScale {
   double get labelLarge => labelLargeBase * multiplier;
   double get labelMedium => labelMediumBase * multiplier;
   double get labelSmall => labelSmallBase * multiplier;
-  double get terminal => terminalBase * multiplier * terminalMultiplier;
-  double get mono => monoBase * multiplier;
+  double get terminal =>
+      terminalBase * multiplier * terminalMultiplier * monoFontScale;
+  double get mono => monoBase * multiplier * monoFontScale;
 }
 
 /// Resolved sizes on [ThemeData.extensions] (from [AppTypographyScale]).
