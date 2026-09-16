@@ -1179,6 +1179,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fileTreeCopyRelativePath => 'Copy relative path';
 
   @override
+  String get fileTabReloadFromDisk => 'Refresh from disk';
+
+  @override
+  String get fileTabReloadDone => 'File refreshed';
+
+  @override
+  String get fileTabReloadFailed => 'Failed to refresh file';
+
+  @override
+  String get fileTabReloadDirtyTitle => 'Unsaved changes';
+
+  @override
+  String get fileTabReloadDirtyMessage =>
+      'This file has unsaved changes. Refreshing from disk discards them.';
+
+  @override
+  String get fileTabReloadDiscard => 'Discard and refresh';
+
+  @override
   String get fileTreeSearchScope => 'Search scope';
 
   @override

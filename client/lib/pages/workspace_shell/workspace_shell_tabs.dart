@@ -2,21 +2,26 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:teampilot/models/cli_tool.dart';
 import 'package:shared_ui/shared_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../cubits/chat_cubit.dart';
+import '../../cubits/editor_cubit.dart';
 import '../../cubits/layout_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../models/app_session.dart';
 import '../../repositories/session_repository.dart';
+import '../../services/editor/file_editor_theme.dart';
 import '../../services/file_tree/file_tree_reveal.dart';
 import '../../services/terminal/workspace_terminal_registry.dart';
 import '../../services/terminal/workspace_terminal_title_resolver.dart';
+import '../../services/workspace/workspace_tools_scope.dart';
 import '../../theme/workspace_surface_layers.dart';
 import '../../utils/ui/app_keys.dart';
 import '../../utils/session/session_row_content.dart';
+import '../../utils/workspace/workspace_path_utils.dart';
 import '../../widgets/tab_close_button.dart';
 import '../../widgets/session_working_spinner.dart';
 import '../../widgets/app_toast/app_toast.dart';
@@ -367,6 +372,10 @@ class WorkspaceShellTabChipState extends State<WorkspaceShellTabChip> {
       unawaited(_showRenameDialog());
     } else if (value == 'reveal_in_tree') {
       unawaited(_revealInFileTree());
+    } else if (value == 'copy_relative_path') {
+      unawaited(_copyRelativePath());
+    } else if (value == 'reload_from_disk') {
+      unawaited(_reloadFromDisk());
     } else if (value == 'pin') {
       widget.onPin?.call();
     } else if (value == 'close') {
@@ -393,12 +402,24 @@ class WorkspaceShellTabChipState extends State<WorkspaceShellTabChip> {
           icon: Icons.drive_file_rename_outline,
           label: l10n.renameTerminalTab,
         ),
-      if (widget.filePath != null && widget.workspaceId != null)
+      if (widget.filePath != null && widget.workspaceId != null) ...[
         TpActionMenuSpec.item(
           value: 'reveal_in_tree',
           icon: Icons.my_location_outlined,
           label: l10n.fileTreeRevealInTree,
         ),
+        TpActionMenuSpec.item(
+          value: 'copy_relative_path',
+          icon: Icons.subdirectory_arrow_right_rounded,
+          label: l10n.fileTreeCopyRelativePath,
+        ),
+        if (!isImagePreviewPath(widget.filePath!))
+          TpActionMenuSpec.item(
+            value: 'reload_from_disk',
+            icon: Icons.refresh,
+            label: l10n.fileTabReloadFromDisk,
+          ),
+      ],
       if (widget.pinnable && widget.onPin != null)
         TpActionMenuSpec.item(
           value: 'pin',
@@ -466,6 +487,81 @@ class WorkspaceShellTabChipState extends State<WorkspaceShellTabChip> {
       message: context.l10n.fileTreeRevealFailed,
       variant: TpToastVariant.error,
     );
+  }
+
+  /// Copies the tab file's path relative to the longest tools-scope root that
+  /// contains it — the same value the editor toolbar's breadcrumb shows —
+  /// falling back to the absolute path when no scope root contains it.
+  Future<void> _copyRelativePath() async {
+    final filePath = widget.filePath;
+    if (filePath == null || !mounted) return;
+    final scope = WorkspaceToolsScope.maybeOf(context);
+    final relative = scope == null
+        ? null
+        : relativePathWithinRoots(scope.roots, filePath);
+    final value = relative == null || relative.isEmpty ? filePath : relative;
+    await Clipboard.setData(ClipboardData(text: value));
+    if (!mounted) return;
+    AppToast.show(
+      context,
+      message: context.l10n.pathCopied(value),
+      variant: TpToastVariant.success,
+    );
+  }
+
+  /// Re-reads the tab file from disk into the open editor buffer — the manual
+  /// escape hatch for edits made outside the app (the editor itself never
+  /// watches open files). Dirty buffers get a discard confirm first.
+  Future<void> _reloadFromDisk() async {
+    final workspaceId = widget.workspaceId;
+    final filePath = widget.filePath;
+    if (workspaceId == null || filePath == null || !mounted) return;
+    final editor = context.read<EditorCubit>();
+    if (editor.state.bucket(workspaceId).dirtyPaths.contains(filePath)) {
+      final discard = await _confirmDiscardDirtyEdits();
+      if (!discard || !mounted) return;
+    }
+    final ok = await editor.reloadFile(workspaceId, filePath);
+    if (!mounted) return;
+    AppToast.show(
+      context,
+      message: ok
+          ? context.l10n.fileTabReloadDone
+          : context.l10n.fileTabReloadFailed,
+      variant: ok ? TpToastVariant.success : TpToastVariant.error,
+    );
+  }
+
+  Future<bool> _confirmDiscardDirtyEdits() async {
+    final l10n = context.l10n;
+    return await showDialog<bool>(
+          context: context,
+          builder: (ctx) => TpDialog(
+            maxWidth: 480,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TpDialogHeader(title: l10n.fileTabReloadDirtyTitle),
+                const SizedBox(height: 16),
+                Text(l10n.fileTabReloadDirtyMessage),
+                TpDialogActions(
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      child: Text(l10n.cancel),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      child: Text(l10n.fileTabReloadDiscard),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ) ??
+        false;
   }
 
   /// Renames the tab's session. Same dialog + cubit path as

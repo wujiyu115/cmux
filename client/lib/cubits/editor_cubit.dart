@@ -716,6 +716,32 @@ class EditorCubit extends Cubit<EditorState> {
     emit(state.withBucket(workspaceId, bucket.copyWith(dirtyPaths: dirty)));
   }
 
+  /// Re-reads [path] from disk into the open editor buffer, discarding any
+  /// unsaved edits (callers confirm first). Returns `false` when the file is
+  /// not open or the read fails; the buffer is left untouched in that case.
+  Future<bool> reloadFile(String workspaceId, String path) async {
+    final key = _handleKey(workspaceId, path);
+    final handle = _handles[key];
+    if (handle == null) return false;
+    final fs = _fsByHandle[key] ?? _fs;
+    try {
+      final content = await fs.readString(path);
+      if (content == null) return false;
+      // savedText must change before the controller write: the handle's
+      // listener marks dirty whenever the new text differs from savedText.
+      handle.savedText = content;
+      handle.controller.text = content;
+      final bucket = state.bucket(workspaceId);
+      if (bucket.dirtyPaths.contains(path)) {
+        final dirty = Set<String>.from(bucket.dirtyPaths)..remove(path);
+        emit(state.withBucket(workspaceId, bucket.copyWith(dirtyPaths: dirty)));
+      }
+      return true;
+    } on Object {
+      return false;
+    }
+  }
+
   Future<bool> saveFile(String workspaceId, String path) async {
     final handle = _handles[_handleKey(workspaceId, path)];
     if (handle == null) return false;

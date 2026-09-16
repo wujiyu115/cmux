@@ -1135,6 +1135,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fileTreeCopyRelativePath => '复制相对路径';
 
   @override
+  String get fileTabReloadFromDisk => '从磁盘刷新';
+
+  @override
+  String get fileTabReloadDone => '已从磁盘刷新';
+
+  @override
+  String get fileTabReloadFailed => '刷新文件失败';
+
+  @override
+  String get fileTabReloadDirtyTitle => '未保存的修改';
+
+  @override
+  String get fileTabReloadDirtyMessage => '该文件有未保存的修改，从磁盘刷新会丢弃这些修改。';
+
+  @override
+  String get fileTabReloadDiscard => '丢弃并刷新';
+
+  @override
   String get fileTreeSearchScope => '搜索范围';
 
   @override

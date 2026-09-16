@@ -51,6 +51,48 @@ void main() {
     await dir.delete(recursive: true);
   });
 
+  test('reloadFile re-reads disk content and clears dirty', () async {
+    final fs = InMemoryFilesystem();
+    fs.files['/repo/a.txt'] = 'v1';
+    final cubit = EditorCubit(fs: fs);
+    addTearDown(cubit.close);
+
+    await cubit.openFile(ws, '/repo/a.txt');
+    expect(cubit.controllerFor(ws, '/repo/a.txt')?.text, 'v1');
+
+    // External edit: the open buffer stays stale until reload.
+    fs.files['/repo/a.txt'] = 'v2';
+    expect(cubit.controllerFor(ws, '/repo/a.txt')?.text, 'v1');
+
+    // Dirty edits are discarded by reload (callers confirm first).
+    cubit.controllerFor(ws, '/repo/a.txt')!.text = 'dirty';
+    await Future<void>.delayed(Duration.zero);
+    expect(cubit.state.bucket(ws).isDirty('/repo/a.txt'), isTrue);
+
+    expect(await cubit.reloadFile(ws, '/repo/a.txt'), isTrue);
+    expect(cubit.controllerFor(ws, '/repo/a.txt')?.text, 'v2');
+    expect(cubit.state.bucket(ws).isDirty('/repo/a.txt'), isFalse);
+
+    // The reloaded text is the new saved baseline.
+    cubit.controllerFor(ws, '/repo/a.txt')!.text = 'v2 edited';
+    await Future<void>.delayed(Duration.zero);
+    expect(cubit.state.bucket(ws).isDirty('/repo/a.txt'), isTrue);
+  });
+
+  test('reloadFile returns false when not open or read fails', () async {
+    final fs = InMemoryFilesystem();
+    fs.files['/repo/b.txt'] = 'v1';
+    final cubit = EditorCubit(fs: fs);
+    addTearDown(cubit.close);
+
+    expect(await cubit.reloadFile(ws, '/repo/b.txt'), isFalse);
+
+    await cubit.openFile(ws, '/repo/b.txt');
+    fs.files.remove('/repo/b.txt');
+    expect(await cubit.reloadFile(ws, '/repo/b.txt'), isFalse);
+    expect(cubit.controllerFor(ws, '/repo/b.txt')?.text, 'v1');
+  });
+
   test('editorKeyFor is a stable, per-file GlobalKey', () async {
     final dir = await Directory.systemTemp.createTemp('teampilot_editor_key_');
     addTearDown(() => dir.delete(recursive: true));

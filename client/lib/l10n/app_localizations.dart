@@ -2246,6 +2246,42 @@ abstract class AppLocalizations {
   /// **'Copy relative path'**
   String get fileTreeCopyRelativePath;
 
+  /// No description provided for @fileTabReloadFromDisk.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh from disk'**
+  String get fileTabReloadFromDisk;
+
+  /// No description provided for @fileTabReloadDone.
+  ///
+  /// In en, this message translates to:
+  /// **'File refreshed'**
+  String get fileTabReloadDone;
+
+  /// No description provided for @fileTabReloadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to refresh file'**
+  String get fileTabReloadFailed;
+
+  /// No description provided for @fileTabReloadDirtyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsaved changes'**
+  String get fileTabReloadDirtyTitle;
+
+  /// No description provided for @fileTabReloadDirtyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This file has unsaved changes. Refreshing from disk discards them.'**
+  String get fileTabReloadDirtyMessage;
+
+  /// No description provided for @fileTabReloadDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard and refresh'**
+  String get fileTabReloadDiscard;
+
   /// No description provided for @fileTreeSearchScope.
   ///
   /// In en, this message translates to:
