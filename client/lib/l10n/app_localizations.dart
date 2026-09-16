@@ -5990,6 +5990,18 @@ abstract class AppLocalizations {
   /// **'Could not list this folder.'**
   String get pairingBrowseFailed;
 
+  /// No description provided for @pairingBrowseThisComputer.
+  ///
+  /// In en, this message translates to:
+  /// **'This computer'**
+  String get pairingBrowseThisComputer;
+
+  /// No description provided for @pairingBrowseCurrentDrive.
+  ///
+  /// In en, this message translates to:
+  /// **'Current'**
+  String get pairingBrowseCurrentDrive;
+
   /// No description provided for @pairingBrowseTitleOn.
   ///
   /// In en, this message translates to:

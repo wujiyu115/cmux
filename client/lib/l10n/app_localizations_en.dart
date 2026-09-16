@@ -3240,6 +3240,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pairingBrowseFailed => 'Could not list this folder.';
 
   @override
+  String get pairingBrowseThisComputer => 'This computer';
+
+  @override
+  String get pairingBrowseCurrentDrive => 'Current';
+
+  @override
   String pairingBrowseTitleOn(String target) {
     return 'Choose a folder on $target';
   }

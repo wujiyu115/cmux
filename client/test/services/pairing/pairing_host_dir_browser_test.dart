@@ -5,7 +5,8 @@ import 'package:teampilot/services/pairing/pairing_host_dir_browser.dart';
 import '../../support/in_memory_filesystem.dart';
 
 /// Builds a browser over one in-memory machine. [homes] maps a target id to the
-/// home the host would report for it; a missing entry means "no home".
+/// home the host would report for it; a missing entry means "no home". [drives]
+/// is the machine's drive-root enumeration (empty off Windows).
 PairingHostDirBrowser _browser(
   Filesystem fs, {
   Map<String, String?> homes = const {},
@@ -13,6 +14,8 @@ PairingHostDirBrowser _browser(
   Set<String> knownTargets = const {'wsl:Ubuntu', 'ssh:box'},
   List<String>? filesystemCalls,
   Duration? resolveTimeout,
+  List<String> drives = const [],
+  List<String>? driveCalls,
 }) {
   return PairingHostDirBrowser(
     resolveTargetId: (raw) async {
@@ -30,6 +33,10 @@ PairingHostDirBrowser _browser(
     homeFor: (targetId) async => homes[targetId],
     defaultLocalRoot: () async => defaultLocalRoot,
     resolveTimeout: resolveTimeout ?? const Duration(seconds: 25),
+    listDrives: () async {
+      driveCalls?.add('drives');
+      return drives;
+    },
   );
 }
 
@@ -134,6 +141,45 @@ void main() {
         browser.browse(null, targetId: 'ssh:box'),
         throwsA(isA<Exception>()),
       );
+    });
+
+    test('a local browse carries the machine drive roots', () async {
+      // The whole point of the field: a Windows browse starts inside one volume
+      // (`Documents/TeamPilot` on C:) and no directory tree can name D:.
+      final fs = InMemoryFilesystem();
+      await fs.ensureDir('/docs/TeamPilot');
+      final listing = await _browser(
+        fs,
+        drives: const [r'C:\', r'D:\'],
+      ).browse(null);
+
+      expect(listing.roots, [r'C:\', r'D:\']);
+    });
+
+    test('a remote browse carries no drive roots', () async {
+      // A WSL distro reaches other volumes by mounting them under /mnt, and an
+      // SSH host is another machine's tree — neither has drive letters, and
+      // enumerating costs a stat per letter for nothing.
+      final fs = InMemoryFilesystem();
+      await fs.ensureDir('/home/me');
+      final driveCalls = <String>[];
+      final listing = await _browser(
+        fs,
+        homes: const {'wsl:Ubuntu': '/home/me'},
+        drives: const [r'C:\'],
+        driveCalls: driveCalls,
+      ).browse(null, targetId: 'wsl:Ubuntu');
+
+      expect(listing.roots, isEmpty);
+      expect(driveCalls, isEmpty);
+    });
+
+    test('a non-Windows local browse carries no drive roots', () async {
+      final fs = InMemoryFilesystem();
+      await fs.ensureDir('/docs/TeamPilot');
+      final listing = await _browser(fs).browse(null);
+
+      expect(listing.roots, isEmpty);
     });
   });
 }

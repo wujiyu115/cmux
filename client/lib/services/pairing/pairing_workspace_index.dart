@@ -62,17 +62,34 @@ class PairingTargetInfo {
 /// One remote-directory listing for `fs.browse`: [path] is the directory just
 /// listed, [parent] its parent (null at a root the browser won't ascend past),
 /// and [dirs] the child directory names (dotfiles already filtered host-side).
+///
+/// [roots] carries the browsed machine's drive roots when it has any — Windows
+/// only, and only for a *local* target (see [PairingDirListing.roots]). They are
+/// siblings of [dirs], not part of it: a drive root is not a child of anything,
+/// so no directory listing can ever contain one.
 class PairingDirListing {
   const PairingDirListing({
     required this.path,
     required this.parent,
     required this.dirs,
+    this.roots = const [],
   });
 
   final String path;
   final String? parent;
   final List<String> dirs;
+
+  /// Drive roots the phone may jump straight to (`C:\`, `D:\`). Empty on a POSIX
+  /// machine, and empty on every remote target — a WSL distro reaches other
+  /// volumes by mounting them under `/mnt`, and an SSH host is another machine's
+  /// single tree. A phone that predates this field simply ignores it.
+  final List<String> roots;
 }
+
+/// Enumerates a machine's drive roots (`C:\`, `D:\`). Injected from bootstrap;
+/// empty off Windows. Kept separate from [PairingDirBrowser] so the browse path
+/// asks for roots only where they can exist.
+typedef ListDrives = Future<List<String>> Function();
 
 /// A client's request for a mirrorable terminal in [workspaceId]. [paneId] names
 /// a specific pane the phone saw; when it is null or no longer alive the host

@@ -12,6 +12,11 @@ import 'pairing_nav_bar.dart';
 /// existing folder when creating a workspace. Pops the selected absolute path,
 /// or null when dismissed.
 ///
+/// Windows machines additionally list their drive roots as jump targets, at the
+/// top of every listing — see [PairingDirListing.roots]. The drives block is the
+/// only way to reach a volume other than the one the browse opened on, since a
+/// single directory tree cannot name its siblings.
+///
 /// [cubit] is captured by the caller (the create-workspace sheet), which already
 /// holds it above the modal barrier. [target] is the machine to browse — null
 /// leaves the choice to the host's default plane.
@@ -90,6 +95,13 @@ class _PairingRemoteDirBrowserPageState
     });
   }
 
+  /// Ascends one level. A drive root's parent is itself, so the browser stops
+  /// there and the drives block is how you leave it for another volume.
+  void _up(String parent) => _load(parent);
+
+  /// Jumps to a drive root shown in the drives block.
+  void _openRoot(String root) => _load(root);
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -97,6 +109,9 @@ class _PairingRemoteDirBrowserPageState
     final spacing = context.tpSpacing;
     final listing = _listing;
     final target = widget.target;
+    // A listed directory is the only thing worth confirming, so the button waits
+    // for one: `path` is empty until the first listing arrives.
+    final hasDirectory = listing != null && listing.path.isNotEmpty;
 
     return Scaffold(
       body: SafeArea(
@@ -121,7 +136,11 @@ class _PairingRemoteDirBrowserPageState
                   spacing.sm,
                 ),
                 child: Text(
-                  listing.path,
+                  // Drives sit above any directory, so there is no path to show
+                  // until one is entered.
+                  listing.path.isEmpty
+                      ? l10n.pairingBrowseThisComputer
+                      : listing.path,
                   style: appMonoTextStyle(
                     context,
                     fontSize: 14,
@@ -152,9 +171,11 @@ class _PairingRemoteDirBrowserPageState
                   : _DirList(
                       listing: listing,
                       onEnter: _load,
+                      onOpenRoot: _openRoot,
+                      onUp: _up,
                     ),
             ),
-            if (listing != null)
+            if (hasDirectory)
               Padding(
                 padding: EdgeInsets.fromLTRB(
                   spacing.lg,
@@ -175,10 +196,17 @@ class _PairingRemoteDirBrowserPageState
 }
 
 class _DirList extends StatelessWidget {
-  const _DirList({required this.listing, required this.onEnter});
+  const _DirList({
+    required this.listing,
+    required this.onEnter,
+    required this.onOpenRoot,
+    required this.onUp,
+  });
 
   final PairingDirListing? listing;
   final ValueChanged<String?> onEnter;
+  final ValueChanged<String> onOpenRoot;
+  final ValueChanged<String> onUp;
 
   @override
   Widget build(BuildContext context) {
@@ -188,6 +216,13 @@ class _DirList extends StatelessWidget {
     if (listing == null) return const SizedBox.shrink();
     final parent = listing!.parent;
     final dirs = listing!.dirs;
+    final roots = listing!.roots;
+    final current = listing!.path;
+    // A listed directory whose parent is null is a root the browser won't ascend
+    // past. When the machine also has drive roots, that is a dead end — offer a
+    // way back up to the drives block, where the other volumes are.
+    final strandedAtRoot =
+        parent == null && current.isNotEmpty && roots.isNotEmpty;
 
     return ListView(
       padding: EdgeInsets.symmetric(horizontal: spacing.lg),
@@ -197,9 +232,23 @@ class _DirList extends StatelessWidget {
             icon: Icons.arrow_upward,
             label: l10n.pairingParentDirectory,
             muted: true,
-            onTap: () => onEnter(parent),
+            onTap: () => onUp(parent),
+          )
+        else if (strandedAtRoot)
+          _Row(
+            icon: Icons.arrow_upward,
+            label: l10n.pairingParentDirectory,
+            muted: true,
+            onTap: () => onEnter(null),
           ),
-        if (dirs.isEmpty && parent == null)
+        for (final root in roots)
+          _Row(
+            icon: Icons.storage_rounded,
+            label: root,
+            selected: _isCurrentDrive(current, root),
+            onTap: () => onOpenRoot(root),
+          ),
+        if (dirs.isEmpty && parent == null && roots.isEmpty)
           Padding(
             padding: EdgeInsets.symmetric(vertical: spacing.xl),
             child: Center(
@@ -215,11 +264,24 @@ class _DirList extends StatelessWidget {
               icon: Icons.folder_outlined,
               label: name,
               onTap: () => onEnter(
-                _join(listing!.path, name),
+                _join(current, name),
               ),
             ),
       ],
     );
+  }
+
+  /// Whether [path] sits on the drive [root] names. Compares the lowercased
+  /// drive letter rather than a prefix, so `C:\` is not "inside" `C:\Users` and
+  /// an odd separator style cannot break the match.
+  static bool _isCurrentDrive(String path, String root) {
+    String drive(String value) {
+      final colon = value.indexOf(':');
+      return colon <= 0 ? '' : value.substring(0, colon).toLowerCase();
+    }
+
+    final pathDrive = drive(path);
+    return pathDrive.isNotEmpty && pathDrive == drive(root);
   }
 
   /// POSIX-style join for display navigation; the host re-normalizes with its
@@ -234,6 +296,7 @@ class _Row extends StatelessWidget {
     required this.label,
     required this.onTap,
     this.muted = false,
+    this.selected = false,
   });
 
   final IconData icon;
@@ -241,11 +304,17 @@ class _Row extends StatelessWidget {
   final VoidCallback onTap;
   final bool muted;
 
+  /// The row names the location currently being listed (a drive root the user
+  /// just entered), so it reads as a position in the tree rather than an action.
+  final bool selected;
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final spacing = context.tpSpacing;
-    final color = muted ? cs.onSurfaceVariant : cs.onSurface;
+    final color = selected
+        ? cs.primary
+        : (muted ? cs.onSurfaceVariant : cs.onSurface);
     return InkWell(
       onTap: onTap,
       child: DecoratedBox(
@@ -266,11 +335,20 @@ class _Row extends StatelessWidget {
                 Expanded(
                   child: Text(
                     label,
-                    style: TextStyle(fontSize: 16, color: color),
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: color,
+                      fontWeight: selected ? FontWeight.w600 : null,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                if (selected)
+                  Text(
+                    context.l10n.pairingBrowseCurrentDrive,
+                    style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
+                  ),
               ],
             ),
           ),

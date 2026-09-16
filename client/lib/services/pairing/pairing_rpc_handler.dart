@@ -294,6 +294,10 @@ class PairingRpcHandler {
       'path': listing.path,
       'parent': listing.parent,
       'dirs': listing.dirs,
+      // Windows-only drive roots. Always present (empty elsewhere) so the phone
+      // can treat "no roots" as "this machine has none" rather than "this host
+      // is old"; a phone that ignores the key behaves exactly as before.
+      'roots': listing.roots,
     });
   }
 

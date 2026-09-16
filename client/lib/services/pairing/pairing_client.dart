@@ -168,11 +168,18 @@ class PairingDirListing {
     required this.path,
     required this.parent,
     required this.dirs,
+    this.roots = const [],
   });
 
   final String path;
   final String? parent;
   final List<String> dirs;
+
+  /// Drive roots on the listed machine (`C:\`, `D:\`), for the phone to offer as
+  /// jump targets. Empty when the machine has none — POSIX, a remote target, or
+  /// a host that predates the field, which is why it defaults to empty rather
+  /// than being required.
+  final List<String> roots;
 }
 
 /// Outcome of [PairingClient.activateSession]: the catalogId to subscribe to,
@@ -765,6 +772,7 @@ class PairingClient {
       const Duration(seconds: 30),
     );
     final rawDirs = result['dirs'];
+    final rawRoots = result['roots'];
     return PairingDirListing(
       path: result['path'] as String? ?? '',
       parent: result['parent'] as String?,
@@ -772,6 +780,14 @@ class PairingClient {
         if (rawDirs is List)
           for (final d in rawDirs)
             if (d is String) d,
+      ],
+      // Absent on an older host: an empty list means "no drives to offer", which
+      // is also what a POSIX machine reports, so the page needs no separate
+      // version check to stay correct.
+      roots: [
+        if (rawRoots is List)
+          for (final r in rawRoots)
+            if (r is String && r.isNotEmpty) r,
       ],
     );
   }

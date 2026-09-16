@@ -3124,6 +3124,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pairingBrowseFailed => '无法列出该文件夹。';
 
   @override
+  String get pairingBrowseThisComputer => '此电脑';
+
+  @override
+  String get pairingBrowseCurrentDrive => '当前';
+
+  @override
   String pairingBrowseTitleOn(String target) {
     return '在 $target 上选择文件夹';
   }

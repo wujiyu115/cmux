@@ -1467,6 +1467,8 @@
   "pairingBrowseTitle": "Choose a folder",
   "pairingBrowseEmpty": "No subfolders here.",
   "pairingBrowseFailed": "Could not list this folder.",
+  "pairingBrowseThisComputer": "This computer",
+  "pairingBrowseCurrentDrive": "Current",
   "pairingBrowseTitleOn": "Choose a folder on {target}",
   "@pairingBrowseTitleOn": {
     "placeholders": {

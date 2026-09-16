@@ -1327,6 +1327,8 @@
   "pairingBrowseTitle": "选择文件夹",
   "pairingBrowseEmpty": "此处没有子文件夹。",
   "pairingBrowseFailed": "无法列出该文件夹。",
+  "pairingBrowseThisComputer": "此电脑",
+  "pairingBrowseCurrentDrive": "当前",
   "pairingBrowseTitleOn": "在 {target} 上选择文件夹",
   "pairingChangesFailed": "无法从桌面端读取更改。",
   "pairingChangesBranch": "位于 {branch}",

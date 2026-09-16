@@ -625,6 +625,57 @@ void main() {
       expect(result['dirs'], ['a', 'b']);
     });
 
+    test('returns the machine drive roots, empty when it has none', () async {
+      // Always present, so a phone can read "no drives" as "this machine has
+      // none" rather than having to tell an empty list from an older host.
+      handler = PairingRpcHandler(
+        catalog: catalog,
+        send: sent.add,
+        uploadOpener: noopUploadOpener,
+        dirBrowser: (path, {targetId}) async => const PairingDirListing(
+          path: r'C:\Users\me',
+          parent: r'C:\Users',
+          dirs: [],
+          roots: [r'C:\', r'D:\'],
+        ),
+      );
+      handler.handle(
+        PairingCodec.decode(_json({
+          'id': 3,
+          'method': 'fs.browse',
+          'params': {'path': r'C:\Users\me'},
+        })),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      final result = (decodeLast() as JsonFrame).data['result'] as Map;
+      expect(result['roots'], [r'C:\', r'D:\']);
+    });
+
+    test('an empty root list still rides in the reply', () async {
+      handler = PairingRpcHandler(
+        catalog: catalog,
+        send: sent.add,
+        uploadOpener: noopUploadOpener,
+        dirBrowser: (path, {targetId}) async => const PairingDirListing(
+          path: '/home/me',
+          parent: '/home',
+          dirs: [],
+        ),
+      );
+      handler.handle(
+        PairingCodec.decode(_json({
+          'id': 4,
+          'method': 'fs.browse',
+          'params': {'path': '/home/me'},
+        })),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      final result = (decodeLast() as JsonFrame).data['result'] as Map;
+      expect(result['roots'], isEmpty);
+    });
+
     test('null path reaches the browser (default root)', () async {
       Object? seen = 'unset';
       handler = PairingRpcHandler(
