@@ -11,6 +11,7 @@ import '../../cubits/voice_input_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../repositories/ssh_credential_store.dart';
 import '../../repositories/voice_input_repository.dart';
+import '../../services/app/ios_background_grace_service.dart';
 import '../../services/pairing/pairing_offer.dart';
 import '../../services/stt/stt_provider_factory.dart';
 import '../../utils/logging/logger.dart';
@@ -40,6 +41,7 @@ class _PairingMobileShellState extends State<PairingMobileShell>
     with WidgetsBindingObserver {
   final AppLinks _appLinks = AppLinks();
   StreamSubscription<Uri>? _linkSub;
+  final IosBackgroundGraceService _backgroundGrace = IosBackgroundGraceService();
 
   @override
   void initState() {
@@ -50,12 +52,31 @@ class _PairingMobileShellState extends State<PairingMobileShell>
 
   /// The LAN socket does not survive the OS freezing this process, and nothing
   /// wakes us to notice: the drop is only observable once we are back. So retry
-  /// on resume instead of waiting out the backoff the user cannot see.
+  /// on resume instead of waiting out the backoff the user cannot see. iOS also
+  /// gets a ~30s background-task assertion while a connection is live, which
+  /// keeps the freeze — and the disconnect — off short switches away.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    if (state != AppLifecycleState.resumed || !mounted) return;
-    context.read<PairingClientCubit>().onAppResumed();
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_backgroundGrace.end());
+      if (!mounted) return;
+      context.read<PairingClientCubit>().onAppResumed();
+      return;
+    }
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      _beginBackgroundGraceIfConnected();
+    }
+  }
+
+  void _beginBackgroundGraceIfConnected() {
+    if (!mounted) return;
+    final phase = context.read<PairingClientCubit>().state.phase;
+    final hasLiveConnection =
+        phase == PairingClientPhase.connected ||
+        phase == PairingClientPhase.mirroring;
+    if (hasLiveConnection) unawaited(_backgroundGrace.begin());
   }
 
   Future<void> _initDeepLinks() async {
