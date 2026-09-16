@@ -181,11 +181,16 @@ class _WorkspacePageState extends State<WorkspacePage> {
         .read<WorkspaceTerminalRegistry>()
         .locatePane(paneId);
     if (located == null || located.$1.workspaceId != widget.workspaceId) {
-      appLogger.w(
-        '[pane-deep-link] pane not found pane=$paneId '
-        'workspace=${widget.workspaceId}',
-      );
-      _clearPaneQuery();
+      // A pane owned by another keep-alive workspace page is not ours to
+      // consume: its owning page applies and clears the query. Only a pane
+      // that no registry knows (stale notification) may be cleared here.
+      if (located == null) {
+        appLogger.w(
+          '[pane-deep-link] pane not found pane=$paneId '
+          'workspace=${widget.workspaceId}',
+        );
+        _clearPaneQuery();
+      }
       return;
     }
     final (group, _) = located;

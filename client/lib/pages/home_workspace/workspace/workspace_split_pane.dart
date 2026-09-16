@@ -138,14 +138,20 @@ class _WorkspaceSplitPaneState extends State<WorkspaceSplitPane> {
     // Workspace already owns a live shell terminal → focus it instead of
     // spawning a second PTY. Reset the guard so a later empty episode re-arms.
     final workbench = ctx.read<WorkbenchCubit>();
-    final existingShell = workbench.resolveMostRecentShell(
-      widget.workspace.workspaceId,
-    );
-    if (existingShell != null) {
+    final workspaceId = widget.workspace.workspaceId;
+    if (workbench.resolveMostRecentShell(workspaceId) != null) {
       _autoTerminalScheduled = false;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        workbench.select(widget.workspace.workspaceId, existingShell);
+        // Empty-center fallback only: a tab activated later in this frame
+        // (e.g. a notification pane deep link) must not be overridden by a
+        // shell resolved during build, and an explicit welcome must be kept.
+        final bucket = workbench.state.bucket(workspaceId);
+        if (bucket.activeTabId != null || bucket.welcomeActive) return;
+        final existingShell = workbench.resolveMostRecentShell(workspaceId);
+        if (existingShell != null) {
+          workbench.select(workspaceId, existingShell);
+        }
       });
       return;
     }
