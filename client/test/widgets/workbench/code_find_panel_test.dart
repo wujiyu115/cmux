@@ -96,4 +96,60 @@ void main() {
     expect(controller.value, isNull);
     expect(find.byType(TextField), findsNothing);
   });
+
+  testWidgets('enter keeps focus so it can step through matches', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_wrap(panel()));
+    controller.findMode();
+    await tester.pump();
+    expect(controller.findInputFocusNode.hasFocus, isTrue);
+
+    await tester.enterText(find.widgetWithText(TextField, 'Find'), 'foo');
+    await tester.pump();
+
+    // Submit without waiting for the background search: the default
+    // finalize unfocuses single-line fields, which is the regression being
+    // guarded against — Enter must keep focus to repeat.
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pump();
+
+    expect(controller.findInputFocusNode.hasFocus, isTrue);
+  });
+
+  testWidgets('enter keeps focus in the replace input', (tester) async {
+    await tester.pumpWidget(_wrap(panel()));
+    controller.findMode();
+    await tester.pump();
+
+    await tester.tap(find.byTooltip('Toggle replace'));
+    await tester.pump();
+
+    await tester.enterText(find.widgetWithText(TextField, 'Replace with'), 'x');
+    await tester.pump();
+
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pump();
+
+    expect(controller.replaceInputFocusNode.hasFocus, isTrue);
+  });
+
+  // The search runs on a real isolate, whose replies only deliver in a
+  // non-fake async zone — hence a plain test() instead of testWidgets().
+  test('nextMatch wraps around the full match list', () async {
+    controller.findMode();
+    controller.findInputController.text = 'foo';
+    for (var i = 0;
+        i < 500 && controller.value?.result == null;
+        i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    expect(controller.value?.result?.matches.length, 2);
+
+    final first = controller.value!.result!.index;
+    controller.nextMatch();
+    expect(controller.value!.result!.index, first == 0 ? 1 : 0);
+    controller.nextMatch();
+    expect(controller.value!.result!.index, first);
+  });
 }

@@ -162,6 +162,10 @@ class CodeFindPanel extends StatelessWidget implements PreferredSizeWidget {
                     ],
                   ),
                 ),
+                // An explicit onEditingComplete skips the default finalize
+                // that unfocuses single-line fields on submit, so Enter can
+                // be pressed repeatedly to step through matches.
+                onEditingComplete: () {},
                 onSubmitted: (_) => controller.nextMatch(),
               ),
             ),
@@ -224,6 +228,8 @@ class CodeFindPanel extends StatelessWidget implements PreferredSizeWidget {
                   context,
                   hint: l10n.editorReplaceHint,
                 ),
+                // Keep focus on Enter so matches can be replaced one by one.
+                onEditingComplete: () {},
                 onSubmitted: (_) => controller.replaceMatch(),
               ),
             ),
