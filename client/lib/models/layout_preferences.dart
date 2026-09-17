@@ -14,6 +14,9 @@ enum WorkspaceEntryMode { home, lastWorkspace }
 /// Default surface when opening a markdown file in the workbench editor.
 enum MarkdownOpenMode { preview, source, remember }
 
+/// How the Source Control panel lists changed files.
+enum GitChangesViewMode { tree, flat }
+
 /// Dropdown value for language preference: `system` | `en` | `zh`.
 String languagePreferenceUiValue(String locale) {
   if (locale.isEmpty) return 'system';
@@ -71,6 +74,7 @@ class LayoutPreferences {
     this.workspaceTerminalHeight = defaultWorkspaceTerminalHeight,
     this.markdownOpenMode = MarkdownOpenMode.preview,
     this.editorPreviewTabs = true,
+    this.gitChangesViewMode = GitChangesViewMode.tree,
   });
 
   factory LayoutPreferences.fromJson(Map<String, Object?> json) {
@@ -141,6 +145,9 @@ class LayoutPreferences {
           _enumValue(MarkdownOpenMode.values, json['markdownOpenMode']) ??
           MarkdownOpenMode.preview,
       editorPreviewTabs: json['editorPreviewTabs'] as bool? ?? true,
+      gitChangesViewMode:
+          _enumValue(GitChangesViewMode.values, json['gitChangesViewMode']) ??
+          GitChangesViewMode.tree,
     ).withAtLeastOneToolVisible();
   }
 
@@ -222,6 +229,10 @@ class LayoutPreferences {
   /// every open pins its own tab (VSCode `enablePreview: false`).
   final bool editorPreviewTabs;
 
+  /// Tree (collapsible folders) vs flat (full relative paths) listing in the
+  /// Source Control panel.
+  final GitChangesViewMode gitChangesViewMode;
+
   LayoutPreferences copyWith({
     LayoutPreset? preset,
     WorkspaceEntryMode? workspaceEntryMode,
@@ -251,6 +262,7 @@ class LayoutPreferences {
     double? workspaceTerminalHeight,
     MarkdownOpenMode? markdownOpenMode,
     bool? editorPreviewTabs,
+    GitChangesViewMode? gitChangesViewMode,
   }) {
     return LayoutPreferences(
       preset: preset ?? this.preset,
@@ -320,6 +332,7 @@ class LayoutPreferences {
           ),
       markdownOpenMode: markdownOpenMode ?? this.markdownOpenMode,
       editorPreviewTabs: editorPreviewTabs ?? this.editorPreviewTabs,
+      gitChangesViewMode: gitChangesViewMode ?? this.gitChangesViewMode,
     ).withAtLeastOneToolVisible();
   }
 
@@ -354,6 +367,7 @@ class LayoutPreferences {
       workspaceTerminalHeight: workspaceTerminalHeight,
       markdownOpenMode: markdownOpenMode,
       editorPreviewTabs: editorPreviewTabs,
+      gitChangesViewMode: gitChangesViewMode,
     );
   }
 
@@ -405,6 +419,7 @@ class LayoutPreferences {
       'workspaceTerminalHeight': workspaceTerminalHeight,
       'markdownOpenMode': markdownOpenMode.name,
       'editorPreviewTabs': editorPreviewTabs,
+      'gitChangesViewMode': gitChangesViewMode.name,
     };
   }
 }

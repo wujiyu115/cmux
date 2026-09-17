@@ -219,4 +219,7 @@ class LayoutCubit extends Cubit<LayoutState> {
 
   Future<void> setEditorPreviewTabs(bool enabled) =>
       _save(state.preferences.copyWith(editorPreviewTabs: enabled));
+
+  Future<void> setGitChangesViewMode(GitChangesViewMode mode) =>
+      _save(state.preferences.copyWith(gitChangesViewMode: mode));
 }

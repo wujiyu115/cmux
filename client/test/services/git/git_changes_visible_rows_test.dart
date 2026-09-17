@@ -146,4 +146,90 @@ void main() {
     );
     expect(width, greaterThan(300));
   });
+
+  test('visibleGitChangesFlatViewData emits depth-0 file rows sorted by path', () {
+    const changes = [
+      GitFileChange(
+        path: 'src/utils/foo.dart',
+        kind: GitChangeKind.modified,
+        staged: false,
+      ),
+      GitFileChange(
+        path: 'readme.md',
+        kind: GitChangeKind.modified,
+        staged: false,
+      ),
+      GitFileChange(
+        path: 'src/alpha.dart',
+        kind: GitChangeKind.modified,
+        staged: false,
+      ),
+    ];
+
+    final data = visibleGitChangesFlatViewData(
+      staged: const [],
+      unstaged: changes,
+    );
+
+    expect(
+      data.unstagedRows.map((r) => (r.change!.path, r.depth, r.isFolder)),
+      [
+        ('readme.md', 0, false),
+        ('src/alpha.dart', 0, false),
+        ('src/utils/foo.dart', 0, false),
+      ],
+    );
+    expect(data.stagedRows, isEmpty);
+  });
+
+  test('visibleGitChangesFlatViewData sorts staged and unstaged separately', () {
+    const staged = [
+      GitFileChange(path: 'lib/b.dart', kind: GitChangeKind.modified, staged: true),
+      GitFileChange(path: 'lib/a.dart', kind: GitChangeKind.modified, staged: true),
+    ];
+    const unstaged = [
+      GitFileChange(path: 'lib/d.dart', kind: GitChangeKind.modified, staged: false),
+      GitFileChange(path: 'lib/c.dart', kind: GitChangeKind.modified, staged: false),
+    ];
+
+    final data = visibleGitChangesFlatViewData(staged: staged, unstaged: unstaged);
+
+    expect(data.stagedRows.map((r) => r.change!.path), [
+      'lib/a.dart',
+      'lib/b.dart',
+    ]);
+    expect(data.unstagedRows.map((r) => r.change!.path), [
+      'lib/c.dart',
+      'lib/d.dart',
+    ]);
+  });
+
+  test('gitChangesMinContentWidth measures full paths when fullPaths is true', () {
+    const fileStyle = TextStyle(fontSize: 12);
+    const folderStyle = TextStyle(fontSize: 12, fontWeight: FontWeight.w500);
+    final rows = [
+      GitChangesVisibleRow.file(
+        change: const GitFileChange(
+          path: 'src/very/deep/long-name.dart',
+          kind: GitChangeKind.modified,
+          staged: false,
+        ),
+        depth: 0,
+      ),
+    ];
+
+    final basenameWidth = gitChangesMinContentWidth(
+      rows: rows,
+      fileLabelStyle: fileStyle,
+      folderLabelStyle: folderStyle,
+    );
+    final fullPathWidth = gitChangesMinContentWidth(
+      rows: rows,
+      fileLabelStyle: fileStyle,
+      folderLabelStyle: folderStyle,
+      fullPaths: true,
+    );
+
+    expect(fullPathWidth, greaterThan(basenameWidth));
+  });
 }

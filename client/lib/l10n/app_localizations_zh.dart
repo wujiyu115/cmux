@@ -342,6 +342,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitUnstageFolder => '取消暂存此目录下的更改';
 
   @override
+  String get gitChangesViewModeTitle => '更改视图';
+
+  @override
+  String get gitChangesViewModeDescription => '源代码管理面板中更改文件的展示方式。';
+
+  @override
+  String get gitChangesViewModeTree => '树形';
+
+  @override
+  String get gitChangesViewModeFlat => '平铺';
+
+  @override
+  String get gitViewModeTreeTooltip => '树形视图';
+
+  @override
+  String get gitViewModeFlatTooltip => '平铺列表';
+
+  @override
   String get treeExpandAllFolders => '展开所有目录';
 
   @override

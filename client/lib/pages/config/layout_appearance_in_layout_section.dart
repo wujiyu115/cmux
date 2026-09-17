@@ -277,6 +277,29 @@ class LayoutAppearanceInLayoutSection extends StatelessWidget {
                   showDividerBelow: true,
                 ),
                 TpPreferenceRow(
+                  title: l10n.gitChangesViewModeTitle,
+                  subtitle: l10n.gitChangesViewModeDescription,
+                  trailing: TpSegmentedPicker<GitChangesViewMode>(
+                    segments: [
+                      TpSegmentedOption<GitChangesViewMode>(
+                        value: GitChangesViewMode.tree,
+                        label: l10n.gitChangesViewModeTree,
+                        icon: Icons.account_tree_outlined,
+                      ),
+                      TpSegmentedOption<GitChangesViewMode>(
+                        value: GitChangesViewMode.flat,
+                        label: l10n.gitChangesViewModeFlat,
+                        icon: Icons.view_headline_outlined,
+                      ),
+                    ],
+                    selected: context.select<LayoutCubit, GitChangesViewMode>(
+                      (c) => c.state.preferences.gitChangesViewMode,
+                    ),
+                    onChanged: controller.setGitChangesViewMode,
+                  ),
+                  showDividerBelow: false,
+                ),
+                TpPreferenceRow(
                   title: l10n.editorPreviewTabsTitle,
                   subtitle: l10n.editorPreviewTabsDescription,
                   trailing: Switch(

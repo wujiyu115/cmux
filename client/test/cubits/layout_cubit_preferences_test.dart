@@ -33,6 +33,44 @@ void main() {
     expect(reloaded.state.preferences.editorPreviewTabs, isFalse);
   });
 
+  test('setGitChangesViewMode persists and reloads', () async {
+    final prefs = await SharedPreferences.getInstance();
+    final cubit = LayoutCubit(repository: LayoutRepository(prefs));
+    await cubit.load();
+    expect(cubit.state.preferences.gitChangesViewMode, GitChangesViewMode.tree);
+
+    await cubit.setGitChangesViewMode(GitChangesViewMode.flat);
+    expect(
+      cubit.state.preferences.gitChangesViewMode,
+      GitChangesViewMode.flat,
+    );
+
+    final reloaded = LayoutCubit(repository: LayoutRepository(prefs));
+    await reloaded.load();
+    expect(
+      reloaded.state.preferences.gitChangesViewMode,
+      GitChangesViewMode.flat,
+    );
+  });
+
+  test('gitChangesViewMode JSON round-trips and unknown values fall back', () {
+    expect(
+      LayoutPreferences.fromJson(const {
+        'gitChangesViewMode': 'flat',
+      }).gitChangesViewMode,
+      GitChangesViewMode.flat,
+    );
+    expect(
+      LayoutPreferences.fromJson(const {'gitChangesViewMode': 'nope'})
+          .gitChangesViewMode,
+      GitChangesViewMode.tree,
+    );
+    final json = LayoutPreferences.fromJson(const {
+      'gitChangesViewMode': 'flat',
+    }).toJson();
+    expect(json['gitChangesViewMode'], 'flat');
+  });
+
   test('setMonoFontSize persists, reloads, and clamps', () async {
     final prefs = await SharedPreferences.getInstance();
     final cubit = LayoutCubit(repository: LayoutRepository(prefs));

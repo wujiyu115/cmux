@@ -752,6 +752,42 @@ abstract class AppLocalizations {
   /// **'Unstage changes in folder'**
   String get gitUnstageFolder;
 
+  /// No description provided for @gitChangesViewModeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes view'**
+  String get gitChangesViewModeTitle;
+
+  /// No description provided for @gitChangesViewModeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'How the Source Control panel lists changed files.'**
+  String get gitChangesViewModeDescription;
+
+  /// No description provided for @gitChangesViewModeTree.
+  ///
+  /// In en, this message translates to:
+  /// **'Tree'**
+  String get gitChangesViewModeTree;
+
+  /// No description provided for @gitChangesViewModeFlat.
+  ///
+  /// In en, this message translates to:
+  /// **'Flat'**
+  String get gitChangesViewModeFlat;
+
+  /// No description provided for @gitViewModeTreeTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Tree view'**
+  String get gitViewModeTreeTooltip;
+
+  /// No description provided for @gitViewModeFlatTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Flat list'**
+  String get gitViewModeFlatTooltip;
+
   /// No description provided for @treeExpandAllFolders.
   ///
   /// In en, this message translates to:

@@ -358,6 +358,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gitUnstageFolder => 'Unstage changes in folder';
 
   @override
+  String get gitChangesViewModeTitle => 'Changes view';
+
+  @override
+  String get gitChangesViewModeDescription =>
+      'How the Source Control panel lists changed files.';
+
+  @override
+  String get gitChangesViewModeTree => 'Tree';
+
+  @override
+  String get gitChangesViewModeFlat => 'Flat';
+
+  @override
+  String get gitViewModeTreeTooltip => 'Tree view';
+
+  @override
+  String get gitViewModeFlatTooltip => 'Flat list';
+
+  @override
   String get treeExpandAllFolders => 'Expand all folders';
 
   @override

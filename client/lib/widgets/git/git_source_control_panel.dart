@@ -8,16 +8,21 @@ import 'package:shared_ui/shared_ui.dart';
 import 'package:teampilot/widgets/app_toast/app_toast.dart';
 
 import '../../cubits/git_cubit.dart';
+import '../../cubits/layout_cubit.dart';
 import '../../cubits/workbench/workbench_tab.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../models/git_status.dart';
+import '../../models/layout_preferences.dart';
+import '../../services/git/git_changes_visible_rows.dart';
 import '../../services/git/git_repo_store.dart';
 import '../../services/storage/runtime_context.dart';
 import '../../services/workbench/workbench_editor_opener.dart';
 import 'git_branch_menu.dart';
 import 'git_changes_tree_list.dart';
+import 'git_view_mode_pill.dart';
 
-/// VSCode-style "Source Control" panel for the editor workbench left rail.
+/// VSCode-style "Source Control" panel for the editor workbench right-tools
+/// rail.
 ///
 /// A pure view over [GitRepoStore]: the per-root [GitCubit]s live in the store
 /// (app-level), so reopening this tab paints the last-known status instantly
@@ -399,66 +404,82 @@ class _GitRepoBodyState extends State<_GitRepoBody> {
 
     return Container(
       padding: const EdgeInsets.all(10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          BlocSelector<GitCubit, GitState, (String, int, int, bool, bool)>(
-            selector: (state) => (
-              state.status.branch ?? 'HEAD',
-              state.status.ahead,
-              state.status.behind,
-              state.busy || state.isLoading,
-              state.allChangeFoldersExpanded,
-            ),
-            builder: (context, header) {
-              final (branch, ahead, behind, busy, allExpanded) = header;
-              return _Header(
-                branch: branch,
-                ahead: ahead,
-                behind: behind,
-                busy: busy,
-                allFoldersExpanded: allExpanded,
-                onRefresh: () => unawaited(_cubit.refresh()),
-                onPush: () => unawaited(_cubit.push()),
-                onPull: () => unawaited(_cubit.pull()),
-                onBranch: () => unawaited(_openBranchSheet()),
-                onToggleExpandAll: _cubit.toggleExpandAllFolders,
-              );
-            },
-          ),
-          const SizedBox(height: 10),
-          BlocSelector<GitCubit, GitState, (bool, bool, String)>(
-            selector: (state) => (
-              state.status.staged.isNotEmpty,
-              state.busy,
-              state.status.branch ?? 'HEAD',
-            ),
-            builder: (context, commit) {
-              final (hasStaged, busy, branch) = commit;
-              return _CommitBox(
-                controller: _commitController,
-                hint: l10n.gitCommitMessageHint(branch),
-                canCommit: hasStaged && !busy,
-                onChanged: _cubit.setCommitMessage,
-                onCommit: () async {
-                  final ok = await _cubit.commit();
-                  if (ok) _commitController.clear();
+      child: Builder(
+        // Selected (not inside the GitState selectors below) so a mode change
+        // repaints this shell without waiting on git state, and without the
+        // tool-views cache key (which would rebuild the file tree too).
+        builder: (context) {
+          final viewMode = context.select<LayoutCubit, GitChangesViewMode>(
+            (c) => c.state.preferences.gitChangesViewMode,
+          );
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              BlocSelector<GitCubit, GitState, (String, int, int, bool, bool)>(
+                selector: (state) => (
+                  state.status.branch ?? 'HEAD',
+                  state.status.ahead,
+                  state.status.behind,
+                  state.busy || state.isLoading,
+                  state.allChangeFoldersExpanded,
+                ),
+                builder: (context, header) {
+                  final (branch, ahead, behind, busy, allExpanded) = header;
+                  return _Header(
+                    branch: branch,
+                    ahead: ahead,
+                    behind: behind,
+                    busy: busy,
+                    allFoldersExpanded: allExpanded,
+                    viewMode: viewMode,
+                    onRefresh: () => unawaited(_cubit.refresh()),
+                    onPush: () => unawaited(_cubit.push()),
+                    onPull: () => unawaited(_cubit.pull()),
+                    onBranch: () => unawaited(_openBranchSheet()),
+                    onToggleExpandAll: _cubit.toggleExpandAllFolders,
+                    onViewModeChanged: (mode) => unawaited(
+                      context.read<LayoutCubit>().setGitChangesViewMode(mode),
+                    ),
+                  );
                 },
-              );
-            },
-          ),
-          const SizedBox(height: 12),
-          Expanded(
-            child:
-                BlocSelector<
+              ),
+              const SizedBox(height: 10),
+              BlocSelector<GitCubit, GitState, (bool, bool, String)>(
+                selector: (state) => (
+                  state.status.staged.isNotEmpty,
+                  state.busy,
+                  state.status.branch ?? 'HEAD',
+                ),
+                builder: (context, commit) {
+                  final (hasStaged, busy, branch) = commit;
+                  return _CommitBox(
+                    controller: _commitController,
+                    hint: l10n.gitCommitMessageHint(branch),
+                    canCommit: hasStaged && !busy,
+                    onChanged: _cubit.setCommitMessage,
+                    onCommit: () async {
+                      final ok = await _cubit.commit();
+                      if (ok) _commitController.clear();
+                    },
+                  );
+                },
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: BlocSelector<
                   GitCubit,
                   GitState,
-                  (bool, GitChangesTreeViewData)
+                  (bool, GitChangesTreeViewData, List<GitFileChange>, List<
+                      GitFileChange>)
                 >(
-                  selector: (state) =>
-                      (state.status.hasChanges, state.changesTreeView),
+                  selector: (state) => (
+                    state.status.hasChanges,
+                    state.changesTreeView,
+                    state.status.staged,
+                    state.status.unstaged,
+                  ),
                   builder: (context, data) {
-                    final (hasChanges, treeView) = data;
+                    final (hasChanges, treeView, staged, unstaged) = data;
                     if (!hasChanges) {
                       final cs = Theme.of(context).colorScheme;
                       return Center(
@@ -473,9 +494,16 @@ class _GitRepoBodyState extends State<_GitRepoBody> {
                     if (!_changesListReady) {
                       return const SizedBox.shrink();
                     }
+                    final isFlat = viewMode == GitChangesViewMode.flat;
                     return GitChangesTreeList(
-                      treeView: treeView,
+                      treeView: isFlat
+                          ? visibleGitChangesFlatViewData(
+                              staged: staged,
+                              unstaged: unstaged,
+                            )
+                          : treeView,
                       cubit: _cubit,
+                      flat: isFlat,
                       listScrollController: _changesScrollController,
                       horizontalScrollController: _horizontalScrollController,
                       onOpenDiff: (change) => unawaited(_openDiff(change)),
@@ -484,8 +512,10 @@ class _GitRepoBodyState extends State<_GitRepoBody> {
                     );
                   },
                 ),
-          ),
-        ],
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -529,11 +559,13 @@ class _Header extends StatelessWidget {
     required this.behind,
     required this.busy,
     required this.allFoldersExpanded,
+    required this.viewMode,
     required this.onRefresh,
     required this.onPush,
     required this.onPull,
     required this.onBranch,
     required this.onToggleExpandAll,
+    required this.onViewModeChanged,
   });
 
   final String branch;
@@ -541,11 +573,13 @@ class _Header extends StatelessWidget {
   final int behind;
   final bool busy;
   final bool allFoldersExpanded;
+  final GitChangesViewMode viewMode;
   final VoidCallback onRefresh;
   final VoidCallback onPush;
   final VoidCallback onPull;
   final VoidCallback onBranch;
   final VoidCallback onToggleExpandAll;
+  final ValueChanged<GitChangesViewMode> onViewModeChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -601,15 +635,17 @@ class _Header extends StatelessWidget {
               child: CircularProgressIndicator(strokeWidth: 2),
             ),
           ),
-        TpIconButton(
-          icon: allFoldersExpanded ? Icons.unfold_less : Icons.unfold_more,
-          compact: true,
-          size: TpIconButton.kCompactSize,
-          tooltip: allFoldersExpanded
-              ? l10n.treeCollapseAllFolders
-              : l10n.treeExpandAllFolders,
-          onTap: onToggleExpandAll,
-        ),
+        GitViewModePill(mode: viewMode, onModeChanged: onViewModeChanged),
+        if (viewMode == GitChangesViewMode.tree)
+          TpIconButton(
+            icon: allFoldersExpanded ? Icons.unfold_less : Icons.unfold_more,
+            compact: true,
+            size: TpIconButton.kCompactSize,
+            tooltip: allFoldersExpanded
+                ? l10n.treeCollapseAllFolders
+                : l10n.treeExpandAllFolders,
+            onTap: onToggleExpandAll,
+          ),
         TpIconButton(
           icon: Icons.download_outlined,
           compact: true,

@@ -12,6 +12,9 @@ import '../file_icon_widget.dart';
 /// Shows a status badge + file name; trailing actions depend on the area:
 /// staged rows offer "unstage", unstaged rows offer "discard" + "stage".
 /// Tapping the row opens the diff.
+///
+/// In [flat] mode the label shows the full repo-relative path with a dimmed
+/// directory prefix instead of the bare basename.
 class GitChangeTile extends StatefulWidget {
   const GitChangeTile({
     required this.change,
@@ -21,6 +24,7 @@ class GitChangeTile extends StatefulWidget {
     required this.onUnstage,
     required this.onDiscard,
     this.hoverEnabled = true,
+    this.flat = false,
     super.key,
   });
 
@@ -31,6 +35,9 @@ class GitChangeTile extends StatefulWidget {
   final VoidCallback onUnstage;
   final VoidCallback onDiscard;
   final bool hoverEnabled;
+
+  /// Flat view: label shows the dimmed directory prefix + basename.
+  final bool flat;
 
   @override
   State<GitChangeTile> createState() => _GitChangeTileState();
@@ -106,11 +113,7 @@ class _GitChangeTileState extends State<GitChangeTile> {
                     const SizedBox(width: 16),
                     FileIconWidget(fileName: name),
                     const SizedBox(width: 6),
-                    Text(
-                      name,
-                      maxLines: 1,
-                      style: TpTextStyles.of(context).md,
-                    ),
+                    _buildLabel(context, cs, name),
                     const SizedBox(width: 8),
                     if (_hovered) ..._actions(context) else _badge(cs),
                   ],
@@ -120,6 +123,32 @@ class _GitChangeTileState extends State<GitChangeTile> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildLabel(BuildContext context, ColorScheme cs, String name) {
+    final styles = TpTextStyles.of(context);
+    if (!widget.flat) {
+      return Text(name, maxLines: 1, style: styles.md);
+    }
+    final normalized = p.posix.normalize(widget.change.path);
+    final dir = p.posix.dirname(normalized);
+    final prefix = dir == '.' || dir.isEmpty ? '' : '$dir/';
+    if (prefix.isEmpty) {
+      return Text(name, maxLines: 1, style: styles.md);
+    }
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(
+            text: prefix,
+            style: styles.mdColored(cs.onSurfaceVariant),
+          ),
+          TextSpan(text: name, style: styles.md),
+        ],
+      ),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
     );
   }
 

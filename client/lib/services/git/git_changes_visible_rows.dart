@@ -30,7 +30,8 @@ class GitChangesVisibleRow extends Equatable {
   List<Object?> get props => [folderPath, name, change, depth, isFolder];
 }
 
-/// Pre-flattened staged + unstaged rows for the changes tree list.
+/// Pre-flattened staged + unstaged rows for the changes list — tree or flat
+/// presentation (flat rows are all file rows at depth 0 with full paths).
 class GitChangesTreeViewData extends Equatable {
   const GitChangesTreeViewData({
     required this.stagedRows,
@@ -80,18 +81,23 @@ const double kGitChangesContentWidthSlack = 12;
 const int _kContentWidthCandidates = 32;
 
 /// Minimum content width so the widest visible tree row fits without truncation.
+/// When [fullPaths] is true, file labels measure the full normalized path
+/// (flat view) instead of the basename.
 double gitChangesMinContentWidth({
   required List<GitChangesVisibleRow> rows,
   required TextStyle fileLabelStyle,
   required TextStyle folderLabelStyle,
   TextScaler textScaler = TextScaler.noScaling,
+  bool fullPaths = false,
 }) {
   if (rows.isEmpty) return 0;
 
   final List<GitChangesVisibleRow> measured;
   if (rows.length > _kContentWidthCandidates) {
     measured = [...rows]
-      ..sort((a, b) => _rowWidthEstimate(b).compareTo(_rowWidthEstimate(a)));
+      ..sort((a, b) => _rowWidthEstimate(b, fullPaths: fullPaths).compareTo(
+      _rowWidthEstimate(a, fullPaths: fullPaths),
+    ));
     measured.length = _kContentWidthCandidates;
   } else {
     measured = rows;
@@ -118,7 +124,9 @@ double gitChangesMinContentWidth({
       continue;
     }
 
-    final label = p.basename(row.change!.path);
+    final label = fullPaths
+        ? p.posix.normalize(row.change!.path)
+        : p.basename(row.change!.path);
     painter.text = TextSpan(text: label, style: fileLabelStyle);
     painter.layout();
     final trailing = row.change!.staged
@@ -137,8 +145,12 @@ double gitChangesMinContentWidth({
   return maxWidth.ceilToDouble() + kGitChangesContentWidthSlack;
 }
 
-double _rowWidthEstimate(GitChangesVisibleRow row) {
-  final label = row.isFolder ? row.name! : p.basename(row.change!.path);
+double _rowWidthEstimate(GitChangesVisibleRow row, {bool fullPaths = false}) {
+  final label = row.isFolder
+      ? row.name!
+      : fullPaths
+      ? p.posix.normalize(row.change!.path)
+      : p.basename(row.change!.path);
   var units = 0.0;
   for (final rune in label.runes) {
     units += rune >= 0x1100 ? 2.0 : 1.0;
@@ -181,6 +193,30 @@ GitChangesTreeViewData visibleGitChangesTreeViewData({
       expandedFolderPaths: expandedFolderPaths,
     ),
   );
+}
+
+/// Flat variant: every change is a depth-0 file row sorted by full path —
+/// no folder nodes, so changed files are visible without expanding.
+GitChangesTreeViewData visibleGitChangesFlatViewData({
+  required List<GitFileChange> staged,
+  required List<GitFileChange> unstaged,
+}) {
+  return GitChangesTreeViewData(
+    stagedRows: _flatRows(staged),
+    unstagedRows: _flatRows(unstaged),
+  );
+}
+
+List<GitChangesVisibleRow> _flatRows(List<GitFileChange> changes) {
+  if (changes.isEmpty) return const [];
+  final sorted = changes.toList()
+    ..sort((a, b) => p.posix.normalize(a.path).compareTo(
+      p.posix.normalize(b.path),
+    ));
+  return [
+    for (final change in sorted)
+      GitChangesVisibleRow.file(change: change, depth: 0),
+  ];
 }
 
 /// Flatten [changes] into folder + file rows for tree view.

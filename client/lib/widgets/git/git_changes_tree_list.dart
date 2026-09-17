@@ -13,7 +13,8 @@ import 'git_change_folder_tile.dart';
 import 'git_change_tile.dart';
 
 /// Flattened git changes tree (staged + unstaged sections), mirroring
-/// [_FileTreeList] in [FileTreePanel].
+/// [_FileTreeList] in [FileTreePanel]. With [flat] true, rows carry full
+/// relative paths with no folder hierarchy.
 class GitChangesTreeList extends StatefulWidget {
   const GitChangesTreeList({
     required this.treeView,
@@ -22,6 +23,7 @@ class GitChangesTreeList extends StatefulWidget {
     required this.horizontalScrollController,
     required this.onOpenDiff,
     required this.onConfirmDiscard,
+    this.flat = false,
     super.key,
   });
 
@@ -31,6 +33,9 @@ class GitChangesTreeList extends StatefulWidget {
   final ScrollController horizontalScrollController;
   final ValueChanged<GitFileChange> onOpenDiff;
   final ValueChanged<GitFileChange> onConfirmDiscard;
+
+  /// Flat view: file rows show full repo-relative paths (no folders).
+  final bool flat;
 
   @override
   State<GitChangesTreeList> createState() => _GitChangesTreeListState();
@@ -78,6 +83,7 @@ class _GitChangesTreeListState extends State<GitChangesTreeList> {
             fileLabelStyle: fileLabelStyle,
             folderLabelStyle: folderLabelStyle,
             textScaler: MediaQuery.textScalerOf(context),
+            fullPaths: widget.flat,
           ),
         );
 
@@ -195,6 +201,7 @@ class _GitChangesTreeListState extends State<GitChangesTreeList> {
       change: change,
       depth: row.depth,
       hoverEnabled: _hoverEnabled,
+      flat: widget.flat,
       onOpenDiff: () => widget.onOpenDiff(change),
       onStage: staged ? () {} : () => unawaited(widget.cubit.stage(change)),
       onUnstage: staged ? () => unawaited(widget.cubit.unstage(change)) : () {},
