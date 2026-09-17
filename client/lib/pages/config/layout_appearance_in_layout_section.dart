@@ -10,9 +10,14 @@ import '../../theme/app_typography_scale.dart';
 import '../../theme/font_catalog.dart';
 import '../../utils/ui/app_keys.dart';
 import '../../widgets/settings/font_preference_setting.dart';
-import '../../widgets/settings/mono_font_size_setting.dart';
+import '../../widgets/settings/font_size_setting.dart';
 import '../../widgets/settings/theme_color_preset_picker.dart';
-import '../../widgets/settings/typography_scale_setting.dart';
+import '../../widgets/settings/ui_zoom_setting.dart';
+
+/// Tightened top inset for the in-card group labels: each [TpPreferenceRow]
+/// already carries 16px of vertical padding, so the default header padding
+/// (top 20) would leave a visibly larger gap than between plain rows.
+const EdgeInsets _groupHeaderPadding = EdgeInsets.fromLTRB(20, 12, 20, 4);
 
 class LayoutAppearanceInLayoutSection extends StatelessWidget {
   const LayoutAppearanceInLayoutSection({super.key});
@@ -26,7 +31,6 @@ class LayoutAppearanceInLayoutSection extends StatelessWidget {
       LayoutCubit,
       LayoutState,
       (
-        String,
         String,
         String,
         double,
@@ -48,12 +52,11 @@ class LayoutAppearanceInLayoutSection extends StatelessWidget {
         return (
           themeMode,
           normalizeThemeColorPreset(state.preferences.themeColorPreset),
-          normalizeTypographyScale(state.preferences.typographyScale),
-          state.preferences.typographyScaleCustomMultiplier,
+          state.preferences.uiFontSize,
           normalizeUiFontId(state.preferences.uiFontId),
           normalizeMonoFontId(state.preferences.monoFontId),
-          state.preferences.monoFontScale,
-          normalizeTypographyScale(state.preferences.uiZoomScale),
+          state.preferences.monoFontSize,
+          normalizeUiZoomScale(state.preferences.uiZoomScale),
           state.preferences.uiZoomCustomMultiplier,
           languagePreferenceUiValue(state.preferences.locale),
         );
@@ -62,11 +65,10 @@ class LayoutAppearanceInLayoutSection extends StatelessWidget {
         final (
           themeMode,
           colorPreset,
-          typographyScale,
-          typographyCustomMultiplier,
+          uiFontSize,
           uiFontId,
           monoFontId,
-          monoFontScale,
+          monoFontSize,
           uiZoomScale,
           uiZoomCustomMultiplier,
           langValue,
@@ -78,26 +80,10 @@ class LayoutAppearanceInLayoutSection extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 TpSectionHeader(title: l10n.appearance),
-                TpPreferenceRow(
-                  title: l10n.workspaceEntryModeTitle,
-                  subtitle: l10n.workspaceEntryModeDescription,
-                  trailing: TpSegmentedPicker<WorkspaceEntryMode>(
-                    segments: [
-                      TpSegmentedOption<WorkspaceEntryMode>(
-                        value: WorkspaceEntryMode.home,
-                        label: l10n.workspaceEntryModeHome,
-                        icon: Icons.home_outlined,
-                      ),
-                      TpSegmentedOption<WorkspaceEntryMode>(
-                        value: WorkspaceEntryMode.lastWorkspace,
-                        label: l10n.workspaceEntryModeLastWorkspace,
-                        icon: Icons.history,
-                      ),
-                    ],
-                    selected: workspaceEntryMode,
-                    onChanged: controller.setWorkspaceEntryMode,
-                  ),
-                  showDividerBelow: true,
+                // --- 主题 ---
+                TpSectionHeader(
+                  title: l10n.theme,
+                  padding: _groupHeaderPadding,
                 ),
                 TpPreferenceRow(
                   title: l10n.themeModeTitle,
@@ -132,17 +118,21 @@ class LayoutAppearanceInLayoutSection extends StatelessWidget {
                     selected: colorPreset,
                     onSelect: controller.setThemeColorPreset,
                   ),
-                  showDividerBelow: true,
+                  showDividerBelow: false,
+                ),
+                // --- 字体与字号 ---
+                TpSectionHeader(
+                  title: l10n.appearanceGroupFonts,
+                  padding: _groupHeaderPadding,
                 ),
                 TpPreferenceRow(
-                  title: l10n.typographyScaleTitle,
-                  subtitle: l10n.typographyScaleDescription,
-                  trailing: TypographyScaleSetting(
-                    scaleId: typographyScale,
-                    customMultiplier: typographyCustomMultiplier,
-                    onScaleIdChanged: controller.setTypographyScale,
-                    onCustomMultiplierChanged:
-                        controller.setTypographyScaleCustom,
+                  title: l10n.uiFontSizeTitle,
+                  subtitle: l10n.uiFontSizeDescription,
+                  trailing: FontSizeSetting(
+                    size: uiFontSize,
+                    minSize: kUiFontSizeMin,
+                    maxSize: kUiFontSizeMax,
+                    onChanged: controller.setUiFontSize,
                   ),
                   showDividerBelow: true,
                 ),
@@ -169,20 +159,81 @@ class LayoutAppearanceInLayoutSection extends StatelessWidget {
                 TpPreferenceRow(
                   title: l10n.monoFontSizeTitle,
                   subtitle: l10n.monoFontSizeDescription,
-                  trailing: MonoFontSizeSetting(
-                    scale: monoFontScale,
-                    onChanged: controller.setMonoFontScale,
+                  trailing: FontSizeSetting(
+                    size: monoFontSize,
+                    minSize: kMonoFontSizeMin,
+                    maxSize: kMonoFontSizeMax,
+                    onChanged: controller.setMonoFontSize,
                   ),
-                  showDividerBelow: true,
+                  showDividerBelow: false,
+                ),
+                // --- 显示缩放 ---
+                TpSectionHeader(
+                  title: l10n.appearanceGroupZoom,
+                  padding: _groupHeaderPadding,
                 ),
                 TpPreferenceRow(
                   title: l10n.uiZoomTitle,
                   subtitle: l10n.uiZoomDescription,
-                  trailing: TypographyScaleSetting(
+                  trailing: UiZoomSetting(
                     scaleId: uiZoomScale,
                     customMultiplier: uiZoomCustomMultiplier,
                     onScaleIdChanged: controller.setUiZoomScale,
                     onCustomMultiplierChanged: controller.setUiZoomCustom,
+                  ),
+                  showDividerBelow: false,
+                ),
+                // --- 语言与区域 ---
+                TpSectionHeader(
+                  title: l10n.appearanceGroupLanguage,
+                  padding: _groupHeaderPadding,
+                ),
+                TpPreferenceRow(
+                  title: l10n.language,
+                  subtitle: l10n.languageDescription,
+                  trailing: TpCompactSelect<String>(
+                    value: langValue,
+                    entries: [
+                      ('system', l10n.languageSystem),
+                      ('en', l10n.languageEnglish),
+                      ('zh', l10n.languageChinese),
+                    ],
+                    itemKeys: const {
+                      'system': AppKeys.languageSystemButton,
+                      'en': AppKeys.languageEnButton,
+                      'zh': AppKeys.languageZhButton,
+                    },
+                    onChanged: (v) {
+                      if (v != null) {
+                        controller.setLocale(languagePreferenceStoredLocale(v));
+                      }
+                    },
+                  ),
+                  showDividerBelow: false,
+                ),
+                // --- 编辑器行为 ---
+                TpSectionHeader(
+                  title: l10n.appearanceGroupEditor,
+                  padding: _groupHeaderPadding,
+                ),
+                TpPreferenceRow(
+                  title: l10n.workspaceEntryModeTitle,
+                  subtitle: l10n.workspaceEntryModeDescription,
+                  trailing: TpSegmentedPicker<WorkspaceEntryMode>(
+                    segments: [
+                      TpSegmentedOption<WorkspaceEntryMode>(
+                        value: WorkspaceEntryMode.home,
+                        label: l10n.workspaceEntryModeHome,
+                        icon: Icons.home_outlined,
+                      ),
+                      TpSegmentedOption<WorkspaceEntryMode>(
+                        value: WorkspaceEntryMode.lastWorkspace,
+                        label: l10n.workspaceEntryModeLastWorkspace,
+                        icon: Icons.history,
+                      ),
+                    ],
+                    selected: workspaceEntryMode,
+                    onChanged: controller.setWorkspaceEntryMode,
                   ),
                   showDividerBelow: true,
                 ),
@@ -221,29 +272,6 @@ class LayoutAppearanceInLayoutSection extends StatelessWidget {
                       (c) => c.state.preferences.editorPreviewTabs,
                     ),
                     onChanged: controller.setEditorPreviewTabs,
-                  ),
-                  showDividerBelow: true,
-                ),
-                TpPreferenceRow(
-                  title: l10n.language,
-                  subtitle: l10n.languageDescription,
-                  trailing: TpCompactSelect<String>(
-                    value: langValue,
-                    entries: [
-                      ('system', l10n.languageSystem),
-                      ('en', l10n.languageEnglish),
-                      ('zh', l10n.languageChinese),
-                    ],
-                    itemKeys: const {
-                      'system': AppKeys.languageSystemButton,
-                      'en': AppKeys.languageEnButton,
-                      'zh': AppKeys.languageZhButton,
-                    },
-                    onChanged: (v) {
-                      if (v != null) {
-                        controller.setLocale(languagePreferenceStoredLocale(v));
-                      }
-                    },
                   ),
                   showDividerBelow: false,
                 ),

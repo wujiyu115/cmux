@@ -84,26 +84,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Primary and accent colors for buttons, toggles, and highlights.';
 
   @override
-  String get typographyScaleTitle => 'Text size';
+  String get uiFontSizeTitle => 'Interface font size';
 
   @override
-  String get typographyScaleDescription =>
-      'Size of UI text. Standard follows your system; does not change icons or spacing.';
-
-  @override
-  String get typographyScaleCompact => 'Small';
-
-  @override
-  String get typographyScaleStandard => 'Standard';
-
-  @override
-  String get typographyScaleComfortable => 'Large';
-
-  @override
-  String get typographyScaleCustom => 'Custom';
-
-  @override
-  String get typographyScaleCustomHint => '50–200';
+  String get uiFontSizeDescription =>
+      'UI text size in pixels. Icons and controls follow; spacing and the whole-UI zoom are separate.';
 
   @override
   String get fontUiTitle => 'Interface font';
@@ -124,22 +109,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get monoFontSizeDescription =>
-      'Font size for terminal, editor, and diffs, relative to text size.';
-
-  @override
-  String get monoFontSizeSmall => 'Small';
-
-  @override
-  String get monoFontSizeStandard => 'Standard';
-
-  @override
-  String get monoFontSizeLarge => 'Large';
-
-  @override
-  String get monoFontSizeCustom => 'Custom';
-
-  @override
-  String get monoFontSizeCustomHint => '70–160';
+      'Font size in pixels for terminal, editor, and diffs.';
 
   @override
   String get fontChangeAppliesOnRestart =>
@@ -165,7 +135,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get uiZoomDescription =>
-      'Zoom the whole UI together — text, icons, and spacing. Standard follows your display scaling.';
+      'Zoom the whole UI together — text, icons, and spacing. Standard is 100%.';
+
+  @override
+  String get uiZoomCompact => 'Small';
+
+  @override
+  String get uiZoomStandard => 'Standard';
+
+  @override
+  String get uiZoomComfortable => 'Large';
+
+  @override
+  String get uiZoomCustom => 'Custom';
+
+  @override
+  String get uiZoomCustomHint => '50–200';
 
   @override
   String get markdownOpenModeTitle => 'Open Markdown as';
@@ -232,6 +217,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get appearance => 'Appearance';
+
+  @override
+  String get appearanceGroupFonts => 'Fonts and sizes';
+
+  @override
+  String get appearanceGroupZoom => 'Display zoom';
+
+  @override
+  String get appearanceGroupLanguage => 'Language and region';
+
+  @override
+  String get appearanceGroupEditor => 'Editor behavior';
 
   @override
   String get workspaceEntryModeTitle => 'Startup view';

@@ -15,17 +15,10 @@ import 'command_ids.dart';
 void registerLayoutCommands(
   CommandBus bus,
   LayoutCubit layout, {
-  required double Function() uiZoomBaseline,
   Future<void> Function()? onTogglePanel,
 }) {
-  bus.register(
-    CommandIds.zoomIn,
-    () => layout.zoomIn(baseline: uiZoomBaseline()),
-  );
-  bus.register(
-    CommandIds.zoomOut,
-    () => layout.zoomOut(baseline: uiZoomBaseline()),
-  );
+  bus.register(CommandIds.zoomIn, layout.zoomIn);
+  bus.register(CommandIds.zoomOut, layout.zoomOut);
   bus.register(CommandIds.zoomReset, () => layout.zoomReset());
   bus.register(CommandIds.toggleSidebar, () => layout.toggleSidebar());
   bus.register(CommandIds.togglePanel, () {

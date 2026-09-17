@@ -39,13 +39,10 @@ ThemeData bootstrapThemeForTextWarmup([ResolvedFonts? fonts]) {
 /// Google Fonts and FlexColorScheme and can stall startup for a long time).
 ThemeData themeForInteractiveWarmup(LayoutPreferences preferences) {
   final fonts = _fontsFromPreferences(preferences);
-  final textBaseline = _systemTextBaseline();
-  final effectiveTextMult = resolveRelativeScale(
-    scaleId: normalizeTypographyScale(preferences.typographyScale),
-    customMultiplier: preferences.typographyScaleCustomMultiplier,
-    baseline: textBaseline,
+  final textScale = AppTypographyScale.fromPx(
+    uiFontSize: preferences.uiFontSize,
+    monoFontSize: preferences.monoFontSize,
   );
-  final textScale = AppTypographyScale(multiplier: effectiveTextMult);
   final seed = bootstrapThemeForTextWarmup(fonts);
   final control = TpControlMetrics.fromScale(textScale.multiplier);
   final textTheme = applyAppInputTextStyles(
@@ -59,17 +56,6 @@ ThemeData themeForInteractiveWarmup(LayoutPreferences preferences) {
       textTheme: textTheme,
       control: control,
     ),
-  );
-}
-
-double _systemTextBaseline() {
-  final systemView = WidgetsBinding.instance.platformDispatcher.implicitView;
-  final systemMq = systemView == null
-      ? const MediaQueryData()
-      : MediaQueryData.fromView(systemView);
-  return autoTextScaleForSystem(
-    systemMq.textScaler.scale(1.0),
-    systemMq.devicePixelRatio,
   );
 }
 

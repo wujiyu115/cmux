@@ -11,17 +11,11 @@ void main() {
   group('registerLayoutCommands', () {
     late CommandBus bus;
     late LayoutCubit layout;
-    late double baseline;
 
     setUp(() {
       bus = CommandBus();
       layout = LayoutCubit();
-      baseline = 1.0;
-      registerLayoutCommands(
-        bus,
-        layout,
-        uiZoomBaseline: () => baseline,
-      );
+      registerLayoutCommands(bus, layout);
     });
 
     tearDown(() => layout.close());
@@ -48,33 +42,17 @@ void main() {
       );
     });
 
-    test(
-      'zoomIn clamps differently for baseline 0.5 than 1.0 near the edge',
-      () async {
-        baseline = 0.5;
-        for (var i = 0; i < 20; i++) {
-          bus.invoke(CommandIds.zoomIn);
-          await Future<void>.delayed(Duration.zero);
-        }
+    test('zoomIn clamps the stored multiplier at kUiZoomMax', () async {
+      for (var i = 0; i < 20; i++) {
+        bus.invoke(CommandIds.zoomIn);
+        await Future<void>.delayed(Duration.zero);
+      }
 
-        final atHalfBaseline =
-            layout.state.preferences.uiZoomCustomMultiplier;
-
-        await layout.zoomReset();
-        baseline = 1.0;
-        for (var i = 0; i < 20; i++) {
-          bus.invoke(CommandIds.zoomIn);
-          await Future<void>.delayed(Duration.zero);
-        }
-
-        final atUnitBaseline =
-            layout.state.preferences.uiZoomCustomMultiplier;
-
-        expect(atHalfBaseline, closeTo(kTypographyCustomMultiplierMax, 0.0001));
-        expect(atUnitBaseline, closeTo(kUiZoomMax, 0.0001));
-        expect(atHalfBaseline, isNot(closeTo(atUnitBaseline, 0.0001)));
-      },
-    );
+      expect(
+        layout.state.preferences.uiZoomCustomMultiplier,
+        closeTo(kUiZoomMax, 0.0001),
+      );
+    });
 
     test('zoomReset command resets the scale id to standard', () async {
       bus.invoke(CommandIds.zoomIn);
@@ -114,7 +92,6 @@ void main() {
       registerLayoutCommands(
         panelBus,
         layout,
-        uiZoomBaseline: () => baseline,
         onTogglePanel: () async {
           calls++;
           const ws = 'ws';

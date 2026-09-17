@@ -3,43 +3,60 @@ import 'package:shared_ui/shared_ui.dart';
 
 /// Central **font size** configuration for TeamPilot UI.
 ///
-/// Edit base values or [AppTypographyScale.standard.multiplier] here (or pass
-/// another scale when building [ThemeData]) — widgets read sizes via
-/// [TextTheme] / [TpTextStyles], not these constants directly.
+/// Font sizes are absolute logical px, mirroring VS Code's `editor.fontSize`
+/// / `terminal.integrated.fontSize` model: [LayoutPreferences.uiFontSize] and
+/// [LayoutPreferences.monoFontSize] feed [AppTypographyScale.fromPx], and the
+/// whole-UI zoom (`uiZoomScale`) is the only remaining relative knob. The OS
+/// display scaling (devicePixelRatio) is handled natively by Flutter — the app
+/// no longer compensates for it in text sizes.
+///
+/// Edit base values here (or pass another scale when building [ThemeData]) —
+/// widgets read sizes via [TextTheme] / [TpTextStyles], not these constants
+/// directly.
 ///
 /// Exceptions: terminal [TerminalStyle] uses [terminal]; see `chat_workbench.dart`.
 
-/// Persisted scale ids (settings UI order). These are **relative** levels: the
-/// effective scale is `autoBaseline × thisMultiplier`, where the baseline is the
-/// per-system auto value (text: [autoTextScaleForSystem]; zoom:
-/// [autoUiZoomForDevicePixelRatio]). So `standard` (×1.0) == auto, `compact` is
-/// a bit tighter, `comfortable` a bit looser, `custom` a % of standard.
-const List<String> kTypographyScaleIds = [
-  'compact',
-  'standard',
-  'comfortable',
-  'custom',
-];
+// --- Font sizes (absolute logical px) ---
 
-const String kDefaultTypographyScaleId = 'standard';
+/// UI body text size (`bodyMedium` baseline); every other UI role derives as
+/// `roleBase × (uiFontSize / kUiFontSizeBase)`.
+const double kUiFontSizeBase = 14;
+const double kUiFontSizeMin = 10;
+const double kUiFontSizeMax = 28;
+const double kDefaultUiFontSize = 14;
 
-/// Allowed custom **text-size** multiplier (× standard). Max is generous so the
-/// in-app text size can replicate large OS text-scaling (e.g. GNOME 1.5).
-const double kTypographyCustomMultiplierMin = 0.5;
-const double kTypographyCustomMultiplierMax = 2.0;
-const double kDefaultTypographyCustomMultiplier = 1.0;
+double clampUiFontSize(double value) => value.clamp(kUiFontSizeMin, kUiFontSizeMax);
 
-/// Relative size multiplier for monospace faces (terminal + code editor +
-/// diffs) on top of the UI text scale. Independent of [multiplier] so mono
-/// size can be tuned without touching chrome density.
-const double kMonoFontScaleMin = 0.7;
-const double kMonoFontScaleMax = 1.6;
-const double kDefaultMonoFontScale = 1.0;
-const double kMonoFontScaleSmall = 0.85;
-const double kMonoFontScaleLarge = 1.15;
+/// Monospace faces (terminal + code editor + diffs), absolute px like VS
+/// Code's `terminal.integrated.fontSize`.
+const double kMonoFontSizeMin = 8;
+const double kMonoFontSizeMax = 28;
+const double kDefaultMonoFontSize = 14;
 
-double clampMonoFontScale(double value) =>
-    value.clamp(kMonoFontScaleMin, kMonoFontScaleMax);
+double clampMonoFontSize(double value) => value.clamp(kMonoFontSizeMin, kMonoFontSizeMax);
+
+// --- Whole-UI zoom (relative presets) ---
+
+/// Persisted zoom preset ids (settings UI order). These are **relative**
+/// levels applied to the whole UI via [UiZoom]: `standard` (×1.0) renders at
+/// 100%, `compact` is a bit tighter, `comfortable` a bit looser, `custom` a %
+/// of standard.
+const List<String> kUiZoomScaleIds = ['compact', 'standard', 'comfortable', 'custom'];
+
+const String kDefaultUiZoomScaleId = 'standard';
+
+/// Allowed custom zoom multiplier (× standard).
+const double kUiZoomCustomMultiplierMin = 0.5;
+const double kUiZoomCustomMultiplierMax = 2.0;
+const double kDefaultUiZoomCustomMultiplier = 1.0;
+
+double clampUiZoomCustomMultiplier(double value) =>
+    value.clamp(kUiZoomCustomMultiplierMin, kUiZoomCustomMultiplierMax);
+
+String normalizeUiZoomScale(String? raw) {
+  if (raw != null && kUiZoomScaleIds.contains(raw)) return raw;
+  return kDefaultUiZoomScaleId;
+}
 
 /// Final-effective **interface zoom** clamp (whole-UI [UiZoom]).
 const double kUiZoomMin = 0.5;
@@ -50,134 +67,62 @@ double clampUiZoom(double value) => value.clamp(kUiZoomMin, kUiZoomMax);
 /// Fixed step applied per press by the `workbench.zoom.in`/`.out` commands.
 const double kUiZoomStep = 0.1;
 
-/// Clamps a `uiZoomCustomMultiplier` candidate so the *effective* zoom
-/// (`baseline × multiplier`, i.e. what [UiZoom] actually renders) stays
-/// within [kUiZoomMin]/[kUiZoomMax], expressed back in multiplier space so
-/// the stored preference stays baseline-independent. Callers without a
-/// device [baseline] (e.g. tests, or code that hasn't resolved
-/// [autoUiZoomForDevicePixelRatio] yet) may pass the default `1.0`.
-double clampUiZoomMultiplierForBaseline(
-  double multiplier, {
-  double baseline = 1.0,
-}) {
-  if (baseline <= 0) return multiplier.clamp(kUiZoomMin, kUiZoomMax);
-  return clampUiZoom(baseline * multiplier) / baseline;
-}
+/// Preset multipliers for the zoom segments.
+const double kUiZoomCompactMultiplier = 0.92;
+const double kUiZoomComfortableMultiplier = 1.08;
 
-/// `standard` whole-UI zoom baseline for a display [devicePixelRatio]. The
-/// `standard` preset maps to this; compact/comfortable/custom are relative to
-/// it. Compensates for OS scaling so density is consistent across platforms:
-/// Windows @150% (dpr 1.5) → ~0.67, Linux/macOS @100% (dpr 1.0) → 1.0.
-double autoUiZoomForDevicePixelRatio(double devicePixelRatio) =>
-    devicePixelRatio <= 0 ? 1.0 : 1.0 / devicePixelRatio;
-
-String normalizeTypographyScale(String? raw) {
-  if (raw != null && kTypographyScaleIds.contains(raw)) return raw;
-  return kDefaultTypographyScaleId;
-}
-
-double clampTypographyCustomMultiplier(double value) =>
-    value.clamp(kTypographyCustomMultiplierMin, kTypographyCustomMultiplierMax);
-
-/// Extra text scale for phones, on top of the dpr-normalized baseline.
-///
-/// The base sizes are tuned for a desktop viewing distance; at arm's length a
-/// 12pt subtitle reads small and controls are hard to tap. Scales text, icons,
-/// and control metrics (via `controlScale`) — [TpSpacing] is pinned to 1.0 by
-/// the host, so gaps are unchanged (whole-UI growth is the separate
-/// `uiZoomScale` knob).
-const double kMobileTextScaleBoost = 1.3;
-
-/// `standard` text-size baseline: the OS's intended *physical* text scale =
-/// [osTextScale] (e.g. GNOME text-scaling-factor; 1.0 where the OS has none) ×
-/// [devicePixelRatio] (display scaling). The `standard` preset maps to this;
-/// compact/comfortable/custom are relative to it. Combined with the standard
-/// interface zoom (1/dpr) this renders text at the size the OS would while
-/// icons/spacing stay compact. e.g. Ubuntu GNOME 1.5 @100% → 1.5; Windows @150%
-/// → 1.5.
-///
-/// [mobile] applies [kMobileTextScaleBoost] *after* the clamp. A 3x phone
-/// already saturates the baseline at [kTypographyCustomMultiplierMax], so
-/// folding the boost in beforehand would be silently discarded.
-double autoTextScaleForSystem(
-  double osTextScale,
-  double devicePixelRatio, {
-  bool mobile = false,
-}) {
-  final dpr = devicePixelRatio <= 0 ? 1.0 : devicePixelRatio;
-  final os = osTextScale <= 0 ? 1.0 : osTextScale;
-  final baseline = clampTypographyCustomMultiplier(os * dpr);
-  return mobile ? baseline * kMobileTextScaleBoost : baseline;
-}
-
-/// Effective scale = [baseline] × the relative preset multiplier (compact 0.92,
-/// standard 1.0, comfortable 1.08, or [customMultiplier] for `custom`). So
-/// `standard` resolves to the auto baseline and the rest are relative to it.
-double resolveRelativeScale({
-  required String scaleId,
-  required double customMultiplier,
-  required double baseline,
-}) =>
-    baseline *
-    typographyScaleForPreferences(
-      scaleId: scaleId,
-      customMultiplier: customMultiplier,
-    ).multiplier;
-
-AppTypographyScale typographyScaleForId(String id) =>
-    switch (normalizeTypographyScale(id)) {
-      'compact' => AppTypographyScale.compact,
-      'comfortable' => AppTypographyScale.comfortable,
-      'custom' => AppTypographyScale(
-        multiplier: kDefaultTypographyCustomMultiplier,
-      ),
-      _ => AppTypographyScale.standard,
-    };
-
-AppTypographyScale typographyScaleForPreferences({
+/// Resolves the stored zoom preference (`scaleId` + `customMultiplier`) to the
+/// multiplier [UiZoom] renders with (still subject to [clampUiZoom]).
+double uiZoomMultiplierFor({
   required String scaleId,
   required double customMultiplier,
 }) {
-  if (normalizeTypographyScale(scaleId) == 'custom') {
-    return AppTypographyScale(
-      multiplier: clampTypographyCustomMultiplier(customMultiplier),
-    );
+  if (normalizeUiZoomScale(scaleId) == 'custom') {
+    return clampUiZoomCustomMultiplier(customMultiplier);
   }
-  return typographyScaleForId(scaleId);
+  return switch (normalizeUiZoomScale(scaleId)) {
+    'compact' => kUiZoomCompactMultiplier,
+    'comfortable' => kUiZoomComfortableMultiplier,
+    _ => 1.0,
+  };
 }
 
 @immutable
 final class AppTypographyScale {
-  const AppTypographyScale({
-    this.multiplier = 1.0,
-    this.terminalMultiplier = 1.0,
-    this.monoFontScale = kDefaultMonoFontScale,
-  });
+  const AppTypographyScale({this.multiplier = 1.0, this.monoPx});
+
+  /// Builds the scale from the persisted absolute px preferences: UI roles
+  /// derive from [uiFontSize] (14 px = design baseline), mono faces render at
+  /// exactly [monoFontSize] px.
+  factory AppTypographyScale.fromPx({
+    required double uiFontSize,
+    required double monoFontSize,
+  }) {
+    return AppTypographyScale(
+      multiplier: uiFontSize / kUiFontSizeBase,
+      monoPx: monoFontSize,
+    );
+  }
 
   /// Default scale used by [buildLightTheme] / [buildDarkTheme].
   static const standard = AppTypographyScale();
 
-  /// Slightly denser UI (≈ −8%).
-  static const compact = AppTypographyScale(multiplier: 0.92);
+  /// Slightly denser UI (≈ −8%); a convenience fixture for tests/derivations.
+  static const compact = AppTypographyScale(
+    multiplier: kUiZoomCompactMultiplier,
+  );
 
-  /// Slightly roomier UI (≈ +8%).
-  static const comfortable = AppTypographyScale(multiplier: 1.08);
+  /// Slightly roomier UI (≈ +8%); a convenience fixture for tests/derivations.
+  static const comfortable = AppTypographyScale(
+    multiplier: kUiZoomComfortableMultiplier,
+  );
 
-  /// Applied to every role below (also composes with [MediaQuery.textScaler]).
+  /// Applied to every UI role below (also composes with [MediaQuery.textScaler]).
   final double multiplier;
 
-  /// Terminal-only trim on top of [multiplier].
-  ///
-  /// Exists so the terminal can opt out of a UI-wide change: the phone's
-  /// [kMobileTextScaleBoost] enlarges chrome, but growing the terminal costs
-  /// columns (a 15% larger face drops an 80-column phone view to ~40), so the
-  /// host passes the inverse here and terminal glyphs stay put.
-  final double terminalMultiplier;
-
-  /// User preference scaling monospace faces (terminal, editor, diffs).
-  /// Unlike [terminalMultiplier] this is a deliberate user size choice, so it
-  /// applies everywhere mono text renders — terminal included.
-  final double monoFontScale;
+  /// Absolute monospace size (terminal / editor / diffs) in logical px. When
+  /// null, mono derives from [multiplier] (legacy warmup / fallback paths).
+  final double? monoPx;
 
   // --- Base sizes at multiplier 1.0 (Material 3 type scale) ---
 
@@ -211,9 +156,8 @@ final class AppTypographyScale {
   double get labelLarge => labelLargeBase * multiplier;
   double get labelMedium => labelMediumBase * multiplier;
   double get labelSmall => labelSmallBase * multiplier;
-  double get terminal =>
-      terminalBase * multiplier * terminalMultiplier * monoFontScale;
-  double get mono => monoBase * multiplier * monoFontScale;
+  double get terminal => monoPx ?? terminalBase * multiplier;
+  double get mono => monoPx ?? monoBase * multiplier;
 }
 
 /// Resolved sizes on [ThemeData.extensions] (from [AppTypographyScale]).

@@ -12,7 +12,6 @@ import 'package:window_manager/window_manager.dart';
 
 import 'app/app_shell.dart';
 import 'app/teampilot_widgets_flutter_binding.dart';
-import 'app/ui_zoom_baseline.dart';
 import 'app/home_index_prefetch.dart';
 import 'cubits/app_bootstrap_cubit.dart';
 import 'cubits/app_update_cubit.dart';
@@ -770,9 +769,6 @@ Future<void> _bootStartup() async {
                 RepositoryProvider<QuickOpenHost>.value(
                   value: shell.quickOpenHost,
                 ),
-                RepositoryProvider<UiZoomBaseline>.value(
-                  value: shell.uiZoomBaseline,
-                ),
               ],
               child: MultiBlocProvider(
                 providers: [
@@ -822,11 +818,10 @@ class TeamPilotApp extends StatelessWidget {
       ({
         String themeMode,
         String colorPreset,
-        String typographyScale,
-        double typographyCustomMultiplier,
+        double uiFontSize,
         String uiFontId,
         String monoFontId,
-        double monoFontScale,
+        double monoFontSize,
         String terminalThemeMode,
         bool useCustomTerminalColors,
         Map<String, int> terminalColorOverrides,
@@ -845,11 +840,10 @@ class TeamPilotApp extends StatelessWidget {
         return (
           themeMode: themeMode,
           colorPreset: colorPreset,
-          typographyScale: normalizeTypographyScale(prefs.typographyScale),
-          typographyCustomMultiplier: prefs.typographyScaleCustomMultiplier,
+          uiFontSize: prefs.uiFontSize,
           uiFontId: prefs.uiFontId,
           monoFontId: prefs.monoFontId,
-          monoFontScale: prefs.monoFontScale,
+          monoFontSize: prefs.monoFontSize,
           terminalThemeMode: prefs.terminalThemeMode,
           useCustomTerminalColors: prefs.useCustomTerminalColors,
           terminalColorOverrides: prefs.terminalColorOverrides,
@@ -871,12 +865,10 @@ class TeamPilotApp extends StatelessWidget {
             return _TeamPilotMaterialApp(
               themeMode: themeBundle.themeMode,
               colorPreset: themeBundle.colorPreset,
-              typographyScaleId: themeBundle.typographyScale,
-              typographyCustomMultiplier:
-                  themeBundle.typographyCustomMultiplier,
+              uiFontSize: themeBundle.uiFontSize,
               uiFontId: themeBundle.uiFontId,
               monoFontId: themeBundle.monoFontId,
-              monoFontScale: themeBundle.monoFontScale,
+              monoFontSize: themeBundle.monoFontSize,
               terminalThemeMode: themeBundle.terminalThemeMode,
               useCustomTerminalColors: themeBundle.useCustomTerminalColors,
               terminalColorOverrides: themeBundle.terminalColorOverrides,
@@ -894,11 +886,10 @@ class _TeamPilotMaterialApp extends StatefulWidget {
   const _TeamPilotMaterialApp({
     required this.themeMode,
     required this.colorPreset,
-    required this.typographyScaleId,
-    required this.typographyCustomMultiplier,
+    required this.uiFontSize,
     required this.uiFontId,
     required this.monoFontId,
-    required this.monoFontScale,
+    required this.monoFontSize,
     required this.terminalThemeMode,
     required this.useCustomTerminalColors,
     required this.terminalColorOverrides,
@@ -908,11 +899,12 @@ class _TeamPilotMaterialApp extends StatefulWidget {
 
   final String themeMode;
   final String colorPreset;
-  final String typographyScaleId;
-  final double typographyCustomMultiplier;
+
+  /// Absolute font sizes (logical px) — see docs/font-size-model.md.
+  final double uiFontSize;
+  final double monoFontSize;
   final String uiFontId;
   final String monoFontId;
-  final double monoFontScale;
 
   /// Terminal colour-scheme prefs — the `terminal` preset derives the whole UI
   /// scheme from them; the fixed presets only use them for editor syntax.
@@ -932,14 +924,15 @@ class _TeamPilotMaterialAppState extends State<_TeamPilotMaterialApp> {
   ThemeData? _lightTheme;
   ThemeData? _darkTheme;
   String? _cachedColorPreset;
-  String? _cachedTypographyScaleId;
-  double? _cachedTypographyCustomMultiplier;
-  double? _cachedEffectiveTextMult;
-  double? _cachedIconMultiplier;
+  double? _cachedUiFontSize;
+  double? _cachedMonoFontSize;
   String? _cachedUiFontId;
   String? _cachedMonoFontId;
-  double? _cachedMonoFontScale;
   int? _cachedTerminalThemeKey;
+
+  /// Last-resolved multipliers consumed by the [TpTheme] wrapper in [build].
+  double? _cachedIconMultiplier;
+  double? _cachedEffectiveTextMult;
 
   /// Session-pinned fonts. Pref changes save immediately but apply on next
   /// cold start — mid-session [ThemeData] font swaps force a multi-second
@@ -948,44 +941,13 @@ class _TeamPilotMaterialAppState extends State<_TeamPilotMaterialApp> {
   late final String _sessionMonoFontId = widget.monoFontId;
 
   ({ThemeData light, ThemeData dark}) _resolveThemes() {
-    // Text size: scales fonts via the theme. `standard` == the per-system
-    // baseline (OS text-scaling × display scaling); compact/comfortable/
-    // custom are relative to it. Read system metrics from the implicit view
-    // — there is no MediaQuery ancestor above MaterialApp here.
-    final systemView = WidgetsBinding.instance.platformDispatcher.implicitView;
-    final systemMq = systemView == null
-        ? const MediaQueryData()
-        : MediaQueryData.fromView(systemView);
-    // The pairing (phone) client is a 1:1 port of the Android prototype, which
-    // is authored in a 393-logical-px design space. Pin its text baseline to
-    // 1.0 so glyphs render at the prototype's exact px — no arm's-length boost,
-    // no dpr saturation. Desktop keeps the per-system auto baseline.
-    final textBaseline = isPairingClient
-        ? 1.0
-        : autoTextScaleForSystem(
-            systemMq.textScaler.scale(1.0),
-            systemMq.devicePixelRatio,
-          );
-    final effectiveTextMult = resolveRelativeScale(
-      scaleId: widget.typographyScaleId,
-      customMultiplier: widget.typographyCustomMultiplier,
-      baseline: textBaseline,
-    );
-    final iconMultiplier = TpIconSizes.resolveIconMultiplier(
-      effectiveTextMultiplier: effectiveTextMult,
-      textBaseline: textBaseline,
-    );
-    _cachedIconMultiplier = iconMultiplier;
     if (_lightTheme != null &&
         _darkTheme != null &&
         _cachedColorPreset == widget.colorPreset &&
-        _cachedTypographyScaleId == widget.typographyScaleId &&
-        _cachedTypographyCustomMultiplier ==
-            widget.typographyCustomMultiplier &&
-        _cachedEffectiveTextMult == effectiveTextMult &&
+        _cachedUiFontSize == widget.uiFontSize &&
+        _cachedMonoFontSize == widget.monoFontSize &&
         _cachedUiFontId == _sessionUiFontId &&
         _cachedMonoFontId == _sessionMonoFontId &&
-        _cachedMonoFontScale == widget.monoFontScale &&
         _cachedTerminalThemeKey == widget.terminalThemeKey) {
       return (light: _lightTheme!, dark: _darkTheme!);
     }
@@ -993,22 +955,31 @@ class _TeamPilotMaterialAppState extends State<_TeamPilotMaterialApp> {
       uiFontId: _sessionUiFontId,
       monoFontId: _sessionMonoFontId,
     );
-    final textScale = AppTypographyScale(
-      // Pairing renders in the prototype's 393-logical space (textBaseline
-      // pinned to 1.0 above), so the terminal already gets the prototype's
-      // 14px mono — no boost to undo.
-      multiplier: effectiveTextMult,
-      terminalMultiplier: 1.0,
-      monoFontScale: widget.monoFontScale,
+    final textScale = AppTypographyScale.fromPx(
+      uiFontSize: widget.uiFontSize,
+      monoFontSize: widget.monoFontSize,
     );
+    // Icons keep a fixed *physical* size and only track the user's font-size
+    // delta, damped (see TpIconSizes.resolveIconMultiplier). The whole UI now
+    // renders at dpr natively (no 1/dpr zoom baseline), so divide by dpr to
+    // preserve that invariant.
+    final dpr = WidgetsBinding.instance.platformDispatcher.implicitView
+            ?.devicePixelRatio ??
+        1.0;
+    final iconMultiplier =
+        TpIconSizes.resolveIconMultiplier(
+          effectiveTextMultiplier: textScale.multiplier,
+          textBaseline: 1.0,
+        ) /
+        (dpr <= 0 ? 1.0 : dpr);
     final iconScale = AppTypographyScale(multiplier: iconMultiplier);
+    _cachedIconMultiplier = iconMultiplier;
+    _cachedEffectiveTextMult = textScale.multiplier;
     _cachedColorPreset = widget.colorPreset;
-    _cachedTypographyScaleId = widget.typographyScaleId;
-    _cachedTypographyCustomMultiplier = widget.typographyCustomMultiplier;
-    _cachedEffectiveTextMult = effectiveTextMult;
+    _cachedUiFontSize = widget.uiFontSize;
+    _cachedMonoFontSize = widget.monoFontSize;
     _cachedUiFontId = _sessionUiFontId;
     _cachedMonoFontId = _sessionMonoFontId;
-    _cachedMonoFontScale = widget.monoFontScale;
     _cachedTerminalThemeKey = widget.terminalThemeKey;
     // Null for the legacy adaptive / classicDark / highContrast terminal modes
     // (nothing to follow) — those fall back to the palette path inside
@@ -1067,28 +1038,21 @@ class _TeamPilotMaterialAppState extends State<_TeamPilotMaterialApp> {
             ({String uiZoomScale, double uiZoomCustomMultiplier})
           >(
             selector: (state) => (
-              uiZoomScale: normalizeTypographyScale(
-                state.preferences.uiZoomScale,
-              ),
+              uiZoomScale: normalizeUiZoomScale(state.preferences.uiZoomScale),
               uiZoomCustomMultiplier: state.preferences.uiZoomCustomMultiplier,
             ),
             builder: (context, zoomBundle) {
-              // Interface zoom: `standard` == the per-display baseline (1/dpr,
-              // compensating for OS display scaling); compact/comfortable/custom
-              // are relative to it.
-              final dpr = MediaQuery.of(context).devicePixelRatio;
-              final baseline = autoUiZoomForDevicePixelRatio(dpr);
-              context.read<UiZoomBaseline>().value = baseline;
+              // Interface zoom: the stored multiplier IS the effective zoom —
+              // `standard` == 100%. The OS display scaling (dpr) applies
+              // natively; no in-app compensation (docs/font-size-model.md §5).
               // Pairing is a 1:1 port of the 393-logical-px prototype: pin the
-              // zoom to 1.0 so the phone renders that exact coordinate space,
-              // bypassing the dpr baseline and the compact/comfortable prefs.
+              // zoom to 1.0 so the phone renders that exact coordinate space.
               final effectiveZoom = isPairingClient
                   ? 1.0
                   : clampUiZoom(
-                      resolveRelativeScale(
+                      uiZoomMultiplierFor(
                         scaleId: zoomBundle.uiZoomScale,
                         customMultiplier: zoomBundle.uiZoomCustomMultiplier,
-                        baseline: baseline,
                       ),
                     );
               Widget content = AppTextScaleBoundary(

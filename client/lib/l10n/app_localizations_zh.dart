@@ -78,25 +78,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get themeColorPresetDescription => '用于按钮、开关与高亮的主色与强调色。';
 
   @override
-  String get typographyScaleTitle => '文字大小';
+  String get uiFontSizeTitle => '界面字号';
 
   @override
-  String get typographyScaleDescription => '界面文字大小。「标准」跟随系统；不改变图标与间距。';
-
-  @override
-  String get typographyScaleCompact => '紧凑';
-
-  @override
-  String get typographyScaleStandard => '标准';
-
-  @override
-  String get typographyScaleComfortable => '宽松';
-
-  @override
-  String get typographyScaleCustom => '自定义';
-
-  @override
-  String get typographyScaleCustomHint => '50–200';
+  String get uiFontSizeDescription => '界面文字的像素字号。图标与控件高度跟随；间距和整体缩放是独立设置。';
 
   @override
   String get fontUiTitle => '界面字体';
@@ -114,22 +99,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get monoFontSizeTitle => '等宽字号';
 
   @override
-  String get monoFontSizeDescription => '终端、编辑器与 diff 的字号倍率，相对文字大小。';
-
-  @override
-  String get monoFontSizeSmall => '小';
-
-  @override
-  String get monoFontSizeStandard => '标准';
-
-  @override
-  String get monoFontSizeLarge => '大';
-
-  @override
-  String get monoFontSizeCustom => '自定义';
-
-  @override
-  String get monoFontSizeCustomHint => '70–160';
+  String get monoFontSizeDescription => '终端、编辑器与 diff 的像素字号。';
 
   @override
   String get fontChangeAppliesOnRestart => '字体已保存，重启 TeamPilot 后生效。';
@@ -153,7 +123,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String get uiZoomTitle => '界面缩放';
 
   @override
-  String get uiZoomDescription => '整体缩放界面——文字、图标与间距一起。「标准」按系统缩放自动匹配。';
+  String get uiZoomDescription => '整体缩放界面——文字、图标与间距一起。「标准」即 100%。';
+
+  @override
+  String get uiZoomCompact => '紧凑';
+
+  @override
+  String get uiZoomStandard => '标准';
+
+  @override
+  String get uiZoomComfortable => '宽松';
+
+  @override
+  String get uiZoomCustom => '自定义';
+
+  @override
+  String get uiZoomCustomHint => '50–200';
 
   @override
   String get markdownOpenModeTitle => '打开 Markdown 为';
@@ -219,6 +204,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get appearance => '外观';
+
+  @override
+  String get appearanceGroupFonts => '字体与字号';
+
+  @override
+  String get appearanceGroupZoom => '显示缩放';
+
+  @override
+  String get appearanceGroupLanguage => '语言与区域';
+
+  @override
+  String get appearanceGroupEditor => '编辑器行为';
 
   @override
   String get workspaceEntryModeTitle => '启动视图';

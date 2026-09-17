@@ -107,59 +107,40 @@ class LayoutCubit extends Cubit<LayoutState> {
     ),
   );
 
-  Future<void> setTypographyScale(String scaleId) => _save(
-    state.preferences.copyWith(
-      typographyScale: normalizeTypographyScale(scaleId),
-    ),
-  );
+  Future<void> setUiFontSize(double px) =>
+      _save(state.preferences.copyWith(uiFontSize: px));
 
-  Future<void> setTypographyScaleCustom(double multiplier) => _save(
-    state.preferences.copyWith(
-      typographyScale: 'custom',
-      typographyScaleCustomMultiplier: clampTypographyCustomMultiplier(
-        multiplier,
-      ),
-    ),
-  );
 
-  /// Whole-UI zoom level (relative preset); independent of text size.
+  /// Whole-UI zoom level (relative preset); independent of font sizes.
   Future<void> setUiZoomScale(String scaleId) => _save(
-    state.preferences.copyWith(uiZoomScale: normalizeTypographyScale(scaleId)),
+    state.preferences.copyWith(uiZoomScale: normalizeUiZoomScale(scaleId)),
   );
 
   Future<void> setUiZoomCustom(double multiplier) => _save(
     state.preferences.copyWith(
       uiZoomScale: 'custom',
-      uiZoomCustomMultiplier: clampTypographyCustomMultiplier(multiplier),
+      uiZoomCustomMultiplier: clampUiZoomCustomMultiplier(multiplier),
     ),
   );
 
-  double get _currentUiZoomMultiplier => typographyScaleForPreferences(
+  double get _currentUiZoomMultiplier => uiZoomMultiplierFor(
     scaleId: state.preferences.uiZoomScale,
     customMultiplier: state.preferences.uiZoomCustomMultiplier,
-  ).multiplier;
+  );
 
-  /// Steps whole-UI zoom in by [kUiZoomStep], switching to `custom`. [baseline]
-  /// is the per-display auto zoom ([autoUiZoomForDevicePixelRatio]) so the
-  /// effective (on-screen) zoom stays within [kUiZoomMin]/[kUiZoomMax] —
-  /// callers without device context (e.g. tests) may omit it.
-  Future<void> zoomIn({double baseline = 1.0}) =>
-      _stepUiZoom(kUiZoomStep, baseline: baseline);
+  /// Steps whole-UI zoom in by [kUiZoomStep], switching to `custom`. The
+  /// stored multiplier is the effective zoom (no per-display baseline).
+  Future<void> zoomIn() => _stepUiZoom(kUiZoomStep);
 
   /// See [zoomIn].
-  Future<void> zoomOut({double baseline = 1.0}) =>
-      _stepUiZoom(-kUiZoomStep, baseline: baseline);
+  Future<void> zoomOut() => _stepUiZoom(-kUiZoomStep);
 
-  Future<void> _stepUiZoom(double delta, {required double baseline}) {
-    final next = clampUiZoomMultiplierForBaseline(
-      _currentUiZoomMultiplier + delta,
-      baseline: baseline,
-    );
-    return setUiZoomCustom(next);
+  Future<void> _stepUiZoom(double delta) {
+    return setUiZoomCustom(clampUiZoom(_currentUiZoomMultiplier + delta));
   }
 
-  /// Resets whole-UI zoom back to the auto per-display baseline.
-  Future<void> zoomReset() => setUiZoomScale(kDefaultTypographyScaleId);
+  /// Resets whole-UI zoom back to 100% (`standard`).
+  Future<void> zoomReset() => setUiZoomScale(kDefaultUiZoomScaleId);
 
   Future<void> toggleSidebar() =>
       setSidebarVisible(!state.preferences.sidebarVisible);
@@ -208,8 +189,8 @@ class LayoutCubit extends Cubit<LayoutState> {
   Future<void> setMonoFontId(String id) =>
       _save(state.preferences.copyWith(monoFontId: normalizeMonoFontId(id)));
 
-  Future<void> setMonoFontScale(double scale) =>
-      _save(state.preferences.copyWith(monoFontScale: scale));
+  Future<void> setMonoFontSize(double px) =>
+      _save(state.preferences.copyWith(monoFontSize: px));
 
   /// No-op: bottom dock removed; keep method for callers / prefs compat.
   Future<void> setWorkspaceTerminalVisible(bool visible) => Future.value();

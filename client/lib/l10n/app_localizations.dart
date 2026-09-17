@@ -236,47 +236,17 @@ abstract class AppLocalizations {
   /// **'Primary and accent colors for buttons, toggles, and highlights.'**
   String get themeColorPresetDescription;
 
-  /// No description provided for @typographyScaleTitle.
+  /// No description provided for @uiFontSizeTitle.
   ///
   /// In en, this message translates to:
-  /// **'Text size'**
-  String get typographyScaleTitle;
+  /// **'Interface font size'**
+  String get uiFontSizeTitle;
 
-  /// No description provided for @typographyScaleDescription.
+  /// No description provided for @uiFontSizeDescription.
   ///
   /// In en, this message translates to:
-  /// **'Size of UI text. Standard follows your system; does not change icons or spacing.'**
-  String get typographyScaleDescription;
-
-  /// No description provided for @typographyScaleCompact.
-  ///
-  /// In en, this message translates to:
-  /// **'Small'**
-  String get typographyScaleCompact;
-
-  /// No description provided for @typographyScaleStandard.
-  ///
-  /// In en, this message translates to:
-  /// **'Standard'**
-  String get typographyScaleStandard;
-
-  /// No description provided for @typographyScaleComfortable.
-  ///
-  /// In en, this message translates to:
-  /// **'Large'**
-  String get typographyScaleComfortable;
-
-  /// No description provided for @typographyScaleCustom.
-  ///
-  /// In en, this message translates to:
-  /// **'Custom'**
-  String get typographyScaleCustom;
-
-  /// No description provided for @typographyScaleCustomHint.
-  ///
-  /// In en, this message translates to:
-  /// **'50–200'**
-  String get typographyScaleCustomHint;
+  /// **'UI text size in pixels. Icons and controls follow; spacing and the whole-UI zoom are separate.'**
+  String get uiFontSizeDescription;
 
   /// No description provided for @fontUiTitle.
   ///
@@ -311,38 +281,8 @@ abstract class AppLocalizations {
   /// No description provided for @monoFontSizeDescription.
   ///
   /// In en, this message translates to:
-  /// **'Font size for terminal, editor, and diffs, relative to text size.'**
+  /// **'Font size in pixels for terminal, editor, and diffs.'**
   String get monoFontSizeDescription;
-
-  /// No description provided for @monoFontSizeSmall.
-  ///
-  /// In en, this message translates to:
-  /// **'Small'**
-  String get monoFontSizeSmall;
-
-  /// No description provided for @monoFontSizeStandard.
-  ///
-  /// In en, this message translates to:
-  /// **'Standard'**
-  String get monoFontSizeStandard;
-
-  /// No description provided for @monoFontSizeLarge.
-  ///
-  /// In en, this message translates to:
-  /// **'Large'**
-  String get monoFontSizeLarge;
-
-  /// No description provided for @monoFontSizeCustom.
-  ///
-  /// In en, this message translates to:
-  /// **'Custom'**
-  String get monoFontSizeCustom;
-
-  /// No description provided for @monoFontSizeCustomHint.
-  ///
-  /// In en, this message translates to:
-  /// **'70–160'**
-  String get monoFontSizeCustomHint;
 
   /// No description provided for @fontChangeAppliesOnRestart.
   ///
@@ -389,8 +329,38 @@ abstract class AppLocalizations {
   /// No description provided for @uiZoomDescription.
   ///
   /// In en, this message translates to:
-  /// **'Zoom the whole UI together — text, icons, and spacing. Standard follows your display scaling.'**
+  /// **'Zoom the whole UI together — text, icons, and spacing. Standard is 100%.'**
   String get uiZoomDescription;
+
+  /// No description provided for @uiZoomCompact.
+  ///
+  /// In en, this message translates to:
+  /// **'Small'**
+  String get uiZoomCompact;
+
+  /// No description provided for @uiZoomStandard.
+  ///
+  /// In en, this message translates to:
+  /// **'Standard'**
+  String get uiZoomStandard;
+
+  /// No description provided for @uiZoomComfortable.
+  ///
+  /// In en, this message translates to:
+  /// **'Large'**
+  String get uiZoomComfortable;
+
+  /// No description provided for @uiZoomCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get uiZoomCustom;
+
+  /// No description provided for @uiZoomCustomHint.
+  ///
+  /// In en, this message translates to:
+  /// **'50–200'**
+  String get uiZoomCustomHint;
 
   /// No description provided for @markdownOpenModeTitle.
   ///
@@ -517,6 +487,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Appearance'**
   String get appearance;
+
+  /// No description provided for @appearanceGroupFonts.
+  ///
+  /// In en, this message translates to:
+  /// **'Fonts and sizes'**
+  String get appearanceGroupFonts;
+
+  /// No description provided for @appearanceGroupZoom.
+  ///
+  /// In en, this message translates to:
+  /// **'Display zoom'**
+  String get appearanceGroupZoom;
+
+  /// No description provided for @appearanceGroupLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Language and region'**
+  String get appearanceGroupLanguage;
+
+  /// No description provided for @appearanceGroupEditor.
+  ///
+  /// In en, this message translates to:
+  /// **'Editor behavior'**
+  String get appearanceGroupEditor;
 
   /// No description provided for @workspaceEntryModeTitle.
   ///

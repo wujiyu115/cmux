@@ -53,17 +53,16 @@ class LayoutPreferences {
     this.workspaceNavWidth = defaultWorkspaceNavWidth,
     this.themeMode = 'system',
     this.themeColorPreset = kDefaultThemeColorPreset,
-    this.typographyScale = kDefaultTypographyScaleId,
-    this.typographyScaleCustomMultiplier = kDefaultTypographyCustomMultiplier,
-    this.uiZoomScale = kDefaultTypographyScaleId,
-    this.uiZoomCustomMultiplier = kDefaultTypographyCustomMultiplier,
+    this.uiFontSize = kDefaultUiFontSize,
+    this.uiZoomScale = kDefaultUiZoomScaleId,
+    this.uiZoomCustomMultiplier = kDefaultUiZoomCustomMultiplier,
     this.terminalThemeMode = 'adaptive',
     this.useCustomTerminalColors = false,
     this.terminalColorOverrides = const {},
     this.locale = '',
     this.uiFontId = FontCatalog.defaultUiId,
     this.monoFontId = FontCatalog.defaultMonoId,
-    this.monoFontScale = kDefaultMonoFontScale,
+    this.monoFontSize = kDefaultMonoFontSize,
     this.workspaceTerminalVisible = false,
     this.workspaceTerminalHeight = defaultWorkspaceTerminalHeight,
     this.markdownOpenMode = MarkdownOpenMode.preview,
@@ -103,20 +102,12 @@ class LayoutPreferences {
       themeColorPreset: normalizeThemeColorPreset(
         json['themeColorPreset'] as String?,
       ),
-      typographyScale: normalizeTypographyScale(
-        json['typographyScale'] as String?,
-      ),
-      typographyScaleCustomMultiplier: clampTypographyCustomMultiplier(
-        _doubleValue(
-          json['typographyScaleCustomMultiplier'],
-          fallback: kDefaultTypographyCustomMultiplier,
-        ),
-      ),
-      uiZoomScale: normalizeTypographyScale(json['uiZoomScale'] as String?),
-      uiZoomCustomMultiplier: clampTypographyCustomMultiplier(
+      uiFontSize: _uiFontSizeFromJson(json),
+      uiZoomScale: normalizeUiZoomScale(json['uiZoomScale'] as String?),
+      uiZoomCustomMultiplier: clampUiZoomCustomMultiplier(
         _doubleValue(
           json['uiZoomCustomMultiplier'],
-          fallback: kDefaultTypographyCustomMultiplier,
+          fallback: kDefaultUiZoomCustomMultiplier,
         ),
       ),
       terminalThemeMode: _terminalThemeModeValue(
@@ -129,9 +120,7 @@ class LayoutPreferences {
       locale: json['locale'] as String? ?? '',
       uiFontId: normalizeUiFontId(json['uiFontId'] as String?),
       monoFontId: normalizeMonoFontId(json['monoFontId'] as String?),
-      monoFontScale: clampMonoFontScale(
-        _doubleValue(json['monoFontScale'], fallback: kDefaultMonoFontScale),
-      ),
+      monoFontSize: _monoFontSizeFromJson(json),
       workspaceTerminalVisible:
           json['workspaceTerminalVisible'] as bool? ?? false,
       workspaceTerminalHeight: _doubleValue(
@@ -183,12 +172,14 @@ class LayoutPreferences {
   final double workspaceNavWidth;
   final String themeMode;
   final String themeColorPreset;
-  final String typographyScale;
-  final double typographyScaleCustomMultiplier;
+  /// UI body text size in logical px; every UI role derives from it via
+  /// [AppTypographyScale.fromPx]. See [clampUiFontSize] for the range.
+  final double uiFontSize;
 
-  /// Whole-UI zoom level (relative preset, independent of text size). The
-  /// effective [UiZoom] is the per-display baseline × this preset's multiplier;
-  /// `standard` == the auto baseline.
+  /// Whole-UI zoom level (relative preset, independent of font sizes). The
+  /// effective [UiZoom] renders at this preset's multiplier; `standard` ==
+  /// 1.0 (100%). The OS display scaling is handled natively by Flutter and
+  /// is NOT compensated here (see docs/font-size-model.md §5).
   final String uiZoomScale;
   final double uiZoomCustomMultiplier;
   final String terminalThemeMode;
@@ -204,9 +195,9 @@ class LayoutPreferences {
   final String uiFontId;
   final String monoFontId;
 
-  /// Relative size multiplier for monospace faces (terminal + editor + diffs);
-  /// see [clampMonoFontScale] for the allowed range.
-  final double monoFontScale;
+  /// Monospace size (terminal + editor + diffs) in logical px; see
+  /// [clampMonoFontSize] for the range.
+  final double monoFontSize;
 
   /// Legacy bottom-dock flag kept for JSON compat; layout always treats as false.
   final bool workspaceTerminalVisible;
@@ -232,8 +223,7 @@ class LayoutPreferences {
     double? workspaceNavWidth,
     String? themeMode,
     String? themeColorPreset,
-    String? typographyScale,
-    double? typographyScaleCustomMultiplier,
+    double? uiFontSize,
     String? uiZoomScale,
     double? uiZoomCustomMultiplier,
     String? terminalThemeMode,
@@ -242,7 +232,7 @@ class LayoutPreferences {
     String? locale,
     String? uiFontId,
     String? monoFontId,
-    double? monoFontScale,
+    double? monoFontSize,
     bool? workspaceTerminalVisible,
     double? workspaceTerminalHeight,
     MarkdownOpenMode? markdownOpenMode,
@@ -276,18 +266,15 @@ class LayoutPreferences {
       ),
       themeMode: themeMode ?? this.themeMode,
       themeColorPreset: themeColorPreset ?? this.themeColorPreset,
-      typographyScale: typographyScale == null
-          ? this.typographyScale
-          : normalizeTypographyScale(typographyScale),
-      typographyScaleCustomMultiplier: typographyScaleCustomMultiplier == null
-          ? this.typographyScaleCustomMultiplier
-          : clampTypographyCustomMultiplier(typographyScaleCustomMultiplier),
+      uiFontSize: uiFontSize == null
+          ? this.uiFontSize
+          : clampUiFontSize(uiFontSize),
       uiZoomScale: uiZoomScale == null
           ? this.uiZoomScale
-          : normalizeTypographyScale(uiZoomScale),
+          : normalizeUiZoomScale(uiZoomScale),
       uiZoomCustomMultiplier: uiZoomCustomMultiplier == null
           ? this.uiZoomCustomMultiplier
-          : clampTypographyCustomMultiplier(uiZoomCustomMultiplier),
+          : clampUiZoomCustomMultiplier(uiZoomCustomMultiplier),
       terminalThemeMode: terminalThemeMode == null
           ? this.terminalThemeMode
           : _terminalThemeModeValue(terminalThemeMode),
@@ -301,9 +288,9 @@ class LayoutPreferences {
       monoFontId: monoFontId == null
           ? this.monoFontId
           : normalizeMonoFontId(monoFontId),
-      monoFontScale: monoFontScale == null
-          ? this.monoFontScale
-          : clampMonoFontScale(monoFontScale),
+      monoFontSize: monoFontSize == null
+          ? this.monoFontSize
+          : clampMonoFontSize(monoFontSize),
       workspaceTerminalVisible:
           workspaceTerminalVisible ?? this.workspaceTerminalVisible,
       workspaceTerminalHeight:
@@ -333,8 +320,7 @@ class LayoutPreferences {
       workspaceNavWidth: workspaceNavWidth,
       themeMode: themeMode,
       themeColorPreset: themeColorPreset,
-      typographyScale: typographyScale,
-      typographyScaleCustomMultiplier: typographyScaleCustomMultiplier,
+      uiFontSize: uiFontSize,
       uiZoomScale: uiZoomScale,
       uiZoomCustomMultiplier: uiZoomCustomMultiplier,
       terminalThemeMode: terminalThemeMode,
@@ -343,7 +329,7 @@ class LayoutPreferences {
       locale: locale,
       uiFontId: uiFontId,
       monoFontId: monoFontId,
-      monoFontScale: monoFontScale,
+      monoFontSize: monoFontSize,
       workspaceTerminalVisible: workspaceTerminalVisible,
       workspaceTerminalHeight: workspaceTerminalHeight,
       markdownOpenMode: markdownOpenMode,
@@ -367,8 +353,7 @@ class LayoutPreferences {
       'workspaceNavWidth': workspaceNavWidth,
       'themeMode': themeMode,
       'themeColorPreset': themeColorPreset,
-      'typographyScale': typographyScale,
-      'typographyScaleCustomMultiplier': typographyScaleCustomMultiplier,
+      'uiFontSize': uiFontSize,
       'uiZoomScale': uiZoomScale,
       'uiZoomCustomMultiplier': uiZoomCustomMultiplier,
       'terminalThemeMode': terminalThemeMode,
@@ -377,7 +362,7 @@ class LayoutPreferences {
       'locale': locale,
       'uiFontId': uiFontId,
       'monoFontId': monoFontId,
-      'monoFontScale': monoFontScale,
+      'monoFontSize': monoFontSize,
       'workspaceTerminalVisible': workspaceTerminalVisible,
       'workspaceTerminalHeight': workspaceTerminalHeight,
       'markdownOpenMode': markdownOpenMode.name,
@@ -457,4 +442,45 @@ WorkspaceEntryMode _workspaceEntryModeFromJson(String? raw) {
   }
   // Legacy `hub` and unknown values open home (no redirect shim).
   return WorkspaceEntryMode.home;
+}
+
+/// Legacy relative text-size preset multiplier (compact 0.92 / standard 1.0 /
+/// comfortable 1.08 / custom = stored multiplier), used only by the px
+/// migration below. See docs/font-size-model.md §5.
+double _legacyTextMultiplier(Map<String, Object?> json) {
+  final scaleId = json['typographyScale'] as String?;
+  if (scaleId == 'custom') {
+    final m = _doubleValue(
+      json['typographyScaleCustomMultiplier'],
+      fallback: 1.0,
+    );
+    return m.clamp(0.5, 2.0);
+  }
+  return switch (scaleId) {
+    'compact' => 0.92,
+    'comfortable' => 1.08,
+    _ => 1.0,
+  };
+}
+
+/// `uiFontSize` migration: new field wins; otherwise fold the legacy
+/// 「文字大小」 preset into px (`round(14 × p)`). The zoom baseline flip
+/// (1/dpr → 1.0) cancels the old OS text baseline, so this static mapping is
+/// visually unchanged at any dpr.
+double _uiFontSizeFromJson(Map<String, Object?> json) {
+  final raw = json['uiFontSize'];
+  if (raw is num) return clampUiFontSize(raw.toDouble());
+  return clampUiFontSize((kUiFontSizeBase * _legacyTextMultiplier(json)).roundToDouble());
+}
+
+/// `monoFontSize` migration: new field wins; otherwise fold the legacy
+/// 「等宽字号」 multiplier into px — today's logical mono size is
+/// `14 × p × s`, so the migration must include the text preset `p` (the
+/// original design draft's mono table omitted it).
+double _monoFontSizeFromJson(Map<String, Object?> json) {
+  final raw = json['monoFontSize'];
+  if (raw is num) return clampMonoFontSize(raw.toDouble());
+  final s = _doubleValue(json['monoFontScale'], fallback: 1.0).clamp(0.7, 1.6);
+  final p = _legacyTextMultiplier(json);
+  return clampMonoFontSize((kUiFontSizeBase * p * s).roundToDouble());
 }

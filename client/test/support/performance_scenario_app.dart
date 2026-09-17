@@ -17,7 +17,6 @@ import 'package:teampilot/cubits/session_preferences_cubit.dart';
 import 'package:teampilot/cubits/shortcut_cubit.dart';
 import 'package:teampilot/cubits/workspace_tools_cubit.dart';
 import 'package:teampilot/cubits/workbench/workbench_cubit.dart';
-import 'package:teampilot/app/ui_zoom_baseline.dart';
 import 'package:teampilot/main.dart';
 import 'package:teampilot/models/runtime_target.dart';
 import 'package:teampilot/pages/home_workspace/workspace_chrome_commands.dart';
@@ -166,9 +165,6 @@ class PerformanceScenarioApp {
           RepositoryProvider<CommandBus>(create: (_) => CommandBus()),
           RepositoryProvider<WorkspaceChromeCommands>(
             create: (_) => WorkspaceChromeCommands(),
-          ),
-          RepositoryProvider<UiZoomBaseline>(
-            create: (_) => UiZoomBaseline(),
           ),
           RepositoryProvider<WorkspaceRunRegistry>.value(
             value: workspaceRunRegistry,

@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:teampilot/app/ui_zoom_baseline.dart';
 import 'package:teampilot/cubits/agent_attention_cubit.dart';
 import 'package:teampilot/cubits/app_bootstrap_cubit.dart';
 import 'package:teampilot/cubits/chat_cubit.dart';
@@ -182,9 +181,6 @@ Widget buildTestApp({
       RepositoryProvider<CommandBus>(create: (_) => CommandBus()),
       RepositoryProvider<WorkspaceChromeCommands>(
         create: (_) => WorkspaceChromeCommands(),
-      ),
-      RepositoryProvider<UiZoomBaseline>(
-        create: (_) => UiZoomBaseline(),
       ),
       RepositoryProvider<WorkspaceRunRegistry>.value(
         value: workspaceRunRegistry,

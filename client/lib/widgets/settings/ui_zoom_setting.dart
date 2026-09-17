@@ -5,9 +5,12 @@ import 'package:shared_ui/shared_ui.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../theme/app_typography_scale.dart';
 
-/// Typography scale preset strip; shows a percent field when [scaleId] is `custom`.
-class TypographyScaleSetting extends StatefulWidget {
-  const TypographyScaleSetting({
+/// Whole-UI zoom preset strip; shows a percent field when [scaleId] is
+/// `custom`. Backs the `uiZoomScale` / `uiZoomCustomMultiplier` preferences —
+/// the only remaining relative knob after font sizes moved to absolute px
+/// (docs/font-size-model.md).
+class UiZoomSetting extends StatefulWidget {
+  const UiZoomSetting({
     required this.scaleId,
     required this.customMultiplier,
     required this.onScaleIdChanged,
@@ -21,10 +24,10 @@ class TypographyScaleSetting extends StatefulWidget {
   final ValueChanged<double> onCustomMultiplierChanged;
 
   @override
-  State<TypographyScaleSetting> createState() => _TypographyScaleSettingState();
+  State<UiZoomSetting> createState() => _UiZoomSettingState();
 }
 
-class _TypographyScaleSettingState extends State<TypographyScaleSetting> {
+class _UiZoomSettingState extends State<UiZoomSetting> {
   late final TextEditingController _percentController;
 
   @override
@@ -36,7 +39,7 @@ class _TypographyScaleSettingState extends State<TypographyScaleSetting> {
   }
 
   @override
-  void didUpdateWidget(covariant TypographyScaleSetting oldWidget) {
+  void didUpdateWidget(covariant UiZoomSetting oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.customMultiplier != widget.customMultiplier) {
       final next = _percentText(widget.customMultiplier);
@@ -61,7 +64,7 @@ class _TypographyScaleSettingState extends State<TypographyScaleSetting> {
       _percentController.text = _percentText(widget.customMultiplier);
       return;
     }
-    final multiplier = clampTypographyCustomMultiplier(parsed / 100);
+    final multiplier = clampUiZoomCustomMultiplier(parsed / 100);
     _percentController.text = _percentText(multiplier);
     widget.onCustomMultiplierChanged(multiplier);
   }
@@ -82,22 +85,22 @@ class _TypographyScaleSettingState extends State<TypographyScaleSetting> {
             segments: [
               TpSegmentedOption<String>(
                 value: 'compact',
-                label: l10n.typographyScaleCompact,
-                icon: Icons.density_small_outlined,
+                label: l10n.uiZoomCompact,
+                icon: Icons.zoom_out_map,
               ),
               TpSegmentedOption<String>(
                 value: 'standard',
-                label: l10n.typographyScaleStandard,
-                icon: Icons.density_medium_outlined,
+                label: l10n.uiZoomStandard,
+                icon: Icons.fit_screen_outlined,
               ),
               TpSegmentedOption<String>(
                 value: 'comfortable',
-                label: l10n.typographyScaleComfortable,
-                icon: Icons.density_large_outlined,
+                label: l10n.uiZoomComfortable,
+                icon: Icons.zoom_in_map,
               ),
               TpSegmentedOption<String>(
                 value: 'custom',
-                label: l10n.typographyScaleCustom,
+                label: l10n.uiZoomCustom,
                 icon: Icons.tune_outlined,
               ),
             ],
@@ -112,20 +115,18 @@ class _TypographyScaleSettingState extends State<TypographyScaleSetting> {
           if (isCustom) ...[
             const SizedBox(width: 8),
             SizedBox(
-              width: 96,
-              height: 38,
+              width: 92,
               child: TextField(
                 controller: _percentController,
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 decoration: InputDecoration(
                   isDense: true,
-                  hintText: l10n.typographyScaleCustomHint,
+                  hintText: l10n.uiZoomCustomHint,
                   suffixText: '%',
                 ),
                 onSubmitted: (_) => _commitPercentInput(),
                 onEditingComplete: _commitPercentInput,
-                onTapOutside: (_) => _commitPercentInput(),
               ),
             ),
           ],

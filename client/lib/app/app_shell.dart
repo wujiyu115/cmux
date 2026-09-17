@@ -119,7 +119,6 @@ import '../services/terminal/workspace_terminal_run_service.dart';
 import '../services/terminal/workspace_terminal_session_ops.dart';
 import '../theme/terminal/user_terminal_theme_registry.dart';
 import '../utils/logging/logger.dart';
-import 'ui_zoom_baseline.dart';
 
 /// Localized copy read from the live router context, for strings raised outside
 /// any widget tree (the Bark test push). Null during startup / teardown, when
@@ -183,7 +182,6 @@ class AppShell {
     required this.workspaceChromeCommands,
     required this.runCommandHost,
     required this.quickOpenHost,
-    required this.uiZoomBaseline,
   });
   final HomeWorkspaceUiCache homeWorkspaceUiCache;
   final HomeTargetController homeTargetController;
@@ -238,7 +236,6 @@ class AppShell {
   final WorkspaceChromeCommands workspaceChromeCommands;
   final RunCommandHost runCommandHost;
   final QuickOpenHost quickOpenHost;
-  final UiZoomBaseline uiZoomBaseline;
 }
 
 Future<AppShell> buildAppShell({
@@ -461,7 +458,6 @@ Future<AppShell> buildAppShell({
   final workspaceChromeCommands = WorkspaceChromeCommands();
   final runCommandHost = RunCommandHost();
   final quickOpenHost = QuickOpenHost();
-  final uiZoomBaseline = UiZoomBaseline();
   registerShortcutsUiCommands(commandBus);
   registerCommandPaletteCommand(commandBus);
   registerRunCommands(commandBus, runCommandHost);
@@ -575,7 +571,6 @@ Future<AppShell> buildAppShell({
   registerLayoutCommands(
     commandBus,
     layoutCubit,
-    uiZoomBaseline: () => uiZoomBaseline.value,
     onTogglePanel: () async {
       await workbenchShellLauncher?.focusOrCreateDefaultShell();
     },
@@ -1299,7 +1294,6 @@ Future<AppShell> buildAppShell({
     workspaceChromeCommands: workspaceChromeCommands,
     runCommandHost: runCommandHost,
     quickOpenHost: quickOpenHost,
-    uiZoomBaseline: uiZoomBaseline,
   );
 }
 
