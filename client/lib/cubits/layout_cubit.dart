@@ -2,7 +2,6 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../models/layout_preferences.dart';
-import '../theme/app_theme.dart';
 import '../theme/app_typography_scale.dart';
 import '../repositories/layout_repository.dart';
 
@@ -101,11 +100,30 @@ class LayoutCubit extends Cubit<LayoutState> {
   Future<void> setThemeMode(String mode) =>
       _save(state.preferences.copyWith(themeMode: mode));
 
-  Future<void> setThemeColorPreset(String presetId) => _save(
-    state.preferences.copyWith(
-      themeColorPreset: normalizeThemeColorPreset(presetId),
-    ),
-  );
+  /// Sets the colour theme for the light slot (VS Code
+  /// `preferredLightColorTheme`).
+  Future<void> setLightTheme(String themeId) =>
+      _save(state.preferences.copyWith(lightThemeId: themeId));
+
+  /// Sets the colour theme for the dark slot.
+  Future<void> setDarkTheme(String themeId) =>
+      _save(state.preferences.copyWith(darkThemeId: themeId));
+
+  /// Sets the theme for whichever slot the current [LayoutPreferences.themeMode]
+  /// renders from (used by compact pickers that offer one theme row).
+  Future<void> setActiveColorTheme(String themeId, {required bool platformDark}) {
+    final slot = switch (state.preferences.themeMode) {
+      'light' => false,
+      'dark' => true,
+      _ => platformDark,
+    };
+    return _save(
+      state.preferences.copyWith(
+        lightThemeId: slot ? null : themeId,
+        darkThemeId: slot ? themeId : null,
+      ),
+    );
+  }
 
   Future<void> setUiFontSize(double px) =>
       _save(state.preferences.copyWith(uiFontSize: px));
@@ -152,8 +170,6 @@ class LayoutCubit extends Cubit<LayoutState> {
   /// No-op: bottom dock removed; shell lives as center workbench tabs.
   Future<void> toggleWorkspaceTerminal() => Future.value();
 
-  Future<void> setTerminalThemeMode(String mode) =>
-      _save(state.preferences.copyWith(terminalThemeMode: mode));
 
   Future<void> setUseCustomTerminalColors(bool value) =>
       _save(state.preferences.copyWith(useCustomTerminalColors: value));

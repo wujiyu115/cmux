@@ -4,6 +4,8 @@
 import 'package:flutter/widgets.dart';
 
 import '../models/cli_tool.dart';
+import '../theme/app_theme.dart';
+import '../theme/color_theme.dart';
 import '../services/editor/editor_messages.dart';
 import 'app_localizations.dart';
 
@@ -27,6 +29,28 @@ extension AppLocalizationsX on AppLocalizations {
       default:
         return themePresetGraphite;
     }
+  }
+
+  /// Display name for a unified colour-theme id (see `color_theme.dart`).
+  /// Interface themes render as "{Preset} · {Light|Dark}"; terminal themes use
+  /// their catalog / imported name; legacy modes use their existing labels.
+  String colorThemeName(String id) {
+    if (isUiColorTheme(id)) {
+      final preset = themeColorPresetName(
+        normalizeThemeColorPreset(uiColorThemePreset(id)),
+      );
+      final variant = uiColorThemeBrightness(id) == Brightness.light
+          ? themeVariantLight
+          : themeVariantDark;
+      return '$preset · $variant';
+    }
+    final terminal = colorThemeTerminalTheme(id);
+    if (terminal != null) return terminal.name;
+    return switch (id) {
+      'classicDark' => workspaceTerminalThemeClassicDark,
+      'highContrast' => workspaceTerminalThemeHighContrast,
+      _ => id,
+    };
   }
 
   String providerListCaption(int modelCount, bool proxyEnabled) {

@@ -12,6 +12,7 @@ import 'app_fonts.dart';
 import 'app_markdown_style_sheet.dart';
 import 'app_outline_input_theme.dart';
 import 'app_typography_scale.dart';
+import 'color_theme.dart';
 import 'font_catalog.dart';
 import 'terminal/cmux_terminal_theme.dart';
 import 'terminal_derived_scheme.dart';
@@ -146,6 +147,56 @@ Color themePresetSwatchSecondary(
     return terminalTheme.background;
   }
   return _palette(presetId, terminalTheme).secondary;
+}
+
+/// Two representative colours for any theme id, for picker swatches. Interface
+/// themes show the palette's primary + secondary; terminal themes show the
+/// terminal background + accent so the chip previews the surface the whole UI
+/// takes on.
+(Color, Color) colorThemeSwatches(String themeId) {
+  if (isUiColorTheme(themeId)) {
+    final preset = normalizeThemeColorPreset(uiColorThemePreset(themeId));
+    return (themePresetSwatchPrimary(preset), themePresetSwatchSecondary(preset));
+  }
+  final theme = colorThemeTerminalTheme(themeId);
+  if (theme != null) {
+    return (theme.background, pickTerminalAccent(theme));
+  }
+  // Legacy classicDark / highContrast have no catalog palette.
+  return const (Color(0xFF0A0C10), Color(0xFF69B3FF));
+}
+
+/// Builds the whole-app [ThemeData] for a unified colour-theme id (see
+/// `color_theme.dart`). Interface themes render their fixed palette at the id's
+/// brightness (the terminal then derives adaptively from this scheme); terminal
+/// themes derive the entire UI from their palette pixel-for-pixel. A theme's own
+/// brightness governs — a dark theme renders dark regardless of which slot held
+/// it. [terminalTheme] lets callers pass an already-resolved (override-applied)
+/// terminal theme; otherwise the catalog theme behind [themeId] is used.
+ThemeData resolveThemeDataFor(
+  String themeId, {
+  AppTypographyScale typographyScale = AppTypographyScale.standard,
+  AppTypographyScale? iconScale,
+  ResolvedFonts? fonts,
+  CmuxTerminalTheme? terminalTheme,
+}) {
+  final brightness = colorThemeBrightness(themeId);
+  ThemeData build(String? preset, CmuxTerminalTheme? theme) =>
+      brightness == Brightness.dark
+          ? buildDarkTheme(preset, typographyScale, iconScale, fonts, theme)
+          : buildLightTheme(preset, typographyScale, iconScale, fonts, theme);
+
+  if (isUiColorTheme(themeId)) {
+    return build(normalizeThemeColorPreset(uiColorThemePreset(themeId)), null);
+  }
+  final resolved = terminalTheme ?? colorThemeTerminalTheme(themeId);
+  if (resolved == null) {
+    // Legacy terminal-only mode (classicDark / highContrast): no UI palette to
+    // derive, so the chrome falls back to the default preset at this
+    // brightness; the terminal still paints its legacy palette via the mapper.
+    return build(null, null);
+  }
+  return build(kTerminalDerivedPresetId, resolved);
 }
 
 const _subThemes = FlexSubThemesData(

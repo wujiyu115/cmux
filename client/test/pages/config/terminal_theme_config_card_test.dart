@@ -95,15 +95,20 @@ void main() {
     return cubit;
   }
 
-  testWidgets('picking a theme writes its id via the cubit', (tester) async {
-    final cubit = await pumpCard(tester);
-    expect(cubit.state.preferences.terminalThemeMode, 'adaptive');
+  testWidgets('imported theme is listed with a delete affordance', (
+    tester,
+  ) async {
+    // Seed the registry with one imported theme so the card renders its row.
+    final saved = (await tester.runAsync(() => repo().save(_importFixture()!)))!;
+    final stored = (await tester.runAsync(() => repo().loadAll()))!;
+    UserTerminalThemeRegistry.instance.replaceAll(stored);
 
-    await tester.ensureVisible(find.text('Dracula'));
-    await tester.tap(find.text('Dracula'));
-    await tester.pump();
+    await pumpCard(tester);
 
-    expect(cubit.state.preferences.terminalThemeMode, 'dracula');
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    expect(find.text(l10n.colorThemeGroupImported), findsOneWidget);
+    expect(find.text('Fixture Theme'), findsWidgets);
+    expect(find.byTooltip(l10n.terminalThemeDeleteTooltip), findsOneWidget);
   });
 
   testWidgets('custom colours toggle enables the slot editor', (tester) async {
@@ -183,10 +188,10 @@ void main() {
       UserTerminalThemeRegistry.instance.byId('paste-theme'),
       isNotNull,
     );
-    expect(cubit.state.preferences.terminalThemeMode, 'paste-theme');
+    expect(cubit.state.preferences.lightThemeId, 'paste-theme');
 
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
-    expect(find.text(l10n.terminalColorSchemeGroupImported), findsOneWidget);
+    expect(find.text(l10n.colorThemeGroupImported), findsOneWidget);
     expect(find.text('Paste Theme'), findsWidgets);
 
     await _drainToast(tester);
@@ -216,7 +221,7 @@ void main() {
       find.byKey(const Key('terminal-theme-import-confirm')),
       findsOneWidget,
     );
-    expect(cubit.state.preferences.terminalThemeMode, 'adaptive');
+    expect(cubit.state.preferences.lightThemeId, 'ui:amber:light');
     expect(Directory(themesDir).existsSync(), isFalse);
   });
 
@@ -233,7 +238,7 @@ void main() {
     UserTerminalThemeRegistry.instance.replaceAll(stored);
 
     final cubit = await pumpCard(tester);
-    cubit.setTerminalThemeMode(saved.id);
+    cubit.setLightTheme(saved.id);
     await tester.pump();
 
     final deleteButton = find.byTooltip('Delete imported theme');
@@ -246,7 +251,7 @@ void main() {
 
     expect(File(p.join(themesDir, '${saved.id}.json')).existsSync(), isFalse);
     expect(UserTerminalThemeRegistry.instance.themes, isEmpty);
-    expect(cubit.state.preferences.terminalThemeMode, 'adaptive');
+    expect(cubit.state.preferences.lightThemeId, 'ui:amber:light');
 
     await _drainToast(tester);
   });

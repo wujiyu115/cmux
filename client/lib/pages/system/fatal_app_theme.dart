@@ -11,19 +11,18 @@ Future<ThemeData> resolveFatalAppTheme() async {
   try {
     final prefs = await SharedPreferences.getInstance();
     final layout = await LayoutRepository(prefs).load();
-    final preset = layout.themeColorPreset;
-    final brightness = switch (layout.themeMode) {
-      'light' => Brightness.light,
-      'dark' => Brightness.dark,
-      _ => WidgetsBinding.instance.platformDispatcher.platformBrightness,
-    };
+    final platformDark =
+        WidgetsBinding.instance.platformDispatcher.platformBrightness ==
+            Brightness.dark;
+    final resolved = layout.resolveColorTheme(platformDark: platformDark);
     final typography = AppTypographyScale.fromPx(
       uiFontSize: layout.uiFontSize,
       monoFontSize: layout.monoFontSize,
     );
-    return brightness == Brightness.dark
-        ? buildDarkTheme(preset, typography)
-        : buildLightTheme(preset, typography);
+    return resolveThemeDataFor(
+      resolved.themeId,
+      typographyScale: typography,
+    );
   } on Object {
     final brightness =
         WidgetsBinding.instance.platformDispatcher.platformBrightness;

@@ -5,14 +5,14 @@ import 'package:shared_ui/shared_ui.dart';
 import '../../cubits/layout_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../models/layout_preferences.dart';
-import '../../theme/app_theme.dart';
 import '../../theme/app_typography_scale.dart';
 import '../../theme/font_catalog.dart';
 import '../../utils/ui/app_keys.dart';
 import '../../widgets/settings/font_preference_setting.dart';
 import '../../widgets/settings/font_size_setting.dart';
-import '../../widgets/settings/theme_color_preset_picker.dart';
+import '../../widgets/settings/color_theme_picker.dart';
 import '../../widgets/settings/ui_zoom_setting.dart';
+import '../../theme/terminal/user_terminal_theme_registry.dart';
 
 /// Tightened top inset for the in-card group labels: each [TpPreferenceRow]
 /// already carries 16px of vertical padding, so the default header padding
@@ -33,6 +33,7 @@ class LayoutAppearanceInLayoutSection extends StatelessWidget {
       (
         String,
         String,
+        String,
         double,
         String,
         String,
@@ -51,7 +52,8 @@ class LayoutAppearanceInLayoutSection extends StatelessWidget {
         }
         return (
           themeMode,
-          normalizeThemeColorPreset(state.preferences.themeColorPreset),
+          state.preferences.lightThemeId,
+          state.preferences.darkThemeId,
           state.preferences.uiFontSize,
           normalizeUiFontId(state.preferences.uiFontId),
           normalizeMonoFontId(state.preferences.monoFontId),
@@ -64,7 +66,8 @@ class LayoutAppearanceInLayoutSection extends StatelessWidget {
       builder: (context, appearance) {
         final (
           themeMode,
-          colorPreset,
+          lightThemeId,
+          darkThemeId,
           uiFontSize,
           uiFontId,
           monoFontId,
@@ -111,15 +114,22 @@ class LayoutAppearanceInLayoutSection extends StatelessWidget {
                   ),
                   showDividerBelow: true,
                 ),
-                TpPreferenceRow(
-                  title: l10n.themeColorPresetTitle,
-                  subtitle: l10n.themeColorPresetDescription,
-                  trailing: ConnectedThemeColorPresetPicker(
-                    selected: colorPreset,
-                    onSelect: controller.setThemeColorPreset,
+                if (themeMode != 'dark')
+                  _ColorThemeRow(
+                    title: l10n.lightThemeTitle,
+                    subtitle: l10n.lightThemeDescription,
+                    themeId: lightThemeId,
+                    onSelect: controller.setLightTheme,
+                    showDividerBelow: themeMode == 'system',
                   ),
-                  showDividerBelow: false,
-                ),
+                if (themeMode != 'light')
+                  _ColorThemeRow(
+                    title: l10n.darkThemeTitle,
+                    subtitle: l10n.darkThemeDescription,
+                    themeId: darkThemeId,
+                    onSelect: controller.setDarkTheme,
+                    showDividerBelow: false,
+                  ),
                 // --- 字体与字号 ---
                 TpSectionHeader(
                   title: l10n.appearanceGroupFonts,
@@ -280,6 +290,74 @@ class LayoutAppearanceInLayoutSection extends StatelessWidget {
           },
         );
       },
+    );
+  }
+}
+
+/// One brightness slot row: shows the active theme name and opens the unified
+/// [ColorThemePicker] on tap. Listens to [UserTerminalThemeRegistry] so the
+/// picker's imported group stays current; import / delete live in the terminal
+/// theme card, so this row never deletes.
+class _ColorThemeRow extends StatefulWidget {
+  const _ColorThemeRow({
+    required this.title,
+    required this.subtitle,
+    required this.themeId,
+    required this.onSelect,
+    required this.showDividerBelow,
+  });
+
+  final String title;
+  final String subtitle;
+  final String themeId;
+  final ValueChanged<String> onSelect;
+  final bool showDividerBelow;
+
+  @override
+  State<_ColorThemeRow> createState() => _ColorThemeRowState();
+}
+
+class _ColorThemeRowState extends State<_ColorThemeRow> {
+  final UserTerminalThemeRegistry _registry =
+      UserTerminalThemeRegistry.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    _registry.addListener(_onRegistryChanged);
+  }
+
+  @override
+  void dispose() {
+    _registry.removeListener(_onRegistryChanged);
+    super.dispose();
+  }
+
+  void _onRegistryChanged() {
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _pick() async {
+    final selected = await ColorThemePicker.show(
+      context,
+      selectedId: widget.themeId,
+      importedThemes: _registry.themes,
+    );
+    if (selected != null) widget.onSelect(selected);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return TpPreferenceRow(
+      title: widget.title,
+      subtitle: widget.subtitle,
+      trailing: TpButton(
+        variant: TpButtonVariant.secondary,
+        onPressed: _pick,
+        child: Text(l10n.colorThemeName(widget.themeId)),
+      ),
+      showDividerBelow: widget.showDividerBelow,
     );
   }
 }

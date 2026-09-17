@@ -6,19 +6,24 @@ import '../../../cubits/layout_cubit.dart';
 import '../../../l10n/l10n_extensions.dart';
 import '../../../repositories/user_terminal_theme_repository.dart';
 import '../../../services/terminal/terminal_theme_mapper.dart';
+import '../../../theme/color_theme.dart';
 import '../../../theme/terminal/cmux_terminal_theme.dart';
 import '../../../theme/terminal/terminal_color_slots.dart';
 import '../../../theme/terminal/user_terminal_theme_registry.dart';
 import '../../../theme/workspace_surface_layers.dart';
 import '../../../widgets/app_toast/app_toast.dart';
 import 'terminal_color_slot_editor.dart';
-import 'terminal_scheme_picker.dart';
 import 'terminal_theme_import_dialog.dart';
 import 'terminal_theme_preview.dart';
 
-/// Terminal colour-scheme settings section: scheme picker (23 catalog themes +
-/// imported themes + legacy modes), theme import / delete, a live preview of the
-/// effective theme, a custom-colours toggle, and the per-slot override editor.
+/// Terminal colour **advanced** section: import / delete user themes, a live
+/// preview of the effective terminal palette, a custom-colours toggle, and the
+/// per-slot override editor.
+///
+/// Theme *selection* is no longer here — it moved to the unified
+/// [ColorThemePicker] in the appearance section (one theme drives UI + terminal
+/// + file browser). This card keeps the pieces that are terminal-specific:
+/// managing imported themes and the per-slot overrides layered on top.
 /// Mounted as a card in the Layout settings scroll (`/config/layout`).
 class TerminalThemeConfigCard extends StatefulWidget {
   const TerminalThemeConfigCard({this.repository, super.key});
@@ -45,19 +50,31 @@ class _TerminalThemeConfigCardState extends State<TerminalThemeConfigCard> {
     final controller = context.read<LayoutCubit>();
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final platformDark = MediaQuery.platformBrightnessOf(context) ==
+        Brightness.dark;
 
     return BlocSelector<
       LayoutCubit,
       LayoutState,
-      (String, bool, Map<String, int>)
+      (String, String, bool, Map<String, int>)
     >(
       selector: (state) => (
-        state.preferences.terminalThemeMode,
+        state.preferences.lightThemeId,
+        state.preferences.darkThemeId,
         state.preferences.useCustomTerminalColors,
         state.preferences.terminalColorOverrides,
       ),
       builder: (context, data) {
-        final (mode, useCustomColors, overrides) = data;
+        final (lightThemeId, darkThemeId, useCustomColors, overrides) = data;
+
+        // The terminal mode the mapper paints with: whichever slot is active.
+        final activeThemeId = switch (
+            controller.state.preferences.themeMode) {
+          'light' => lightThemeId,
+          'dark' => darkThemeId,
+          _ => platformDark ? darkThemeId : lightThemeId,
+        };
+        final mode = terminalModeForColorTheme(activeThemeId);
 
         // Effective theme (scheme + overrides) drives the preview; the base
         // theme (no overrides) seeds the per-slot swatches / fields.
@@ -86,18 +103,20 @@ class _TerminalThemeConfigCardState extends State<TerminalThemeConfigCard> {
               trailing: TpButton(
                 key: const Key('terminal-theme-import-action'),
                 variant: TpButtonVariant.secondary,
-                onPressed: () => _import(controller),
+                onPressed: () => _import(controller, platformDark),
                 child: Text(l10n.terminalThemeImportAction),
               ),
               showDividerBelow: true,
             ),
-            TerminalSchemePicker(
-              selectedMode: mode,
-              onSelect: controller.setTerminalThemeMode,
-              importedThemes: _imported,
-              onDeleteImported: (theme) => _delete(controller, theme),
-            ),
-            const TpSeparator(),
+            if (_imported.isNotEmpty) ...[
+              TpSectionHeader(title: l10n.colorThemeGroupImported),
+              for (final theme in _imported)
+                _ImportedThemeRow(
+                  theme: theme,
+                  onDelete: () => _delete(controller, theme),
+                ),
+              const TpSeparator(),
+            ],
             TerminalThemePreview(theme: effective),
             const TpSeparator(),
             TpPreferenceRow(
@@ -124,9 +143,9 @@ class _TerminalThemeConfigCardState extends State<TerminalThemeConfigCard> {
   }
 
   /// Import flow: parse in the dialog, persist, refresh the synchronous registry
-  /// the theme mapper reads, then select the new theme so the effect is visible
-  /// immediately.
-  Future<void> _import(LayoutCubit controller) async {
+  /// the theme mapper reads, then select the new theme into the active slot so
+  /// the effect is visible immediately.
+  Future<void> _import(LayoutCubit controller, bool platformDark) async {
     final result = await showTerminalThemeImportDialog(context);
     final theme = result?.theme;
     if (theme == null || !mounted) return;
@@ -147,7 +166,8 @@ class _TerminalThemeConfigCardState extends State<TerminalThemeConfigCard> {
 
     await _refreshRegistry();
     if (!mounted) return;
-    controller.setTerminalThemeMode(saved.id);
+    await controller.setActiveColorTheme(saved.id, platformDark: platformDark);
+    if (!mounted) return;
 
     final warnings = result!.warnings;
     final derived = warnings.map(l10n.terminalColorSlotLabel).join(', ');
@@ -206,11 +226,19 @@ class _TerminalThemeConfigCardState extends State<TerminalThemeConfigCard> {
     }
     await _refreshRegistry();
     if (!mounted) return;
-    // Never leave the preference pointing at a theme that no longer exists.
-    // Read the mode now rather than capturing it at build time, so a selection
-    // made while the confirm dialog was open still counts.
-    if (controller.state.preferences.terminalThemeMode == theme.id) {
-      controller.setTerminalThemeMode('adaptive');
+    // Never leave a slot pointing at a theme that no longer exists. Read both
+    // slots now rather than capturing them at build time, so a selection made
+    // while the confirm dialog was open still counts.
+    final prefs = controller.state.preferences;
+    final fallbackLight = kDefaultLightColorThemeId;
+    final fallbackDark = kDefaultDarkColorThemeId;
+    if (prefs.lightThemeId == theme.id || prefs.darkThemeId == theme.id) {
+      await controller.setLightTheme(
+        prefs.lightThemeId == theme.id ? fallbackLight : prefs.lightThemeId,
+      );
+      await controller.setDarkTheme(
+        prefs.darkThemeId == theme.id ? fallbackDark : prefs.darkThemeId,
+      );
     }
   }
 
@@ -219,5 +247,83 @@ class _TerminalThemeConfigCardState extends State<TerminalThemeConfigCard> {
     UserTerminalThemeRegistry.instance.replaceAll(themes);
     if (!mounted) return;
     setState(() => _imported = themes);
+  }
+}
+
+/// One imported-theme row: name + author + delete affordance. Selection happens
+/// in the unified [ColorThemePicker]; this row only manages the file.
+class _ImportedThemeRow extends StatelessWidget {
+  const _ImportedThemeRow({required this.theme, required this.onDelete});
+
+  final CmuxTerminalTheme theme;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final cs = Theme.of(context).colorScheme;
+    final styles = TpTextStyles.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(theme.name),
+                if (theme.author.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    l10n.terminalColorSchemeByAuthor(theme.author),
+                    style: styles.mutedSm,
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          _SwatchStrip(
+            colors: [
+              theme.background,
+              theme.foreground,
+              theme.accent ?? theme.cursor,
+              theme.ansi[1],
+              theme.ansi[2],
+              theme.ansi[4],
+            ],
+          ),
+          const SizedBox(width: 4),
+          TpIconButton(
+            icon: Icons.delete_outline,
+            compact: true,
+            size: TpIconButton.kCompactSize,
+            tooltip: l10n.terminalThemeDeleteTooltip,
+            color: cs.onSurfaceVariant,
+            onTap: onDelete,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SwatchStrip extends StatelessWidget {
+  const _SwatchStrip({required this.colors});
+
+  final List<Color> colors;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(5),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final color in colors)
+            Container(width: 16, height: 20, color: color),
+        ],
+      ),
+    );
   }
 }

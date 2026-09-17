@@ -392,8 +392,12 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
   TerminalTheme _terminalTheme(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final platformDark = MediaQuery.platformBrightnessOf(context) ==
+        Brightness.dark;
     final mode = context.select<LayoutCubit, String>(
-      (cubit) => cubit.state.preferences.terminalThemeMode,
+      (cubit) => cubit.state.preferences
+          .resolveColorTheme(platformDark: platformDark)
+          .terminalMode,
     );
     final useCustomColors = context.select<LayoutCubit, bool>(
       (cubit) => cubit.state.preferences.useCustomTerminalColors,

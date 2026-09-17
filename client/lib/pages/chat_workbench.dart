@@ -268,8 +268,12 @@ class _ChatWorkbenchBody extends StatelessWidget {
     final slice = this.slice;
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final platformDark = MediaQuery.platformBrightnessOf(context) ==
+        Brightness.dark;
     final terminalThemeMode = context.select<LayoutCubit, String>(
-      (cubit) => cubit.state.preferences.terminalThemeMode,
+      (cubit) => cubit.state.preferences
+          .resolveColorTheme(platformDark: platformDark)
+          .terminalMode,
     );
     final useCustomTerminalColors = context.select<LayoutCubit, bool>(
       (cubit) => cubit.state.preferences.useCustomTerminalColors,

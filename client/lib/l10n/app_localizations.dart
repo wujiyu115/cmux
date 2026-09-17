@@ -224,17 +224,77 @@ abstract class AppLocalizations {
   /// **'Light, dark, or match the operating system appearance.'**
   String get themeModeDescription;
 
-  /// No description provided for @themeColorPresetTitle.
+  /// No description provided for @lightThemeTitle.
   ///
   /// In en, this message translates to:
-  /// **'Theme colors'**
-  String get themeColorPresetTitle;
+  /// **'Light theme'**
+  String get lightThemeTitle;
 
-  /// No description provided for @themeColorPresetDescription.
+  /// No description provided for @lightThemeDescription.
   ///
   /// In en, this message translates to:
-  /// **'Primary and accent colors for buttons, toggles, and highlights.'**
-  String get themeColorPresetDescription;
+  /// **'Color theme used in light mode — interface, terminal, and file browser all follow it.'**
+  String get lightThemeDescription;
+
+  /// No description provided for @darkThemeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark theme'**
+  String get darkThemeTitle;
+
+  /// No description provided for @darkThemeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Color theme used in dark mode — interface, terminal, and file browser all follow it.'**
+  String get darkThemeDescription;
+
+  /// No description provided for @colorThemeDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Color theme'**
+  String get colorThemeDialogTitle;
+
+  /// No description provided for @colorThemeGroupUiLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Interface themes · Light'**
+  String get colorThemeGroupUiLight;
+
+  /// No description provided for @colorThemeGroupUiDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Interface themes · Dark'**
+  String get colorThemeGroupUiDark;
+
+  /// No description provided for @colorThemeGroupTerminalDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Terminal themes · Dark'**
+  String get colorThemeGroupTerminalDark;
+
+  /// No description provided for @colorThemeGroupTerminalLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Terminal themes · Light'**
+  String get colorThemeGroupTerminalLight;
+
+  /// No description provided for @colorThemeGroupImported.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported'**
+  String get colorThemeGroupImported;
+
+  /// No description provided for @themeVariantLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get themeVariantLight;
+
+  /// No description provided for @themeVariantDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get themeVariantDark;
 
   /// No description provided for @uiFontSizeTitle.
   ///
@@ -2455,12 +2515,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Settings'**
   String get workspaceTerminalSettings;
-
-  /// No description provided for @workspaceTerminalThemeAdaptive.
-  ///
-  /// In en, this message translates to:
-  /// **'Match app theme'**
-  String get workspaceTerminalThemeAdaptive;
 
   /// No description provided for @workspaceTerminalThemeClassicDark.
   ///
@@ -5129,26 +5183,8 @@ abstract class AppLocalizations {
   /// No description provided for @terminalColorSchemeDescription.
   ///
   /// In en, this message translates to:
-  /// **'Pick a built-in palette for embedded terminals, or tweak individual colors.'**
+  /// **'Manage imported themes and tweak individual colors on top of the selected theme.'**
   String get terminalColorSchemeDescription;
-
-  /// No description provided for @terminalColorSchemeGroupDark.
-  ///
-  /// In en, this message translates to:
-  /// **'Dark'**
-  String get terminalColorSchemeGroupDark;
-
-  /// No description provided for @terminalColorSchemeGroupLight.
-  ///
-  /// In en, this message translates to:
-  /// **'Light'**
-  String get terminalColorSchemeGroupLight;
-
-  /// No description provided for @terminalColorSchemeGroupLegacy.
-  ///
-  /// In en, this message translates to:
-  /// **'Adaptive & legacy'**
-  String get terminalColorSchemeGroupLegacy;
 
   /// No description provided for @terminalColorSchemeByAuthor.
   ///

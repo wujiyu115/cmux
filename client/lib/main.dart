@@ -73,6 +73,7 @@ import 'theme/app_font_prepare.dart';
 import 'theme/app_font_resolver.dart';
 import 'theme/installed_font_enumerator.dart';
 import 'theme/app_theme.dart';
+import 'theme/color_theme.dart';
 import 'theme/team_pilot_toast_config.dart';
 import 'theme/terminal_derived_scheme.dart';
 import 'theme/workspace_surface_layers.dart';
@@ -817,15 +818,15 @@ class TeamPilotApp extends StatelessWidget {
       LayoutState,
       ({
         String themeMode,
-        String colorPreset,
+        String lightThemeId,
+        String darkThemeId,
         double uiFontSize,
         String uiFontId,
         String monoFontId,
         double monoFontSize,
-        String terminalThemeMode,
         bool useCustomTerminalColors,
         Map<String, int> terminalColorOverrides,
-        int terminalThemeKey,
+        int terminalOverridesKey,
       })
     >(
       selector: (state) {
@@ -836,23 +837,21 @@ class TeamPilotApp extends StatelessWidget {
             themeMode != 'system') {
           themeMode = 'system';
         }
-        final colorPreset = normalizeThemeColorPreset(prefs.themeColorPreset);
         return (
           themeMode: themeMode,
-          colorPreset: colorPreset,
+          lightThemeId: prefs.lightThemeId,
+          darkThemeId: prefs.darkThemeId,
           uiFontSize: prefs.uiFontSize,
           uiFontId: prefs.uiFontId,
           monoFontId: prefs.monoFontId,
           monoFontSize: prefs.monoFontSize,
-          terminalThemeMode: prefs.terminalThemeMode,
           useCustomTerminalColors: prefs.useCustomTerminalColors,
           terminalColorOverrides: prefs.terminalColorOverrides,
           // Value key over the (unmodifiable, freshly built) override map so the
-          // record keeps `==` semantics; the themes rebuild on every preset
-          // because the fixed presets carry the terminal theme in
-          // [TerminalThemeExtension] for editor syntax too.
-          terminalThemeKey: uiTerminalThemeCacheKey(
-            mode: prefs.terminalThemeMode,
+          // record keeps `==` semantics; the themes rebuild when the terminal
+          // colour overrides change.
+          terminalOverridesKey: uiTerminalThemeCacheKey(
+            mode: '',
             useCustomColors: prefs.useCustomTerminalColors,
             colorOverrides: prefs.terminalColorOverrides,
           ),
@@ -864,15 +863,15 @@ class TeamPilotApp extends StatelessWidget {
           builder: (context, savedLocale) {
             return _TeamPilotMaterialApp(
               themeMode: themeBundle.themeMode,
-              colorPreset: themeBundle.colorPreset,
+              lightThemeId: themeBundle.lightThemeId,
+              darkThemeId: themeBundle.darkThemeId,
               uiFontSize: themeBundle.uiFontSize,
               uiFontId: themeBundle.uiFontId,
               monoFontId: themeBundle.monoFontId,
               monoFontSize: themeBundle.monoFontSize,
-              terminalThemeMode: themeBundle.terminalThemeMode,
               useCustomTerminalColors: themeBundle.useCustomTerminalColors,
               terminalColorOverrides: themeBundle.terminalColorOverrides,
-              terminalThemeKey: themeBundle.terminalThemeKey,
+              terminalOverridesKey: themeBundle.terminalOverridesKey,
               savedLocale: savedLocale,
             );
           },
@@ -885,20 +884,24 @@ class TeamPilotApp extends StatelessWidget {
 class _TeamPilotMaterialApp extends StatefulWidget {
   const _TeamPilotMaterialApp({
     required this.themeMode,
-    required this.colorPreset,
+    required this.lightThemeId,
+    required this.darkThemeId,
     required this.uiFontSize,
     required this.uiFontId,
     required this.monoFontId,
     required this.monoFontSize,
-    required this.terminalThemeMode,
     required this.useCustomTerminalColors,
     required this.terminalColorOverrides,
-    required this.terminalThemeKey,
+    required this.terminalOverridesKey,
     required this.savedLocale,
   });
 
   final String themeMode;
-  final String colorPreset;
+
+  /// Active colour theme per brightness slot (VS Code
+  /// `preferredLight/DarkColorTheme`); see `color_theme.dart`.
+  final String lightThemeId;
+  final String darkThemeId;
 
   /// Absolute font sizes (logical px) — see docs/font-size-model.md.
   final double uiFontSize;
@@ -906,14 +909,12 @@ class _TeamPilotMaterialApp extends StatefulWidget {
   final String uiFontId;
   final String monoFontId;
 
-  /// Terminal colour-scheme prefs — the `terminal` preset derives the whole UI
-  /// scheme from them; the fixed presets only use them for editor syntax.
-  final String terminalThemeMode;
+  /// Per-slot terminal colour overrides layered on the resolved terminal theme.
   final bool useCustomTerminalColors;
   final Map<String, int> terminalColorOverrides;
 
-  /// Value fingerprint of the three fields above.
-  final int terminalThemeKey;
+  /// Value fingerprint of the override fields above.
+  final int terminalOverridesKey;
   final String savedLocale;
 
   @override
@@ -923,12 +924,13 @@ class _TeamPilotMaterialApp extends StatefulWidget {
 class _TeamPilotMaterialAppState extends State<_TeamPilotMaterialApp> {
   ThemeData? _lightTheme;
   ThemeData? _darkTheme;
-  String? _cachedColorPreset;
+  String? _cachedLightThemeId;
+  String? _cachedDarkThemeId;
   double? _cachedUiFontSize;
   double? _cachedMonoFontSize;
   String? _cachedUiFontId;
   String? _cachedMonoFontId;
-  int? _cachedTerminalThemeKey;
+  int? _cachedTerminalOverridesKey;
 
   /// Last-resolved multipliers consumed by the [TpTheme] wrapper in [build].
   double? _cachedIconMultiplier;
@@ -943,12 +945,13 @@ class _TeamPilotMaterialAppState extends State<_TeamPilotMaterialApp> {
   ({ThemeData light, ThemeData dark}) _resolveThemes() {
     if (_lightTheme != null &&
         _darkTheme != null &&
-        _cachedColorPreset == widget.colorPreset &&
+        _cachedLightThemeId == widget.lightThemeId &&
+        _cachedDarkThemeId == widget.darkThemeId &&
         _cachedUiFontSize == widget.uiFontSize &&
         _cachedMonoFontSize == widget.monoFontSize &&
         _cachedUiFontId == _sessionUiFontId &&
         _cachedMonoFontId == _sessionMonoFontId &&
-        _cachedTerminalThemeKey == widget.terminalThemeKey) {
+        _cachedTerminalOverridesKey == widget.terminalOverridesKey) {
       return (light: _lightTheme!, dark: _darkTheme!);
     }
     final fonts = AppFontResolver.resolve(
@@ -975,36 +978,34 @@ class _TeamPilotMaterialAppState extends State<_TeamPilotMaterialApp> {
     final iconScale = AppTypographyScale(multiplier: iconMultiplier);
     _cachedIconMultiplier = iconMultiplier;
     _cachedEffectiveTextMult = textScale.multiplier;
-    _cachedColorPreset = widget.colorPreset;
+
+    // Each slot renders its own theme; a terminal theme's palette (with the
+    // user's per-slot overrides) drives the whole UI, an interface theme
+    // renders its fixed palette and the terminal derives adaptively.
+    ThemeData themeForSlot(String themeId) {
+      final terminalTheme = resolveUiTerminalTheme(
+        mode: terminalModeForColorTheme(themeId),
+        useCustomColors: widget.useCustomTerminalColors,
+        colorOverrides: widget.terminalColorOverrides,
+      );
+      return resolveThemeDataFor(
+        themeId,
+        typographyScale: textScale,
+        iconScale: iconScale,
+        fonts: fonts,
+        terminalTheme: terminalTheme,
+      );
+    }
+
+    _cachedLightThemeId = widget.lightThemeId;
+    _cachedDarkThemeId = widget.darkThemeId;
     _cachedUiFontSize = widget.uiFontSize;
     _cachedMonoFontSize = widget.monoFontSize;
     _cachedUiFontId = _sessionUiFontId;
     _cachedMonoFontId = _sessionMonoFontId;
-    _cachedTerminalThemeKey = widget.terminalThemeKey;
-    // Null for the legacy adaptive / classicDark / highContrast terminal modes
-    // (nothing to follow) — those fall back to the palette path inside
-    // [buildLightTheme] / [buildDarkTheme] and the atom-one syntax palettes.
-    // Resolved on every preset: the terminal-derived preset derives the whole
-    // scheme from it, the fixed presets only attach it for editor syntax.
-    final terminalTheme = resolveUiTerminalTheme(
-      mode: widget.terminalThemeMode,
-      useCustomColors: widget.useCustomTerminalColors,
-      colorOverrides: widget.terminalColorOverrides,
-    );
-    _lightTheme = buildLightTheme(
-      widget.colorPreset,
-      textScale,
-      iconScale,
-      fonts,
-      terminalTheme,
-    );
-    _darkTheme = buildDarkTheme(
-      widget.colorPreset,
-      textScale,
-      iconScale,
-      fonts,
-      terminalTheme,
-    );
+    _cachedTerminalOverridesKey = widget.terminalOverridesKey;
+    _lightTheme = themeForSlot(widget.lightThemeId);
+    _darkTheme = themeForSlot(widget.darkThemeId);
     return (light: _lightTheme!, dark: _darkTheme!);
   }
 

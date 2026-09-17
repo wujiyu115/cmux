@@ -1,47 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:shared_ui/shared_ui.dart';
 
-import '../../../l10n/l10n_extensions.dart';
-import '../../../services/terminal/terminal_theme_mapper.dart';
-import '../../../theme/terminal/cmux_terminal_theme.dart';
-import '../../../theme/terminal/terminal_theme_catalog.g.dart';
-import '../../../theme/workspace_surface_layers.dart';
+import '../../l10n/l10n_extensions.dart';
+import '../../theme/app_theme.dart';
+import '../../theme/color_theme.dart';
+import '../../theme/terminal_derived_scheme.dart';
+import '../../theme/terminal/cmux_terminal_theme.dart';
+import '../../theme/terminal/terminal_theme_catalog.g.dart';
 
-/// One selectable option in the terminal scheme picker.
-class _SchemeOption {
-  const _SchemeOption({
-    required this.id,
-    required this.name,
-    required this.author,
-    required this.swatches,
-  });
-
-  final String id;
-  final String name;
-  final String author;
-  final List<Color> swatches;
-}
-
-/// Grouped picker for the 23 built-in terminal palettes, any user-imported
-/// themes, and the legacy adaptive/classicDark/highContrast modes. Selecting a
-/// row writes the id back via [onSelect] (`terminalThemeMode`).
-class TerminalSchemePicker extends StatelessWidget {
-  const TerminalSchemePicker({
-    required this.selectedMode,
+/// The unified colour-theme picker — the single place a theme is chosen, in
+/// the VS Code `workbench.colorTheme` sense: one id decides the UI chrome, the
+/// terminal palette, and the file-browser surface together.
+///
+/// Groups: interface palettes (light / dark), terminal themes (dark / light),
+/// and user-imported themes. Selecting a row returns its theme id; the caller
+/// writes it to the light or dark slot depending on which row was tapped.
+///
+/// [onDeleteImported] enables the delete affordance on imported rows (and must
+/// also refresh the registry behind [importedThemes]).
+class ColorThemePicker extends StatelessWidget {
+  const ColorThemePicker({
+    required this.selectedId,
     required this.onSelect,
     this.importedThemes = const [],
     this.onDeleteImported,
     super.key,
   });
 
-  final String selectedMode;
+  final String selectedId;
   final ValueChanged<String> onSelect;
-
-  /// User-imported themes, shown in their own group above the built-ins.
   final List<CmuxTerminalTheme> importedThemes;
-
-  /// Delete handler for an imported row; when null the delete button is hidden
-  /// (so the control never appears without behaviour behind it).
   final ValueChanged<CmuxTerminalTheme>? onDeleteImported;
 
   static List<Color> _catalogSwatches(CmuxTerminalTheme t) => <Color>[
@@ -53,34 +41,59 @@ class TerminalSchemePicker extends StatelessWidget {
     t.ansi[4],
   ];
 
-  List<Color> _legacySwatches(ColorScheme cs, bool isDark, String mode) {
-    final theme = teampilotTerminalTheme(
-      cs,
-      isDark: isDark,
-      mode: mode,
-      chrome: WorkspacePageChrome.workspace,
+  /// Opens the picker as a dialog and returns the chosen id, or null on cancel.
+  static Future<String?> show(
+    BuildContext context, {
+    required String selectedId,
+    List<CmuxTerminalTheme> importedThemes = const [],
+    ValueChanged<CmuxTerminalTheme>? onDeleteImported,
+  }) {
+    return showTpDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return TpDialog(
+          maxWidth: 560,
+          maxHeight: 640,
+          scrollable: true,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TpDialogHeader(title: dialogContext.l10n.colorThemeDialogTitle),
+              ColorThemePicker(
+                selectedId: selectedId,
+                importedThemes: importedThemes,
+                onDeleteImported: onDeleteImported,
+                onSelect: (id) => Navigator.of(dialogContext).pop(id),
+              ),
+            ],
+          ),
+        );
+      },
     );
-    Color op(int v) => Color(0xFF000000 | v);
-    return <Color>[
-      op(theme.background),
-      op(theme.foreground),
-      op(theme.hintStart.bg),
-      op(theme.ansi[1]),
-      op(theme.ansi[2]),
-      op(theme.ansi[4]),
-    ];
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final dark = <_SchemeOption>[];
-    final light = <_SchemeOption>[];
+    // Interface themes: each fixed palette rendered at both brightnesses.
+    List<_ThemeOption> uiOptions(Brightness brightness) => [
+      for (final preset in kThemeColorPresetIds)
+        if (preset != kTerminalDerivedPresetId)
+          _ThemeOption(
+            id: uiColorThemeId(preset, brightness),
+            name: l10n.themeColorPresetName(preset),
+            swatches: [
+              themePresetSwatchPrimary(preset),
+              themePresetSwatchSecondary(preset),
+            ],
+          ),
+    ];
+
+    final dark = <_ThemeOption>[];
+    final light = <_ThemeOption>[];
     for (final theme in kCmuxTerminalThemes) {
-      final option = _SchemeOption(
+      final option = _ThemeOption(
         id: theme.id,
         name: theme.name,
         author: theme.author,
@@ -89,37 +102,18 @@ class TerminalSchemePicker extends StatelessWidget {
       (theme.isDark ? dark : light).add(option);
     }
 
-    final legacy = <_SchemeOption>[
-      _SchemeOption(
-        id: 'adaptive',
-        name: l10n.workspaceTerminalThemeAdaptive,
-        author: '',
-        swatches: _legacySwatches(cs, isDark, 'adaptive'),
-      ),
-      _SchemeOption(
-        id: 'classicDark',
-        name: l10n.workspaceTerminalThemeClassicDark,
-        author: '',
-        swatches: _legacySwatches(cs, isDark, 'classicDark'),
-      ),
-      _SchemeOption(
-        id: 'highContrast',
-        name: l10n.workspaceTerminalThemeHighContrast,
-        author: '',
-        swatches: _legacySwatches(cs, isDark, 'highContrast'),
-      ),
-    ];
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        _group(context, l10n.colorThemeGroupUiLight, uiOptions(Brightness.light)),
+        _group(context, l10n.colorThemeGroupUiDark, uiOptions(Brightness.dark)),
         if (importedThemes.isNotEmpty)
           _group(
             context,
-            l10n.terminalColorSchemeGroupImported,
+            l10n.colorThemeGroupImported,
             [
               for (final theme in importedThemes)
-                _SchemeOption(
+                _ThemeOption(
                   id: theme.id,
                   name: theme.name,
                   author: theme.author,
@@ -133,9 +127,8 @@ class TerminalSchemePicker extends StatelessWidget {
                     onDeleteImported!(theme);
                   },
           ),
-        _group(context, l10n.terminalColorSchemeGroupLegacy, legacy),
-        _group(context, l10n.terminalColorSchemeGroupDark, dark),
-        _group(context, l10n.terminalColorSchemeGroupLight, light),
+        _group(context, l10n.colorThemeGroupTerminalDark, dark),
+        _group(context, l10n.colorThemeGroupTerminalLight, light),
       ],
     );
   }
@@ -143,7 +136,7 @@ class TerminalSchemePicker extends StatelessWidget {
   Widget _group(
     BuildContext context,
     String title,
-    List<_SchemeOption> options, {
+    List<_ThemeOption> options, {
     ValueChanged<String>? onDelete,
   }) {
     return Column(
@@ -151,9 +144,9 @@ class TerminalSchemePicker extends StatelessWidget {
       children: [
         TpSectionHeader(title: title),
         for (final option in options)
-          _SchemeRow(
+          _ThemeRow(
             option: option,
-            selected: option.id == selectedMode,
+            selected: option.id == selectedId,
             onTap: () => onSelect(option.id),
             onDelete: onDelete == null ? null : () => onDelete(option.id),
           ),
@@ -162,19 +155,31 @@ class TerminalSchemePicker extends StatelessWidget {
   }
 }
 
-class _SchemeRow extends StatelessWidget {
-  const _SchemeRow({
+class _ThemeOption {
+  const _ThemeOption({
+    required this.id,
+    required this.name,
+    required this.swatches,
+    this.author = '',
+  });
+
+  final String id;
+  final String name;
+  final String author;
+  final List<Color> swatches;
+}
+
+class _ThemeRow extends StatelessWidget {
+  const _ThemeRow({
     required this.option,
     required this.selected,
     required this.onTap,
     this.onDelete,
   });
 
-  final _SchemeOption option;
+  final _ThemeOption option;
   final bool selected;
   final VoidCallback onTap;
-
-  /// Non-null only for imported rows.
   final VoidCallback? onDelete;
 
   @override
@@ -242,8 +247,7 @@ class _SwatchStrip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          for (final color in colors)
-            Container(width: 16, height: 20, color: color),
+          for (final color in colors) Container(width: 16, height: 20, color: color),
         ],
       ),
     );

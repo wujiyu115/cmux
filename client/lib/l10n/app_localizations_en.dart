@@ -77,11 +77,42 @@ class AppLocalizationsEn extends AppLocalizations {
       'Light, dark, or match the operating system appearance.';
 
   @override
-  String get themeColorPresetTitle => 'Theme colors';
+  String get lightThemeTitle => 'Light theme';
 
   @override
-  String get themeColorPresetDescription =>
-      'Primary and accent colors for buttons, toggles, and highlights.';
+  String get lightThemeDescription =>
+      'Color theme used in light mode — interface, terminal, and file browser all follow it.';
+
+  @override
+  String get darkThemeTitle => 'Dark theme';
+
+  @override
+  String get darkThemeDescription =>
+      'Color theme used in dark mode — interface, terminal, and file browser all follow it.';
+
+  @override
+  String get colorThemeDialogTitle => 'Color theme';
+
+  @override
+  String get colorThemeGroupUiLight => 'Interface themes · Light';
+
+  @override
+  String get colorThemeGroupUiDark => 'Interface themes · Dark';
+
+  @override
+  String get colorThemeGroupTerminalDark => 'Terminal themes · Dark';
+
+  @override
+  String get colorThemeGroupTerminalLight => 'Terminal themes · Light';
+
+  @override
+  String get colorThemeGroupImported => 'Imported';
+
+  @override
+  String get themeVariantLight => 'Light';
+
+  @override
+  String get themeVariantDark => 'Dark';
 
   @override
   String get uiFontSizeTitle => 'Interface font size';
@@ -1290,9 +1321,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get workspaceTerminalSettings => 'Settings';
-
-  @override
-  String get workspaceTerminalThemeAdaptive => 'Match app theme';
 
   @override
   String get workspaceTerminalThemeClassicDark => 'Classic dark';
@@ -2756,16 +2784,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get terminalColorSchemeDescription =>
-      'Pick a built-in palette for embedded terminals, or tweak individual colors.';
-
-  @override
-  String get terminalColorSchemeGroupDark => 'Dark';
-
-  @override
-  String get terminalColorSchemeGroupLight => 'Light';
-
-  @override
-  String get terminalColorSchemeGroupLegacy => 'Adaptive & legacy';
+      'Manage imported themes and tweak individual colors on top of the selected theme.';
 
   @override
   String terminalColorSchemeByAuthor(String author) {

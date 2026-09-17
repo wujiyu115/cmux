@@ -1,7 +1,11 @@
+import 'package:flutter/material.dart' show Brightness;
+
 import '../theme/app_theme.dart';
 import '../theme/app_typography_scale.dart';
+import '../theme/color_theme.dart';
 import '../theme/font_catalog.dart';
 import '../theme/terminal/terminal_color_slots.dart';
+import '../theme/terminal_derived_scheme.dart';
 
 enum LayoutPreset { workbench, chatFocus, inspector }
 
@@ -52,11 +56,11 @@ class LayoutPreferences {
     this.homeSidebarWidth = defaultHomeSidebarWidth,
     this.workspaceNavWidth = defaultWorkspaceNavWidth,
     this.themeMode = 'system',
-    this.themeColorPreset = kDefaultThemeColorPreset,
+    this.lightThemeId = kDefaultLightColorThemeId,
+    this.darkThemeId = kDefaultDarkColorThemeId,
     this.uiFontSize = kDefaultUiFontSize,
     this.uiZoomScale = kDefaultUiZoomScaleId,
     this.uiZoomCustomMultiplier = kDefaultUiZoomCustomMultiplier,
-    this.terminalThemeMode = 'adaptive',
     this.useCustomTerminalColors = false,
     this.terminalColorOverrides = const {},
     this.locale = '',
@@ -99,8 +103,17 @@ class LayoutPreferences {
         fallback: defaultWorkspaceNavWidth,
       ).clamp(minWorkspaceNavWidth, maxWorkspaceNavWidth),
       themeMode: json['themeMode'] as String? ?? 'system',
-      themeColorPreset: normalizeThemeColorPreset(
-        json['themeColorPreset'] as String?,
+      lightThemeId: _colorThemeIdFromJson(
+        json,
+        slot: 'lightThemeId',
+        fallback: kDefaultLightColorThemeId,
+        brightness: Brightness.light,
+      ),
+      darkThemeId: _colorThemeIdFromJson(
+        json,
+        slot: 'darkThemeId',
+        fallback: kDefaultDarkColorThemeId,
+        brightness: Brightness.dark,
       ),
       uiFontSize: _uiFontSizeFromJson(json),
       uiZoomScale: normalizeUiZoomScale(json['uiZoomScale'] as String?),
@@ -109,9 +122,6 @@ class LayoutPreferences {
           json['uiZoomCustomMultiplier'],
           fallback: kDefaultUiZoomCustomMultiplier,
         ),
-      ),
-      terminalThemeMode: _terminalThemeModeValue(
-        json['terminalThemeMode'] as String?,
       ),
       useCustomTerminalColors: json['useCustomTerminalColors'] as bool? ?? false,
       terminalColorOverrides: _terminalColorOverridesFromJson(
@@ -171,7 +181,12 @@ class LayoutPreferences {
   final double homeSidebarWidth;
   final double workspaceNavWidth;
   final String themeMode;
-  final String themeColorPreset;
+
+  /// Active colour theme per brightness slot (VS Code
+  /// `preferredLight/DarkColorTheme`). Each id names the whole-app look — see
+  /// `color_theme.dart`; [themeMode] picks the slot, or follows the platform.
+  final String lightThemeId;
+  final String darkThemeId;
   /// UI body text size in logical px; every UI role derives from it via
   /// [AppTypographyScale.fromPx]. See [clampUiFontSize] for the range.
   final double uiFontSize;
@@ -182,7 +197,6 @@ class LayoutPreferences {
   /// is NOT compensated here (see docs/font-size-model.md §5).
   final String uiZoomScale;
   final double uiZoomCustomMultiplier;
-  final String terminalThemeMode;
 
   /// When true, [terminalColorOverrides] are layered on top of the resolved
   /// terminal theme (see `terminal_theme_mapper.dart`).
@@ -222,11 +236,11 @@ class LayoutPreferences {
     double? homeSidebarWidth,
     double? workspaceNavWidth,
     String? themeMode,
-    String? themeColorPreset,
+    String? lightThemeId,
+    String? darkThemeId,
     double? uiFontSize,
     String? uiZoomScale,
     double? uiZoomCustomMultiplier,
-    String? terminalThemeMode,
     bool? useCustomTerminalColors,
     Map<String, int>? terminalColorOverrides,
     String? locale,
@@ -265,7 +279,11 @@ class LayoutPreferences {
         maxWorkspaceNavWidth,
       ),
       themeMode: themeMode ?? this.themeMode,
-      themeColorPreset: themeColorPreset ?? this.themeColorPreset,
+      lightThemeId: normalizeColorThemeId(
+        lightThemeId,
+        this.lightThemeId,
+      ),
+      darkThemeId: normalizeColorThemeId(darkThemeId, this.darkThemeId),
       uiFontSize: uiFontSize == null
           ? this.uiFontSize
           : clampUiFontSize(uiFontSize),
@@ -275,9 +293,6 @@ class LayoutPreferences {
       uiZoomCustomMultiplier: uiZoomCustomMultiplier == null
           ? this.uiZoomCustomMultiplier
           : clampUiZoomCustomMultiplier(uiZoomCustomMultiplier),
-      terminalThemeMode: terminalThemeMode == null
-          ? this.terminalThemeMode
-          : _terminalThemeModeValue(terminalThemeMode),
       useCustomTerminalColors:
           useCustomTerminalColors ?? this.useCustomTerminalColors,
       terminalColorOverrides: terminalColorOverrides == null
@@ -319,11 +334,11 @@ class LayoutPreferences {
       homeSidebarWidth: homeSidebarWidth,
       workspaceNavWidth: workspaceNavWidth,
       themeMode: themeMode,
-      themeColorPreset: themeColorPreset,
+      lightThemeId: lightThemeId,
+      darkThemeId: darkThemeId,
       uiFontSize: uiFontSize,
       uiZoomScale: uiZoomScale,
       uiZoomCustomMultiplier: uiZoomCustomMultiplier,
-      terminalThemeMode: terminalThemeMode,
       useCustomTerminalColors: useCustomTerminalColors,
       terminalColorOverrides: terminalColorOverrides,
       locale: locale,
@@ -334,6 +349,24 @@ class LayoutPreferences {
       workspaceTerminalHeight: workspaceTerminalHeight,
       markdownOpenMode: markdownOpenMode,
       editorPreviewTabs: editorPreviewTabs,
+    );
+  }
+
+  /// Resolves the active colour theme for the current platform brightness:
+  /// the theme id, the brightness it actually renders at (a terminal theme
+  /// carries its own — a dark theme in the light slot still renders dark),
+  /// and the terminal mode the theme mapper consumes.
+  ({String themeId, Brightness brightness, String terminalMode})
+  resolveColorTheme({required bool platformDark}) {
+    final themeId = switch (themeMode) {
+      'light' => lightThemeId,
+      'dark' => darkThemeId,
+      _ => platformDark ? darkThemeId : lightThemeId,
+    };
+    return (
+      themeId: themeId,
+      brightness: colorThemeBrightness(themeId),
+      terminalMode: terminalModeForColorTheme(themeId),
     );
   }
 
@@ -352,11 +385,11 @@ class LayoutPreferences {
       'homeSidebarWidth': homeSidebarWidth,
       'workspaceNavWidth': workspaceNavWidth,
       'themeMode': themeMode,
-      'themeColorPreset': themeColorPreset,
+      'lightThemeId': lightThemeId,
+      'darkThemeId': darkThemeId,
       'uiFontSize': uiFontSize,
       'uiZoomScale': uiZoomScale,
       'uiZoomCustomMultiplier': uiZoomCustomMultiplier,
-      'terminalThemeMode': terminalThemeMode,
       'useCustomTerminalColors': useCustomTerminalColors,
       'terminalColorOverrides': Map<String, int>.from(terminalColorOverrides),
       'locale': locale,
@@ -419,22 +452,42 @@ Map<String, int> _terminalColorOverridesFromJson(Object? raw) {
   return Map<String, int>.unmodifiable(out);
 }
 
-String _terminalThemeModeValue(String? raw) {
-  if (raw == null || raw.isEmpty) return 'adaptive';
-  if (raw == 'adaptive' || raw == 'classicDark' || raw == 'highContrast') {
-    return raw;
+/// Migrates the legacy `themeColorPreset` + `terminalThemeMode` pair into a
+/// per-brightness colour-theme id. The new [slot] key wins when present;
+/// otherwise the two old fields collapse into one theme T:
+///
+/// - a terminal theme (`terminalThemeMode != 'adaptive'`) → T is that id, and
+///   **both** slots take it (a terminal theme carries its own brightness, so
+///   the light/dark split is meaningless for it);
+/// - a fixed UI preset (`themeColorPreset != 'terminal'`) → the slot takes that
+///   preset at its own brightness (`ui:{preset}:{light|dark}`), matching the
+///   old behaviour where one preset rendered both light and dark;
+/// - the degenerate `terminal` + `adaptive` fallback → `ui:amber`.
+///
+/// See docs/theme-model.md §4.
+String _colorThemeIdFromJson(
+  Map<String, Object?> json, {
+  required String slot,
+  required String fallback,
+  required Brightness brightness,
+}) {
+  final raw = json[slot];
+  if (raw is String && raw.isNotEmpty) {
+    return normalizeColorThemeId(raw, fallback);
   }
-  // Built-in catalog ids (`dracula`) and user-imported theme ids are both
-  // slugs. User themes load *after* preferences at bootstrap, so checking the
-  // registry here would clobber a valid imported id; accept any slug and let
-  // `terminal_theme_mapper.dart` fall back to adaptive when it resolves to
-  // nothing.
-  return raw.length <= 64 && _themeSlugPattern.hasMatch(raw)
-      ? raw
-      : 'adaptive';
+  final legacyMode = json['terminalThemeMode'] as String?;
+  final legacyPreset = normalizeThemeColorPreset(
+    json['themeColorPreset'] as String?,
+  );
+  if (legacyMode != null && legacyMode.isNotEmpty && legacyMode != 'adaptive') {
+    // Terminal theme in both slots — its own brightness governs rendering.
+    return normalizeColorThemeId(legacyMode, fallback);
+  }
+  if (legacyPreset != kTerminalDerivedPresetId) {
+    return uiColorThemeId(legacyPreset, brightness);
+  }
+  return fallback;
 }
-
-final RegExp _themeSlugPattern = RegExp(r'^[a-z0-9]+(?:[-_][a-z0-9]+)*$');
 
 WorkspaceEntryMode _workspaceEntryModeFromJson(String? raw) {
   if (raw == 'lastWorkspace') {

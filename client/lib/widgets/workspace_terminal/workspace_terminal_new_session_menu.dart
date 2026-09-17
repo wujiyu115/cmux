@@ -12,6 +12,8 @@ import '../../pages/ssh_profiles/ssh_profile_form_dialog.dart';
 import '../../repositories/ssh_profile_repository.dart';
 import '../../services/terminal/workspace_shell_connector.dart';
 import '../../services/terminal/workspace_terminal_launch_catalog.dart';
+import '../../theme/terminal/user_terminal_theme_registry.dart';
+import '../settings/color_theme_picker.dart';
 typedef WorkspaceTerminalSessionSelected =
     void Function(WorkspaceTerminalSessionSpec spec);
 
@@ -145,60 +147,25 @@ Future<void> _handleLaunchMenuSelection({
   }
 }
 
-/// Centered theme dialog for workspace shell (also reachable from the + catalog).
+/// Quick colour-theme switch for the workspace shell (also reachable from the +
+/// catalog). Opens the same unified [ColorThemePicker] as settings — one theme
+/// drives the UI, terminal, and file browser together — and writes the chosen
+/// id into whichever brightness slot is currently active.
 Future<void> showWorkspaceTerminalSettingsSheet(BuildContext context) async {
-  final l10n = context.l10n;
-  await showDialog<void>(
-    context: context,
-    builder: (ctx) {
-      return BlocBuilder<LayoutCubit, LayoutState>(
-        builder: (context, state) {
-          // This quick dialog only exposes the three legacy presets; a catalog
-          // id (chosen in the full settings section) shows as "adaptive" here.
-          final rawMode = state.preferences.terminalThemeMode;
-          final mode =
-              (rawMode == 'classicDark' || rawMode == 'highContrast')
-              ? rawMode
-              : 'adaptive';
-          return TpDialog(
-            maxWidth: 420,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                TpDialogHeader(
-                  title: l10n.workspaceTerminalSettings,
-                  onClose: () => Navigator.of(ctx).pop(),
-                ),
-                SizedBox(height: context.tpSpacing.lg),
-                SegmentedButton<String>(
-                  segments: [
-                    ButtonSegment(
-                      value: 'adaptive',
-                      label: Text(l10n.workspaceTerminalThemeAdaptive),
-                    ),
-                    ButtonSegment(
-                      value: 'classicDark',
-                      label: Text(l10n.workspaceTerminalThemeClassicDark),
-                    ),
-                    ButtonSegment(
-                      value: 'highContrast',
-                      label: Text(l10n.workspaceTerminalThemeHighContrast),
-                    ),
-                  ],
-                  selected: {mode},
-                  onSelectionChanged: (selection) {
-                    final value = selection.firstOrNull;
-                    if (value == null) return;
-                    context.read<LayoutCubit>().setTerminalThemeMode(value);
-                    Navigator.pop(ctx);
-                  },
-                ),
-              ],
-            ),
-          );
-        },
-      );
-    },
+  final controller = context.read<LayoutCubit>();
+  final platformDark = MediaQuery.platformBrightnessOf(context) ==
+      Brightness.dark;
+  final prefs = controller.state.preferences;
+  final currentId = switch (prefs.themeMode) {
+    'light' => prefs.lightThemeId,
+    'dark' => prefs.darkThemeId,
+    _ => platformDark ? prefs.darkThemeId : prefs.lightThemeId,
+  };
+  final selected = await ColorThemePicker.show(
+    context,
+    selectedId: currentId,
+    importedThemes: UserTerminalThemeRegistry.instance.themes,
   );
+  if (selected == null || !context.mounted) return;
+  await controller.setActiveColorTheme(selected, platformDark: platformDark);
 }

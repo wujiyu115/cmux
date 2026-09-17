@@ -174,11 +174,20 @@ class _PairingMirrorPageState extends State<PairingMirrorPage>
     _engine.reconfigure(terminalConfigFromTheme(theme));
   }
 
-  TerminalTheme _resolveTerminalTheme() => teampilotTerminalTheme(
-    Theme.of(context).colorScheme,
-    isDark: Theme.of(context).brightness == Brightness.dark,
-    mode: context.watch<LayoutCubit>().state.preferences.terminalThemeMode,
-  );
+  TerminalTheme _resolveTerminalTheme() {
+    final platformDark = MediaQuery.platformBrightnessOf(context) ==
+        Brightness.dark;
+    return teampilotTerminalTheme(
+      Theme.of(context).colorScheme,
+      isDark: Theme.of(context).brightness == Brightness.dark,
+      mode: context
+          .watch<LayoutCubit>()
+          .state
+          .preferences
+          .resolveColorTheme(platformDark: platformDark)
+          .terminalMode,
+    );
+  }
 
   /// The soft keyboard does not arrive in one step — see [KeyboardInsetPtyHold]
   /// for why every frame of that animation must not become its own SIGWINCH.

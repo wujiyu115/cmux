@@ -72,10 +72,40 @@ class AppLocalizationsZh extends AppLocalizations {
   String get themeModeDescription => '浅色、深色，或与系统外观一致。';
 
   @override
-  String get themeColorPresetTitle => '主题色';
+  String get lightThemeTitle => '浅色主题';
 
   @override
-  String get themeColorPresetDescription => '用于按钮、开关与高亮的主色与强调色。';
+  String get lightThemeDescription => '浅色模式下使用的颜色主题——界面、终端与文件浏览全部跟随。';
+
+  @override
+  String get darkThemeTitle => '深色主题';
+
+  @override
+  String get darkThemeDescription => '深色模式下使用的颜色主题——界面、终端与文件浏览全部跟随。';
+
+  @override
+  String get colorThemeDialogTitle => '颜色主题';
+
+  @override
+  String get colorThemeGroupUiLight => '界面主题 · 浅色';
+
+  @override
+  String get colorThemeGroupUiDark => '界面主题 · 深色';
+
+  @override
+  String get colorThemeGroupTerminalDark => '终端主题 · 深色';
+
+  @override
+  String get colorThemeGroupTerminalLight => '终端主题 · 浅色';
+
+  @override
+  String get colorThemeGroupImported => '已导入';
+
+  @override
+  String get themeVariantLight => '浅色';
+
+  @override
+  String get themeVariantDark => '深色';
 
   @override
   String get uiFontSizeTitle => '界面字号';
@@ -1242,9 +1272,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get workspaceTerminalSettings => '设置';
-
-  @override
-  String get workspaceTerminalThemeAdaptive => '跟随主题';
 
   @override
   String get workspaceTerminalThemeClassicDark => '经典暗色';
@@ -2667,16 +2694,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get terminalColorSchemeTitle => '终端配色方案';
 
   @override
-  String get terminalColorSchemeDescription => '为内置终端选择内建配色，或单独调整某些颜色。';
-
-  @override
-  String get terminalColorSchemeGroupDark => '暗色';
-
-  @override
-  String get terminalColorSchemeGroupLight => '亮色';
-
-  @override
-  String get terminalColorSchemeGroupLegacy => '自适应与经典';
+  String get terminalColorSchemeDescription => '管理导入的主题，并在所选主题之上单独调整某些颜色。';
 
   @override
   String terminalColorSchemeByAuthor(String author) {

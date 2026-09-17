@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:teampilot/models/layout_preferences.dart';
 
@@ -190,37 +191,95 @@ void main() {
     expect(prefs.terminalColorOverrides['foreground'], 0xFF223344);
   });
 
-  test('terminalThemeMode widened to accept catalog ids', () {
+  test('colour theme slots default to the amber interface themes', () {
+    final prefs = LayoutPreferences.fromJson(const {});
+    expect(prefs.lightThemeId, 'ui:amber:light');
+    expect(prefs.darkThemeId, 'ui:amber:dark');
+  });
+
+  test('migrates a legacy fixed preset into both brightness slots', () {
+    final prefs = LayoutPreferences.fromJson(const {
+      'themeColorPreset': 'forest',
+    });
+    expect(prefs.lightThemeId, 'ui:forest:light');
+    expect(prefs.darkThemeId, 'ui:forest:dark');
+  });
+
+  test('migrates a legacy terminal mode into both slots verbatim', () {
+    final prefs = LayoutPreferences.fromJson(const {
+      'terminalThemeMode': 'dracula',
+    });
+    // A terminal theme carries its own brightness, so both slots take it.
+    expect(prefs.lightThemeId, 'dracula');
+    expect(prefs.darkThemeId, 'dracula');
+  });
+
+  test('legacy terminal mode wins over a legacy preset', () {
+    final prefs = LayoutPreferences.fromJson(const {
+      'themeColorPreset': 'ocean',
+      'terminalThemeMode': 'classicDark',
+    });
+    expect(prefs.lightThemeId, 'classicDark');
+    expect(prefs.darkThemeId, 'classicDark');
+  });
+
+  test('new slot keys win over legacy keys and toJson drops the legacy ones', () {
+    final prefs = LayoutPreferences.fromJson(const {
+      'lightThemeId': 'nord',
+      'darkThemeId': 'dracula',
+      'themeColorPreset': 'ocean',
+      'terminalThemeMode': 'classicDark',
+    });
+    expect(prefs.lightThemeId, 'nord');
+    expect(prefs.darkThemeId, 'dracula');
+
+    final json = prefs.toJson();
+    expect(json['lightThemeId'], 'nord');
+    expect(json['darkThemeId'], 'dracula');
+    expect(json.containsKey('themeColorPreset'), isFalse);
+    expect(json.containsKey('terminalThemeMode'), isFalse);
+  });
+
+  test('structurally broken theme ids fall back to the slot default', () {
+    // A terminal id must be a stable slug; junk resets to the amber default.
     expect(
-      LayoutPreferences.fromJson(const {
-        'terminalThemeMode': 'dracula',
-      }).terminalThemeMode,
-      'dracula',
+      LayoutPreferences.fromJson(const {'darkThemeId': 'Not A Slug!'}).darkThemeId,
+      'ui:amber:dark',
     );
-    // Unknown *slugs* survive: user-imported theme ids load after preferences
-    // at bootstrap, so rejecting them here would clobber a valid import.
-    // `terminal_theme_mapper.dart` falls back when the id resolves to nothing.
+    // A `ui:` id missing its brightness suffix is malformed → fallback.
     expect(
-      LayoutPreferences.fromJson(const {
-        'terminalThemeMode': 'totally-bogus',
-      }).terminalThemeMode,
+      LayoutPreferences.fromJson(const {'lightThemeId': 'ui:amber'}).lightThemeId,
+      'ui:amber:light',
+    );
+    // An unknown but well-formed slug survives (imported ids load later).
+    expect(
+      LayoutPreferences.fromJson(const {'lightThemeId': 'totally-bogus'}).lightThemeId,
       'totally-bogus',
     );
-    // Non-slug junk still falls back.
-    for (final junk in const ['Totally Bogus!', '-dash', '', 'a/b']) {
-      expect(
-        LayoutPreferences.fromJson({
-          'terminalThemeMode': junk,
-        }).terminalThemeMode,
-        'adaptive',
-        reason: junk,
-      );
-    }
+  });
+
+  test('resolveColorTheme picks the slot by mode and derives the terminal mode', () {
+    const prefs = LayoutPreferences(
+      lightThemeId: 'ui:amber:light',
+      darkThemeId: 'dracula',
+    );
+
+    final light = prefs.resolveColorTheme(platformDark: false);
+    expect(light.themeId, 'ui:amber:light');
+    expect(light.brightness, Brightness.light);
+    expect(light.terminalMode, 'adaptive'); // interface theme → adaptive
+
+    // themeMode 'system' follows the platform.
+    final dark = prefs.copyWith(themeMode: 'system').resolveColorTheme(
+      platformDark: true,
+    );
+    expect(dark.themeId, 'dracula');
+    expect(dark.terminalMode, 'dracula'); // terminal theme → itself
+
+    // themeMode pins a slot regardless of platform.
     expect(
-      LayoutPreferences.fromJson(const {
-        'terminalThemeMode': 'classicDark',
-      }).terminalThemeMode,
-      'classicDark',
+      prefs.copyWith(themeMode: 'light').resolveColorTheme(platformDark: true).themeId,
+      'ui:amber:light',
     );
   });
 

@@ -16,18 +16,15 @@ TerminalTheme resolveTerminalThemeFromLayout({
   required LayoutPreferences preferences,
   required Brightness platformBrightness,
 }) {
-  final isDark = switch (preferences.themeMode) {
-    'light' => false,
-    'dark' => true,
-    _ => platformBrightness == Brightness.dark,
-  };
-  final colorScheme = isDark
-      ? buildDarkTheme(preferences.themeColorPreset).colorScheme
-      : buildLightTheme(preferences.themeColorPreset).colorScheme;
+  final resolved = preferences.resolveColorTheme(
+    platformDark: platformBrightness == Brightness.dark,
+  );
+  final isDark = resolved.brightness == Brightness.dark;
+  final colorScheme = resolveThemeDataFor(resolved.themeId).colorScheme;
   return teampilotTerminalTheme(
     colorScheme,
     isDark: isDark,
-    mode: preferences.terminalThemeMode,
+    mode: resolved.terminalMode,
     chrome: WorkspacePageChrome.workspace,
     useCustomColors: preferences.useCustomTerminalColors,
     colorOverrides: preferences.terminalColorOverrides,
