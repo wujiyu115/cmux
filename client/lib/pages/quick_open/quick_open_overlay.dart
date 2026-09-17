@@ -18,6 +18,7 @@ import '../../services/quick_open/quick_open_mru_repository.dart';
 import '../../services/quick_open/quick_open_prewarm.dart';
 import '../../services/quick_open/top_scored.dart';
 import '../../services/storage/app_storage.dart';
+import '../../cubits/editor_cubit.dart';
 import '../../services/workbench/workbench_editor_opener.dart';
 import '../../utils/commands/fuzzy_match.dart';
 import '../../utils/session/workspace_sessions.dart';
@@ -84,14 +85,30 @@ Future<void> showQuickOpenDialog(
       await openWorkspaceSessionTab(context, workspace, result.session);
       return;
     }
-    final path = (result as QuickOpenFileResult).path;
+    final fileResult = result as QuickOpenFileResult;
+    final path = fileResult.path;
     // Fire-and-forget: the MRU rotation is a multi-spawn write on WSL/SSH and
     // must not delay the editor open. A lost update between overlapping
     // touches only reorders the recents list.
     unawaited(mru.touch(workspace.firstFolderPath, path));
     if (!context.mounted) return;
-    unawaited(
-      opener.openFile(workspace.workspaceId, path, fs: fs, preview: true),
+    await opener.openFile(workspace.workspaceId, path, fs: fs, preview: true);
+    final line = fileResult.line;
+    if (line == null || line <= 0) return;
+    // `path:line` query — select and center the line after the open settles.
+    if (!context.mounted) return;
+    final editor = context.read<EditorCubit>();
+    for (var attempt = 0; attempt < 75 && context.mounted; attempt++) {
+      if (editor.controllerFor(workspace.workspaceId, path) != null) break;
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+    }
+    if (!context.mounted) return;
+    editor.selectLines(
+      workspace.workspaceId,
+      path,
+      startLine: line,
+      endLine: line,
+      centerIfInvisible: true,
     );
   } finally {
     _quickOpenDialogOpen = false;
@@ -105,11 +122,25 @@ sealed class QuickOpenResult {
   const QuickOpenResult();
 }
 
-/// A file to open in the editor.
+/// A file to open in the editor; [line] (1-based) when the query carried a
+/// `path:line` suffix (VS Code-style jump-on-open).
 class QuickOpenFileResult extends QuickOpenResult {
-  const QuickOpenFileResult(this.path);
+  const QuickOpenFileResult(this.path, {this.line});
 
   final String path;
+  final int? line;
+}
+
+/// Splits a VS Code-style `path:line` query into the fuzzy query and the
+/// 1-based line; no trailing number → line null.
+({String query, int? line}) splitQuickOpenLineSuffix(String input) {
+  final value = input.trim();
+  final match = RegExp(r'^(.*):\s*(\d+)$').firstMatch(value);
+  if (match != null && match.group(1)!.isNotEmpty) {
+    final line = int.tryParse(match.group(2)!);
+    if (line != null) return (query: match.group(1)!.trim(), line: line);
+  }
+  return (query: value, line: null);
 }
 
 /// A conversation session to open as a workbench tab.
@@ -211,6 +242,10 @@ class _QuickOpenOverlayState extends State<QuickOpenOverlay> {
 
   String _query = '';
   int _selectedIndex = 0;
+
+  /// 1-based line number parsed from a trailing `:123` in the query —
+  /// stripped before matching so it never distorts the fuzzy filter.
+  int? _gotoLine;
   bool _indexLoading = true;
   QuickOpenIndex _index = const QuickOpenIndex.empty();
   List<QuickOpenFileEntry> _recent = const [];
@@ -400,7 +435,11 @@ class _QuickOpenOverlayState extends State<QuickOpenOverlay> {
   }
 
   void _onQueryChanged(String value) {
-    setState(() => _query = value);
+    // VS Code-style `path:line`: split a trailing line number off the query
+    // before it reaches the fuzzy matcher.
+    final (:query, :line) = splitQuickOpenLineSuffix(value);
+    _gotoLine = line;
+    setState(() => _query = query);
     _debounceTimer?.cancel();
     _debounceTimer = Timer(_debounce, _applyRecompute);
   }
@@ -449,7 +488,7 @@ class _QuickOpenOverlayState extends State<QuickOpenOverlay> {
     final row = _rows[index];
     final QuickOpenResult result = row.isSession
         ? QuickOpenSessionResult(row.session!)
-        : QuickOpenFileResult(row.entry!.path);
+        : QuickOpenFileResult(row.entry!.path, line: _gotoLine);
     Navigator.of(context).pop(result);
   }
 

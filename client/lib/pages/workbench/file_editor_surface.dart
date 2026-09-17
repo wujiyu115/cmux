@@ -7,11 +7,14 @@ import 'package:re_editor/re_editor.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 import '../../cubits/editor_cubit.dart';
+import '../../cubits/layout_cubit.dart';
 import '../../cubits/workbench/workbench_cubit.dart';
 import '../../cubits/workbench/workbench_tab.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../services/commands/command_bus.dart';
 import '../../services/commands/editor_goto_line_command_registrar.dart';
+import '../../services/commands/editor_goto_symbol_command_registrar.dart';
+import '../../services/editor/editor_symbols.dart';
 import '../../services/editor/file_editor_theme.dart';
 import '../../services/editor/file_editor_toolbar.dart';
 import '../../services/editor/markdown_view_mode_store.dart';
@@ -26,6 +29,7 @@ import '../../widgets/workbench/file_diff_surface_toggle.dart';
 import '../../widgets/workbench/markdown_view_mode_toggle.dart';
 import 'file_editor_image_preview.dart';
 import 'editor_goto_line_dialog.dart';
+import 'editor_symbol_sheet.dart';
 import 'markdown_preview_pane.dart';
 
 /// Center-pane file editor for one path (no inner tab bar).
@@ -83,6 +87,25 @@ class _FileEditorToolbar extends StatelessWidget {
   final String workspaceId;
   final String path;
 
+  /// [LayoutCubit] when in scope (app shell); null in lightweight harnesses.
+  LayoutCubit? _maybeLayoutCubit(BuildContext context) {
+    try {
+      return context.read<LayoutCubit>();
+    } on Object {
+      return null;
+    }
+  }
+
+  /// Toolbar path: resolve the open file's controller, then show the picker.
+  void _openGotoSymbolForToolbar(BuildContext context) {
+    final controller =
+        context.read<EditorCubit>().controllerFor(workspaceId, path);
+    if (controller == null) return;
+    unawaited(
+      showEditorSymbolSheet(context, controller: controller, path: path),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final dirty = context.select<EditorCubit, bool>(
@@ -106,6 +129,14 @@ class _FileEditorToolbar extends StatelessWidget {
     final canToggleDiff = gitCubitForAbsolutePath(context, path) != null;
     final isMarkdown = isMarkdownEditorPath(path);
     final opener = context.read<WorkbenchEditorOpener>();
+    // [LayoutCubit] lives above the app shell; lightweight test harnesses
+    // mount the editor without it and default to no wrap.
+    final LayoutCubit? layout = _maybeLayoutCubit(context);
+    final wordWrap = layout == null
+        ? false
+        : context.select<LayoutCubit, bool>(
+            (c) => c.state.preferences.editorWordWrap,
+          );
     return SizedBox(
       height: 36,
       child: Padding(
@@ -141,6 +172,22 @@ class _FileEditorToolbar extends StatelessWidget {
                   ],
                 ),
               ),
+            ),
+            IconButton(
+              tooltip: context.l10n.editorWordWrap,
+              icon: Icon(
+                Icons.wrap_text,
+                size: 18,
+                color: wordWrap ? cs.primary : cs.onSurfaceVariant,
+              ),
+              onPressed: layout == null
+                  ? null
+                  : () => layout.setEditorWordWrap(!wordWrap),
+            ),
+            IconButton(
+              tooltip: context.l10n.editorGotoSymbolTitle,
+              icon: const Icon(Icons.format_list_numbered, size: 18),
+              onPressed: () => _openGotoSymbolForToolbar(context),
             ),
             if (!readOnly) ...[
               IconButton(
@@ -285,6 +332,18 @@ class _CodeEditorPane extends StatefulWidget {
   final CodeLineEditingController controller;
   final bool readOnly;
 
+  /// Soft-wrap preference via [LayoutCubit]; lightweight harnesses without
+  /// the cubit fall back to off.
+  static bool _selectWordWrap(BuildContext context) {
+    try {
+      return context.select<LayoutCubit, bool>(
+        (c) => c.state.preferences.editorWordWrap,
+      );
+    } on Object {
+      return false;
+    }
+  }
+
   @override
   State<_CodeEditorPane> createState() => _CodeEditorPaneState();
 }
@@ -349,11 +408,14 @@ class _CodeEditorPaneState extends State<_CodeEditorPane> {
     }
   }
 
-  /// Go-to-line (Mod+G) claim, held while this pane's subtree has focus so the
-  /// shortcut always targets the focused editor — kept-alive workspace tabs
-  /// can leave several panes mounted offstage.
+  /// Go-to-line (Mod+G) and go-to-symbol (Mod+Shift+O) claims, held while
+  /// this pane's subtree has focus so the shortcuts always target the
+  /// focused editor — kept-alive workspace tabs can leave several panes
+  /// mounted offstage.
   VoidCallback? _gotoLineDisposer;
   bool _gotoLineOpen = false;
+  VoidCallback? _gotoSymbolDisposer;
+  bool _gotoSymbolOpen = false;
 
   void _setMenuOpen(bool value) {
     if (mounted) _menuOpen.value = value;
@@ -366,10 +428,30 @@ class _CodeEditorPaneState extends State<_CodeEditorPane> {
         context.read<CommandBus>(),
         _openGotoLine,
       );
+      _gotoSymbolDisposer ??= claimEditorGotoSymbolCommand(
+        context.read<CommandBus>(),
+        _openGotoSymbol,
+      );
     } else {
       _gotoLineDisposer?.call();
       _gotoLineDisposer = null;
+      _gotoSymbolDisposer?.call();
+      _gotoSymbolDisposer = null;
     }
+  }
+
+  void _openGotoSymbol() {
+    if (_gotoSymbolOpen || !mounted) return;
+    _gotoSymbolOpen = true;
+    unawaited(
+      showEditorSymbolSheet(
+        context,
+        controller: widget.controller,
+        path: widget.path,
+      ).whenComplete(() {
+        if (mounted) _gotoSymbolOpen = false;
+      }),
+    );
   }
 
   void _openGotoLine() {
@@ -388,6 +470,10 @@ class _CodeEditorPaneState extends State<_CodeEditorPane> {
   @override
   void dispose() {
     _gotoLineDisposer?.call();
+    _gotoSymbolDisposer?.call();
+    // focusChange auto-save: the pane unmounting means its file tab lost
+    // the active slot.
+    _editor.maybeSaveOnBlur(widget.workspaceId, widget.path);
     _verticalScroller.removeListener(_persistScroll);
     _horizontalScroller.removeListener(_persistScroll);
     // CodeScrollController.dispose only unbinds the editor key; the injected
@@ -423,11 +509,12 @@ class _CodeEditorPaneState extends State<_CodeEditorPane> {
         widget.path,
         tokenProvider: editor.tokenProviderFor(widget.workspaceId, widget.path),
       ),
-      wordWrap: false,
+      wordWrap: _CodeEditorPane._selectWordWrap(context),
       indicatorBuilder:
           (context, editingController, chunkController, notifier) {
             return _LineNumberWithViewportBinder(
               controller: editingController,
+              chunkController: chunkController,
               notifier: notifier,
               session: editor.documentSessionFor(
                 widget.workspaceId,
@@ -446,17 +533,26 @@ class _CodeEditorPaneState extends State<_CodeEditorPane> {
   }
 }
 
-/// Renders the gutter line numbers and, when the file has a tree-sitter
-/// [DocumentSession], keeps its viewport token requests in sync with the
-/// visible line band published by re-editor's indicator notifier.
+/// Renders the gutter (fold indicators + line numbers) and, when the file
+/// has a tree-sitter [DocumentSession], keeps its viewport token requests
+/// in sync with the visible line band published by re-editor's indicator
+/// notifier.
+///
+/// Fold indicators come free: [CodeEditor] always runs the default
+/// brace-based [CodeChunkController] analysis — rendering
+/// [DefaultCodeChunkIndicator] is all it takes to expose collapse/expand.
+/// (Brace languages only; indentation languages are not covered by the
+/// re-editor default analyzer.)
 class _LineNumberWithViewportBinder extends StatefulWidget {
   const _LineNumberWithViewportBinder({
     required this.controller,
+    required this.chunkController,
     required this.notifier,
     required this.session,
   });
 
   final CodeLineEditingController controller;
+  final CodeChunkController chunkController;
   final CodeIndicatorValueNotifier notifier;
   final DocumentSession? session;
 
@@ -503,9 +599,19 @@ class _LineNumberWithViewportBinderState
 
   @override
   Widget build(BuildContext context) {
-    return DefaultCodeLineNumber(
-      controller: widget.controller,
-      notifier: widget.notifier,
+    return Row(
+      children: [
+        DefaultCodeChunkIndicator(
+          width: 14,
+          controller: widget.chunkController,
+          notifier: widget.notifier,
+        ),
+        const SizedBox(width: 2),
+        DefaultCodeLineNumber(
+          controller: widget.controller,
+          notifier: widget.notifier,
+        ),
+      ],
     );
   }
 }

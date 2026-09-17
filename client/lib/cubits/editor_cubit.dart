@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert' show utf8;
 import 'dart:math' as math;
 import 'dart:typed_data';
@@ -8,6 +9,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:path/path.dart' as p;
 import 'package:re_editor/re_editor.dart';
 
+import '../models/layout_preferences.dart' show EditorAutoSaveMode;
 import '../services/editor/code_line_selection_for_lines.dart';
 import '../services/editor/editor_messages.dart';
 import '../services/editor/file_editor_theme.dart';
@@ -236,17 +238,88 @@ class _OpenFileHandle {
 typedef DiffReload =
     Future<String?> Function(bool ignoreWhitespace, bool fullContext);
 
+/// One open file's disk watch: filters [FsTreeWatch] events for the file,
+/// debounces bursts (editors and writers often fire several events), and
+/// reloads the buffer when clean. Events are coarse hints — the reload
+/// re-reads the whole file, so a stale or spurious event is harmless.
+class _DiskWatch {
+  _DiskWatch({
+    required FsTreeWatch watch,
+    required this.workspaceId,
+    required this.path,
+    required this.pathContext,
+    required this.shouldReload,
+    required this.onReload,
+  }) : _watch = watch;
+
+  static const _debounce = Duration(milliseconds: 400);
+
+  final FsTreeWatch _watch;
+  final String workspaceId;
+  final String path;
+  final p.Context pathContext;
+  final bool Function() shouldReload;
+  final VoidCallback onReload;
+
+  StreamSubscription<FsChangeEvent>? _subscription;
+  Timer? _timer;
+  bool _disposed = false;
+
+  void start() {
+    _subscription = _watch.events.listen(
+      _onEvent,
+      onError: (Object _) {},
+      cancelOnError: false,
+    );
+  }
+
+  void _onEvent(FsChangeEvent event) {
+    if (_disposed) return;
+    if (event.type != FsChangeType.modified &&
+        event.type != FsChangeType.unknown) {
+      return;
+    }
+    if (!pathContext.equals(pathContext.normalize(event.path), path)) return;
+    _timer?.cancel();
+    _timer = Timer(_debounce, () {
+      if (_disposed || !shouldReload()) return; // Dirty buffer wins.
+      onReload();
+    });
+  }
+
+  Future<void> dispose() {
+    _disposed = true;
+    _timer?.cancel();
+    _timer = null;
+    final sub = _subscription;
+    _subscription = null;
+    sub?.cancel();
+    return _watch.close();
+  }
+}
+
 class EditorCubit extends Cubit<EditorState> {
   EditorCubit({
     Filesystem? fs,
     TsWorkerPool? workerPool,
     LanguageRegistry? languageRegistry,
+    EditorAutoSaveMode Function()? autoSaveMode,
   })  : _fs = fs ?? AppStorage.fs,
         _injectedPool = workerPool,
         _injectedRegistry = languageRegistry,
+        _autoSaveMode = autoSaveMode,
         super(const EditorState());
 
   final Filesystem _fs;
+
+  /// Current auto-save preference (injected by the shell from
+  /// [LayoutCubit]; null keeps auto-save off — tests and harnesses).
+  final EditorAutoSaveMode Function()? _autoSaveMode;
+
+  static const _autoSaveDelay = Duration(milliseconds: 1000);
+
+  EditorAutoSaveMode get _effectiveAutoSaveMode =>
+      _autoSaveMode?.call() ?? EditorAutoSaveMode.off;
 
   /// Injected in tests; falls back to the shared [EditorPlatform] pool/registry
   /// in the app. Resolved lazily so tests that never open a highlighted file do
@@ -259,6 +332,14 @@ class EditorCubit extends Cubit<EditorState> {
   final Map<String, Uint8List> _imageBytes = {};
   final Map<String, DiffReload> _diffReloadByKey = {};
 
+  /// Per-open-file disk watches (local plane only — only [LocalFilesystem]
+  /// implements [FsWatcher]). A modified event reloads the buffer when it is
+  /// not dirty; dirty buffers are left untouched.
+  final Map<String, _DiskWatch> _diskWatches = {};
+
+  /// Pending afterDelay auto-save timers, one per dirty handle.
+  final Map<String, Timer> _autoSaveTimers = {};
+
   TsWorkerPool get _pool => _injectedPool ?? EditorPlatform.workerPool;
   LanguageRegistry get _registry => _injectedRegistry ?? EditorPlatform.registry;
 
@@ -267,15 +348,15 @@ class EditorCubit extends Cubit<EditorState> {
   CodeLineEditingController? controllerFor(String workspaceId, String path) =>
       _handles[_handleKey(workspaceId, path)]?.controller;
 
-  /// Selects an inclusive 1-based line range in an open file.
-  ///
-  /// v1 sets [CodeLineEditingController.selection] only; scroll-into-view is not
-  /// guaranteed.
+  /// Selects an inclusive 1-based line range in an open file. With
+  /// [centerIfInvisible] the editor also scrolls the selection into view
+  /// (no-op when already visible) — used by search-result jumps.
   void selectLines(
     String workspaceId,
     String path, {
     required int startLine,
     int? endLine,
+    bool centerIfInvisible = false,
   }) {
     final controller = controllerFor(workspaceId, path);
     if (controller == null) return;
@@ -289,6 +370,9 @@ class EditorCubit extends Cubit<EditorState> {
       startLine: startLine,
       endLine: endLine,
     );
+    if (centerIfInvisible) {
+      controller.makeCursorCenterIfInvisible();
+    }
   }
 
   GlobalKey? editorKeyFor(String workspaceId, String path) =>
@@ -565,6 +649,7 @@ class EditorCubit extends Cubit<EditorState> {
       }
 
       handle.attachListener();
+      _startDiskWatch(workspaceId, normalized, filesystem);
 
       final current = state.bucket(workspaceId);
       final paths = [...current.openFilePaths, normalized];
@@ -667,6 +752,27 @@ class EditorCubit extends Cubit<EditorState> {
     if (bucket.dirtyPaths.contains(path)) return;
     final dirty = Set<String>.from(bucket.dirtyPaths)..add(path);
     emit(state.withBucket(workspaceId, bucket.copyWith(dirtyPaths: dirty)));
+    _scheduleAutoSave(workspaceId, path);
+  }
+
+  void _scheduleAutoSave(String workspaceId, String path) {
+    if (_effectiveAutoSaveMode != EditorAutoSaveMode.afterDelay) return;
+    final key = _handleKey(workspaceId, path);
+    _autoSaveTimers[key]?.cancel();
+    _autoSaveTimers[key] = Timer(_autoSaveDelay, () {
+      _autoSaveTimers.remove(key);
+      if (isClosed) return;
+      if (!state.bucket(workspaceId).dirtyPaths.contains(path)) return;
+      unawaited(saveFile(workspaceId, path));
+    });
+  }
+
+  /// Save-on-blur hook for the focusChange mode: the editor pane calls it
+  /// when its file tab is deactivated (the pane unmounts).
+  void maybeSaveOnBlur(String workspaceId, String path) {
+    if (_effectiveAutoSaveMode != EditorAutoSaveMode.focusChange) return;
+    if (!state.bucket(workspaceId).dirtyPaths.contains(path)) return;
+    unawaited(saveFile(workspaceId, path));
   }
 
   /// Returns `false` when the tab is dirty and [force] is false.
@@ -771,7 +877,43 @@ class EditorCubit extends Cubit<EditorState> {
     final key = _handleKey(workspaceId, path);
     _fsByHandle.remove(key);
     _imageBytes.remove(key);
+    _diskWatches.remove(key)?.dispose();
+    _autoSaveTimers.remove(key)?.cancel();
     _handles.remove(key)?.dispose();
+  }
+
+  /// Starts a disk watch for an open text file so external changes (e.g. an
+  /// agent CLI editing the file in a terminal) reload into the buffer.
+  /// Watches the parent directory (the only watch primitive is recursive
+  /// [FsWatcher.watchTree]) and filters events to the file itself. No-op on
+  /// planes without watch support (WSL/SFTP) or when watching is unsupported
+  /// by the OS — manual reload stays available there.
+  void _startDiskWatch(String workspaceId, String path, Filesystem fs) {
+    if (fs is! FsWatcher) return;
+    final watcher = fs as FsWatcher;
+    if (isImagePreviewPath(path)) return; // Image tabs reload on focus, v1.
+    final key = _handleKey(workspaceId, path);
+    final dir = fs.pathContext.dirname(path);
+    if (dir.isEmpty) return;
+    final FsTreeWatch watch;
+    try {
+      watch = watcher.watchTree(dir);
+    } on Object {
+      return;
+    }
+    final diskWatch = _DiskWatch(
+      watch: watch,
+      workspaceId: workspaceId,
+      path: path,
+      pathContext: fs.pathContext,
+      shouldReload: () =>
+          _handles[key] != null &&
+          !state.bucket(workspaceId).dirtyPaths.contains(path),
+      onReload: () => unawaited(reloadFile(workspaceId, path)),
+    );
+    _diskWatches[key]?.dispose();
+    _diskWatches[key] = diskWatch;
+    diskWatch.start();
   }
 
   @override
@@ -779,6 +921,14 @@ class EditorCubit extends Cubit<EditorState> {
     for (final key in _handles.keys.toList()) {
       _handles.remove(key)?.dispose();
     }
+    for (final watch in _diskWatches.values) {
+      watch.dispose();
+    }
+    _diskWatches.clear();
+    for (final timer in _autoSaveTimers.values) {
+      timer.cancel();
+    }
+    _autoSaveTimers.clear();
     _fsByHandle.clear();
     _imageBytes.clear();
     _diffReloadByKey.clear();
