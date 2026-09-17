@@ -179,11 +179,28 @@ dart run tool/sync_bundled_google_fonts.dart
 fastforge package --platform windows --targets exe
 ```
 
-Runnable binary without an installer:
+Runnable binary without an installer — use [`build_windows.bat`](../build_windows.bat)
+from the repo root. It runs `flutter pub get`, syncs the gitignored bundled fonts
+when missing, regenerates the gitignored native splash sources (`native_splash_screen.cmake`
+hard-fails without them), then builds:
+
+```bat
+build_windows.bat                 :: release
+build_windows.bat --debug --run   :: debug, then launch
+build_windows.bat --zip --msix    :: also fastforge-package (see above for --exe)
+build_windows.bat --help
+```
+
+Output: `client/build/windows/x64/runner/<Mode>/TeamPilot.exe`.
+
+Equivalent manual steps:
 
 ```powershell
+cd client
+flutter pub get
+dart run tool/sync_bundled_google_fonts.dart
+dart run native_splash_screen_cli gen
 flutter build windows --release
-# Output: client/build/windows/x64/runner/Release/TeamPilot.exe
 ```
 
 OS-specific tooling matches the CI workflows. See [`client/linux/packaging/README.md`](../client/linux/packaging/README.md) for Linux details.
