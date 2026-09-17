@@ -22,6 +22,7 @@ class ColorThemePicker extends StatelessWidget {
   const ColorThemePicker({
     required this.selectedId,
     required this.onSelect,
+    required this.brightness,
     this.importedThemes = const [],
     this.onDeleteImported,
     super.key,
@@ -29,6 +30,11 @@ class ColorThemePicker extends StatelessWidget {
 
   final String selectedId;
   final ValueChanged<String> onSelect;
+
+  /// The brightness slot being edited. Only themes of this brightness are
+  /// offered — a light slot must not be able to hold a dark theme (and vice
+  /// versa), since each slot's theme renders at its own brightness.
+  final Brightness brightness;
   final List<CmuxTerminalTheme> importedThemes;
   final ValueChanged<CmuxTerminalTheme>? onDeleteImported;
 
@@ -41,10 +47,12 @@ class ColorThemePicker extends StatelessWidget {
     t.ansi[4],
   ];
 
-  /// Opens the picker as a dialog and returns the chosen id, or null on cancel.
+  /// Opens the picker as a dialog for the given brightness [slot] and returns
+  /// the chosen id, or null on cancel.
   static Future<String?> show(
     BuildContext context, {
     required String selectedId,
+    required Brightness brightness,
     List<CmuxTerminalTheme> importedThemes = const [],
     ValueChanged<CmuxTerminalTheme>? onDeleteImported,
   }) {
@@ -61,6 +69,7 @@ class ColorThemePicker extends StatelessWidget {
               TpDialogHeader(title: dialogContext.l10n.colorThemeDialogTitle),
               ColorThemePicker(
                 selectedId: selectedId,
+                brightness: brightness,
                 importedThemes: importedThemes,
                 onDeleteImported: onDeleteImported,
                 onSelect: (id) => Navigator.of(dialogContext).pop(id),
@@ -76,8 +85,10 @@ class ColorThemePicker extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
 
-    // Interface themes: each fixed palette rendered at both brightnesses.
-    List<_ThemeOption> uiOptions(Brightness brightness) => [
+    final isLight = brightness == Brightness.light;
+
+    // Interface themes: the fixed palettes at this slot's brightness only.
+    final uiOptions = <_ThemeOption>[
       for (final preset in kThemeColorPresetIds)
         if (preset != kTerminalDerivedPresetId)
           _ThemeOption(
@@ -90,36 +101,42 @@ class ColorThemePicker extends StatelessWidget {
           ),
     ];
 
-    final dark = <_ThemeOption>[];
-    final light = <_ThemeOption>[];
-    for (final theme in kCmuxTerminalThemes) {
-      final option = _ThemeOption(
-        id: theme.id,
-        name: theme.name,
-        author: theme.author,
-        swatches: _catalogSwatches(theme),
-      );
-      (theme.isDark ? dark : light).add(option);
-    }
+    // Terminal themes of this brightness only.
+    final terminal = <_ThemeOption>[
+      for (final theme in kCmuxTerminalThemes)
+        if (theme.isDark != isLight)
+          _ThemeOption(
+            id: theme.id,
+            name: theme.name,
+            author: theme.author,
+            swatches: _catalogSwatches(theme),
+          ),
+    ];
+
+    final imported = <_ThemeOption>[
+      for (final theme in importedThemes)
+        if (theme.isLightByLuminance == isLight)
+          _ThemeOption(
+            id: theme.id,
+            name: theme.name,
+            author: theme.author,
+            swatches: _catalogSwatches(theme),
+          ),
+    ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _group(context, l10n.colorThemeGroupUiLight, uiOptions(Brightness.light)),
-        _group(context, l10n.colorThemeGroupUiDark, uiOptions(Brightness.dark)),
-        if (importedThemes.isNotEmpty)
+        _group(
+          context,
+          isLight ? l10n.colorThemeGroupUiLight : l10n.colorThemeGroupUiDark,
+          uiOptions,
+        ),
+        if (imported.isNotEmpty)
           _group(
             context,
             l10n.colorThemeGroupImported,
-            [
-              for (final theme in importedThemes)
-                _ThemeOption(
-                  id: theme.id,
-                  name: theme.name,
-                  author: theme.author,
-                  swatches: _catalogSwatches(theme),
-                ),
-            ],
+            imported,
             onDelete: onDeleteImported == null
                 ? null
                 : (id) {
@@ -127,8 +144,13 @@ class ColorThemePicker extends StatelessWidget {
                     onDeleteImported!(theme);
                   },
           ),
-        _group(context, l10n.colorThemeGroupTerminalDark, dark),
-        _group(context, l10n.colorThemeGroupTerminalLight, light),
+        _group(
+          context,
+          isLight
+              ? l10n.colorThemeGroupTerminalLight
+              : l10n.colorThemeGroupTerminalDark,
+          terminal,
+        ),
       ],
     );
   }

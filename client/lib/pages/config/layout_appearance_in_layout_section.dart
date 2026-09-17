@@ -119,6 +119,7 @@ class LayoutAppearanceInLayoutSection extends StatelessWidget {
                     title: l10n.lightThemeTitle,
                     subtitle: l10n.lightThemeDescription,
                     themeId: lightThemeId,
+                    brightness: Brightness.light,
                     onSelect: controller.setLightTheme,
                     showDividerBelow: themeMode == 'system',
                   ),
@@ -127,6 +128,7 @@ class LayoutAppearanceInLayoutSection extends StatelessWidget {
                     title: l10n.darkThemeTitle,
                     subtitle: l10n.darkThemeDescription,
                     themeId: darkThemeId,
+                    brightness: Brightness.dark,
                     onSelect: controller.setDarkTheme,
                     showDividerBelow: false,
                   ),
@@ -303,6 +305,7 @@ class _ColorThemeRow extends StatefulWidget {
     required this.title,
     required this.subtitle,
     required this.themeId,
+    required this.brightness,
     required this.onSelect,
     required this.showDividerBelow,
   });
@@ -310,6 +313,9 @@ class _ColorThemeRow extends StatefulWidget {
   final String title;
   final String subtitle;
   final String themeId;
+
+  /// The slot this row edits; constrains the picker to this brightness.
+  final Brightness brightness;
   final ValueChanged<String> onSelect;
   final bool showDividerBelow;
 
@@ -341,6 +347,7 @@ class _ColorThemeRowState extends State<_ColorThemeRow> {
     final selected = await ColorThemePicker.show(
       context,
       selectedId: widget.themeId,
+      brightness: widget.brightness,
       importedThemes: _registry.themes,
     );
     if (selected != null) widget.onSelect(selected);

@@ -50,6 +50,11 @@ class AppearanceControls extends StatelessWidget {
           'dark' => darkThemeId,
           _ => platformDark ? darkThemeId : lightThemeId,
         };
+        final activeBrightness = switch (themeMode) {
+          'light' => Brightness.light,
+          'dark' => Brightness.dark,
+          _ => platformDark ? Brightness.dark : Brightness.light,
+        };
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -88,6 +93,7 @@ class AppearanceControls extends StatelessWidget {
                   final selected = await ColorThemePicker.show(
                     context,
                     selectedId: activeThemeId,
+                    brightness: activeBrightness,
                     importedThemes:
                         UserTerminalThemeRegistry.instance.themes,
                   );

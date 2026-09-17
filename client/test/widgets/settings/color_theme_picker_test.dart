@@ -25,27 +25,69 @@ Widget _wrap(ColorThemePicker picker) {
   );
 }
 
+CmuxTerminalTheme _importedTheme({required bool light}) => CmuxTerminalTheme(
+  name: light ? 'My Light' : 'My Dark',
+  author: 'me',
+  isDark: !light,
+  background: light ? const Color(0xFFF0F0F0) : const Color(0xFF101010),
+  foreground: light ? const Color(0xFF202020) : const Color(0xFFE0E0E0),
+  cursor: light ? const Color(0xFF202020) : const Color(0xFFE0E0E0),
+  selection: const Color(0xFF444444),
+  searchHit: const Color(0xFFE0B000),
+  searchHitCurrent: const Color(0xFF00B0E0),
+  searchHitFg: const Color(0xFF101010),
+  ansi: List<Color>.filled(16, const Color(0xFF808080)),
+);
+
 void main() {
-  testWidgets('lists interface themes per brightness and terminal groups', (
-    tester,
-  ) async {
+  testWidgets('light slot offers only light groups and themes', (tester) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
     await tester.pumpWidget(
       _wrap(
-        ColorThemePicker(selectedId: 'ui:amber:light', onSelect: (_) {}),
+        ColorThemePicker(
+          selectedId: 'ui:amber:light',
+          brightness: Brightness.light,
+          importedThemes: [_importedTheme(light: true), _importedTheme(light: false)],
+          onSelect: (_) {},
+        ),
       ),
     );
     await tester.pump();
 
     expect(find.text(l10n.colorThemeGroupUiLight), findsOneWidget);
+    expect(find.text(l10n.colorThemeGroupTerminalLight), findsOneWidget);
+    expect(find.text(l10n.colorThemeGroupUiDark), findsNothing);
+    expect(find.text(l10n.colorThemeGroupTerminalDark), findsNothing);
+    // Dark catalog themes are filtered out.
+    expect(find.text('Dracula'), findsNothing);
+    expect(find.text('Solarized Light'), findsOneWidget);
+    // Imported themes filtered by luminance.
+    expect(find.text('My Light'), findsOneWidget);
+    expect(find.text('My Dark'), findsNothing);
+  });
+
+  testWidgets('dark slot offers only dark groups and themes', (tester) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await tester.pumpWidget(
+      _wrap(
+        ColorThemePicker(
+          selectedId: 'ui:amber:dark',
+          brightness: Brightness.dark,
+          importedThemes: [_importedTheme(light: true), _importedTheme(light: false)],
+          onSelect: (_) {},
+        ),
+      ),
+    );
+    await tester.pump();
+
     expect(find.text(l10n.colorThemeGroupUiDark), findsOneWidget);
     expect(find.text(l10n.colorThemeGroupTerminalDark), findsOneWidget);
-    expect(find.text(l10n.colorThemeGroupTerminalLight), findsOneWidget);
-    // Every fixed palette appears once per brightness group (5 × 2).
-    expect(find.text('Amber'), findsNWidgets(2));
-    expect(find.text('Forest'), findsNWidgets(2));
-    // Terminal catalog themes are listed.
+    expect(find.text(l10n.colorThemeGroupUiLight), findsNothing);
+    expect(find.text(l10n.colorThemeGroupTerminalLight), findsNothing);
     expect(find.text('Dracula'), findsOneWidget);
+    expect(find.text('Solarized Light'), findsNothing);
+    expect(find.text('My Dark'), findsOneWidget);
+    expect(find.text('My Light'), findsNothing);
   });
 
   testWidgets('tapping a row emits its unified theme id', (tester) async {
@@ -53,16 +95,16 @@ void main() {
     await tester.pumpWidget(
       _wrap(
         ColorThemePicker(
-          selectedId: 'ui:amber:light',
+          selectedId: 'ui:amber:dark',
+          brightness: Brightness.dark,
           onSelect: selected.add,
         ),
       ),
     );
     await tester.pump();
 
-    // Interface row: the dark Amber row carries the :dark-suffixed id.
-    final amberRows = find.text('Amber');
-    await tester.tap(amberRows.last);
+    // Interface row in the dark slot carries the :dark-suffixed id.
+    await tester.tap(find.text('Amber'));
     await tester.pump();
     expect(selected, ['ui:amber:dark']);
     expect(uiColorThemeBrightness(selected.single), Brightness.dark);
@@ -80,24 +122,13 @@ void main() {
     tester,
   ) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
-    final imported = CmuxTerminalTheme(
-      name: 'My Theme',
-      author: 'me',
-      isDark: true,
-      background: const Color(0xFF101010),
-      foreground: const Color(0xFFE0E0E0),
-      cursor: const Color(0xFFE0E0E0),
-      selection: const Color(0xFF444444),
-      searchHit: const Color(0xFFE0B000),
-      searchHitCurrent: const Color(0xFF00B0E0),
-      searchHitFg: const Color(0xFF101010),
-      ansi: List<Color>.filled(16, const Color(0xFF808080)),
-    );
+    final imported = _importedTheme(light: false);
     CmuxTerminalTheme? deleted;
     await tester.pumpWidget(
       _wrap(
         ColorThemePicker(
-          selectedId: 'ui:amber:light',
+          selectedId: 'ui:amber:dark',
+          brightness: Brightness.dark,
           importedThemes: [imported],
           onDeleteImported: (t) => deleted = t,
           onSelect: (_) {},
@@ -107,8 +138,8 @@ void main() {
     await tester.pump();
 
     expect(find.text(l10n.colorThemeGroupImported), findsOneWidget);
-    await tester.ensureVisible(find.text('My Theme'));
-    expect(find.text('My Theme'), findsOneWidget);
+    await tester.ensureVisible(find.text('My Dark'));
+    expect(find.text('My Dark'), findsOneWidget);
 
     await tester.tap(find.byTooltip(l10n.terminalThemeDeleteTooltip));
     await tester.pump();
@@ -116,7 +147,7 @@ void main() {
     expect(deleted!.id, imported.id);
   });
 
-  testWidgets('all fixed presets render both brightness ids', (tester) async {
+  test('all fixed presets render both brightness ids', () {
     // Guard the id scheme the prefs migration writes: every preset id in
     // kThemeColorPresetIds (minus `terminal`) must produce parseable ui ids.
     for (final preset in kThemeColorPresetIds) {

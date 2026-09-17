@@ -161,9 +161,15 @@ Future<void> showWorkspaceTerminalSettingsSheet(BuildContext context) async {
     'dark' => prefs.darkThemeId,
     _ => platformDark ? prefs.darkThemeId : prefs.lightThemeId,
   };
+  final slotBrightness = switch (prefs.themeMode) {
+    'light' => Brightness.light,
+    'dark' => Brightness.dark,
+    _ => platformDark ? Brightness.dark : Brightness.light,
+  };
   final selected = await ColorThemePicker.show(
     context,
     selectedId: currentId,
+    brightness: slotBrightness,
     importedThemes: UserTerminalThemeRegistry.instance.themes,
   );
   if (selected == null || !context.mounted) return;
