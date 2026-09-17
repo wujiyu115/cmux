@@ -40,24 +40,28 @@ CmuxTerminalTheme _importedTheme({required bool light}) => CmuxTerminalTheme(
 );
 
 void main() {
-  testWidgets('light slot offers only light groups and themes', (tester) async {
+  testWidgets('light slot offers one merged group of light themes only', (
+    tester,
+  ) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
     await tester.pumpWidget(
       _wrap(
         ColorThemePicker(
           selectedId: 'ui:amber:light',
           brightness: Brightness.light,
-          importedThemes: [_importedTheme(light: true), _importedTheme(light: false)],
+          importedThemes: [
+            _importedTheme(light: true),
+            _importedTheme(light: false),
+          ],
           onSelect: (_) {},
         ),
       ),
     );
     await tester.pump();
 
-    expect(find.text(l10n.colorThemeGroupUiLight), findsOneWidget);
-    expect(find.text(l10n.colorThemeGroupTerminalLight), findsOneWidget);
-    expect(find.text(l10n.colorThemeGroupUiDark), findsNothing);
-    expect(find.text(l10n.colorThemeGroupTerminalDark), findsNothing);
+    // One merged group per brightness; the dark group is absent.
+    expect(find.text(l10n.colorThemeGroupLight), findsOneWidget);
+    expect(find.text(l10n.colorThemeGroupDark), findsNothing);
     // Dark catalog themes are filtered out.
     expect(find.text('Dracula'), findsNothing);
     expect(find.text('Solarized Light'), findsOneWidget);
@@ -66,24 +70,27 @@ void main() {
     expect(find.text('My Dark'), findsNothing);
   });
 
-  testWidgets('dark slot offers only dark groups and themes', (tester) async {
+  testWidgets('dark slot offers one merged group of dark themes only', (
+    tester,
+  ) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
     await tester.pumpWidget(
       _wrap(
         ColorThemePicker(
           selectedId: 'ui:amber:dark',
           brightness: Brightness.dark,
-          importedThemes: [_importedTheme(light: true), _importedTheme(light: false)],
+          importedThemes: [
+            _importedTheme(light: true),
+            _importedTheme(light: false),
+          ],
           onSelect: (_) {},
         ),
       ),
     );
     await tester.pump();
 
-    expect(find.text(l10n.colorThemeGroupUiDark), findsOneWidget);
-    expect(find.text(l10n.colorThemeGroupTerminalDark), findsOneWidget);
-    expect(find.text(l10n.colorThemeGroupUiLight), findsNothing);
-    expect(find.text(l10n.colorThemeGroupTerminalLight), findsNothing);
+    expect(find.text(l10n.colorThemeGroupDark), findsOneWidget);
+    expect(find.text(l10n.colorThemeGroupLight), findsNothing);
     expect(find.text('Dracula'), findsOneWidget);
     expect(find.text('Solarized Light'), findsNothing);
     expect(find.text('My Dark'), findsOneWidget);
@@ -118,9 +125,7 @@ void main() {
     expect(terminalModeForColorTheme(selected.last), 'dracula');
   });
 
-  testWidgets('imported themes get their own group and delete affordance', (
-    tester,
-  ) async {
+  testWidgets('imported themes get a delete affordance', (tester) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
     final imported = _importedTheme(light: false);
     CmuxTerminalTheme? deleted;
@@ -137,7 +142,7 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text(l10n.colorThemeGroupImported), findsOneWidget);
+    expect(find.text(l10n.colorThemeGroupImported), findsNothing);
     await tester.ensureVisible(find.text('My Dark'));
     expect(find.text('My Dark'), findsOneWidget);
 

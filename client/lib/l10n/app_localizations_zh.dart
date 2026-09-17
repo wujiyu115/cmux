@@ -87,16 +87,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get colorThemeDialogTitle => '颜色主题';
 
   @override
-  String get colorThemeGroupUiLight => '界面主题 · 浅色';
+  String get colorThemeGroupLight => '浅色主题';
 
   @override
-  String get colorThemeGroupUiDark => '界面主题 · 深色';
-
-  @override
-  String get colorThemeGroupTerminalDark => '终端主题 · 深色';
-
-  @override
-  String get colorThemeGroupTerminalLight => '终端主题 · 浅色';
+  String get colorThemeGroupDark => '深色主题';
 
   @override
   String get colorThemeGroupImported => '已导入';
@@ -115,6 +109,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get fontUiTitle => '界面字体';
+
+  @override
+  String get fontSizePxSuffix => 'px';
 
   @override
   String get fontUiDescription => '界面文字。系统跟随操作系统默认字体。重启后生效。';

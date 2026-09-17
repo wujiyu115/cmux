@@ -138,6 +138,16 @@ class LayoutAppearanceInLayoutSection extends StatelessWidget {
                   padding: _groupHeaderPadding,
                 ),
                 TpPreferenceRow(
+                  title: l10n.fontUiTitle,
+                  subtitle: l10n.fontUiDescription,
+                  trailing: FontPreferenceSetting(
+                    role: FontRole.ui,
+                    value: uiFontId,
+                    onChanged: controller.setUiFontId,
+                  ),
+                  showDividerBelow: true,
+                ),
+                TpPreferenceRow(
                   title: l10n.uiFontSizeTitle,
                   subtitle: l10n.uiFontSizeDescription,
                   trailing: FontSizeSetting(
@@ -145,16 +155,6 @@ class LayoutAppearanceInLayoutSection extends StatelessWidget {
                     minSize: kUiFontSizeMin,
                     maxSize: kUiFontSizeMax,
                     onChanged: controller.setUiFontSize,
-                  ),
-                  showDividerBelow: true,
-                ),
-                TpPreferenceRow(
-                  title: l10n.fontUiTitle,
-                  subtitle: l10n.fontUiDescription,
-                  trailing: FontPreferenceSetting(
-                    role: FontRole.ui,
-                    value: uiFontId,
-                    onChanged: controller.setUiFontId,
                   ),
                   showDividerBelow: true,
                 ),

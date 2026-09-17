@@ -188,7 +188,7 @@ void main() {
       UserTerminalThemeRegistry.instance.byId('paste-theme'),
       isNotNull,
     );
-    expect(cubit.state.preferences.lightThemeId, 'paste-theme');
+    expect(cubit.state.preferences.darkThemeId, 'paste-theme');
 
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
     expect(find.text(l10n.colorThemeGroupImported), findsOneWidget);
@@ -238,7 +238,7 @@ void main() {
     UserTerminalThemeRegistry.instance.replaceAll(stored);
 
     final cubit = await pumpCard(tester);
-    cubit.setLightTheme(saved.id);
+    cubit.setDarkTheme(saved.id);
     await tester.pump();
 
     final deleteButton = find.byTooltip('Delete imported theme');
@@ -251,7 +251,7 @@ void main() {
 
     expect(File(p.join(themesDir, '${saved.id}.json')).existsSync(), isFalse);
     expect(UserTerminalThemeRegistry.instance.themes, isEmpty);
-    expect(cubit.state.preferences.lightThemeId, 'ui:amber:light');
+    expect(cubit.state.preferences.darkThemeId, 'ui:amber:dark');
 
     await _drainToast(tester);
   });

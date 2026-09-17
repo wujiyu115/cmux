@@ -205,36 +205,43 @@ void main() {
     expect(prefs.darkThemeId, 'ui:forest:dark');
   });
 
-  test('migrates a legacy terminal mode into both slots verbatim', () {
+  test('migrates a legacy terminal mode into its own brightness slot', () {
     final prefs = LayoutPreferences.fromJson(const {
       'terminalThemeMode': 'dracula',
     });
-    // A terminal theme carries its own brightness, so both slots take it.
-    expect(prefs.lightThemeId, 'dracula');
+    // Dracula is dark: it fills the dark slot; the light slot keeps the
+    // default light theme (no legacy preset to inherit).
     expect(prefs.darkThemeId, 'dracula');
+    expect(prefs.lightThemeId, 'ui:amber:light');
   });
 
-  test('legacy terminal mode wins over a legacy preset', () {
+  test('legacy terminal mode fills its slot; preset fills the other', () {
     final prefs = LayoutPreferences.fromJson(const {
       'themeColorPreset': 'ocean',
       'terminalThemeMode': 'classicDark',
     });
-    expect(prefs.lightThemeId, 'classicDark');
     expect(prefs.darkThemeId, 'classicDark');
+    expect(prefs.lightThemeId, 'ui:ocean:light');
   });
 
-  test('new slot keys win over legacy keys and toJson drops the legacy ones', () {
+  test('slot brightness contract coerces a wrong-brightness stored id', () {
+    // A dark theme stored in the light slot is coerced to the light default —
+    // this is what stops "switch to light still renders dark".
     final prefs = LayoutPreferences.fromJson(const {
       'lightThemeId': 'nord',
       'darkThemeId': 'dracula',
-      'themeColorPreset': 'ocean',
-      'terminalThemeMode': 'classicDark',
     });
-    expect(prefs.lightThemeId, 'nord');
+    expect(prefs.lightThemeId, 'ui:amber:light');
     expect(prefs.darkThemeId, 'dracula');
 
+    // copyWith enforces it too.
+    final coerced = const LayoutPreferences().copyWith(lightThemeId: 'dracula');
+    expect(coerced.lightThemeId, 'ui:amber:light');
+    final ok = const LayoutPreferences().copyWith(darkThemeId: 'dracula');
+    expect(ok.darkThemeId, 'dracula');
+
     final json = prefs.toJson();
-    expect(json['lightThemeId'], 'nord');
+    expect(json['lightThemeId'], 'ui:amber:light');
     expect(json['darkThemeId'], 'dracula');
     expect(json.containsKey('themeColorPreset'), isFalse);
     expect(json.containsKey('terminalThemeMode'), isFalse);
@@ -251,10 +258,16 @@ void main() {
       LayoutPreferences.fromJson(const {'lightThemeId': 'ui:amber'}).lightThemeId,
       'ui:amber:light',
     );
-    // An unknown but well-formed slug survives (imported ids load later).
+    // An unknown but well-formed slug survives in the DARK slot (unresolvable
+    // ids read as dark, and an imported theme may load later); the light slot
+    // coerces it away since a dark-reading id can't fill a light slot.
+    expect(
+      LayoutPreferences.fromJson(const {'darkThemeId': 'totally-bogus'}).darkThemeId,
+      'totally-bogus',
+    );
     expect(
       LayoutPreferences.fromJson(const {'lightThemeId': 'totally-bogus'}).lightThemeId,
-      'totally-bogus',
+      'ui:amber:light',
     );
   });
 

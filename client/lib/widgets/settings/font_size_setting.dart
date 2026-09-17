@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../l10n/l10n_extensions.dart';
+
 /// Absolute font-size stepper (logical px): −/+ buttons around a direct
 /// numeric input. Shared by the 「界面字号」 (`uiFontSize`) and 「等宽字号」
 /// (`monoFontSize`) preferences — the VS Code-style absolute px model
@@ -71,6 +73,7 @@ class _FontSizeSettingState extends State<FontSizeSetting> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final atMin = _clamped <= widget.minSize;
     final atMax = _clamped >= widget.maxSize;
@@ -81,24 +84,28 @@ class _FontSizeSettingState extends State<FontSizeSetting> {
           icon: Icons.remove,
           onPressed: atMin ? null : () => _step(-1),
         ),
+        // Digits-only field: the 'px' unit label sits OUTSIDE the input so it
+        // can never overlap the centred digits (a suffix inside a narrow
+        // centre-aligned field clipped '16' down to '1').
         SizedBox(
-          width: 64,
+          width: 40,
           child: TextField(
             controller: _controller,
             textAlign: TextAlign.center,
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             style: TextStyle(color: cs.onSurface),
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               isDense: true,
               border: InputBorder.none,
-              suffixText: 'px',
-              suffixStyle: TextStyle(color: cs.onSurfaceVariant),
+              contentPadding: EdgeInsets.zero,
             ),
             onSubmitted: (_) => _commitInput(),
             onEditingComplete: _commitInput,
           ),
         ),
+        const SizedBox(width: 2),
+        Text(l10n.fontSizePxSuffix, style: TextStyle(color: cs.onSurfaceVariant)),
         _StepButton(
           icon: Icons.add,
           onPressed: atMax ? null : () => _step(1),

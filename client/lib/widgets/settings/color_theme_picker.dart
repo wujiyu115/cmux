@@ -87,8 +87,10 @@ class ColorThemePicker extends StatelessWidget {
 
     final isLight = brightness == Brightness.light;
 
-    // Interface themes: the fixed palettes at this slot's brightness only.
-    final uiOptions = <_ThemeOption>[
+    // One merged group per brightness: interface palettes, catalog themes, and
+    // imported themes all drive UI + terminal + file browser together, so they
+    // are presented as a single list of "themes", split only by brightness.
+    final options = <_ThemeOption>[
       for (final preset in kThemeColorPresetIds)
         if (preset != kTerminalDerivedPresetId)
           _ThemeOption(
@@ -99,10 +101,6 @@ class ColorThemePicker extends StatelessWidget {
               themePresetSwatchSecondary(preset),
             ],
           ),
-    ];
-
-    // Terminal themes of this brightness only.
-    final terminal = <_ThemeOption>[
       for (final theme in kCmuxTerminalThemes)
         if (theme.isDark != isLight)
           _ThemeOption(
@@ -111,9 +109,6 @@ class ColorThemePicker extends StatelessWidget {
             author: theme.author,
             swatches: _catalogSwatches(theme),
           ),
-    ];
-
-    final imported = <_ThemeOption>[
       for (final theme in importedThemes)
         if (theme.isLightByLuminance == isLight)
           _ThemeOption(
@@ -121,37 +116,20 @@ class ColorThemePicker extends StatelessWidget {
             name: theme.name,
             author: theme.author,
             swatches: _catalogSwatches(theme),
+            imported: true,
           ),
     ];
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _group(
-          context,
-          isLight ? l10n.colorThemeGroupUiLight : l10n.colorThemeGroupUiDark,
-          uiOptions,
-        ),
-        if (imported.isNotEmpty)
-          _group(
-            context,
-            l10n.colorThemeGroupImported,
-            imported,
-            onDelete: onDeleteImported == null
-                ? null
-                : (id) {
-                    final theme = importedThemes.firstWhere((t) => t.id == id);
-                    onDeleteImported!(theme);
-                  },
-          ),
-        _group(
-          context,
-          isLight
-              ? l10n.colorThemeGroupTerminalLight
-              : l10n.colorThemeGroupTerminalDark,
-          terminal,
-        ),
-      ],
+    return _group(
+      context,
+      isLight ? l10n.colorThemeGroupLight : l10n.colorThemeGroupDark,
+      options,
+      onDelete: onDeleteImported == null
+          ? null
+          : (id) {
+              final theme = importedThemes.firstWhere((t) => t.id == id);
+              onDeleteImported!(theme);
+            },
     );
   }
 
@@ -170,7 +148,9 @@ class ColorThemePicker extends StatelessWidget {
             option: option,
             selected: option.id == selectedId,
             onTap: () => onSelect(option.id),
-            onDelete: onDelete == null ? null : () => onDelete(option.id),
+            onDelete: option.imported && onDelete != null
+                ? () => onDelete(option.id)
+                : null,
           ),
       ],
     );
@@ -183,12 +163,16 @@ class _ThemeOption {
     required this.name,
     required this.swatches,
     this.author = '',
+    this.imported = false,
   });
 
   final String id;
   final String name;
   final String author;
   final List<Color> swatches;
+
+  /// True for user-imported themes, which are the only deletable rows.
+  final bool imported;
 }
 
 class _ThemeRow extends StatelessWidget {

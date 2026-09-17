@@ -279,11 +279,16 @@ class LayoutPreferences {
         maxWorkspaceNavWidth,
       ),
       themeMode: themeMode ?? this.themeMode,
-      lightThemeId: normalizeColorThemeId(
-        lightThemeId,
-        this.lightThemeId,
+      lightThemeId: coerceColorThemeBrightness(
+        normalizeColorThemeId(lightThemeId, this.lightThemeId),
+        Brightness.light,
+        kDefaultLightColorThemeId,
       ),
-      darkThemeId: normalizeColorThemeId(darkThemeId, this.darkThemeId),
+      darkThemeId: coerceColorThemeBrightness(
+        normalizeColorThemeId(darkThemeId, this.darkThemeId),
+        Brightness.dark,
+        kDefaultDarkColorThemeId,
+      ),
       uiFontSize: uiFontSize == null
           ? this.uiFontSize
           : clampUiFontSize(uiFontSize),
@@ -453,16 +458,17 @@ Map<String, int> _terminalColorOverridesFromJson(Object? raw) {
 }
 
 /// Migrates the legacy `themeColorPreset` + `terminalThemeMode` pair into a
-/// per-brightness colour-theme id. The new [slot] key wins when present;
-/// otherwise the two old fields collapse into one theme T:
+/// per-brightness colour-theme id. The new [slot] key wins when present (and
+/// is coerced to the slot's brightness); otherwise the two old fields are
+/// split by brightness:
 ///
-/// - a terminal theme (`terminalThemeMode != 'adaptive'`) → T is that id, and
-///   **both** slots take it (a terminal theme carries its own brightness, so
-///   the light/dark split is meaningless for it);
-/// - a fixed UI preset (`themeColorPreset != 'terminal'`) → the slot takes that
-///   preset at its own brightness (`ui:{preset}:{light|dark}`), matching the
-///   old behaviour where one preset rendered both light and dark;
-/// - the degenerate `terminal` + `adaptive` fallback → `ui:amber`.
+/// - a terminal theme (`terminalThemeMode != 'adaptive'`) fills **only the slot
+///   matching its own brightness**; the other slot keeps the legacy preset at
+///   that slot's brightness (or the default when the preset was `terminal`);
+/// - a fixed UI preset (`themeColorPreset != 'terminal'`) fills each slot as
+///   `ui:{preset}:{light|dark}`, matching the old behaviour where one preset
+///   rendered both light and dark;
+/// - the degenerate `terminal` + `adaptive` fallback → the slot default.
 ///
 /// See docs/theme-model.md §4.
 String _colorThemeIdFromJson(
@@ -473,15 +479,23 @@ String _colorThemeIdFromJson(
 }) {
   final raw = json[slot];
   if (raw is String && raw.isNotEmpty) {
-    return normalizeColorThemeId(raw, fallback);
+    return coerceColorThemeBrightness(
+      normalizeColorThemeId(raw, fallback),
+      brightness,
+      fallback,
+    );
   }
   final legacyMode = json['terminalThemeMode'] as String?;
   final legacyPreset = normalizeThemeColorPreset(
     json['themeColorPreset'] as String?,
   );
   if (legacyMode != null && legacyMode.isNotEmpty && legacyMode != 'adaptive') {
-    // Terminal theme in both slots — its own brightness governs rendering.
-    return normalizeColorThemeId(legacyMode, fallback);
+    final mode = normalizeColorThemeId(legacyMode, fallback);
+    if (colorThemeBrightness(mode) == brightness) return mode;
+    // Wrong-brightness slot keeps the legacy preset at its own brightness.
+    return legacyPreset == kTerminalDerivedPresetId
+        ? fallback
+        : uiColorThemeId(legacyPreset, brightness);
   }
   if (legacyPreset != kTerminalDerivedPresetId) {
     return uiColorThemeId(legacyPreset, brightness);

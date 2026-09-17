@@ -57,7 +57,7 @@ mode dark   → darkThemeId
 mode system → platformDark ? darkThemeId : lightThemeId
 effectiveBrightness = brightnessOf(effectiveThemeId)   // ui:…:light/dark 按 id;目录按 luminance
 ```
-主题亮暗**以主题自身为准**(VS Code 语义):把 `dracula` 放进亮槽 + mode=light 渲染的就是暗色 —— 槽位只是「跟随系统时用哪个」。
+**槽位亮度契约**:`lightThemeId` 只能持有渲染为亮的主题,`darkThemeId` 只能持有暗的 —— `fromJson` 与 `copyWith` 都强制(`coerceColorThemeBrightness`),不一致回退该槽默认。这堵死了「切到浅色仍渲染暗色」(旧迁移曾把暗色终端主题填进双槽)。主题亮暗以主题自身为准:目录/导入按 luminance,`ui:` 按后缀,未解析 id 视为暗。
 
 **设置 UI**:
 - 外观卡「主题」组:主题模式(三段,不变)+ 按模式条件显示「浅色主题」「深色主题」行(mode=system 两行都显示)—— 行尾按钮显示当前主题名,点开**统一主题选择器**(分组列表,复用 `TerminalSchemePicker` 的色板行样式):界面主题(浅/深)/ 终端主题(深/浅)/ 导入主题。
@@ -67,18 +67,21 @@ effectiveBrightness = brightnessOf(effectiveThemeId)   // ui:…:light/dark 按 
 
 ## 4. 迁移(`fromJson` 静态)
 
-新字段缺失时,从旧字段解析单一主题 T 再分槽:
+新字段缺失时按亮度分槽迁移:
 
 ```
-T = terminalThemeMode != 'adaptive' ? terminalThemeMode          // 目录/legacy/导入
-  : themeColorPreset != 'terminal'  ? 'ui:{themeColorPreset}'    // 固定预设
-  : 'ui:amber'                                                    // terminal+adaptive 回退态
-lightThemeId = T 为目录/legacy/导入 ? T : 'ui:{preset}:light'
-darkThemeId  = T 为目录/legacy/导入 ? T : 'ui:{preset}:dark'
+legacyMode = terminalThemeMode (非 adaptive)
+legacyPreset = themeColorPreset (非 terminal)
+每槽 brightness B:
+  新槽 key 存在        → 强制为 B(契约)
+  legacyMode 亮度 == B → legacyMode
+  legacyMode 亮度 != B → legacyPreset 的 B 版(或默认)
+  否则 legacyPreset != terminal → 'ui:{legacyPreset}:{B}'
+  否则                 → 默认
 ```
 
 - 固定预设用户(多数):亮暗槽 = 该预设的亮/暗版 —— **与今天完全一致**(今天就是一个 preset 渲染两个亮度)。
-- 目录主题用户:两槽同 id —— 今天 `preset='terminal'` + `mode=dracula` 在 system 下亮环境会错配回退到默认调色板(`_canDeriveFromTerminal` 亮度校验不过);迁移后恒定渲染 dracula,**行为变化 = 修掉错配**,与「主题自带亮暗」语义一致。
+- 目录主题用户:主题只进**自身亮度**的槽;另一槽取旧预设的该亮度版(或默认)。今天 `preset='terminal'` + `mode=dracula` 在 system 下亮环境会错配回退到默认调色板(`_canDeriveFromTerminal` 亮度校验不过);迁移后各槽恒定,**行为变化 = 修掉错配**。
 - `themeMode` 原样保留,无迁移。
 - `toJson` 只写新字段;旧字段两个版本后可从迁移分支清除(clean cutover:类中直接删)。
 
@@ -103,7 +106,7 @@ darkThemeId  = T 为目录/legacy/导入 ? T : 'ui:{preset}:dark'
 |---|---|
 | `widgets/settings/theme_color_preset_picker.dart` | **删除**(chips 选择器被统一列表取代) |
 | `pages/config/terminal_theme/terminal_scheme_picker.dart` | 改造为统一 `ColorThemePicker`(增加界面主题组)或新写 + 删旧 |
-| 新 `widgets/settings/color_theme_picker.dart` | 统一选择器 dialog:分组(界面·浅/界面·深/终端·深/终端·浅/导入)+ 色板行 + 选中态 |
+| 新 `widgets/settings/color_theme_picker.dart` | 统一选择器 dialog:**每个亮度一个合并组**(浅色主题/深色主题),组内 = 界面调色板 + 目录主题 + 导入主题(按亮度过滤);导入行带删除 |
 
 ### l10n
 

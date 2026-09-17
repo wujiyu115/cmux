@@ -254,29 +254,17 @@ abstract class AppLocalizations {
   /// **'Color theme'**
   String get colorThemeDialogTitle;
 
-  /// No description provided for @colorThemeGroupUiLight.
+  /// No description provided for @colorThemeGroupLight.
   ///
   /// In en, this message translates to:
-  /// **'Interface themes · Light'**
-  String get colorThemeGroupUiLight;
+  /// **'Light themes'**
+  String get colorThemeGroupLight;
 
-  /// No description provided for @colorThemeGroupUiDark.
+  /// No description provided for @colorThemeGroupDark.
   ///
   /// In en, this message translates to:
-  /// **'Interface themes · Dark'**
-  String get colorThemeGroupUiDark;
-
-  /// No description provided for @colorThemeGroupTerminalDark.
-  ///
-  /// In en, this message translates to:
-  /// **'Terminal themes · Dark'**
-  String get colorThemeGroupTerminalDark;
-
-  /// No description provided for @colorThemeGroupTerminalLight.
-  ///
-  /// In en, this message translates to:
-  /// **'Terminal themes · Light'**
-  String get colorThemeGroupTerminalLight;
+  /// **'Dark themes'**
+  String get colorThemeGroupDark;
 
   /// No description provided for @colorThemeGroupImported.
   ///
@@ -313,6 +301,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Interface font'**
   String get fontUiTitle;
+
+  /// No description provided for @fontSizePxSuffix.
+  ///
+  /// In en, this message translates to:
+  /// **'px'**
+  String get fontSizePxSuffix;
 
   /// No description provided for @fontUiDescription.
   ///

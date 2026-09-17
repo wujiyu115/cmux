@@ -78,6 +78,18 @@ Brightness colorThemeBrightness(String id) {
 String terminalModeForColorTheme(String id) =>
     isUiColorTheme(id) ? 'adaptive' : id;
 
+/// Enforces the slot contract: a slot may only hold a theme of its own
+/// brightness. Returns [id] when it renders at [brightness], else [fallback].
+///
+/// This is what keeps the light slot from holding a dark theme — the failure
+/// mode where switching themeMode to light still rendered dark (a migrated
+/// dark terminal theme had filled both slots).
+String coerceColorThemeBrightness(
+  String id,
+  Brightness brightness,
+  String fallback,
+) => colorThemeBrightness(id) == brightness ? id : fallback;
+
 /// Clamps an arbitrary stored id to a renderable one. An interface id keeps its
 /// shape; a terminal id survives verbatim (catalog / imported ids load after
 /// preferences, and legacy modes are valid), so — like the old

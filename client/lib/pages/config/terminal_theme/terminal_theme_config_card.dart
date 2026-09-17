@@ -166,7 +166,14 @@ class _TerminalThemeConfigCardState extends State<TerminalThemeConfigCard> {
 
     await _refreshRegistry();
     if (!mounted) return;
-    await controller.setActiveColorTheme(saved.id, platformDark: platformDark);
+    // An imported theme carries its own brightness; write it into the slot
+    // matching that brightness (the brightness contract would otherwise coerce
+    // a dark theme out of the light slot and the import would appear to no-op).
+    if (saved.isLightByLuminance) {
+      await controller.setLightTheme(saved.id);
+    } else {
+      await controller.setDarkTheme(saved.id);
+    }
     if (!mounted) return;
 
     final warnings = result!.warnings;

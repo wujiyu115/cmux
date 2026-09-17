@@ -94,16 +94,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get colorThemeDialogTitle => 'Color theme';
 
   @override
-  String get colorThemeGroupUiLight => 'Interface themes · Light';
+  String get colorThemeGroupLight => 'Light themes';
 
   @override
-  String get colorThemeGroupUiDark => 'Interface themes · Dark';
-
-  @override
-  String get colorThemeGroupTerminalDark => 'Terminal themes · Dark';
-
-  @override
-  String get colorThemeGroupTerminalLight => 'Terminal themes · Light';
+  String get colorThemeGroupDark => 'Dark themes';
 
   @override
   String get colorThemeGroupImported => 'Imported';
@@ -123,6 +117,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fontUiTitle => 'Interface font';
+
+  @override
+  String get fontSizePxSuffix => 'px';
 
   @override
   String get fontUiDescription =>
