@@ -20,26 +20,27 @@ export default function (pi) {
 		if (process.platform === "linux" && require("node:fs").existsSync(exe)) curl = exe;
 	} catch {}
 
-	const post = async (body) => {
+	// Fire-and-forget: pi awaits handler returns, so post is sync and never
+	// blocks the agent on status delivery. On WSL the curl.exe launch crosses
+	// Win32 interop — bounded for HTTP by --max-time, but the launch itself can
+	// stall for seconds under load, so it is detached + unref'd (orphans curl,
+	// survives omp's exit) and never awaited. Same bridge as the Orca forwarder.
+	const spawn = require("node:child_process").spawn;
+	const post = (body) => {
 		const payload = JSON.stringify(body);
 		try {
 			if (curl) {
-				// Awaited: a fire-and-forget spawn dies with the omp process before
-				// the request completes (seen with real omp).
-				const p = Bun.spawn({
-					cmd: [
-						curl, "-sS", "--connect-timeout", "1", "--max-time", "3",
-						"-H", `X-Session: ${seatSession}`,
-						"-H", `X-Member: ${seatMember}`,
-						"-H", "Content-Type: application/json",
-						"--data-binary", payload, url,
-					],
-					stdout: "ignore",
-					stderr: "ignore",
-				});
-				await p.exited;
+				const child = spawn(curl, [
+					"-sS", "--connect-timeout", "1", "--max-time", "3",
+					"-H", `X-Session: ${seatSession}`,
+					"-H", `X-Member: ${seatMember}`,
+					"-H", "Content-Type: application/json",
+					"--data-binary", payload, url,
+				], { detached: true, stdio: "ignore" });
+				child.on("error", () => {});
+				child.unref();
 			} else {
-				await fetch(url, {
+				fetch(url, {
 					method: "POST",
 					headers: {
 						"X-Session": seatSession,
@@ -48,7 +49,7 @@ export default function (pi) {
 					},
 					body: payload,
 					signal: AbortSignal.timeout(3000),
-				});
+				}).catch(() => {});
 			}
 		} catch {}
 	};

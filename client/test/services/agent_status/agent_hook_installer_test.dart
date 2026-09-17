@@ -432,8 +432,13 @@ void main() {
         agentHookOmpScriptBody,
         contains('/mnt/c/Windows/System32/curl.exe'),
       );
-      // The spawn must be awaited, or omp's exit kills the request mid-flight.
-      expect(agentHookOmpScriptBody, contains('await p.exited'));
+      // The interop spawn must be detached fire-and-forget, never awaited: an
+      // awaited WSL->Win32 launch stalls pi's handler critical path and trips
+      // its 30s timeout. detached+unref also orphans curl so the request lands
+      // after omp exits.
+      expect(agentHookOmpScriptBody, contains('detached: true'));
+      expect(agentHookOmpScriptBody, contains('child.unref()'));
+      expect(agentHookOmpScriptBody, isNot(contains('await p.exited')));
     });
   });
 

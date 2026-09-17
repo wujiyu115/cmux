@@ -515,9 +515,12 @@ exit /b 0
 ///   session_stop entirely.
 ///
 /// The WSL `curl.exe` interop fallback mirrors the sh forwarder; on the host
-/// (or macOS/Linux) it uses plain `fetch`. The spawn is awaited — a
-/// fire-and-forget child dies with the omp process before the request
-/// completes.
+/// (or macOS/Linux) it uses plain `fetch`. The interop spawn is detached and
+/// fire-and-forget: awaiting the WSL->Win32 launch would put an unbounded stall
+/// on pi's awaited-handler critical path (curl bounds the HTTP via `--max-time`,
+/// but not the interop process launch, which stalls for seconds under load and
+/// tripped pi's 30s handler timeout). detached+unref orphans curl so the request
+/// still lands after omp exits — same bridge as the Orca status forwarder.
 const agentHookOmpScriptBody =
     r'''// TeamPilot agent-status forwarder (managed — do not edit).
 const url = process.env.TEAMPILOT_AGENT_STATUS_URL;
@@ -536,24 +539,27 @@ export default function (pi) {
 		if (process.platform === "linux" && require("node:fs").existsSync(exe)) curl = exe;
 	} catch {}
 
-	const post = async (body) => {
+	// Fire-and-forget: pi awaits handler returns, so post is sync and never
+	// blocks the agent on status delivery. On WSL the curl.exe launch crosses
+	// Win32 interop — bounded for HTTP by --max-time, but the launch itself can
+	// stall for seconds under load, so it is detached + unref'd (orphans curl,
+	// survives omp's exit) and never awaited. Same bridge as the Orca forwarder.
+	const spawn = require("node:child_process").spawn;
+	const post = (body) => {
 		const payload = JSON.stringify(body);
 		try {
 			if (curl) {
-				const p = Bun.spawn({
-					cmd: [
-						curl, "-sS", "--connect-timeout", "1", "--max-time", "3",
-						"-H", `X-Session: ${seatSession}`,
-						"-H", `X-Member: ${seatMember}`,
-						"-H", "Content-Type: application/json",
-						"--data-binary", payload, url,
-					],
-					stdout: "ignore",
-					stderr: "ignore",
-				});
-				await p.exited;
+				const child = spawn(curl, [
+					"-sS", "--connect-timeout", "1", "--max-time", "3",
+					"-H", `X-Session: ${seatSession}`,
+					"-H", `X-Member: ${seatMember}`,
+					"-H", "Content-Type: application/json",
+					"--data-binary", payload, url,
+				], { detached: true, stdio: "ignore" });
+				child.on("error", () => {});
+				child.unref();
 			} else {
-				await fetch(url, {
+				fetch(url, {
 					method: "POST",
 					headers: {
 						"X-Session": seatSession,
@@ -562,7 +568,7 @@ export default function (pi) {
 					},
 					body: payload,
 					signal: AbortSignal.timeout(3000),
-				});
+				}).catch(() => {});
 			}
 		} catch {}
 	};
