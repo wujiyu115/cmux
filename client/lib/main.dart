@@ -32,6 +32,8 @@ import 'router/app_router.dart';
 import 'services/commands/command_bus.dart';
 import 'services/commands/key_chord.dart';
 import 'services/commands/quick_open_command_registrar.dart';
+import 'services/commands/search_in_files_command_registrar.dart';
+import 'services/search/workspace_search_store.dart';
 import 'services/commands/reconciled_keyboard.dart';
 import 'services/commands/run_command_registrar.dart';
 import 'services/commands/shortcut_context.dart';
@@ -769,6 +771,12 @@ Future<void> _bootStartup() async {
                 ),
                 RepositoryProvider<QuickOpenHost>.value(
                   value: shell.quickOpenHost,
+                ),
+                RepositoryProvider<WorkspaceSearchStore>.value(
+                  value: shell.workspaceSearchStore,
+                ),
+                RepositoryProvider<SearchHost>.value(
+                  value: shell.searchHost,
                 ),
               ],
               child: MultiBlocProvider(

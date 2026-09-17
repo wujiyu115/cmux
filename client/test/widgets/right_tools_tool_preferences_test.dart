@@ -7,6 +7,7 @@ void main() {
       const prefs = RightToolsToolPreferences(
         fileTreeVisible: false,
         gitVisible: false,
+        searchVisible: false,
       );
       expect(prefs.needsLifecycleHost, isFalse);
       expect(prefs.needsDiskSideEffects, isFalse);
@@ -16,6 +17,7 @@ void main() {
       const fileTree = RightToolsToolPreferences(
         fileTreeVisible: true,
         gitVisible: false,
+        searchVisible: false,
       );
       expect(fileTree.needsLifecycleHost, isTrue);
       expect(fileTree.needsDiskSideEffects, isTrue);
@@ -23,8 +25,19 @@ void main() {
       const git = RightToolsToolPreferences(
         fileTreeVisible: false,
         gitVisible: true,
+        searchVisible: false,
       );
       expect(git.needsDiskSideEffects, isTrue);
+    });
+
+    test('search needs the lifecycle host but not disk side effects', () {
+      const search = RightToolsToolPreferences(
+        fileTreeVisible: false,
+        gitVisible: false,
+        searchVisible: true,
+      );
+      expect(search.needsLifecycleHost, isTrue);
+      expect(search.needsDiskSideEffects, isFalse);
     });
   });
 }

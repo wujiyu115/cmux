@@ -48,6 +48,7 @@ Widget _host(WorktreeCubit cubit) {
             preferences: const RightToolsToolPreferences(
               fileTreeVisible: false,
               gitVisible: false,
+              searchVisible: false,
             ),
             cwd: '/repo',
             workspaceId: 'w1',

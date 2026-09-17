@@ -9,12 +9,15 @@ import '../../../cubits/layout_cubit.dart';
 import '../../../cubits/run_cubit.dart';
 import '../../../cubits/workbench/workbench_cubit.dart';
 import '../../../cubits/worktree_cubit.dart';
+import '../../../cubits/workspace_tools_cubit.dart';
 import '../../../models/workspace.dart';
 import '../../../services/commands/quick_open_command_registrar.dart';
 import '../../../services/commands/run_command_registrar.dart';
+import '../../../services/commands/search_in_files_command_registrar.dart';
 import '../../../services/git/git_command_runner.dart';
 import '../../../services/quick_open/quick_open_mru_repository.dart';
 import '../../../services/quick_open/quick_open_prewarm.dart';
+import '../../../services/search/workspace_search_store.dart';
 import '../../../services/workspace/workspace_run_registry.dart';
 import '../../../services/workspace/workspace_tools_scope.dart';
 import '../../../services/workspace/workspace_tools_scope_registry.dart';
@@ -22,6 +25,8 @@ import '../../../services/workspace/workspace_worktree_registry.dart';
 import '../../../services/workbench/workbench_shell_launcher.dart';
 import '../../../utils/ui/app_keys.dart';
 import '../../../widgets/right_tools/right_tools_panel.dart';
+import '../../../widgets/right_tools/right_tools_tool_preferences.dart';
+import '../../../widgets/right_tools/right_tools_tool_views.dart';
 import '../../../widgets/workspace_terminal_panel.dart';
 import '../../chat_page.dart';
 import '../../quick_open/quick_open_overlay.dart';
@@ -52,6 +57,8 @@ class _WorkspaceSplitPaneState extends State<WorkspaceSplitPane> {
   RunCommandHost? _runCommandHost;
   QuickOpenHost? _quickOpenHost;
   late final void Function() _openQuickOpen = _openQuickOpenNow;
+  SearchHost? _searchHost;
+  late final void Function() _openSearchInFiles = _openSearchInFilesNow;
 
   /// Guards the empty-workspace auto-terminal so it fires once per empty
   /// episode (not on every rebuild while the shell is still connecting).
@@ -62,8 +69,10 @@ class _WorkspaceSplitPaneState extends State<WorkspaceSplitPane> {
     super.didChangeDependencies();
     _runCommandHost = context.read<RunCommandHost>();
     _quickOpenHost = context.read<QuickOpenHost>();
+    _searchHost = context.read<SearchHost>();
     _syncRunCommandHost();
     _syncQuickOpenHost();
+    _syncSearchHost();
   }
 
   @override
@@ -75,6 +84,7 @@ class _WorkspaceSplitPaneState extends State<WorkspaceSplitPane> {
     }
     _boundRunCubit = null;
     _quickOpenHost?.unbind(_openQuickOpen);
+    _searchHost?.unbind(_openSearchInFiles);
     super.dispose();
   }
 
@@ -180,6 +190,54 @@ class _WorkspaceSplitPaneState extends State<WorkspaceSplitPane> {
       host.bind(_openQuickOpen);
     } else {
       host.unbind(_openQuickOpen);
+    }
+  }
+
+  void _syncSearchHost() {
+    final host = _searchHost;
+    if (host == null) return;
+    final routeActive = WorkspaceRouteActiveScope.routeActiveOf(context);
+    if (routeActive) {
+      host.bind(_openSearchInFiles);
+    } else {
+      host.unbind(_openSearchInFiles);
+    }
+  }
+
+  /// Ctrl/Cmd+Shift+F: force the right-tools panel + search view visible,
+  /// switch the tool tab, and focus the query field (bounded retry — the
+  /// tab mounts lazily).
+  Future<void> _openSearchInFilesNow() async {
+    if (!mounted) return;
+    final layout = context.read<LayoutCubit>();
+    final prefs = layout.state.preferences;
+    if (!prefs.rightToolsVisible) {
+      await layout.setRightToolsVisible(true);
+    }
+    if (!prefs.searchVisible) {
+      await layout.setRegionVisibility(
+        appRailVisible: true,
+        fileTreeVisible: prefs.fileTreeVisible,
+        gitVisible: prefs.gitVisible,
+        searchVisible: true,
+      );
+    }
+    if (!mounted) return;
+    context.read<WorkspaceToolsCubit>().setSelectedIndex(
+      widget.tabScopeId,
+      rightToolsSearchViewIndex(
+        RightToolsToolPreferences.from(layout.state.preferences),
+      ),
+    );
+    final cubit = context
+        .read<WorkspaceSearchStore>()
+        .cubitFor(widget.workspace.workspaceId);
+    for (var attempt = 0; attempt < 75 && mounted; attempt++) {
+      if (cubit.queryFocusNode.canRequestFocus) {
+        cubit.queryFocusNode.requestFocus();
+        break;
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 20));
     }
   }
 

@@ -21,6 +21,7 @@ import '../../models/workspace_topology.dart';
 import '../../services/commands/command_bus.dart';
 import '../../services/commands/command_ids.dart';
 import '../../services/file_tree/workspace_file_tree_store.dart';
+import '../../services/search/workspace_search_store.dart';
 import '../../services/home_workspace/home_closed_workspaces_store.dart';
 import '../../services/home_workspace/home_open_workspaces_store.dart';
 import '../../services/home_workspace/home_recent_workspaces_store.dart';
@@ -366,6 +367,7 @@ class _HomeShellState extends State<HomeShell> {
     context.read<WorkspaceRunRegistry>().removeScope(tab.tabKey);
 
     context.read<WorkspaceFileTreeStore>().removeWorkspace(tab.workspaceId);
+    context.read<WorkspaceSearchStore>().removeWorkspace(tab.workspaceId);
     context.read<WorkspaceWorktreeRegistry>().removeWorkspace(tab.workspaceId);
 
     if (running == 0) {

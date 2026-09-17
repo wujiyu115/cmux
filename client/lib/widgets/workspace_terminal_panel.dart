@@ -1002,7 +1002,6 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
         );
         terminalBody = TerminalFindShortcuts(
           findVisible: _findVisible,
-          onToggleFind: _openFind,
           onFindNext: () => activeEntry.controller.searchNext(),
           onFindPrevious: () => activeEntry.controller.searchPrev(),
           onCloseFind: _closeFind,

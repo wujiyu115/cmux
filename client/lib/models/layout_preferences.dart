@@ -15,6 +15,10 @@ enum WorkspaceEntryMode { home, lastWorkspace }
 enum MarkdownOpenMode { preview, source, remember }
 
 /// How the Source Control panel lists changed files.
+/// When dirty editor buffers save automatically: never, 1s after the last
+/// keystroke, or when the pane loses the active tab.
+enum EditorAutoSaveMode { off, afterDelay, focusChange }
+
 enum GitChangesViewMode { tree, flat }
 
 /// Dropdown value for language preference: `system` | `en` | `zh`.
@@ -52,6 +56,7 @@ class LayoutPreferences {
     this.appRailVisible = true,
     this.fileTreeVisible = true,
     this.gitVisible = true,
+    this.searchVisible = true,
     this.rightToolsVisible = true,
     this.sidebarVisible = true,
     this.rightToolsWidth = defaultRightToolsWidth,
@@ -75,6 +80,8 @@ class LayoutPreferences {
     this.markdownOpenMode = MarkdownOpenMode.preview,
     this.editorPreviewTabs = true,
     this.gitChangesViewMode = GitChangesViewMode.tree,
+    this.editorWordWrap = false,
+    this.editorAutoSave = EditorAutoSaveMode.off,
   });
 
   factory LayoutPreferences.fromJson(Map<String, Object?> json) {
@@ -89,6 +96,7 @@ class LayoutPreferences {
       appRailVisible: json['appRailVisible'] as bool? ?? true,
       fileTreeVisible: json['fileTreeVisible'] as bool? ?? true,
       gitVisible: json['gitVisible'] as bool? ?? true,
+      searchVisible: json['searchVisible'] as bool? ?? true,
       rightToolsVisible: json['rightToolsVisible'] as bool? ?? true,
       sidebarVisible: json['sidebarVisible'] as bool? ?? true,
       rightToolsWidth: _doubleValue(
@@ -148,6 +156,10 @@ class LayoutPreferences {
       gitChangesViewMode:
           _enumValue(GitChangesViewMode.values, json['gitChangesViewMode']) ??
           GitChangesViewMode.tree,
+      editorWordWrap: json['editorWordWrap'] as bool? ?? false,
+      editorAutoSave:
+          _enumValue(EditorAutoSaveMode.values, json['editorAutoSave']) ??
+          EditorAutoSaveMode.off,
     ).withAtLeastOneToolVisible();
   }
 
@@ -181,6 +193,7 @@ class LayoutPreferences {
   final bool appRailVisible;
   final bool fileTreeVisible;
   final bool gitVisible;
+  final bool searchVisible;
   final bool rightToolsVisible;
   final bool sidebarVisible;
   final double rightToolsWidth;
@@ -233,6 +246,12 @@ class LayoutPreferences {
   /// Source Control panel.
   final GitChangesViewMode gitChangesViewMode;
 
+  /// Soft-wrap long lines in the code editor instead of horizontal scrolling.
+  final bool editorWordWrap;
+
+  /// When dirty editor buffers save automatically.
+  final EditorAutoSaveMode editorAutoSave;
+
   LayoutPreferences copyWith({
     LayoutPreset? preset,
     WorkspaceEntryMode? workspaceEntryMode,
@@ -240,6 +259,7 @@ class LayoutPreferences {
     bool? appRailVisible,
     bool? fileTreeVisible,
     bool? gitVisible,
+    bool? searchVisible,
     bool? rightToolsVisible,
     bool? sidebarVisible,
     double? rightToolsWidth,
@@ -263,6 +283,8 @@ class LayoutPreferences {
     MarkdownOpenMode? markdownOpenMode,
     bool? editorPreviewTabs,
     GitChangesViewMode? gitChangesViewMode,
+    bool? editorWordWrap,
+    EditorAutoSaveMode? editorAutoSave,
   }) {
     return LayoutPreferences(
       preset: preset ?? this.preset,
@@ -272,6 +294,7 @@ class LayoutPreferences {
       appRailVisible: appRailVisible ?? this.appRailVisible,
       fileTreeVisible: fileTreeVisible ?? this.fileTreeVisible,
       gitVisible: gitVisible ?? this.gitVisible,
+      searchVisible: searchVisible ?? this.searchVisible,
       rightToolsVisible: rightToolsVisible ?? this.rightToolsVisible,
       sidebarVisible: sidebarVisible ?? this.sidebarVisible,
       rightToolsWidth: (rightToolsWidth ?? this.rightToolsWidth).clamp(
@@ -333,11 +356,13 @@ class LayoutPreferences {
       markdownOpenMode: markdownOpenMode ?? this.markdownOpenMode,
       editorPreviewTabs: editorPreviewTabs ?? this.editorPreviewTabs,
       gitChangesViewMode: gitChangesViewMode ?? this.gitChangesViewMode,
+      editorWordWrap: editorWordWrap ?? this.editorWordWrap,
+      editorAutoSave: editorAutoSave ?? this.editorAutoSave,
     ).withAtLeastOneToolVisible();
   }
 
   LayoutPreferences withAtLeastOneToolVisible() {
-    if (fileTreeVisible) return this;
+    if (fileTreeVisible || gitVisible || searchVisible) return this;
     return LayoutPreferences(
       preset: preset,
       workspaceEntryMode: workspaceEntryMode,
@@ -345,6 +370,7 @@ class LayoutPreferences {
       appRailVisible: appRailVisible,
       fileTreeVisible: true,
       gitVisible: gitVisible,
+      searchVisible: searchVisible,
       rightToolsVisible: rightToolsVisible,
       sidebarVisible: sidebarVisible,
       rightToolsWidth: rightToolsWidth,
@@ -368,6 +394,8 @@ class LayoutPreferences {
       markdownOpenMode: markdownOpenMode,
       editorPreviewTabs: editorPreviewTabs,
       gitChangesViewMode: gitChangesViewMode,
+      editorWordWrap: editorWordWrap,
+      editorAutoSave: editorAutoSave,
     );
   }
 
@@ -397,6 +425,7 @@ class LayoutPreferences {
       'appRailVisible': appRailVisible,
       'fileTreeVisible': fileTreeVisible,
       'gitVisible': gitVisible,
+      'searchVisible': searchVisible,
       'rightToolsVisible': rightToolsVisible,
       'sidebarVisible': sidebarVisible,
       'rightToolsWidth': rightToolsWidth,
@@ -420,6 +449,8 @@ class LayoutPreferences {
       'markdownOpenMode': markdownOpenMode.name,
       'editorPreviewTabs': editorPreviewTabs,
       'gitChangesViewMode': gitChangesViewMode.name,
+      'editorWordWrap': editorWordWrap,
+      'editorAutoSave': editorAutoSave.name,
     };
   }
 }

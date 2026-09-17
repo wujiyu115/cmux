@@ -142,7 +142,6 @@ class _ChatWorkbenchRunningTerminalState
       onFocusChange: _setContentFindClaim,
       child: TerminalFindShortcuts(
         findVisible: widget.findVisible,
-        onToggleFind: () => widget.onFindVisibleChanged(true),
         onFindNext: () {
           widget.terminalController.searchNext();
           widget.onControllerSearchChanged();

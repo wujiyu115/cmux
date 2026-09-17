@@ -118,12 +118,14 @@ class _TerminalFindBarState extends State<TerminalFindBar> {
   }
 }
 
-/// Keyboard shortcuts for terminal find (Ctrl+Shift+F, F3, Escape).
+/// Keyboard shortcuts for terminal find (F3, Escape). Ctrl+Shift+F was
+/// removed: the chord belongs to the app-level search-in-files command now;
+/// terminal find stays reachable via Mod+F (contentFind claim) while the
+/// terminal has focus.
 class TerminalFindShortcuts extends StatelessWidget {
   const TerminalFindShortcuts({
     required this.child,
     required this.findVisible,
-    required this.onToggleFind,
     required this.onFindNext,
     required this.onFindPrevious,
     required this.onCloseFind,
@@ -132,7 +134,6 @@ class TerminalFindShortcuts extends StatelessWidget {
 
   final Widget child;
   final bool findVisible;
-  final VoidCallback onToggleFind;
   final VoidCallback onFindNext;
   final VoidCallback onFindPrevious;
   final VoidCallback onCloseFind;
@@ -141,11 +142,6 @@ class TerminalFindShortcuts extends StatelessWidget {
   Widget build(BuildContext context) {
     return Shortcuts(
       shortcuts: <ShortcutActivator, Intent>{
-        const SingleActivator(
-          LogicalKeyboardKey.keyF,
-          control: true,
-          shift: true,
-        ): const _TerminalFindToggleIntent(),
         const SingleActivator(LogicalKeyboardKey.f3):
             const _TerminalFindNextIntent(),
         const SingleActivator(LogicalKeyboardKey.f3, shift: true):
@@ -155,16 +151,6 @@ class TerminalFindShortcuts extends StatelessWidget {
       },
       child: Actions(
         actions: <Type, Action<Intent>>{
-          _TerminalFindToggleIntent: CallbackAction<_TerminalFindToggleIntent>(
-            onInvoke: (_) {
-              if (findVisible) {
-                onCloseFind();
-              } else {
-                onToggleFind();
-              }
-              return null;
-            },
-          ),
           _TerminalFindNextIntent: CallbackAction<_TerminalFindNextIntent>(
             onInvoke: (_) {
               if (findVisible) onFindNext();
@@ -189,10 +175,6 @@ class TerminalFindShortcuts extends StatelessWidget {
       ),
     );
   }
-}
-
-class _TerminalFindToggleIntent extends Intent {
-  const _TerminalFindToggleIntent();
 }
 
 class _TerminalFindNextIntent extends Intent {

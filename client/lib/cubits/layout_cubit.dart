@@ -62,12 +62,14 @@ class LayoutCubit extends Cubit<LayoutState> {
     required bool appRailVisible,
     required bool fileTreeVisible,
     bool? gitVisible,
+    bool? searchVisible,
   }) {
     return _save(
       state.preferences.copyWith(
         appRailVisible: appRailVisible,
         fileTreeVisible: fileTreeVisible,
         gitVisible: gitVisible,
+        searchVisible: searchVisible,
       ),
     );
   }
@@ -222,4 +224,10 @@ class LayoutCubit extends Cubit<LayoutState> {
 
   Future<void> setGitChangesViewMode(GitChangesViewMode mode) =>
       _save(state.preferences.copyWith(gitChangesViewMode: mode));
+
+  Future<void> setEditorWordWrap(bool enabled) =>
+      _save(state.preferences.copyWith(editorWordWrap: enabled));
+
+  Future<void> setEditorAutoSave(EditorAutoSaveMode mode) =>
+      _save(state.preferences.copyWith(editorAutoSave: mode));
 }

@@ -91,6 +91,32 @@ abstract final class CommandCatalog {
       terminalPassthrough: true,
       titleL10nKey: 'shortcutsEditorGotoLine',
     ),
+    // Editor go-to-symbol (VSCode-style Ctrl/Cmd+Shift+O); claimed by the
+    // focused editor pane, silent no-op while no editor owns focus.
+    CommandDefinition(
+      id: CommandIds.editorGotoSymbol,
+      category: CommandCategory.navigation,
+      defaultChords: [
+        KeyChord(key: 'o', mods: [KeyChordMod.mod, KeyChordMod.shift]),
+      ],
+      when: ShortcutWhen.hasWorkspace,
+      terminalPassthrough: true,
+      titleL10nKey: 'shortcutsEditorGotoSymbol',
+    ),
+    // Workspace-wide content search (VSCode-style Ctrl/Cmd+Shift+F). Owned
+    // by the app shell: opens the right-tools search view on the active
+    // workspace. Takes over the terminal's legacy literal-Ctrl+Shift+F
+    // binding (remapped to a no-op in the terminal shortcuts map).
+    CommandDefinition(
+      id: CommandIds.searchInFiles,
+      category: CommandCategory.navigation,
+      defaultChords: [
+        KeyChord(key: 'f', mods: [KeyChordMod.mod, KeyChordMod.shift]),
+      ],
+      when: ShortcutWhen.hasWorkspace,
+      terminalPassthrough: true,
+      titleL10nKey: 'shortcutsSearchInFiles',
+    ),
 
     // Workbench strip tabs
     CommandDefinition(

@@ -9,11 +9,13 @@ import '../../cubits/file_tree_cubit.dart';
 import '../../cubits/worktree_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../services/storage/runtime_context.dart';
+import '../../services/search/workspace_search_store.dart';
 import '../../services/workspace/workspace_tools_scope.dart';
 import '../../utils/workspace/workspace_path_utils.dart';
 import '../git/git_source_control_panel.dart';
 import 'file_tree_panel.dart';
 import 'right_tools_tool_preferences.dart';
+import 'search_panel.dart';
 import 'tabbed_panel.dart';
 import 'tool_view.dart';
 
@@ -192,8 +194,34 @@ class _RightToolsToolViewsState extends State<RightToolsToolViews> {
       );
     }
 
+    if (widget.preferences.searchVisible) {
+      views.add(
+        ToolView(
+          icon: Icons.search,
+          label: l10n.searchInFilesLabel,
+          child: SearchPanel(
+            key: const ValueKey('workspace-search'),
+            cubit: context.read<WorkspaceSearchStore>().cubitFor(
+              widget.workspaceId,
+            ),
+            workspaceId: widget.workspaceId,
+          ),
+        ),
+      );
+    }
+
     return views;
   }
+}
+
+/// Index of the search view in [_buildViews]' output — keep in sync with the
+/// view order above (file tree, source control, search). The Ctrl+Shift+F
+/// command switches the tabbed panel to this index.
+int rightToolsSearchViewIndex(RightToolsToolPreferences preferences) {
+  var index = 0;
+  if (preferences.fileTreeVisible) index++;
+  if (preferences.gitVisible) index++;
+  return index;
 }
 
 /// Current-worktree branch label above the tool tabs. Subscribes to

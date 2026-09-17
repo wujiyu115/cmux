@@ -14,19 +14,25 @@ class LayoutRegionVisibilitySection extends StatelessWidget {
     final l10n = context.l10n;
     final controller = context.read<LayoutCubit>();
 
-    return BlocSelector<LayoutCubit, LayoutState, (bool, bool)>(
+    return BlocSelector<LayoutCubit, LayoutState, (bool, bool, bool)>(
       selector: (state) => (
         state.preferences.fileTreeVisible,
         state.preferences.gitVisible,
+        state.preferences.searchVisible,
       ),
       builder: (context, visibility) {
-        final (fileTreeVisible, gitVisible) = visibility;
+        final (fileTreeVisible, gitVisible, searchVisible) = visibility;
 
-        void setVisibility({bool? fileTreeVisible, bool? gitVisible}) {
+        void setVisibility({
+          bool? fileTreeVisible,
+          bool? gitVisible,
+          bool? searchVisible,
+        }) {
           controller.setRegionVisibility(
             appRailVisible: true,
             fileTreeVisible: fileTreeVisible ?? visibility.$1,
             gitVisible: gitVisible ?? visibility.$2,
+            searchVisible: searchVisible ?? visibility.$3,
           );
         }
 
@@ -50,6 +56,16 @@ class LayoutRegionVisibilitySection extends StatelessWidget {
               trailing: Switch(
                 value: gitVisible,
                 onChanged: (value) => setVisibility(gitVisible: value),
+              ),
+              showDividerBelow: true,
+            ),
+            TpPreferenceRow(
+              title: l10n.searchInFilesLabel,
+              subtitle: l10n.visibilitySearchHint,
+              trailing: Switch(
+                key: AppKeys.searchVisibilitySwitch,
+                value: searchVisible,
+                onChanged: (value) => setVisibility(searchVisible: value),
               ),
               showDividerBelow: false,
             ),

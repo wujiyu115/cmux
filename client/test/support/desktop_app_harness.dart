@@ -28,9 +28,14 @@ import 'package:teampilot/repositories/ssh_known_host_repository.dart';
 import 'package:teampilot/repositories/ssh_profile_repository.dart';
 import 'package:teampilot/router/app_router.dart';
 import 'package:teampilot/services/app/connection_mode_service.dart';
+import 'package:teampilot/cubits/search_cubit.dart';
 import 'package:teampilot/services/commands/command_bus.dart';
 import 'package:teampilot/services/commands/quick_open_command_registrar.dart';
 import 'package:teampilot/services/commands/run_command_registrar.dart';
+import 'package:teampilot/services/commands/search_in_files_command_registrar.dart';
+import 'package:teampilot/services/quick_open/quick_open_prewarm.dart';
+import 'package:teampilot/services/search/workspace_search_service.dart';
+import 'package:teampilot/services/search/workspace_search_store.dart';
 import 'package:teampilot/services/file_tree/workspace_file_tree_store.dart';
 import 'package:teampilot/services/git/git_command_runner.dart';
 import 'package:teampilot/services/git/git_repo_store.dart';
@@ -190,6 +195,18 @@ Widget buildTestApp({
       ),
       RepositoryProvider<QuickOpenHost>(
         create: (_) => QuickOpenHost(),
+      ),
+      RepositoryProvider<WorkspaceSearchStore>(
+        create: (_) => WorkspaceSearchStore(
+          cubitFactory: () => SearchCubit(
+            service: WorkspaceSearchService(
+              indexRegistry: sharedQuickOpenIndexRegistry,
+            ),
+          ),
+        ),
+      ),
+      RepositoryProvider<SearchHost>(
+        create: (_) => SearchHost(),
       ),
     ],
     child: MultiBlocProvider(

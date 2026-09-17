@@ -212,6 +212,96 @@ abstract class AppLocalizations {
   /// **'Show the source control panel for the current repository.'**
   String get visibilityGitHint;
 
+  /// No description provided for @visibilitySearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Show the search tool in the right tools panel.'**
+  String get visibilitySearchHint;
+
+  /// No description provided for @searchInFilesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get searchInFilesLabel;
+
+  /// No description provided for @searchQueryPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get searchQueryPlaceholder;
+
+  /// No description provided for @searchPathFilterPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter paths (e.g. lib/)'**
+  String get searchPathFilterPlaceholder;
+
+  /// No description provided for @searchCaseSensitiveTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Match Case'**
+  String get searchCaseSensitiveTooltip;
+
+  /// No description provided for @searchWholeWordTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Match Whole Word'**
+  String get searchWholeWordTooltip;
+
+  /// No description provided for @searchUseRegexTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Use Regular Expression'**
+  String get searchUseRegexTooltip;
+
+  /// No description provided for @searchIncludePlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Include (glob, e.g. *.dart)'**
+  String get searchIncludePlaceholder;
+
+  /// No description provided for @searchExcludePlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Exclude (glob, e.g. build/**)'**
+  String get searchExcludePlaceholder;
+
+  /// No description provided for @searchResultsSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} results in {files} files'**
+  String searchResultsSummary(int count, int files);
+
+  /// No description provided for @searchTruncated.
+  ///
+  /// In en, this message translates to:
+  /// **'Results truncated — refine the query'**
+  String get searchTruncated;
+
+  /// No description provided for @searchNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No results'**
+  String get searchNoResults;
+
+  /// No description provided for @searchScanning.
+  ///
+  /// In en, this message translates to:
+  /// **'Searching…'**
+  String get searchScanning;
+
+  /// No description provided for @searchInvalidRegex.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid regular expression'**
+  String get searchInvalidRegex;
+
+  /// No description provided for @searchBuiltinEngineNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'ripgrep not found — using the built-in scan (slower)'**
+  String get searchBuiltinEngineNotice;
+
   /// No description provided for @themeModeTitle.
   ///
   /// In en, this message translates to:
@@ -469,6 +559,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'On: single-click opens reuse one preview tab. Off: every open gets its own tab.'**
   String get editorPreviewTabsDescription;
+
+  /// No description provided for @editorWordWrap.
+  ///
+  /// In en, this message translates to:
+  /// **'Word Wrap'**
+  String get editorWordWrap;
+
+  /// No description provided for @editorWordWrapTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Word wrap'**
+  String get editorWordWrapTitle;
+
+  /// No description provided for @editorWordWrapDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Soft-wrap long lines instead of horizontal scrolling.'**
+  String get editorWordWrapDescription;
+
+  /// No description provided for @editorAutoSaveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto save'**
+  String get editorAutoSaveTitle;
+
+  /// No description provided for @editorAutoSaveDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'When dirty editor buffers save automatically.'**
+  String get editorAutoSaveDescription;
+
+  /// No description provided for @editorAutoSaveOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get editorAutoSaveOff;
+
+  /// No description provided for @editorAutoSaveAfterDelay.
+  ///
+  /// In en, this message translates to:
+  /// **'After delay'**
+  String get editorAutoSaveAfterDelay;
+
+  /// No description provided for @editorAutoSaveFocusChange.
+  ///
+  /// In en, this message translates to:
+  /// **'On tab switch'**
+  String get editorAutoSaveFocusChange;
 
   /// No description provided for @themePresetGraphite.
   ///
@@ -2119,6 +2257,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Go to Line'**
   String get editorGotoLineTitle;
+
+  /// No description provided for @editorGotoSymbolTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Symbol'**
+  String get editorGotoSymbolTitle;
+
+  /// No description provided for @editorGotoSymbolHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter symbols…'**
+  String get editorGotoSymbolHint;
+
+  /// No description provided for @editorGotoSymbolNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No symbols found in this file.'**
+  String get editorGotoSymbolNone;
 
   /// No description provided for @editorGotoLineRangeHint.
   ///
@@ -4321,6 +4477,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Go to Line in Editor'**
   String get shortcutsEditorGotoLine;
+
+  /// No description provided for @shortcutsEditorGotoSymbol.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Symbol in Editor'**
+  String get shortcutsEditorGotoSymbol;
+
+  /// No description provided for @shortcutsSearchInFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Search in Files'**
+  String get shortcutsSearchInFiles;
 
   /// No description provided for @quickOpenSearchHint.
   ///

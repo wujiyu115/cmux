@@ -59,8 +59,23 @@ class TeampilotAlacrittyTerminal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final shortcutCubit = context.watch<ShortcutCubit>();
+    // Remap the terminal's default literal-Ctrl+Shift+F (ToggleSearchIntent,
+    // never wired in this app) to a stop-propagation no-op, then merge the
+    // command-bus overlay. The app-level `workbench.searchInFiles` command
+    // (Mod+Shift+F) now owns the chord — on macOS the two never collide
+    // (Cmd vs literal Ctrl), but the remap still blocks the 0x06 control
+    // byte that a removed entry would newly encode into the PTY. The
+    // overlay contributes its own Mod+Shift+F entry for the same reason;
+    // `SingleActivator` has identity equality, so a plain spread cannot
+    // replace the default entry in place.
+    final baseShortcuts = <ShortcutActivator, Intent>{
+      for (final entry in defaultTerminalShortcuts.entries)
+        entry.key: entry.value is ToggleSearchIntent
+            ? const DoNothingAndStopPropagationIntent()
+            : entry.value,
+    };
     final terminalShortcuts = <ShortcutActivator, Intent>{
-      ...defaultTerminalShortcuts,
+      ...baseShortcuts,
       ...terminalPassthroughShortcutOverlay(
         effectiveByCommand: shortcutCubit.effective,
         isMacOS: defaultIsMacOS(),

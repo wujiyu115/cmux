@@ -66,6 +66,53 @@ class AppLocalizationsZh extends AppLocalizations {
   String get visibilityGitHint => '显示当前仓库的源代码管理面板。';
 
   @override
+  String get visibilitySearchHint => '在右侧工具面板中显示搜索工具。';
+
+  @override
+  String get searchInFilesLabel => '搜索';
+
+  @override
+  String get searchQueryPlaceholder => '搜索';
+
+  @override
+  String get searchPathFilterPlaceholder => '路径过滤（如 lib/）';
+
+  @override
+  String get searchCaseSensitiveTooltip => '区分大小写';
+
+  @override
+  String get searchWholeWordTooltip => '全字匹配';
+
+  @override
+  String get searchUseRegexTooltip => '使用正则表达式';
+
+  @override
+  String get searchIncludePlaceholder => '包含（glob，如 *.dart）';
+
+  @override
+  String get searchExcludePlaceholder => '排除（glob，如 build/**）';
+
+  @override
+  String searchResultsSummary(int count, int files) {
+    return '$files 个文件中共 $count 个结果';
+  }
+
+  @override
+  String get searchTruncated => '结果已截断，请缩小搜索范围';
+
+  @override
+  String get searchNoResults => '无结果';
+
+  @override
+  String get searchScanning => '搜索中…';
+
+  @override
+  String get searchInvalidRegex => '正则表达式无效';
+
+  @override
+  String get searchBuiltinEngineNotice => '未找到 ripgrep，使用内置扫描（较慢）';
+
+  @override
   String get themeModeTitle => '主题模式';
 
   @override
@@ -195,6 +242,30 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get editorPreviewTabsDescription =>
       '开启：单击打开的文件复用同一个预览标签页。关闭：每次打开都固定为独立标签页。';
+
+  @override
+  String get editorWordWrap => '自动换行';
+
+  @override
+  String get editorWordWrapTitle => '自动换行';
+
+  @override
+  String get editorWordWrapDescription => '长行软换行，代替水平滚动。';
+
+  @override
+  String get editorAutoSaveTitle => '自动保存';
+
+  @override
+  String get editorAutoSaveDescription => '编辑器有未保存修改时何时自动保存。';
+
+  @override
+  String get editorAutoSaveOff => '关闭';
+
+  @override
+  String get editorAutoSaveAfterDelay => '延迟保存';
+
+  @override
+  String get editorAutoSaveFocusChange => '切换标签页时';
 
   @override
   String get themePresetGraphite => '石墨';
@@ -1064,6 +1135,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get editorGotoLineTitle => '跳转到行';
+
+  @override
+  String get editorGotoSymbolTitle => '跳转到符号';
+
+  @override
+  String get editorGotoSymbolHint => '过滤符号…';
+
+  @override
+  String get editorGotoSymbolNone => '此文件中未找到符号。';
 
   @override
   String editorGotoLineRangeHint(int total) {
@@ -2239,6 +2319,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get shortcutsEditorGotoLine => '跳转到编辑器行号';
+
+  @override
+  String get shortcutsEditorGotoSymbol => '跳转到编辑器符号';
+
+  @override
+  String get shortcutsSearchInFiles => '在文件中搜索';
 
   @override
   String get quickOpenSearchHint => '搜索会话或文件…';

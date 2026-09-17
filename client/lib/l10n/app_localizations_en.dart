@@ -70,6 +70,55 @@ class AppLocalizationsEn extends AppLocalizations {
       'Show the source control panel for the current repository.';
 
   @override
+  String get visibilitySearchHint =>
+      'Show the search tool in the right tools panel.';
+
+  @override
+  String get searchInFilesLabel => 'Search';
+
+  @override
+  String get searchQueryPlaceholder => 'Search';
+
+  @override
+  String get searchPathFilterPlaceholder => 'Filter paths (e.g. lib/)';
+
+  @override
+  String get searchCaseSensitiveTooltip => 'Match Case';
+
+  @override
+  String get searchWholeWordTooltip => 'Match Whole Word';
+
+  @override
+  String get searchUseRegexTooltip => 'Use Regular Expression';
+
+  @override
+  String get searchIncludePlaceholder => 'Include (glob, e.g. *.dart)';
+
+  @override
+  String get searchExcludePlaceholder => 'Exclude (glob, e.g. build/**)';
+
+  @override
+  String searchResultsSummary(int count, int files) {
+    return '$count results in $files files';
+  }
+
+  @override
+  String get searchTruncated => 'Results truncated — refine the query';
+
+  @override
+  String get searchNoResults => 'No results';
+
+  @override
+  String get searchScanning => 'Searching…';
+
+  @override
+  String get searchInvalidRegex => 'Invalid regular expression';
+
+  @override
+  String get searchBuiltinEngineNotice =>
+      'ripgrep not found — using the built-in scan (slower)';
+
+  @override
   String get themeModeTitle => 'Theme mode';
 
   @override
@@ -208,6 +257,32 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get editorPreviewTabsDescription =>
       'On: single-click opens reuse one preview tab. Off: every open gets its own tab.';
+
+  @override
+  String get editorWordWrap => 'Word Wrap';
+
+  @override
+  String get editorWordWrapTitle => 'Word wrap';
+
+  @override
+  String get editorWordWrapDescription =>
+      'Soft-wrap long lines instead of horizontal scrolling.';
+
+  @override
+  String get editorAutoSaveTitle => 'Auto save';
+
+  @override
+  String get editorAutoSaveDescription =>
+      'When dirty editor buffers save automatically.';
+
+  @override
+  String get editorAutoSaveOff => 'Off';
+
+  @override
+  String get editorAutoSaveAfterDelay => 'After delay';
+
+  @override
+  String get editorAutoSaveFocusChange => 'On tab switch';
 
   @override
   String get themePresetGraphite => 'Graphite';
@@ -1108,6 +1183,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get editorGotoLineTitle => 'Go to Line';
+
+  @override
+  String get editorGotoSymbolTitle => 'Go to Symbol';
+
+  @override
+  String get editorGotoSymbolHint => 'Filter symbols…';
+
+  @override
+  String get editorGotoSymbolNone => 'No symbols found in this file.';
 
   @override
   String editorGotoLineRangeHint(int total) {
@@ -2315,6 +2399,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shortcutsEditorGotoLine => 'Go to Line in Editor';
+
+  @override
+  String get shortcutsEditorGotoSymbol => 'Go to Symbol in Editor';
+
+  @override
+  String get shortcutsSearchInFiles => 'Search in Files';
 
   @override
   String get quickOpenSearchHint => 'Search sessions or files…';

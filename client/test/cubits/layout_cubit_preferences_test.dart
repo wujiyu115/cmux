@@ -196,6 +196,45 @@ void main() {
     });
   });
 
+  test('setEditorWordWrap persists and reloads', () async {
+    final prefs = await SharedPreferences.getInstance();
+    final cubit = LayoutCubit(repository: LayoutRepository(prefs));
+    await cubit.load();
+    expect(cubit.state.preferences.editorWordWrap, isFalse);
+
+    await cubit.setEditorWordWrap(true);
+    expect(cubit.state.preferences.editorWordWrap, isTrue);
+
+    final reloaded = LayoutCubit(repository: LayoutRepository(prefs));
+    await reloaded.load();
+    expect(reloaded.state.preferences.editorWordWrap, isTrue);
+  });
+
+  test('setEditorAutoSave persists and reloads', () async {
+    final prefs = await SharedPreferences.getInstance();
+    final cubit = LayoutCubit(repository: LayoutRepository(prefs));
+    await cubit.load();
+    expect(cubit.state.preferences.editorAutoSave, EditorAutoSaveMode.off);
+
+    await cubit.setEditorAutoSave(EditorAutoSaveMode.afterDelay);
+    expect(
+      cubit.state.preferences.editorAutoSave,
+      EditorAutoSaveMode.afterDelay,
+    );
+
+    final reloaded = LayoutCubit(repository: LayoutRepository(prefs));
+    await reloaded.load();
+    expect(
+      reloaded.state.preferences.editorAutoSave,
+      EditorAutoSaveMode.afterDelay,
+    );
+    // Unknown JSON value falls back to off.
+    expect(
+      LayoutPreferences.fromJson(const {'editorAutoSave': 'nope'}).editorAutoSave,
+      EditorAutoSaveMode.off,
+    );
+  });
+
   test('AppTypographyScale px model pins mono independent of UI size', () {
     const scale = AppTypographyScale(multiplier: 1.2, monoPx: 15);
     expect(scale.mono, 15);

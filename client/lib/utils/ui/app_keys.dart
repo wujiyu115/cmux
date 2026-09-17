@@ -18,6 +18,7 @@ class AppKeys {
     'workspace-chat-landing-back-button',
   );
   static const fileTreeVisibilitySwitch = Key('file-tree-visibility-switch');
+  static const searchVisibilitySwitch = Key('search-visibility-switch');
   static const openExistingSessionStartsTerminalSwitch = Key(
     'open-existing-session-starts-terminal-switch',
   );

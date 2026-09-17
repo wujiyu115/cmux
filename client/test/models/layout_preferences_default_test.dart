@@ -341,4 +341,50 @@ void main() {
       isFalse,
     );
   });
+
+  test('searchVisible defaults on and round-trips', () {
+    expect(const LayoutPreferences().searchVisible, isTrue);
+    expect(LayoutPreferences.fromJson(const {}).searchVisible, isTrue);
+    final off = const LayoutPreferences().copyWith(searchVisible: false);
+    expect(off.searchVisible, isFalse);
+    expect(
+      LayoutPreferences.fromJson(off.toJson()).searchVisible,
+      isFalse,
+    );
+    expect(
+      LayoutPreferences.fromJson(const {'searchVisible': false}).searchVisible,
+      isFalse,
+    );
+  });
+
+  test('editorWordWrap defaults off and round-trips', () {
+    expect(const LayoutPreferences().editorWordWrap, isFalse);
+    expect(LayoutPreferences.fromJson(const {}).editorWordWrap, isFalse);
+    final on = const LayoutPreferences().copyWith(editorWordWrap: true);
+    expect(on.editorWordWrap, isTrue);
+    expect(
+      LayoutPreferences.fromJson(on.toJson()).editorWordWrap,
+      isTrue,
+    );
+    expect(
+      LayoutPreferences.fromJson(const {'editorWordWrap': true}).editorWordWrap,
+      isTrue,
+    );
+  });
+
+  test('withAtLeastOneToolVisible: search alone satisfies the contract', () {
+    // Only search visible → nothing force-shown, contract intact.
+    final prefs = const LayoutPreferences().copyWith(
+      fileTreeVisible: false,
+      gitVisible: false,
+    );
+    expect(prefs.fileTreeVisible, isFalse);
+    expect(prefs.gitVisible, isFalse);
+    expect(prefs.searchVisible, isTrue);
+
+    // Everything off → the fallback force-shows the file tree.
+    final forced = const LayoutPreferences()
+        .copyWith(fileTreeVisible: false, gitVisible: false, searchVisible: false);
+    expect(forced.fileTreeVisible, isTrue);
+  });
 }

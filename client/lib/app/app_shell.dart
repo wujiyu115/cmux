@@ -20,6 +20,7 @@ import '../services/agent_status/agent_hook_install_service.dart';
 import '../services/notification/agent_attention_notification_service.dart';
 import '../services/editor_platform/editor_platform.dart';
 import '../cubits/notification_cubit.dart';
+import '../cubits/search_cubit.dart';
 import '../cubits/command_log_cubit.dart';
 import '../cubits/shortcut_cubit.dart';
 import '../cubits/editor_cubit.dart';
@@ -30,6 +31,7 @@ import '../services/workbench/workbench_strip_navigator.dart';
 import '../services/editor/markdown_view_mode_store.dart';
 import '../cubits/config_cubit.dart';
 import '../cubits/layout_cubit.dart';
+import '../models/layout_preferences.dart';
 import '../cubits/workspace_groups_cubit.dart';
 import '../cubits/workspace_tools_cubit.dart';
 import '../cubits/session_preferences_cubit.dart';
@@ -76,6 +78,7 @@ import '../services/cli/toolchain_executable_discovery.dart';
 import '../services/commands/command_bus.dart';
 import '../services/commands/layout_command_registrar.dart';
 import '../services/commands/quick_open_command_registrar.dart';
+import '../services/commands/search_in_files_command_registrar.dart';
 import '../services/commands/run_command_registrar.dart';
 import '../services/commands/session_command_registrar.dart';
 import '../services/commands/shortcuts_ui_commands.dart';
@@ -106,6 +109,9 @@ import '../widgets/ssh/ssh_host_key_prompt_dialog.dart';
 import '../services/ssh/ssh_profile_connection_coordinator.dart';
 import '../services/terminal/terminal_transport_factory.dart';
 import '../services/file_tree/workspace_file_tree_store.dart';
+import '../services/quick_open/quick_open_prewarm.dart';
+import '../services/search/workspace_search_service.dart';
+import '../services/search/workspace_search_store.dart';
 import '../services/git/git_repo_store.dart';
 import '../services/git/git_service.dart';
 import '../models/git_status.dart';
@@ -182,6 +188,8 @@ class AppShell {
     required this.workspaceChromeCommands,
     required this.runCommandHost,
     required this.quickOpenHost,
+    required this.workspaceSearchStore,
+    required this.searchHost,
   });
   final HomeWorkspaceUiCache homeWorkspaceUiCache;
   final HomeTargetController homeTargetController;
@@ -236,6 +244,8 @@ class AppShell {
   final WorkspaceChromeCommands workspaceChromeCommands;
   final RunCommandHost runCommandHost;
   final QuickOpenHost quickOpenHost;
+  final WorkspaceSearchStore workspaceSearchStore;
+  final SearchHost searchHost;
 }
 
 Future<AppShell> buildAppShell({
@@ -458,10 +468,20 @@ Future<AppShell> buildAppShell({
   final workspaceChromeCommands = WorkspaceChromeCommands();
   final runCommandHost = RunCommandHost();
   final quickOpenHost = QuickOpenHost();
+  final workspaceSearchService = WorkspaceSearchService(
+    indexRegistry: sharedQuickOpenIndexRegistry,
+    sshProfiles: sshProfileRepo,
+    sshClientFactory: sshClientFactory,
+  );
+  final workspaceSearchStore = WorkspaceSearchStore(
+    cubitFactory: () => SearchCubit(service: workspaceSearchService),
+  );
+  final searchHost = SearchHost();
   registerShortcutsUiCommands(commandBus);
   registerCommandPaletteCommand(commandBus);
   registerRunCommands(commandBus, runCommandHost);
   registerQuickOpenCommands(commandBus, quickOpenHost);
+  registerSearchInFilesCommand(commandBus, searchHost);
 
   final transportFactory = TerminalTransportFactory(
     sshProfileRepository: sshProfileRepo,
@@ -808,7 +828,9 @@ Future<AppShell> buildAppShell({
     boot('bootstrapAppData complete');
   }
 
-  editorCubit = EditorCubit();
+  editorCubit = EditorCubit(
+    autoSaveMode: () => layoutCubit.state.preferences.editorAutoSave,
+  );
   // Fire-and-forget: warm the common tree-sitter grammars so the first file
   // open paints colored instead of cold. Never blocks app start.
   unawaited(EditorPlatform.bootstrap());
@@ -1294,6 +1316,8 @@ Future<AppShell> buildAppShell({
     workspaceChromeCommands: workspaceChromeCommands,
     runCommandHost: runCommandHost,
     quickOpenHost: quickOpenHost,
+    workspaceSearchStore: workspaceSearchStore,
+    searchHost: searchHost,
   );
 }
 

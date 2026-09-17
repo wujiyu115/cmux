@@ -308,6 +308,44 @@ class LayoutAppearanceInLayoutSection extends StatelessWidget {
                     ),
                     onChanged: controller.setEditorPreviewTabs,
                   ),
+                  showDividerBelow: true,
+                ),
+                TpPreferenceRow(
+                  title: l10n.editorWordWrapTitle,
+                  subtitle: l10n.editorWordWrapDescription,
+                  trailing: Switch(
+                    value: context.select<LayoutCubit, bool>(
+                      (c) => c.state.preferences.editorWordWrap,
+                    ),
+                    onChanged: controller.setEditorWordWrap,
+                  ),
+                  showDividerBelow: true,
+                ),
+                TpPreferenceRow(
+                  title: l10n.editorAutoSaveTitle,
+                  subtitle: l10n.editorAutoSaveDescription,
+                  trailing: TpCompactSelect<EditorAutoSaveMode>(
+                    value: context.select<LayoutCubit, EditorAutoSaveMode>(
+                      (c) => c.state.preferences.editorAutoSave,
+                    ),
+                    entries: [
+                      (
+                        EditorAutoSaveMode.off,
+                        l10n.editorAutoSaveOff,
+                      ),
+                      (
+                        EditorAutoSaveMode.afterDelay,
+                        l10n.editorAutoSaveAfterDelay,
+                      ),
+                      (
+                        EditorAutoSaveMode.focusChange,
+                        l10n.editorAutoSaveFocusChange,
+                      ),
+                    ],
+                    onChanged: (v) {
+                      if (v != null) controller.setEditorAutoSave(v);
+                    },
+                  ),
                   showDividerBelow: false,
                 ),
               ],
