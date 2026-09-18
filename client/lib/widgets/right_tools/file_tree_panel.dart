@@ -12,7 +12,6 @@ import 'package:teampilot/widgets/app_toast/app_toast.dart';
 
 import '../../cubits/file_tree_cubit.dart';
 import '../../cubits/workbench/workbench_cubit.dart';
-import '../../cubits/workbench/workbench_tab.dart';
 
 import '../../l10n/l10n_extensions.dart';
 import '../../services/file_tree/file_tree_visible_rows.dart';
@@ -98,10 +97,16 @@ class _FileTreePanelState extends State<FileTreePanel> {
     final active = context.read<WorkbenchCubit>().activeTabId(
       widget.workspaceId,
     );
-    if (active == null || active.kind != WorkbenchTabKind.file) return;
+    if (active == null) return;
+
+    // File tabs reveal their own path; diff tabs (Source Control, File↔Diff
+    // toggle) reveal the underlying file — it lives on disk and in the tree
+    // even though the tab shows a diff.
+    final filePath = active.filePath ?? active.diffAbsolutePath;
+    if (filePath == null) return;
 
     _filterController.clear();
-    final ok = await _cubit.revealPath(active.id);
+    final ok = await _cubit.revealPath(filePath);
     if (!mounted) return;
     if (!ok) {
       AppToast.show(

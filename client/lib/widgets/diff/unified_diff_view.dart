@@ -15,6 +15,7 @@ import '../../theme/workspace_surface_layers.dart';
 import 'diff_overview_ruler.dart';
 import 'diff_view_controller.dart';
 import 'side_by_side_diff_view.dart' show diffColorsFor;
+import 'diff_find_bar.dart';
 
 /// Single-column unified diff renderer: context lines plus removed/added lines
 /// (modify rows render as an old line then a new line), with the same line bands
@@ -42,6 +43,7 @@ class UnifiedDiffView extends StatefulWidget {
 class _UnifiedDiffViewState extends State<UnifiedDiffView> {
   late final CodeLineEditingController _controller;
   late final CodeScrollController _scroll;
+  late final CodeFindController _findController;
   late List<DiffRow> _rows;
   late UnifiedPane _pane;
   double _lineHeightCache = 16;
@@ -59,6 +61,7 @@ class _UnifiedDiffViewState extends State<UnifiedDiffView> {
     super.initState();
     _build();
     _controller = CodeLineEditingController.fromText(_pane.text);
+    _findController = CodeFindController(_controller);
     _scroll = CodeScrollController();
     widget.controller?.addListener(_onNavigate);
     _publishChangeCount();
@@ -159,6 +162,7 @@ class _UnifiedDiffViewState extends State<UnifiedDiffView> {
     widget.controller?.removeListener(_onNavigate);
     _controller.dispose();
     _scroll.dispose();
+    _findController.dispose();
     // Invalidate any in-flight _openSession() so it discards rather than
     // setState()s on a disposed widget.
     _sessionGeneration++;
@@ -190,6 +194,9 @@ class _UnifiedDiffViewState extends State<UnifiedDiffView> {
           child: CodeEditor(
             controller: _controller,
             scrollController: _scroll,
+            findController: _findController,
+            findBuilder: (context, controller, readOnly) =>
+                DiffFindBar(controller: controller),
             readOnly: true,
             showCursorWhenReadOnly: false,
             wordWrap: false,

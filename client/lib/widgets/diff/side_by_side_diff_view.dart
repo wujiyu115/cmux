@@ -15,6 +15,7 @@ import '../../theme/workspace_surface_layers.dart';
 import 'diff_overview_ruler.dart';
 import 'diff_ribbon_painter.dart';
 import 'diff_view_controller.dart';
+import 'diff_find_bar.dart';
 
 /// IDEA-style two-pane diff renderer: aligned old/new code with
 /// add/remove/modify line bands, inline char highlights, syntax coloring,
@@ -49,6 +50,7 @@ class SideBySideDiffView extends StatefulWidget {
 class _SideBySideDiffViewState extends State<SideBySideDiffView> {
   late final CodeLineEditingController _leftController;
   late final CodeLineEditingController _rightController;
+  late final CodeFindController _findController;
   late final CodeScrollController _leftScroll;
   late final CodeScrollController _rightScroll;
 
@@ -74,6 +76,7 @@ class _SideBySideDiffViewState extends State<SideBySideDiffView> {
     _texts = buildDiffPaneTexts(_result.rows);
     _leftController = CodeLineEditingController.fromText(_texts.leftText);
     _rightController = CodeLineEditingController.fromText(_texts.rightText);
+    _findController = CodeFindController(_rightController);
     _leftScroll = CodeScrollController();
     _rightScroll = CodeScrollController();
     _leftScroll.verticalScroller.addListener(_syncFromLeft);
@@ -257,6 +260,7 @@ class _SideBySideDiffViewState extends State<SideBySideDiffView> {
             numbers: _texts.rightNumbers,
             style: rightStyle,
             session: _rightSession,
+            findController: _findController,
           ),
         ),
         DiffOverviewRuler(
@@ -315,12 +319,18 @@ class _SideBySideDiffViewState extends State<SideBySideDiffView> {
     required List<int?> numbers,
     required CodeEditorStyle style,
     required DocumentSession? session,
+    CodeFindController? findController,
   }) {
     return CodeEditor(
       controller: controller,
       scrollController: scroll,
       readOnly: true,
       showCursorWhenReadOnly: false,
+      findController: findController,
+      findBuilder: findController == null
+          ? null
+          : (context, controller, readOnly) =>
+                DiffFindBar(controller: controller),
       wordWrap: false,
       style: style,
       lineDecorations: decorations,

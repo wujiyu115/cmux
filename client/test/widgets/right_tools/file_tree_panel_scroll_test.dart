@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_ui/shared_ui.dart';
 import 'package:teampilot/cubits/file_tree_cubit.dart';
 import 'package:teampilot/cubits/workbench/workbench_cubit.dart';
+import 'package:teampilot/cubits/workbench/workbench_tab.dart';
 import 'package:teampilot/l10n/app_localizations.dart';
 import 'package:teampilot/services/workspace/workspace_tools_scope.dart';
 import 'package:teampilot/widgets/right_tools/file_tree_panel.dart';
@@ -172,6 +173,41 @@ void main() {
     expect(rowRect.top, greaterThanOrEqualTo(listRect.top));
     expect(rowRect.bottom, lessThanOrEqualTo(listRect.bottom));
     // Scroll-into-view consumed the pending reveal.
+    expect(cubit.state.revealPath, isNull);
+    await cubit.close();
+    await workbench.close();
+  });
+
+  // Regression: the reveal button skipped diff tabs (Source Control opens
+  // files as diff tabs), so the underlying file could never be located.
+  testWidgets('reveal button locates the file behind an active diff tab', (
+    tester,
+  ) async {
+    final cubit = await _warmCubit(_fs());
+    final workbench = WorkbenchCubit();
+    workbench.ensureTab(
+      'w1',
+      WorkbenchTabId.diff(
+        '/repo/file55.txt',
+        source: WorkbenchDiffSource.unstaged,
+      ),
+    );
+
+    await tester.pumpWidget(_host(cubit, workbench));
+    await tester.pump();
+    await tester.pump();
+
+    await tester.tap(find.byTooltip(lookupAppLocalizations(const Locale('en')).fileTreeRevealActiveFile));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(_listController(tester).offset, greaterThan(0));
+    final row = find.text('file55.txt');
+    expect(row, findsOneWidget);
+    final listRect = tester.getRect(find.byType(ListView));
+    final rowRect = tester.getRect(row);
+    expect(rowRect.top, greaterThanOrEqualTo(listRect.top));
+    expect(rowRect.bottom, lessThanOrEqualTo(listRect.bottom));
     expect(cubit.state.revealPath, isNull);
     await cubit.close();
     await workbench.close();

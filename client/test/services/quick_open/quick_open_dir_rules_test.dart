@@ -25,6 +25,18 @@ void main() {
       expect(rules.allowsUser('common/convertor/other/b.txt'), isFalse);
       expect(rules.allowsUser('README.md'), isTrue);
     });
+    test('include carves out the whole subtree, any depth', () {
+      final rules = QuickOpenDirRules(
+        WorkspaceIndexDirs(
+          excluded: ['common'],
+          included: ['common/convertor'],
+        ),
+      );
+      expect(rules.allowsUser('common/convertor/a.lua'), isTrue);
+      expect(rules.allowsUser('common/convertor/other/a.lua'), isTrue);
+      expect(rules.allowsUser('common/convertor/other/sub/a.lua'), isTrue);
+      expect(rules.allowsUser('common/other/a.lua'), isFalse);
+    });
 
     test('windows separators are tolerated', () {
       final rules = QuickOpenDirRules(
