@@ -135,4 +135,47 @@ void main() {
       expect(runner.calls.last, ['branch', '-d', '--', 'feat/x']);
     },
   );
+  test('old-git -z fallback is cached across polls', () async {
+    final runner = _OldGitFakeRunner();
+    final svc = GitWorktreeService(
+      runner: LocalGitCommandRunner(runner: runner.call),
+    );
+    await svc.list('/repo'); // First poll: -z fails, falls back.
+    await svc.list('/repo'); // Second poll: straight to the plain form.
+
+    expect(runner.zAttempts, 1, reason: 'only the first poll tries -z');
+    expect(runner.plainAttempts, 2);
+  });
+}
+
+/// Fake old git: `worktree list --porcelain -z` exits 129 with the usage
+/// error; the plain porcelain form works.
+class _OldGitFakeRunner {
+  int zAttempts = 0;
+  int plainAttempts = 0;
+
+  Future<ProcessResult> call(
+    String executable,
+    List<String> arguments, {
+    Encoding? stdoutEncoding,
+    Encoding? stderrEncoding,
+  }) async {
+    final cIdx = arguments.indexOf('-C');
+    if (cIdx < 0) return ProcessResult(0, 0, '/usr/bin/git\n', '');
+    final cmd = arguments.sublist(cIdx + 2);
+    if (cmd.contains('-z') && cmd.length >= 3 && cmd[0] == 'worktree' && cmd[1] == 'list') {
+      zAttempts++;
+      return ProcessResult(0, 129, '', "error: unknown switch `z'");
+    }
+    if (cmd.length >= 2 && cmd[0] == 'worktree' && cmd[1] == 'list') {
+      plainAttempts++;
+      return ProcessResult(
+        0,
+        0,
+        'worktree /repo\nHEAD abc\nbranch refs/heads/main\n',
+        '',
+      );
+    }
+    return ProcessResult(0, 0, '', '');
+  }
 }

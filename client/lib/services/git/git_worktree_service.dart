@@ -16,6 +16,11 @@ class GitWorktreeService {
 
   final GitCommandRunner _runner;
 
+  /// Whether `worktree list --porcelain -z` works on this runner's git.
+  /// Cached after the first "old git" fallback (git <2.36 rejects -z) so
+  /// periodic sidebar polling stops re-hitting the doomed invocation.
+  bool? _supportsZ;
+
   /// Parse `git worktree list --porcelain` output. [nulDelimited] for the
   /// `-z` form (fields NUL-delimited, records terminated by an extra NUL).
   static List<GitWorktree> parseWorktreeList(
@@ -110,6 +115,9 @@ class GitWorktreeService {
   /// default (e.g. non-git workspaces, or test/sandbox hosts where locating git
   /// raises a [ProcessException]).
   Future<List<GitWorktree>> list(String repoPath) async {
+    // Old git (<2.36) rejects -z; after one fallback the plain form is the
+    // steady-state invocation (avoids a wasted spawn + log noise per poll).
+    if (_supportsZ == false) return _listPlain(repoPath);
     try {
       final out = await _run(repoPath, [
         'worktree',
@@ -117,23 +125,28 @@ class GitWorktreeService {
         '--porcelain',
         '-z',
       ]);
+      _supportsZ = true;
       return parseWorktreeList(out, nulDelimited: true);
     } on GitException catch (e) {
-      // git <2.36 rejects -z; retry the plain form before giving up.
       if (_isUnknownZOption(e.message)) {
-        try {
-          final out = await _run(repoPath, ['worktree', 'list', '--porcelain']);
-          return parseWorktreeList(out, nulDelimited: false);
-        } on Object catch (e2) {
-          appLogger.d('[GitWorktree] list (no -z) failed for $repoPath: $e2');
-          return const [];
-        }
+        _supportsZ = false;
+        return _listPlain(repoPath);
       }
       appLogger.d('[GitWorktree] list failed for $repoPath: ${e.message}');
       return const [];
     } on Object catch (e) {
       // e.g. ProcessException when git cannot be spawned at all.
       appLogger.d('[GitWorktree] list errored for $repoPath: $e');
+      return const [];
+    }
+  }
+
+  Future<List<GitWorktree>> _listPlain(String repoPath) async {
+    try {
+      final out = await _run(repoPath, ['worktree', 'list', '--porcelain']);
+      return parseWorktreeList(out, nulDelimited: false);
+    } on Object catch (e) {
+      appLogger.d('[GitWorktree] list (no -z) failed for $repoPath: $e');
       return const [];
     }
   }
