@@ -89,19 +89,30 @@ class _FontSizeSettingState extends State<FontSizeSetting> {
         // centre-aligned field clipped '16' down to '1').
         SizedBox(
           width: 40,
-          child: TextField(
-            controller: _controller,
-            textAlign: TextAlign.center,
-            keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            style: TextStyle(color: cs.onSurface),
-            decoration: const InputDecoration(
-              isDense: true,
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.zero,
+          // Centered so the digit line box sits mid-height: the global input
+          // decoration theme's height constraint top-aligns the decorator
+          // content, leaving the ~18px digits visibly higher than the
+          // flanking −/+/px glyphs (7px at the default scale).
+          child: Center(
+            child: TextField(
+              controller: _controller,
+              textAlign: TextAlign.center,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              style: TextStyle(color: cs.onSurface),
+              decoration: const InputDecoration(
+                isDense: true,
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.zero,
+                // Override the global input theme's tight 32-height
+                // constraint: it top-aligns the decorator content, so the
+                // digit line box rides high inside the (now natural-height)
+                // field while Center pulls it to the row's midline.
+                constraints: BoxConstraints(minHeight: 0),
+              ),
+              onSubmitted: (_) => _commitInput(),
+              onEditingComplete: _commitInput,
             ),
-            onSubmitted: (_) => _commitInput(),
-            onEditingComplete: _commitInput,
           ),
         ),
         const SizedBox(width: 2),
