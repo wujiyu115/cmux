@@ -108,7 +108,10 @@ class RipgrepSearchEngine {
     );
   }
 
-  /// CLI args for one rg invocation (root paths appended by [search]).
+  /// CLI args for one rg invocation (root paths appended by [search]). The
+  /// pattern precedes `--` so rg never falls back to reading stdin (it does
+  /// when no pattern is given — a missing pattern made rg block forever on
+  /// the never-closed stdin pipe of the spawned process).
   List<String> buildRipgrepArguments(SearchQuery query) {
     final args = <String>[
       '--json',
@@ -127,7 +130,10 @@ class RipgrepSearchEngine {
     for (final glob in _splitPatterns(query.excludeGlobs)) {
       args..add('-g')..add('!${_rgGlob(glob)}');
     }
-    args.add('--');
+    // The pattern goes before `--`; roots (appended by [search]) stay path-only.
+    args
+      ..add(query.text)
+      ..add('--');
     return args;
   }
 }
@@ -140,6 +146,12 @@ List<String> _splitPatterns(String raw) => raw
 
 /// Maps our glob semantics onto rg's: a trailing `/` (directory prefix)
 /// becomes `dir/**` (rg does not treat a trailing slash as a prefix match).
+///
+/// No `**/` prefix: rg anchors slash-bearing globs at its cwd, and the
+/// caller sets cwd to the search root (`--cd`), so `common/**` means exactly
+/// "root's common/ subtree" — matching [SearchGlobSet]'s anchored semantics
+/// (and VS Code). A `**/` prefix would instead match same-named dirs at any
+/// depth, diverging from the built-in engine.
 String _rgGlob(String pattern) {
   if (pattern.length > 1 && pattern.endsWith('/')) {
     return '${pattern.substring(0, pattern.length - 1)}/**';
@@ -204,12 +216,6 @@ String searchDisplayPathFor(
   return absolutePath;
 }
 
-/// True when [posixNormalizedPath] passes the query's path filter.
-bool searchPathFilterMatches(SearchQuery query, String path) {
-  final filter = query.pathFilter.trim().toLowerCase();
-  if (filter.isEmpty) return true;
-  return path.toLowerCase().replaceAll(r'\', '/').contains(filter);
-}
 
 /// Accumulates parsed rg events into [SearchResults].
 class _RipgrepCollector {
@@ -261,8 +267,6 @@ class _RipgrepCollector {
     final line = text.endsWith('\n')
         ? text.substring(0, text.length - 1)
         : text;
-
-    if (!searchPathFilterMatches(query, path)) return;
 
     // Re-run the pattern locally: code-unit-accurate spans + immune to
     // rg-side byte-offset drift on non-ASCII lines.

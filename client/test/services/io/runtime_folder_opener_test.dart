@@ -56,7 +56,10 @@ void main() {
     final ok = await opener.reveal(path: '/cfg', workContext: ctx);
 
     expect(ok, isTrue);
-    expect(calls.single, ['wsl.exe', '-d', 'Ubuntu', 'xdg-open', '--', '/cfg']);
+    expect(
+      calls.single,
+      ['wsl.exe', '-d', 'Ubuntu', '--exec', 'xdg-open', '--', '/cfg'],
+    );
   });
 }
 

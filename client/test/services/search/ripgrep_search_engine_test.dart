@@ -106,27 +106,6 @@ void main() {
     expect(results.engine, SearchEngineKind.ripgrep);
   });
 
-  test('path filter drops non-matching files', () async {
-    handle = _FakeHandle([
-      _matchEvent('/repo/lib/a.dart', 1, 'foo\n'),
-      _matchEvent('/repo/test/b.dart', 1, 'foo\n'),
-    ]);
-    handle.finish(0);
-
-    const query = SearchQuery(text: 'foo', pathFilter: 'lib/');
-    final run = engine.search(
-      query: query,
-      pattern: query.compilePattern().pattern!,
-      targetId: 'local',
-      pathContext: pContext,
-      roots: ['/repo'],
-      workingDirectory: '/repo',
-    );
-    final results = await run.results;
-
-    expect(results.files.map((f) => f.displayPath), ['lib/a.dart']);
-  });
-
   test('non-primary root gets basename prefix; other target prefixed', () async {
     handle = _FakeHandle([
       _matchEvent('/other/src/x.dart', 1, 'foo\n'),
@@ -175,6 +154,8 @@ void main() {
     expect(lastArguments, contains('*.dart'));
     expect(lastArguments, contains('*.md'));
     expect(lastArguments, contains('!build/**'));
+    // Pattern precedes `--`; roots (path-only) follow it.
+    expect(lastArguments[lastArguments.indexOf('--') - 1], 'foo');
     expect(lastArguments.sublist(lastArguments.length - 2), [
       '/repo',
       '/repo2',

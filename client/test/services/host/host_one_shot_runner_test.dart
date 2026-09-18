@@ -80,11 +80,12 @@ void main() {
 
       expect(
         calls.single,
-        containsAll([
+        containsAllInOrder([
           '-d',
           'Ubuntu',
           '--cd',
           '/home/user/repo',
+          '--exec',
           'git',
           'status',
         ]),
