@@ -75,7 +75,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get searchQueryPlaceholder => '搜索';
 
   @override
-  String get searchPathFilterPlaceholder => '路径过滤（如 lib/）';
+  String get searchCollapseAllTooltip => '全部收起';
+
+  @override
+  String get searchExpandAllTooltip => '全部展开';
+
+  @override
+  String get searchRerunTooltip => '重新搜索';
 
   @override
   String get searchCaseSensitiveTooltip => '区分大小写';
@@ -105,6 +111,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get searchScanning => '搜索中…';
+
+  @override
+  String get searchCancelButton => '中止搜索';
 
   @override
   String get searchInvalidRegex => '正则表达式无效';

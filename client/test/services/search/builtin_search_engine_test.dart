@@ -83,18 +83,11 @@ void main() {
     expect(results.files.single.matches.single.snippet, contains('123'));
   });
 
-  test('path filter and include/exclude globs', () async {
+  test('include/exclude globs', () async {
     await fs.writeString('/repo/lib/a.dart', 'foo\n');
     await fs.writeString('/repo/test/a.dart', 'foo\n');
     await fs.writeString('/repo/lib/b.md', 'foo\n');
 
-    final filtered = await run(
-      const SearchQuery(text: 'foo', pathFilter: 'lib/'),
-    ).results;
-    expect(filtered.files.map((f) => f.displayPath), [
-      'lib/a.dart',
-      'lib/b.md',
-    ]);
 
     final included = await run(
       const SearchQuery(text: 'foo', includeGlobs: '*.dart'),

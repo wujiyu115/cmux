@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_ui/shared_ui.dart';
+import 'package:path/path.dart' as p;
+
 
 import '../../../cubits/editor_cubit.dart';
 import '../../../cubits/search_cubit.dart';
@@ -38,15 +40,14 @@ class SearchPanel extends StatefulWidget {
 
 class _SearchPanelState extends State<SearchPanel> {
   final _queryController = TextEditingController();
-  final _pathFilterController = TextEditingController();
   final _includeController = TextEditingController();
   final _excludeController = TextEditingController();
+  final _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _queryController.text = widget.cubit.state.query.text;
-    _pathFilterController.text = widget.cubit.state.query.pathFilter;
     _includeController.text = widget.cubit.state.query.includeGlobs;
     _excludeController.text = widget.cubit.state.query.excludeGlobs;
     widget.cubit.scopeResolver = _currentScope;
@@ -56,9 +57,9 @@ class _SearchPanelState extends State<SearchPanel> {
   void dispose() {
     widget.cubit.scopeResolver = null;
     _queryController.dispose();
-    _pathFilterController.dispose();
     _includeController.dispose();
     _excludeController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -111,12 +112,10 @@ class _SearchPanelState extends State<SearchPanel> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _buildQueryRow(context, cubit),
-                const SizedBox(height: 6),
-                _buildToggleRow(context, cubit, state),
+                _buildQueryRow(context, cubit, state),
                 const SizedBox(height: 6),
                 _buildFilterRows(context, cubit),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 Expanded(child: _buildBody(context, state)),
               ],
             ),
@@ -126,7 +125,12 @@ class _SearchPanelState extends State<SearchPanel> {
     );
   }
 
-  Widget _buildQueryRow(BuildContext context, SearchCubit cubit) {
+  /// Query input with the Aa / ab / .* toggles embedded at the right end
+  Widget _buildQueryRow(
+    BuildContext context,
+    SearchCubit cubit,
+    SearchState state,
+  ) {
     final l10n = context.l10n;
     return TextField(
       controller: _queryController,
@@ -135,81 +139,60 @@ class _SearchPanelState extends State<SearchPanel> {
         isDense: true,
         hintText: l10n.searchQueryPlaceholder,
         border: const OutlineInputBorder(),
+        suffixIcon: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _SearchToggle(
+              icon: Icons.sort_by_alpha,
+              tooltip: l10n.searchCaseSensitiveTooltip,
+              selected: state.query.caseSensitive,
+              onTap: cubit.toggleCaseSensitive,
+            ),
+            _SearchToggle(
+              icon: Icons.abc,
+              tooltip: l10n.searchWholeWordTooltip,
+              selected: state.query.wholeWord,
+              onTap: cubit.toggleWholeWord,
+            ),
+            _SearchToggle(
+              icon: Icons.code,
+              tooltip: l10n.searchUseRegexTooltip,
+              selected: state.query.useRegex,
+              onTap: cubit.toggleUseRegex,
+            ),
+          ],
+        ),
+        suffixIconConstraints: const BoxConstraints(minWidth: 0),
       ),
       onChanged: cubit.setQuery,
       onSubmitted: (_) => cubit.rerun(),
     );
   }
-
-  Widget _buildToggleRow(BuildContext context, SearchCubit cubit, SearchState state) {
-    final l10n = context.l10n;
-    return Row(
-      children: [
-        _SearchToggle(
-          icon: Icons.sort_by_alpha,
-          tooltip: l10n.searchCaseSensitiveTooltip,
-          selected: state.query.caseSensitive,
-          onTap: cubit.toggleCaseSensitive,
-        ),
-        _SearchToggle(
-          icon: Icons.abc,
-          tooltip: l10n.searchWholeWordTooltip,
-          selected: state.query.wholeWord,
-          onTap: cubit.toggleWholeWord,
-        ),
-        _SearchToggle(
-          icon: Icons.code,
-          tooltip: l10n.searchUseRegexTooltip,
-          selected: state.query.useRegex,
-          onTap: cubit.toggleUseRegex,
-        ),
-        const Spacer(),
-        _StatusLine(state: state),
-      ],
-    );
-  }
-
+  /// VS Code layout: the include/exclude inputs stack vertically (no
+  /// separate path-filter input — include globs cover that use case).
   Widget _buildFilterRows(BuildContext context, SearchCubit cubit) {
     final l10n = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         TextField(
-          controller: _pathFilterController,
+          controller: _includeController,
           decoration: InputDecoration(
             isDense: true,
-            hintText: l10n.searchPathFilterPlaceholder,
+            hintText: l10n.searchIncludePlaceholder,
             border: const OutlineInputBorder(),
           ),
-          onChanged: cubit.setPathFilter,
+          onChanged: cubit.setIncludeGlobs,
         ),
-        const SizedBox(height: 6),
-        Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _includeController,
-                decoration: InputDecoration(
-                  isDense: true,
-                  hintText: l10n.searchIncludePlaceholder,
-                  border: const OutlineInputBorder(),
-                ),
-                onChanged: cubit.setIncludeGlobs,
-              ),
-            ),
-            const SizedBox(width: 6),
-            Expanded(
-              child: TextField(
-                controller: _excludeController,
-                decoration: InputDecoration(
-                  isDense: true,
-                  hintText: l10n.searchExcludePlaceholder,
-                  border: const OutlineInputBorder(),
-                ),
-                onChanged: cubit.setExcludeGlobs,
-              ),
-            ),
-          ],
+        const SizedBox(height: 4),
+        TextField(
+          controller: _excludeController,
+          decoration: InputDecoration(
+            isDense: true,
+            hintText: l10n.searchExcludePlaceholder,
+            border: const OutlineInputBorder(),
+          ),
+          onChanged: cubit.setExcludeGlobs,
         ),
       ],
     );
@@ -221,72 +204,218 @@ class _SearchPanelState extends State<SearchPanel> {
       return _CenteredHint(text: l10n.searchInvalidRegex);
     }
     if (state.status == SearchStatus.running) {
-      return const Center(child: CircularProgressIndicator(strokeWidth: 2));
+      final cubit = context.read<SearchCubit>();
+      return Center(
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            const SizedBox(width: 12),
+            TpButton(
+              variant: TpButtonVariant.outline,
+              onPressed: cubit.cancel,
+              child: Text(l10n.searchCancelButton),
+            ),
+          ],
+        ),
+      );
     }
     final results = state.results;
-    if (results == null || results.files.isEmpty) {
-      if (state.status == SearchStatus.done) {
-        return _CenteredHint(text: l10n.searchNoResults);
-      }
-      return _CenteredHint(text: l10n.searchQueryPlaceholder);
+    if (state.status == SearchStatus.done) {
+      // Done: results list, or the no-results hint. Either way the summary
+      // row shows above — it carries the engine notice when ripgrep was
+      // unavailable, which must be visible even with zero results.
+      final cubit = context.read<SearchCubit>();
+      final empty = results == null || results.files.isEmpty;
+      return Column(
+        children: [
+          _ResultsSummaryRow(state: state, cubit: cubit),
+          if (empty)
+            Expanded(child: _CenteredHint(text: l10n.searchNoResults))
+          else ..._buildResultsList(state, results!, cubit),
+        ],
+      );
     }
+    return _CenteredHint(text: l10n.searchQueryPlaceholder);
+  }
+
+  List<Widget> _buildResultsList(
+    SearchState state,
+    SearchResults results,
+    SearchCubit cubit,
+  ) {
     final files = results.files;
     final rows = state.rows;
-    return Scrollbar(
-      thumbVisibility: true,
-      child: ListView.builder(
-        itemExtent: null,
-        scrollCacheExtent: ScrollCacheExtent.pixels(400),
-        itemCount: rows.length + 1,
-        itemBuilder: (context, index) {
-          if (index == rows.length) {
-            // Footer: truncation / engine notices.
-            return _ResultsFooter(results: results);
-          }
-          final row = rows[index];
-          return switch (row) {
-            SearchFileHeaderRow() => _FileHeaderRow(
-              row: row,
-              file: files[row.fileIndex],
-              onTap: () =>
-                  _openMatch(files[row.fileIndex], files[row.fileIndex].matches.first),
-            ),
-            SearchMatchRow() => _MatchRow(
-              row: row,
-              file: files[row.fileIndex],
-              onTap: () => _openMatch(files[row.fileIndex], row.match),
-            ),
-          };
-        },
+    return [
+      Expanded(
+        child: Scrollbar(
+          thumbVisibility: true,
+          controller: _scrollController,
+          child: ListView.builder(
+            controller: _scrollController,
+            itemExtent: null,
+            scrollCacheExtent: ScrollCacheExtent.pixels(400),
+            itemCount: rows.length + 1,
+            itemBuilder: (context, index) {
+              if (index == rows.length) {
+                // Footer: truncation / engine notices.
+                return _ResultsFooter(results: results);
+              }
+              final row = rows[index];
+              return switch (row) {
+                SearchFileHeaderRow() => _FileHeaderRow(
+                  row: row,
+                  file: files[row.fileIndex],
+                  collapsed: state.collapsedFiles.contains(
+                    files[row.fileIndex].absolutePath,
+                  ),
+                  onToggleCollapse: () => cubit.toggleFileCollapse(
+                    files[row.fileIndex].absolutePath,
+                  ),
+                  onTap: () => _openMatch(
+                    files[row.fileIndex],
+                    files[row.fileIndex].matches.first,
+                  ),
+                ),
+                SearchMatchRow() => _MatchRow(
+                  row: row,
+                  file: files[row.fileIndex],
+                  onTap: () => _openMatch(files[row.fileIndex], row.match),
+                ),
+              };
+            },
+          ),
+        ),
       ),
-    );
+    ];
   }
 }
 
-class _StatusLine extends StatelessWidget {
-  const _StatusLine({required this.state});
+/// VS Code-style summary row above the results: "N results in M files" on
+/// the left, action icon buttons on the right — a cancel (✕) while running,
+/// rerun (↻) + collapse-all toggle when done.
+class _ResultsSummaryRow extends StatelessWidget {
+  const _ResultsSummaryRow({required this.state, required this.cubit});
 
   final SearchState state;
+  final SearchCubit cubit;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
-    String? text;
-    if (state.status == SearchStatus.done && state.results != null) {
-      text = l10n.searchResultsSummary(
-        state.results!.totalMatches,
-        state.results!.files.length,
-      );
-    } else if (state.status == SearchStatus.running) {
-      text = l10n.searchScanning;
-    }
+    final results = state.results;
+    final text = switch (state.status) {
+      SearchStatus.running => l10n.searchScanning,
+      SearchStatus.done when results != null => l10n.searchResultsSummary(
+        results.totalMatches,
+        results.files.length,
+      ),
+      _ => null,
+    };
     if (text == null) return const SizedBox.shrink();
-    return Text(
-      text,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      style: TpTextStyles.of(context).xsColored(cs.onSurfaceVariant),
+    final allCollapsed = results != null &&
+        results.files.length > 1 &&
+        state.collapsedFiles.length >= results.files.length;
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 4),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  text,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TpTextStyles.of(context).xsColored(cs.onSurfaceVariant),
+                ),
+              ),
+              if (state.status == SearchStatus.running)
+                _SummaryIconButton(
+                  icon: Icons.close,
+                  tooltip: l10n.searchCancelButton,
+                  onTap: cubit.cancel,
+                )
+              else ...[
+                _SummaryIconButton(
+                  icon: allCollapsed
+                      ? Icons.unfold_more
+                      : Icons.unfold_less,
+                  tooltip: allCollapsed
+                      ? l10n.searchExpandAllTooltip
+                      : l10n.searchCollapseAllTooltip,
+                  onTap: () => cubit.toggleAllFilesCollapse(),
+                ),
+                _SummaryIconButton(
+                  icon: Icons.refresh,
+                  tooltip: l10n.searchRerunTooltip,
+                  onTap: cubit.rerun,
+                ),
+              ],
+            ],
+          ),
+        ),
+        // Engine notice: shown whatever the result count — "no ripgrep,
+        // built-in scan (slower)" is actionable info even with 0 matches.
+        if (results != null &&
+            results.engine == SearchEngineKind.builtin)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, size: 12, color: cs.tertiary),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    l10n.searchBuiltinEngineNotice,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TpTextStyles.of(
+                      context,
+                    ).xsColored(cs.onSurfaceVariant),
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _SummaryIconButton extends StatelessWidget {
+  const _SummaryIconButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(left: 4),
+      child: Tooltip(
+        message: tooltip,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(6),
+          child: SizedBox(
+            width: 26,
+            height: 26,
+            child: Icon(icon, size: 14, color: cs.onSurfaceVariant),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -300,10 +429,10 @@ class _ResultsFooter extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
+    // Engine notice moved to the summary row (visible with zero results);
+    // the footer keeps only truncation.
     final notices = <String>[
       if (results.truncated) l10n.searchTruncated,
-      if (results.engine == SearchEngineKind.builtin)
-        l10n.searchBuiltinEngineNotice,
     ];
     if (notices.isEmpty) return const SizedBox(height: 4);
     return Padding(
@@ -315,40 +444,75 @@ class _ResultsFooter extends StatelessWidget {
     );
   }
 }
-
+/// File group header (VS Code style): chevron + file name (semibold) +
+/// directory (dim, trailing) on one line, match count at the right edge.
+/// Tapping the chevron (or the row) toggles the file's match lines; tapping
+/// the name area opens the file at its first match.
 class _FileHeaderRow extends StatelessWidget {
-  const _FileHeaderRow({required this.row, required this.file, this.onTap});
+  const _FileHeaderRow({
+    required this.row,
+    required this.file,
+    required this.collapsed,
+    required this.onToggleCollapse,
+    this.onTap,
+  });
 
   final SearchFileHeaderRow row;
   final SearchFileResult file;
+  final bool collapsed;
+  final VoidCallback onToggleCollapse;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final styles = TpTextStyles.of(context);
+    final dir = p.posix.dirname(row.displayPath);
+    final name = p.posix.basename(row.displayPath);
     return InkWell(
-      onTap: onTap,
+      onTap: onToggleCollapse,
       child: SizedBox(
         height: 30,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 2),
           child: Row(
             children: [
-              Icon(Icons.description_outlined, size: 14, color: cs.primary),
-              const SizedBox(width: 6),
+              Icon(
+                collapsed ? Icons.chevron_right : Icons.expand_more,
+                size: 16,
+                color: cs.onSurfaceVariant,
+              ),
               Expanded(
-                child: Text(
-                  row.displayPath,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TpTextStyles.of(context).smSemibold,
+                child: InkWell(
+                  onTap: onTap,
+                  child: Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: styles.smSemibold,
+                        ),
+                      ),
+                      if (dir != '.') ...[
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            dir,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: styles.xsColored(cs.onSurfaceVariant),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
               ),
               Text(
                 '${row.matchCount}',
-                style: TpTextStyles.of(
-                  context,
-                ).xsColored(cs.onSurfaceVariant),
+                style: styles.xsColored(cs.onSurfaceVariant),
               ),
             ],
           ),
@@ -374,7 +538,7 @@ class _MatchRow extends StatelessWidget {
       child: SizedBox(
         height: 38,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 2),
+          padding: const EdgeInsets.only(left: 16),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -409,13 +573,16 @@ class _HighlightedSnippet extends StatelessWidget {
 
   final String snippet;
   final List<SearchMatchSpan> spans;
-
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final base = TpTextStyles.of(context).xs;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // VS Code-style highlight: a background fill (not a font-color change) so
+    // the hit stays visible regardless of the active theme's primary contrast.
     final highlight = base.copyWith(
-      color: cs.primary,
+      color: isDark ? const Color(0xFFFFE082) : const Color(0xFF6D4C00),
+      backgroundColor: isDark ? const Color(0xFF69511E) : const Color(0xFFFFE082),
       fontWeight: FontWeight.w600,
     );
     final children = <TextSpan>[];

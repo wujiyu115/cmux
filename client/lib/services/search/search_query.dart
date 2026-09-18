@@ -19,7 +19,6 @@ const int kSearchSnippetLength = 240;
 class SearchQuery extends Equatable {
   const SearchQuery({
     this.text = '',
-    this.pathFilter = '',
     this.caseSensitive = false,
     this.wholeWord = false,
     this.useRegex = false,
@@ -28,7 +27,6 @@ class SearchQuery extends Equatable {
   });
 
   final String text;
-  final String pathFilter;
   final bool caseSensitive;
   final bool wholeWord;
   final bool useRegex;
@@ -41,7 +39,6 @@ class SearchQuery extends Equatable {
 
   SearchQuery copyWith({
     String? text,
-    String? pathFilter,
     bool? caseSensitive,
     bool? wholeWord,
     bool? useRegex,
@@ -49,7 +46,6 @@ class SearchQuery extends Equatable {
     String? excludeGlobs,
   }) => SearchQuery(
     text: text ?? this.text,
-    pathFilter: pathFilter ?? this.pathFilter,
     caseSensitive: caseSensitive ?? this.caseSensitive,
     wholeWord: wholeWord ?? this.wholeWord,
     useRegex: useRegex ?? this.useRegex,
@@ -100,7 +96,6 @@ class SearchQuery extends Equatable {
   @override
   List<Object?> get props => [
     text,
-    pathFilter,
     caseSensitive,
     wholeWord,
     useRegex,

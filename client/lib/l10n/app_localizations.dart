@@ -230,11 +230,23 @@ abstract class AppLocalizations {
   /// **'Search'**
   String get searchQueryPlaceholder;
 
-  /// No description provided for @searchPathFilterPlaceholder.
+  /// No description provided for @searchCollapseAllTooltip.
   ///
   /// In en, this message translates to:
-  /// **'Filter paths (e.g. lib/)'**
-  String get searchPathFilterPlaceholder;
+  /// **'Collapse all'**
+  String get searchCollapseAllTooltip;
+
+  /// No description provided for @searchExpandAllTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Expand all'**
+  String get searchExpandAllTooltip;
+
+  /// No description provided for @searchRerunTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Search again'**
+  String get searchRerunTooltip;
 
   /// No description provided for @searchCaseSensitiveTooltip.
   ///
@@ -289,6 +301,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Searching…'**
   String get searchScanning;
+
+  /// No description provided for @searchCancelButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel search'**
+  String get searchCancelButton;
 
   /// No description provided for @searchInvalidRegex.
   ///

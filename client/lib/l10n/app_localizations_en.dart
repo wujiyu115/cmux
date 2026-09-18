@@ -80,7 +80,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get searchQueryPlaceholder => 'Search';
 
   @override
-  String get searchPathFilterPlaceholder => 'Filter paths (e.g. lib/)';
+  String get searchCollapseAllTooltip => 'Collapse all';
+
+  @override
+  String get searchExpandAllTooltip => 'Expand all';
+
+  @override
+  String get searchRerunTooltip => 'Search again';
 
   @override
   String get searchCaseSensitiveTooltip => 'Match Case';
@@ -110,6 +116,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get searchScanning => 'Searching…';
+
+  @override
+  String get searchCancelButton => 'Cancel search';
 
   @override
   String get searchInvalidRegex => 'Invalid regular expression';

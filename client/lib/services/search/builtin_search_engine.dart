@@ -11,8 +11,7 @@ import 'ripgrep_search_engine.dart'
     show
         SearchRunHandle,
         buildSearchMatch,
-        searchDisplayPathFor,
-        searchPathFilterMatches;
+        searchDisplayPathFor;
 
 /// Built-in scanner used when ripgrep is unavailable on a plane: enumerates
 /// candidates via the (gitignore-aware) quick-open index, reads files in
@@ -224,7 +223,6 @@ class _ScanState {
 /// Candidate filter: path filter + include/exclude globs (binary/size checks
 /// happen at read time).
 bool _accepts(SearchQuery query, QuickOpenFileEntry entry) {
-  if (!searchPathFilterMatches(query, entry.relativePath)) return false;
   final include = SearchGlobSet(query.includeGlobs);
   if (!include.isEmpty && !include.matches(entry.relativePath)) {
     return false;

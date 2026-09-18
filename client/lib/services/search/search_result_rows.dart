@@ -38,8 +38,13 @@ class SearchMatchRow extends SearchRow {
   List<Object?> get props => [fileIndex, match];
 }
 
-/// Builds the flat row list: one header per file followed by its match rows.
-List<SearchRow> buildSearchRows(SearchResults results) {
+/// Builds the flat row list: one header per file followed by its match rows —
+/// except for files in [collapsedFiles], whose match rows are omitted
+/// (VS Code-style per-file collapse). Headers always stay visible.
+List<SearchRow> buildSearchRows(
+  SearchResults results, {
+  Set<String> collapsedFiles = const {},
+}) {
   final rows = <SearchRow>[];
   for (var i = 0; i < results.files.length; i++) {
     final file = results.files[i];
@@ -50,6 +55,7 @@ List<SearchRow> buildSearchRows(SearchResults results) {
         fileIndex: i,
       ),
     );
+    if (collapsedFiles.contains(file.absolutePath)) continue;
     for (final match in file.matches) {
       rows.add(SearchMatchRow(fileIndex: i, match: match));
     }

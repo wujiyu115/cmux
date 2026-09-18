@@ -21,6 +21,7 @@ class SearchState extends Equatable {
     this.status = SearchStatus.idle,
     this.results,
     this.patternError,
+    this.collapsedFiles = const {},
   });
 
   final SearchQuery query;
@@ -32,6 +33,10 @@ class SearchState extends Equatable {
   /// Non-null when [query] is a regex that failed to compile.
   final String? patternError;
 
+  /// Result files whose match lines are collapsed away (VS Code-style
+  /// per-file collapse). Keyed by [SearchFileResult.absolutePath].
+  final Set<String> collapsedFiles;
+
   SearchState copyWith({
     SearchQuery? query,
     SearchStatus? status,
@@ -39,6 +44,8 @@ class SearchState extends Equatable {
     bool clearResults = false,
     String? patternError,
     bool clearPatternError = false,
+    Set<String>? collapsedFiles,
+    bool clearCollapsedFiles = false,
   }) => SearchState(
     query: query ?? this.query,
     status: status ?? this.status,
@@ -46,13 +53,23 @@ class SearchState extends Equatable {
     patternError: clearPatternError
         ? null
         : (patternError ?? this.patternError),
+    collapsedFiles: clearCollapsedFiles
+        ? const {}
+        : (collapsedFiles ?? this.collapsedFiles),
   );
 
   /// Flat rows for the results list (null while no results).
-  List<SearchRow> get rows => results == null ? const [] : buildSearchRows(results!);
+  List<SearchRow> get rows => results == null
+      ? const []
+      : buildSearchRows(results!, collapsedFiles: collapsedFiles);
 
-  @override
-  List<Object?> get props => [query, status, results, patternError];
+  List<Object?> get props => [
+    query,
+    status,
+    results,
+    patternError,
+    collapsedFiles,
+  ];
 }
 
 /// Per-workspace search controller. One instance per open workspace
@@ -78,10 +95,7 @@ class SearchCubit extends Cubit<SearchState> {
 
   SearchRunHandle? _activeRun;
   int _generation = 0;
-
   void setQuery(String text) => _updateQuery(state.query.copyWith(text: text));
-  void setPathFilter(String value) =>
-      _updateQuery(state.query.copyWith(pathFilter: value));
   void toggleCaseSensitive() =>
       _updateQuery(state.query.copyWith(caseSensitive: !state.query.caseSensitive));
   void toggleWholeWord() =>
@@ -95,7 +109,9 @@ class SearchCubit extends Cubit<SearchState> {
 
   void _updateQuery(SearchQuery query) {
     if (query == state.query) return;
-    emit(state.copyWith(query: query, clearResults: true));
+    emit(
+      state.copyWith(query: query, clearResults: true, clearCollapsedFiles: true),
+    );
     if (query.isEmpty) {
       Debounces.debounce(_debounceKey, Duration.zero, () {
         if (state.query.isEmpty) _setIdle();
@@ -146,6 +162,45 @@ class SearchCubit extends Cubit<SearchState> {
       _activeRun = null;
       emit(state.copyWith(status: SearchStatus.done, results: results));
     });
+  }
+
+  /// Cancels the active run and shows whatever was found so far (VS Code's
+  /// cancel semantics: partial results survive).
+  void cancel() {
+    if (state.status != SearchStatus.running) return;
+    final run = _activeRun;
+    if (run == null) return;
+    _generation++;
+    run.cancel();
+    _activeRun = null;
+    run.results.then((results) {
+      if (isClosed) return;
+      emit(state.copyWith(status: SearchStatus.done, results: results));
+    });
+  }
+
+  /// Toggles the per-file collapse of [path]'s match lines (VS Code style).
+  void toggleFileCollapse(String path) {
+    final next = Set<String>.of(state.collapsedFiles);
+    if (!next.add(path)) next.remove(path);
+    emit(state.copyWith(collapsedFiles: next));
+  }
+
+  /// Collapses every result file — or expands them all when already fully
+  /// collapsed (VS Code's collapse-all toggle).
+  void toggleAllFilesCollapse() {
+    final files = state.results?.files ?? const <SearchFileResult>[];
+    if (files.isEmpty) return;
+    final fullyCollapsed =
+        state.collapsedFiles.length >= files.length &&
+        files.every((f) => state.collapsedFiles.contains(f.absolutePath));
+    emit(
+      state.copyWith(
+        collapsedFiles: fullyCollapsed
+            ? const <String>{}
+            : {for (final f in files) f.absolutePath},
+      ),
+    );
   }
 
   /// Re-runs the current query immediately (scope changed / manual retry).
