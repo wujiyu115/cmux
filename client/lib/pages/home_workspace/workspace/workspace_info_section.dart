@@ -253,5 +253,6 @@ void _copyText(BuildContext context, String text) {
     context,
     message: context.l10n.pathCopied(text),
     variant: TpToastVariant.success,
+    record: false,
   );
 }

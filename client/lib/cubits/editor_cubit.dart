@@ -167,6 +167,13 @@ class _OpenFileHandle {
   /// Stable per-file identity for the [CodeEditor] element.
   final GlobalKey editorKey = GlobalKey(debugLabel: 'file-editor');
 
+  /// Keyboard focus node of the mounted code-editor pane. Pane-owned: the
+  /// pane registers it on mount and unregisters (identity-guarded) on
+  /// dispose; never disposed here. Lets open flows focus an already-active
+  /// file's editor; null while no code pane is mounted (tab inactive, still
+  /// loading, image, markdown preview).
+  FocusNode? codeFocusNode;
+
   /// Retained scroll anchors so the pane restores its viewport when the file
   /// tab is re-selected. Dies with the handle; deliberately outside [state] —
   /// scroll ticks must not republish editor state.
@@ -378,8 +385,39 @@ class EditorCubit extends Cubit<EditorState> {
   GlobalKey? editorKeyFor(String workspaceId, String path) =>
       _handles[_handleKey(workspaceId, path)]?.editorKey;
 
-  /// Loaded image bytes for an open preview tab, or null when not an image /
-  /// not open.
+  /// Registers the code-editor pane's focus node for this file (mounted
+  /// panes only). Identity-guarded so a disposing pane never clobbers a
+  /// later pane's registration.
+  void registerCodeFocusNode(
+    String workspaceId,
+    String path,
+    FocusNode node,
+  ) {
+    _handles[_handleKey(workspaceId, path)]?.codeFocusNode = node;
+  }
+
+  /// Unregisters [node] when it is still the registered node.
+  void unregisterCodeFocusNode(
+    String workspaceId,
+    String path,
+    FocusNode node,
+  ) {
+    final handle = _handles[_handleKey(workspaceId, path)];
+    if (handle?.codeFocusNode == node) handle?.codeFocusNode = null;
+  }
+
+  /// Focuses the mounted code-editor pane for this file, post-frame, so a
+  /// just-opening file's pane can receive focus the frame it mounts.
+  void focusCodeEditor(String workspaceId, String path) {
+    final node = _handles[_handleKey(workspaceId, path)]?.codeFocusNode;
+    if (node == null || !node.canRequestFocus) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (node.canRequestFocus && _handles[_handleKey(workspaceId, path)]?.codeFocusNode == node) {
+        node.requestFocus();
+      }
+    });
+  }
+
   Uint8List? bytesFor(String workspaceId, String path) =>
       _imageBytes[_handleKey(workspaceId, path)];
 

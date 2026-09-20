@@ -184,6 +184,7 @@ class LogViewerPanelState extends State<LogViewerPanel> {
       context,
       message: context.l10n.logViewerPathCopied(p.basename(path)),
       variant: TpToastVariant.success,
+      record: false,
     );
   }
 

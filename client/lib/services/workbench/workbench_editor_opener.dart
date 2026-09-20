@@ -41,6 +41,7 @@ class WorkbenchEditorOpener {
     String path, {
     Filesystem? fs,
     bool preview = true,
+    bool focus = true,
   }) async {
     final normalized = path.trim();
     if (normalized.isEmpty) return;
@@ -60,6 +61,7 @@ class WorkbenchEditorOpener {
     );
     _closeReplaced(workspaceId, replaced);
     await _editor.openFile(workspaceId, normalized, fs: fs);
+    if (focus) _editor.focusCodeEditor(workspaceId, normalized);
   }
 
   void openDiff({

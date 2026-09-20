@@ -106,4 +106,37 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 250));
   });
+
+  testWidgets('AppToast.show with record: false skips the notification list', (tester) async {
+    final recorder = _RecordingRecorder();
+    NotificationRecorder.install(recorder);
+
+    await tester.pumpWidget(
+      _harness(
+        child: Builder(
+          builder: (context) {
+            return TextButton(
+              onPressed: () => AppToast.show(
+                context,
+                message: 'Path copied: /repo/a.txt',
+                variant: TpToastVariant.success,
+                record: false,
+              ),
+              child: const Text('go'),
+            );
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('go'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+
+    expect(recorder.records, isEmpty);
+
+    TpToast.dismiss();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+  });
 }

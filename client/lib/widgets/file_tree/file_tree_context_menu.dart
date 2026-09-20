@@ -190,6 +190,7 @@ abstract final class FileTreeContextMenu {
             context,
             message: context.l10n.pathCopied(targetPath),
             variant: TpToastVariant.success,
+            record: false,
           );
         }
       case 'copy_relative_path':
@@ -200,6 +201,7 @@ abstract final class FileTreeContextMenu {
             context,
             message: context.l10n.pathCopied(relative),
             variant: TpToastVariant.success,
+            record: false,
           );
         }
       case 'search_scope':

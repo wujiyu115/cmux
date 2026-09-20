@@ -350,6 +350,7 @@ class _CodeEditorPane extends StatefulWidget {
 
 class _CodeEditorPaneState extends State<_CodeEditorPane> {
   final _menuOpen = ValueNotifier(false);
+  final FocusNode _focusNode = FocusNode(debugLabel: 'code-editor-pane');
 
   /// Find/replace state for this pane. Owned here (not by re-editor) so it
   /// survives editor rebuilds; re-editor only disposes controllers it created
@@ -368,6 +369,12 @@ class _CodeEditorPaneState extends State<_CodeEditorPane> {
   late final ScrollController _verticalScroller;
   late final ScrollController _horizontalScroller;
   late final CodeScrollController _scrollController;
+
+  /// Whether this pane already claimed focus in this mount. Focus-on-mount
+  /// only runs once: the pane mounts when its file tab becomes active, and a
+  /// later widget rebuild (word-wrap toggle, find panel opening) must not
+  /// steal focus from a surface the user focused meanwhile.
+  bool _claimedFocus = false;
 
   @override
   void initState() {
@@ -389,6 +396,39 @@ class _CodeEditorPaneState extends State<_CodeEditorPane> {
       verticalScroller: _verticalScroller,
       horizontalScroller: _horizontalScroller,
     );
+    _editor.registerCodeFocusNode(
+      widget.workspaceId,
+      widget.path,
+      _focusNode,
+    );
+  }
+
+  @override
+  void didUpdateWidget(_CodeEditorPane oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      // The same code pane is re-targeted at a different document: the
+      // registration must follow the new path.
+      _editor.unregisterCodeFocusNode(
+        oldWidget.workspaceId,
+        oldWidget.path,
+        _focusNode,
+      );
+      _editor.registerCodeFocusNode(
+        widget.workspaceId,
+        widget.path,
+        _focusNode,
+      );
+    }
+  }
+
+  void _claimFocusOnce() {
+    if (_claimedFocus) return;
+    _claimedFocus = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_focusNode.canRequestFocus) return;
+      _focusNode.requestFocus();
+    });
   }
 
   void _persistScroll() {
@@ -471,6 +511,11 @@ class _CodeEditorPaneState extends State<_CodeEditorPane> {
   void dispose() {
     _gotoLineDisposer?.call();
     _gotoSymbolDisposer?.call();
+    _editor.unregisterCodeFocusNode(
+      widget.workspaceId,
+      widget.path,
+      _focusNode,
+    );
     // focusChange auto-save: the pane unmounting means its file tab lost
     // the active slot.
     _editor.maybeSaveOnBlur(widget.workspaceId, widget.path);
@@ -483,11 +528,13 @@ class _CodeEditorPaneState extends State<_CodeEditorPane> {
     _horizontalScroller.dispose();
     _findController.dispose();
     _menuOpen.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    _claimFocusOnce();
     final editor = context.read<EditorCubit>();
     final codeEditor = CodeEditor(
       key:
@@ -495,6 +542,7 @@ class _CodeEditorPaneState extends State<_CodeEditorPane> {
           ValueKey(widget.path),
       controller: widget.controller,
       readOnly: widget.readOnly,
+      focusNode: _focusNode,
       findController: _findController,
       scrollController: _scrollController,
       findBuilder: (context, controller, readOnly) =>

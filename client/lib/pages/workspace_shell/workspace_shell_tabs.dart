@@ -506,6 +506,7 @@ class WorkspaceShellTabChipState extends State<WorkspaceShellTabChip> {
       context,
       message: context.l10n.pathCopied(value),
       variant: TpToastVariant.success,
+      record: false,
     );
   }
 

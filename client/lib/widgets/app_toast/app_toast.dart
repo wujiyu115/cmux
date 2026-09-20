@@ -10,12 +10,18 @@ abstract final class AppToast {
   static String? _lastGlobalMessage;
 
   /// Shows a toast when [context] is available.
+  ///
+  /// [record] controls whether a non-info toast is also persisted into the
+  /// notification center. Feedback-only confirmations (clipboard copies and
+  /// similar echo actions) pass `false`: the user just performed the action
+  /// and knows it — a notification-list entry is noise.
   static void show(
     BuildContext context, {
     required String message,
     TpToastVariant variant = TpToastVariant.info,
     TpToastAction? action,
     Duration? duration,
+    bool record = true,
   }) {
     final trimmed = message.trim();
     if (trimmed.isEmpty || !context.mounted) return;
@@ -26,6 +32,7 @@ abstract final class AppToast {
       variant: variant,
       action: action,
       duration: duration,
+      record: record,
     );
   }
 
@@ -36,6 +43,7 @@ abstract final class AppToast {
     TpToastAction? action,
     Duration? duration,
     bool deduplicate = true,
+    bool record = true,
   }) {
     final trimmed = message.trim();
     if (trimmed.isEmpty) return;
@@ -60,6 +68,7 @@ abstract final class AppToast {
       variant: variant,
       action: action,
       duration: duration,
+      record: record,
     );
   }
 
@@ -74,6 +83,7 @@ abstract final class AppToast {
     required TpToastVariant variant,
     TpToastAction? action,
     Duration? duration,
+    required bool record,
   }) {
     TpToast.show(
       context,
@@ -83,7 +93,7 @@ abstract final class AppToast {
       duration: duration,
     );
 
-    if (variant != TpToastVariant.info) {
+    if (record && variant != TpToastVariant.info) {
       NotificationRecorder.maybeCurrent?.record(
         message: message,
         variant: variant,
@@ -98,6 +108,7 @@ extension AppToastContext on BuildContext {
     TpToastVariant variant = TpToastVariant.info,
     TpToastAction? action,
     Duration? duration,
+    bool record = true,
   }) {
     AppToast.show(
       this,
@@ -105,6 +116,7 @@ extension AppToastContext on BuildContext {
       variant: variant,
       action: action,
       duration: duration,
+      record: record,
     );
   }
 }
