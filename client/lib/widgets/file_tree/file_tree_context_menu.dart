@@ -9,7 +9,12 @@ import 'package:teampilot/widgets/app_toast/app_toast.dart';
 
 import '../../cubits/chat_cubit.dart';
 import '../../cubits/file_tree_cubit.dart';
+import '../../cubits/git_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
+import '../../services/git/git_repo_store.dart';
+import '../../services/io/filesystem.dart';
+import '../../widgets/workbench/file_diff_surface_toggle.dart'
+    show gitCubitForAbsolutePath;
 import '../../models/workspace_index_dirs.dart';
 import '../../repositories/session_repository.dart';
 import '../../services/editor/file_editor_theme.dart';
@@ -102,6 +107,12 @@ abstract final class FileTreeContextMenu {
           value: 'copy_relative_path',
           icon: Icons.subdirectory_arrow_right_rounded,
           label: l10n.fileTreeCopyRelativePath,
+        ),
+      if (!isDirectory)
+        TpActionMenuSpec.item(
+          value: 'show_blame',
+          icon: Icons.history_outlined,
+          label: l10n.fileTabShowBlame,
         ),
       if (isDirectory && mount != null)
         TpActionMenuSpec.item(
@@ -204,6 +215,13 @@ abstract final class FileTreeContextMenu {
             record: false,
           );
         }
+      case 'show_blame':
+        await _toggleBlame(
+          context,
+          workspaceId: workspaceId,
+          targetPath: targetPath,
+          fs: cubit.fs,
+        );
       case 'search_scope':
         final sub = await showTpActionMenuFromSpecsAtTap<String>(
           context: context,
@@ -378,6 +396,60 @@ abstract final class FileTreeContextMenu {
         variant: TpToastVariant.error,
       );
     }
+  }
+
+  /// Toggles the workspace's blame bar from the file tree, then opens the
+  /// file in the editor so the bar lands somewhere visible. Turning on
+  /// verifies the file's folder is a git work tree first and toasts when it
+  /// is not — same behavior as the file tab context menu entry.
+  static Future<void> _toggleBlame(
+    BuildContext context, {
+    required String workspaceId,
+    required String targetPath,
+    required Filesystem fs,
+  }) async {
+    final store = context.read<GitRepoStore>();
+    final enabled = store.blameVisibleWorkspaces.value.contains(workspaceId);
+    if (!enabled) {
+      final git = gitCubitForAbsolutePath(context, targetPath);
+      final isRepo = git != null && await _ensureRepoStatus(git);
+      if (!context.mounted) return;
+      if (!isRepo) {
+        AppToast.show(
+          context,
+          message: context.l10n.blameNotGitRepo,
+          variant: TpToastVariant.error,
+        );
+        return;
+      }
+    }
+    store.toggleBlame(workspaceId);
+    // Open the file first so the blame bar that just turned on has a
+    // surface to mount on (the bar lives in FileEditorSurface).
+    await context.read<WorkbenchEditorOpener>().openFile(
+          workspaceId,
+          targetPath,
+          fs: fs,
+        );
+    if (!context.mounted) return;
+    AppToast.show(
+      context,
+      message: enabled ? context.l10n.blameDisabled : context.l10n.blameEnabled,
+      variant: TpToastVariant.success,
+      record: false,
+    );
+  }
+
+  /// Waits for the repo cubit's first status load when no git view warmed it.
+  static Future<bool> _ensureRepoStatus(GitCubit git) async {
+    if (git.state.repoRoot.isEmpty) return false;
+    if (git.state.status.isRepository) return true;
+    if (git.state.isLoading) {
+      await git.stream
+          .firstWhere((s) => !s.isLoading)
+          .timeout(const Duration(seconds: 3), onTimeout: () => git.state);
+    }
+    return git.state.status.isRepository;
   }
 
   static String _mapError(BuildContext context, String key) {
