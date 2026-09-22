@@ -1174,6 +1174,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get editorRedoEdit => 'Redo';
 
   @override
+  String get editorSendToAgent => 'Send to agent';
+
+  @override
+  String get editorCopyPathWithLines => 'Copy path with line numbers';
+
+  @override
+  String get agentReferenceSent => 'Reference sent to the active terminal';
+
+  @override
+  String get agentReferenceNoSession =>
+      'No running session terminal in this workspace';
+
+  @override
+  String get agentReferenceNoRoot =>
+      'This file is outside the workspace folders';
+
+  @override
+  String get agentReferenceCrossMachine =>
+      'This file lives on a different machine than the terminal';
+
+  @override
   String get editorRevertChanges => 'Revert changes';
 
   @override
@@ -1339,6 +1360,61 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fileTabReloadFromDisk => 'Refresh from disk';
+
+  @override
+  String get fileTabShowBlame => 'Show blame bar';
+
+  @override
+  String get blameEnabled => 'Blame bar enabled for this workspace';
+
+  @override
+  String get blameDisabled => 'Blame bar disabled';
+
+  @override
+  String get blameNotGitRepo =>
+      'This file\'s folder is not in a Git repository';
+
+  @override
+  String get blameNoHistory => 'No blame available for this line';
+
+  @override
+  String get blameNotCommittedYet => 'Not committed yet';
+
+  @override
+  String get blameUnknownAuthor => 'Unknown author';
+
+  @override
+  String get blameUnknownDate => 'unknown date';
+
+  @override
+  String blameLineSummary(String author, String ago, String subject) {
+    return '$author ($ago), $subject';
+  }
+
+  @override
+  String blameLineTooltip(
+    String hash,
+    String author,
+    String email,
+    String date,
+  ) {
+    return '$hash · $author <$email> · $date';
+  }
+
+  @override
+  String blameTimeDaysAgo(int days) {
+    return '$days d ago';
+  }
+
+  @override
+  String blameTimeMonthsAgo(int months) {
+    return '$months mo ago';
+  }
+
+  @override
+  String blameTimeYearsAgo(int years) {
+    return '$years y ago';
+  }
 
   @override
   String get fileTabReloadDone => 'File refreshed';

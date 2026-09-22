@@ -20,6 +20,7 @@ import '../../services/editor/file_editor_toolbar.dart';
 import '../../services/editor/markdown_view_mode_store.dart';
 import '../../services/editor_platform/document_session.dart';
 import '../../services/editor_platform/editor_viewport_token_binder.dart';
+import '../../services/git/git_repo_store.dart';
 import '../../services/workbench/workbench_editor_opener.dart';
 import '../../services/workspace/workspace_tools_scope.dart';
 import '../../theme/workspace_surface_layers.dart';
@@ -28,6 +29,7 @@ import '../../widgets/workbench/code_find_panel.dart';
 import '../../widgets/workbench/file_diff_surface_toggle.dart';
 import '../../widgets/workbench/markdown_view_mode_toggle.dart';
 import 'file_editor_image_preview.dart';
+import 'git_blame_bar.dart';
 import 'editor_goto_line_dialog.dart';
 import 'editor_symbol_sheet.dart';
 import 'markdown_preview_pane.dart';
@@ -73,6 +75,31 @@ class FileEditorSurface extends StatelessWidget {
             const Divider(height: 1),
             Expanded(
               child: _FileEditorBody(workspaceId: workspaceId, path: path),
+            ),
+            Builder(
+              builder: (context) {
+                // Same guard as canToggleDiff: lightweight harnesses mount
+                // the editor without WorkspaceToolsScope/GitRepoStore.
+                if (WorkspaceToolsScope.maybeOf(context) == null) {
+                  return const SizedBox.shrink();
+                }
+                final store = context.read<GitRepoStore>();
+                return ValueListenableBuilder<Set<String>>(
+                  valueListenable: store.blameVisibleWorkspaces,
+                  builder: (context, blameVisible, _) {
+                    final show = blameVisible.contains(workspaceId) &&
+                        gitCubitForAbsolutePath(context, path) != null;
+                    if (!show) return const SizedBox.shrink();
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Divider(height: 1),
+                        GitBlameBar(workspaceId: workspaceId, path: path),
+                      ],
+                    );
+                  },
+                );
+              },
             ),
           ],
         ),

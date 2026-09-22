@@ -1126,6 +1126,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get editorRedoEdit => '重做';
 
   @override
+  String get editorSendToAgent => '发送到 Agent';
+
+  @override
+  String get editorCopyPathWithLines => '复制路径与行号';
+
+  @override
+  String get agentReferenceSent => '引用已发送到当前终端';
+
+  @override
+  String get agentReferenceNoSession => '此工作区暂无运行中的会话终端';
+
+  @override
+  String get agentReferenceNoRoot => '此文件不在工作区目录内';
+
+  @override
+  String get agentReferenceCrossMachine => '此文件与终端不在同一台机器上';
+
+  @override
   String get editorRevertChanges => '撤销修改';
 
   @override
@@ -1288,6 +1306,60 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get fileTabReloadFromDisk => '从磁盘刷新';
+
+  @override
+  String get fileTabShowBlame => '显示 Blame 栏';
+
+  @override
+  String get blameEnabled => '已为本工作区启用 Blame 栏';
+
+  @override
+  String get blameDisabled => '已关闭 Blame 栏';
+
+  @override
+  String get blameNotGitRepo => '该文件所在目录不在 Git 仓库中';
+
+  @override
+  String get blameNoHistory => '此行没有 blame 信息';
+
+  @override
+  String get blameNotCommittedYet => '尚未提交';
+
+  @override
+  String get blameUnknownAuthor => '未知作者';
+
+  @override
+  String get blameUnknownDate => '未知日期';
+
+  @override
+  String blameLineSummary(String author, String ago, String subject) {
+    return '$author（$ago），$subject';
+  }
+
+  @override
+  String blameLineTooltip(
+    String hash,
+    String author,
+    String email,
+    String date,
+  ) {
+    return '$hash · $author <$email> · $date';
+  }
+
+  @override
+  String blameTimeDaysAgo(int days) {
+    return '$days 天前';
+  }
+
+  @override
+  String blameTimeMonthsAgo(int months) {
+    return '$months 个月前';
+  }
+
+  @override
+  String blameTimeYearsAgo(int years) {
+    return '$years 年前';
+  }
 
   @override
   String get fileTabReloadDone => '已从磁盘刷新';

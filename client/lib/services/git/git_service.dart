@@ -1,8 +1,9 @@
 import 'dart:convert';
 
+import '../../models/git_blame.dart';
 import '../../models/git_status.dart';
-import '../../utils/logging/logger.dart';
 import '../storage/runtime_context.dart';
+import '../../utils/logging/logger.dart';
 import 'git_command_runner.dart';
 
 export 'git_command_runner.dart'
@@ -354,9 +355,100 @@ class GitService {
         .toList();
   }
 
+  /// Per-line blame of [relativePath] at working-tree content
+  /// (`git blame --incremental`). Returns null when the file is not in a
+  /// work tree / not committed yet (git exits non-zero for unborn HEAD or
+  /// an untracked path); an empty list is never returned for a valid file.
+  ///
+  /// Uses the raw runner (not [_run]) because non-zero exit here means "no
+  /// blame available", not an error to surface.
+  Future<List<GitBlameEntry>?> blameFile(String dir, String relativePath) async {
+    if (!await isAvailable) return null;
+    final result = await _runner.runInDirectory(dir, [
+      '-c',
+      'i18n.logOutputEncoding=UTF-8',
+      'blame',
+      '--root',
+      '--incremental',
+      '--',
+      relativePath,
+    ]);
+    if (result.exitCode != 0) return null;
+    final entries = parseIncrementalBlame(result.stdout);
+    return entries.isEmpty ? null : entries;
+  }
+
   Future<void> checkout(String dir, String name) =>
       _run(dir, ['checkout', name]);
 
   Future<void> createBranch(String dir, String name) =>
       _run(dir, ['checkout', '-b', name]);
+}
+
+/// Parses `git blame --incremental` porcelain: repeated blocks starting
+/// `<40-hex> [boundary] <origLine> <finalLine> <numLines>` followed by
+/// tab-prefixed `author` / `author-mail` / `author-time` / `summary` headers
+/// until the `filename` trailer. Same semantics as VS Code's `parseGitBlame`.
+List<GitBlameEntry> parseIncrementalBlame(String stdout) {
+  final rangesByHash = <String, List<GitBlameLineRange>>{};
+  final propsByHash = <String, Map<String, String>>{};
+  String? currentHash;
+
+  final lines = const LineSplitter().convert(stdout);
+  // `<hash> <origLine> <finalLine> <numLines>`; git emits `boundary` and the
+  // property lines as separate tab-free lines after the header.
+  final headerRegex = RegExp(r'^([0-9a-f]{40}) (\d+) (\d+) (\d+)$');
+
+  for (final raw in lines) {
+    // Property lines are tab-indented; the block header line is not.
+    final line = raw.startsWith('\t') ? raw.substring(1) : raw;
+    final headerMatch = headerRegex.firstMatch(line);
+    if (headerMatch != null) {
+      final hash = headerMatch.group(1)!;
+      // Group indices: 1=hash, 2=origLine, 3=finalLine, 4=numLines.
+      final finalLine = int.parse(headerMatch.group(3)!);
+      final numLines = int.parse(headerMatch.group(4)!);
+      final range = GitBlameLineRange(
+        start: finalLine,
+        end: finalLine + numLines - 1,
+      );
+      rangesByHash.putIfAbsent(hash, () => []).add(range);
+      propsByHash.putIfAbsent(hash, () => <String, String>{});
+      currentHash = hash;
+      continue;
+    }
+
+    final space = line.indexOf(' ');
+    if (space <= 0 || currentHash == null) continue;
+    final key = line.substring(0, space);
+    final value = line.substring(space + 1);
+    propsByHash[currentHash]![key] = value;
+  }
+
+  final entries = <GitBlameEntry>[];
+  for (final hash in rangesByHash.keys) {
+    final props = propsByHash[hash] ?? const <String, String>{};
+    final ranges = rangesByHash[hash]!;
+    ranges.sort((a, b) => a.start.compareTo(b.start));
+    entries.add(
+      GitBlameEntry(
+        hash: hash,
+        ranges: List.unmodifiable(ranges),
+        authorName: props['author'],
+        authorEmail: _stripAngleBrackets(props['author-mail']),
+        authorTime: int.tryParse(props['author-time'] ?? ''),
+        subject: props['summary'],
+      ),
+    );
+  }
+  entries.sort((a, b) => a.ranges.first.start.compareTo(b.ranges.first.start));
+  return entries;
+}
+
+String? _stripAngleBrackets(String? mail) {
+  if (mail == null) return null;
+  var value = mail;
+  if (value.startsWith('<')) value = value.substring(1);
+  if (value.endsWith('>')) value = value.substring(0, value.length - 1);
+  return value;
 }

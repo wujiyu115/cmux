@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../models/git_blame.dart';
 import '../models/git_status.dart';
 import '../services/git/git_changes_visible_rows.dart';
 import '../services/git/git_service.dart';
@@ -393,6 +394,28 @@ class GitCubit extends Cubit<GitState> {
       _publish(state.copyWith(errorMessage: e.message), recomputeRows: false);
       return null;
     }
+  }
+
+  /// In-memory blame cache, keyed by repo-relative path. Blame of a whole
+  /// file is one subprocess and O(lines) output, so the editor's blame bar
+  /// re-reads from here on every caret move. Never invalidated eagerly;
+  /// the caller drops it when the buffer turns dirty.
+  final _blameCache = <String, List<GitBlameEntry>>{};
+
+  /// Full-file blame for [relativePath] (HEAD content), cached. Returns an
+  /// empty list when the file has no blame (unborn HEAD / untracked path).
+  /// Unlike [diff], blame failures are silent: the bar shows a hint, not an
+  /// error banner.
+  Future<List<GitBlameEntry>> serviceBlame(String relativePath) async {
+    final cached = _blameCache[relativePath];
+    if (cached != null) return cached;
+    final entries = await _service.blameFile(
+          state.repoRoot,
+          relativePath,
+        ) ??
+        const <GitBlameEntry>[];
+    _blameCache[relativePath] = entries;
+    return entries;
   }
 
   /// Runs [action], then refreshes. Returns false (and sets an error) on

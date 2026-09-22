@@ -2240,6 +2240,42 @@ abstract class AppLocalizations {
   /// **'Redo'**
   String get editorRedoEdit;
 
+  /// No description provided for @editorSendToAgent.
+  ///
+  /// In en, this message translates to:
+  /// **'Send to agent'**
+  String get editorSendToAgent;
+
+  /// No description provided for @editorCopyPathWithLines.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy path with line numbers'**
+  String get editorCopyPathWithLines;
+
+  /// No description provided for @agentReferenceSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Reference sent to the active terminal'**
+  String get agentReferenceSent;
+
+  /// No description provided for @agentReferenceNoSession.
+  ///
+  /// In en, this message translates to:
+  /// **'No running session terminal in this workspace'**
+  String get agentReferenceNoSession;
+
+  /// No description provided for @agentReferenceNoRoot.
+  ///
+  /// In en, this message translates to:
+  /// **'This file is outside the workspace folders'**
+  String get agentReferenceNoRoot;
+
+  /// No description provided for @agentReferenceCrossMachine.
+  ///
+  /// In en, this message translates to:
+  /// **'This file lives on a different machine than the terminal'**
+  String get agentReferenceCrossMachine;
+
   /// No description provided for @editorRevertChanges.
   ///
   /// In en, this message translates to:
@@ -2551,6 +2587,89 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Refresh from disk'**
   String get fileTabReloadFromDisk;
+
+  /// No description provided for @fileTabShowBlame.
+  ///
+  /// In en, this message translates to:
+  /// **'Show blame bar'**
+  String get fileTabShowBlame;
+
+  /// No description provided for @blameEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Blame bar enabled for this workspace'**
+  String get blameEnabled;
+
+  /// No description provided for @blameDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Blame bar disabled'**
+  String get blameDisabled;
+
+  /// No description provided for @blameNotGitRepo.
+  ///
+  /// In en, this message translates to:
+  /// **'This file\'s folder is not in a Git repository'**
+  String get blameNotGitRepo;
+
+  /// No description provided for @blameNoHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'No blame available for this line'**
+  String get blameNoHistory;
+
+  /// No description provided for @blameNotCommittedYet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not committed yet'**
+  String get blameNotCommittedYet;
+
+  /// No description provided for @blameUnknownAuthor.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown author'**
+  String get blameUnknownAuthor;
+
+  /// No description provided for @blameUnknownDate.
+  ///
+  /// In en, this message translates to:
+  /// **'unknown date'**
+  String get blameUnknownDate;
+
+  /// No description provided for @blameLineSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{author} ({ago}), {subject}'**
+  String blameLineSummary(String author, String ago, String subject);
+
+  /// No description provided for @blameLineTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'{hash} · {author} <{email}> · {date}'**
+  String blameLineTooltip(
+    String hash,
+    String author,
+    String email,
+    String date,
+  );
+
+  /// No description provided for @blameTimeDaysAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{days} d ago'**
+  String blameTimeDaysAgo(int days);
+
+  /// No description provided for @blameTimeMonthsAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{months} mo ago'**
+  String blameTimeMonthsAgo(int months);
+
+  /// No description provided for @blameTimeYearsAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{years} y ago'**
+  String blameTimeYearsAgo(int years);
 
   /// No description provided for @fileTabReloadDone.
   ///

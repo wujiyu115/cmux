@@ -472,6 +472,12 @@
   "editorSelectAll": "全选",
   "editorUndoEdit": "撤销",
   "editorRedoEdit": "重做",
+  "editorSendToAgent": "发送到 Agent",
+  "editorCopyPathWithLines": "复制路径与行号",
+  "agentReferenceSent": "引用已发送到当前终端",
+  "agentReferenceNoSession": "此工作区暂无运行中的会话终端",
+  "agentReferenceNoRoot": "此文件不在工作区目录内",
+  "agentReferenceCrossMachine": "此文件与终端不在同一台机器上",
   "editorRevertChanges": "撤销修改",
   "editorUnsavedChangesTitle": "未保存的更改",
   "editorUnsavedChangesDiscardMultiple": "放弃 {count} 个文件中的未保存修改？",
@@ -531,6 +537,69 @@
   "fileTreeOpenInTerminal": "在终端中打开",
   "fileTreeCopyRelativePath": "复制相对路径",
   "fileTabReloadFromDisk": "从磁盘刷新",
+  "fileTabShowBlame": "显示 Blame 栏",
+  "blameEnabled": "已为本工作区启用 Blame 栏",
+  "blameDisabled": "已关闭 Blame 栏",
+  "blameNotGitRepo": "该文件所在目录不在 Git 仓库中",
+  "blameNoHistory": "此行没有 blame 信息",
+  "blameNotCommittedYet": "尚未提交",
+  "blameUnknownAuthor": "未知作者",
+  "blameUnknownDate": "未知日期",
+  "blameLineSummary": "{author}（{ago}），{subject}",
+  "@blameLineSummary": {
+    "placeholders": {
+      "author": {
+        "type": "String"
+      },
+      "ago": {
+        "type": "String"
+      },
+      "subject": {
+        "type": "String"
+      }
+    }
+  },
+  "blameLineTooltip": "{hash} · {author} <{email}> · {date}",
+  "@blameLineTooltip": {
+    "placeholders": {
+      "hash": {
+        "type": "String"
+      },
+      "author": {
+        "type": "String"
+      },
+      "email": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "blameTimeDaysAgo": "{days} 天前",
+  "@blameTimeDaysAgo": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "blameTimeMonthsAgo": "{months} 个月前",
+  "@blameTimeMonthsAgo": {
+    "placeholders": {
+      "months": {
+        "type": "int"
+      }
+    }
+  },
+  "blameTimeYearsAgo": "{years} 年前",
+  "@blameTimeYearsAgo": {
+    "placeholders": {
+      "years": {
+        "type": "int"
+      }
+    }
+  },
   "fileTabReloadDone": "已从磁盘刷新",
   "fileTabReloadFailed": "刷新文件失败",
   "fileTabReloadDirtyTitle": "未保存的修改",

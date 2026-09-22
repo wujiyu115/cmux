@@ -485,6 +485,12 @@
   "editorSelectAll": "Select all",
   "editorUndoEdit": "Undo",
   "editorRedoEdit": "Redo",
+  "editorSendToAgent": "Send to agent",
+  "editorCopyPathWithLines": "Copy path with line numbers",
+  "agentReferenceSent": "Reference sent to the active terminal",
+  "agentReferenceNoSession": "No running session terminal in this workspace",
+  "agentReferenceNoRoot": "This file is outside the workspace folders",
+  "agentReferenceCrossMachine": "This file lives on a different machine than the terminal",
   "editorRevertChanges": "Revert changes",
   "editorUnsavedChangesTitle": "Unsaved changes",
   "editorUnsavedChangesDiscardMultiple": "Discard unsaved changes in {count} file(s)?",
@@ -565,6 +571,69 @@
   "fileTreeOpenInTerminal": "Open in Terminal",
   "fileTreeCopyRelativePath": "Copy relative path",
   "fileTabReloadFromDisk": "Refresh from disk",
+  "fileTabShowBlame": "Show blame bar",
+  "blameEnabled": "Blame bar enabled for this workspace",
+  "blameDisabled": "Blame bar disabled",
+  "blameNotGitRepo": "This file's folder is not in a Git repository",
+  "blameNoHistory": "No blame available for this line",
+  "blameNotCommittedYet": "Not committed yet",
+  "blameUnknownAuthor": "Unknown author",
+  "blameUnknownDate": "unknown date",
+  "blameLineSummary": "{author} ({ago}), {subject}",
+  "@blameLineSummary": {
+    "placeholders": {
+      "author": {
+        "type": "String"
+      },
+      "ago": {
+        "type": "String"
+      },
+      "subject": {
+        "type": "String"
+      }
+    }
+  },
+  "blameLineTooltip": "{hash} · {author} <{email}> · {date}",
+  "@blameLineTooltip": {
+    "placeholders": {
+      "hash": {
+        "type": "String"
+      },
+      "author": {
+        "type": "String"
+      },
+      "email": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "blameTimeDaysAgo": "{days} d ago",
+  "@blameTimeDaysAgo": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "blameTimeMonthsAgo": "{months} mo ago",
+  "@blameTimeMonthsAgo": {
+    "placeholders": {
+      "months": {
+        "type": "int"
+      }
+    }
+  },
+  "blameTimeYearsAgo": "{years} y ago",
+  "@blameTimeYearsAgo": {
+    "placeholders": {
+      "years": {
+        "type": "int"
+      }
+    }
+  },
   "fileTabReloadDone": "File refreshed",
   "fileTabReloadFailed": "Failed to refresh file",
   "fileTabReloadDirtyTitle": "Unsaved changes",

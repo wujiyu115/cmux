@@ -9,12 +9,15 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../cubits/chat_cubit.dart';
 import '../../cubits/editor_cubit.dart';
+import '../../cubits/git_cubit.dart';
 import '../../cubits/layout_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../models/app_session.dart';
 import '../../repositories/session_repository.dart';
 import '../../services/editor/file_editor_theme.dart';
 import '../../services/file_tree/file_tree_reveal.dart';
+import '../../services/git/git_repo_store.dart';
+import '../../widgets/workbench/file_diff_surface_toggle.dart' show gitCubitForAbsolutePath;
 import '../../services/terminal/workspace_terminal_registry.dart';
 import '../../services/terminal/workspace_terminal_title_resolver.dart';
 import '../../services/workspace/workspace_tools_scope.dart';
@@ -374,6 +377,8 @@ class WorkspaceShellTabChipState extends State<WorkspaceShellTabChip> {
       unawaited(_revealInFileTree());
     } else if (value == 'copy_relative_path') {
       unawaited(_copyRelativePath());
+    } else if (value == 'show_blame') {
+      unawaited(_toggleBlameForTab());
     } else if (value == 'reload_from_disk') {
       unawaited(_reloadFromDisk());
     } else if (value == 'pin') {
@@ -412,6 +417,11 @@ class WorkspaceShellTabChipState extends State<WorkspaceShellTabChip> {
           value: 'copy_relative_path',
           icon: Icons.subdirectory_arrow_right_rounded,
           label: l10n.fileTreeCopyRelativePath,
+        ),
+        TpActionMenuSpec.item(
+          value: 'show_blame',
+          icon: Icons.history_outlined,
+          label: l10n.fileTabShowBlame,
         ),
         if (!isImagePreviewPath(widget.filePath!))
           TpActionMenuSpec.item(
@@ -487,6 +497,58 @@ class WorkspaceShellTabChipState extends State<WorkspaceShellTabChip> {
       message: context.l10n.fileTreeRevealFailed,
       variant: TpToastVariant.error,
     );
+  }
+
+  /// Toggles the per-workspace blame bar from the file tab context menu.
+  ///
+  /// The blame bar lives in [FileEditorSurface]; this only flips the
+  /// workspace-scoped visibility flag in [GitRepoStore] (persisted across
+  /// tab switches like the git cubits) and shows the bar immediately by
+  /// making sure the editor tab stays the active surface.
+  Future<void> _toggleBlameForTab() async {
+    final workspaceId = widget.workspaceId;
+    final filePath = widget.filePath;
+    if (workspaceId == null || filePath == null || !mounted) return;
+
+    final store = context.read<GitRepoStore>();
+    final enabled = store.blameVisibleWorkspaces.value.contains(workspaceId);
+    if (!enabled) {
+      // Turning on: verify the file's folder is a git work tree first, so
+      // the menu can explain why nothing shows up otherwise.
+      final git = gitCubitForAbsolutePath(context, filePath);
+      final isRepo = git != null && await _ensureRepoStatus(git);
+      if (!mounted) return;
+      if (!isRepo) {
+        AppToast.show(
+          context,
+          message: context.l10n.blameNotGitRepo,
+          variant: TpToastVariant.error,
+        );
+        return;
+      }
+    }
+    store.toggleBlame(workspaceId);
+    AppToast.show(
+      context,
+      message: enabled
+          ? context.l10n.blameDisabled
+          : context.l10n.blameEnabled,
+      variant: TpToastVariant.success,
+      record: false,
+    );
+  }
+
+  /// Waits for the repo cubit's first status load when the tab opened before
+  /// any git view warmed it. Returns whether the root resolved to a repo.
+  Future<bool> _ensureRepoStatus(GitCubit git) async {
+    if (git.state.repoRoot.isEmpty) return false;
+    if (git.state.status.isRepository) return true;
+    if (git.state.isLoading) {
+      await git.stream
+          .firstWhere((s) => !s.isLoading)
+          .timeout(const Duration(seconds: 3), onTimeout: () => git.state);
+    }
+    return git.state.status.isRepository;
   }
 
   /// Copies the tab file's path relative to the longest tools-scope root that
