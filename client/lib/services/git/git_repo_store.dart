@@ -2,7 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 
 import '../../cubits/git_cubit.dart';
+import '../../cubits/svn_cubit.dart';
 import '../storage/runtime_context.dart';
+import '../vcs/svn_service.dart';
 import 'git_service.dart';
 
 /// App-level registry of long-lived [GitCubit]s, one per repository root and
@@ -48,6 +50,47 @@ class GitRepoStore {
     next ? current.add(workspaceId) : current.remove(workspaceId);
     blameVisibleWorkspaces.value = current;
     return next;
+  }
+
+  /// Per-repo [SvnCubit] registry, same LRU pattern as the git cubits. One
+  /// store serves both VCSes; keys share the git `_cacheKey` namespace.
+  final Map<String, SvnCubit> _svnCubits = <String, SvnCubit>{};
+
+  /// Test seam for the svn cubit factory (mirrors [cubitFactory]).
+  // ignore: unused_field
+  static SvnCubit Function(String root, RuntimeContext workContext)?
+  _svnCubitFactoryOverride;
+
+  static SvnCubit _defaultSvnFactory(
+    String root,
+    RuntimeContext workContext,
+  ) {
+    final service =
+        SvnService.debugOverrideFactory?.call() ??
+        SvnService.forContext(workContext);
+    return SvnCubit(service: service)..setRepoRoot(root);
+  }
+
+  /// Returns the retained svn cubit for [root] on [workContext], creating
+  /// (and warming) it on first access.
+  SvnCubit svnCubitFor(String root, {required RuntimeContext workContext}) {
+    final key = _cacheKey(root, workContext);
+    final existing = _svnCubits.remove(key);
+    if (existing != null) {
+      _svnCubits[key] = existing;
+      return existing;
+    }
+    final cubit = _svnCubitFactoryOverride?.call(
+          workContext.filesystem.pathContext.normalize(root),
+          workContext,
+        ) ??
+        _defaultSvnFactory(
+          workContext.filesystem.pathContext.normalize(root),
+          workContext,
+        );
+    _svnCubits[key] = cubit;
+    _evict();
+    return cubit;
   }
 
   /// Normalized `targetId:root` → cubit. Insertion order is the LRU order.
@@ -96,6 +139,10 @@ class GitRepoStore {
       final oldestKey = _cubits.keys.first;
       _cubits.remove(oldestKey)?.close();
     }
+    while (_svnCubits.length > _maxRetained) {
+      final oldestKey = _svnCubits.keys.first;
+      _svnCubits.remove(oldestKey)?.close();
+    }
   }
 
   void dispose() {
@@ -104,5 +151,9 @@ class GitRepoStore {
       cubit.close();
     }
     _cubits.clear();
+    for (final cubit in _svnCubits.values) {
+      cubit.close();
+    }
+    _svnCubits.clear();
   }
 }

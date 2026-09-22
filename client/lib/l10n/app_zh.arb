@@ -178,6 +178,37 @@
   "gitCreateBranch": "新建分支",
   "gitNewBranchHint": "新分支名称",
   "gitError": "Git：{message}",
+  "svnNotInstalled": "未找到 SVN。请安装 Subversion 客户端以管理此工作副本。",
+  "svnUpdate": "从仓库更新",
+  "svnRefresh": "刷新",
+  "svnCommit": "提交",
+  "svnCommitHint": "提交信息",
+  "svnCommitNothingSelected": "未选择要提交的文件",
+  "svnSelectedCount": "已选 {count} 项",
+  "@svnSelectedCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "svnSelectAll": "全选改动",
+  "svnClearSelection": "清除选择",
+  "svnNoChanges": "没有改动",
+  "svnOpenDiff": "查看差异",
+  "svnRevertTitle": "还原修改？",
+  "svnRevertAction": "还原",
+  "svnRevertBody": "还原 {count} 个文件的本地修改？此操作不可撤销。",
+  "@svnRevertBody": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "svnAdd": "加入版本控制",
+  "svnExternals": "外部引用（{count}）",
+  "@svnExternals": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "@gitError": {
     "placeholders": {
       "message": {

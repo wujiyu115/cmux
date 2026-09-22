@@ -181,6 +181,37 @@
   "gitCreateBranch": "Create branch",
   "gitNewBranchHint": "New branch name",
   "gitError": "Git: {message}",
+  "svnNotInstalled": "SVN was not found. Install a Subversion client to manage this working copy.",
+  "svnUpdate": "Update from repository",
+  "svnRefresh": "Refresh",
+  "svnCommit": "Commit",
+  "svnCommitHint": "Commit message",
+  "svnCommitNothingSelected": "Nothing selected to commit",
+  "svnSelectedCount": "{count} selected",
+  "@svnSelectedCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "svnSelectAll": "Select all changes",
+  "svnClearSelection": "Clear selection",
+  "svnNoChanges": "No changes",
+  "svnOpenDiff": "Open diff",
+  "svnRevertTitle": "Revert changes?",
+  "svnRevertAction": "Revert",
+  "svnRevertBody": "Revert local changes in {count} file(s)? This cannot be undone.",
+  "@svnRevertBody": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "svnAdd": "Add to version control",
+  "svnExternals": "Externals ({count})",
+  "@svnExternals": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "@gitError": {
     "placeholders": {
       "message": {

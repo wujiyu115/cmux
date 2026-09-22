@@ -480,6 +480,60 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get svnNotInstalled => '未找到 SVN。请安装 Subversion 客户端以管理此工作副本。';
+
+  @override
+  String get svnUpdate => '从仓库更新';
+
+  @override
+  String get svnRefresh => '刷新';
+
+  @override
+  String get svnCommit => '提交';
+
+  @override
+  String get svnCommitHint => '提交信息';
+
+  @override
+  String get svnCommitNothingSelected => '未选择要提交的文件';
+
+  @override
+  String svnSelectedCount(int count) {
+    return '已选 $count 项';
+  }
+
+  @override
+  String get svnSelectAll => '全选改动';
+
+  @override
+  String get svnClearSelection => '清除选择';
+
+  @override
+  String get svnNoChanges => '没有改动';
+
+  @override
+  String get svnOpenDiff => '查看差异';
+
+  @override
+  String get svnRevertTitle => '还原修改？';
+
+  @override
+  String get svnRevertAction => '还原';
+
+  @override
+  String svnRevertBody(int count) {
+    return '还原 $count 个文件的本地修改？此操作不可撤销。';
+  }
+
+  @override
+  String get svnAdd => '加入版本控制';
+
+  @override
+  String svnExternals(int count) {
+    return '外部引用（$count）';
+  }
+
+  @override
   String gitAheadBehind(int ahead, int behind) {
     return '↑$ahead ↓$behind';
   }

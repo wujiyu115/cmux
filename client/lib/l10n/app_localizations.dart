@@ -1016,6 +1016,102 @@ abstract class AppLocalizations {
   /// **'Git: {message}'**
   String gitError(String message);
 
+  /// No description provided for @svnNotInstalled.
+  ///
+  /// In en, this message translates to:
+  /// **'SVN was not found. Install a Subversion client to manage this working copy.'**
+  String get svnNotInstalled;
+
+  /// No description provided for @svnUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Update from repository'**
+  String get svnUpdate;
+
+  /// No description provided for @svnRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get svnRefresh;
+
+  /// No description provided for @svnCommit.
+  ///
+  /// In en, this message translates to:
+  /// **'Commit'**
+  String get svnCommit;
+
+  /// No description provided for @svnCommitHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Commit message'**
+  String get svnCommitHint;
+
+  /// No description provided for @svnCommitNothingSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing selected to commit'**
+  String get svnCommitNothingSelected;
+
+  /// No description provided for @svnSelectedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String svnSelectedCount(int count);
+
+  /// No description provided for @svnSelectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Select all changes'**
+  String get svnSelectAll;
+
+  /// No description provided for @svnClearSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear selection'**
+  String get svnClearSelection;
+
+  /// No description provided for @svnNoChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'No changes'**
+  String get svnNoChanges;
+
+  /// No description provided for @svnOpenDiff.
+  ///
+  /// In en, this message translates to:
+  /// **'Open diff'**
+  String get svnOpenDiff;
+
+  /// No description provided for @svnRevertTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Revert changes?'**
+  String get svnRevertTitle;
+
+  /// No description provided for @svnRevertAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Revert'**
+  String get svnRevertAction;
+
+  /// No description provided for @svnRevertBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Revert local changes in {count} file(s)? This cannot be undone.'**
+  String svnRevertBody(int count);
+
+  /// No description provided for @svnAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to version control'**
+  String get svnAdd;
+
+  /// No description provided for @svnExternals.
+  ///
+  /// In en, this message translates to:
+  /// **'Externals ({count})'**
+  String svnExternals(int count);
+
   /// No description provided for @gitAheadBehind.
   ///
   /// In en, this message translates to:

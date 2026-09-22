@@ -16,6 +16,8 @@ import '../../models/layout_preferences.dart';
 import '../../services/git/git_changes_visible_rows.dart';
 import '../../services/git/git_repo_store.dart';
 import '../../services/storage/runtime_context.dart';
+import '../../services/vcs/vcs_detector.dart';
+import 'svn_repo_section.dart';
 import '../../services/workbench/workbench_editor_opener.dart';
 import 'git_branch_menu.dart';
 import 'git_changes_tree_list.dart';
@@ -93,8 +95,9 @@ class _GitSourceControlPanelState extends State<GitSourceControlPanel> {
       );
     }
     if (roots.length == 1) {
-      return _GitRepoBody(
-        cubit: _cubitFor(roots.first),
+      return _SvnAwareBody(
+        root: roots.first,
+        store: _store,
         workContext: _workContext,
         workspaceId: widget.workspaceId,
       );
@@ -113,13 +116,103 @@ class _GitSourceControlPanelState extends State<GitSourceControlPanel> {
           },
         ),
         Expanded(
-          child: _GitRepoBody(
+          child: _SvnAwareBody(
             key: ValueKey('git-repo:$active'),
-            cubit: _cubitFor(active),
+            root: active,
+            store: _store,
             workContext: _workContext,
             workspaceId: widget.workspaceId,
           ),
         ),
+      ],
+    );
+  }
+}
+
+/// Git repo body plus any svn working copies nested below [root] (the
+/// svn-in-git layout). Pure-git roots render exactly as before.
+class _SvnAwareBody extends StatefulWidget {
+  const _SvnAwareBody({
+    required this.root,
+    required this.store,
+    required this.workContext,
+    required this.workspaceId,
+    super.key,
+  });
+
+  final String root;
+  final GitRepoStore store;
+  final RuntimeContext workContext;
+  final String workspaceId;
+
+  @override
+  State<_SvnAwareBody> createState() => _SvnAwareBodyState();
+}
+
+class _SvnAwareBodyState extends State<_SvnAwareBody> {
+  VcsProbeResult? _probe;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_probeAreas());
+  }
+
+  @override
+  void didUpdateWidget(_SvnAwareBody oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.root != widget.root) {
+      _probe = null;
+      unawaited(_probeAreas());
+    }
+  }
+
+  Future<void> _probeAreas() async {
+    final detector = VcsDetector();
+    final fs = widget.workContext.filesystem;
+    final result = await detector.probe(widget.root, fs);
+    if (mounted) setState(() => _probe = result);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final probe = _probe;
+    final svnAreas = probe?.areas
+            .where((a) => a.kind == VcsKind.svn)
+            .toList(growable: false) ??
+        const <VcsArea>[];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(
+          child: _GitRepoBody(
+            cubit: widget.store.cubitFor(
+              widget.root,
+              workContext: widget.workContext,
+            ),
+            workContext: widget.workContext,
+            workspaceId: widget.workspaceId,
+          ),
+        ),
+        if (svnAreas.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Divider(height: 1),
+                for (final area in svnAreas)
+                  SvnRepoSection(
+                    key: ValueKey('svn-repo:${area.root}'),
+                    cubit: widget.store.svnCubitFor(
+                      area.root,
+                      workContext: widget.workContext,
+                    ),
+                    workspaceId: widget.workspaceId,
+                  ),
+              ],
+            ),
+          ),
       ],
     );
   }

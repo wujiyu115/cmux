@@ -501,6 +501,61 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get svnNotInstalled =>
+      'SVN was not found. Install a Subversion client to manage this working copy.';
+
+  @override
+  String get svnUpdate => 'Update from repository';
+
+  @override
+  String get svnRefresh => 'Refresh';
+
+  @override
+  String get svnCommit => 'Commit';
+
+  @override
+  String get svnCommitHint => 'Commit message';
+
+  @override
+  String get svnCommitNothingSelected => 'Nothing selected to commit';
+
+  @override
+  String svnSelectedCount(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String get svnSelectAll => 'Select all changes';
+
+  @override
+  String get svnClearSelection => 'Clear selection';
+
+  @override
+  String get svnNoChanges => 'No changes';
+
+  @override
+  String get svnOpenDiff => 'Open diff';
+
+  @override
+  String get svnRevertTitle => 'Revert changes?';
+
+  @override
+  String get svnRevertAction => 'Revert';
+
+  @override
+  String svnRevertBody(int count) {
+    return 'Revert local changes in $count file(s)? This cannot be undone.';
+  }
+
+  @override
+  String get svnAdd => 'Add to version control';
+
+  @override
+  String svnExternals(int count) {
+    return 'Externals ($count)';
+  }
+
+  @override
   String gitAheadBehind(int ahead, int behind) {
     return '↑$ahead ↓$behind';
   }

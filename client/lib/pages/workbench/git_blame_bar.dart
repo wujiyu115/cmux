@@ -7,10 +7,11 @@ import 'package:re_editor/re_editor.dart';
 import 'package:path/path.dart' as p;
 
 import '../../cubits/editor_cubit.dart';
-import '../../l10n/l10n_extensions.dart';
 import '../../models/git_blame.dart';
+import '../../l10n/l10n_extensions.dart';
 import '../../services/git/git_repo_store.dart';
-import '../../widgets/workbench/file_diff_surface_toggle.dart';
+import '../../services/vcs/vcs_detector.dart';
+import '../../services/workspace/workspace_tools_scope.dart';
 import 'blame_relative_time.dart';
 
 /// Bottom bar showing the blame of the caret line, VS Code status-bar style:
@@ -99,24 +100,43 @@ class _GitBlameBarState extends State<GitBlameBar> {
 
   Future<void> _loadBlame() async {
     final token = ++_loadToken;
-    final git = gitCubitForAbsolutePath(context, widget.path);
-    final root = git?.state.repoRoot ?? '';
-    if (git == null || root.isEmpty) {
+    final store = context.read<GitRepoStore>();
+    final scope = WorkspaceToolsScope.maybeOf(context);
+    final tools = scope?.tools;
+    if (scope == null || tools == null) {
       _entries = const [];
       _setStateIfMounted();
       return;
     }
-    final relative = p.Context().relative(widget.path, from: root);
-    if (relative.startsWith('..')) {
+    final probe = await VcsDetector().probe(_folderOf(widget.path), tools.context.filesystem);
+    final area = probe.areaForPath(widget.path);
+    if (area == null) {
       _entries = const [];
       _setStateIfMounted();
       return;
     }
-    final blame = await git.serviceBlame(relative);
+    List<GitBlameEntry>? blame;
+
+    switch (area.kind) {
+      case VcsKind.git:
+        final git = store.cubitFor(area.root, workContext: tools.context);
+        blame = await git.serviceBlame(_relativeTo(widget.path, area.root));
+      case VcsKind.svn:
+        final svn = store.svnCubitFor(area.root, workContext: tools.context);
+        blame = await svn.serviceBlame(_relativeTo(widget.path, area.root));
+    }
     if (token != _loadToken || !mounted) return;
     _entries = blame;
     _setStateIfMounted();
   }
+
+  String _relativeTo(String path, String root) {
+    final ctx = p.Context();
+    final relative = ctx.relative(path, from: root);
+    return relative.replaceAll('\\', '/');
+  }
+
+  String _folderOf(String path) => p.Context().dirname(path);
 
   void _setStateIfMounted() {
     if (mounted) setState(() {});
