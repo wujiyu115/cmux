@@ -152,6 +152,10 @@ class _SvnAwareBody extends StatefulWidget {
 class _SvnAwareBodyState extends State<_SvnAwareBody> {
   VcsProbeResult? _probe;
 
+  /// Which VCS plane the panel shows. Auto-falls back to git when there are
+  /// no svn areas (pure-git roots see no pill at all, exactly as before).
+  bool _svnTab = false;
+
   @override
   void initState() {
     super.initState();
@@ -163,6 +167,7 @@ class _SvnAwareBodyState extends State<_SvnAwareBody> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.root != widget.root) {
       _probe = null;
+      _svnTab = false;
       unawaited(_probeAreas());
     }
   }
@@ -181,39 +186,165 @@ class _SvnAwareBodyState extends State<_SvnAwareBody> {
             .where((a) => a.kind == VcsKind.svn)
             .toList(growable: false) ??
         const <VcsArea>[];
+    // Git is always present for this body (the cubit refresh decides the
+    // not-a-repo hint); svn only when the probe found working copies.
+    final showTabs = svnAreas.isNotEmpty;
+    final gitVisible = !showTabs || !_svnTab;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Expanded(
-          child: _GitRepoBody(
-            cubit: widget.store.cubitFor(
-              widget.root,
-              workContext: widget.workContext,
-            ),
-            workContext: widget.workContext,
-            workspaceId: widget.workspaceId,
-          ),
-        ),
-        if (svnAreas.isNotEmpty)
+        if (showTabs) ...[
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Divider(height: 1),
-                for (final area in svnAreas)
-                  SvnRepoSection(
-                    key: ValueKey('svn-repo:${area.root}'),
-                    cubit: widget.store.svnCubitFor(
-                      area.root,
-                      workContext: widget.workContext,
-                    ),
-                    workspaceId: widget.workspaceId,
+            padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
+            child: _VcsTabPill(
+              svn: _svnTab,
+              onChanged: (svn) => setState(() => _svnTab = svn),
+            ),
+          ),
+        ],
+        Expanded(
+          child: gitVisible
+              ? _GitRepoBody(
+                  cubit: widget.store.cubitFor(
+                    widget.root,
+                    workContext: widget.workContext,
                   ),
-              ],
+                  workContext: widget.workContext,
+                  workspaceId: widget.workspaceId,
+                )
+              : _SvnTabBody(
+                  areas: svnAreas,
+                  store: widget.store,
+                  workContext: widget.workContext,
+                  workspaceId: widget.workspaceId,
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+/// All svn sections stacked and scrollable, for the SVN tab.
+class _SvnTabBody extends StatelessWidget {
+  const _SvnTabBody({
+    required this.areas,
+    required this.store,
+    required this.workContext,
+    required this.workspaceId,
+    super.key,
+  });
+
+  final List<VcsArea> areas;
+  final GitRepoStore store;
+  final RuntimeContext workContext;
+  final String workspaceId;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.only(bottom: 10),
+      children: [
+        for (final area in areas)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: SvnRepoSection(
+              key: ValueKey('svn-repo:${area.root}'),
+              cubit: store.svnCubitFor(
+                area.root,
+                workContext: workContext,
+              ),
+              workspaceId: workspaceId,
             ),
           ),
       ],
+    );
+  }
+}
+
+/// Git | SVN segmented pill in the same chrome as [GitViewModePill].
+class _VcsTabPill extends StatelessWidget {
+  const _VcsTabPill({
+    required this.svn,
+    required this.onChanged,
+    super.key,
+  });
+
+  final bool svn;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final color = cs.onSurface;
+    return Container(
+      height: 28,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: cs.outlineVariant),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _VcsTabSegment(
+            icon: Icons.account_tree_outlined,
+            tooltip: context.l10n.scmGitTabTooltip,
+            selected: !svn,
+            color: color,
+            onTap: () => onChanged(false),
+          ),
+          Container(width: 1, height: 14, color: cs.outlineVariant),
+          _VcsTabSegment(
+            icon: Icons.layers_outlined,
+            tooltip: context.l10n.scmSvnTabTooltip,
+            selected: svn,
+            color: color,
+            onTap: () => onChanged(true),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _VcsTabSegment extends StatelessWidget {
+  const _VcsTabSegment({
+    required this.icon,
+    required this.tooltip,
+    required this.selected,
+    required this.color,
+    required this.onTap,
+    super.key,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final bool selected;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: selected
+            ? cs.onSurface.withValues(alpha: 0.12)
+            : Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          hoverColor: color.withValues(alpha: 0.12),
+          splashColor: color.withValues(alpha: 0.2),
+          child: SizedBox(
+            width: 34,
+            height: 28,
+            child: Center(
+              child: Icon(icon, size: context.tpIconSizes.sm, color: color),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

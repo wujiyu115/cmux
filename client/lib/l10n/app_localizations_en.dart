@@ -461,6 +461,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gitViewModeFlatTooltip => 'Flat list';
 
   @override
+  String get scmGitTabTooltip => 'Git';
+
+  @override
+  String get scmSvnTabTooltip => 'SVN';
+
+  @override
   String get treeExpandAllFolders => 'Expand all folders';
 
   @override

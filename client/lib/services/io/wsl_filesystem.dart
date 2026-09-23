@@ -544,15 +544,22 @@ class WslFilesystem implements Filesystem, FsBatchOps, FsSymlinkLister {
   }
 
   @override
-  Future<List<String>?> findNestedDirsNamed(String root, String name) async {
+  Future<List<String>?> findNestedDirsNamed(
+    String root,
+    String name, {
+    int maxDepth = 4,
+  }) async {
     // -L follows directory symlinks (the native listDir semantic here);
-    // -prune keeps matches from being descended into.
+    // -prune keeps matches from being descended into; -maxdepth bounds the
+    // walk so symlinked dependency trees don't multiply the traversal.
     final result = await _run([
       'find',
       '-L',
       root,
       '-mindepth',
       '1',
+      '-maxdepth',
+      '$maxDepth',
       '-name',
       name,
       '-type',

@@ -471,14 +471,21 @@ class RemoteFileStore {
   }
 
   /// Absolute paths of directories named [name] below [root] (not [root]
-  /// itself), following directory symlinks, without walking into matches —
-  /// the marker-directory scan VcsDetector needs (`find -L root -name name
-  /// -type d -prune`). Null when the remote find failed outright (empty
-  /// output just means no matches).
-  Future<List<String>?> findNestedDirPaths(String root, String name) async {
+  /// itself), at most [maxDepth] levels down, following directory symlinks,
+  /// without walking into matches — the marker-directory scan VcsDetector
+  /// needs (`find -L root -maxdepth N -name name -type d -prune`). The
+  /// depth bound matters: unbounded `find -L` follows every symlink in the
+  /// tree (game repos link 3rd/ deps into lualib/), multiplying the walked
+  /// entries 20x+. Null when the remote find failed outright (empty output
+  /// just means no matches).
+  Future<List<String>?> findNestedDirPaths(
+    String root,
+    String name, {
+    int maxDepth = 4,
+  }) async {
     final result = await execShell(
-      'find -L ${shellSingleQuote(root)} -mindepth 1 -name '
-      '${shellSingleQuote(name)} -type d -prune -print',
+      'find -L ${shellSingleQuote(root)} -mindepth 1 -maxdepth $maxDepth '
+      '-name ${shellSingleQuote(name)} -type d -prune -print',
     );
     if (sshRunFailed(result)) return null;
     final out = utf8.decode(result.stdout, allowMalformed: true);

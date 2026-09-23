@@ -944,6 +944,18 @@ abstract class AppLocalizations {
   /// **'Flat list'**
   String get gitViewModeFlatTooltip;
 
+  /// No description provided for @scmGitTabTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Git'**
+  String get scmGitTabTooltip;
+
+  /// No description provided for @scmSvnTabTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'SVN'**
+  String get scmSvnTabTooltip;
+
   /// No description provided for @treeExpandAllFolders.
   ///
   /// In en, this message translates to:

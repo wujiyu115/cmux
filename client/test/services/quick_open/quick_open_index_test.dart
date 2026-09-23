@@ -124,7 +124,11 @@ class _PlainFilesystem implements Filesystem {
   ];
 
   @override
-  Future<List<String>?> findNestedDirsNamed(String root, String name) async =>
+  Future<List<String>?> findNestedDirsNamed(
+    String root,
+    String name, {
+    int maxDepth = 4,
+  }) async =>
       null;
 
   @override

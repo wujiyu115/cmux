@@ -159,6 +159,8 @@
   "gitChangesViewModeFlat": "平铺",
   "gitViewModeTreeTooltip": "树形视图",
   "gitViewModeFlatTooltip": "平铺列表",
+  "scmGitTabTooltip": "Git",
+  "scmSvnTabTooltip": "SVN",
   "treeExpandAllFolders": "展开所有目录",
   "treeCollapseAllFolders": "折叠所有目录",
   "gitDiscard": "放弃更改",

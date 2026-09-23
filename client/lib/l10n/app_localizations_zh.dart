@@ -440,6 +440,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gitViewModeFlatTooltip => '平铺列表';
 
   @override
+  String get scmGitTabTooltip => 'Git';
+
+  @override
+  String get scmSvnTabTooltip => 'SVN';
+
+  @override
   String get treeExpandAllFolders => '展开所有目录';
 
   @override

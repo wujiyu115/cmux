@@ -80,7 +80,12 @@ class _FakeFilesystem implements Filesystem {
   Future<List<FsDirEntry>> listDirRecursive(String path) async => listDir(path);
 
   @override
-  Future<List<String>?> findNestedDirsNamed(String root, String name) async => null;
+  Future<List<String>?> findNestedDirsNamed(
+    String root,
+    String name, {
+    int maxDepth = 4,
+  }) async =>
+      null;
 
   @override
   Future<String> createTempDir({String? prefix, String? parent}) async =>

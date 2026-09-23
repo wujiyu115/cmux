@@ -70,7 +70,12 @@ class VcsProbeResult {
 /// to *use* an area. All filesystem access goes through [Filesystem], so the
 /// same code runs on native/WSL/SSH backends.
 class VcsDetector {
-  VcsDetector({this.maxSvnScanDepth = 4, this.maxSvnAreas = 8});
+  /// Depth counts the marker dir itself: depth 2 finds a working copy one
+  /// directory below [folder] — including through a symlinked directory
+  /// (find -L counts the followed link's children one level deeper, so
+  /// `repo/common -> ../wc` resolves its `.svn` at depth 2). Deeper walks
+  /// cost 20x+ entries on trees that symlink their dependency dirs.
+  VcsDetector({this.maxSvnScanDepth = 2, this.maxSvnAreas = 8});
 
   /// How deep below [folder] to walk looking for nested `.svn` directories.
   /// Git needs no downward scan: every path in the folder resolves through
@@ -113,7 +118,11 @@ class VcsDetector {
       // except via externals, and those carry their own shallow `.svn`
       // found by this same scan.
       final found = <VcsArea>[];
-      final bulk = await fs.findNestedDirsNamed(normalized, '.svn');
+      final bulk = await fs.findNestedDirsNamed(
+        normalized,
+        '.svn',
+        maxDepth: maxSvnScanDepth,
+      );
       if (bulk != null) {
         // find returns the marker dirs themselves (e.g. `…/common/.svn`);
         // the working-copy root is their parent. Keep only top-level wcs:

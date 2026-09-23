@@ -32,8 +32,8 @@ InMemoryFilesystem _deepSvnLayout() {
   dir('/repo/a');
   dir('/repo/a/b');
   dir('/repo/a/b/c');
-  // d (level 4) and deeper are added per-test: level 4 is the last
-  // scanned level with the default maxSvnScanDepth of 4.
+  // Deeper levels are added per-test: depth 2 (a/b) is the last scanned
+  // level with the default maxSvnScanDepth of 2.
   return fs;
 }
 
@@ -130,25 +130,26 @@ void main() {
 
     test('svn checkout below the max scan depth is not found', () async {
       final fs = _deepSvnLayout();
-      // 5 levels deep (a/b/c/d/e) with default maxSvnScanDepth 4.
+      // 3 levels deep (a/b/c) with default maxSvnScanDepth 2: `a` is
+      // scanned, its children are beyond the boundary.
       fs.directories
-        ..add('/repo/a/b/c/d')
-        ..add('/repo/a/b/c/d/e')
-        ..add('/repo/a/b/c/d/e/.svn');
+        ..add('/repo/a/b')
+        ..add('/repo/a/b/c')
+        ..add('/repo/a/b/c/.svn');
       final result = await VcsDetector().probe('/repo', fs);
       expect(result.areas, [const VcsArea(kind: VcsKind.git, root: '/repo')]);
     });
 
     test('svn checkout exactly at the max scan depth is found', () async {
       final fs = _deepSvnLayout();
-      // 4 levels deep (a/b/c/d) is the last scanned level.
+      // a/b is depth 2 — the last scanned level.
       fs.directories
-        ..add('/repo/a/b/c/d')
-        ..add('/repo/a/b/c/d/.svn');
+        ..add('/repo/a/b')
+        ..add('/repo/a/b/.svn');
       final result = await VcsDetector().probe('/repo', fs);
       expect(
         result.areas,
-        contains(const VcsArea(kind: VcsKind.svn, root: '/repo/a/b/c/d')),
+        contains(const VcsArea(kind: VcsKind.svn, root: '/repo/a/b')),
       );
     });
 

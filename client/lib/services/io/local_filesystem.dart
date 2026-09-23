@@ -428,7 +428,11 @@ class LocalFilesystem
   }
 
   @override
-  Future<List<String>?> findNestedDirsNamed(String root, String name) async {
+  Future<List<String>?> findNestedDirsNamed(
+    String root,
+    String name, {
+    int maxDepth = 4,
+  }) async {
     // Local disk walks are cheap; no bulk primitive needed (null = caller
     // falls back to per-directory listing).
     return null;

@@ -162,6 +162,8 @@
   "gitChangesViewModeFlat": "Flat",
   "gitViewModeTreeTooltip": "Tree view",
   "gitViewModeFlatTooltip": "Flat list",
+  "scmGitTabTooltip": "Git",
+  "scmSvnTabTooltip": "SVN",
   "treeExpandAllFolders": "Expand all folders",
   "treeCollapseAllFolders": "Collapse all folders",
   "gitDiscard": "Discard changes",

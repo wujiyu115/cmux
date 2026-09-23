@@ -29,7 +29,11 @@ class _BulkFindFs implements Filesystem {
       ];
 
   @override
-  Future<List<String>?> findNestedDirsNamed(String root, String name) async =>
+  Future<List<String>?> findNestedDirsNamed(
+    String root,
+    String name, {
+    int maxDepth = 4,
+  }) async =>
       root == '/work/2003VB12' && name == '.svn' ? findResult : null;
 
   @override

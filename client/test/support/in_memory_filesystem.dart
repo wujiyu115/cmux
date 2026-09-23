@@ -194,7 +194,11 @@ class InMemoryFilesystem implements Filesystem, FsSymlinkLister {
   }
 
   @override
-  Future<List<String>?> findNestedDirsNamed(String root, String name) async {
+  Future<List<String>?> findNestedDirsNamed(
+    String root,
+    String name, {
+    int maxDepth = 4,
+  }) async {
     // No bulk primitive: callers fall back to per-directory listing, which
     // is the behavior the unit tests exercise.
     return null;
