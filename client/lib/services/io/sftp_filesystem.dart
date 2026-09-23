@@ -137,6 +137,11 @@ class SftpFilesystem implements Filesystem, FsSymlinkLister {
   }
 
   @override
+  Future<List<String>?> findNestedDirsNamed(String root, String name) {
+    return store.findNestedDirPaths(root, name);
+  }
+
+  @override
   Future<List<FsDirEntry>> listDirRecursiveFollowLinks(String path) async {
     try {
       final entries = await store.listDirectoryEntriesRecursiveFollowLinks(

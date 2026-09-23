@@ -130,13 +130,20 @@ class _GitBlameBarState extends State<GitBlameBar> {
     _setStateIfMounted();
   }
 
+  /// Path math must use the target's own style: a POSIX SSH/WSL path run
+  /// through the host default context (Windows on a Windows host) resolves
+  /// roots to `\home\…`, breaking root matching and `git -C` arguments.
   String _relativeTo(String path, String root) {
-    final ctx = p.Context();
-    final relative = ctx.relative(path, from: root);
-    return relative.replaceAll('\\', '/');
+    final ctx = _pathContext();
+    return ctx.relative(path, from: root).replaceAll('\\', '/');
   }
 
-  String _folderOf(String path) => p.Context().dirname(path);
+  String _folderOf(String path) => _pathContext().dirname(path);
+
+  p.Context _pathContext() {
+    final tools = WorkspaceToolsScope.maybeOf(context)?.tools;
+    return tools?.context.filesystem.pathContext ?? p.Context();
+  }
 
   void _setStateIfMounted() {
     if (mounted) setState(() {});

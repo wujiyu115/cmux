@@ -428,6 +428,13 @@ class LocalFilesystem
   }
 
   @override
+  Future<List<String>?> findNestedDirsNamed(String root, String name) async {
+    // Local disk walks are cheap; no bulk primitive needed (null = caller
+    // falls back to per-directory listing).
+    return null;
+  }
+
+  @override
   Future<List<String>> listSymlinkedDirs(String root) async {
     final dir = Directory(root);
     if (!await dir.exists()) return const [];

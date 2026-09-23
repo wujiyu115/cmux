@@ -171,6 +171,16 @@ abstract interface class Filesystem {
 
   Future<List<FsDirEntry>> listDirRecursive(String path);
 
+  /// All directories named [name] below [root] (not [root] itself), found
+  /// without walking into them, following directory symlinks on backends
+  /// where that is the native semantic. One bulk operation on shell-backed
+  /// filesystems (`find`), so depth-limited scans over remote trees do not
+  /// degrade into thousands of serial round trips.
+  ///
+  /// Backends without a bulk primitive (in-memory tests, local disk) return
+  /// null and callers fall back to per-directory listing.
+  Future<List<String>?> findNestedDirsNamed(String root, String name);
+
   Future<String> createTempDir({String? prefix, String? parent});
 
   Future<void> appendString(String path, String content);

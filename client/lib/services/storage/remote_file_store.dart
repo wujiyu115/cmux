@@ -470,6 +470,25 @@ class RemoteFileStore {
     ];
   }
 
+  /// Absolute paths of directories named [name] below [root] (not [root]
+  /// itself), following directory symlinks, without walking into matches —
+  /// the marker-directory scan VcsDetector needs (`find -L root -name name
+  /// -type d -prune`). Null when the remote find failed outright (empty
+  /// output just means no matches).
+  Future<List<String>?> findNestedDirPaths(String root, String name) async {
+    final result = await execShell(
+      'find -L ${shellSingleQuote(root)} -mindepth 1 -name '
+      '${shellSingleQuote(name)} -type d -prune -print',
+    );
+    if (sshRunFailed(result)) return null;
+    final out = utf8.decode(result.stdout, allowMalformed: true);
+    if (out.trim().isEmpty) return const [];
+    return [
+      for (final line in out.split('\n'))
+        if (line.trim().isNotEmpty) line.trim(),
+    ];
+  }
+
   /// [listDirectoryEntriesRecursive] with symlinks followed; GNU find
   /// detects link loops itself. Dangling links can force a non-zero exit
   /// with valid output, so only empty stdout means failure.

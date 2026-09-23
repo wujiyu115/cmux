@@ -124,6 +124,10 @@ class _PlainFilesystem implements Filesystem {
   ];
 
   @override
+  Future<List<String>?> findNestedDirsNamed(String root, String name) async =>
+      null;
+
+  @override
   Future<String> createTempDir({String? prefix, String? parent}) async =>
       '/tmp/x';
 

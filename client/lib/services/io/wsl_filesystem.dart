@@ -544,6 +544,32 @@ class WslFilesystem implements Filesystem, FsBatchOps, FsSymlinkLister {
   }
 
   @override
+  Future<List<String>?> findNestedDirsNamed(String root, String name) async {
+    // -L follows directory symlinks (the native listDir semantic here);
+    // -prune keeps matches from being descended into.
+    final result = await _run([
+      'find',
+      '-L',
+      root,
+      '-mindepth',
+      '1',
+      '-name',
+      name,
+      '-type',
+      'd',
+      '-prune',
+      '-print',
+    ]);
+    if (result.exitCode != 0) return null;
+    final out = (result.stdout as String).trim();
+    if (out.isEmpty) return const [];
+    return [
+      for (final line in out.split('\n'))
+        if (line.trim().isNotEmpty) line.trim(),
+    ];
+  }
+
+  @override
   Future<List<FsDirEntry>> listDirRecursiveFollowLinks(String path) async {
     // -L follows symlinks; GNU find detects loops itself and reports the
     // loop point once. Dangling links are dropped with a non-zero exit, so

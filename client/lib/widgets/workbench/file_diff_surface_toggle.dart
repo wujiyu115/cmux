@@ -116,7 +116,11 @@ GitCubit? gitCubitForAbsolutePath(BuildContext context, String absolutePath) {
   final scope = WorkspaceToolsScope.maybeOf(context);
   final tools = scope?.tools;
   if (scope == null || tools == null || scope.roots.isEmpty) return null;
-  final root = _longestRootContaining(scope.roots, absolutePath);
+  // Path math must use the target's own style (posix for SSH/WSL), not the
+  // host default: on a Windows host `p.Context()` rewrites `/home/ejoy/...`
+  // to `\home\ejoy\...`, which then fails as the `git -C` directory.
+  final ctx = tools.context.filesystem.pathContext;
+  final root = _longestRootContaining(scope.roots, absolutePath, ctx);
   if (root == null) return null;
   return context.read<GitRepoStore>().cubitFor(
     root,
@@ -124,8 +128,11 @@ GitCubit? gitCubitForAbsolutePath(BuildContext context, String absolutePath) {
   );
 }
 
-String? _longestRootContaining(List<String> roots, String absolutePath) {
-  final ctx = p.Context();
+String? _longestRootContaining(
+  List<String> roots,
+  String absolutePath,
+  p.Context ctx,
+) {
   final normalized = ctx.normalize(absolutePath);
   String? best;
   var bestLen = -1;
@@ -158,7 +165,9 @@ Future<void> switchFileDiffSurface({
   if (git == null) return;
   final root = git.state.repoRoot;
   if (root.isEmpty) return;
-  final relative = p.Context().relative(absolutePath, from: root);
+  final scope = WorkspaceToolsScope.maybeOf(context);
+  final ctx = scope?.tools?.context.filesystem.pathContext ?? p.Context();
+  final relative = ctx.relative(absolutePath, from: root);
   if (relative.startsWith('..')) return;
   await opener.openChangesDiff(
     workspaceId: workspaceId,

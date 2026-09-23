@@ -113,7 +113,26 @@ class VcsDetector {
       // except via externals, and those carry their own shallow `.svn`
       // found by this same scan.
       final found = <VcsArea>[];
-      await _scanNestedSvn(normalized, 0, fs, found);
+      final bulk = await fs.findNestedDirsNamed(normalized, '.svn');
+      if (bulk != null) {
+        // find returns the marker dirs themselves (e.g. `…/common/.svn`);
+        // the working-copy root is their parent. Keep only top-level wcs:
+        // externals under a found wc (their own shallow `.svn`) surface as
+        // rows inside its group, not as separate areas — same fold as the
+        // per-directory scan below.
+        final roots = [
+          for (final marker in bulk)
+            if (marker.endsWith('/.svn') || marker.endsWith(r'\.svn'))
+              ctx.dirname(marker),
+        ]..sort((a, b) => a.length.compareTo(b.length));
+        for (final root in roots) {
+          if (found.length >= maxSvnAreas) break;
+          if (found.any((a) => ctx.isWithin(a.root, root))) continue;
+          found.add(VcsArea(kind: VcsKind.svn, root: root));
+        }
+      } else {
+        await _scanNestedSvn(normalized, 0, fs, found);
+      }
       areas.addAll(found);
     }
 
