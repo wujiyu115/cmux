@@ -254,6 +254,7 @@ class _SvnTabBody extends StatelessWidget {
                 workContext: workContext,
               ),
               workspaceId: workspaceId,
+              fs: workContext.filesystem,
             ),
           ),
       ],

@@ -7,6 +7,7 @@ import 'package:teampilot/widgets/app_toast/app_toast.dart';
 
 import '../../cubits/svn_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
+import '../../services/io/filesystem.dart';
 import '../../services/vcs/svn_service.dart';
 import '../../services/workbench/workbench_editor_opener.dart';
 import 'svn_changes_list.dart';
@@ -19,11 +20,17 @@ class SvnRepoSection extends StatefulWidget {
   const SvnRepoSection({
     required this.cubit,
     required this.workspaceId,
+    this.fs,
     super.key,
   });
 
   final SvnCubit cubit;
   final String workspaceId;
+
+  /// Filesystem of the work plane the cubit runs on; forwarded to the editor
+  /// so remote (WSL/SSH) paths open against their own backend instead of the
+  /// local host's (which can't resolve posix paths).
+  final Filesystem? fs;
 
   @override
   State<SvnRepoSection> createState() => _SvnRepoSectionState();
@@ -75,6 +82,7 @@ class _SvnRepoSectionState extends State<SvnRepoSection> {
     await context.read<WorkbenchEditorOpener>().openFile(
           widget.workspaceId,
           _absolutePathOf(change),
+          fs: widget.fs,
           preview: true,
         );
   }
