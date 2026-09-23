@@ -48,6 +48,13 @@ class _SvnRepoSectionState extends State<SvnRepoSection> {
   }
 
   Future<void> _openDiff(SvnFileChange change) async {
+    final unversioned = change.kind == SvnChangeKind.unversioned ||
+        change.kind == SvnChangeKind.ignored;
+    if (unversioned) {
+      // No repository history to diff against — open the file itself.
+      await _openFile(change);
+      return;
+    }
     String? diff;
     try {
       diff = await _cubit.serviceDiff(change.path);
@@ -55,16 +62,27 @@ class _SvnRepoSectionState extends State<SvnRepoSection> {
       diff = null;
     }
     if (!mounted || diff == null) return;
-    final absolutePath = _cubit.state.repoRoot.isEmpty
-        ? change.path
-        : '${_cubit.state.repoRoot}/${change.path}';
     await context.read<WorkbenchEditorOpener>().openChangesDiff(
       workspaceId: widget.workspaceId,
-      absolutePath: absolutePath,
+      absolutePath: _absolutePathOf(change),
       title: change.path,
       loadDiff: ({ignoreWhitespace = false, fullContext = false}) async =>
           _cubit.serviceDiff(change.path),
     );
+  }
+
+  Future<void> _openFile(SvnFileChange change) async {
+    await context.read<WorkbenchEditorOpener>().openFile(
+          widget.workspaceId,
+          _absolutePathOf(change),
+          preview: true,
+        );
+  }
+
+  String _absolutePathOf(SvnFileChange change) {
+    final root = _cubit.state.repoRoot;
+    if (root.isEmpty) return change.path;
+    return '$root/${change.path}';
   }
 
   Future<void> _confirmRevert(List<String> paths) async {
