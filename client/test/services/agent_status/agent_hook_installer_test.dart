@@ -52,7 +52,9 @@ void main() {
           AgentHookTarget.codex => '${tmp.path}/.codex/hooks.json',
           AgentHookTarget.ohMyPi =>
             '${tmp.path}/.omp/agent/hooks/pre/'
-                '$agentHookOmpFileName',
+                '$agentHookModuleFileName',
+          AgentHookTarget.pi =>
+            '${tmp.path}/.pi/agent/extensions/$agentHookModuleFileName',
         },
     filesystem: filesystem,
   );
@@ -369,7 +371,7 @@ void main() {
       // targets nothing lands in the TeamPilot agent-hooks dir.
       expect(
         installer!.scriptPath,
-        endsWith('.omp/agent/hooks/pre/$agentHookOmpFileName'),
+        endsWith('.omp/agent/hooks/pre/$agentHookModuleFileName'),
       );
       expect(installer.scriptPath, isNot(contains('/host/app/agent-hooks')));
       // The module file is the whole install; the settings path is the module.
@@ -384,14 +386,14 @@ void main() {
         final fs = InMemoryFilesystem();
         await AgentHookInstaller(
           target: AgentHookTarget.ohMyPi,
-          scriptPath: '/home/u/.omp/agent/hooks/pre/$agentHookOmpFileName',
-          settingsPath: '/home/u/.omp/agent/hooks/pre/$agentHookOmpFileName',
+          scriptPath: '/home/u/.omp/agent/hooks/pre/$agentHookModuleFileName',
+          settingsPath: '/home/u/.omp/agent/hooks/pre/$agentHookModuleFileName',
           filesystem: fs,
           scriptBody: agentHookOmpScriptBody,
         ).install();
 
         expect(
-          fs.files['/home/u/.omp/agent/hooks/pre/$agentHookOmpFileName'],
+          fs.files['/home/u/.omp/agent/hooks/pre/$agentHookModuleFileName'],
           agentHookOmpScriptBody,
         );
         expect(fs.files.length, 1);
@@ -411,7 +413,7 @@ void main() {
           filesystem: fs,
         ).install();
 
-        const module = '/home/u/.omp/agent/hooks/pre/$agentHookOmpFileName';
+        const module = '/home/u/.omp/agent/hooks/pre/$agentHookModuleFileName';
         expect(fs.files[module], agentHookOmpScriptBody);
         // No settings file was created anywhere in the distro home.
         expect(fs.files.keys.where((p) => p.endsWith('.json')), isEmpty);
@@ -442,6 +444,91 @@ void main() {
     });
   });
 
+  group('pi target', () {
+    test('forHost resolves the module under the pi agent dir', () {
+      final installer = AgentHookInstaller.forHost(
+        target: AgentHookTarget.pi,
+        hostAppDataRoot: '/host/app',
+      );
+      expect(installer, isNotNull);
+      // pi auto-discovers extension modules from <agentDir>/extensions/;
+      // nothing lands in the TeamPilot agent-hooks dir.
+      expect(
+        installer!.scriptPath,
+        endsWith('.pi/agent/extensions/$agentHookModuleFileName'),
+      );
+      expect(installer.scriptPath, isNot(contains('/host/app/agent-hooks')));
+      // The module file is the whole install; the settings path is the module.
+      expect(installer.settingsPath, installer.scriptPath);
+      expect(installer.windowsScriptPath, isNull);
+      expect(installer.scriptBody, agentHookPiScriptBody);
+    });
+
+    test(
+      'install writes only the module — no settings merge, no .bak',
+      () async {
+        final fs = InMemoryFilesystem();
+        await AgentHookInstaller(
+          target: AgentHookTarget.pi,
+          scriptPath: '/home/u/.pi/agent/extensions/$agentHookModuleFileName',
+          settingsPath: '/home/u/.pi/agent/extensions/$agentHookModuleFileName',
+          filesystem: fs,
+          scriptBody: agentHookPiScriptBody,
+        ).install();
+
+        expect(
+          fs.files['/home/u/.pi/agent/extensions/$agentHookModuleFileName'],
+          agentHookPiScriptBody,
+        );
+        expect(fs.files.length, 1);
+        expect(fs.files.keys.where((p) => p.endsWith('.bak')), isEmpty);
+      },
+    );
+
+    test('forWslDistro writes the module into the distro ~/.pi tree', () async {
+      final fs = InMemoryFilesystem();
+      await AgentHookInstaller.forWslDistro(
+        target: AgentHookTarget.pi,
+        distro: 'Ubuntu',
+        distroHome: '/home/u',
+        distroAppDataRoot: '/home/u/.local/share/com.hhoa.teampilot',
+        filesystem: fs,
+      ).install();
+
+      const module = '/home/u/.pi/agent/extensions/$agentHookModuleFileName';
+      expect(fs.files[module], agentHookPiScriptBody);
+      // No settings file was created anywhere in the distro home.
+      expect(fs.files.keys.where((p) => p.endsWith('.json')), isEmpty);
+    });
+
+    test('module body maps raw pi events onto Claude-shaped payloads', () {
+      expect(agentHookPiScriptBody, contains('"agent_start"'));
+      expect(agentHookPiScriptBody, contains('"tool_call"'));
+      expect(agentHookPiScriptBody, contains('"tool_result"'));
+      // agent_settled is the sole done edge; `aborted` rides is_interrupt so
+      // Escape-cancels surface as interrupted, not finished.
+      expect(agentHookPiScriptBody, contains('"agent_settled"'));
+      expect(agentHookPiScriptBody, contains('is_interrupt'));
+      // Raw pi has none of omp's extras — no waiting edge exists for it.
+      expect(agentHookPiScriptBody, isNot(contains('"session_stop"')));
+      expect(
+        agentHookPiScriptBody,
+        isNot(contains('"tool_approval_requested"')),
+      );
+      expect(agentHookPiScriptBody, isNot(contains('willContinue')));
+      expect(agentHookPiScriptBody, isNot(contains('AskUserQuestion')));
+      // WSL interop fallback + detached fire-and-forget, same as the omp
+      // module: an awaited WSL->Win32 launch stalls pi's handler critical path.
+      expect(
+        agentHookPiScriptBody,
+        contains('/mnt/c/Windows/System32/curl.exe'),
+      );
+      expect(agentHookPiScriptBody, contains('detached: true'));
+      expect(agentHookPiScriptBody, contains('child.unref()'));
+      expect(agentHookPiScriptBody, isNot(contains('await p.exited')));
+    });
+  });
+
   group('forWslDistro', () {
     test(
       'writes each target\'s settings inside the distro via the injected fs',
@@ -464,6 +551,16 @@ void main() {
         expect(fs.files['/home/u/.claude/settings.json'], isNotNull);
         expect(fs.files['/home/u/.qoder/settings.json'], isNotNull);
         expect(fs.files['/home/u/.codex/hooks.json'], isNotNull);
+        // Module-only targets: the TS module lands in the target's own agent
+        // dir and is the entire install.
+        expect(
+          fs.files['/home/u/.omp/agent/hooks/pre/$agentHookModuleFileName'],
+          agentHookOmpScriptBody,
+        );
+        expect(
+          fs.files['/home/u/.pi/agent/extensions/$agentHookModuleFileName'],
+          agentHookPiScriptBody,
+        );
 
         // The command must be a POSIX path valid *inside* the distro, and a
         // distro never needs the Windows cmd forwarder.
@@ -495,10 +592,10 @@ void main() {
 
   group('forHost', () {
     test('resolves each target to its own settings file', () {
-      // ohMyPi resolves against the omp config dir, not the app-data root —
-      // its own group below covers it.
+      // ohMyPi and pi resolve against their own agent dirs, not the app-data
+      // root — their own groups above cover them.
       final settingsTargets = AgentHookTarget.values
-          .where((t) => t != AgentHookTarget.ohMyPi);
+          .where((t) => t != AgentHookTarget.ohMyPi && t != AgentHookTarget.pi);
       final byTarget = <AgentHookTarget, AgentHookInstaller?>{};
       for (final target in settingsTargets) {
         byTarget[target] = AgentHookInstaller.forHost(

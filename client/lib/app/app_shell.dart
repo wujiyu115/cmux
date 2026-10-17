@@ -547,7 +547,8 @@ Future<AppShell> buildAppShell({
   // best-effort): additively merges gateway-forwarding entries into the user's
   // ~/.claude/settings.json, ~/.qoder/settings.json, and ~/.codex/hooks.json,
   // drops the forwarder scripts under the host <teampilotRoot>/agent-hooks/,
-  // and writes the omp hook module into ~/.omp/agent/hooks/pre/.
+  // and writes the pi-family hook modules — omp into ~/.omp/agent/hooks/pre/,
+  // pi into ~/.pi/agent/extensions/.
   // Panes stamp seat identity env at connect; the hook reads it at run time
   // (see agent_hook_installer.dart). WSL distros are installed lazily on first
   // launch into them, via onWslDistroLaunch above. Skipped on mobile: there is

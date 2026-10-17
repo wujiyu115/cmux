@@ -11,9 +11,10 @@ typedef WslHookPaths = ({String home, String appDataRoot});
 /// Decides *where* the shared agent forwarder hooks are installed.
 ///
 /// Claude Code, Qoder, and Codex each read their own settings file on every
-/// machine the app touches, so one install fans out to one [AgentHookInstaller]
-/// per [AgentHookTarget]: the host at boot, each WSL distro lazily on first
-/// launch into it.
+/// machine the app touches; oh-my-pi and pi instead get a TS extension module
+/// dropped into their own agent dirs. One install fans out to one
+/// [AgentHookInstaller] per [AgentHookTarget]: the host at boot, each WSL
+/// distro lazily on first launch into it.
 ///
 /// A WSL distro is a separate machine for this purpose: a CLI running inside
 /// it reads that distro's own `~/.claude/settings.json` / `~/.qoder/settings

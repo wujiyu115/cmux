@@ -24,7 +24,8 @@ export default function (pi) {
 	// blocks the agent on status delivery. On WSL the curl.exe launch crosses
 	// Win32 interop — bounded for HTTP by --max-time, but the launch itself can
 	// stall for seconds under load, so it is detached + unref'd (orphans curl,
-	// survives omp's exit) and never awaited. Same bridge as the Orca forwarder.
+	// the request still lands after the CLI exits) and never awaited. Same
+	// bridge as the Orca forwarder.
 	const spawn = require("node:child_process").spawn;
 	const post = (body) => {
 		const payload = JSON.stringify(body);

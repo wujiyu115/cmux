@@ -28,17 +28,30 @@ const codexHookCmdFileName = 'codex-hook.cmd';
 /// Claude, Qoder, and Codex report Claude-Code-shaped payloads on stdin
 /// (`hook_event_name`, `tool_name`, `is_interrupt`, …), so
 /// [AgentStatusNormalizer] decodes them through a single Claude-family path —
-/// no per-target normalization. oh-my-pi instead runs TS extension modules
-/// discovered from `~/.omp/agent/hooks/pre/`; its module emits the same
-/// Claude-Code-shaped payloads, so it rides the same normalizer path too —
-/// but it needs no settings merge, just the module file on disk.
-enum AgentHookTarget { claude, qoder, codex, ohMyPi }
+/// no per-target normalization. oh-my-pi and pi instead run TS extension
+/// modules discovered from their own agent dirs (`~/.omp/agent/hooks/pre/`,
+/// `~/.pi/agent/extensions/`); the modules emit the same Claude-Code-shaped
+/// payloads, so they ride the same normalizer path too — but they need no
+/// settings merge, just the module file on disk.
+enum AgentHookTarget {
+  claude,
+  qoder,
+  codex,
+  ohMyPi,
+  pi;
 
-/// Fixed file name of the managed oh-my-pi hook module, dropped into
-/// `~/.omp/agent/hooks/pre/` (with the `pre` dir created as needed). Same
-/// naming rationale as [agentHookScriptFileName]: a recognisable marker for
-/// our own files.
-const agentHookOmpFileName = 'teampilot-status.ts';
+  /// Targets whose whole install is the TS module file — no settings merge,
+  /// no forwarder script, no `.bak`.
+  bool get isModuleOnly =>
+      this == AgentHookTarget.ohMyPi || this == AgentHookTarget.pi;
+}
+
+/// Fixed file name of the managed pi-family hook module, dropped into the
+/// target's own agent dir (oh-my-pi `…/agent/hooks/pre/`, pi
+/// `…/agent/extensions/`, with the dir created as needed). Same naming
+/// rationale as [agentHookScriptFileName]: a recognisable marker for our own
+/// files.
+const agentHookModuleFileName = 'teampilot-status.ts';
 
 /// One hook event the installer manages in the target CLI's settings file.
 ///
@@ -173,7 +186,7 @@ class AgentHookInstaller {
           : '$home/.omp/agent';
       final modulePath = _join(
         _join(_join(agentDir, 'hooks'), 'pre'),
-        agentHookOmpFileName,
+        agentHookModuleFileName,
       );
       return AgentHookInstaller(
         target: target,
@@ -185,6 +198,30 @@ class AgentHookInstaller {
         scriptBody: agentHookOmpScriptBody,
       );
     }
+    if (target == AgentHookTarget.pi) {
+      final home = _homeDir();
+      if (home == null) return null;
+      // pi auto-loads TS extensions from <agentDir>/extensions/ (jiti, no
+      // build step); PI_CODING_AGENT_DIR overrides the default ~/.pi/agent
+      // root, so honor it like CLAUDE_CONFIG_DIR / CODEX_HOME.
+      final configDir = Platform.environment['PI_CODING_AGENT_DIR']?.trim();
+      final agentDir = (configDir != null && configDir.isNotEmpty)
+          ? configDir
+          : '$home/.pi/agent';
+      final modulePath = _join(
+        _join(agentDir, 'extensions'),
+        agentHookModuleFileName,
+      );
+      return AgentHookInstaller(
+        target: target,
+        // Same module-only install as oh-my-pi: pi reads the extension file
+        // directly, so there is no settings file to merge into.
+        scriptPath: modulePath,
+        settingsPath: modulePath,
+        filesystem: filesystem,
+        scriptBody: agentHookPiScriptBody,
+      );
+    }
     final settingsPath = switch (target) {
       AgentHookTarget.claude => _joinOrNull(
         resolveClaudeConfigDir(),
@@ -192,7 +229,7 @@ class AgentHookInstaller {
       ),
       AgentHookTarget.qoder => _joinOrNull(_qoderHostDir(), 'settings.json'),
       AgentHookTarget.codex => _joinOrNull(_codexHomeDir(), 'hooks.json'),
-      AgentHookTarget.ohMyPi => null,
+      AgentHookTarget.ohMyPi || AgentHookTarget.pi => null,
     };
     if (settingsPath == null) return null;
     final scriptDir = _join(hostAppDataRoot, 'agent-hooks');
@@ -223,17 +260,30 @@ class AgentHookInstaller {
       final agentDir = '$distroHome/.omp/agent';
       return AgentHookInstaller(
         target: target,
-        scriptPath: '$agentDir/hooks/pre/$agentHookOmpFileName',
-        settingsPath: '$agentDir/hooks/pre/$agentHookOmpFileName',
+        scriptPath: '$agentDir/hooks/pre/$agentHookModuleFileName',
+        settingsPath: '$agentDir/hooks/pre/$agentHookModuleFileName',
         filesystem: filesystem ?? WslFilesystem(distro: distro),
         scriptBody: agentHookOmpScriptBody,
+      );
+    }
+    if (target == AgentHookTarget.pi) {
+      // The distro's own PI_CODING_AGENT_DIR would need a wsl.exe round trip
+      // to read; the default ~/.pi/agent dir is written instead — same
+      // trade-off as the oh-my-pi variant above.
+      final agentDir = '$distroHome/.pi/agent';
+      return AgentHookInstaller(
+        target: target,
+        scriptPath: '$agentDir/extensions/$agentHookModuleFileName',
+        settingsPath: '$agentDir/extensions/$agentHookModuleFileName',
+        filesystem: filesystem ?? WslFilesystem(distro: distro),
+        scriptBody: agentHookPiScriptBody,
       );
     }
     final settingsPath = switch (target) {
       AgentHookTarget.claude => '$distroHome/.claude/settings.json',
       AgentHookTarget.qoder => '$distroHome/.qoder/settings.json',
       AgentHookTarget.codex => '$distroHome/.codex/hooks.json',
-      AgentHookTarget.ohMyPi => '',
+      AgentHookTarget.ohMyPi || AgentHookTarget.pi => '',
     };
     return AgentHookInstaller(
       target: target,
@@ -283,11 +333,12 @@ class AgentHookInstaller {
   /// Idempotent: (re)writes the forwarder script(s) and merges the managed
   /// hook groups into the CLI settings. Best-effort — logs and swallows
   /// failures so a bootstrap can never be blocked by a missing/locked settings
-  /// file. oh-my-pi has no settings to merge: the module file *is* the install.
+  /// file. Module-only targets (oh-my-pi, pi) have no settings to merge: the
+  /// module file *is* the install.
   Future<void> install() async {
     try {
       await _writeFile(scriptPath, scriptBody);
-      if (target == AgentHookTarget.ohMyPi) return;
+      if (target.isModuleOnly) return;
       final cmdPath = windowsScriptPath;
       if (cmdPath != null) {
         await _writeFile(cmdPath, normalizeCmdScriptEndings(codexHookCmdBody));
@@ -354,13 +405,13 @@ class AgentHookInstaller {
   }
 
   /// Codex has no `StopFailure` event (its event set otherwise maps 1:1).
-  /// oh-my-pi never reaches here — its module file is written whole.
+  /// Module-only targets never reach here — their module file is written whole.
   static List<_ManagedHookEvent> _eventsFor(AgentHookTarget target) =>
       switch (target) {
         AgentHookTarget.claude || AgentHookTarget.qoder => _managedEvents,
         AgentHookTarget.codex =>
           _managedEvents.where((event) => event.name != 'StopFailure').toList(),
-        AgentHookTarget.ohMyPi => const [],
+        AgentHookTarget.ohMyPi || AgentHookTarget.pi => const [],
       };
 
   Map<String, Object?> _buildGroup(_ManagedHookEvent event) {
@@ -494,35 +545,19 @@ exit /b 0
 exit /b 0
 ''';
 
-/// oh-my-pi hook module, written to `~/.omp/agent/hooks/pre/teampilot-status.ts`.
-///
-/// omp (a Bun app) discovers TS extension modules from that dir and binds the
-/// default export's `pi.on(...)` handlers to the runtime event bus — there is
-/// no settings file to merge into, the module file *is* the install. Reference
-/// copy kept next to this file as `agent_hook_omp_body.ts`; keep both in sync.
+/// Shared head of the pi-family hook modules (oh-my-pi and raw pi): the PTY
+/// env seat guard, the WSL `curl.exe` interop detection, and the detached
+/// fire-and-forget `post`. Each target's module constant appends its
+/// event-to-payload handlers to this core.
 ///
 /// Same contract as the sh forwarder: seat identity from the PTY env, no-op
-/// without it. Event mapping (validated against real omp):
-/// - `agent_start` → UserPromptSubmit (working, explicit)
-/// - `tool_call`/`tool_result` → PreToolUse/PostToolUse (working); omp's
-///   clarifying-question tool `ask` is renamed AskUserQuestion → waiting
-/// - `tool_approval_requested` → PermissionRequest (waiting)
-/// - `session_stop` → Stop (done). Fires only for the root agent — subagents
-///   are excluded by omp itself — so it is the primary done edge.
-/// - `agent_end` → Stop (done), but only when not a scheduled continuation
-///   (`willContinue`) and not a subagent (its session file lives inside a
-///   parent's artifacts dir). Covers user-interrupted turns, where omp skips
-///   session_stop entirely.
-///
-/// The WSL `curl.exe` interop fallback mirrors the sh forwarder; on the host
-/// (or macOS/Linux) it uses plain `fetch`. The interop spawn is detached and
-/// fire-and-forget: awaiting the WSL->Win32 launch would put an unbounded stall
-/// on pi's awaited-handler critical path (curl bounds the HTTP via `--max-time`,
-/// but not the interop process launch, which stalls for seconds under load and
-/// tripped pi's 30s handler timeout). detached+unref orphans curl so the request
-/// still lands after omp exits — same bridge as the Orca status forwarder.
-const agentHookOmpScriptBody =
-    r'''// TeamPilot agent-status forwarder (managed — do not edit).
+/// without it. The interop spawn is detached and fire-and-forget: awaiting the
+/// WSL->Win32 launch would put an unbounded stall on pi's awaited-handler
+/// critical path (curl bounds the HTTP via `--max-time`, but not the interop
+/// process launch, which stalls for seconds under load and tripped pi's 30s
+/// handler timeout). detached+unref orphans curl so the request still lands
+/// after the CLI exits — same bridge as the Orca status forwarder.
+const _tsModuleCore = r'''// TeamPilot agent-status forwarder (managed — do not edit).
 const url = process.env.TEAMPILOT_AGENT_STATUS_URL;
 const seatSession = process.env.TEAMPILOT_SESSION;
 const seatMember = process.env.TEAMPILOT_MEMBER;
@@ -543,7 +578,8 @@ export default function (pi) {
 	// blocks the agent on status delivery. On WSL the curl.exe launch crosses
 	// Win32 interop — bounded for HTTP by --max-time, but the launch itself can
 	// stall for seconds under load, so it is detached + unref'd (orphans curl,
-	// survives omp's exit) and never awaited. Same bridge as the Orca forwarder.
+	// the request still lands after the CLI exits) and never awaited. Same
+	// bridge as the Orca forwarder.
 	const spawn = require("node:child_process").spawn;
 	const post = (body) => {
 		const payload = JSON.stringify(body);
@@ -571,7 +607,29 @@ export default function (pi) {
 				}).catch(() => {});
 			}
 		} catch {}
-	};
+	};''';
+
+/// oh-my-pi hook module, written to `~/.omp/agent/hooks/pre/teampilot-status.ts`.
+///
+/// omp (a Bun app) discovers TS extension modules from that dir and binds the
+/// default export's `pi.on(...)` handlers to the runtime event bus — there is
+/// no settings file to merge into, the module file *is* the install. Reference
+/// copy kept next to this file as `agent_hook_omp_body.ts`; keep both in sync.
+///
+/// Event mapping (validated against real omp):
+/// - `agent_start` → UserPromptSubmit (working, explicit)
+/// - `tool_call`/`tool_result` → PreToolUse/PostToolUse (working); omp's
+///   clarifying-question tool `ask` is renamed AskUserQuestion → waiting
+/// - `tool_approval_requested` → PermissionRequest (waiting)
+/// - `session_stop` → Stop (done). Fires only for the root agent — subagents
+///   are excluded by omp itself — so it is the primary done edge.
+/// - `agent_end` → Stop (done), but only when not a scheduled continuation
+///   (`willContinue`) and not a subagent (its session file lives inside a
+///   parent's artifacts dir). Covers user-interrupted turns, where omp skips
+///   session_stop entirely.
+const agentHookOmpScriptBody =
+    '$_tsModuleCore'
+    r'''
 
 	// omp event -> Claude-Code-shaped payload the TeamPilot normalizer reads.
 	pi.on("agent_start", () => post({ hook_event_name: "UserPromptSubmit" }));
@@ -606,5 +664,58 @@ export default function (pi) {
 		} catch {}
 		post({ hook_event_name: "Stop" });
 	});
+}
+''';
+
+/// Raw pi hook module, written to `~/.pi/agent/extensions/teampilot-status.ts`
+/// (or `<PI_CODING_AGENT_DIR>/extensions/…` when that env var is set).
+///
+/// pi (badlogic/pi-mono) auto-discovers TS extension modules from that dir and
+/// binds the default export's `pi.on(...)` handlers (jiti — no build step), so
+/// like oh-my-pi there is no settings file to merge into: the module file *is*
+/// the install. Reference copy kept next to this file as
+/// `agent_hook_pi_body.ts`; keep both in sync.
+///
+/// Event mapping (verified against pi-mono `extensions/types.ts`):
+/// - `agent_start` → UserPromptSubmit (working, explicit)
+/// - `tool_call`/`tool_result` → PreToolUse/PostToolUse (working); nested
+///   `executeTool` calls carry `parentToolCallId` and forward too — still
+///   activity in the same run, so the seat stays working
+/// - `agent_settled` → Stop (done), with `aborted` mapped to Claude's
+///   `is_interrupt` so Escape-style cancels surface as interrupted. Raw pi
+///   has no omp-style `session_stop` and `agent_end` carries no `willContinue`;
+///   `agent_settled` fires only after retries, compaction, and queued
+///   continuations are exhausted, making it the sole terminal edge.
+///
+/// No waiting edge: raw pi raises no approval event (permissions are handled
+/// by dedicated permission extensions, not bus events), so the
+/// needs-permission notification does not exist for pi.
+const agentHookPiScriptBody =
+    '$_tsModuleCore'
+    r'''
+
+	// pi event -> Claude-Code-shaped payload the TeamPilot normalizer reads.
+	// Raw pi has no omp-style session_stop and no approval event; agent_settled
+	// is the sole terminal edge — retries, compaction, and queued continuations
+	// are all exhausted by the time it fires.
+	pi.on("agent_start", () => post({ hook_event_name: "UserPromptSubmit" }));
+	pi.on("tool_call", (event) => post({
+		hook_event_name: "PreToolUse",
+		tool_name: event?.toolName,
+		tool_input: event?.input,
+		tool_use_id: event?.toolCallId,
+	}));
+	pi.on("tool_result", (event) => post({
+		hook_event_name: "PostToolUse",
+		tool_name: event?.toolName,
+		tool_input: event?.input,
+		tool_use_id: event?.toolCallId,
+	}));
+	// Escape-style cancels report `aborted`; the normalizer reads the Claude
+	// Stop `is_interrupt` flag to mark the turn interrupted, not finished.
+	pi.on("agent_settled", (event) => post({
+		hook_event_name: "Stop",
+		is_interrupt: event?.aborted === true,
+	}));
 }
 ''';
