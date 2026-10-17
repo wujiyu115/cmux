@@ -1,0 +1,74 @@
+# loop-engine example configuration
+# Secrets use "env:VAR_NAME" references; set them in the environment.
+
+engine:
+  port: 8787
+  dbPath: ./data/loop-engine.db
+  intervalMs: 5000
+  pollIntervalMs: 60000   # webhook-loss poll + PR reconcile cadence; 0 disables both
+  transcriptDir: ./data/transcripts
+  logDir: ./data/logs
+  worktreesRoot: ./data/worktrees
+
+connectors:
+  github:
+    token: env:GITHUB_TOKEN
+    webhookSecret: env:GITHUB_WEBHOOK_SECRET
+    labels:
+      inProgress: loop-in-progress
+      needsHuman: loop-needs-human
+
+# Optional connector plugins; see plugins/generic-webhook for an example.
+plugins:
+  - path: ./plugins/generic-webhook
+    config:
+      secret: env:GENERIC_WEBHOOK_SECRET
+      ignoreActors: []
+  # Jira Cloud: tickets in, comments/transitions out; PRs open on the
+  # repo-configured git reporter (repos.<project>.reporter).
+  - path: ./plugins/jira
+    config:
+      baseUrl: https://yourorg.atlassian.net
+      email: env:JIRA_EMAIL
+      apiToken: env:JIRA_API_TOKEN
+      transitions:
+        inProgress: In Progress
+        blocked: Blocked
+      ignoreActors: []
+
+runners:
+  claude:
+    command: claude
+    args: ["-p", "--output-format", "json"]
+
+repos:
+  owner/repo:
+    repoDir: D:/repos/owner/repo
+    runner: claude
+    # reporter: github    # git-side PR reporter; needed when tickets come from
+    #                     # intake-only sources (generic-webhook, Feishu, ...)
+    trigger:
+      assignees: [loop-agent]
+      labels: [loop]
+    verification:
+      - name: typecheck
+        command: npx tsc --noEmit
+        required: true
+      - name: test
+        command: npm test
+        required: true
+    budget:
+      maxAttempts: 3
+      timeoutMs: 900000
+      # maxTokens: 2000000    # optional per-work token cap (input + output)
+    pr:
+      base: main
+
+  # Jira example: project key as config key, account ids as assignee triggers.
+  # PROJ:
+  #   repoDir: D:/repos/owner/repo
+  #   runner: claude
+  #   reporter: github          # PRs open on GitHub while the ticket lives in Jira
+  #   trigger:
+  #     assignees: ["5f8d0a1b2c3d4e5f6a7b8c9d"]   # Jira account ids
+  #     labels: [loop]
