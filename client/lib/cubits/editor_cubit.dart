@@ -358,6 +358,13 @@ class EditorCubit extends Cubit<EditorState> {
   /// Selects an inclusive 1-based line range in an open file. With
   /// [centerIfInvisible] the editor also scrolls the selection into view
   /// (no-op when already visible) — used by search-result jumps.
+  ///
+  /// The centering is retried across frames when the code pane has not
+  /// mounted yet: a first click on a search result opens the file, and the
+  /// handle exists before the [CodeEditor] render object does, so an
+  /// immediate makeCursorCenterIfInvisible silently no-ops and the view
+  /// stays at the top (the selection is still applied — a second click
+  /// centers because the pane is live by then).
   void selectLines(
     String workspaceId,
     String path, {
@@ -378,8 +385,34 @@ class EditorCubit extends Cubit<EditorState> {
       endLine: endLine,
     );
     if (centerIfInvisible) {
-      controller.makeCursorCenterIfInvisible();
+      _centerSelectionWhenPaneMounted(workspaceId, path, controller);
     }
+  }
+
+  /// Bounded post-frame retries of the center scroll until the editor pane's
+  /// render object exists (guarded by the controller identity so a file
+  /// switch mid-retry never scrolls a stale pane).
+  void _centerSelectionWhenPaneMounted(
+    String workspaceId,
+    String path,
+    CodeLineEditingController controller,
+  ) {
+    var attempts = 0;
+    void tryCenter() {
+      if (controllerFor(workspaceId, path) != controller) return;
+      controller.makeCursorCenterIfInvisible();
+      // makeCursorCenterIfInvisible no-ops without the render object; the
+      // editor key resolves once the pane mounts. A mounted editor centers
+      // on the first call, so the extra frames cost nothing in steady state.
+      final render =
+          editorKeyFor(workspaceId, path)?.currentContext?.findRenderObject();
+      if (render != null && render.attached || ++attempts > 30) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (controllerFor(workspaceId, path) == controller) tryCenter();
+      });
+    }
+
+    tryCenter();
   }
 
   GlobalKey? editorKeyFor(String workspaceId, String path) =>

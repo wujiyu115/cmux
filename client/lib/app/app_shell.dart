@@ -31,7 +31,6 @@ import '../services/workbench/workbench_strip_navigator.dart';
 import '../services/editor/markdown_view_mode_store.dart';
 import '../cubits/config_cubit.dart';
 import '../cubits/layout_cubit.dart';
-import '../models/layout_preferences.dart';
 import '../cubits/workspace_groups_cubit.dart';
 import '../cubits/workspace_tools_cubit.dart';
 import '../cubits/session_preferences_cubit.dart';
