@@ -53,6 +53,7 @@ class _SshProfilesSectionState extends State<SshProfilesSection> {
           context,
           message: context.l10n.sshProfileTestSuccess,
           variant: TpToastVariant.success,
+          record: false,
         );
       }
       return null;
@@ -63,6 +64,7 @@ class _SshProfilesSectionState extends State<SshProfilesSection> {
           context,
           message: sshConnectionFailureUserMessage(e, context.l10n),
           variant: TpToastVariant.error,
+          record: false,
         );
       }
       return e;

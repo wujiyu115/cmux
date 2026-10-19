@@ -154,6 +154,7 @@ class _SshProfileFormDialogState extends State<_SshProfileFormDialog> {
         context,
         message: context.l10n.sshProfileFormCredentialRequired,
         variant: TpToastVariant.warning,
+        record: false,
       );
       return null;
     }
@@ -204,13 +205,14 @@ class _SshProfileFormDialogState extends State<_SshProfileFormDialog> {
         context,
         message: context.l10n.sshProfileTestSuccess,
         variant: TpToastVariant.success,
+        record: false,
       );
     } on Object catch (error) {
-      if (!mounted) return;
       AppToast.show(
         context,
         message: sshConnectionFailureUserMessage(error, context.l10n),
         variant: TpToastVariant.error,
+        record: false,
       );
     } finally {
       if (mounted) setState(() => _testing = false);

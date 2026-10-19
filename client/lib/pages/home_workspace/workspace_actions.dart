@@ -77,6 +77,7 @@ Future<void> cloneWorkspace(BuildContext context, Workspace workspace) async {
       context,
       message: l10n.homeWorkspaceCloneWorkspaceSuccess(baseName),
       variant: TpToastVariant.success,
+      record: false,
     );
     context.go('/home-v2/workspace/${cloned.workspaceId}');
   } on Object catch (error) {
@@ -85,6 +86,7 @@ Future<void> cloneWorkspace(BuildContext context, Workspace workspace) async {
       context,
       message: '${l10n.homeWorkspaceCloneWorkspaceFailed}: $error',
       variant: TpToastVariant.error,
+      record: false,
     );
   }
 }

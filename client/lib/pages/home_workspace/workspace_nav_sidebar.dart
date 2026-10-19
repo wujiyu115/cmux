@@ -710,10 +710,10 @@ class _WorkspaceNavRowState extends State<_WorkspaceNavRow> {
           child: Container(
             margin: const EdgeInsets.symmetric(vertical: 1),
             padding: const EdgeInsets.only(
-              left: 6,
-              right: 6,
-              top: 8,
-              bottom: 8,
+              left: 2,
+              right: 4,
+              top: 6,
+              bottom: 6,
             ),
             decoration: BoxDecoration(
               color: background,
@@ -731,9 +731,9 @@ class _WorkspaceNavRowState extends State<_WorkspaceNavRow> {
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                const SizedBox(width: 7),
+                const SizedBox(width: 5),
                 leading,
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 Expanded(
                   child: Text(
                     name,

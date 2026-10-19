@@ -113,6 +113,7 @@ class _FileTreePanelState extends State<FileTreePanel> {
         context,
         message: context.l10n.fileTreeRevealFailed,
         variant: TpToastVariant.error,
+        record: false,
       );
     }
     // Scrolling is state-driven: the reveal BlocListener in [build] reacts to

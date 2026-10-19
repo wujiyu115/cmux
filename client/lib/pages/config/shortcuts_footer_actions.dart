@@ -109,7 +109,8 @@ class ShortcutsFooterActions extends StatelessWidget {
           context,
           message: l10n.shortcutsExportFailed,
           variant: TpToastVariant.error,
-        );
+              record: false,
+    );
       }
     }
   }
@@ -131,7 +132,8 @@ class ShortcutsFooterActions extends StatelessWidget {
           context,
           message: l10n.shortcutsImportInvalidFile,
           variant: TpToastVariant.error,
-        );
+              record: false,
+    );
       }
       return;
     }

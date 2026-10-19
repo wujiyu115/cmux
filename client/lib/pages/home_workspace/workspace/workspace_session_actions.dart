@@ -129,18 +129,21 @@ void _handleSessionOpenStatus(
         context,
         message: blockedMixedMessage,
         variant: TpToastVariant.warning,
+        record: false,
       );
     case SessionOpenStatus.missingWorkspace:
       AppToast.show(
         context,
         message: context.l10n.sessionLaunchMissingWorkspace,
         variant: TpToastVariant.warning,
+        record: false,
       );
     case SessionOpenStatus.missingTeamMember:
       AppToast.show(
         context,
         message: context.l10n.sessionLaunchMissingTeamMember,
         variant: TpToastVariant.warning,
+        record: false,
       );
   }
 }
@@ -285,6 +288,7 @@ Future<void> openWorkspaceNewWorktree(
       context,
       message: l10n.worktreeCreateFailed(error.toString()),
       variant: TpToastVariant.error,
+      record: false,
     );
   }
 }

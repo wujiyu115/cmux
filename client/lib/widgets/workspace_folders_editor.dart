@@ -136,6 +136,7 @@ class _WorkspaceFoldersEditorState extends State<WorkspaceFoldersEditor> {
         context,
         message: context.l10n.workspaceDirectoryAlreadyAdded,
         variant: TpToastVariant.warning,
+        record: false,
       );
       return;
     }

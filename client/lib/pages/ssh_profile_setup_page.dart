@@ -161,13 +161,14 @@ class _SshProfileSetupPageState extends State<SshProfileSetupPage> {
         context,
         message: context.l10n.sshProfileTestSuccess,
         variant: TpToastVariant.success,
+        record: false,
       );
     } on Object catch (error) {
-      if (!mounted) return;
       AppToast.show(
         context,
         message: sshConnectionFailureUserMessage(error, context.l10n),
         variant: TpToastVariant.error,
+        record: false,
       );
     } finally {
       if (mounted) setState(() => _testing = false);

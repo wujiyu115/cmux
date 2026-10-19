@@ -141,6 +141,7 @@ class _SvnRepoSectionState extends State<SvnRepoSection> {
         context,
         message: context.l10n.svnCommitNothingSelected,
         variant: TpToastVariant.warning,
+        record: false,
       );
     }
   }

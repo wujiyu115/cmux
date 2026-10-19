@@ -72,6 +72,11 @@ class WorkspaceIconSettingsRow extends StatelessWidget {
       workspace,
     );
     if (error == null || !context.mounted) return;
-    AppToast.show(context, message: error, variant: TpToastVariant.error);
+    AppToast.show(
+      context,
+      message: error,
+      variant: TpToastVariant.error,
+      record: false,
+    );
   }
 }

@@ -101,6 +101,7 @@ class _QuickOpenScopeDialogState extends State<_QuickOpenScopeDialog> {
           error.toString(),
         ),
         variant: TpToastVariant.error,
+              record: false,
       );
       return false;
     }
@@ -117,6 +118,7 @@ class _QuickOpenScopeDialogState extends State<_QuickOpenScopeDialog> {
         context,
         message: context.l10n.workspaceQuickOpenScopeDuplicate,
         variant: TpToastVariant.warning,
+              record: false,
       );
       return;
     }
@@ -144,6 +146,7 @@ class _QuickOpenScopeDialogState extends State<_QuickOpenScopeDialog> {
         context,
         message: context.l10n.workspaceQuickOpenScopeNoFolder,
         variant: TpToastVariant.warning,
+              record: false,
       );
       return;
     }
@@ -166,7 +169,8 @@ class _QuickOpenScopeDialogState extends State<_QuickOpenScopeDialog> {
           context,
           message: context.l10n.workspaceQuickOpenScopeOutsideRoot,
           variant: TpToastVariant.warning,
-        );
+                record: false,
+      );
         return;
       }
       relative = normalizeIndexDirRule(ctx.relative(abs, from: root));
@@ -176,6 +180,7 @@ class _QuickOpenScopeDialogState extends State<_QuickOpenScopeDialog> {
         context,
         message: context.l10n.workspaceQuickOpenScopeOutsideRoot,
         variant: TpToastVariant.error,
+              record: false,
       );
       return;
     }
@@ -185,6 +190,7 @@ class _QuickOpenScopeDialogState extends State<_QuickOpenScopeDialog> {
         context,
         message: context.l10n.workspaceQuickOpenScopeDuplicate,
         variant: TpToastVariant.warning,
+              record: false,
       );
       return;
     }
@@ -211,6 +217,7 @@ class _QuickOpenScopeDialogState extends State<_QuickOpenScopeDialog> {
         context,
         message: l10n.workspaceQuickOpenScopeExportSuccess,
         variant: TpToastVariant.success,
+              record: false,
       );
     } on Object {
       if (!mounted) return;
@@ -218,6 +225,7 @@ class _QuickOpenScopeDialogState extends State<_QuickOpenScopeDialog> {
         context,
         message: l10n.workspaceQuickOpenScopeExportFailed,
         variant: TpToastVariant.error,
+              record: false,
       );
     }
   }
@@ -241,6 +249,7 @@ class _QuickOpenScopeDialogState extends State<_QuickOpenScopeDialog> {
         context,
         message: l10n.workspaceQuickOpenScopeImportInvalid,
         variant: TpToastVariant.error,
+              record: false,
       );
       return;
     }
@@ -258,7 +267,8 @@ class _QuickOpenScopeDialogState extends State<_QuickOpenScopeDialog> {
       context,
       message: l10n.workspaceQuickOpenScopeImportSuccess,
       variant: TpToastVariant.success,
-    );
+            record: false,
+      );
   }
 
   /// Default save name for [WorkspaceIndexDirs] exports: the workspace's

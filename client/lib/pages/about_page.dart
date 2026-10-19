@@ -59,7 +59,8 @@ class _AboutConfigWorkspaceState extends State<AboutConfigWorkspace> {
                   context,
                   message: l10n.appUpdateUpToDate,
                   variant: TpToastVariant.success,
-                );
+                      record: false,
+    );
               }
             },
             builder: (context, state) {

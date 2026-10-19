@@ -160,7 +160,8 @@ class _TerminalThemeConfigCardState extends State<TerminalThemeConfigCard> {
         context,
         message: l10n.terminalThemeImportSaveFailed,
         variant: TpToastVariant.error,
-      );
+            record: false,
+    );
       return;
     }
 
@@ -228,7 +229,8 @@ class _TerminalThemeConfigCardState extends State<TerminalThemeConfigCard> {
         context,
         message: l10n.terminalThemeDeleteFailed,
         variant: TpToastVariant.error,
-      );
+            record: false,
+    );
       return;
     }
     await _refreshRegistry();

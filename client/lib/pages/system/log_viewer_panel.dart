@@ -198,6 +198,7 @@ class LogViewerPanelState extends State<LogViewerPanel> {
         context,
         message: l10n.logViewerClearDone,
         variant: TpToastVariant.success,
+        record: false,
       );
     } on Object catch (e) {
       if (!mounted) return;
@@ -205,6 +206,7 @@ class LogViewerPanelState extends State<LogViewerPanel> {
         context,
         message: l10n.logViewerClearFailed('$e'),
         variant: TpToastVariant.error,
+        record: false,
       );
     }
   }
