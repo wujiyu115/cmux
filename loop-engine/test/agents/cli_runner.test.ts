@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
-import { CliAgentRunner, extractTodos, parseCliOutput } from "../../src/agents/cli_runner";
+import { CliAgentRunner, extractTodos, parseCliOutput, parsePiStream } from "../../src/agents/cli_runner";
 import type { AgentRunSpec } from "../../src/agents/runner";
 
 const fixturesDir = join(dirname(fileURLToPath(import.meta.url)), "..", "fixtures");
@@ -83,6 +83,88 @@ describe("parseCliOutput", () => {
   it("falls back to raw text for non-JSON output", () => {
     const parsed = parseCliOutput("just text\n");
     expect(parsed).toEqual({ ok: true, text: "just text", usage: { inputTokens: 0, outputTokens: 0 } });
+  });
+});
+
+const PI_STREAM = [
+  JSON.stringify({ type: "session", id: "s1", cwd: "/tmp" }),
+  JSON.stringify({ type: "agent_start" }),
+  JSON.stringify({ type: "turn_start" }),
+  JSON.stringify({
+    type: "turn_end",
+    message: {
+      role: "assistant",
+      content: [{ type: "thinking", thinking: "musing" }, { type: "text", text: "ok" }],
+      usage: { input: 4309, output: 16 },
+    },
+  }),
+  JSON.stringify({ type: "agent_end" }),
+  JSON.stringify({ type: "agent_settled" }),
+].join("\n");
+
+describe("parsePiStream", () => {
+  it("extracts the assistant text and pi-shaped usage from the event stream", () => {
+    expect(parsePiStream(PI_STREAM)).toEqual({
+      ok: true,
+      text: "ok",
+      usage: { inputTokens: 4309, outputTokens: 16 },
+    });
+  });
+
+  it("uses the last turn_end text", () => {
+    const stream = [
+      JSON.stringify({
+        type: "turn_end",
+        message: { role: "assistant", content: [{ type: "text", text: "first" }], usage: {} },
+      }),
+      JSON.stringify({
+        type: "turn_end",
+        message: { role: "assistant", content: [{ type: "text", text: "second" }], usage: {} },
+      }),
+    ].join("\n");
+    expect(parsePiStream(stream).text).toBe("second");
+  });
+
+  it("marks error events as failures and keeps their message", () => {
+    const stream = [
+      JSON.stringify({ type: "agent_start" }),
+      JSON.stringify({ type: "error", message: "provider unreachable" }),
+    ].join("\n");
+    const parsed = parsePiStream(stream);
+    expect(parsed.ok).toBe(false);
+    expect(parsed.text).toContain("provider unreachable");
+  });
+
+  it("ignores non-JSON lines", () => {
+    const stream = `noise\n${JSON.stringify({
+      type: "turn_end",
+      message: { role: "assistant", content: [{ type: "text", text: "done" }], usage: { input: 1, output: 2 } },
+    })}`;
+    expect(parsePiStream(stream)).toEqual({
+      ok: true,
+      text: "done",
+      usage: { inputTokens: 1, outputTokens: 2 },
+    });
+  });
+});
+
+describe("parseCliOutput pi vs claude sniffing", () => {
+  it("routes pi NDJSON streams to the pi parser", () => {
+    const parsed = parseCliOutput(PI_STREAM);
+    expect(parsed.text).toBe("ok");
+    expect(parsed.usage).toEqual({ inputTokens: 4309, outputTokens: 16 });
+  });
+
+  it("still parses claude single-object output", () => {
+    const raw = JSON.stringify({
+      type: "result",
+      is_error: false,
+      result: "hello",
+      usage: { input_tokens: 3, output_tokens: 4 },
+    });
+    const parsed = parseCliOutput(raw);
+    expect(parsed.text).toBe("hello");
+    expect(parsed.usage).toEqual({ inputTokens: 3, outputTokens: 4 });
   });
 });
 

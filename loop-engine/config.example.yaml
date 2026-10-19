@@ -7,6 +7,13 @@ engine:
   intervalMs: 5000
   pollIntervalMs: 60000   # webhook-loss poll + PR reconcile cadence; 0 disables both
   maxWorkers: 1           # concurrent work records advanced per tick (Phase 4)
+  # Agent CLI isolation (Phase 4). pi and Claude Code need LLM API access,
+  # so the sandbox keeps the network on; $HOME is mounted read-only for
+  # credentials (~/.claude, ~/.pi) and only the worktree is writable.
+  # sandbox:
+  #   mode: none           # none | docker | bwrap (linux only)
+  #   image: agent-cli:latest   # docker image containing pi/claude
+  #   allowNetwork: true
   transcriptDir: ./data/transcripts
   logDir: ./data/logs
   worktreesRoot: ./data/worktrees
@@ -38,9 +45,15 @@ plugins:
       ignoreActors: []
 
 runners:
+  # Claude Code: single-JSON output, credentials in ~/.claude
   claude:
     command: claude
     args: ["-p", "--output-format", "json"]
+  # pi agent: NDJSON event stream, credentials in ~/.pi
+  # (parseCliOutput sniffs the first line and picks the pi parser)
+  # pi:
+  #   command: pi
+  #   args: ["--mode", "json", "--print"]
 
 repos:
   owner/repo:

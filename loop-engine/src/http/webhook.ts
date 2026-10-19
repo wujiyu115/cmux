@@ -5,6 +5,7 @@ import type { ConnectorRegistry } from "../connectors/registry";
 import type { IntakeEvent } from "../domain/events";
 import type { WorkRecord } from "../domain/work";
 import type { WorkStore } from "../store/store";
+import { registerPanelRoutes } from "./panel";
 
 export interface WebhookServerDeps {
   connectors: ConnectorRegistry;
@@ -50,6 +51,7 @@ export function createWebhookServer(deps: WebhookServerDeps): FastifyInstance {
   });
 
   app.get("/healthz", async () => ({ ok: true }));
+  registerPanelRoutes(app);
 
   if (deps.store) {
     app.get("/work", async () => {

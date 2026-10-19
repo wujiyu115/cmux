@@ -74,6 +74,15 @@ export const appConfigSchema = z.object({
       port: z.number().int().positive().default(8787),
       /** Concurrent work records advanced per tick; 1 keeps the serial loop. */
       maxWorkers: z.number().int().min(1).default(1),
+      /** Agent CLI execution isolation: "none" | "docker" | "bwrap". */
+      sandbox: z
+        .object({
+          mode: z.enum(["none", "docker", "bwrap"]).default("none"),
+          image: z.string().optional(),
+          /** pi and Claude Code need LLM API access, so network defaults to on. */
+          allowNetwork: z.boolean().optional(),
+        })
+        .default({}),
     })
     .default({}),
   connectors: z.object({ github: githubConnectorSchema.optional() }).default({}),

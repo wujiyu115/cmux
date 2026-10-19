@@ -9,6 +9,7 @@ import { LoopEngine } from "./engine/loop";
 import { ShellVerifier } from "./engine/shell_verifier";
 import { createWebhookServer } from "./http/webhook";
 import { loadPlugins } from "./plugins/loader";
+import { createSandbox } from "./sandbox/sandboxes";
 import { SqliteWorkStore } from "./store/sqlite_store";
 import { GitWorktreeFactory } from "./workspace/git_worktree";
 
@@ -48,6 +49,7 @@ async function main(): Promise<void> {
   }
   await loadPlugins(config.plugins, connectors, projects);
 
+  const sandbox = createSandbox(config.engine.sandbox);
   const runners = new Map(
     Object.entries(config.runners).map(([id, runner]) => [
       id,
@@ -56,6 +58,7 @@ async function main(): Promise<void> {
         command: runner.command,
         args: runner.args,
         transcriptDir: config.engine.transcriptDir,
+        sandbox,
       }),
     ]),
   );

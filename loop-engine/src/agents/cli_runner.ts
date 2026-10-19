@@ -3,15 +3,18 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import type { TodoItem } from "../domain/todo";
+import type { Sandbox } from "../sandbox/sandbox";
 import type { AgentRunResult, AgentRunSpec, AgentRunner } from "./runner";
 
 export interface CliAgentRunnerOptions {
   id: string;
-  /** Executable to launch, e.g. "claude". Must resolve via the shell. */
+  /** Executable to launch, e.g. "claude" or "pi". Must resolve via the shell. */
   command: string;
   /** Extra CLI args; must be shell-safe (no spaces in individual args). */
   args?: string[];
   env?: Record<string, string>;
+  /** Optional execution isolation (docker/bwrap); defaults to pass-through. */
+  sandbox?: Sandbox;
   transcriptDir: string;
 }
 
@@ -29,6 +32,12 @@ interface ParsedOutput {
   usage: { inputTokens: number; outputTokens: number };
 }
 
+interface ParsedOutput {
+  ok: boolean;
+  text: string;
+  usage: { inputTokens: number; outputTokens: number };
+}
+
 function tail(text: string, max = 400): string {
   const trimmed = text.trim();
   return trimmed.length > max ? trimmed.slice(-max) : trimmed;
@@ -38,20 +47,84 @@ function parseUsage(value: unknown): { inputTokens: number; outputTokens: number
   if (!value || typeof value !== "object") return { inputTokens: 0, outputTokens: 0 };
   const record = value as Record<string, unknown>;
   const num = (x: unknown): number => (typeof x === "number" && Number.isFinite(x) ? x : 0);
-  return { inputTokens: num(record.input_tokens), outputTokens: num(record.output_tokens) };
+  // Claude Code shape: input_tokens / output_tokens
+  if (record.input_tokens !== undefined || record.output_tokens !== undefined) {
+    return { inputTokens: num(record.input_tokens), outputTokens: num(record.output_tokens) };
+  }
+  // pi shape: input / output
+  return { inputTokens: num(record.input), outputTokens: num(record.output) };
+}
+
+function assistantText(message: unknown): string {
+  if (!message || typeof message !== "object") return "";
+  const content = (message as Record<string, unknown>).content;
+  if (!Array.isArray(content)) return "";
+  return content
+    .filter(
+      (part): part is { type: "text"; text: string } =>
+        !!part && typeof part === "object" && (part as { type?: unknown }).type === "text",
+    )
+    .map((part) => part.text)
+    .join("");
 }
 
 /**
- * Accepts either a Claude-Code-shaped JSON result (`claude -p --output-format json`)
- * or plain text output. Anything that is not JSON is treated as agent prose.
+ * Parses pi's NDJSON event stream (`pi --mode json -p`): the final answer is
+ * the last turn_end/agent_end event's assistant text, usage comes from
+ * turn_end.message.usage (pi shape: input/output).
+ */
+export function parsePiStream(raw: string): ParsedOutput {
+  const lines = raw.split("\n").map((l) => l.trim()).filter((l) => l.length > 0);
+  let text = "";
+  let usage: { inputTokens: number; outputTokens: number } = { inputTokens: 0, outputTokens: 0 };
+  let ok = true;
+  for (const line of lines) {
+    let event: Record<string, unknown>;
+    try {
+      const parsed: unknown = JSON.parse(line);
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) continue;
+      event = parsed as Record<string, unknown>;
+    } catch {
+      continue;
+    }
+    if (event.type === "error" || event.type === "abort") {
+      ok = false;
+      const message = typeof event.message === "string" ? event.message : "agent reported an error";
+      text = text ? `${text}\n${message}` : message;
+      continue;
+    }
+    if (event.type === "turn_end" && event.message && typeof event.message === "object") {
+      const message = event.message as Record<string, unknown>;
+      const next = assistantText(message);
+      if (next) text = next;
+      if (message.usage) usage = parseUsage(message.usage);
+    }
+  }
+  return { ok, text, usage };
+}
+
+/**
+ * Accepts three shapes and picks by sniffing the first non-empty line:
+ * 1. Claude-Code-shaped single JSON object (`claude -p --output-format json`)
+ * 2. pi's NDJSON event stream (`pi --mode json -p`)
+ * 3. plain text output (anything else; treated as agent prose)
  */
 export function parseCliOutput(raw: string): ParsedOutput {
   const trimmed = raw.trim();
   if (trimmed.length > 0) {
+    const firstLine = trimmed.split("\n", 1)[0]!.trim();
     try {
-      const parsed: unknown = JSON.parse(trimmed);
-      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-        const record = parsed as Record<string, unknown>;
+      const first: unknown = JSON.parse(firstLine);
+      if (first && typeof first === "object" && !Array.isArray(first)) {
+        const record = first as Record<string, unknown>;
+        // pi NDJSON streams open with lifecycle events (session/agent_start/...)
+        // while a Claude result object carries result/is_error/subtype fields.
+        const piEventType =
+          typeof record.type === "string" &&
+          record.result === undefined &&
+          record.is_error === undefined &&
+          record.subtype === undefined;
+        if (piEventType) return parsePiStream(trimmed);
         const result = typeof record.result === "string" ? record.result : trimmed;
         const ok =
           record.is_error !== true &&
@@ -130,8 +203,11 @@ export class CliAgentRunner implements AgentRunner {
 
   private spawnCli(spec: AgentRunSpec): Promise<CliOutcome> {
     return new Promise((resolve) => {
-      const child = spawn(this.options.command, this.options.args ?? [], {
-        cwd: spec.cwd,
+      const wrapped = this.options.sandbox
+        ? this.options.sandbox.wrap({ command: this.options.command, args: this.options.args ?? [], cwd: spec.cwd })
+        : { command: this.options.command, args: this.options.args ?? [] };
+      const child = spawn(wrapped.command, wrapped.args, {
+        cwd: wrapped.cwd ?? spec.cwd,
         shell: true,
         env: { ...process.env, ...this.options.env },
         stdio: ["pipe", "pipe", "pipe"],

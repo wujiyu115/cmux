@@ -191,4 +191,14 @@ describe("webhook server", () => {
     const res = await server.inject({ method: "GET", url: "/work" });
     expect(res.statusCode).toBe(404);
   });
+
+  it("serves the observation panel at /panel without a store", async () => {
+    const { server } = makeServer();
+    const res = await server.inject({ method: "GET", url: "/panel" });
+    expect(res.statusCode).toBe(200);
+    expect(res.headers["content-type"]).toContain("text/html");
+    // the panel is a static document that talks to /work and /healthz
+    expect(res.body).toContain("loop-engine panel");
+    expect(res.body).toContain("fetch(\"/work\")");
+  });
 });
