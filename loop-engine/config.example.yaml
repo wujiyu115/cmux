@@ -6,6 +6,7 @@ engine:
   dbPath: ./data/loop-engine.db
   intervalMs: 5000
   pollIntervalMs: 60000   # webhook-loss poll + PR reconcile cadence; 0 disables both
+  maxWorkers: 1           # concurrent work records advanced per tick (Phase 4)
   transcriptDir: ./data/transcripts
   logDir: ./data/logs
   worktreesRoot: ./data/worktrees

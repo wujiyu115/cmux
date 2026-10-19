@@ -163,6 +163,7 @@ function makeHarness(
     verifyResults?: boolean[];
     maxAttempts?: number;
     maxTokens?: number;
+    maxWorkers?: number;
     extraConnectors?: Connector[];
     repoReporter?: string;
   } = {},
@@ -200,7 +201,7 @@ function makeHarness(
       verifier,
       now: () => NOW,
     },
-    { repos: { "owner/repo": repoConfig } } satisfies EngineConfig,
+    { repos: { "owner/repo": repoConfig }, maxWorkers: opts.maxWorkers } satisfies EngineConfig,
   );
 
   return { engine, reporter, runner, store, verifier, worktrees };
@@ -432,6 +433,101 @@ describe("tick lifecycle", () => {
     expect(record.worktreeDir).toBeUndefined();
     expect(h.runner.specs).toHaveLength(1);
     expect(h.reporter.has("fail")).toBe(true);
+  });
+});
+
+describe("concurrent workers", () => {
+  class GatedRunner implements AgentRunner {
+    readonly id = "claude";
+    readonly specs: AgentRunSpec[] = [];
+    private readonly gates: Array<() => void> = [];
+
+    async run(spec: AgentRunSpec): Promise<AgentRunResult> {
+      this.specs.push(spec);
+      await new Promise<void>((resolve) => this.gates.push(resolve));
+      return okRun();
+    }
+
+    releaseAll(): void {
+      for (const resolve of this.gates.splice(0)) resolve();
+    }
+  }
+
+  function makeTicketFor(key: string): Ticket {
+    return makeTicket({
+      id: { connectorId: "github", externalId: `owner/repo#${key}` },
+      url: `https://github.com/owner/repo/issues/${key}`,
+      title: `Task ${key}`,
+    });
+  }
+
+  it("advances one record at a time with maxWorkers=1 (default)", async () => {
+    const h = makeHarness();
+    await h.engine.ingest([assignedEvent(makeTicketFor("1")), assignedEvent(makeTicketFor("2"))]);
+
+    await h.engine.tick();
+
+    const records = await h.store.list();
+    const statuses = records.map((r) => r.status).sort();
+    // one record advanced to executing, the other untouched
+    expect(statuses).toEqual(["claimed", "executing"]);
+    expect(h.runner.specs).toHaveLength(1);
+  });
+
+  it("advances up to maxWorkers records in parallel per tick", async () => {
+    const h = makeHarness({ maxWorkers: 2 });
+    await h.engine.ingest([assignedEvent(makeTicketFor("1")), assignedEvent(makeTicketFor("2"))]);
+
+    const tickPromise = h.engine.tick();
+    // let the microtasks settle: both records should have been claimed and advanced
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    const records = await h.store.list();
+    const statuses = records.map((r) => r.status).sort();
+    expect(statuses).toEqual(["executing", "executing"]);
+    expect(h.runner.specs).toHaveLength(2);
+    await tickPromise;
+  });
+
+  it("never advances the same record twice across overlapping ticks", async () => {
+    const h = makeHarness({ maxWorkers: 2 });
+    const ticket = makeTicketFor("1");
+    await h.engine.ingest([assignedEvent(ticket)]);
+
+    const first = h.engine.tick();
+    const second = h.engine.tick();
+    await Promise.all([first, second]);
+
+    expect(h.runner.specs).toHaveLength(1);
+  });
+
+  it("caps claims at maxWorkers when more records are ready", async () => {
+    const h = makeHarness({ maxWorkers: 2 });
+    await h.engine.ingest([
+      assignedEvent(makeTicketFor("1")),
+      assignedEvent(makeTicketFor("2")),
+      assignedEvent(makeTicketFor("3")),
+    ]);
+
+    await h.engine.tick();
+
+    const statuses = (await h.store.list()).map((r) => r.status).sort();
+    expect(statuses).toEqual(["claimed", "executing", "executing"]);
+  });
+
+  it("keeps advancing remaining records on the next tick", async () => {
+    const h = makeHarness({ maxWorkers: 2 });
+    await h.engine.ingest([
+      assignedEvent(makeTicketFor("1")),
+      assignedEvent(makeTicketFor("2")),
+      assignedEvent(makeTicketFor("3")),
+    ]);
+
+    // each tick always advances the earliest actionable records first, so
+    // records 1-2 finish before record 3 starts; 6 ticks total
+    for (let i = 0; i < 6; i++) await h.engine.tick();
+
+    const records = await h.store.list();
+    expect(records.every((r) => r.status === "awaiting_review")).toBe(true);
   });
 });
 

@@ -15,4 +15,10 @@ export interface RepoConfig {
 export interface EngineConfig {
   /** Keyed by Ticket.project. */
   repos: Record<string, RepoConfig>;
+  /** Concurrent work records advanced per tick; 1 = the original serial loop. */
+  maxWorkers?: number;
 }
+
+export interface EngineOptions extends EngineConfig {}
+
+export const DEFAULT_MAX_WORKERS = 1;

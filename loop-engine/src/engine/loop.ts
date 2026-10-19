@@ -24,12 +24,18 @@ export interface EnginePorts {
 
 export class LoopEngine {
   private timer: ReturnType<typeof setInterval> | undefined;
+  /** Ids of records currently being advanced by a worker. */
+  private readonly inFlight = new Set<string>();
   private ticking = false;
 
   constructor(
     private readonly ports: EnginePorts,
     private readonly config: EngineConfig,
   ) {}
+
+  get maxWorkers(): number {
+    return this.config.maxWorkers ?? 1;
+  }
 
   /** Webhook / poll events funnel in here: dedup → trigger match → claim. */
   async ingest(events: IntakeEvent[]): Promise<void> {
@@ -50,13 +56,33 @@ export class LoopEngine {
     this.timer = undefined;
   }
 
-  /** Advance one actionable record by one stage. Idempotent and re-entrant after a crash. */
+  /**
+   * Advance up to `maxWorkers` actionable records by one stage each. All
+   * claims happen synchronously before any await, so two overlapping ticks
+   * can never pick the same record. Each stage is idempotent and re-entrant
+   * after a crash (statuses double as re-entry points).
+   */
   async tick(): Promise<void> {
     if (this.ticking) return;
     this.ticking = true;
     try {
-      const record = await this.ports.store.nextActionable();
-      if (record) await this.advance(record);
+      const claimed: WorkRecord[] = [];
+      while (claimed.length < this.maxWorkers) {
+        const excludeIds = [...this.inFlight];
+        const record = await this.ports.store.nextActionable(excludeIds);
+        if (!record) break;
+        this.inFlight.add(record.id);
+        claimed.push(record);
+      }
+      await Promise.all(
+        claimed.map(async (record) => {
+          try {
+            await this.advance(record);
+          } finally {
+            this.inFlight.delete(record.id);
+          }
+        }),
+      );
     } finally {
       this.ticking = false;
     }

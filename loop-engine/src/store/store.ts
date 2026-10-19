@@ -9,7 +9,8 @@ export interface WorkStore {
   get(id: string): Promise<WorkRecord | undefined>;
   list(): Promise<WorkRecord[]>;
   findActiveByTicket(ticketId: TicketId): Promise<WorkRecord | undefined>;
-  nextActionable(): Promise<WorkRecord | undefined>;
+  /** Next actionable record, skipping the given ids (in-flight worker claims). */
+  nextActionable(excludeIds?: string[]): Promise<WorkRecord | undefined>;
   listAwaitingReview(): Promise<WorkRecord[]>;
   hasEvent(eventId: string): Promise<boolean>;
   markEvent(eventId: string): Promise<void>;
@@ -50,8 +51,10 @@ export class InMemoryWorkStore implements WorkStore {
     return found ? { ...found } : undefined;
   }
 
-  async nextActionable(): Promise<WorkRecord | undefined> {
-    const found = [...this.records.values()].find((r) => ACTIONABLE_STATUSES.includes(r.status));
+  async nextActionable(excludeIds: string[] = []): Promise<WorkRecord | undefined> {
+    const found = [...this.records.values()]
+      .filter((r) => ACTIONABLE_STATUSES.includes(r.status) && !excludeIds.includes(r.id))
+      .find(Boolean);
     return found ? { ...found } : undefined;
   }
 

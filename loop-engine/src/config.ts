@@ -72,6 +72,8 @@ export const appConfigSchema = z.object({
       logDir: z.string().default("./data/logs"),
       worktreesRoot: z.string().default("./data/worktrees"),
       port: z.number().int().positive().default(8787),
+      /** Concurrent work records advanced per tick; 1 keeps the serial loop. */
+      maxWorkers: z.number().int().min(1).default(1),
     })
     .default({}),
   connectors: z.object({ github: githubConnectorSchema.optional() }).default({}),

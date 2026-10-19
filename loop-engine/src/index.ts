@@ -69,7 +69,7 @@ async function main(): Promise<void> {
       verifier: new ShellVerifier({ logDir: config.engine.logDir }),
       now: () => new Date(),
     },
-    { repos: config.repos },
+    { repos: config.repos, maxWorkers: config.engine.maxWorkers },
   );
 
   const server = createWebhookServer({ connectors, onEvents: (events) => engine.ingest(events), store });

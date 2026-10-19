@@ -177,11 +177,12 @@ export class SqliteWorkStore implements WorkStore {
     return row ? fromRow(row) : undefined;
   }
 
-  async nextActionable(): Promise<WorkRecord | undefined> {
+  async nextActionable(excludeIds: string[] = []): Promise<WorkRecord | undefined> {
     const placeholders = ACTIONABLE_STATUSES.map(() => "?").join(",");
-    const row = this.db
-      .prepare(`SELECT * FROM work WHERE status IN (${placeholders}) ORDER BY created_at, rowid LIMIT 1`)
-      .get(...ACTIONABLE_STATUSES) as WorkRow | undefined;
+    const rows = this.db
+      .prepare(`SELECT * FROM work WHERE status IN (${placeholders}) ORDER BY created_at, rowid`)
+      .all(...ACTIONABLE_STATUSES) as WorkRow[];
+    const row = rows.find((r) => !excludeIds.includes(r.id));
     return row ? fromRow(row) : undefined;
   }
 
