@@ -228,6 +228,9 @@ class LayoutCubit extends Cubit<LayoutState> {
   Future<void> setEditorWordWrap(bool enabled) =>
       _save(state.preferences.copyWith(editorWordWrap: enabled));
 
+  Future<void> setEditorShowBlameBar(bool enabled) =>
+      _save(state.preferences.copyWith(editorShowBlameBar: enabled));
+
   Future<void> setEditorAutoSave(EditorAutoSaveMode mode) =>
       _save(state.preferences.copyWith(editorAutoSave: mode));
 }

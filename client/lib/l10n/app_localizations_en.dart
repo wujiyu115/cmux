@@ -1423,17 +1423,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fileTabReloadFromDisk => 'Refresh from disk';
 
   @override
-  String get fileTabShowBlame => 'Show blame bar';
+  String get editorShowBlameBarTitle => 'Blame bar';
 
   @override
-  String get blameEnabled => 'Blame bar enabled for this workspace';
-
-  @override
-  String get blameDisabled => 'Blame bar disabled';
-
-  @override
-  String get blameNotGitRepo =>
-      'This file\'s folder is not in a Git repository';
+  String get editorShowBlameBarDescription =>
+      'Show the git blame bar above the editor (applies to all workspaces)';
 
   @override
   String get blameNoHistory => 'No blame available for this line';

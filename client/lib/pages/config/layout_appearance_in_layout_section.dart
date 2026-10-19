@@ -322,6 +322,17 @@ class LayoutAppearanceInLayoutSection extends StatelessWidget {
                   showDividerBelow: true,
                 ),
                 TpPreferenceRow(
+                  title: l10n.editorShowBlameBarTitle,
+                  subtitle: l10n.editorShowBlameBarDescription,
+                  trailing: Switch(
+                    value: context.select<LayoutCubit, bool>(
+                      (c) => c.state.preferences.editorShowBlameBar,
+                    ),
+                    onChanged: controller.setEditorShowBlameBar,
+                  ),
+                  showDividerBelow: true,
+                ),
+                TpPreferenceRow(
                   title: l10n.editorAutoSaveTitle,
                   subtitle: l10n.editorAutoSaveDescription,
                   trailing: TpCompactSelect<EditorAutoSaveMode>(

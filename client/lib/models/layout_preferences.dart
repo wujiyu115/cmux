@@ -82,6 +82,7 @@ class LayoutPreferences {
     this.gitChangesViewMode = GitChangesViewMode.tree,
     this.editorWordWrap = false,
     this.editorAutoSave = EditorAutoSaveMode.off,
+    this.editorShowBlameBar = false,
   });
 
   factory LayoutPreferences.fromJson(Map<String, Object?> json) {
@@ -160,6 +161,7 @@ class LayoutPreferences {
       editorAutoSave:
           _enumValue(EditorAutoSaveMode.values, json['editorAutoSave']) ??
           EditorAutoSaveMode.off,
+      editorShowBlameBar: json['editorShowBlameBar'] as bool? ?? false,
     ).withAtLeastOneToolVisible();
   }
 
@@ -252,6 +254,9 @@ class LayoutPreferences {
   /// When dirty editor buffers save automatically.
   final EditorAutoSaveMode editorAutoSave;
 
+  /// Show the git blame bar above the editor (global, from settings).
+  final bool editorShowBlameBar;
+
   LayoutPreferences copyWith({
     LayoutPreset? preset,
     WorkspaceEntryMode? workspaceEntryMode,
@@ -285,6 +290,7 @@ class LayoutPreferences {
     GitChangesViewMode? gitChangesViewMode,
     bool? editorWordWrap,
     EditorAutoSaveMode? editorAutoSave,
+    bool? editorShowBlameBar,
   }) {
     return LayoutPreferences(
       preset: preset ?? this.preset,
@@ -358,6 +364,7 @@ class LayoutPreferences {
       gitChangesViewMode: gitChangesViewMode ?? this.gitChangesViewMode,
       editorWordWrap: editorWordWrap ?? this.editorWordWrap,
       editorAutoSave: editorAutoSave ?? this.editorAutoSave,
+      editorShowBlameBar: editorShowBlameBar ?? this.editorShowBlameBar,
     ).withAtLeastOneToolVisible();
   }
 
@@ -396,6 +403,7 @@ class LayoutPreferences {
       gitChangesViewMode: gitChangesViewMode,
       editorWordWrap: editorWordWrap,
       editorAutoSave: editorAutoSave,
+      editorShowBlameBar: editorShowBlameBar,
     );
   }
 
@@ -451,6 +459,7 @@ class LayoutPreferences {
       'gitChangesViewMode': gitChangesViewMode.name,
       'editorWordWrap': editorWordWrap,
       'editorAutoSave': editorAutoSave.name,
+      'editorShowBlameBar': editorShowBlameBar,
     };
   }
 }

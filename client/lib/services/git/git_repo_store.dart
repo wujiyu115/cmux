@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 
 import '../../cubits/git_cubit.dart';
@@ -37,20 +36,6 @@ class GitRepoStore {
   final GitCubit Function(String root, RuntimeContext workContext)
   _cubitFactory;
   final int _maxRetained;
-
-  /// Workspace-scoped "blame bar visible" toggles, keyed by workspace id.
-  /// `git blame` is expensive, so the bar is opt-in per workspace (tab
-  /// context menu) and this set outlives tab switches like the cubits do.
-  final blameVisibleWorkspaces = ValueNotifier<Set<String>>(<String>{});
-
-  /// Toggles blame visibility for [workspaceId]; returns the new state.
-  bool toggleBlame(String workspaceId) {
-    final current = Set<String>.of(blameVisibleWorkspaces.value);
-    final next = !current.contains(workspaceId);
-    next ? current.add(workspaceId) : current.remove(workspaceId);
-    blameVisibleWorkspaces.value = current;
-    return next;
-  }
 
   /// Per-repo [SvnCubit] registry, same LRU pattern as the git cubits. One
   /// store serves both VCSes; keys share the git `_cacheKey` namespace.
@@ -146,7 +131,6 @@ class GitRepoStore {
   }
 
   void dispose() {
-    blameVisibleWorkspaces.dispose();
     for (final cubit in _cubits.values) {
       cubit.close();
     }

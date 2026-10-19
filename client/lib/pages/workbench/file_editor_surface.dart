@@ -14,13 +14,11 @@ import '../../l10n/l10n_extensions.dart';
 import '../../services/commands/command_bus.dart';
 import '../../services/commands/editor_goto_line_command_registrar.dart';
 import '../../services/commands/editor_goto_symbol_command_registrar.dart';
-import '../../services/editor/editor_symbols.dart';
 import '../../services/editor/file_editor_theme.dart';
 import '../../services/editor/file_editor_toolbar.dart';
 import '../../services/editor/markdown_view_mode_store.dart';
 import '../../services/editor_platform/document_session.dart';
 import '../../services/editor_platform/editor_viewport_token_binder.dart';
-import '../../services/git/git_repo_store.dart';
 import '../../services/workbench/workbench_editor_opener.dart';
 import '../../services/workspace/workspace_tools_scope.dart';
 import '../../theme/workspace_surface_layers.dart';
@@ -83,21 +81,19 @@ class FileEditorSurface extends StatelessWidget {
                 if (WorkspaceToolsScope.maybeOf(context) == null) {
                   return const SizedBox.shrink();
                 }
-                final store = context.read<GitRepoStore>();
-                return ValueListenableBuilder<Set<String>>(
-                  valueListenable: store.blameVisibleWorkspaces,
-                  builder: (context, blameVisible, _) {
-                    final show = blameVisible.contains(workspaceId) &&
-                        gitCubitForAbsolutePath(context, path) != null;
-                    if (!show) return const SizedBox.shrink();
-                    return Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Divider(height: 1),
-                        GitBlameBar(workspaceId: workspaceId, path: path),
-                      ],
-                    );
-                  },
+                // Global settings toggle (Layout / Editor preferences);
+                // the blame bar mounts only when a git repo cubit resolves.
+                final show = context.select<LayoutCubit, bool>(
+                      (c) => c.state.preferences.editorShowBlameBar,
+                    ) &&
+                    gitCubitForAbsolutePath(context, path) != null;
+                if (!show) return const SizedBox.shrink();
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Divider(height: 1),
+                    GitBlameBar(workspaceId: workspaceId, path: path),
+                  ],
                 );
               },
             ),

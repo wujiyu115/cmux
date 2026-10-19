@@ -1368,16 +1368,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fileTabReloadFromDisk => '从磁盘刷新';
 
   @override
-  String get fileTabShowBlame => '显示 Blame 栏';
+  String get editorShowBlameBarTitle => 'Blame 栏';
 
   @override
-  String get blameEnabled => '已为本工作区启用 Blame 栏';
-
-  @override
-  String get blameDisabled => '已关闭 Blame 栏';
-
-  @override
-  String get blameNotGitRepo => '该文件所在目录不在 Git 仓库中';
+  String get editorShowBlameBarDescription => '在编辑器上方显示 git blame 栏（对所有工作区生效）';
 
   @override
   String get blameNoHistory => '此行没有 blame 信息';

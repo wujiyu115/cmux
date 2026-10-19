@@ -18,10 +18,11 @@ import 'blame_relative_time.dart';
 /// `author (relative time), commit subject` for the owning commit; the short
 /// hash in a tooltip with author email and the exact date.
 ///
-/// Opt-in per workspace via the file tab context menu (GitRepoStore's
-/// [GitRepoStore.blameVisibleWorkspaces]); mounted only when that flag is on.
-/// Blame runs once per file load and is cached in memory; dirty buffers show
-/// the "not committed yet" state because blame covers HEAD content only.
+/// Opt-in globally via Settings → Layout → Editor (the persisted
+/// [LayoutPreferences.editorShowBlameBar] switch); mounted only when that
+/// setting is on. Blame runs once per file load and is cached in memory; dirty
+/// buffers show the "not committed yet" state because blame covers HEAD
+/// content only.
 class GitBlameBar extends StatefulWidget {
   const GitBlameBar({
     super.key,

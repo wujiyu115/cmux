@@ -2696,29 +2696,17 @@ abstract class AppLocalizations {
   /// **'Refresh from disk'**
   String get fileTabReloadFromDisk;
 
-  /// No description provided for @fileTabShowBlame.
+  /// No description provided for @editorShowBlameBarTitle.
   ///
   /// In en, this message translates to:
-  /// **'Show blame bar'**
-  String get fileTabShowBlame;
+  /// **'Blame bar'**
+  String get editorShowBlameBarTitle;
 
-  /// No description provided for @blameEnabled.
+  /// No description provided for @editorShowBlameBarDescription.
   ///
   /// In en, this message translates to:
-  /// **'Blame bar enabled for this workspace'**
-  String get blameEnabled;
-
-  /// No description provided for @blameDisabled.
-  ///
-  /// In en, this message translates to:
-  /// **'Blame bar disabled'**
-  String get blameDisabled;
-
-  /// No description provided for @blameNotGitRepo.
-  ///
-  /// In en, this message translates to:
-  /// **'This file\'s folder is not in a Git repository'**
-  String get blameNotGitRepo;
+  /// **'Show the git blame bar above the editor (applies to all workspaces)'**
+  String get editorShowBlameBarDescription;
 
   /// No description provided for @blameNoHistory.
   ///
