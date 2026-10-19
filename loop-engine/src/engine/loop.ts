@@ -98,8 +98,14 @@ export class LoopEngine {
     const connector = this.ports.connectors.get(ticket.id.connectorId);
     if (!connector?.intake) return;
 
-    const identities = await connector.intake.selfIdentities();
-    if (identities.includes(event.actor)) return;
+    // Self-loop guard: ignore events the connector itself caused. Poll-derived
+    // events observe assignee/label state rather than a write action, so the
+    // issue author being the connector identity (single-person setups) must
+    // not swallow a legitimate trigger.
+    if (!event.pollDerived) {
+      const identities = await connector.intake.selfIdentities();
+      if (identities.includes(event.actor)) return;
+    }
 
     const repo = this.config.repos[ticket.project];
     if (!repo) return;
@@ -229,6 +235,8 @@ export class LoopEngine {
           `no reporter for project ${record.ticket.project}: connector "${record.ticket.id.connectorId}" cannot open pull requests; set repos.<project>.reporter`,
         );
       }
+      // PR heads must exist on origin; publish the branch from the repo clone.
+      await this.ports.worktrees.push({ repoDir: repo.repoDir, branch: record.branch });
       const pr = await gitReporter.openPullRequest!(record.ticket, {
         title: record.ticket.title,
         body: buildPrBody(record, report),

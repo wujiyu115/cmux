@@ -13,6 +13,8 @@ export class FakeGitHubClient implements GitHubClient {
   searchQueries: string[] = [];
   searchResults: SearchIssueItem[] = [];
   pullRequestStates: Record<string, GitHubPullRequestState> = {};
+  /** head ref -> existing open PR url; createPullRequest throws 422 for these. */
+  existingPulls: Record<string, string> = {};
   loginRequests = 0;
 
   async addLabels(owner: string, repo: string, number: number, labels: string[]): Promise<void> {
@@ -33,7 +35,17 @@ export class FakeGitHubClient implements GitHubClient {
     params: CreatePullRequestParams,
   ): Promise<{ url: string }> {
     this.pullRequests.push({ owner, repo, params });
+    const existing = this.existingPulls[params.head];
+    if (existing) {
+      const err = new Error("Validation Failed") as Error & { status: number };
+      err.status = 422;
+      throw err;
+    }
     return { url: "https://github.com/owner/repo/pull/9" };
+  }
+
+  async findOpenPullRequest(_owner: string, _repo: string, head: string): Promise<string | undefined> {
+    return this.existingPulls[head];
   }
 
   async getPullRequest(owner: string, repo: string, number: number): Promise<GitHubPullRequestState> {

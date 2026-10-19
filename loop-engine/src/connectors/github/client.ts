@@ -31,6 +31,8 @@ export interface GitHubClient {
   removeLabel(owner: string, repo: string, issueNumber: number, name: string): Promise<void>;
   createComment(owner: string, repo: string, issueNumber: number, body: string): Promise<void>;
   createPullRequest(owner: string, repo: string, params: CreatePullRequestParams): Promise<{ url: string }>;
+  /** Head-ref lookup used for PR-open idempotency ("owner:branch" head filter). */
+  findOpenPullRequest(owner: string, repo: string, head: string): Promise<string | undefined>;
   getPullRequest(owner: string, repo: string, number: number): Promise<GitHubPullRequestState>;
   getAuthenticatedLogin(): Promise<string>;
   searchIssues(query: string): Promise<SearchIssueItem[]>;
@@ -60,6 +62,15 @@ export class OctokitGitHubClient implements GitHubClient {
     return { url: res.data.html_url };
   }
 
+  async findOpenPullRequest(owner: string, repo: string, head: string): Promise<string | undefined> {
+    const res = await this.octokit.rest.pulls.list({
+      owner,
+      repo,
+      head: `${owner}:${head}`,
+      state: "open",
+    });
+    return res.data.find((pr) => pr.head.ref === head)?.html_url;
+  }
   async getPullRequest(owner: string, repo: string, number: number): Promise<GitHubPullRequestState> {
     const res = await this.octokit.rest.pulls.get({ owner, repo, pull_number: number });
     return { state: res.data.state, merged: res.data.merged };

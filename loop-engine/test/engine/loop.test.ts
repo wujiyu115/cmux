@@ -146,6 +146,7 @@ class FakeVerifier implements Verifier {
 class FakeWorktreeFactory implements WorktreeFactory {
   readonly branches: string[] = [];
   readonly released: string[] = [];
+  readonly pushes: Array<{ repoDir: string; branch: string }> = [];
 
   async prepare(spec: WorktreeSpec) {
     this.branches.push(spec.branch);
@@ -154,6 +155,10 @@ class FakeWorktreeFactory implements WorktreeFactory {
 
   async release(dir: string): Promise<void> {
     this.released.push(dir);
+  }
+
+  async push(spec: { repoDir: string; branch: string }): Promise<void> {
+    this.pushes.push(spec);
   }
 }
 
@@ -246,6 +251,17 @@ describe("ingest", () => {
     expect(await h.store.list()).toHaveLength(0);
   });
 
+  it("claims poll-derived events even when the author is a self identity", async () => {
+    // single-person setup: the maintainer authors and self-assigns their own
+    // issue with the account whose token the connector uses
+    const h = makeHarness();
+    await h.engine.ingest([assignedEvent(makeTicket(), { actor: "loop-bot", pollDerived: true })]);
+
+    const records = await h.store.list();
+    expect(records).toHaveLength(1);
+    expect(records[0]!.status).toBe("claimed");
+  });
+
   it("ignores duplicate event deliveries", async () => {
     const h = makeHarness();
     const event = assignedEvent(makeTicket());
@@ -319,6 +335,8 @@ describe("tick lifecycle", () => {
     expect(record!.prUrl).toBe("https://github.com/owner/repo/pull/99");
     expect(h.reporter.has("openPullRequest")).toBe(true);
     expect(h.reporter.has("postResult")).toBe(true);
+    // the branch is pushed to origin before the PR opens
+    expect(h.worktrees.pushes).toEqual([{ repoDir: "/repos/owner/repo", branch: `loop/${id}` }]);
 
     const prCall = h.reporter.calls.find((c) => c.method === "openPullRequest")!;
     const spec = prCall.args[1] as PullRequestSpec;

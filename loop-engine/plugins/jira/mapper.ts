@@ -176,6 +176,7 @@ export function mapPollIssue(issue: JiraIssue, target: PollProject): IntakeEvent
       kind: "ticket.assigned",
       ticket,
       assignee: issue.assigneeAccountId,
+      pollDerived: true,
     });
   }
   for (const label of issue.labels) {
@@ -186,6 +187,7 @@ export function mapPollIssue(issue: JiraIssue, target: PollProject): IntakeEvent
         kind: "ticket.labeled",
         ticket,
         label,
+        pollDerived: true,
       });
     }
   }

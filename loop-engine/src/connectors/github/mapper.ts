@@ -166,6 +166,7 @@ export function mapPollIssue(item: SearchIssueItem, target: PollTarget): IntakeE
       kind: "ticket.assigned",
       ticket,
       assignee,
+      pollDerived: true,
     });
   }
   for (const label of data.labels) {
@@ -176,6 +177,7 @@ export function mapPollIssue(item: SearchIssueItem, target: PollTarget): IntakeE
         kind: "ticket.labeled",
         ticket,
         label,
+        pollDerived: true,
       });
     }
   }

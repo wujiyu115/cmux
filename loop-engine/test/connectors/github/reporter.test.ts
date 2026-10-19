@@ -60,6 +60,20 @@ describe("GitHubReporter", () => {
     ]);
   });
 
+  it("returns the existing PR when one is already open for the head (idempotent retry)", async () => {
+    const { client, connector } = makeConnector();
+    client.existingPulls["loop/abc"] = "https://github.com/owner/repo/pull/7";
+    const spec: PullRequestSpec = {
+      title: "Fix login",
+      body: "summary",
+      head: "loop/abc",
+      base: "main",
+      repo: "owner/repo",
+    };
+    const result = await connector.reporter!.openPullRequest!(ticket, spec);
+    expect(result.url).toBe("https://github.com/owner/repo/pull/7");
+  });
+
   it("opens pull requests for tickets raised in other systems", async () => {
     const { client, connector } = makeConnector();
     const external: Ticket = {

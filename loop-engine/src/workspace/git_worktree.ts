@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { promisify } from "node:util";
 
-import type { PreparedWorktree, WorktreeFactory, WorktreeSpec } from "./worktree";
+import type { PreparedWorktree, PushSpec, WorktreeFactory, WorktreeSpec } from "./worktree";
 
 const execFileAsync = promisify(execFile);
 
@@ -53,5 +53,11 @@ export class GitWorktreeFactory implements WorktreeFactory {
     const repoDir = this.repoDirs.get(dir);
     this.repoDirs.delete(dir);
     if (repoDir) await gitSucceeds(["worktree", "prune"], repoDir);
+  }
+
+  async push(spec: PushSpec): Promise<void> {
+    // PR heads must exist on origin; re-pushing an identical branch is a
+    // harmless no-op, so retries after a failed PR open stay safe.
+    await git(["push", "origin", spec.branch], spec.repoDir);
   }
 }

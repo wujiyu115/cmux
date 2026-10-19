@@ -26,12 +26,23 @@ export class GitHubReporter implements Reporter {
     // The PR target comes from the spec, not the ticket: tickets raised in other
     // systems still open their PR against the configured GitHub repo.
     const ref = parseRepoRef(spec.repo);
-    return this.deps.client.createPullRequest(ref.owner, ref.repo, {
-      title: spec.title,
-      head: spec.head,
-      base: spec.base,
-      body: spec.body,
-    });
+    try {
+      return await this.deps.client.createPullRequest(ref.owner, ref.repo, {
+        title: spec.title,
+        head: spec.head,
+        base: spec.base,
+        body: spec.body,
+      });
+    } catch (err) {
+      // Idempotency: a retry after a crash (or a race with another worker)
+      // may find the PR already open for this head (GitHub answers 422).
+      // Return the existing PR instead of failing the work.
+      if ((err as { status?: number }).status === 422) {
+        const url = await this.deps.client.findOpenPullRequest(ref.owner, ref.repo, spec.head);
+        if (url) return { url };
+      }
+      throw err;
+    }
   }
 
   async postResult(ticket: Ticket, summary: string, prUrl?: string): Promise<void> {
