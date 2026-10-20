@@ -376,6 +376,10 @@
   "remoteDirectoryBrowserUseTypedPath": "Use path",
   "remoteDirectoryBrowserError": "Couldn't open the remote directory. You can still type a path below.",
   "remoteDirectoryBrowserEmpty": "No subdirectories here",
+  "fuzzyDirectoryPickerTitle": "Choose a directory",
+  "fuzzyDirectoryPickerFilterHint": "Fuzzy-search folders here",
+  "fuzzyDirectoryPickerNoMatch": "No folders match",
+  "fuzzyDirectoryPickerError": "Failed to list this directory",
   "deleteWorkspace": "Delete Workspace",
   "deleteWorkspaceConfirm": "Delete workspace \"{name}\" and all its sessions? This cannot be undone.",
   "@deleteWorkspaceConfirm": {

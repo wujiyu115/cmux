@@ -1808,6 +1808,30 @@ abstract class AppLocalizations {
   /// **'No subdirectories here'**
   String get remoteDirectoryBrowserEmpty;
 
+  /// No description provided for @fuzzyDirectoryPickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a directory'**
+  String get fuzzyDirectoryPickerTitle;
+
+  /// No description provided for @fuzzyDirectoryPickerFilterHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Fuzzy-search folders here'**
+  String get fuzzyDirectoryPickerFilterHint;
+
+  /// No description provided for @fuzzyDirectoryPickerNoMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No folders match'**
+  String get fuzzyDirectoryPickerNoMatch;
+
+  /// No description provided for @fuzzyDirectoryPickerError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to list this directory'**
+  String get fuzzyDirectoryPickerError;
+
   /// No description provided for @deleteWorkspace.
   ///
   /// In en, this message translates to:

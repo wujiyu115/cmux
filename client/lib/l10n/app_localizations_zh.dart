@@ -901,6 +901,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get remoteDirectoryBrowserEmpty => '此处没有子目录';
 
   @override
+  String get fuzzyDirectoryPickerTitle => '选择目录';
+
+  @override
+  String get fuzzyDirectoryPickerFilterHint => '模糊搜索当前目录下的文件夹';
+
+  @override
+  String get fuzzyDirectoryPickerNoMatch => '没有匹配的文件夹';
+
+  @override
+  String get fuzzyDirectoryPickerError => '读取目录失败';
+
+  @override
   String get deleteWorkspace => '删除工作区';
 
   @override

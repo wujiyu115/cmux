@@ -941,6 +941,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get remoteDirectoryBrowserEmpty => 'No subdirectories here';
 
   @override
+  String get fuzzyDirectoryPickerTitle => 'Choose a directory';
+
+  @override
+  String get fuzzyDirectoryPickerFilterHint => 'Fuzzy-search folders here';
+
+  @override
+  String get fuzzyDirectoryPickerNoMatch => 'No folders match';
+
+  @override
+  String get fuzzyDirectoryPickerError => 'Failed to list this directory';
+
+  @override
   String get deleteWorkspace => 'Delete Workspace';
 
   @override

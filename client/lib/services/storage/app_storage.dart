@@ -273,6 +273,16 @@ class DefaultWorkspaceDirectory {
     }
   }
 
+  /// Non-throwing variant for opportunistic callers (directory pickers): a
+  /// null start simply opens the browser at the backend home instead.
+  static Future<String?> resolveOrNull({SharedPreferences? preferences}) async {
+    try {
+      return await resolve(preferences: preferences);
+    } on Object {
+      return null;
+    }
+  }
+
   @visibleForTesting
   static String? platformDocumentsFastPathForTesting() =>
       _platformDocumentsFastPath();
