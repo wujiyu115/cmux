@@ -7,7 +7,11 @@ import 'package:teampilot/services/storage/remote_directory_browser.dart';
 /// directory contents. Only the methods [RemoteDirectoryBrowser] touches are
 /// meaningful; the rest throw.
 class _FakeFilesystem implements Filesystem {
-  _FakeFilesystem({required this.home, required this.entries});
+  _FakeFilesystem({
+    required this.home,
+    required this.entries,
+    p.Context? pathContext,
+  }) : pathContext = pathContext ?? p.Context(style: p.Style.posix);
 
   final String home;
 
@@ -15,7 +19,7 @@ class _FakeFilesystem implements Filesystem {
   final Map<String, List<FsDirEntry>> entries;
 
   @override
-  final p.Context pathContext = p.Context(style: p.Style.posix);
+  final p.Context pathContext;
 
   @override
   Future<String?> resolveSymlink(String path) async =>
@@ -145,6 +149,58 @@ void main() {
       final fs = _FakeFilesystem(home: '/home', entries: {});
       final browser = RemoteDirectoryBrowser(fs);
       expect(browser.child('/home/alice', 'work'), '/home/alice/work');
+    });
+  });
+
+  group('RemoteDirectoryBrowser on a windows path context', () {
+    // The local (non-ssh/wsl) target injects `p.context` — on a Windows host
+    // that is a windows-style context (backslashes, drive roots). The picker
+    // dialog must navigate drive letters without mangling.
+    _FakeFilesystem windowsFs() => _FakeFilesystem(
+          home: r'C:\Users\alice',
+          pathContext: p.Context(style: p.Style.windows),
+          entries: {
+            r'C:\': const [
+              FsDirEntry(name: 'Users', isDirectory: true),
+              FsDirEntry(name: 'Windows', isDirectory: true),
+            ],
+            r'C:\Users': const [
+              FsDirEntry(name: 'alice', isDirectory: true),
+              FsDirEntry(name: 'Public', isDirectory: true),
+            ],
+            r'C:\Users\alice': const [
+              FsDirEntry(name: 'Documents', isDirectory: true),
+            ],
+          },
+        );
+
+    test('resolveInitial normalizes backslash paths', () async {
+      final browser = RemoteDirectoryBrowser(windowsFs());
+      expect(
+        await browser.resolveInitial(r'C:\Users\alice\\Documents\\'),
+        r'C:\Users\alice\Documents',
+      );
+    });
+
+    test('list computes the windows parent and drive-root parent is null',
+        () async {
+      final browser = RemoteDirectoryBrowser(windowsFs());
+
+      final users = await browser.list(r'C:\Users');
+      expect(users.path, r'C:\Users');
+      expect(users.parent, r'C:\');
+
+      final root = await browser.list(r'C:\');
+      expect(root.parent, isNull);
+      expect(root.directories, ['Users', 'Windows']);
+    });
+
+    test('child joins with backslash semantics', () {
+      final browser = RemoteDirectoryBrowser(windowsFs());
+      expect(
+        browser.child(r'C:\Users\alice', 'Documents'),
+        r'C:\Users\alice\Documents',
+      );
     });
   });
 }
