@@ -25,6 +25,7 @@ class BarkPushSettings {
   const BarkPushSettings({
     this.mode = BarkPushMode.whenDisconnected,
     this.serverUrl = defaultServerUrl,
+    this.mobileInputOnly = true,
   });
 
   /// Bark's hosted relay. Self-hosters replace it; the path (`/push`) is added
@@ -36,6 +37,12 @@ class BarkPushSettings {
   final BarkPushMode mode;
   final String serverUrl;
 
+  /// When true (default), only turns whose last user input was typed on a
+  /// paired phone are pushed. A desktop-typed turn means the user is at the
+  /// desk, so pushing would be noise. Turning this off pushes every notice
+  /// that survives the mode gate.
+  final bool mobileInputOnly;
+
   /// Trimmed origin with any trailing slashes removed, or the default when the
   /// user cleared the field. Empty is never a usable server, and silently
   /// falling back beats failing every push with a confusing URL error.
@@ -44,21 +51,31 @@ class BarkPushSettings {
     return trimmed.isEmpty ? defaultServerUrl : trimmed;
   }
 
-  BarkPushSettings copyWith({BarkPushMode? mode, String? serverUrl}) =>
-      BarkPushSettings(
-        mode: mode ?? this.mode,
-        serverUrl: serverUrl ?? this.serverUrl,
-      );
+  BarkPushSettings copyWith({
+    BarkPushMode? mode,
+    String? serverUrl,
+    bool? mobileInputOnly,
+  }) => BarkPushSettings(
+    mode: mode ?? this.mode,
+    serverUrl: serverUrl ?? this.serverUrl,
+    mobileInputOnly: mobileInputOnly ?? this.mobileInputOnly,
+  );
 
-  Map<String, Object?> toJson() => {'mode': mode.name, 'serverUrl': serverUrl};
+  Map<String, Object?> toJson() => {
+    'mode': mode.name,
+    'serverUrl': serverUrl,
+    'mobileInputOnly': mobileInputOnly,
+  };
 
   factory BarkPushSettings.fromJson(Map<String, Object?> json) {
     final url = json['serverUrl'];
+    final mobileOnly = json['mobileInputOnly'];
     return BarkPushSettings(
       mode: BarkPushMode.fromName(json['mode']),
       serverUrl: url is String && url.trim().isNotEmpty
           ? url
           : defaultServerUrl,
+      mobileInputOnly: mobileOnly is bool ? mobileOnly : true,
     );
   }
 
@@ -66,8 +83,9 @@ class BarkPushSettings {
   bool operator ==(Object other) =>
       other is BarkPushSettings &&
       other.mode == mode &&
-      other.serverUrl == serverUrl;
+      other.serverUrl == serverUrl &&
+      other.mobileInputOnly == mobileInputOnly;
 
   @override
-  int get hashCode => Object.hash(mode, serverUrl);
+  int get hashCode => Object.hash(mode, serverUrl, mobileInputOnly);
 }

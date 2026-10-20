@@ -1848,6 +1848,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Sends turn finished, waiting for permission, and interrupted.';
 
   @override
+  String get barkPushMobileInputOnlyTitle => 'Only phone-typed turns';
+
+  @override
+  String get barkPushMobileInputOnlyDescription =>
+      'Push only when the turn\'s last input was typed on a paired phone; desktop input means you are at the desk';
+
+  @override
   String get barkPushModeOff => 'Off';
 
   @override

@@ -1780,6 +1780,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get barkPushModeDescription => '包含完成一轮、等待授权、被打断三类。';
 
   @override
+  String get barkPushMobileInputOnlyTitle => '仅手机输入的对话';
+
+  @override
+  String get barkPushMobileInputOnlyDescription =>
+      '只在本轮最后一次输入来自配对手机时推送；桌面键盘输入说明你就在电脑前';
+
+  @override
   String get barkPushModeOff => '关闭';
 
   @override

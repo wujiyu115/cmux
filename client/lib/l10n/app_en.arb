@@ -838,6 +838,8 @@
   "barkPushSectionSubtitle": "Reaches your phone even when it is not connected to this desktop. Carries the workspace name and the tab title so several agents stay apart.",
   "barkPushModeTitle": "Push agent notices to Bark",
   "barkPushModeDescription": "Sends turn finished, waiting for permission, and interrupted.",
+  "barkPushMobileInputOnlyTitle": "Only phone-typed turns",
+  "barkPushMobileInputOnlyDescription": "Push only when the turn's last input was typed on a paired phone; desktop input means you are at the desk",
   "barkPushModeOff": "Off",
   "barkPushModeDisconnected": "Only when no phone is connected",
   "barkPushModeAlways": "Always",

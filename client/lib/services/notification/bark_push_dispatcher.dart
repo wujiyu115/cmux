@@ -13,11 +13,15 @@ class BarkPushTarget {
     required this.mode,
     required this.serverUrl,
     required this.deviceKey,
+    this.mobileInputOnly = true,
   });
 
   final BarkPushMode mode;
   final String serverUrl;
   final String deviceKey;
+
+  /// See [BarkPushSettings.mobileInputOnly]: push only phone-originated turns.
+  final bool mobileInputOnly;
 
   /// A configured channel. Mode alone is not enough: the default mode is
   /// [BarkPushMode.whenDisconnected], so a fresh install would otherwise "want"
@@ -51,10 +55,12 @@ class BarkPushDispatcher {
     required BarkPushSender sender,
     required BarkPushTarget Function() target,
     required bool Function() hasConnectedPhone,
+    bool Function(String seatId)? lastInputWasRemote,
     BarkPushStrings? Function()? resolveStrings,
   }) : _sender = sender,
        _target = target,
        _hasConnectedPhone = hasConnectedPhone,
+       _lastInputWasRemote = lastInputWasRemote ?? ((_) => false),
        _resolveStrings = resolveStrings ?? _defaultResolveStrings;
 
   final BarkPushSender _sender;
@@ -65,6 +71,12 @@ class BarkPushDispatcher {
   /// as well would deliver the same event twice — see
   /// [BarkPushMode.whenDisconnected].
   final bool Function() _hasConnectedPhone;
+
+  /// Seat → was the latest user input typed on a paired phone. Feeds the
+  /// mobile-input-only gate: desktop-typed turns mean the user is at the desk
+  /// and a push would be noise.
+  final bool Function(String seatId) _lastInputWasRemote;
+
   final BarkPushStrings? Function() _resolveStrings;
 
   /// Fire-and-forget: a slow or unreachable Bark server must not hold up the
@@ -74,6 +86,9 @@ class BarkPushDispatcher {
     final target = _target();
     if (!target.isUsable) return;
     if (target.mode == BarkPushMode.whenDisconnected && _hasConnectedPhone()) {
+      return;
+    }
+    if (target.mobileInputOnly && !_lastInputWasRemote(notice.seatId)) {
       return;
     }
     final strings = _resolveStrings();

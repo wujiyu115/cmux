@@ -134,6 +134,18 @@ class _PushChannelSectionState extends State<PushChannelSection> {
               ),
               showDividerBelow: true,
             ),
+            TpPreferenceRow(
+              title: l10n.barkPushMobileInputOnlyTitle,
+              subtitle: l10n.barkPushMobileInputOnlyDescription,
+              trailing: Switch(
+                key: AppKeys.barkPushMobileInputOnlySwitch,
+                value: state.settings.mobileInputOnly,
+                onChanged: (enabled) {
+                  unawaited(cubit.setMobileInputOnly(enabled));
+                },
+              ),
+              showDividerBelow: true,
+            ),
             TpPreferenceStack(
               title: l10n.barkPushServerTitle,
               subtitle: l10n.barkPushServerDescription,

@@ -93,10 +93,17 @@ class BarkPushCubit extends Cubit<BarkPushState> {
     mode: state.settings.mode,
     serverUrl: state.settings.normalizedServerUrl,
     deviceKey: state.deviceKey,
+    mobileInputOnly: state.settings.mobileInputOnly,
   );
 
   Future<void> setMode(BarkPushMode mode) async {
     final settings = state.settings.copyWith(mode: mode);
+    emit(state.copyWith(settings: settings, clearLastTest: true));
+    await _repository.saveSettings(settings);
+  }
+
+  Future<void> setMobileInputOnly(bool enabled) async {
+    final settings = state.settings.copyWith(mobileInputOnly: enabled);
     emit(state.copyWith(settings: settings, clearLastTest: true));
     await _repository.saveSettings(settings);
   }

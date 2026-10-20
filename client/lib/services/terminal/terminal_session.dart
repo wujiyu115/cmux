@@ -141,6 +141,27 @@ class TerminalSession {
 
   void markUserTurnIdle() => _userTurnActive = false;
 
+  // ---- Input origin (desktop keyboard vs paired phone) ------------------
+  // Bark pushes only make sense for turns the user started from their phone;
+  // if the last input came from the desktop keyboard the user is at the desk
+  // and a push would be noise. Desktop keystrokes flow TerminalView →
+  // engine.output → _wireEngineOutput (local origin); phone keystrokes flow
+  // pairing InputFrame → writeRemoteInput (remote origin).
+  DateTime? _lastLocalInputAt;
+  DateTime? _lastRemoteInputAt;
+
+  /// Whether the most recent user input on this session came from a paired
+  /// phone rather than the desktop's own terminal view. Ties (none yet, or
+  /// equal timestamps) count as local: pushing without evidence of phone use
+  // is the noisy direction.
+  bool get lastInputWasRemote {
+    final local = _lastLocalInputAt;
+    final remote = _lastRemoteInputAt;
+    if (remote == null) return false;
+    if (local == null) return true;
+    return remote.isAfter(local);
+  }
+
   SshMemberSession? sshMemberSession;
 
   Map<String, String>? _extraEnvironment;
@@ -231,6 +252,7 @@ class TerminalSession {
     _engineOutputSubscription = engine.output.listen((data) {
       final forward = _inputPipeline.transformEngineToPty(data);
       if (forward.isNotEmpty) {
+        _lastLocalInputAt = DateTime.now();
         _launch.writeToPty(forward);
       }
     });
@@ -277,7 +299,10 @@ class TerminalSession {
   bool get cursorVisible => engine.grid.cursorVisible;
 
   /// Writes raw bytes from a remote pairing client straight into the child PTY.
-  void writeRemoteInput(Uint8List data) => _launch.writeToPty(data);
+  void writeRemoteInput(Uint8List data) {
+    _lastRemoteInputAt = DateTime.now();
+    _launch.writeToPty(data);
+  }
 
   @visibleForTesting
   void onViewportResize(int columns, int rows) =>

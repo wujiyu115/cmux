@@ -25,14 +25,18 @@ void main() {
       BarkPushMode mode = BarkPushMode.whenDisconnected,
       String deviceKey = 'key',
       bool connected = false,
+      bool mobileInputOnly = false,
+      bool Function(String seatId)? lastInputWasRemote,
     }) => BarkPushDispatcher(
       sender: sender,
       target: () => BarkPushTarget(
         mode: mode,
         serverUrl: 'https://bark.example',
         deviceKey: deviceKey,
+        mobileInputOnly: mobileInputOnly,
       ),
       hasConnectedPhone: () => connected,
+      lastInputWasRemote: lastInputWasRemote ?? ((_) => true),
       resolveStrings: () => const BarkPushStrings(
         kindBodies: {
           PairingAgentNoticeKind.done: 'Agent finished a turn',
@@ -115,6 +119,31 @@ void main() {
       build(mode: BarkPushMode.always, deviceKey: '').handle(notice());
       await settle();
       expect(sent, isEmpty);
+    });
+
+    test('mobile-input-only pushes phone-originated turns', () async {
+      build(mobileInputOnly: true, lastInputWasRemote: (seatId) {
+        expect(seatId, 'ws:p1');
+        return true;
+      }).handle(notice());
+      await settle();
+      expect(sent, hasLength(1));
+    });
+
+    test('mobile-input-only drops desktop-typed turns', () async {
+      // The user is at the desk — pushing their own keystroke back at the
+      // phone would be noise.
+      build(mobileInputOnly: true, lastInputWasRemote: (_) => false)
+          .handle(notice());
+      await settle();
+      expect(sent, isEmpty);
+    });
+
+    test('mobile-input-only off pushes desktop-typed turns too', () async {
+      build(mobileInputOnly: false, lastInputWasRemote: (_) => false)
+          .handle(notice());
+      await settle();
+      expect(sent, hasLength(1));
     });
 
     test('waiting and interrupted are pushed too, not just done', () async {

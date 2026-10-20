@@ -98,6 +98,7 @@ import '../services/notification/bark_push_dispatcher.dart';
 import '../services/notification/bark_push_sender.dart';
 import '../services/notification/mobile_agent_notice_presenter.dart';
 import '../services/notification/notification_recorder.dart';
+import '../services/notification/seat_input_origin.dart';
 import '../services/notification/terminal_idle_notification_service.dart';
 import '../services/terminal/command_log_sink.dart';
 import '../services/cli/sessions/agent_cli_session_service.dart';
@@ -1230,6 +1231,10 @@ Future<AppShell> buildAppShell({
   // already downstream of the `notifyOnSessionIdle` master switch. Deliberately
   // *not* gated on the pairing host running: push is the path that works when
   // nothing is connected, which includes a desktop with pairing turned off.
+  final seatInputOrigin = SeatInputOrigin(
+    chat: chatCubit,
+    workspaceTerminals: workspaceTerminalRegistry,
+  );
   final barkPushDispatcher = BarkPushDispatcher(
     sender: barkPushSender,
     target: barkPushCubit.target,
@@ -1237,6 +1242,9 @@ Future<AppShell> buildAppShell({
     // is no host cubit at all, and on a host build this closure runs long after
     // bootstrap assigned it.
     hasConnectedPhone: () => pairingHostCubit?.hasConnectedPhone ?? false,
+    // Only turns typed on a paired phone get pushed (toggleable in settings):
+    // desktop-typed turns mean the user is at the desk.
+    lastInputWasRemote: seatInputOrigin.lastInputWasRemote,
   );
   agentNotices.stream.listen(barkPushDispatcher.handle);
 

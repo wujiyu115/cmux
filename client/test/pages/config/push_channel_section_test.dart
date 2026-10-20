@@ -160,4 +160,18 @@ void main() {
 
     expect((await repository.loadSettings()).mode, BarkPushMode.always);
   });
+
+  testWidgets('toggling "only phone-typed turns" persists it', (tester) async {
+    cubit = build(deviceKey: 'k');
+    await cubit.load();
+    await pump(tester);
+
+    // Default is on: only phone-originated turns get pushed.
+    expect((await repository.loadSettings()).mobileInputOnly, isTrue);
+
+    await tester.tap(find.byKey(AppKeys.barkPushMobileInputOnlySwitch));
+    await tester.pumpAndSettle();
+
+    expect((await repository.loadSettings()).mobileInputOnly, isFalse);
+  });
 }

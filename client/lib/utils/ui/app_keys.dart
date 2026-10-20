@@ -27,6 +27,9 @@ class AppKeys {
   );
   static const notifyOnPtyIdleSwitch = Key('notify-on-pty-idle-switch');
   static const barkPushModeDropdown = Key('bark-push-mode-dropdown');
+  static const barkPushMobileInputOnlySwitch = Key(
+    'bark-push-mobile-input-only-switch',
+  );
   static const barkPushServerField = Key('bark-push-server-field');
   static const barkPushDeviceKeyField = Key('bark-push-device-key-field');
   static const barkPushTestButton = Key('bark-push-test-button');

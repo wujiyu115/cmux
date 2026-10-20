@@ -3451,6 +3451,18 @@ abstract class AppLocalizations {
   /// **'Sends turn finished, waiting for permission, and interrupted.'**
   String get barkPushModeDescription;
 
+  /// No description provided for @barkPushMobileInputOnlyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Only phone-typed turns'**
+  String get barkPushMobileInputOnlyTitle;
+
+  /// No description provided for @barkPushMobileInputOnlyDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Push only when the turn\'s last input was typed on a paired phone; desktop input means you are at the desk'**
+  String get barkPushMobileInputOnlyDescription;
+
   /// No description provided for @barkPushModeOff.
   ///
   /// In en, this message translates to:

@@ -804,6 +804,8 @@
   "barkPushSectionSubtitle": "手机未连接到本桌面时也能收到。通知里带工作区名和标签页标题，便于区分多个 Agent。",
   "barkPushModeTitle": "推送 Agent 通知到 Bark",
   "barkPushModeDescription": "包含完成一轮、等待授权、被打断三类。",
+  "barkPushMobileInputOnlyTitle": "仅手机输入的对话",
+  "barkPushMobileInputOnlyDescription": "只在本轮最后一次输入来自配对手机时推送；桌面键盘输入说明你就在电脑前",
   "barkPushModeOff": "关闭",
   "barkPushModeDisconnected": "仅在无手机连接时",
   "barkPushModeAlways": "总是推送",

@@ -840,6 +840,18 @@ class ChatCubit extends Cubit<ChatState>
     emit(state.copyWith(selectedMemberId: memberId));
   }
 
+  /// Whether any member shell of the session received its most recent user
+  /// input from a paired phone (Bark push gate — see SeatInputOrigin).
+  /// [sessionId] matches any open workspace bucket, not only the active one.
+  bool sessionLastInputWasRemote(String sessionId) {
+    final tab = _tabStore.openTabBySessionId(sessionId);
+    if (tab == null) return false;
+    for (final shell in tab.memberShells.values) {
+      if (shell.lastInputWasRemote) return true;
+    }
+    return false;
+  }
+
   /// Whether the member's PTY is up (spawning through running).
   ///
   /// [memberId] is the shell key (`memberShells` / History `shellMemberId`),
