@@ -24,6 +24,7 @@ class WorkspaceTabDeferredMount extends StatelessWidget {
       retainWhenInactive: true,
       placeholder: const WorkspacePageCardShell(
         chrome: WorkspacePageChrome.workspace,
+        omitLeftPadding: true,
         child: SizedBox.expand(),
       ),
       builder: builder,

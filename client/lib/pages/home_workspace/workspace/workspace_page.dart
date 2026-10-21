@@ -285,6 +285,7 @@ class _WorkspacePageState extends State<WorkspacePage> {
     if (workspace == null) {
       return WorkspacePageCardShell(
         chrome: WorkspacePageChrome.workspace,
+        omitLeftPadding: true,
         child: _MissingWorkspace(label: l10n.homeWorkspaceEmptyWorkspaces),
       );
     }
@@ -292,8 +293,13 @@ class _WorkspacePageState extends State<WorkspacePage> {
     // Heavy body mounts at the tab-slot [WorkspaceTabDeferredMount]; this
     // page paints immediately once that defer reveals.
     // App-global status bar lives on HomeShell (GlobalResourceManagerHost).
+    //
+    // Flush-left: the workspace card sits directly beside the global
+    // workspace nav sidebar — the 16px card inset reads as a dead gap there
+    // (regressed in the rail removal; omitLeftPadding restores it).
     return WorkspacePageCardShell(
       chrome: WorkspacePageChrome.workspace,
+      omitLeftPadding: true,
       child: _buildCardBody(workspace: workspace),
     );
   }
