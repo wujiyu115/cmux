@@ -83,6 +83,7 @@ class LayoutPreferences {
     this.editorWordWrap = false,
     this.editorAutoSave = EditorAutoSaveMode.off,
     this.editorShowBlameBar = false,
+    this.editorReloadOnTabActivate = true,
   });
 
   factory LayoutPreferences.fromJson(Map<String, Object?> json) {
@@ -162,6 +163,8 @@ class LayoutPreferences {
           _enumValue(EditorAutoSaveMode.values, json['editorAutoSave']) ??
           EditorAutoSaveMode.off,
       editorShowBlameBar: json['editorShowBlameBar'] as bool? ?? false,
+      editorReloadOnTabActivate:
+          json['editorReloadOnTabActivate'] as bool? ?? true,
     ).withAtLeastOneToolVisible();
   }
 
@@ -257,6 +260,11 @@ class LayoutPreferences {
   /// Show the git blame bar above the editor (global, from settings).
   final bool editorShowBlameBar;
 
+  /// Re-read a clean file tab from disk when it becomes the active tab.
+  /// Complements the disk watch (unavailable on WSL/SFTP) and catches atomic
+  /// writes / checkouts the watch's modified events miss.
+  final bool editorReloadOnTabActivate;
+
   LayoutPreferences copyWith({
     LayoutPreset? preset,
     WorkspaceEntryMode? workspaceEntryMode,
@@ -291,6 +299,7 @@ class LayoutPreferences {
     bool? editorWordWrap,
     EditorAutoSaveMode? editorAutoSave,
     bool? editorShowBlameBar,
+    bool? editorReloadOnTabActivate,
   }) {
     return LayoutPreferences(
       preset: preset ?? this.preset,
@@ -365,6 +374,8 @@ class LayoutPreferences {
       editorWordWrap: editorWordWrap ?? this.editorWordWrap,
       editorAutoSave: editorAutoSave ?? this.editorAutoSave,
       editorShowBlameBar: editorShowBlameBar ?? this.editorShowBlameBar,
+      editorReloadOnTabActivate:
+          editorReloadOnTabActivate ?? this.editorReloadOnTabActivate,
     ).withAtLeastOneToolVisible();
   }
 
@@ -404,6 +415,7 @@ class LayoutPreferences {
       editorWordWrap: editorWordWrap,
       editorAutoSave: editorAutoSave,
       editorShowBlameBar: editorShowBlameBar,
+      editorReloadOnTabActivate: editorReloadOnTabActivate,
     );
   }
 
@@ -460,6 +472,7 @@ class LayoutPreferences {
       'editorWordWrap': editorWordWrap,
       'editorAutoSave': editorAutoSave.name,
       'editorShowBlameBar': editorShowBlameBar,
+      'editorReloadOnTabActivate': editorReloadOnTabActivate,
     };
   }
 }

@@ -333,6 +333,17 @@ class LayoutAppearanceInLayoutSection extends StatelessWidget {
                   showDividerBelow: true,
                 ),
                 TpPreferenceRow(
+                  title: l10n.editorReloadOnTabActivateTitle,
+                  subtitle: l10n.editorReloadOnTabActivateDescription,
+                  trailing: Switch(
+                    value: context.select<LayoutCubit, bool>(
+                      (c) => c.state.preferences.editorReloadOnTabActivate,
+                    ),
+                    onChanged: controller.setEditorReloadOnTabActivate,
+                  ),
+                  showDividerBelow: true,
+                ),
+                TpPreferenceRow(
                   title: l10n.editorAutoSaveTitle,
                   subtitle: l10n.editorAutoSaveDescription,
                   trailing: TpCompactSelect<EditorAutoSaveMode>(

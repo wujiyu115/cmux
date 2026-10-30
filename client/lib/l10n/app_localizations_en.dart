@@ -1442,6 +1442,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Show the git blame bar above the editor (applies to all workspaces)';
 
   @override
+  String get editorReloadOnTabActivateTitle => 'Reload on tab activation';
+
+  @override
+  String get editorReloadOnTabActivateDescription =>
+      'Switching back to a file tab re-reads it from disk when it changed outside the app and has no unsaved edits. Files with unsaved edits are left alone.';
+
+  @override
   String get blameNoHistory => 'No blame available for this line';
 
   @override

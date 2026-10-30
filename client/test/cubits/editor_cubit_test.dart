@@ -79,6 +79,57 @@ void main() {
     expect(cubit.state.bucket(ws).isDirty('/repo/a.txt'), isTrue);
   });
 
+  test('reloadIfChanged refreshes a clean buffer and leaves dirty ones', () async {
+    final fs = InMemoryFilesystem();
+    fs.files['/repo/c.txt'] = 'v1';
+    final cubit = EditorCubit(fs: fs);
+    addTearDown(cubit.close);
+
+    await cubit.openFile(ws, '/repo/c.txt');
+
+    // Unchanged on disk: no rewrite (caret/undo stay intact).
+    final controller = cubit.controllerFor(ws, '/repo/c.txt')!;
+    var notifications = 0;
+    void count() => notifications++;
+    controller.addListener(count);
+    addTearDown(() => controller.removeListener(count));
+    expect(await cubit.reloadIfChanged(ws, '/repo/c.txt'), isFalse);
+    expect(notifications, 0);
+
+    // External change with a clean buffer: refreshed, not dirty.
+    fs.files['/repo/c.txt'] = 'v2';
+    expect(await cubit.reloadIfChanged(ws, '/repo/c.txt'), isTrue);
+    expect(controller.text, 'v2');
+    expect(cubit.state.bucket(ws).isDirty('/repo/c.txt'), isFalse);
+
+    // Dirty buffer wins over the disk: never silently discarded.
+    controller.text = 'mine';
+    await Future<void>.delayed(Duration.zero);
+    fs.files['/repo/c.txt'] = 'v3';
+    expect(await cubit.reloadIfChanged(ws, '/repo/c.txt'), isFalse);
+    expect(controller.text, 'mine');
+    expect(cubit.state.bucket(ws).isDirty('/repo/c.txt'), isTrue);
+  });
+
+  test('onTabActivated honours the reload-on-activation preference', () async {
+    final fs = InMemoryFilesystem();
+    fs.files['/repo/d.txt'] = 'v1';
+    var enabled = false;
+    final cubit = EditorCubit(fs: fs, reloadOnTabActivate: () => enabled);
+    addTearDown(cubit.close);
+
+    await cubit.openFile(ws, '/repo/d.txt');
+    final controller = cubit.controllerFor(ws, '/repo/d.txt')!;
+
+    fs.files['/repo/d.txt'] = 'v2';
+    await cubit.onTabActivated(ws, '/repo/d.txt');
+    expect(controller.text, 'v1'); // Preference off: untouched.
+
+    enabled = true;
+    await cubit.onTabActivated(ws, '/repo/d.txt');
+    expect(controller.text, 'v2');
+  });
+
   test('reloadFile returns false when not open or read fails', () async {
     final fs = InMemoryFilesystem();
     fs.files['/repo/b.txt'] = 'v1';

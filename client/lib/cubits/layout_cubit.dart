@@ -231,6 +231,10 @@ class LayoutCubit extends Cubit<LayoutState> {
   Future<void> setEditorShowBlameBar(bool enabled) =>
       _save(state.preferences.copyWith(editorShowBlameBar: enabled));
 
+  Future<void> setEditorReloadOnTabActivate(bool enabled) => _save(
+    state.preferences.copyWith(editorReloadOnTabActivate: enabled),
+  );
+
   Future<void> setEditorAutoSave(EditorAutoSaveMode mode) =>
       _save(state.preferences.copyWith(editorAutoSave: mode));
 }

@@ -1386,6 +1386,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get editorShowBlameBarDescription => '在编辑器上方显示 git blame 栏（对所有工作区生效）';
 
   @override
+  String get editorReloadOnTabActivateTitle => '切回标签页时从磁盘刷新';
+
+  @override
+  String get editorReloadOnTabActivateDescription =>
+      '切回某个文件标签页时，若文件在应用外被修改且没有未保存的修改，则自动从磁盘重新读取。有未保存修改的文件不受影响。';
+
+  @override
   String get blameNoHistory => '此行没有 blame 信息';
 
   @override

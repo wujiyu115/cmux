@@ -33,7 +33,7 @@ import 'editor_symbol_sheet.dart';
 import 'markdown_preview_pane.dart';
 
 /// Center-pane file editor for one path (no inner tab bar).
-class FileEditorSurface extends StatelessWidget {
+class FileEditorSurface extends StatefulWidget {
   const FileEditorSurface({
     required this.workspaceId,
     required this.path,
@@ -44,7 +44,44 @@ class FileEditorSurface extends StatelessWidget {
   final String path;
 
   @override
+  State<FileEditorSurface> createState() => _FileEditorSurfaceState();
+}
+
+class _FileEditorSurfaceState extends State<FileEditorSurface> {
+  /// The surface mounts each time its tab becomes the active workbench tab
+  /// (only shell/run tabs are kept alive), so mount == activation: refresh the
+  /// clean buffer from disk once, per the "reload on tab activation" setting.
+  @override
+  void initState() {
+    super.initState();
+    _reloadFromDiskOnce();
+  }
+
+  @override
+  void didUpdateWidget(FileEditorSurface oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.path != widget.path &&
+        oldWidget.workspaceId == widget.workspaceId) {
+      _reloadFromDiskOnce();
+    }
+  }
+
+  void _reloadFromDiskOnce() {
+    final editor = context.read<EditorCubit>();
+    final workspaceId = widget.workspaceId;
+    final path = widget.path;
+    // Post-frame so the reload's state emission never lands inside build; the
+    // cubit itself no-ops when the preference is off, the tab is dirty or the
+    // disk content is unchanged.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(editor.onTabActivated(workspaceId, path));
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final workspaceId = widget.workspaceId;
+    final path = widget.path;
     final cs = Theme.of(context).colorScheme;
     if (isImagePreviewPath(path)) {
       return ColoredBox(

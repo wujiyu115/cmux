@@ -311,10 +311,12 @@ class EditorCubit extends Cubit<EditorState> {
     TsWorkerPool? workerPool,
     LanguageRegistry? languageRegistry,
     EditorAutoSaveMode Function()? autoSaveMode,
+    bool Function()? reloadOnTabActivate,
   })  : _fs = fs ?? AppStorage.fs,
         _injectedPool = workerPool,
         _injectedRegistry = languageRegistry,
         _autoSaveMode = autoSaveMode,
+        _reloadOnTabActivate = reloadOnTabActivate,
         super(const EditorState());
 
   final Filesystem _fs;
@@ -322,6 +324,10 @@ class EditorCubit extends Cubit<EditorState> {
   /// Current auto-save preference (injected by the shell from
   /// [LayoutCubit]; null keeps auto-save off — tests and harnesses).
   final EditorAutoSaveMode Function()? _autoSaveMode;
+
+  /// "Reload on tab activation" preference (injected by the shell from
+  /// [LayoutCubit]; null keeps tab-activation reloads off — tests/harnesses).
+  final bool Function()? _reloadOnTabActivate;
 
   static const _autoSaveDelay = Duration(milliseconds: 1000);
 
@@ -893,6 +899,42 @@ class EditorCubit extends Cubit<EditorState> {
     emit(state.withBucket(workspaceId, bucket.copyWith(dirtyPaths: dirty)));
   }
 
+  /// Called when a file tab becomes the workbench's active tab.
+  ///
+  /// The tab-activation counterpart of the manual "reload from disk" entry:
+  /// re-reads the buffer when the preference is on, the buffer is clean and
+  /// the file actually changed on disk. Disk watches do not cover WSL/SFTP
+  /// and miss atomic writes (checkout, agent CLI rewrites), so a clean buffer
+  /// can otherwise stay stale until the user reloads by hand.
+  Future<void> onTabActivated(String workspaceId, String path) async {
+    if (!(_reloadOnTabActivate?.call() ?? false)) return;
+    if (isImagePreviewPath(path)) return; // Image tabs re-read on mount.
+    await reloadIfChanged(workspaceId, path);
+  }
+
+  /// Re-reads [path] from disk only when the buffer is clean and the disk
+  /// content differs from the buffer. Returns `true` when the buffer was
+  /// replaced. Unlike [reloadFile] this never discards edits and leaves the
+  /// controller untouched (undo history, caret) when nothing changed.
+  Future<bool> reloadIfChanged(String workspaceId, String path) async {
+    final key = _handleKey(workspaceId, path);
+    final handle = _handles[key];
+    if (handle == null) return false;
+    final bucket = state.bucket(workspaceId);
+    if (bucket.dirtyPaths.contains(path)) return false;
+    if (bucket.loadingPaths.contains(path)) return false;
+    final fs = _fsByHandle[key] ?? _fs;
+    final content = await _readQuietly(fs, path);
+    if (content == null) return false;
+    if (content == handle.controller.text) {
+      // Keep the saved baseline in sync even when the text matches.
+      handle.savedText = content;
+      return false;
+    }
+    _applyDiskContent(workspaceId, path, handle, content);
+    return true;
+  }
+
   /// Re-reads [path] from disk into the open editor buffer, discarding any
   /// unsaved edits (callers confirm first). Returns `false` when the file is
   /// not open or the read fails; the buffer is left untouched in that case.
@@ -901,21 +943,34 @@ class EditorCubit extends Cubit<EditorState> {
     final handle = _handles[key];
     if (handle == null) return false;
     final fs = _fsByHandle[key] ?? _fs;
+    final content = await _readQuietly(fs, path);
+    if (content == null) return false;
+    _applyDiskContent(workspaceId, path, handle, content);
+    return true;
+  }
+
+  Future<String?> _readQuietly(Filesystem fs, String path) async {
     try {
-      final content = await fs.readString(path);
-      if (content == null) return false;
-      // savedText must change before the controller write: the handle's
-      // listener marks dirty whenever the new text differs from savedText.
-      handle.savedText = content;
-      handle.controller.text = content;
-      final bucket = state.bucket(workspaceId);
-      if (bucket.dirtyPaths.contains(path)) {
-        final dirty = Set<String>.from(bucket.dirtyPaths)..remove(path);
-        emit(state.withBucket(workspaceId, bucket.copyWith(dirtyPaths: dirty)));
-      }
-      return true;
+      return await fs.readString(path);
     } on Object {
-      return false;
+      return null;
+    }
+  }
+
+  void _applyDiskContent(
+    String workspaceId,
+    String path,
+    _OpenFileHandle handle,
+    String content,
+  ) {
+    // savedText must change before the controller write: the handle's
+    // listener marks dirty whenever the new text differs from savedText.
+    handle.savedText = content;
+    handle.controller.text = content;
+    final bucket = state.bucket(workspaceId);
+    if (bucket.dirtyPaths.contains(path)) {
+      final dirty = Set<String>.from(bucket.dirtyPaths)..remove(path);
+      emit(state.withBucket(workspaceId, bucket.copyWith(dirtyPaths: dirty)));
     }
   }
 
@@ -980,7 +1035,9 @@ class EditorCubit extends Cubit<EditorState> {
       shouldReload: () =>
           _handles[key] != null &&
           !state.bucket(workspaceId).dirtyPaths.contains(path),
-      onReload: () => unawaited(reloadFile(workspaceId, path)),
+      // [reloadIfChanged] keeps the caret and undo history when the event is a
+      // spurious/no-op write.
+      onReload: () => unawaited(reloadIfChanged(workspaceId, path)),
     );
     _diskWatches[key]?.dispose();
     _diskWatches[key] = diskWatch;

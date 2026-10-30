@@ -2732,6 +2732,18 @@ abstract class AppLocalizations {
   /// **'Show the git blame bar above the editor (applies to all workspaces)'**
   String get editorShowBlameBarDescription;
 
+  /// No description provided for @editorReloadOnTabActivateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reload on tab activation'**
+  String get editorReloadOnTabActivateTitle;
+
+  /// No description provided for @editorReloadOnTabActivateDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Switching back to a file tab re-reads it from disk when it changed outside the app and has no unsaved edits. Files with unsaved edits are left alone.'**
+  String get editorReloadOnTabActivateDescription;
+
   /// No description provided for @blameNoHistory.
   ///
   /// In en, this message translates to:

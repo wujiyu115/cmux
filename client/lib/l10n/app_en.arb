@@ -610,6 +610,8 @@
   "fileTabReloadFromDisk": "Refresh from disk",
   "editorShowBlameBarTitle": "Blame bar",
   "editorShowBlameBarDescription": "Show the git blame bar above the editor (applies to all workspaces)",
+  "editorReloadOnTabActivateTitle": "Reload on tab activation",
+  "editorReloadOnTabActivateDescription": "Switching back to a file tab re-reads it from disk when it changed outside the app and has no unsaved edits. Files with unsaved edits are left alone.",
   "blameNoHistory": "No blame available for this line",
   "blameNotCommittedYet": "Not committed yet",
   "blameUnknownAuthor": "Unknown author",

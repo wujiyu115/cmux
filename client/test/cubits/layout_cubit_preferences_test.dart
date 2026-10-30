@@ -210,6 +210,27 @@ void main() {
     expect(reloaded.state.preferences.editorWordWrap, isTrue);
   });
 
+  test('setEditorReloadOnTabActivate persists and reloads', () async {
+    final prefs = await SharedPreferences.getInstance();
+    final cubit = LayoutCubit(repository: LayoutRepository(prefs));
+    await cubit.load();
+    // Default on: clean tabs refresh when re-activated.
+    expect(cubit.state.preferences.editorReloadOnTabActivate, isTrue);
+
+    await cubit.setEditorReloadOnTabActivate(false);
+    expect(cubit.state.preferences.editorReloadOnTabActivate, isFalse);
+
+    final reloaded = LayoutCubit(repository: LayoutRepository(prefs));
+    await reloaded.load();
+    expect(reloaded.state.preferences.editorReloadOnTabActivate, isFalse);
+    expect(
+      LayoutPreferences.fromJson(
+        reloaded.state.preferences.toJson(),
+      ).editorReloadOnTabActivate,
+      isFalse,
+    );
+  });
+
   test('setEditorAutoSave persists and reloads', () async {
     final prefs = await SharedPreferences.getInstance();
     final cubit = LayoutCubit(repository: LayoutRepository(prefs));

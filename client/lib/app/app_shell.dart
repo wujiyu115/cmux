@@ -831,6 +831,8 @@ Future<AppShell> buildAppShell({
 
   editorCubit = EditorCubit(
     autoSaveMode: () => layoutCubit.state.preferences.editorAutoSave,
+    reloadOnTabActivate: () =>
+        layoutCubit.state.preferences.editorReloadOnTabActivate,
   );
   // Fire-and-forget: warm the common tree-sitter grammars so the first file
   // open paints colored instead of cold. Never blocks app start.
