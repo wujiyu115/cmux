@@ -31,6 +31,11 @@ class AppKeys {
     'bark-push-mobile-input-only-switch',
   );
   static const barkPushServerField = Key('bark-push-server-field');
+  static const barkPushScheduleMode = Key('bark-push-schedule-mode');
+  static const barkPushScheduleStart = Key('bark-push-schedule-start');
+  static const barkPushScheduleEnd = Key('bark-push-schedule-end');
+  static Key barkPushScheduleDay(int weekday) =>
+      Key('bark-push-schedule-day-$weekday');
   static const barkPushDeviceKeyField = Key('bark-push-device-key-field');
   static const barkPushTestButton = Key('bark-push-test-button');
   static const barkPushTestOutcome = Key('bark-push-test-outcome');

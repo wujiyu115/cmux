@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:teampilot/models/bark_push_schedule.dart';
 import 'package:teampilot/models/bark_push_settings.dart';
 import 'package:teampilot/services/notification/bark_push_dispatcher.dart';
 import 'package:teampilot/services/notification/bark_push_sender.dart';
@@ -27,13 +28,17 @@ void main() {
       bool connected = false,
       bool mobileInputOnly = false,
       bool Function(String seatId)? lastInputWasRemote,
+      BarkPushSchedule schedule = const BarkPushSchedule(),
+      DateTime Function()? now,
     }) => BarkPushDispatcher(
       sender: sender,
+      now: now,
       target: () => BarkPushTarget(
         mode: mode,
         serverUrl: 'https://bark.example',
         deviceKey: deviceKey,
         mobileInputOnly: mobileInputOnly,
+        schedule: schedule,
       ),
       hasConnectedPhone: () => connected,
       lastInputWasRemote: lastInputWasRemote ?? ((_) => true),
@@ -143,6 +148,42 @@ void main() {
       build(mobileInputOnly: false, lastInputWasRemote: (_) => false)
           .handle(notice());
       await settle();
+      expect(sent, hasLength(1));
+    });
+
+    test('schedule allowlist pushes only inside the window', () async {
+      const schedule = BarkPushSchedule(
+        mode: BarkPushScheduleMode.allow,
+        days: {DateTime.friday},
+        startMinute: 9 * 60,
+        endMinute: 18 * 60,
+      );
+      // Friday 2026-10-30 12:00 — inside.
+      build(schedule: schedule, now: () => DateTime(2026, 10, 30, 12))
+          .handle(notice());
+      // Friday 20:00 — outside.
+      build(schedule: schedule, now: () => DateTime(2026, 10, 30, 20))
+          .handle(notice());
+      await settle();
+
+      expect(sent, hasLength(1));
+    });
+
+    test('schedule blocklist suppresses inside the window', () async {
+      const schedule = BarkPushSchedule(
+        mode: BarkPushScheduleMode.block,
+        days: {DateTime.friday},
+        startMinute: 9 * 60,
+        endMinute: 18 * 60,
+      );
+      // Suppressed: Friday 12:00 is inside the blocked window.
+      build(schedule: schedule, now: () => DateTime(2026, 10, 30, 12))
+          .handle(notice());
+      // Delivered: Saturday 12:00 is outside it.
+      build(schedule: schedule, now: () => DateTime(2026, 10, 31, 12))
+          .handle(notice());
+      await settle();
+
       expect(sent, hasLength(1));
     });
 

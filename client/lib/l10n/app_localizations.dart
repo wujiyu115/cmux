@@ -3505,6 +3505,66 @@ abstract class AppLocalizations {
   /// **'Off'**
   String get barkPushModeOff;
 
+  /// No description provided for @barkPushScheduleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Push schedule'**
+  String get barkPushScheduleTitle;
+
+  /// No description provided for @barkPushScheduleDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter pushes by weekday and local time window. Filtered notices are dropped, not queued.'**
+  String get barkPushScheduleDescription;
+
+  /// No description provided for @barkPushScheduleModeOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get barkPushScheduleModeOff;
+
+  /// No description provided for @barkPushScheduleModeAllow.
+  ///
+  /// In en, this message translates to:
+  /// **'Allowlist'**
+  String get barkPushScheduleModeAllow;
+
+  /// No description provided for @barkPushScheduleModeBlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Blocklist'**
+  String get barkPushScheduleModeBlock;
+
+  /// No description provided for @barkPushScheduleDaysLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Days'**
+  String get barkPushScheduleDaysLabel;
+
+  /// No description provided for @barkPushScheduleTimeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Time window'**
+  String get barkPushScheduleTimeLabel;
+
+  /// No description provided for @barkPushScheduleStartTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Start time'**
+  String get barkPushScheduleStartTime;
+
+  /// No description provided for @barkPushScheduleEndTime.
+  ///
+  /// In en, this message translates to:
+  /// **'End time'**
+  String get barkPushScheduleEndTime;
+
+  /// No description provided for @barkPushScheduleOvernightHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The window runs past midnight, and the days are its start day.'**
+  String get barkPushScheduleOvernightHint;
+
   /// No description provided for @barkPushModeDisconnected.
   ///
   /// In en, this message translates to:

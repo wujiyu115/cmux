@@ -1877,6 +1877,38 @@ class AppLocalizationsEn extends AppLocalizations {
   String get barkPushModeOff => 'Off';
 
   @override
+  String get barkPushScheduleTitle => 'Push schedule';
+
+  @override
+  String get barkPushScheduleDescription =>
+      'Filter pushes by weekday and local time window. Filtered notices are dropped, not queued.';
+
+  @override
+  String get barkPushScheduleModeOff => 'Off';
+
+  @override
+  String get barkPushScheduleModeAllow => 'Allowlist';
+
+  @override
+  String get barkPushScheduleModeBlock => 'Blocklist';
+
+  @override
+  String get barkPushScheduleDaysLabel => 'Days';
+
+  @override
+  String get barkPushScheduleTimeLabel => 'Time window';
+
+  @override
+  String get barkPushScheduleStartTime => 'Start time';
+
+  @override
+  String get barkPushScheduleEndTime => 'End time';
+
+  @override
+  String get barkPushScheduleOvernightHint =>
+      'The window runs past midnight, and the days are its start day.';
+
+  @override
   String get barkPushModeDisconnected => 'Only when no phone is connected';
 
   @override

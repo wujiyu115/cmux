@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import 'bark_push_schedule.dart';
+
 /// When the desktop forwards agent notices to Bark.
 ///
 /// [whenDisconnected] is the default: a phone with a live pairing connection
@@ -26,6 +28,7 @@ class BarkPushSettings {
     this.mode = BarkPushMode.whenDisconnected,
     this.serverUrl = defaultServerUrl,
     this.mobileInputOnly = true,
+    this.schedule = const BarkPushSchedule(),
   });
 
   /// Bark's hosted relay. Self-hosters replace it; the path (`/push`) is added
@@ -43,6 +46,9 @@ class BarkPushSettings {
   /// that survives the mode gate.
   final bool mobileInputOnly;
 
+  /// Weekday + time window that gates pushes; off by default.
+  final BarkPushSchedule schedule;
+
   /// Trimmed origin with any trailing slashes removed, or the default when the
   /// user cleared the field. Empty is never a usable server, and silently
   /// falling back beats failing every push with a confusing URL error.
@@ -55,16 +61,19 @@ class BarkPushSettings {
     BarkPushMode? mode,
     String? serverUrl,
     bool? mobileInputOnly,
+    BarkPushSchedule? schedule,
   }) => BarkPushSettings(
     mode: mode ?? this.mode,
     serverUrl: serverUrl ?? this.serverUrl,
     mobileInputOnly: mobileInputOnly ?? this.mobileInputOnly,
+    schedule: schedule ?? this.schedule,
   );
 
   Map<String, Object?> toJson() => {
     'mode': mode.name,
     'serverUrl': serverUrl,
     'mobileInputOnly': mobileInputOnly,
+    'schedule': schedule.toJson(),
   };
 
   factory BarkPushSettings.fromJson(Map<String, Object?> json) {
@@ -76,6 +85,7 @@ class BarkPushSettings {
           ? url
           : defaultServerUrl,
       mobileInputOnly: mobileOnly is bool ? mobileOnly : true,
+      schedule: BarkPushSchedule.fromJson(json['schedule']),
     );
   }
 
@@ -84,8 +94,9 @@ class BarkPushSettings {
       other is BarkPushSettings &&
       other.mode == mode &&
       other.serverUrl == serverUrl &&
-      other.mobileInputOnly == mobileInputOnly;
+      other.mobileInputOnly == mobileInputOnly &&
+      other.schedule == schedule;
 
   @override
-  int get hashCode => Object.hash(mode, serverUrl, mobileInputOnly);
+  int get hashCode => Object.hash(mode, serverUrl, mobileInputOnly, schedule);
 }

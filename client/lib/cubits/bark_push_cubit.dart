@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../models/bark_push_schedule.dart';
 import '../models/bark_push_settings.dart';
 import '../repositories/bark_push_repository.dart';
 import '../services/notification/bark_push_dispatcher.dart';
@@ -94,6 +95,7 @@ class BarkPushCubit extends Cubit<BarkPushState> {
     serverUrl: state.settings.normalizedServerUrl,
     deviceKey: state.deviceKey,
     mobileInputOnly: state.settings.mobileInputOnly,
+    schedule: state.settings.schedule,
   );
 
   Future<void> setMode(BarkPushMode mode) async {
@@ -104,6 +106,13 @@ class BarkPushCubit extends Cubit<BarkPushState> {
 
   Future<void> setMobileInputOnly(bool enabled) async {
     final settings = state.settings.copyWith(mobileInputOnly: enabled);
+    emit(state.copyWith(settings: settings, clearLastTest: true));
+    await _repository.saveSettings(settings);
+  }
+
+  /// Weekday/time window gate; see [BarkPushSchedule].
+  Future<void> setSchedule(BarkPushSchedule schedule) async {
+    final settings = state.settings.copyWith(schedule: schedule);
     emit(state.copyWith(settings: settings, clearLastTest: true));
     await _repository.saveSettings(settings);
   }

@@ -6,6 +6,7 @@ import 'package:http/testing.dart';
 import 'package:shared_ui/shared_ui.dart';
 import 'package:teampilot/cubits/bark_push_cubit.dart';
 import 'package:teampilot/l10n/app_localizations.dart';
+import 'package:teampilot/models/bark_push_schedule.dart';
 import 'package:teampilot/models/bark_push_settings.dart';
 import 'package:teampilot/pages/config/push_channel_section.dart';
 import 'package:teampilot/repositories/bark_push_repository.dart';
@@ -44,6 +45,12 @@ void main() {
   tearDown(() => cubit.close());
 
   Future<void> pump(WidgetTester tester) async {
+    // Tall viewport: the section is a scrolling settings column and the test
+    // button must be hit-testable without scrolling in every test.
+    tester.view.physicalSize = const Size(800, 1600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     final theme = ThemeData.light();
     await tester.pumpWidget(
       MaterialApp(
@@ -173,5 +180,90 @@ void main() {
     await tester.pumpAndSettle();
 
     expect((await repository.loadSettings()).mobileInputOnly, isFalse);
+  });
+
+  group('push schedule', () {
+    /// Wide enough for [TpSegmentedPicker]'s pill mode (its compact-select
+    /// fallback sits below 840 logical px).
+    Future<void> pumpWide(WidgetTester tester) async {
+      await pump(tester);
+      tester.view.physicalSize = const Size(1400, 1600);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('mode, days and window persist', (tester) async {
+      cubit = build(deviceKey: 'k');
+      await cubit.load();
+      await pumpWide(tester);
+
+      // Off by default: the day chips and times are hidden.
+      expect((await repository.loadSettings()).schedule.isActive, isFalse);
+      expect(
+        find.byKey(AppKeys.barkPushScheduleDay(DateTime.monday)),
+        findsNothing,
+      );
+
+      await tester.tap(find.text('Allowlist'));
+      await tester.pumpAndSettle();
+      final allow = (await repository.loadSettings()).schedule;
+      expect(allow.mode, BarkPushScheduleMode.allow);
+      expect(
+        find.byKey(AppKeys.barkPushScheduleDay(DateTime.monday)),
+        findsOneWidget,
+      );
+
+      // Every day starts selected; tapping one deselects it.
+      await tester.tap(find.byKey(AppKeys.barkPushScheduleDay(DateTime.friday)));
+      await tester.pumpAndSettle();
+      expect(
+        (await repository.loadSettings()).schedule.days,
+        isNot(contains(DateTime.friday)),
+      );
+
+      await tester.tap(find.text('Blocklist'));
+      await tester.pumpAndSettle();
+      expect(
+        (await repository.loadSettings()).schedule.mode,
+        BarkPushScheduleMode.block,
+      );
+    });
+
+    testWidgets('the last selected day cannot be deselected', (tester) async {
+      cubit = build(deviceKey: 'k');
+      await cubit.load();
+      await cubit.setSchedule(
+        const BarkPushSchedule(
+          mode: BarkPushScheduleMode.allow,
+          days: {DateTime.monday},
+        ),
+      );
+      await pumpWide(tester);
+
+      await tester.tap(find.byKey(AppKeys.barkPushScheduleDay(DateTime.monday)));
+      await tester.pumpAndSettle();
+
+      // An empty set would read as "every day" — the opposite of the intent.
+      expect(
+        (await repository.loadSettings()).schedule.days,
+        {DateTime.monday},
+      );
+    });
+
+    testWidgets('the time buttons open the picker', (tester) async {
+      cubit = build(deviceKey: 'k');
+      await cubit.load();
+      await cubit.setSchedule(
+        const BarkPushSchedule(mode: BarkPushScheduleMode.allow),
+      );
+      await pumpWide(tester);
+
+      await tester.tap(find.byKey(AppKeys.barkPushScheduleStart));
+      await tester.pumpAndSettle();
+      expect(find.text('Start time'), findsOneWidget);
+
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(find.text('Start time'), findsNothing);
+    });
   });
 }

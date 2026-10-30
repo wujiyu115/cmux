@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import '../../l10n/l10n_extensions.dart';
+import '../../models/bark_push_schedule.dart';
 import '../../models/bark_push_settings.dart';
 import '../../router/app_router.dart';
 import '../pairing/agent_notice_message.dart';
@@ -14,6 +15,7 @@ class BarkPushTarget {
     required this.serverUrl,
     required this.deviceKey,
     this.mobileInputOnly = true,
+    this.schedule = const BarkPushSchedule(),
   });
 
   final BarkPushMode mode;
@@ -22,6 +24,9 @@ class BarkPushTarget {
 
   /// See [BarkPushSettings.mobileInputOnly]: push only phone-originated turns.
   final bool mobileInputOnly;
+
+  /// Weekday/time window; [BarkPushSchedule.mode] off means no filtering.
+  final BarkPushSchedule schedule;
 
   /// A configured channel. Mode alone is not enough: the default mode is
   /// [BarkPushMode.whenDisconnected], so a fresh install would otherwise "want"
@@ -50,6 +55,10 @@ class BarkPushStrings {
 /// Reads the same notice stream that feeds paired phones, which is why it sits
 /// downstream of `notifyOnSessionIdle` — that master switch has already been
 /// applied by the time a notice reaches here.
+///
+/// A notice that fails any gate (mode, mobile-input-only, or the weekday/time
+/// [BarkPushSchedule]) is dropped rather than queued: a "turn finished" from
+/// three hours ago has no value once its window reopens.
 class BarkPushDispatcher {
   BarkPushDispatcher({
     required BarkPushSender sender,
@@ -57,11 +66,13 @@ class BarkPushDispatcher {
     required bool Function() hasConnectedPhone,
     bool Function(String seatId)? lastInputWasRemote,
     BarkPushStrings? Function()? resolveStrings,
+    DateTime Function()? now,
   }) : _sender = sender,
        _target = target,
        _hasConnectedPhone = hasConnectedPhone,
        _lastInputWasRemote = lastInputWasRemote ?? ((_) => false),
-       _resolveStrings = resolveStrings ?? _defaultResolveStrings;
+       _resolveStrings = resolveStrings ?? _defaultResolveStrings,
+       _now = now ?? DateTime.now;
 
   final BarkPushSender _sender;
   final BarkPushTarget Function() _target;
@@ -79,6 +90,9 @@ class BarkPushDispatcher {
 
   final BarkPushStrings? Function() _resolveStrings;
 
+  /// Local wall clock, injectable so the schedule gate is testable.
+  final DateTime Function() _now;
+
   /// Fire-and-forget: a slow or unreachable Bark server must not hold up the
   /// desktop's own notification, and there is nothing useful to do with a
   /// failure here (the settings page's test button is where errors are surfaced).
@@ -91,6 +105,8 @@ class BarkPushDispatcher {
     if (target.mobileInputOnly && !_lastInputWasRemote(notice.seatId)) {
       return;
     }
+    // Weekday/time window: allowlist (only inside) or blocklist (skip inside).
+    if (!target.schedule.allows(_now())) return;
     final strings = _resolveStrings();
     if (strings == null) return;
 

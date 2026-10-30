@@ -1809,6 +1809,36 @@ class AppLocalizationsZh extends AppLocalizations {
   String get barkPushModeOff => '关闭';
 
   @override
+  String get barkPushScheduleTitle => '推送时间表';
+
+  @override
+  String get barkPushScheduleDescription => '按周几和本地时间段过滤推送。被过滤的通知直接丢弃，不会补发。';
+
+  @override
+  String get barkPushScheduleModeOff => '关闭';
+
+  @override
+  String get barkPushScheduleModeAllow => '白名单';
+
+  @override
+  String get barkPushScheduleModeBlock => '黑名单';
+
+  @override
+  String get barkPushScheduleDaysLabel => '星期';
+
+  @override
+  String get barkPushScheduleTimeLabel => '时间段';
+
+  @override
+  String get barkPushScheduleStartTime => '开始时间';
+
+  @override
+  String get barkPushScheduleEndTime => '结束时间';
+
+  @override
+  String get barkPushScheduleOvernightHint => '该时间段跨过午夜，星期指起始那天。';
+
+  @override
   String get barkPushModeDisconnected => '仅在无手机连接时';
 
   @override

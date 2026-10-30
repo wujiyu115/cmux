@@ -9,6 +9,7 @@ import '../../l10n/l10n_extensions.dart';
 import '../../models/bark_push_settings.dart';
 import '../../utils/debounce/debounce.dart';
 import '../../utils/ui/app_keys.dart';
+import 'push_schedule_editor.dart';
 
 /// Settings block for the Bark push channel: the one delivery path that still
 /// works when no phone is connected to this desktop.
@@ -145,6 +146,10 @@ class _PushChannelSectionState extends State<PushChannelSection> {
                 },
               ),
               showDividerBelow: true,
+            ),
+            BarkPushScheduleEditor(
+              schedule: state.settings.schedule,
+              onChanged: (schedule) => unawaited(cubit.setSchedule(schedule)),
             ),
             TpPreferenceStack(
               title: l10n.barkPushServerTitle,
