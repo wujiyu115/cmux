@@ -592,7 +592,14 @@ class EditorCubit extends Cubit<EditorState> {
         stat = await filesystem.stat(normalized);
       }
       if (!_stillLoading(workspaceId, normalized)) return;
-      if (!stat.exists || !stat.isFile) {
+      // A symlink to a regular file must open like the file itself. Backends
+      // that dereference (stat -L / FileStat.stat / SFTP stat) already report
+      // `file`; those that cannot (or that hit a race) report `symlink`, and the
+      // read below is what decides. Only "missing" and "directory" are
+      // rejected outright.
+      if (!stat.exists ||
+          (stat.kind != FsEntityKind.file &&
+              stat.kind != FsEntityKind.symlink)) {
         emit(_clearLoading(workspaceId, normalized, error: EditorMessage.fileNotFound));
         return;
       }
@@ -983,7 +990,10 @@ class EditorCubit extends Cubit<EditorState> {
     }
     final fs = _fsByHandle[_handleKey(workspaceId, path)] ?? _fs;
     try {
-      await fs.atomicWrite(path, handle.controller.text);
+      await fs.atomicWrite(
+        await _writeTargetFor(fs, path),
+        handle.controller.text,
+      );
       handle.savedText = handle.controller.text;
       final bucket = state.bucket(workspaceId);
       final dirty = Set<String>.from(bucket.dirtyPaths)..remove(path);
@@ -996,6 +1006,18 @@ class EditorCubit extends Cubit<EditorState> {
     } on Object catch (e) {
       emit(state.copyWith(snackbarMessage: EditorMessage.saveFailed(e)));
       return false;
+    }
+  }
+
+  /// Byte-level target of a buffer write: the symlink's canonical target when
+  /// [path] is a link. [Filesystem.atomicWrite] replaces the path it is given
+  /// (tmp file + rename), so writing through the link path would turn the link
+  /// into a regular file and silently detach it from its target.
+  Future<String> _writeTargetFor(Filesystem fs, String path) async {
+    try {
+      return await fs.resolveSymlink(path) ?? path;
+    } on Object {
+      return path;
     }
   }
 

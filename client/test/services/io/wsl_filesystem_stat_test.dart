@@ -115,7 +115,7 @@ void main() {
         '-c',
         predicate<String>(
           (script) =>
-              script.contains('stat -c "\$2" -- "\$1"') &&
+              script.contains('stat -L -c "\$2" -- "\$1"') &&
               script.contains('head -c "\$3" -- "\$1" | base64 -w0'),
         ),
       ]);
@@ -242,6 +242,8 @@ void main() {
 
       final script = capturedArgs![3];
       expect(script, contains('for f in "\$@"'));
+      // -L so a symlinked file stats as a regular file, like [stat] does.
+      expect(script, contains('stat -L -c "%F|%s|%Y" -- "\$f"'));
       expect(
         script,
         contains('head -c "\$max" -- "\$f" 2>/dev/null | base64 -w0'),

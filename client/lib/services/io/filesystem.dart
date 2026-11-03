@@ -89,6 +89,9 @@ abstract interface class FsBatchOps {
   /// transferred when given; [tailBytes] additionally transfers the file's
   /// last bytes (ignored when [maxBytes] is null — the whole file already
   /// came back).
+  ///
+  /// The stat dereferences symlinks, so a link to a regular file reports
+  /// [FsEntityKind.file] exactly like [Filesystem.stat] does.
   Future<FsStatAndBytes?> statAndReadBytes(
     String path, {
     int? maxBytes,

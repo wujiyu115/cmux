@@ -543,6 +543,87 @@ void main() {
     expect(cubit.codeScrollOffsetFor(ws, '/repo/a.txt'),
         (vertical: 0.0, horizontal: 0.0));
   });
+
+  test('opens a file whose stat reports a symlink', () async {
+    // Regression: the WSL batched stat used to omit `-L`, so a symlinked source
+    // file (common in game repos) reported `symbolic link` and the editor
+    // rejected it as "File not found".
+    final fs = _SymlinkFilesystem(
+      linkPath: '/repo/lualib/room/util/dmg_formule.lua',
+      targetPath: '/repo/shared/lua/dmg_formule.lua',
+    );
+    fs.files['/repo/shared/lua/dmg_formule.lua'] = 'return {}';
+    final cubit = EditorCubit(fs: fs);
+    addTearDown(cubit.close);
+
+    await cubit.openFile(ws, '/repo/lualib/room/util/dmg_formule.lua');
+
+    expect(
+      cubit.state.bucket(ws).openFilePaths,
+      ['/repo/lualib/room/util/dmg_formule.lua'],
+    );
+    expect(
+      cubit.controllerFor(ws, '/repo/lualib/room/util/dmg_formule.lua')?.text,
+      'return {}',
+    );
+  });
+
+  test('saving a symlinked file writes through the link, not over it', () async {
+    final fs = _SymlinkFilesystem(
+      linkPath: '/repo/link.lua',
+      targetPath: '/repo/real.lua',
+    );
+    fs.files['/repo/real.lua'] = 'v1';
+    final cubit = EditorCubit(fs: fs);
+    addTearDown(cubit.close);
+
+    await cubit.openFile(ws, '/repo/link.lua');
+    cubit.controllerFor(ws, '/repo/link.lua')!.text = 'v2';
+    await Future<void>.delayed(Duration.zero);
+    expect(await cubit.saveFile(ws, '/repo/link.lua'), isTrue);
+
+    // The target got the bytes and the link survived (an atomic write onto the
+    // link path would have replaced it with a regular file).
+    expect(fs.files['/repo/real.lua'], 'v2');
+    expect(fs.files.containsKey('/repo/link.lua'), isFalse);
+    expect(fs.symlinks['/repo/link.lua'], '/repo/real.lua');
+  });
+}
+
+/// Test double for a backend that reports a link as [FsEntityKind.symlink]
+/// instead of dereferencing it, and reads through it.
+class _SymlinkFilesystem extends InMemoryFilesystem {
+  _SymlinkFilesystem({required this.linkPath, required this.targetPath}) {
+    symlinks[linkPath] = targetPath;
+  }
+
+  final String linkPath;
+  final String targetPath;
+
+  String _throughLink(String path) => path == linkPath ? targetPath : path;
+
+  @override
+  Future<FsStat> stat(String path) async {
+    if (path == linkPath) {
+      final target = await super.stat(targetPath);
+      if (!target.exists) return const FsStat(kind: FsEntityKind.notFound);
+      return FsStat(
+        kind: FsEntityKind.symlink,
+        size: target.size,
+        mtime: target.mtime,
+      );
+    }
+    return super.stat(path);
+  }
+
+  @override
+  Future<String?> readString(String path) => super.readString(_throughLink(path));
+
+  @override
+  Future<List<int>?> readBytes(String path) => super.readBytes(_throughLink(path));
+
+  @override
+  Future<String?> resolveSymlink(String path) async => _throughLink(path);
 }
 
 class _GatedFilesystem extends InMemoryFilesystem {

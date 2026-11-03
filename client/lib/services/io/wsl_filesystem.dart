@@ -171,7 +171,11 @@ class WslFilesystem implements Filesystem, FsBatchOps, FsSymlinkLister {
         ? tailBytes
         : null;
     final script =
-        'stat -c "\$2" -- "\$1" || exit 1\n'
+        // -L dereferences symlinks, matching [stat] and [listDir]: a link to a
+        // regular file must report "regular file", not "symbolic link", or
+        // callers reject it as not-a-file (symlinked sources are common in
+        // game repos). A dangling link then fails the stat and reads as missing.
+        'stat -L -c "\$2" -- "\$1" || exit 1\n'
         '[ -r "\$1" ] || exit 2\n'
         'if [ -n "\$3" ]; then\n'
         '  head -c "\$3" -- "\$1" | base64 -w0\n'
@@ -233,7 +237,7 @@ class WslFilesystem implements Filesystem, FsBatchOps, FsSymlinkLister {
     final script =
         'max="\$1"; tail="\$2"; shift 2\n'
         'for f in "\$@"; do\n'
-        '  s=\$(stat -c "%F|%s|%Y" -- "\$f" 2>/dev/null) || s=""\n'
+        '  s=\$(stat -L -c "%F|%s|%Y" -- "\$f" 2>/dev/null) || s=""\n'
         '  printf "%s\\n" "\$s"\n'
         '  if [ -n "\$s" ] && [ -r "\$f" ]; then\n'
         '    if [ -n "\$max" ]; then\n'
