@@ -12,6 +12,7 @@ import '../../services/editor_platform/document_session_token_provider.dart';
 import '../../services/editor_platform/editor_platform.dart';
 import '../../services/editor_platform/editor_viewport_token_binder.dart';
 import '../../theme/workspace_surface_layers.dart';
+import '../../widgets/editor/app_code_scrollbar.dart';
 import 'diff_overview_ruler.dart';
 import 'diff_ribbon_painter.dart';
 import 'diff_view_controller.dart';
@@ -327,6 +328,9 @@ class _SideBySideDiffViewState extends State<SideBySideDiffView> {
       readOnly: true,
       showCursorWhenReadOnly: false,
       findController: findController,
+      scrollbarBuilder: buildAppCodeScrollbar,
+      verticalScrollbarWidth: kAppCodeScrollbarExtent,
+      horizontalScrollbarHeight: kAppCodeScrollbarExtent,
       findBuilder: findController == null
           ? null
           : (context, controller, readOnly) =>

@@ -228,70 +228,84 @@ class _FileTreePanelState extends State<FileTreePanel> {
         },
         child: Container(
           key: AppKeys.fileTreePanel,
-          padding: const EdgeInsets.all(13),
+          // No right padding: the list runs full-bleed so the overlay
+          // scrollbar sits on the panel edge, VS Code-style. The header/chrome
+          // rows re-add their own gutter below; rows reserve
+          // [_kFileTreeRowScrollbarGutter] on their trailing edge.
+          padding: const EdgeInsets.fromLTRB(13, 13, 0, 13),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              BlocSelector<FileTreeCubit, FileTreeState, (bool, bool, String)>(
-                selector: (state) => (
-                  state.expandedPaths.isNotEmpty,
-                  state.showHiddenFiles,
-                  state.rootPath,
-                ),
-                builder: (context, header) {
-                  final (hasExpandedFolders, showHiddenFiles, rootPath) =
-                      header;
-                  return LayoutBuilder(
-                    builder: (context, constraints) {
-                      const actionSlotWidth = 28.0;
-                      final actionCount = (hasExpandedFolders ? 5 : 4) + 1;
-                      final showInlineActions =
-                          constraints.maxWidth >= actionSlotWidth * actionCount;
-                      return Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              l10n.fileTree,
-                              style: TpTextStyles.of(
-                                context,
-                              ).xsBoldWideColored(cs.onSurfaceVariant),
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                            ),
-                          ),
-                          if (showInlineActions)
-                            ..._buildFileTreeHeaderActions(
-                              l10n: l10n,
-                              showHiddenFiles: showHiddenFiles,
-                              rootPath: rootPath,
-                              filterVisible: _filterVisible,
-                            )
-                          else
-                            FileTreeHeaderOverflowMenu(
-                              l10n: l10n,
-                              showHiddenFiles: showHiddenFiles,
-                              filterVisible: _filterVisible,
-                              hasExpandedFolders: hasExpandedFolders,
-                              canCopy: rootPath.isNotEmpty,
-                              onRefresh: _cubit.refresh,
-                              onReveal: () =>
-                                  unawaited(_revealActiveEditorFile()),
-                              onCollapseAll: _cubit.collapseAllFolders,
-                              onToggleFilter: _toggleFilterVisible,
-                              onToggleHidden: _cubit.toggleShowHidden,
-                              onCopy: () {
-                                if (rootPath.isNotEmpty) {
-                                  Clipboard.setData(
-                                    ClipboardData(text: rootPath),
-                                  );
-                                }
-                              },
-                            ),
-                        ],
-                      );
-                    },
-                  );
-                },
+              Padding(
+                padding: const EdgeInsets.only(right: 13),
+                child:
+                    BlocSelector<
+                      FileTreeCubit,
+                      FileTreeState,
+                      (bool, bool, String)
+                    >(
+                      selector: (state) => (
+                        state.expandedPaths.isNotEmpty,
+                        state.showHiddenFiles,
+                        state.rootPath,
+                      ),
+                      builder: (context, header) {
+                        final (hasExpandedFolders, showHiddenFiles, rootPath) =
+                            header;
+                        return LayoutBuilder(
+                          builder: (context, constraints) {
+                            const actionSlotWidth = 28.0;
+                            final actionCount =
+                                (hasExpandedFolders ? 5 : 4) + 1;
+                            final showInlineActions =
+                                constraints.maxWidth >=
+                                actionSlotWidth * actionCount;
+                            return Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    l10n.fileTree,
+                                    style: TpTextStyles.of(
+                                      context,
+                                    ).xsBoldWideColored(cs.onSurfaceVariant),
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ),
+                                ),
+                                if (showInlineActions)
+                                  ..._buildFileTreeHeaderActions(
+                                    l10n: l10n,
+                                    showHiddenFiles: showHiddenFiles,
+                                    rootPath: rootPath,
+                                    filterVisible: _filterVisible,
+                                  )
+                                else
+                                  FileTreeHeaderOverflowMenu(
+                                    l10n: l10n,
+                                    showHiddenFiles: showHiddenFiles,
+                                    filterVisible: _filterVisible,
+                                    hasExpandedFolders: hasExpandedFolders,
+                                    canCopy: rootPath.isNotEmpty,
+                                    onRefresh: _cubit.refresh,
+                                    onReveal: () =>
+                                        unawaited(_revealActiveEditorFile()),
+                                    onCollapseAll: _cubit.collapseAllFolders,
+                                    onToggleFilter: _toggleFilterVisible,
+                                    onToggleHidden: _cubit.toggleShowHidden,
+                                    onCopy: () {
+                                      if (rootPath.isNotEmpty) {
+                                        Clipboard.setData(
+                                          ClipboardData(text: rootPath),
+                                        );
+                                      }
+                                    },
+                                  ),
+                              ],
+                            );
+                          },
+                        );
+                      },
+                    ),
               ),
               const SizedBox(height: 8),
               Expanded(
@@ -299,50 +313,58 @@ class _FileTreePanelState extends State<FileTreePanel> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     if (_filterVisible) ...[
-                      _FileTreeFilterField(
-                        controller: _filterController,
-                        hintText: l10n.filterFiles,
-                        onFilterChanged: _cubit.setFilter,
-                        onClear: () {
-                          _filterController.clear();
-                          _cubit.setFilter('');
-                        },
+                      Padding(
+                        padding: const EdgeInsets.only(right: 13),
+                        child: _FileTreeFilterField(
+                          controller: _filterController,
+                          hintText: l10n.filterFiles,
+                          onFilterChanged: _cubit.setFilter,
+                          onClear: () {
+                            _filterController.clear();
+                            _cubit.setFilter('');
+                          },
+                        ),
                       ),
                       const SizedBox(height: 10),
                     ],
                     if (_listReady) ...[
                       // Single-root: show the folder path. Multi-root: each root
                       // gets its own header row, so the single path line is hidden.
-                      BlocSelector<
-                        FileTreeCubit,
-                        FileTreeState,
-                        (bool, bool, String)
-                      >(
-                        selector: (state) => (
-                          state.isMultiRoot,
-                          state.anyRootExists,
-                          state.rootPath,
-                        ),
-                        builder: (context, root) {
-                          final (isMultiRoot, anyRootExists, rootPath) = root;
-                          if (isMultiRoot) return const SizedBox.shrink();
-                          if (anyRootExists) {
-                            return Text(
-                              rootPath,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TpTextStyles.of(
-                                context,
-                              ).smColored(cs.onSurfaceVariant),
-                            );
-                          }
-                          return Text(
-                            'Directory unavailable',
-                            style: TpTextStyles.of(context).smColored(
-                              cs.onSurfaceVariant.withValues(alpha: 0.7),
+                      Padding(
+                        padding: const EdgeInsets.only(right: 13),
+                        child:
+                            BlocSelector<
+                              FileTreeCubit,
+                              FileTreeState,
+                              (bool, bool, String)
+                            >(
+                              selector: (state) => (
+                                state.isMultiRoot,
+                                state.anyRootExists,
+                                state.rootPath,
+                              ),
+                              builder: (context, root) {
+                                final (isMultiRoot, anyRootExists, rootPath) =
+                                    root;
+                                if (isMultiRoot) return const SizedBox.shrink();
+                                if (anyRootExists) {
+                                  return Text(
+                                    rootPath,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TpTextStyles.of(
+                                      context,
+                                    ).smColored(cs.onSurfaceVariant),
+                                  );
+                                }
+                                return Text(
+                                  'Directory unavailable',
+                                  style: TpTextStyles.of(context).smColored(
+                                    cs.onSurfaceVariant.withValues(alpha: 0.7),
+                                  ),
+                                );
+                              },
                             ),
-                          );
-                        },
                       ),
                       const SizedBox(height: 10),
                       Expanded(
@@ -614,20 +636,24 @@ class _FileTreeListState extends State<_FileTreeList> {
           ),
         );
 
-        return Scrollbar(
+        // Both bars sit outside the horizontal view so the vertical thumb is
+        // painted at the viewport edge, not at the edge of the scrolled
+        // content (which can be off-screen).
+        return TpOverlayScrollbar(
+          axis: Axis.horizontal,
           controller: widget.horizontalScrollController,
-          thumbVisibility: true,
           notificationPredicate: (notification) =>
               notification.metrics.axis == Axis.horizontal,
-          child: SingleChildScrollView(
-            controller: widget.horizontalScrollController,
-            scrollDirection: Axis.horizontal,
-            child: SizedBox(
-              width: contentWidth,
-              height: constraints.maxHeight,
-              child: Scrollbar(
-                controller: widget.listScrollController,
-                thumbVisibility: true,
+          child: TpOverlayScrollbar(
+            controller: widget.listScrollController,
+            notificationPredicate: (notification) =>
+                notification.metrics.axis == Axis.vertical,
+            child: SingleChildScrollView(
+              controller: widget.horizontalScrollController,
+              scrollDirection: Axis.horizontal,
+              child: SizedBox(
+                width: contentWidth,
+                height: constraints.maxHeight,
                 child: NotificationListener<ScrollNotification>(
                   onNotification: _onScrollNotification,
                   child: ListView.builder(

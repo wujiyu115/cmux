@@ -72,9 +72,8 @@ class LogViewerLineList extends StatelessWidget {
     final itemCount = lines.length;
 
     if (wrapLines) {
-      return Scrollbar(
+      return TpOverlayScrollbar(
         controller: scrollController,
-        thumbVisibility: true,
         child: ListView.builder(
           controller: scrollController,
           scrollCacheExtent: _cacheExtent,
@@ -92,9 +91,8 @@ class LogViewerLineList extends StatelessWidget {
       );
     }
 
-    return Scrollbar(
+    return TpOverlayScrollbar(
       controller: scrollController,
-      thumbVisibility: true,
       child: ListView.builder(
         controller: scrollController,
         itemExtent: _singleLineExtent,

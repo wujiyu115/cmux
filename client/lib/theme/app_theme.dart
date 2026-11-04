@@ -11,6 +11,7 @@ import 'app_tooltip_theme.dart';
 import 'app_fonts.dart';
 import 'app_markdown_style_sheet.dart';
 import 'app_outline_input_theme.dart';
+import 'app_scrollbar_theme.dart';
 import 'app_typography_scale.dart';
 import 'color_theme.dart';
 import 'font_catalog.dart';
@@ -504,6 +505,7 @@ ThemeData _applyTypography(
         colorScheme: scheme,
         textTheme: textTheme,
       ),
+      scrollbarTheme: buildAppScrollbarTheme(colorScheme: scheme),
     );
   }
   final typographySeed = ThemeData(
@@ -565,5 +567,6 @@ ThemeData _applyTypography(
       colorScheme: scheme,
       textTheme: mergedTextTheme,
     ),
+    scrollbarTheme: buildAppScrollbarTheme(colorScheme: scheme),
   );
 }

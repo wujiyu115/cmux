@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:re_editor/re_editor.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 import '../../cubits/editor_cubit.dart';
 import '../../services/editor/markdown_preview_link_handler.dart';
@@ -93,25 +94,28 @@ class _MarkdownPreviewPaneState extends State<MarkdownPreviewPane> {
     // SelectionArea must sit *inside* the scroll content. As an ancestor it
     // enables edge auto-scroll while selecting, which yanks long previews to
     // the top (flutter/flutter#110917).
-    return SingleChildScrollView(
+    return TpOverlayScrollbar(
       controller: _scrollController,
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-      child: SelectionArea(
-        child: MarkdownBody(
-          data: _data,
-          styleSheet: buildAppMarkdownStyleSheet(Theme.of(context)),
-          selectable: false,
-          onTapLink: (text, href, title) {
-            unawaited(
-              handleMarkdownPreviewLink(
-                href: href,
-                markdownFilePath: widget.path,
-                workspaceId: widget.workspaceId,
-                workspaceRoots: roots,
-                opener: opener,
-              ),
-            );
-          },
+      child: SingleChildScrollView(
+        controller: _scrollController,
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+        child: SelectionArea(
+          child: MarkdownBody(
+            data: _data,
+            styleSheet: buildAppMarkdownStyleSheet(Theme.of(context)),
+            selectable: false,
+            onTapLink: (text, href, title) {
+              unawaited(
+                handleMarkdownPreviewLink(
+                  href: href,
+                  markdownFilePath: widget.path,
+                  workspaceId: widget.workspaceId,
+                  workspaceRoots: roots,
+                  opener: opener,
+                ),
+              );
+            },
+          ),
         ),
       ),
     );

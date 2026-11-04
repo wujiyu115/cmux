@@ -24,6 +24,7 @@ import '../../services/workspace/workspace_tools_scope.dart';
 import '../../theme/workspace_surface_layers.dart';
 import '../../utils/workspace/workspace_path_utils.dart';
 import '../../widgets/workbench/code_find_panel.dart';
+import '../../widgets/editor/app_code_scrollbar.dart';
 import '../../widgets/workbench/file_diff_surface_toggle.dart';
 import '../../widgets/workbench/markdown_view_mode_toggle.dart';
 import 'file_editor_image_preview.dart';
@@ -605,6 +606,9 @@ class _CodeEditorPaneState extends State<_CodeEditorPane> {
       focusNode: _focusNode,
       findController: _findController,
       scrollController: _scrollController,
+      scrollbarBuilder: buildAppCodeScrollbar,
+      verticalScrollbarWidth: kAppCodeScrollbarExtent,
+      horizontalScrollbarHeight: kAppCodeScrollbarExtent,
       findBuilder: (context, controller, readOnly) =>
           CodeFindPanel(controller: controller, readOnly: readOnly),
       toolbarController: FileEditorContextMenuController(

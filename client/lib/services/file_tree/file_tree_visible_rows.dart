@@ -45,6 +45,13 @@ const double kFileTreeIndentWidth = 16;
 /// Outer horizontal inset on each list row in the file tree panel.
 const double kFileTreeRowHorizontalPadding = 2;
 
+/// Trailing gutter reserved for the overlay scrollbar.
+///
+/// The list is full-bleed so the bar hugs the panel edge (VS Code layout); this
+/// keeps row labels — including their ellipsis — clear of it. Matches
+/// `kAppScrollbarThickness` plus a little air.
+const double kFileTreeRowScrollbarGutter = 16;
+
 /// Inner left/right padding on [FileTreeNode].
 const double kFileTreeNodePaddingLeft = 4;
 const double kFileTreeNodePaddingRight = 8;
@@ -112,6 +119,7 @@ double fileTreeMinContentWidth({
         kFileTreeNodePaddingLeft +
         kFileTreeLeadingChromeWidth +
         kFileTreeNodePaddingRight +
+        kFileTreeRowScrollbarGutter +
         kFileTreeRowHorizontalPadding * 2 +
         textWidth;
     maxWidth = math.max(maxWidth, rowWidth);

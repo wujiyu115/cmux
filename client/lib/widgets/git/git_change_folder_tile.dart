@@ -108,7 +108,9 @@ class _GitChangeFolderTileState extends State<GitChangeFolderTile> {
                   kGitChangesNodePaddingLeft +
                   kGitChangesRowHorizontalPadding,
               kGitChangesRowVerticalPadding,
-              kGitChangesNodePaddingRight + kGitChangesRowHorizontalPadding,
+              kGitChangesNodePaddingRight +
+                  kGitChangesRowHorizontalPadding +
+                  kGitChangesRowScrollbarGutter,
               kGitChangesRowVerticalPadding,
             ),
             child: OverflowBox(

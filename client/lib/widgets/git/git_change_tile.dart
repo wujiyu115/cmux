@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 
 import '../../l10n/l10n_extensions.dart';
@@ -98,7 +98,9 @@ class _GitChangeTileState extends State<GitChangeTile> {
                   kGitChangesNodePaddingLeft +
                   kGitChangesRowHorizontalPadding,
               kGitChangesRowVerticalPadding,
-              kGitChangesNodePaddingRight + kGitChangesRowHorizontalPadding,
+              kGitChangesNodePaddingRight +
+                  kGitChangesRowHorizontalPadding +
+                  kGitChangesRowScrollbarGutter,
               kGitChangesRowVerticalPadding,
             ),
             child: OverflowBox(
@@ -140,10 +142,7 @@ class _GitChangeTileState extends State<GitChangeTile> {
     return Text.rich(
       TextSpan(
         children: [
-          TextSpan(
-            text: prefix,
-            style: styles.mdColored(cs.onSurfaceVariant),
-          ),
+          TextSpan(text: prefix, style: styles.mdColored(cs.onSurfaceVariant)),
           TextSpan(text: name, style: styles.md),
         ],
       ),
@@ -157,9 +156,7 @@ class _GitChangeTileState extends State<GitChangeTile> {
     child: Text(
       widget.change.badge,
       textAlign: TextAlign.center,
-      style: TpTextStyles.of(
-        context,
-      ).smBoldColored(_badgeColor(cs)),
+      style: TpTextStyles.of(context).smBoldColored(_badgeColor(cs)),
     ),
   );
 

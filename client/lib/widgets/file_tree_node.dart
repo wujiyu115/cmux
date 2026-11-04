@@ -188,7 +188,9 @@ class _FileTreeNodeState extends State<FileTreeNode> {
                     kFileTreeNodePaddingLeft +
                     kFileTreeRowHorizontalPadding,
                 kFileTreeRowVerticalPadding,
-                kFileTreeNodePaddingRight + kFileTreeRowHorizontalPadding,
+                kFileTreeNodePaddingRight +
+                    kFileTreeRowHorizontalPadding +
+                    kFileTreeRowScrollbarGutter,
                 kFileTreeRowVerticalPadding,
               ),
               child: OverflowBox(

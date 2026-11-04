@@ -87,20 +87,23 @@ class _GitChangesTreeListState extends State<GitChangesTreeList> {
           ),
         );
 
-        return Scrollbar(
+        // See [TpOverlayScrollbar]: both bars live outside the horizontal view
+        // so the vertical thumb is painted at the viewport edge.
+        return TpOverlayScrollbar(
+          axis: Axis.horizontal,
           controller: widget.horizontalScrollController,
-          thumbVisibility: true,
           notificationPredicate: (notification) =>
               notification.metrics.axis == Axis.horizontal,
-          child: SingleChildScrollView(
-            controller: widget.horizontalScrollController,
-            scrollDirection: Axis.horizontal,
-            child: SizedBox(
-              width: contentWidth,
-              height: constraints.maxHeight,
-              child: Scrollbar(
-                controller: widget.listScrollController,
-                thumbVisibility: true,
+          child: TpOverlayScrollbar(
+            controller: widget.listScrollController,
+            notificationPredicate: (notification) =>
+                notification.metrics.axis == Axis.vertical,
+            child: SingleChildScrollView(
+              controller: widget.horizontalScrollController,
+              scrollDirection: Axis.horizontal,
+              child: SizedBox(
+                width: contentWidth,
+                height: constraints.maxHeight,
                 child: NotificationListener<ScrollNotification>(
                   onNotification: _onScrollNotification,
                   child: CustomScrollView(

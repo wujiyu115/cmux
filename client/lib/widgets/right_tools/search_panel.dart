@@ -252,8 +252,7 @@ class _SearchPanelState extends State<SearchPanel> {
     final rows = state.rows;
     return [
       Expanded(
-        child: Scrollbar(
-          thumbVisibility: true,
+        child: TpOverlayScrollbar(
           controller: _scrollController,
           child: ListView.builder(
             controller: _scrollController,

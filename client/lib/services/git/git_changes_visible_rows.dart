@@ -61,6 +61,13 @@ const double kGitChangesIndentWidth = 16;
 /// Outer horizontal inset on each list row in tree view.
 const double kGitChangesRowHorizontalPadding = 2;
 
+/// Trailing gutter reserved for the overlay scrollbar.
+///
+/// The changes list is full-bleed so the bar hugs the panel edge (VS Code
+/// layout); this keeps row labels and their trailing actions clear of it.
+/// Matches `kAppScrollbarThickness` plus a little air.
+const double kGitChangesRowScrollbarGutter = 16;
+
 /// Inner left/right padding on change rows.
 const double kGitChangesNodePaddingLeft = 6;
 const double kGitChangesNodePaddingRight = 6;
@@ -95,9 +102,12 @@ double gitChangesMinContentWidth({
   final List<GitChangesVisibleRow> measured;
   if (rows.length > _kContentWidthCandidates) {
     measured = [...rows]
-      ..sort((a, b) => _rowWidthEstimate(b, fullPaths: fullPaths).compareTo(
-      _rowWidthEstimate(a, fullPaths: fullPaths),
-    ));
+      ..sort(
+        (a, b) => _rowWidthEstimate(
+          b,
+          fullPaths: fullPaths,
+        ).compareTo(_rowWidthEstimate(a, fullPaths: fullPaths)),
+      );
     measured.length = _kContentWidthCandidates;
   } else {
     measured = rows;
@@ -117,6 +127,7 @@ double gitChangesMinContentWidth({
           kGitChangesNodePaddingLeft +
           kGitChangesLeadingChromeWidth +
           kGitChangesNodePaddingRight +
+          kGitChangesRowScrollbarGutter +
           kGitChangesRowHorizontalPadding * 2 +
           painter.width +
           kGitChangesTrailingActionsWidth;
@@ -137,6 +148,7 @@ double gitChangesMinContentWidth({
         kGitChangesNodePaddingLeft +
         kGitChangesLeadingChromeWidth +
         kGitChangesNodePaddingRight +
+        kGitChangesRowScrollbarGutter +
         kGitChangesRowHorizontalPadding * 2 +
         painter.width +
         trailing;
@@ -210,9 +222,9 @@ GitChangesTreeViewData visibleGitChangesFlatViewData({
 List<GitChangesVisibleRow> _flatRows(List<GitFileChange> changes) {
   if (changes.isEmpty) return const [];
   final sorted = changes.toList()
-    ..sort((a, b) => p.posix.normalize(a.path).compareTo(
-      p.posix.normalize(b.path),
-    ));
+    ..sort(
+      (a, b) => p.posix.normalize(a.path).compareTo(p.posix.normalize(b.path)),
+    );
   return [
     for (final change in sorted)
       GitChangesVisibleRow.file(change: change, depth: 0),

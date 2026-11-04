@@ -182,7 +182,8 @@ class _SvnAwareBodyState extends State<_SvnAwareBody> {
   @override
   Widget build(BuildContext context) {
     final probe = _probe;
-    final svnAreas = probe?.areas
+    final svnAreas =
+        probe?.areas
             .where((a) => a.kind == VcsKind.svn)
             .toList(growable: false) ??
         const <VcsArea>[];
@@ -249,10 +250,7 @@ class _SvnTabBody extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: SvnRepoSection(
               key: ValueKey('svn-repo:${area.root}'),
-              cubit: store.svnCubitFor(
-                area.root,
-                workContext: workContext,
-              ),
+              cubit: store.svnCubitFor(area.root, workContext: workContext),
               workspaceId: workspaceId,
               fs: workContext.filesystem,
             ),
@@ -264,11 +262,7 @@ class _SvnTabBody extends StatelessWidget {
 
 /// Git | SVN segmented pill in the same chrome as [GitViewModePill].
 class _VcsTabPill extends StatelessWidget {
-  const _VcsTabPill({
-    required this.svn,
-    required this.onChanged,
-    super.key,
-  });
+  const _VcsTabPill({required this.svn, required this.onChanged, super.key});
 
   final bool svn;
   final ValueChanged<bool> onChanged;
@@ -428,9 +422,9 @@ class _RepoChip extends StatelessWidget {
           visualDensity: VisualDensity.compact,
           onSelected: (_) => onTap(),
           tooltip: root,
-          labelStyle: TpTextStyles.of(context).smColored(
-            selected ? cs.onSecondaryContainer : cs.onSurfaceVariant,
-          ),
+          labelStyle: TpTextStyles.of(
+            context,
+          ).smColored(selected ? cs.onSecondaryContainer : cs.onSurfaceVariant),
         ),
       ),
     );
@@ -456,7 +450,9 @@ class _DirtyBadge extends StatelessWidget {
       ),
       child: Text(
         '$count',
-        style: TpTextStyles.of(context).xsSemiboldColored(selected ? cs.onSecondaryContainer : cs.onPrimaryContainer),
+        style: TpTextStyles.of(context).xsSemiboldColored(
+          selected ? cs.onSecondaryContainer : cs.onPrimaryContainer,
+        ),
       ),
     );
   }
@@ -628,7 +624,11 @@ class _GitRepoBodyState extends State<_GitRepoBody> {
     }
 
     return Container(
-      padding: const EdgeInsets.all(10),
+      // No right padding: the changes list runs full-bleed so the overlay
+      // scrollbar sits on the panel edge, VS Code-style. The header and commit
+      // box re-add their own gutter; rows reserve
+      // [kGitChangesRowScrollbarGutter] on their trailing edge.
+      padding: const EdgeInsets.fromLTRB(10, 10, 0, 10),
       child: Builder(
         // Selected (not inside the GitState selectors below) so a mode change
         // repaints this shell without waiting on git state, and without the
@@ -640,103 +640,123 @@ class _GitRepoBodyState extends State<_GitRepoBody> {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              BlocSelector<GitCubit, GitState, (String, int, int, bool, bool)>(
-                selector: (state) => (
-                  state.status.branch ?? 'HEAD',
-                  state.status.ahead,
-                  state.status.behind,
-                  state.busy || state.isLoading,
-                  state.allChangeFoldersExpanded,
-                ),
-                builder: (context, header) {
-                  final (branch, ahead, behind, busy, allExpanded) = header;
-                  return _Header(
-                    branch: branch,
-                    ahead: ahead,
-                    behind: behind,
-                    busy: busy,
-                    allFoldersExpanded: allExpanded,
-                    viewMode: viewMode,
-                    onRefresh: () => unawaited(_cubit.refresh()),
-                    onPush: () => unawaited(_cubit.push()),
-                    onPull: () => unawaited(_cubit.pull()),
-                    onBranch: () => unawaited(_openBranchSheet()),
-                    onToggleExpandAll: _cubit.toggleExpandAllFolders,
-                    onViewModeChanged: (mode) => unawaited(
-                      context.read<LayoutCubit>().setGitChangesViewMode(mode),
+              Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child:
+                    BlocSelector<
+                      GitCubit,
+                      GitState,
+                      (String, int, int, bool, bool)
+                    >(
+                      selector: (state) => (
+                        state.status.branch ?? 'HEAD',
+                        state.status.ahead,
+                        state.status.behind,
+                        state.busy || state.isLoading,
+                        state.allChangeFoldersExpanded,
+                      ),
+                      builder: (context, header) {
+                        final (branch, ahead, behind, busy, allExpanded) =
+                            header;
+                        return _Header(
+                          branch: branch,
+                          ahead: ahead,
+                          behind: behind,
+                          busy: busy,
+                          allFoldersExpanded: allExpanded,
+                          viewMode: viewMode,
+                          onRefresh: () => unawaited(_cubit.refresh()),
+                          onPush: () => unawaited(_cubit.push()),
+                          onPull: () => unawaited(_cubit.pull()),
+                          onBranch: () => unawaited(_openBranchSheet()),
+                          onToggleExpandAll: _cubit.toggleExpandAllFolders,
+                          onViewModeChanged: (mode) => unawaited(
+                            context.read<LayoutCubit>().setGitChangesViewMode(
+                              mode,
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
               ),
               const SizedBox(height: 10),
-              BlocSelector<GitCubit, GitState, (bool, bool, String)>(
-                selector: (state) => (
-                  state.status.staged.isNotEmpty,
-                  state.busy,
-                  state.status.branch ?? 'HEAD',
-                ),
-                builder: (context, commit) {
-                  final (hasStaged, busy, branch) = commit;
-                  return _CommitBox(
-                    controller: _commitController,
-                    hint: l10n.gitCommitMessageHint(branch),
-                    canCommit: hasStaged && !busy,
-                    onChanged: _cubit.setCommitMessage,
-                    onCommit: () async {
-                      final ok = await _cubit.commit();
-                      if (ok) _commitController.clear();
-                    },
-                  );
-                },
-              ),
-              const SizedBox(height: 12),
-              Expanded(
-                child: BlocSelector<
-                  GitCubit,
-                  GitState,
-                  (bool, GitChangesTreeViewData, List<GitFileChange>, List<
-                      GitFileChange>)
-                >(
+              Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: BlocSelector<GitCubit, GitState, (bool, bool, String)>(
                   selector: (state) => (
-                    state.status.hasChanges,
-                    state.changesTreeView,
-                    state.status.staged,
-                    state.status.unstaged,
+                    state.status.staged.isNotEmpty,
+                    state.busy,
+                    state.status.branch ?? 'HEAD',
                   ),
-                  builder: (context, data) {
-                    final (hasChanges, treeView, staged, unstaged) = data;
-                    if (!hasChanges) {
-                      final cs = Theme.of(context).colorScheme;
-                      return Center(
-                        child: Text(
-                          l10n.gitNoChanges,
-                          style: TpTextStyles.of(
-                            context,
-                          ).smColored(cs.onSurfaceVariant),
-                        ),
-                      );
-                    }
-                    if (!_changesListReady) {
-                      return const SizedBox.shrink();
-                    }
-                    final isFlat = viewMode == GitChangesViewMode.flat;
-                    return GitChangesTreeList(
-                      treeView: isFlat
-                          ? visibleGitChangesFlatViewData(
-                              staged: staged,
-                              unstaged: unstaged,
-                            )
-                          : treeView,
-                      cubit: _cubit,
-                      flat: isFlat,
-                      listScrollController: _changesScrollController,
-                      horizontalScrollController: _horizontalScrollController,
-                      onOpenDiff: (change) => unawaited(_openDiff(change)),
-                      onConfirmDiscard: (change) =>
-                          unawaited(_confirmDiscard(change)),
+                  builder: (context, commit) {
+                    final (hasStaged, busy, branch) = commit;
+                    return _CommitBox(
+                      controller: _commitController,
+                      hint: l10n.gitCommitMessageHint(branch),
+                      canCommit: hasStaged && !busy,
+                      onChanged: _cubit.setCommitMessage,
+                      onCommit: () async {
+                        final ok = await _cubit.commit();
+                        if (ok) _commitController.clear();
+                      },
                     );
                   },
                 ),
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child:
+                    BlocSelector<
+                      GitCubit,
+                      GitState,
+                      (
+                        bool,
+                        GitChangesTreeViewData,
+                        List<GitFileChange>,
+                        List<GitFileChange>,
+                      )
+                    >(
+                      selector: (state) => (
+                        state.status.hasChanges,
+                        state.changesTreeView,
+                        state.status.staged,
+                        state.status.unstaged,
+                      ),
+                      builder: (context, data) {
+                        final (hasChanges, treeView, staged, unstaged) = data;
+                        if (!hasChanges) {
+                          final cs = Theme.of(context).colorScheme;
+                          return Center(
+                            child: Text(
+                              l10n.gitNoChanges,
+                              style: TpTextStyles.of(
+                                context,
+                              ).smColored(cs.onSurfaceVariant),
+                            ),
+                          );
+                        }
+                        if (!_changesListReady) {
+                          return const SizedBox.shrink();
+                        }
+                        final isFlat = viewMode == GitChangesViewMode.flat;
+                        return GitChangesTreeList(
+                          treeView: isFlat
+                              ? visibleGitChangesFlatViewData(
+                                  staged: staged,
+                                  unstaged: unstaged,
+                                )
+                              : treeView,
+                          cubit: _cubit,
+                          flat: isFlat,
+                          listScrollController: _changesScrollController,
+                          horizontalScrollController:
+                              _horizontalScrollController,
+                          onOpenDiff: (change) => unawaited(_openDiff(change)),
+                          onConfirmDiscard: (change) =>
+                              unawaited(_confirmDiscard(change)),
+                        );
+                      },
+                    ),
               ),
             ],
           );
@@ -766,9 +786,7 @@ class _GitCenteredHint extends StatelessWidget {
             Text(
               text,
               textAlign: TextAlign.center,
-              style: TpTextStyles.of(
-                context,
-              ).smColored(cs.onSurfaceVariant),
+              style: TpTextStyles.of(context).smColored(cs.onSurfaceVariant),
             ),
           ],
         ),
@@ -832,9 +850,7 @@ class _Header extends StatelessWidget {
                       branch,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TpTextStyles.of(
-                        context,
-                      ).smSemibold,
+                      style: TpTextStyles.of(context).smSemibold,
                     ),
                   ),
                   if (ahead > 0 || behind > 0) ...[
