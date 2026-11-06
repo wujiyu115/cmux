@@ -30,16 +30,29 @@ class PairedDesktop {
 
   /// Which of [wsUrls] actually worked last time.
   ///
-  /// The host advertises every local address it has and the client skips the
-  /// ones that time out, so `wsUrls.first` is regularly a dead VPN route rather
-  /// than the reachable address — surfacing it sends the user chasing the wrong
-  /// IP. Null for desktops paired before this field existed.
+  /// A host that listens on every interface advertises every local address, and
+  /// `wsUrls.first` is regularly a dead VPN route rather than the reachable
+  /// address — surfacing it sends the user chasing the wrong IP. Null for
+  /// desktops paired before this field existed.
   final String? lastConnectedUrl;
 
   /// Address to show for this desktop: the one that last worked, else the first
   /// advertised candidate, else the bare id.
   String get displayUrl =>
       lastConnectedUrl ?? (wsUrls.isEmpty ? id : wsUrls.first);
+
+  /// URLs to dial, best first.
+  ///
+  /// A desktop with several NICs advertises several addresses and the first is
+  /// regularly a dead VPN/virtual route — every reconnect that starts at
+  /// `wsUrls.first` pays a connect timeout before reaching the address that
+  /// worked last time. Leading with [lastConnectedUrl] turns that into a single
+  /// attempt, and the rest stay as fallbacks.
+  List<String> get connectCandidates {
+    final last = lastConnectedUrl;
+    if (last == null || last.isEmpty) return wsUrls;
+    return [last, ...wsUrls.where((url) => url != last)];
+  }
 
   PairedDesktop copyWith({
     String? name,
@@ -79,7 +92,8 @@ class PairedDesktop {
     return PairedDesktop(
       id: id,
       name: raw['name'] is String ? raw['name'] as String : id,
-      wsUrls: (raw['wsUrls'] as List?)?.whereType<String>().toList() ?? const [],
+      wsUrls:
+          (raw['wsUrls'] as List?)?.whereType<String>().toList() ?? const [],
       hostPublicKeyB64: pk,
       deviceToken: token,
       resumeSecret: raw['resume'] is String ? raw['resume'] as String : null,
@@ -106,6 +120,15 @@ abstract class PairingSettingsRepository {
   Future<bool> loadPairingHostEnabled();
   Future<void> savePairingHostEnabled(bool value);
 
+  /// Address the offer should advertise ("此电脑的地址"), or null for every
+  /// interface.
+  ///
+  /// A desktop with a VPN or a virtual adapter advertises several addresses,
+  /// and the phone pays a connect timeout on each dead route before reaching
+  /// the reachable one. Picking one here collapses that to a single attempt.
+  Future<String?> loadPairingHostAddress();
+  Future<void> savePairingHostAddress(String? address);
+
   Future<List<PairedDesktop>> loadPairedDesktops();
   Future<void> savePairedDesktops(List<PairedDesktop> desktops);
 }
@@ -116,6 +139,7 @@ class SharedPrefsPairingSettingsRepository
 
   static const storageKey = 'teampilot.pairing_settings.v1';
   static const _hostEnabledKey = 'hostEnabled';
+  static const _hostAddressKey = 'hostAddress';
   static const _pairedDesktopsKey = 'pairedDesktops';
 
   final SharedPreferences _preferences;
@@ -128,6 +152,23 @@ class SharedPrefsPairingSettingsRepository
   Future<void> savePairingHostEnabled(bool value) async {
     final current = _readMap();
     current[_hostEnabledKey] = value;
+    await _writeMap(current);
+  }
+
+  @override
+  Future<String?> loadPairingHostAddress() async {
+    final raw = _readMap()[_hostAddressKey];
+    return raw is String && raw.isNotEmpty ? raw : null;
+  }
+
+  @override
+  Future<void> savePairingHostAddress(String? address) async {
+    final current = _readMap();
+    if (address == null || address.isEmpty) {
+      current.remove(_hostAddressKey);
+    } else {
+      current[_hostAddressKey] = address;
+    }
     await _writeMap(current);
   }
 
@@ -172,11 +213,14 @@ class SharedPrefsPairingSettingsRepository
 class InMemoryPairingSettingsRepository implements PairingSettingsRepository {
   InMemoryPairingSettingsRepository({
     bool hostEnabled = false,
+    String? hostAddress,
     List<PairedDesktop>? pairedDesktops,
   }) : _hostEnabled = hostEnabled,
+       _hostAddress = hostAddress,
        _pairedDesktops = pairedDesktops ?? [];
 
   bool _hostEnabled;
+  String? _hostAddress;
   List<PairedDesktop> _pairedDesktops;
 
   @override
@@ -185,6 +229,14 @@ class InMemoryPairingSettingsRepository implements PairingSettingsRepository {
   @override
   Future<void> savePairingHostEnabled(bool value) async {
     _hostEnabled = value;
+  }
+
+  @override
+  Future<String?> loadPairingHostAddress() async => _hostAddress;
+
+  @override
+  Future<void> savePairingHostAddress(String? address) async {
+    _hostAddress = address;
   }
 
   @override

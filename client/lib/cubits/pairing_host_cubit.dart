@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -6,6 +8,24 @@ import '../services/pairing/device_registry.dart';
 import '../services/pairing/lan_pairing_server.dart';
 import '../services/pairing/pairing_offer.dart';
 import '../utils/logging/logger.dart';
+
+/// One address the desktop can listen on, as offered in the bind picker.
+class PairingInterfaceAddress extends Equatable {
+  const PairingInterfaceAddress({required this.name, required this.ip});
+
+  /// OS interface name (`Wi-Fi`, `以太网`, `vEthernet (WSL)`), which is what
+  /// tells two same-subnet adapters apart in the picker.
+  final String name;
+  final String ip;
+
+  @override
+  List<Object?> get props => [name, ip];
+}
+
+/// Lists this machine's bindable IPv4 addresses. Injected so tests do not touch
+/// the real network stack.
+typedef PairingInterfaceLister =
+    Future<List<PairingInterfaceAddress>> Function();
 
 /// Desktop pairing-host state: whether the LAN server is enabled/running, the
 /// current QR offer to display, the LAN URLs to fall back to, and the book of
@@ -18,6 +38,8 @@ class PairingHostState extends Equatable {
     this.offer,
     this.lanUrls = const [],
     this.devices = const [],
+    this.advertisedAddress,
+    this.interfaces = const [],
     this.error,
   });
 
@@ -27,6 +49,12 @@ class PairingHostState extends Equatable {
   final PairingOffer? offer;
   final List<String> lanUrls;
   final List<PairedDeviceInfo> devices;
+
+  /// Address put in the pairing offer, or null to offer every interface.
+  final String? advertisedAddress;
+
+  /// Bindable addresses on this machine, for the picker.
+  final List<PairingInterfaceAddress> interfaces;
   final String? error;
 
   PairingHostState copyWith({
@@ -37,6 +65,9 @@ class PairingHostState extends Equatable {
     bool clearOffer = false,
     List<String>? lanUrls,
     List<PairedDeviceInfo>? devices,
+    String? advertisedAddress,
+    bool clearAdvertisedAddress = false,
+    List<PairingInterfaceAddress>? interfaces,
     String? error,
     bool clearError = false,
   }) => PairingHostState(
@@ -46,6 +77,10 @@ class PairingHostState extends Equatable {
     offer: clearOffer ? null : (offer ?? this.offer),
     lanUrls: lanUrls ?? this.lanUrls,
     devices: devices ?? this.devices,
+    advertisedAddress: clearAdvertisedAddress
+        ? null
+        : (advertisedAddress ?? this.advertisedAddress),
+    interfaces: interfaces ?? this.interfaces,
     error: clearError ? null : (error ?? this.error),
   );
 
@@ -57,6 +92,8 @@ class PairingHostState extends Equatable {
     offer,
     lanUrls,
     devices,
+    advertisedAddress,
+    interfaces,
     error,
   ];
 }
@@ -68,23 +105,65 @@ class PairingHostCubit extends Cubit<PairingHostState> {
   PairingHostCubit({
     required PairingSettingsRepository settings,
     required DeviceRegistry registry,
-    required LanPairingServer Function() serverFactory,
+    required LanPairingServer Function(String? advertisedAddress) serverFactory,
+    PairingInterfaceLister? interfaceLister,
   }) : _settings = settings,
        _registry = registry,
        _serverFactory = serverFactory,
+       _interfaceLister = interfaceLister ?? _listLocalIpv4Interfaces,
        super(const PairingHostState());
 
   final PairingSettingsRepository _settings;
   final DeviceRegistry _registry;
-  final LanPairingServer Function() _serverFactory;
+  final LanPairingServer Function(String? advertisedAddress) _serverFactory;
+  final PairingInterfaceLister _interfaceLister;
 
   LanPairingServer? _server;
 
   Future<void> init() async {
     final enabled = await _settings.loadPairingHostEnabled();
-    emit(state.copyWith(enabled: enabled));
+    final advertisedAddress = await _settings.loadPairingHostAddress();
+    emit(
+      state.copyWith(
+        enabled: enabled,
+        advertisedAddress: advertisedAddress,
+        interfaces: await _interfaceLister(),
+      ),
+    );
     if (enabled) await _start();
     await _refreshDevices();
+  }
+
+  /// Re-reads the machine's addresses (Wi-Fi switch, VPN up/down). Cheap, and
+  /// called when the settings page opens so the picker is never stale.
+  Future<void> refreshInterfaces() async {
+    final interfaces = await _interfaceLister();
+    if (isClosed) return;
+    emit(state.copyWith(interfaces: interfaces));
+  }
+
+  /// Chooses which address the offer advertises (null = every interface).
+  ///
+  /// Advertise-only on purpose: the listener keeps binding `anyIPv4`, so
+  /// switching never drops a connected phone or changes the port — it just
+  /// re-issues the offer/QR with a single URL.
+  Future<void> setAdvertisedAddress(String? address) async {
+    final next = (address == null || address.trim().isEmpty)
+        ? null
+        : address.trim();
+    if (next == state.advertisedAddress) return;
+    await _settings.savePairingHostAddress(next);
+    emit(
+      state.copyWith(
+        advertisedAddress: next,
+        clearAdvertisedAddress: next == null,
+        clearError: true,
+      ),
+    );
+    final server = _server;
+    if (server == null) return;
+    server.advertisedAddress = next;
+    await refreshOffer();
   }
 
   Future<void> setEnabled(bool value) async {
@@ -105,7 +184,7 @@ class PairingHostCubit extends Cubit<PairingHostState> {
 
   Future<void> _start() async {
     try {
-      final server = _serverFactory();
+      final server = _serverFactory(state.advertisedAddress);
       await server.ensureStarted();
       _server = server;
       emit(state.copyWith(running: true, port: server.port, clearError: true));
@@ -143,6 +222,25 @@ class PairingHostCubit extends Cubit<PairingHostState> {
   Future<void> _refreshDevices() async {
     final devices = await _registry.list();
     emit(state.copyWith(devices: devices));
+  }
+
+  static Future<List<PairingInterfaceAddress>>
+  _listLocalIpv4Interfaces() async {
+    try {
+      final interfaces = await NetworkInterface.list(
+        type: InternetAddressType.IPv4,
+        includeLoopback: false,
+      );
+      return [
+        for (final iface in interfaces)
+          for (final addr in iface.addresses)
+            if (!addr.isLoopback)
+              PairingInterfaceAddress(name: iface.name, ip: addr.address),
+      ];
+    } on Object catch (e) {
+      appLogger.d('pairing host cannot list interfaces: $e');
+      return const [];
+    }
   }
 
   @override

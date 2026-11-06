@@ -845,7 +845,8 @@ Future<AppShell> buildAppShell({
     chat: chatCubit,
     markdownViewModes: markdownViewModes,
     readMarkdownOpenMode: () => layoutCubit.state.preferences.markdownOpenMode,
-    readEditorPreviewTabs: () => layoutCubit.state.preferences.editorPreviewTabs,
+    readEditorPreviewTabs: () =>
+        layoutCubit.state.preferences.editorPreviewTabs,
   );
   final resolvedShellLauncher = WorkbenchShellLauncher(
     workbench: workbenchCubit,
@@ -1202,25 +1203,27 @@ Future<AppShell> buildAppShell({
       return repo.git.diffAgainstHead(repo.root, path, untracked: untracked);
     }
 
-    LanPairingServer serverFactory() => LanPairingServer(
-      hostStaticKey: hostStaticKey,
-      registry: deviceRegistry,
-      catalog: sessionCatalog,
-      hostName: Platform.localHostname,
-      uploadOpener: pairingUploadOpener,
-      workspaceIndex: pairingWorkspaceIndex,
-      activator: pairingActivate,
-      dirBrowser: pairingDirBrowser.browse,
-      workspaceCreator: pairingCreateWorkspace,
-      groupCreator: pairingCreateGroup,
-      workspaceDeleter: pairingDeleteWorkspace,
-      paneCloser: pairingClosePane,
-      groupIndex: pairingGroupIndex,
-      targetIndex: pairingTargetIndex,
-      gitChanges: pairingGitChanges,
-      gitDiff: pairingGitDiff,
-      agentNotices: agentNoticeWire,
-    );
+    LanPairingServer serverFactory(String? advertisedAddress) =>
+        LanPairingServer(
+          advertisedAddress: advertisedAddress,
+          hostStaticKey: hostStaticKey,
+          registry: deviceRegistry,
+          catalog: sessionCatalog,
+          hostName: Platform.localHostname,
+          uploadOpener: pairingUploadOpener,
+          workspaceIndex: pairingWorkspaceIndex,
+          activator: pairingActivate,
+          dirBrowser: pairingDirBrowser.browse,
+          workspaceCreator: pairingCreateWorkspace,
+          groupCreator: pairingCreateGroup,
+          workspaceDeleter: pairingDeleteWorkspace,
+          paneCloser: pairingClosePane,
+          groupIndex: pairingGroupIndex,
+          targetIndex: pairingTargetIndex,
+          gitChanges: pairingGitChanges,
+          gitDiff: pairingGitDiff,
+          agentNotices: agentNoticeWire,
+        );
     pairingHostCubit = PairingHostCubit(
       settings: pairingSettings,
       registry: deviceRegistry,

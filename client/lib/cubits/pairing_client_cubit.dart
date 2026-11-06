@@ -168,7 +168,9 @@ class PairingClientState extends Equatable {
     targets: targets ?? this.targets,
     logs: logs ?? this.logs,
     stageStatuses: stageStatuses ?? this.stageStatuses,
-    pendingOffer: clearPendingOffer ? null : (pendingOffer ?? this.pendingOffer),
+    pendingOffer: clearPendingOffer
+        ? null
+        : (pendingOffer ?? this.pendingOffer),
     activeHostName: activeHostName ?? this.activeHostName,
     activeHostUrl: activeHostUrl ?? this.activeHostUrl,
     activeCatalogId: clearActiveCatalogId
@@ -393,7 +395,7 @@ class PairingClientCubit extends Cubit<PairingClientState> {
     try {
       final result = await client
           .connect(
-            wsUrls: desktop.wsUrls,
+            wsUrls: desktop.connectCandidates,
             token: desktop.deviceToken,
             hostPublicKeyB64: desktop.hostPublicKeyB64,
             deviceId: desktop.id,
@@ -454,10 +456,7 @@ class PairingClientCubit extends Cubit<PairingClientState> {
     _activeSubscription = null;
     _appendLog('Connection lost — reconnecting…');
     emit(
-      state.copyWith(
-        reconnecting: true,
-        notice: PairingNotice.connectionLost,
-      ),
+      state.copyWith(reconnecting: true, notice: PairingNotice.connectionLost),
     );
     _scheduleReconnect();
   }
@@ -483,7 +482,8 @@ class PairingClientCubit extends Cubit<PairingClientState> {
     if (isClosed || !_wantsConnection) return;
     final client = _client;
     if (!state.reconnecting && client != null) {
-      final established = state.phase == PairingClientPhase.connected ||
+      final established =
+          state.phase == PairingClientPhase.connected ||
           state.phase == PairingClientPhase.mirroring;
       // Mid-handshake (the confirm screens): leave the in-flight connect alone
       // — a probe now would be dropped by the half-open channel and read as
@@ -529,10 +529,7 @@ class PairingClientCubit extends Cubit<PairingClientState> {
     _resumeCatalogId = state.activeCatalogId;
     _activeSubscription = null;
     emit(
-      state.copyWith(
-        reconnecting: true,
-        notice: PairingNotice.connectionLost,
-      ),
+      state.copyWith(reconnecting: true, notice: PairingNotice.connectionLost),
     );
     _reconnectAttempt = 0;
     _reconnectTimer?.cancel();
@@ -547,7 +544,7 @@ class PairingClientCubit extends Cubit<PairingClientState> {
     try {
       final result = await client
           .connect(
-            wsUrls: desktop.wsUrls,
+            wsUrls: desktop.connectCandidates,
             token: desktop.deviceToken,
             hostPublicKeyB64: desktop.hostPublicKeyB64,
             deviceId: desktop.id,
@@ -798,9 +795,7 @@ class PairingClientCubit extends Cubit<PairingClientState> {
       emit(
         state.copyWith(
           clearActivatingKey: true,
-          notice: result.fallback
-              ? PairingNotice.fallbackOpenedTerminal
-              : null,
+          notice: result.fallback ? PairingNotice.fallbackOpenedTerminal : null,
         ),
       );
       await openSession(result.catalogId);

@@ -11,7 +11,7 @@ import '../support/pairing_upload_doubles.dart';
 
 /// Fake host server: no real socket, deterministic port/offer.
 class _FakeServer extends LanPairingServer {
-  _FakeServer()
+  _FakeServer({super.advertisedAddress})
     : super(
         hostStaticKey: PairingKeyPair.generate(),
         registry: DeviceRegistry(InMemoryPairingKeyStore()),
@@ -22,6 +22,7 @@ class _FakeServer extends LanPairingServer {
 
   bool started = false;
   bool disposed = false;
+  int startCount = 0;
 
   @override
   bool get isRunning => started && !disposed;
@@ -32,6 +33,7 @@ class _FakeServer extends LanPairingServer {
   @override
   Future<void> ensureStarted() async {
     started = true;
+    startCount++;
   }
 
   @override
@@ -56,12 +58,21 @@ void main() {
     late DeviceRegistry registry;
     late _FakeServer server;
 
-    PairingHostCubit makeCubit(PairingSettingsRepository settings) {
-      server = _FakeServer();
+    /// Addresses the cubit asked the server factory to advertise, in order.
+    final requested = <String?>[];
+
+    PairingHostCubit makeCubit(
+      PairingSettingsRepository settings, {
+      PairingInterfaceLister? interfaces,
+    }) {
       final cubit = PairingHostCubit(
         settings: settings,
         registry: registry,
-        serverFactory: () => server,
+        serverFactory: (advertisedAddress) {
+          requested.add(advertisedAddress);
+          return server = _FakeServer(advertisedAddress: advertisedAddress);
+        },
+        interfaceLister: interfaces ?? () async => const [],
       );
       addTearDown(cubit.close);
       return cubit;
@@ -69,6 +80,7 @@ void main() {
 
     setUp(() {
       registry = DeviceRegistry(InMemoryPairingKeyStore());
+      requested.clear();
     });
 
     test('init with host disabled leaves the server stopped', () async {
@@ -90,24 +102,80 @@ void main() {
       expect(cubit.state.lanUrls, isNotEmpty);
     });
 
-    test('setEnabled(true) starts, setEnabled(false) stops + clears offer',
-        () async {
-      final settings = InMemoryPairingSettingsRepository();
+    test(
+      'setEnabled(true) starts, setEnabled(false) stops + clears offer',
+      () async {
+        final settings = InMemoryPairingSettingsRepository();
+        final cubit = makeCubit(settings);
+        await cubit.init();
+
+        await cubit.setEnabled(true);
+        expect(cubit.state.running, isTrue);
+        expect(cubit.state.offer, isNotNull);
+        expect(server.started, isTrue);
+        expect(await settings.loadPairingHostEnabled(), isTrue);
+
+        await cubit.setEnabled(false);
+        expect(cubit.state.running, isFalse);
+        expect(cubit.state.offer, isNull);
+        expect(cubit.state.lanUrls, isEmpty);
+        expect(server.disposed, isTrue);
+        expect(await settings.loadPairingHostEnabled(), isFalse);
+      },
+    );
+
+    test('init exposes interfaces and the saved bind address', () async {
+      final cubit = makeCubit(
+        InMemoryPairingSettingsRepository(),
+        interfaces: () async => const [
+          PairingInterfaceAddress(name: 'Wi-Fi', ip: '192.168.1.10'),
+          PairingInterfaceAddress(name: 'vEthernet (WSL)', ip: '172.20.0.1'),
+        ],
+      );
+      await cubit.init();
+      expect(cubit.state.interfaces, hasLength(2));
+      expect(cubit.state.advertisedAddress, isNull);
+      expect(requested, isEmpty);
+    });
+
+    test('a saved address is advertised without a restart', () async {
+      final settings = InMemoryPairingSettingsRepository(
+        hostEnabled: true,
+        hostAddress: '192.168.1.10',
+      );
+      final cubit = makeCubit(settings);
+      await cubit.init();
+      expect(requested, ['192.168.1.10']);
+      expect(cubit.state.advertisedAddress, '192.168.1.10');
+    });
+
+    test('setAdvertisedAddress persists and re-issues the offer', () async {
+      final settings = InMemoryPairingSettingsRepository(hostEnabled: true);
+      final cubit = makeCubit(settings);
+      await cubit.init();
+      final startsBefore = server.startCount;
+
+      await cubit.setAdvertisedAddress(' 192.168.1.10 ');
+      expect(await settings.loadPairingHostAddress(), '192.168.1.10');
+      expect(cubit.state.advertisedAddress, '192.168.1.10');
+      expect(cubit.state.offer, isNotNull);
+      // Advertise-only: the listener is untouched, so a connected phone keeps
+      // its socket and the port never changes.
+      expect(server.startCount, startsBefore);
+      expect(cubit.state.port, 4321);
+    });
+
+    test('setAdvertisedAddress(null) returns to every interface', () async {
+      final settings = InMemoryPairingSettingsRepository(
+        hostEnabled: true,
+        hostAddress: '192.168.1.10',
+      );
       final cubit = makeCubit(settings);
       await cubit.init();
 
-      await cubit.setEnabled(true);
-      expect(cubit.state.running, isTrue);
-      expect(cubit.state.offer, isNotNull);
-      expect(server.started, isTrue);
-      expect(await settings.loadPairingHostEnabled(), isTrue);
-
-      await cubit.setEnabled(false);
-      expect(cubit.state.running, isFalse);
-      expect(cubit.state.offer, isNull);
-      expect(cubit.state.lanUrls, isEmpty);
-      expect(server.disposed, isTrue);
-      expect(await settings.loadPairingHostEnabled(), isFalse);
+      await cubit.setAdvertisedAddress(null);
+      expect(await settings.loadPairingHostAddress(), isNull);
+      expect(cubit.state.advertisedAddress, isNull);
     });
 
     test('revokeDevice removes it from the device list', () async {

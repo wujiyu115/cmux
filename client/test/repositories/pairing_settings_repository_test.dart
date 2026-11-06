@@ -42,19 +42,28 @@ void main() {
 
     test('copyWith keeps an existing stamp when none is passed', () {
       final stamped = base.copyWith(lastConnectedAt: DateTime(2026, 7, 1));
-      expect(stamped.copyWith(name: 'Renamed').lastConnectedAt, DateTime(2026, 7, 1));
+      expect(
+        stamped.copyWith(name: 'Renamed').lastConnectedAt,
+        DateTime(2026, 7, 1),
+      );
     });
 
     test('lastConnectedUrl survives a round-trip', () {
       const winner = 'ws://30.210.203.184:14257/pair/ws';
       final stamped = base.copyWith(lastConnectedUrl: winner);
-      expect(PairedDesktop.fromJson(stamped.toJson())!.lastConnectedUrl, winner);
+      expect(
+        PairedDesktop.fromJson(stamped.toJson())!.lastConnectedUrl,
+        winner,
+      );
     });
 
-    test('a desktop paired before lastConnectedUrl existed reads back null', () {
-      final legacy = base.toJson()..remove('lastConnectedUrl');
-      expect(PairedDesktop.fromJson(legacy)!.lastConnectedUrl, isNull);
-    });
+    test(
+      'a desktop paired before lastConnectedUrl existed reads back null',
+      () {
+        final legacy = base.toJson()..remove('lastConnectedUrl');
+        expect(PairedDesktop.fromJson(legacy)!.lastConnectedUrl, isNull);
+      },
+    );
   });
 
   group('PairedDesktop.displayUrl', () {
@@ -79,6 +88,25 @@ void main() {
 
     test('falls back to the first candidate before any connect', () {
       expect(twoCandidates.displayUrl, 'ws://10.253.0.5:14257/pair/ws');
+    });
+
+    test('dials the address that worked last time first', () {
+      final connected = twoCandidates.copyWith(
+        lastConnectedUrl: 'ws://30.210.203.184:14257/pair/ws',
+      );
+      expect(connected.connectCandidates, [
+        'ws://30.210.203.184:14257/pair/ws',
+        'ws://10.253.0.5:14257/pair/ws',
+      ]);
+      // No duplicate when the working address is already the first candidate.
+      final first = twoCandidates.copyWith(
+        lastConnectedUrl: 'ws://10.253.0.5:14257/pair/ws',
+      );
+      expect(first.connectCandidates, twoCandidates.wsUrls);
+    });
+
+    test('keeps the advertised order before any connect', () {
+      expect(twoCandidates.connectCandidates, twoCandidates.wsUrls);
     });
 
     test('falls back to the id when the host advertised nothing', () {

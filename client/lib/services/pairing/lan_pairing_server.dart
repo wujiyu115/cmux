@@ -14,9 +14,13 @@ import 'session_catalog.dart';
 import 'ws_transport.dart';
 
 /// Desktop-only LAN listener for phone pairing. Mirrors [AgentStatusGateway]'s
-/// lifecycle (idempotent [ensureStarted], force-close [dispose]) but binds
-/// `anyIPv4` so devices on the same network can reach it, and upgrades
+/// lifecycle (idempotent [ensureStarted], force-close [dispose]) and upgrades
 /// `GET /pair/ws` to a WebSocket handed to a [PairingConnection].
+///
+/// [advertisedAddress] is the address put in the pairing offer. The socket
+/// still listens on `anyIPv4`, so any route that reaches the machine keeps
+/// working; only the *advertised* address changes, which is what stops a phone
+/// from racing connect timeouts against the desktop's VPN / virtual adapters.
 ///
 /// Only ever constructed on a host platform behind a `isPairingHost && enabled`
 /// gate — the mobile client never binds.
@@ -40,6 +44,7 @@ class LanPairingServer {
     PairingGitDiffProvider? gitDiff,
     Stream<PairingAgentNotice>? agentNotices,
     PairingOfferWindow? offerWindow,
+    this.advertisedAddress,
     List<int> ports = kPairingPortLadder,
   }) : _ports = ports,
        _agentNotices = agentNotices,
@@ -64,6 +69,15 @@ class LanPairingServer {
   /// Ports [ensureStarted] tries in order. `[0]` means "any", which tests use to
   /// avoid contending with a real desktop on the same machine.
   final List<int> _ports;
+
+  /// Address to put in the offer, or null to offer every local IPv4.
+  ///
+  /// A host name is accepted as well as an IPv4: a user who reaches this
+  /// desktop through a tunnel may only know the name, not the address.
+  ///
+  /// Mutable in place: choosing another address must not restart the listener,
+  /// or a connected phone would lose its socket just for a re-labelled URL.
+  String? advertisedAddress;
 
   final PairingKeyPair _hostStaticKey;
   final DeviceRegistry _registry;
@@ -215,10 +229,17 @@ class LanPairingServer {
     );
   }
 
-  /// Every non-loopback IPv4 `ws://ip:port/pair/ws` the client can try in turn.
+  /// The URLs a phone should try, in order.
+  ///
+  /// [advertisedAddress] set: exactly one URL. Otherwise: every non-loopback
+  /// IPv4 of the machine, which is what makes the phone probe dead routes.
   Future<List<String>> lanWsUrls() async {
     if (_http == null) return const [];
     final p = _http!.port;
+    final chosen = advertisedAddress?.trim();
+    if (chosen != null && chosen.isNotEmpty) {
+      return ['ws://$chosen:$p/pair/ws'];
+    }
     final interfaces = await NetworkInterface.list(
       type: InternetAddressType.IPv4,
       includeLoopback: false,

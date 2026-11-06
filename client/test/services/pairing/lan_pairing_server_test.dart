@@ -16,9 +16,13 @@ import '../../support/pairing_upload_doubles.dart';
 /// [ports] defaults to `[0]` rather than [kPairingPortLadder]: a real desktop may
 /// hold the ladder on the machine running these tests, and the lifecycle cases do
 /// not care which port they get.
-LanPairingServer _server(PairingKeyPair key, {List<int> ports = const [0]}) =>
-    LanPairingServer(
+LanPairingServer _server(
+  PairingKeyPair key, {
+  List<int> ports = const [0],
+  String? advertisedAddress,
+}) => LanPairingServer(
   hostStaticKey: key,
+  advertisedAddress: advertisedAddress,
   registry: DeviceRegistry(InMemoryPairingKeyStore()),
   catalog: SessionCatalog(),
   hostName: 'Test Desktop',
@@ -52,21 +56,24 @@ void main() {
     expect(server.port, first);
   });
 
-  test('binds the first ladder port so saved phone URLs survive a restart', () async {
-    // The regression: binding port 0 handed out a new port every launch, and
-    // every paired phone's stored ws:// URL pointed at the old one.
-    final ports = [await _recentlyFreePort(), await _recentlyFreePort()];
-    final first = _server(PairingKeyPair.generate(), ports: ports);
-    await first.ensureStarted();
-    expect(first.port, ports.first);
-    await first.dispose();
+  test(
+    'binds the first ladder port so saved phone URLs survive a restart',
+    () async {
+      // The regression: binding port 0 handed out a new port every launch, and
+      // every paired phone's stored ws:// URL pointed at the old one.
+      final ports = [await _recentlyFreePort(), await _recentlyFreePort()];
+      final first = _server(PairingKeyPair.generate(), ports: ports);
+      await first.ensureStarted();
+      expect(first.port, ports.first);
+      await first.dispose();
 
-    // A restart lands on the same port, which is the whole point.
-    final second = _server(PairingKeyPair.generate(), ports: ports);
-    await second.ensureStarted();
-    addTearDown(second.dispose);
-    expect(second.port, ports.first);
-  });
+      // A restart lands on the same port, which is the whole point.
+      final second = _server(PairingKeyPair.generate(), ports: ports);
+      await second.ensureStarted();
+      addTearDown(second.dispose);
+      expect(second.port, ports.first);
+    },
+  );
 
   test('walks down the ladder when an earlier port is taken', () async {
     final ports = [await _recentlyFreePort(), await _recentlyFreePort()];
@@ -80,26 +87,67 @@ void main() {
     expect(server.port, ports[1]);
   });
 
-  test('falls back to an ephemeral port when the whole ladder is taken', () async {
-    final ports = [await _recentlyFreePort(), await _recentlyFreePort()];
-    final squatters = [
-      for (final port in ports)
-        await ServerSocket.bind(InternetAddress.anyIPv4, port),
-    ];
-    addTearDown(() async {
-      for (final s in squatters) {
-        await s.close();
-      }
-    });
+  test(
+    'falls back to an ephemeral port when the whole ladder is taken',
+    () async {
+      final ports = [await _recentlyFreePort(), await _recentlyFreePort()];
+      final squatters = [
+        for (final port in ports)
+          await ServerSocket.bind(InternetAddress.anyIPv4, port),
+      ];
+      addTearDown(() async {
+        for (final s in squatters) {
+          await s.close();
+        }
+      });
 
-    final server = _server(PairingKeyPair.generate(), ports: ports);
+      final server = _server(PairingKeyPair.generate(), ports: ports);
+      await server.ensureStarted();
+      addTearDown(server.dispose);
+      // Last resort: pairing still works for a fresh scan; only saved URLs are
+      // lost, which is exactly what the warning in ensureStarted says.
+      expect(server.isRunning, isTrue);
+      expect(server.port, isNot(anyOf(ports)));
+      expect(server.port, greaterThan(0));
+    },
+  );
+
+  test('a chosen address is the only URL offered to the phone', () async {
+    final server = _server(
+      PairingKeyPair.generate(),
+      advertisedAddress: InternetAddress.loopbackIPv4.address,
+    );
     await server.ensureStarted();
     addTearDown(server.dispose);
-    // Last resort: pairing still works for a fresh scan; only saved URLs are
-    // lost, which is exactly what the warning in ensureStarted says.
-    expect(server.isRunning, isTrue);
-    expect(server.port, isNot(anyOf(ports)));
-    expect(server.port, greaterThan(0));
+
+    final urls = await server.lanWsUrls();
+    expect(urls, ['ws://127.0.0.1:${server.port}/pair/ws']);
+  });
+
+  test('unpinned keeps advertising every interface', () async {
+    final server = _server(PairingKeyPair.generate());
+    await server.ensureStarted();
+    addTearDown(server.dispose);
+
+    final urls = await server.lanWsUrls();
+    // Test machines vary in NIC count; what matters is that this is not the
+    // single-address shape a pin produces.
+    expect(urls, isNot(<String>['ws://127.0.0.1:${server.port}/pair/ws']));
+    expect(urls.every((u) => u.endsWith(':${server.port}/pair/ws')), isTrue);
+  });
+
+  test('a custom host name is advertised verbatim', () async {
+    // A tunnel endpoint or DNS name is not a local NIC, so it cannot bind —
+    // it is only ever written into the offer.
+    final server = _server(
+      PairingKeyPair.generate(),
+      advertisedAddress: 'studio.example.com',
+    );
+    await server.ensureStarted();
+    addTearDown(server.dispose);
+    expect(await server.lanWsUrls(), [
+      'ws://studio.example.com:${server.port}/pair/ws',
+    ]);
   });
 
   test('createOffer opens a window and pins the host static key', () async {

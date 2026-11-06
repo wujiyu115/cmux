@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 import '../../cubits/pairing_host_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
@@ -30,6 +33,7 @@ class _PairingConfigWorkspaceState extends State<PairingConfigWorkspace> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final cubit = context.read<PairingHostCubit>();
+      unawaited(cubit.refreshInterfaces());
       if (cubit.state.running) cubit.refreshOffer();
     });
   }
@@ -71,6 +75,8 @@ class _PairingConfigWorkspaceState extends State<PairingConfigWorkspace> {
               value: state.enabled,
               onChanged: (v) => cubit.setEnabled(v),
             ),
+            if (state.enabled || state.running)
+              _LocalAddressRow(state: state, cubit: cubit),
             if (state.error != null)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
@@ -83,14 +89,172 @@ class _PairingConfigWorkspaceState extends State<PairingConfigWorkspace> {
               const SizedBox(height: 16),
               _OfferCard(state: state, onRefresh: cubit.refreshOffer),
               const SizedBox(height: 24),
-              _DeviceList(
-                devices: state.devices,
-                onRevoke: cubit.revokeDevice,
-              ),
+              _DeviceList(devices: state.devices, onRevoke: cubit.revokeDevice),
             ],
           ],
         );
       },
+    );
+  }
+}
+
+/// "此电脑的地址": which local address the pairing code advertises.
+///
+/// With a VPN or a virtual adapter present, the machine has several addresses
+/// and a phone has to time out on each dead route before it reaches the one
+/// that works. Picking one here puts a single address in the code.
+class _LocalAddressRow extends StatefulWidget {
+  const _LocalAddressRow({required this.state, required this.cubit});
+
+  final PairingHostState state;
+  final PairingHostCubit cubit;
+
+  @override
+  State<_LocalAddressRow> createState() => _LocalAddressRowState();
+}
+
+class _LocalAddressRowState extends State<_LocalAddressRow> {
+  /// Menu value for the trailing "add custom address…" action. Selecting a
+  /// menu item latches the select's internal value, so the row rebuilds the
+  /// select (via this generation counter) after the action runs.
+  static const _customValue = '__custom__';
+
+  int _generation = 0;
+
+  Future<void> _addCustomAddress() async {
+    final entered = await showDialog<String>(
+      context: context,
+      builder: (_) => const _CustomAddressDialog(),
+    );
+    if (!mounted) return;
+    setState(() => _generation++);
+    if (entered != null) {
+      await widget.cubit.setAdvertisedAddress(entered);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final cs = Theme.of(context).colorScheme;
+    final chosen = widget.state.advertisedAddress;
+    final entries = <(String, String)>[
+      ('', l10n.pairingLocalAddressAll),
+      for (final address in widget.state.interfaces)
+        (address.ip, l10n.pairingLocalAddressEntry(address.ip, address.name)),
+      // An address typed by hand, or one saved when the machine had another
+      // network: it must stay selectable even though it is not listed now.
+      if (chosen != null && !widget.state.interfaces.any((a) => a.ip == chosen))
+        (chosen, chosen),
+      (_customValue, l10n.pairingLocalAddressCustom),
+    ];
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.pairingLocalAddressTitle,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              KeyedSubtree(
+                key: ValueKey(_generation),
+                child: TpCompactSelect<String>(
+                  key: AppKeys.pairingLocalAddressSelect,
+                  value: chosen ?? '',
+                  entries: entries,
+                  minWidth: 220,
+                  onChanged: (value) {
+                    if (value == _customValue) {
+                      unawaited(_addCustomAddress());
+                      return;
+                    }
+                    unawaited(
+                      widget.cubit.setAdvertisedAddress(
+                        value == null || value.isEmpty ? null : value,
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              TpIconButton(
+                key: AppKeys.pairingLocalAddressRefresh,
+                icon: Icons.refresh,
+                iconSize: 18,
+                tooltip: l10n.pairingLocalAddressRefresh,
+                onTap: () => unawaited(widget.cubit.refreshInterfaces()),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            l10n.pairingLocalAddressHint,
+            style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Free-text address for users whose reachable address is not on a local NIC
+/// (a tunnel endpoint, a DNS name). Validated before it can reach the offer.
+class _CustomAddressDialog extends StatefulWidget {
+  const _CustomAddressDialog();
+
+  @override
+  State<_CustomAddressDialog> createState() => _CustomAddressDialogState();
+}
+
+class _CustomAddressDialogState extends State<_CustomAddressDialog> {
+  final _controller = TextEditingController();
+  String? _error;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final value = _controller.text.trim();
+    final host = Uri.tryParse('ws://$value')?.host ?? '';
+    if (value.isEmpty || host.isEmpty || host != value) {
+      setState(() => _error = context.l10n.pairingLocalAddressInvalid);
+      return;
+    }
+    Navigator.of(context).pop(value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return AlertDialog(
+      title: Text(l10n.pairingLocalAddressCustomTitle),
+      content: TpInput(
+        controller: _controller,
+        autofocus: true,
+        decoration: InputDecoration(
+          hintText: l10n.pairingLocalAddressCustomHint,
+          errorText: _error,
+        ),
+        onSubmitted: (_) => _submit(),
+      ),
+      actions: [
+        TpButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.cancel),
+        ),
+        TpButton(
+          key: AppKeys.pairingLocalAddressCustomSave,
+          onPressed: _submit,
+          child: Text(l10n.ok),
+        ),
+      ],
     );
   }
 }
@@ -188,7 +352,10 @@ class _OfferCard extends StatelessWidget {
           Text(l10n.pairingNoLanAddress)
         else
           for (final url in state.lanUrls)
-            SelectableText(url, style: const TextStyle(fontFamily: 'monospace')),
+            SelectableText(
+              url,
+              style: const TextStyle(fontFamily: 'monospace'),
+            ),
       ],
     );
   }
