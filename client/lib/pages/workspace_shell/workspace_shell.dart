@@ -33,6 +33,7 @@ class WorkspaceShell extends StatelessWidget {
     this.onNewTerminal,
     this.onNewTerminalDefault,
     this.tabBarTrailing,
+    this.statusBar,
     super.key,
   });
 
@@ -67,6 +68,10 @@ class WorkspaceShell extends StatelessWidget {
 
   /// Extra controls on the right of the tab row (e.g. Chat/Terminal toggle).
   final Widget? tabBarTrailing;
+
+  /// Bottom status strip, pinned below [child]. The shell only positions it;
+  /// what it reports stays with the caller (see `WorkspaceStatusBar`).
+  final Widget? statusBar;
 
   @override
   Widget build(BuildContext context) {
@@ -159,6 +164,7 @@ class WorkspaceShell extends StatelessWidget {
         if (tabs.isEmpty && !showNewChatButton && actions.isNotEmpty && showHeader)
           WorkspaceShellActionsBar(actions: actions),
         Expanded(child: child),
+        if (statusBar != null) statusBar!,
       ],
     );
   }

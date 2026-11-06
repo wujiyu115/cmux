@@ -23,6 +23,7 @@ import '../../services/workbench/workbench_shell_launcher.dart';
 import '../../services/workbench/workbench_tab_projection.dart';
 import '../../services/workspace/workspace_tools_scope.dart';
 import '../../theme/workspace_accent_palette.dart';
+import '../../widgets/workbench/workspace_status_bar.dart';
 import '../../widgets/workbench/workbench_session_sync.dart';
 import '../../widgets/workbench/workbench_shell_run_sync.dart';
 import '../../widgets/workspace_terminal/workspace_terminal_new_session_menu.dart';
@@ -384,6 +385,10 @@ class _ChatWorkspaceShell extends StatelessWidget {
                         }
                       : null,
                   actions: const [],
+                  statusBar: WorkspaceStatusBar(
+                    workspaceId: workspaceId,
+                    directory: cwd,
+                  ),
                   child: ChatPageStructuralBodyProbe(
                     key: chatPageStructuralBodyProbeKey,
                     child: WorkbenchBody(

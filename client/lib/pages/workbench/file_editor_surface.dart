@@ -28,7 +28,6 @@ import '../../widgets/editor/app_code_scrollbar.dart';
 import '../../widgets/workbench/file_diff_surface_toggle.dart';
 import '../../widgets/workbench/markdown_view_mode_toggle.dart';
 import 'file_editor_image_preview.dart';
-import 'git_blame_bar.dart';
 import 'editor_goto_line_dialog.dart';
 import 'editor_symbol_sheet.dart';
 import 'markdown_preview_pane.dart';
@@ -111,29 +110,6 @@ class _FileEditorSurfaceState extends State<FileEditorSurface> {
             const Divider(height: 1),
             Expanded(
               child: _FileEditorBody(workspaceId: workspaceId, path: path),
-            ),
-            Builder(
-              builder: (context) {
-                // Same guard as canToggleDiff: lightweight harnesses mount
-                // the editor without WorkspaceToolsScope/GitRepoStore.
-                if (WorkspaceToolsScope.maybeOf(context) == null) {
-                  return const SizedBox.shrink();
-                }
-                // Global settings toggle (Layout / Editor preferences);
-                // the blame bar mounts only when a git repo cubit resolves.
-                final show = context.select<LayoutCubit, bool>(
-                      (c) => c.state.preferences.editorShowBlameBar,
-                    ) &&
-                    gitCubitForAbsolutePath(context, path) != null;
-                if (!show) return const SizedBox.shrink();
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Divider(height: 1),
-                    GitBlameBar(workspaceId: workspaceId, path: path),
-                  ],
-                );
-              },
             ),
           ],
         ),

@@ -25,6 +25,7 @@ import 'package:teampilot/services/git/git_repo_store.dart';
 import 'package:teampilot/services/io/local_filesystem.dart';
 import 'package:teampilot/services/terminal/workspace_terminal_registry.dart';
 import 'package:teampilot/services/workspace/workspace_tools_scope.dart';
+import 'package:teampilot/utils/ui/app_keys.dart';
 
 import '../support/desktop_app_harness.dart';
 import '../support/idle_run_platform.dart';
@@ -171,6 +172,10 @@ void main() {
       }
 
       final countAfterSettle = _structuralProbe(tester).buildCount;
+
+      // The workbench owns one status strip for every tab kind (it replaced
+      // the per-editor blame bar), so it must mount with the shell.
+      expect(find.byKey(AppKeys.workspaceStatusBar), findsOneWidget);
 
       chatCubit.updateWorkingSessionsForTest({'sess-1'});
       await tester.pump();
