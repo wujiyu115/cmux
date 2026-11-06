@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:shared_ui/shared_ui.dart';
 
 import '../../l10n/l10n_extensions.dart';
 import '../../services/pairing/pairing_client.dart';
 import '../../theme/app_fonts.dart';
 import '../../utils/ui/app_keys.dart';
-import 'pairing_block_button.dart';
+import 'mobile_chrome.dart';
 import 'pairing_node_row.dart';
 
-/// One workspace and its nodes, as a collapsible group closed by a hairline.
+/// One workspace and its terminals, as a collapsible row in the desktop detail
+/// list: chevron, folder, name, and the terminal count at the trailing edge
+/// (with a liveness dot), following the reference's tree.
 ///
-/// Hand-rolled rather than [TpDisclosure] / [ExpansionTile]: the summary needs a
-/// trailing liveness pill, and the children must stay mounted while collapsed so
-/// the list doesn't rebuild every row on each expand.
+/// Hand-rolled rather than [TpDisclosure] / [ExpansionTile]: the children must
+/// stay unmounted while collapsed so a busy desktop does not build every pane on
+/// each expand toggle.
 class PairingWorkspaceGroup extends StatefulWidget {
   const PairingWorkspaceGroup({
     super.key,
@@ -42,77 +43,32 @@ class _PairingWorkspaceGroupState extends State<PairingWorkspaceGroup> {
   ///
   /// Auto-expanding every workspace with a live pane made the list unusable on a
   /// phone: a desktop with a handful of busy workspaces opened to screens of
-  /// terminal rows, and the workspace the reader came for was scrolled off. The
-  /// row's own liveness pill already says which ones have something running.
+  /// terminal rows, and the workspace the reader came for was scrolled off.
   bool _expanded = false;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final cs = Theme.of(context).colorScheme;
     final workspace = widget.workspace;
     final liveCount = workspace.panes.where((n) => n.live).length;
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: cs.outlineVariant)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _Summary(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _Summary(
+          workspace: workspace,
+          expanded: _expanded,
+          liveCount: liveCount,
+          onTap: () => setState(() => _expanded = !_expanded),
+          onLongPress: () => widget.onDeleteWorkspace(workspace),
+        ),
+        if (_expanded)
+          _Body(
             workspace: workspace,
-            expanded: _expanded,
-            liveCount: liveCount,
-            onTap: () => setState(() => _expanded = !_expanded),
-            onLongPress: () => widget.onDeleteWorkspace(workspace),
+            activatingKey: widget.activatingKey,
+            onOpenNode: widget.onOpenNode,
+            onDeleteNode: widget.onDeleteNode,
           ),
-          // Built only while open, matching the ExpansionTile behaviour this
-          // replaced: a collapsed workspace costs nothing.
-          if (_expanded)
-            _Body(
-              workspace: workspace,
-              activatingKey: widget.activatingKey,
-              onOpenNode: widget.onOpenNode,
-              onDeleteNode: widget.onDeleteNode,
-            ),
-          // Shown whether or not something is already running: with no panes it
-          // is the only way to get a mirrorable terminal in a dormant workspace
-          // from the phone, and with panes it is the only way to add a tab —
-          // host-side `session.activate` with a null paneId opens a fresh
-          // terminal rather than reusing one, the same call the desktop's "new
-          // terminal tab" command makes.
-          if (_expanded)
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                context.tpSpacing.xs,
-                0,
-                context.tpSpacing.xs,
-                context.tpSpacing.md,
-              ),
-              child: PairingBlockButton(
-                key: AppKeys.pairingOpenTerminalButton(workspace.workspaceId),
-                variant: PairingButtonVariant.outlined,
-                onPressed: () => widget.onOpenNode(
-                  PairingSessionNode(
-                    workspaceId: workspace.workspaceId,
-                    title: workspace.title,
-                    subtitle: '',
-                    live: false,
-                  ),
-                ),
-                // "Open" reads as "show me the one that is there" once rows
-                // are listed above the button, so a workspace with panes gets
-                // the additive label instead.
-                child: Text(
-                  workspace.panes.isEmpty
-                      ? l10n.pairingOpenTerminalHere
-                      : l10n.pairingNewTerminalHere,
-                ),
-              ),
-            ),
-        ],
-      ),
+      ],
     );
   }
 }
@@ -136,22 +92,18 @@ class _Summary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
-    final spacing = context.tpSpacing;
     final total = workspace.panes.length;
 
     return InkWell(
       key: AppKeys.pairingWorkspaceHeader(workspace.workspaceId),
       onTap: onTap,
       onLongPress: onLongPress,
+      borderRadius: BorderRadius.circular(10),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: 56),
+        constraints: const BoxConstraints(minHeight: 48),
         child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: spacing.xs,
-            vertical: spacing.sm,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
           child: Row(
             children: [
               AnimatedRotation(
@@ -159,51 +111,46 @@ class _Summary extends StatelessWidget {
                 duration: const Duration(milliseconds: 160),
                 child: Icon(
                   Icons.chevron_right,
-                  size: context.tpIconSizes.md,
+                  size: 17,
                   color: cs.onSurfaceVariant,
                 ),
               ),
-              SizedBox(width: spacing.sm),
+              const SizedBox(width: 6),
+              Icon(Icons.folder_outlined, size: 18, color: cs.onSurfaceVariant),
+              const SizedBox(width: 8),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      workspace.title.isEmpty
-                          ? workspace.workspaceId
-                          : workspace.title,
-                      // Middle rank: below the group header, above a terminal
-                      // row. The prototype's 21 / 700 does not survive the
-                      // phone-wide 15% text boost, and bold at this size fought
-                      // the group header above it for attention.
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    SizedBox(height: spacing.xxs),
-                    Text(
-                      '$total',
-                      style: appMonoTextStyle(
-                        context,
-                        fontSize: 12,
-                        color: cs.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  workspace.title.isEmpty
+                      ? workspace.workspaceId
+                      : workspace.title,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: cs.onSurface,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              SizedBox(width: spacing.sm),
-              TpStatusBadge(
-                label: liveCount > 0
-                    ? l10n.pairingLiveBadge
-                    : l10n.pairingOfflineBadge,
-                tone: liveCount > 0
-                    ? TpStatusBadgeTone.success
-                    : TpStatusBadgeTone.neutral,
+              const SizedBox(width: 8),
+              if (liveCount > 0) ...[
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: mobileOnlineColor(context),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 6),
+              ],
+              Text(
+                '$total',
+                style: appMonoTextStyle(
+                  context,
+                  fontSize: 12,
+                  color: cs.onSurfaceVariant,
+                ),
               ),
             ],
           ),
@@ -228,8 +175,8 @@ class _Body extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // One flat list: everything mirrorable is a terminal, so a group header
-    // would separate rows that are the same kind of thing.
+    final l10n = context.l10n;
+    final cs = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -240,7 +187,43 @@ class _Body extends StatelessWidget {
             onTap: () => onOpenNode(pane),
             onLongPress: () => onDeleteNode(pane),
           ),
-        SizedBox(height: context.tpSpacing.sm),
+        // Shown whether or not something is already running: with no panes it
+        // is the only way to get a mirrorable terminal in a dormant workspace
+        // from the phone, and with panes it is the only way to add a tab —
+        // host-side `session.activate` with a null paneId opens a fresh
+        // terminal rather than reusing one, the same call the desktop's "new
+        // terminal tab" command makes.
+        InkWell(
+          key: AppKeys.pairingOpenTerminalButton(workspace.workspaceId),
+          onTap: () => onOpenNode(
+            PairingSessionNode(
+              workspaceId: workspace.workspaceId,
+              title: workspace.title,
+              subtitle: '',
+              live: false,
+            ),
+          ),
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(30, 10, 4, 14),
+            child: Row(
+              children: [
+                Icon(Icons.add, size: 16, color: cs.onSurfaceVariant),
+                const SizedBox(width: 8),
+                Text(
+                  workspace.panes.isEmpty
+                      ? l10n.pairingOpenTerminalHere
+                      : l10n.pairingNewTerminalHere,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: cs.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }

@@ -1439,7 +1439,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get editorShowBlameBarDescription =>
-      'Show the git blame bar above the editor (applies to all workspaces)';
+      'Show the caret line\'s git blame in the workspace status bar (applies to all workspaces)';
 
   @override
   String get editorReloadOnTabActivateTitle => 'Reload on tab activation';
@@ -1505,6 +1505,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fileTabReloadDiscard => 'Discard and refresh';
+
+  @override
+  String workspaceStatusBarChanges(int count) {
+    return '$count changed files';
+  }
+
+  @override
+  String workspaceStatusBarCaret(int line, int column) {
+    return 'Ln $line, Col $column';
+  }
+
+  @override
+  String get workspaceStatusBarUnsaved => 'Unsaved';
+
+  @override
+  String get workspaceStatusBarBlameLoading => 'Loading blame…';
 
   @override
   String get fileTreeSearchScope => 'Search scope';
@@ -3241,6 +3257,38 @@ class AppLocalizationsEn extends AppLocalizations {
       'Phones on the same network can mirror and control this desktop\'s terminal sessions after scanning a QR code.';
 
   @override
+  String get pairingLocalAddressTitle => 'This computer’s address';
+
+  @override
+  String get pairingLocalAddressHint =>
+      'Phones must be able to reach this address over Wi-Fi or Tailscale.';
+
+  @override
+  String get pairingLocalAddressAll => 'All interfaces';
+
+  @override
+  String pairingLocalAddressEntry(String ip, String name) {
+    return '$ip ($name)';
+  }
+
+  @override
+  String get pairingLocalAddressCustom => 'Add custom address…';
+
+  @override
+  String get pairingLocalAddressCustomTitle => 'Custom address';
+
+  @override
+  String get pairingLocalAddressCustomHint =>
+      'An IP or hostname the phone can reach';
+
+  @override
+  String get pairingLocalAddressInvalid =>
+      'Enter a valid IP address or hostname.';
+
+  @override
+  String get pairingLocalAddressRefresh => 'Refresh addresses';
+
+  @override
   String get pairingScanToPair => 'Scan to pair';
 
   @override
@@ -3333,6 +3381,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pairingDesktopFallback => 'Desktop';
+
+  @override
+  String get mobileTabActivity => 'Activity';
+
+  @override
+  String get moreActions => 'More';
+
+  @override
+  String get pairingDisconnect => 'Disconnect';
+
+  @override
+  String get pairingPairDesktop => 'Pair a desktop';
+
+  @override
+  String get pairingSearchWorkspaces => 'Search workspaces';
+
+  @override
+  String get pairingOnlyOnline => 'Only online';
+
+  @override
+  String get pairingNoMatchingWorkspaces => 'No workspaces match.';
 
   @override
   String get pairingRefresh => 'Refresh';

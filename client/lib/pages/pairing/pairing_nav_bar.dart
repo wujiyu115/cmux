@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 import '../../l10n/l10n_extensions.dart';
+import 'mobile_chrome.dart';
 
 /// The top bar shared by the mobile pairing screens: back affordance, a title,
 /// and one optional trailing slot.
@@ -168,11 +169,16 @@ class PairingNavAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Circular chip, matching the larger mobile surfaces (desktop detail,
+    // settings tab). A bare glyph floating on the page read as unclickable
+    // next to those screens.
     return TpIconButton(
       icon: icon,
       tooltip: tooltip,
       size: 48,
       iconSize: iconSize,
+      borderRadius: 24,
+      backgroundColor: mobileCardColor(context),
       onTap: onTap,
     );
   }

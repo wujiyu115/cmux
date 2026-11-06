@@ -3,26 +3,35 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 import '../../cubits/pairing_client_cubit.dart';
-import '../../cubits/voice_input_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
 import '../../repositories/pairing_settings_repository.dart';
 import '../../utils/ui/app_keys.dart';
 import '../../widgets/app_toast/app_toast.dart';
+import 'mobile_chrome.dart';
 import 'mobile_settings_page.dart';
 import 'paired_host_row.dart';
-import 'pairing_block_button.dart';
 import 'pairing_network_strip.dart';
 
-/// Mobile home: the desktops this phone has paired with.
+/// Mobile home: the desktops this phone has paired with, laid out as the
+/// Orca-style activity feed — a large page title, one section, and a rounded
+/// card per section whose last row is the add action. Settings is the second
+/// bottom-bar destination rather than a header glyph.
 ///
-/// The scan CTA is pinned to the bottom in both the empty and populated states —
-/// it is the only action on this screen, so it stays in one place instead of
-/// migrating between an empty-state button and a floating one.
-class PairedHostsPage extends StatelessWidget {
+/// The add affordance exists twice on purpose: the floating "+" is the
+/// thumb-reachable action, and the in-card row is discoverable while reading the
+/// list. Both open the QR scanner.
+class PairedHostsPage extends StatefulWidget {
   const PairedHostsPage({required this.onScan, super.key});
 
   /// Opens the QR scanner (host injects navigation; keeps this page routing-free).
   final VoidCallback onScan;
+
+  @override
+  State<PairedHostsPage> createState() => _PairedHostsPageState();
+}
+
+class _PairedHostsPageState extends State<PairedHostsPage> {
+  MobileTab _tab = MobileTab.activity;
 
   @override
   Widget build(BuildContext context) {
@@ -30,36 +39,34 @@ class PairedHostsPage extends StatelessWidget {
       buildWhen: (a, b) =>
           a.pairedDesktops != b.pairedDesktops || a.localIp != b.localIp,
       builder: (context, state) {
-        final l10n = context.l10n;
-        final cs = Theme.of(context).colorScheme;
-        final spacing = context.tpSpacing;
-        final desktops = state.pairedDesktops;
+        // Built lazily: the settings tab needs cubits (layout / voice) that the
+        // activity feed does not, and an IndexedStack would force them on every
+        // home build.
+        final body = _tab == MobileTab.activity
+            ? _ActivityFeed(
+                desktops: state.pairedDesktops,
+                localIp: state.localIp,
+                onScan: widget.onScan,
+              )
+            : const MobileSettingsPage(embedded: true);
         return Scaffold(
           key: AppKeys.pairedHostsPage,
-          body: SafeArea(
-            bottom: false,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _Header(count: desktops.length),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: spacing.lg),
-                  child: PairingNetworkStrip(localIp: state.localIp),
-                ),
-                Divider(height: 1, thickness: 1, color: cs.outlineVariant),
-                Expanded(
-                  child: desktops.isEmpty
-                      ? TpEmptyState(
-                          icon: Icons.qr_code_2,
-                          title: l10n.pairingNoPairedDesktops,
-                          hint: l10n.pairingEmptyHint,
-                          centered: true,
-                        )
-                      : _HostList(desktops: desktops),
-                ),
-                _Footer(onScan: onScan),
-              ],
-            ),
+          body: SafeArea(bottom: false, child: body),
+          floatingActionButton: _tab == MobileTab.activity
+              ? FloatingActionButton(
+                  key: AppKeys.mobileAddDesktopButton,
+                  onPressed: widget.onScan,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                  elevation: 0,
+                  highlightElevation: 0,
+                  shape: const CircleBorder(),
+                  child: const Icon(Icons.add, size: 28),
+                )
+              : null,
+          bottomNavigationBar: MobileBottomNav(
+            current: _tab,
+            onSelected: (tab) => setState(() => _tab = tab),
           ),
         );
       },
@@ -67,84 +74,110 @@ class PairedHostsPage extends StatelessWidget {
   }
 }
 
-class _Header extends StatelessWidget {
-  const _Header({required this.count});
+class _ActivityFeed extends StatelessWidget {
+  const _ActivityFeed({
+    required this.desktops,
+    required this.localIp,
+    required this.onScan,
+  });
 
-  final int count;
+  final List<PairedDesktop> desktops;
+  final String? localIp;
+  final VoidCallback onScan;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final cs = Theme.of(context).colorScheme;
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 96),
+      children: [
+        Text(
+          l10n.mobileTabActivity,
+          // Reference page title: 30 / 700, tight tracking.
+          style: TextStyle(
+            fontSize: 30,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.6,
+            color: cs.onSurface,
+          ),
+        ),
+        const SizedBox(height: 22),
+        Text(
+          l10n.pairingDesktops,
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: cs.onSurface,
+          ),
+        ),
+        const SizedBox(height: 8),
+        _DesktopCard(
+          desktops: desktops,
+          onScan: onScan,
+          cubit: context.read<PairingClientCubit>(),
+        ),
+        if (localIp != null && localIp!.isNotEmpty) ...[
+          const SizedBox(height: 14),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: PairingNetworkStrip(localIp: localIp),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _DesktopCard extends StatelessWidget {
+  const _DesktopCard({
+    required this.desktops,
+    required this.onScan,
+    required this.cubit,
+  });
+
+  final List<PairedDesktop> desktops;
+  final VoidCallback onScan;
+  final PairingClientCubit cubit;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final spacing = context.tpSpacing;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(spacing.lg, spacing.md, spacing.lg, spacing.sm),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+    final hairline = mobileHairlineColor(context);
+    return Material(
+      color: mobileCardColor(context),
+      borderRadius: BorderRadius.circular(20),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: Text(
-              context.l10n.pairingDesktops,
-              // Prototype large `.appbar` title: 26 / 700 — same as
-              // [PairingNavBar.large] so every list header reads identically.
-              style: TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.w700,
-                color: cs.onSurface,
+          if (desktops.isEmpty)
+            const _EmptyIntro()
+          else
+            for (var i = 0; i < desktops.length; i++) ...[
+              if (i > 0) Divider(height: 1, thickness: 1, color: hairline),
+              PairedHostRow(
+                desktop: desktops[i],
+                onTap: () => cubit.connectToDesktop(desktops[i]),
+                onRemove: () => _removeWithUndo(context, desktops[i]),
               ),
-            ),
-          ),
-          Text(
-            '$count',
-            // Prototype `.appbar .count`: 17, muted.
-            style: TextStyle(fontSize: 17, color: cs.onSurfaceVariant),
-          ),
-          SizedBox(width: spacing.xs),
-          TpIconButton(
-            key: AppKeys.mobileSettingsButton,
-            icon: Icons.settings_outlined,
-            tooltip: context.l10n.settings,
-            // The page mounts in the root navigator, above the shell's voice
-            // cubit; hand it the cubit read here so its voice row can reach it.
-            onTap: () => Navigator.of(context).push(
-              MobileSettingsPage.route(context.read<VoiceInputCubit>()),
-            ),
+            ],
+          Divider(height: 1, thickness: 1, color: hairline),
+          MobileCardActionRow(
+            key: AppKeys.pairingScanCtaButton,
+            icon: Icons.add,
+            label: context.l10n.pairingPairDesktop,
+            onTap: onScan,
+            foreground: cs.primary,
           ),
         ],
       ),
     );
   }
-}
-
-class _HostList extends StatelessWidget {
-  const _HostList({required this.desktops});
-
-  final List<PairedDesktop> desktops;
-
-  @override
-  Widget build(BuildContext context) {
-    final cubit = context.read<PairingClientCubit>();
-    return ListView.separated(
-      padding: EdgeInsets.symmetric(horizontal: context.tpSpacing.lg),
-      itemCount: desktops.length,
-      separatorBuilder: (_, __) => const TpSeparator(),
-      itemBuilder: (context, i) {
-        final desktop = desktops[i];
-        return PairedHostRow(
-          desktop: desktop,
-          onTap: () => cubit.connectToDesktop(desktop),
-          onRemove: () => _removeWithUndo(context, cubit, desktop),
-        );
-      },
-    );
-  }
 
   /// Removing a pinned host key means re-scanning the desktop's QR to get it
   /// back, so the delete is always paired with an undo affordance.
-  void _removeWithUndo(
-    BuildContext context,
-    PairingClientCubit cubit,
-    PairedDesktop desktop,
-  ) {
+  void _removeWithUndo(BuildContext context, PairedDesktop desktop) {
     final l10n = context.l10n;
     cubit.removeDesktop(desktop.id);
     AppToast.show(
@@ -159,43 +192,44 @@ class _HostList extends StatelessWidget {
   }
 }
 
-class _Footer extends StatelessWidget {
-  const _Footer({required this.onScan});
-
-  final VoidCallback onScan;
+class _EmptyIntro extends StatelessWidget {
+  const _EmptyIntro();
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
-    final spacing = context.tpSpacing;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: cs.surface,
-        border: Border(top: BorderSide(color: cs.outlineVariant)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            spacing.lg,
-            spacing.md,
-            spacing.lg,
-            spacing.md,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.qr_code_2, size: 20, color: cs.onSurfaceVariant),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  l10n.pairingNoPairedDesktops,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: cs.onSurface,
+                  ),
+                ),
+              ),
+            ],
           ),
-          child: PairingBlockButton(
-            key: AppKeys.pairingScanCtaButton,
-            onPressed: onScan,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Prototype `.btn svg`: 22px.
-                const Icon(Icons.qr_code_scanner, size: 22),
-                SizedBox(width: spacing.sm),
-                Text(context.l10n.pairingScanToPair),
-              ],
+          const SizedBox(height: 8),
+          Text(
+            l10n.pairingEmptyHint,
+            style: TextStyle(
+              fontSize: 13,
+              height: 1.4,
+              color: cs.onSurfaceVariant,
             ),
           ),
-        ),
+        ],
       ),
     );
   }

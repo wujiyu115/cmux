@@ -4,6 +4,11 @@ class AppKeys {
   const AppKeys._();
 
   static const workspaceTopbar = Key('workspace-topbar');
+  static const workspaceStatusBar = Key('workspace-status-bar');
+  static const workspaceStatusBarBranch = Key('workspace-status-bar-branch');
+  static const workspaceStatusBarBlame = Key('workspace-status-bar-blame');
+  static const workspaceStatusBarCaret = Key('workspace-status-bar-caret');
+  static const workspaceStatusBarDirty = Key('workspace-status-bar-dirty');
   static const chatWorkspace = Key('chat-workspace');
   static const configWorkspace = Key('config-workspace');
   static const configSettingsHub = Key('config-settings-hub');
@@ -39,9 +44,7 @@ class AppKeys {
   static const barkPushDeviceKeyField = Key('bark-push-device-key-field');
   static const barkPushTestButton = Key('bark-push-test-button');
   static const barkPushTestOutcome = Key('bark-push-test-outcome');
-  static const notifyWhileWatchingSwitch = Key(
-    'notify-while-watching-switch',
-  );
+  static const notifyWhileWatchingSwitch = Key('notify-while-watching-switch');
   static const sidebarSessionWaitingMarker = Key(
     'sidebar-session-waiting-marker',
   );
@@ -65,6 +68,13 @@ class AppKeys {
   );
   // Pairing (desktop host config section).
   static const pairingConfigWorkspace = Key('pairing-config-workspace');
+  static const pairingLocalAddressSelect = Key('pairing-local-address-select');
+  static const pairingLocalAddressRefresh = Key(
+    'pairing-local-address-refresh',
+  );
+  static const pairingLocalAddressCustomSave = Key(
+    'pairing-local-address-custom-save',
+  );
   static const pairingHostEnableSwitch = Key('pairing-host-enable-switch');
   static const pairingRefreshOfferButton = Key('pairing-refresh-offer-button');
   static const pairingQrImage = Key('pairing-qr-image');
@@ -79,7 +89,9 @@ class AppKeys {
   static const pairingSessionListPage = Key('pairing-session-list-page');
   static const pairingMirrorPage = Key('pairing-mirror-page');
   static const pairingMirrorCopyButton = Key('pairing-mirror-copy-button');
-  static const pairingMirrorChangesButton = Key('pairing-mirror-changes-button');
+  static const pairingMirrorChangesButton = Key(
+    'pairing-mirror-changes-button',
+  );
   static const pairingMirrorChangesSheet = Key('pairing-mirror-changes-sheet');
   static const pairingMirrorDiffPage = Key('pairing-mirror-diff-page');
   static const pairingScanCtaButton = Key('pairing-scan-cta');
@@ -91,6 +103,15 @@ class AppKeys {
   static const pairingDeleteSheet = Key('pairing-delete-sheet');
   static const pairingDeleteConfirmButton = Key('pairing-delete-confirm');
   static const mobileSettingsButton = Key('mobile-settings-button');
+  static const mobileAddDesktopButton = Key('mobile-add-desktop');
+  static const pairingWorkspaceSearchField = Key(
+    'pairing-workspace-search-field',
+  );
+  static const pairingOnlineOnlyToggle = Key('pairing-online-only-toggle');
+  static const pairingWorkspaceCreateButton = Key(
+    'pairing-workspace-create-button',
+  );
+  static const pairingWorkspaceMoreButton = Key('pairing-workspace-more');
   static const mobileSettingsPage = Key('mobile-settings-page');
   static const mobileToolbar = Key('mobile-toolbar');
   static const mobileToolbarHideKeyboardButton = Key('mobile-toolbar-hide-kb');
@@ -138,8 +159,7 @@ class AppKeys {
       Key('pairing-workspace-$workspaceId');
   static Key pairingOpenTerminalButton(String workspaceId) =>
       Key('pairing-open-terminal-$workspaceId');
-  static Key pairingSessionNode(String nodeKey) =>
-      Key('pairing-node-$nodeKey');
+  static Key pairingSessionNode(String nodeKey) => Key('pairing-node-$nodeKey');
 
   /// Row key on the paired-hosts list. Value predates [AppKeys] — kept verbatim.
   static Key pairedHostRow(String id) => Key('paired-desktop-$id');

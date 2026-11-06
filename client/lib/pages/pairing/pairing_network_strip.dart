@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:shared_ui/shared_ui.dart';
 
 import '../../l10n/l10n_extensions.dart';
 import '../../theme/app_fonts.dart';
-import '../../theme/app_typography_scale.dart';
 import '../../utils/ui/app_keys.dart';
+import 'mobile_chrome.dart';
 
-/// This phone's own network context above the hosts list. Pairing fails most
+/// This phone's own network context under the hosts card. Pairing fails most
 /// often because the two devices are on different subnets, so showing the local
-/// IPv4 next to the desktop's advertised address makes that diagnosable without
-/// leaving the app. Renders nothing when no LAN address resolved.
+/// IPv4 makes that diagnosable without leaving the app. Renders nothing when no
+/// LAN address resolved.
 class PairingNetworkStrip extends StatelessWidget {
   const PairingNetworkStrip({super.key, required this.localIp});
 
@@ -20,32 +19,36 @@ class PairingNetworkStrip extends StatelessWidget {
     final ip = localIp;
     if (ip == null || ip.isEmpty) return const SizedBox.shrink();
     final cs = Theme.of(context).colorScheme;
-    final spacing = context.tpSpacing;
-    final typography = context.appTypography;
-    return Padding(
+    return Row(
       key: AppKeys.pairingNetworkStrip,
-      padding: EdgeInsets.only(bottom: spacing.md),
-      child: Row(
-        children: [
-          TpStatusBadge(
-            label: context.l10n.pairingLanLabel,
-            tone: TpStatusBadgeTone.success,
+      children: [
+        Container(
+          width: 7,
+          height: 7,
+          decoration: BoxDecoration(
+            color: mobileOnlineColor(context),
+            shape: BoxShape.circle,
           ),
-          SizedBox(width: spacing.sm),
-          Expanded(
-            child: Text(
-              ip,
-              style: appMonoTextStyle(
-                context,
-                fontSize: typography.bodySmall,
-                color: cs.onSurfaceVariant,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(width: 8),
+        Text(
+          context.l10n.pairingLanLabel,
+          style: TextStyle(fontSize: 12.5, color: cs.onSurfaceVariant),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            ip,
+            style: appMonoTextStyle(
+              context,
+              fontSize: 12,
+              color: cs.onSurfaceVariant,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

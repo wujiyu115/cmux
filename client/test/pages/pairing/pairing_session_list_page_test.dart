@@ -60,10 +60,7 @@ const _wsA = PairingWorkspaceNode(
   panes: [_pane, _secondPane],
 );
 
-const _dormant = PairingWorkspaceNode(
-  workspaceId: 'wsB',
-  title: 'Dormant',
-);
+const _dormant = PairingWorkspaceNode(workspaceId: 'wsB', title: 'Dormant');
 
 void main() {
   late _TestCubit cubit;
@@ -98,8 +95,9 @@ void main() {
     expect(find.text('No workspaces on this desktop.'), findsOneWidget);
   });
 
-  testWidgets('workspace renders its live terminals with geometry badges',
-      (tester) async {
+  testWidgets('workspace renders its live terminals with geometry badges', (
+    tester,
+  ) async {
     cubit.set(
       const PairingClientState(
         phase: PairingClientPhase.connected,
@@ -123,7 +121,6 @@ void main() {
     expect(find.text('120×40'), findsOneWidget);
     expect(find.text('zsh'), findsOneWidget);
     expect(find.text('80×24'), findsOneWidget);
-    expect(find.text('Live'), findsWidgets);
     expect(find.byKey(AppKeys.pairingSessionNode('ws:p2')), findsOneWidget);
 
     // Collapsing again drops the node rows.
@@ -134,8 +131,9 @@ void main() {
     expect(find.byKey(AppKeys.pairingSessionNode('ws:p2')), findsNothing);
   });
 
-  testWidgets('a workspace with nothing running offers to open a terminal',
-      (tester) async {
+  testWidgets('a workspace with nothing running offers to open a terminal', (
+    tester,
+  ) async {
     cubit.set(
       const PairingClientState(
         phase: PairingClientPhase.connected,
@@ -158,8 +156,9 @@ void main() {
     expect(cubit.activated.single.paneId, isNull);
   });
 
-  testWidgets('a workspace with panes still offers a new terminal',
-      (tester) async {
+  testWidgets('a workspace with panes still offers a new terminal', (
+    tester,
+  ) async {
     cubit.set(
       const PairingClientState(
         phase: PairingClientPhase.connected,
@@ -184,8 +183,9 @@ void main() {
     expect(cubit.activated.single.paneId, isNull);
   });
 
-  testWidgets('the connection row shows the URL that actually connected',
-      (tester) async {
+  testWidgets('the connection row shows the URL that actually connected', (
+    tester,
+  ) async {
     cubit.set(
       const PairingClientState(
         phase: PairingClientPhase.connected,
@@ -319,8 +319,9 @@ void main() {
     expect(cubit.closedTerminals, isEmpty);
   });
 
-  testWidgets('tapping a workspace header never deletes — long-press only',
-      (tester) async {
+  testWidgets('tapping a workspace header never deletes — long-press only', (
+    tester,
+  ) async {
     cubit.set(
       const PairingClientState(
         phase: PairingClientPhase.connected,
@@ -335,5 +336,67 @@ void main() {
 
     expect(find.byKey(AppKeys.pairingDeleteSheet), findsNothing);
     expect(cubit.deletedWorkspaces, isEmpty);
+  });
+
+  testWidgets('search narrows the tree to matching workspaces and terminals', (
+    tester,
+  ) async {
+    cubit.set(
+      const PairingClientState(
+        phase: PairingClientPhase.connected,
+        activeHostName: 'Studio',
+        workspaces: [_wsA, _dormant],
+      ),
+    );
+    await pump(tester);
+    expect(find.byKey(AppKeys.pairingWorkspaceHeader('wsA')), findsOneWidget);
+    expect(find.byKey(AppKeys.pairingWorkspaceHeader('wsB')), findsOneWidget);
+
+    await tester.enterText(
+      find.byKey(AppKeys.pairingWorkspaceSearchField),
+      'dormant',
+    );
+    await tester.pump();
+    expect(find.byKey(AppKeys.pairingWorkspaceHeader('wsA')), findsNothing);
+    expect(find.byKey(AppKeys.pairingWorkspaceHeader('wsB')), findsOneWidget);
+
+    // Pane titles match too, not only workspace names.
+    await tester.enterText(
+      find.byKey(AppKeys.pairingWorkspaceSearchField),
+      'zsh',
+    );
+    await tester.pump();
+    expect(find.byKey(AppKeys.pairingWorkspaceHeader('wsA')), findsOneWidget);
+    expect(find.byKey(AppKeys.pairingWorkspaceHeader('wsB')), findsNothing);
+
+    await tester.enterText(
+      find.byKey(AppKeys.pairingWorkspaceSearchField),
+      'nothing matches this',
+    );
+    await tester.pump();
+    expect(find.text('No workspaces match.'), findsOneWidget);
+  });
+
+  testWidgets('the online-only filter hides workspaces with no live panes', (
+    tester,
+  ) async {
+    cubit.set(
+      const PairingClientState(
+        phase: PairingClientPhase.connected,
+        activeHostName: 'Studio',
+        workspaces: [_wsA, _dormant],
+      ),
+    );
+    await pump(tester);
+
+    await tester.tap(find.byKey(AppKeys.pairingOnlineOnlyToggle));
+    await tester.pump();
+
+    expect(find.byKey(AppKeys.pairingWorkspaceHeader('wsA')), findsOneWidget);
+    expect(find.byKey(AppKeys.pairingWorkspaceHeader('wsB')), findsNothing);
+
+    await tester.tap(find.byKey(AppKeys.pairingOnlineOnlyToggle));
+    await tester.pump();
+    expect(find.byKey(AppKeys.pairingWorkspaceHeader('wsB')), findsOneWidget);
   });
 }

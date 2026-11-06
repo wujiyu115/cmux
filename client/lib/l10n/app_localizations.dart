@@ -2729,7 +2729,7 @@ abstract class AppLocalizations {
   /// No description provided for @editorShowBlameBarDescription.
   ///
   /// In en, this message translates to:
-  /// **'Show the git blame bar above the editor (applies to all workspaces)'**
+  /// **'Show the caret line\'s git blame in the workspace status bar (applies to all workspaces)'**
   String get editorShowBlameBarDescription;
 
   /// No description provided for @editorReloadOnTabActivateTitle.
@@ -2832,6 +2832,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Discard and refresh'**
   String get fileTabReloadDiscard;
+
+  /// No description provided for @workspaceStatusBarChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} changed files'**
+  String workspaceStatusBarChanges(int count);
+
+  /// No description provided for @workspaceStatusBarCaret.
+  ///
+  /// In en, this message translates to:
+  /// **'Ln {line}, Col {column}'**
+  String workspaceStatusBarCaret(int line, int column);
+
+  /// No description provided for @workspaceStatusBarUnsaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsaved'**
+  String get workspaceStatusBarUnsaved;
+
+  /// No description provided for @workspaceStatusBarBlameLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading blame…'**
+  String get workspaceStatusBarBlameLoading;
 
   /// No description provided for @fileTreeSearchScope.
   ///
@@ -5983,6 +6007,60 @@ abstract class AppLocalizations {
   /// **'Phones on the same network can mirror and control this desktop\'s terminal sessions after scanning a QR code.'**
   String get pairingEnableSubtitle;
 
+  /// No description provided for @pairingLocalAddressTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This computer’s address'**
+  String get pairingLocalAddressTitle;
+
+  /// No description provided for @pairingLocalAddressHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Phones must be able to reach this address over Wi-Fi or Tailscale.'**
+  String get pairingLocalAddressHint;
+
+  /// No description provided for @pairingLocalAddressAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All interfaces'**
+  String get pairingLocalAddressAll;
+
+  /// No description provided for @pairingLocalAddressEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'{ip} ({name})'**
+  String pairingLocalAddressEntry(String ip, String name);
+
+  /// No description provided for @pairingLocalAddressCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Add custom address…'**
+  String get pairingLocalAddressCustom;
+
+  /// No description provided for @pairingLocalAddressCustomTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom address'**
+  String get pairingLocalAddressCustomTitle;
+
+  /// No description provided for @pairingLocalAddressCustomHint.
+  ///
+  /// In en, this message translates to:
+  /// **'An IP or hostname the phone can reach'**
+  String get pairingLocalAddressCustomHint;
+
+  /// No description provided for @pairingLocalAddressInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid IP address or hostname.'**
+  String get pairingLocalAddressInvalid;
+
+  /// No description provided for @pairingLocalAddressRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh addresses'**
+  String get pairingLocalAddressRefresh;
+
   /// No description provided for @pairingScanToPair.
   ///
   /// In en, this message translates to:
@@ -6162,6 +6240,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Desktop'**
   String get pairingDesktopFallback;
+
+  /// No description provided for @mobileTabActivity.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity'**
+  String get mobileTabActivity;
+
+  /// No description provided for @moreActions.
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get moreActions;
+
+  /// No description provided for @pairingDisconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect'**
+  String get pairingDisconnect;
+
+  /// No description provided for @pairingPairDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'Pair a desktop'**
+  String get pairingPairDesktop;
+
+  /// No description provided for @pairingSearchWorkspaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Search workspaces'**
+  String get pairingSearchWorkspaces;
+
+  /// No description provided for @pairingOnlyOnline.
+  ///
+  /// In en, this message translates to:
+  /// **'Only online'**
+  String get pairingOnlyOnline;
+
+  /// No description provided for @pairingNoMatchingWorkspaces.
+  ///
+  /// In en, this message translates to:
+  /// **'No workspaces match.'**
+  String get pairingNoMatchingWorkspaces;
 
   /// No description provided for @pairingRefresh.
   ///

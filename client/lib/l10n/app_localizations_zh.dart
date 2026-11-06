@@ -1383,7 +1383,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get editorShowBlameBarTitle => 'Blame 栏';
 
   @override
-  String get editorShowBlameBarDescription => '在编辑器上方显示 git blame 栏（对所有工作区生效）';
+  String get editorShowBlameBarDescription =>
+      '在工作区底部状态栏显示当前行的 git blame（对所有工作区生效）';
 
   @override
   String get editorReloadOnTabActivateTitle => '切回标签页时从磁盘刷新';
@@ -1448,6 +1449,22 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get fileTabReloadDiscard => '丢弃并刷新';
+
+  @override
+  String workspaceStatusBarChanges(int count) {
+    return '$count 个变更文件';
+  }
+
+  @override
+  String workspaceStatusBarCaret(int line, int column) {
+    return '行 $line，列 $column';
+  }
+
+  @override
+  String get workspaceStatusBarUnsaved => '未保存';
+
+  @override
+  String get workspaceStatusBarBlameLoading => '正在读取 blame…';
 
   @override
   String get fileTreeSearchScope => '搜索范围';
@@ -3130,6 +3147,35 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pairingEnableSubtitle => '同一网络下的手机扫码后可镜像并控制此桌面的终端会话。';
 
   @override
+  String get pairingLocalAddressTitle => '此电脑的地址';
+
+  @override
+  String get pairingLocalAddressHint => '手机必须能通过 Wi-Fi 或 Tailscale 访问此地址。';
+
+  @override
+  String get pairingLocalAddressAll => '全部网卡';
+
+  @override
+  String pairingLocalAddressEntry(String ip, String name) {
+    return '$ip（$name）';
+  }
+
+  @override
+  String get pairingLocalAddressCustom => '添加自定义地址…';
+
+  @override
+  String get pairingLocalAddressCustomTitle => '自定义地址';
+
+  @override
+  String get pairingLocalAddressCustomHint => '手机能访问的 IP 或主机名';
+
+  @override
+  String get pairingLocalAddressInvalid => '请输入有效的 IP 地址或主机名。';
+
+  @override
+  String get pairingLocalAddressRefresh => '刷新地址列表';
+
+  @override
   String get pairingScanToPair => '扫码配对';
 
   @override
@@ -3154,7 +3200,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pairingRevoke => '撤销';
 
   @override
-  String get pairingDesktops => '桌面';
+  String get pairingDesktops => '台式机';
 
   @override
   String get pairingScan => '扫码';
@@ -3218,6 +3264,27 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get pairingDesktopFallback => '桌面';
+
+  @override
+  String get mobileTabActivity => '动态';
+
+  @override
+  String get moreActions => '更多';
+
+  @override
+  String get pairingDisconnect => '断开连接';
+
+  @override
+  String get pairingPairDesktop => '配对桌面';
+
+  @override
+  String get pairingSearchWorkspaces => '搜索工作区';
+
+  @override
+  String get pairingOnlyOnline => '只看在线';
+
+  @override
+  String get pairingNoMatchingWorkspaces => '没有匹配的工作区。';
 
   @override
   String get pairingRefresh => '刷新';

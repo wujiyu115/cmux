@@ -23,8 +23,14 @@ import 'voice/voice_settings_page.dart';
 /// shell's [BlocProvider] — so the page's own context cannot read it. Callers
 /// on the paired-hosts screen (under the shell) pass
 /// `context.read<VoiceInputCubit>()`.
+///
+/// With [embedded] the page renders as the settings *tab* inside the home shell
+/// instead: no back affordance (the bottom bar owns switching) and no SafeArea,
+/// because the home Scaffold already applied it.
 class MobileSettingsPage extends StatelessWidget {
-  const MobileSettingsPage({super.key});
+  const MobileSettingsPage({super.key, this.embedded = false});
+
+  final bool embedded;
 
   /// Route helper so callers cannot forget to re-provide the cubit across the
   /// route boundary.
@@ -41,64 +47,59 @@ class MobileSettingsPage extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final spacing = context.tpSpacing;
 
+    final content = Column(
+      children: [
+        PairingNavBar.large(
+          title: l10n.settings,
+          onBack: embedded ? null : () => Navigator.of(context).maybePop(),
+        ),
+        Expanded(
+          child: ListView(
+            padding: EdgeInsets.all(spacing.lg),
+            children: [
+              // One card grouping appearance rows + the voice entry, matching
+              // the prototype's single settings card.
+              TpCard.outlined(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const AppearanceControls(),
+                    Divider(height: 1, thickness: 1, color: cs.outlineVariant),
+                    ListTile(
+                      key: AppKeys.mobileSettingsVoiceRow,
+                      // Explicit sizes: the app's icon scale is damped, so
+                      // theme-sized glyphs render too small here.
+                      leading: const Icon(Icons.mic_none, size: 22),
+                      title: Text(l10n.voiceInputSettings),
+                      trailing: const Icon(Icons.chevron_right, size: 20),
+                      onTap: () => Navigator.of(context).push(
+                        VoiceSettingsPage.route(
+                          context.read<VoiceInputCubit>(),
+                        ),
+                      ),
+                    ),
+                    Divider(height: 1, thickness: 1, color: cs.outlineVariant),
+                    ListTile(
+                      key: AppKeys.mobileSettingsDebugLogRow,
+                      leading: const Icon(Icons.bug_report_outlined, size: 22),
+                      title: Text(l10n.debugLogTitle),
+                      trailing: const Icon(Icons.chevron_right, size: 20),
+                      onTap: () =>
+                          Navigator.of(context).push(DebugLogPage.route()),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+
     return Scaffold(
       key: AppKeys.mobileSettingsPage,
-      body: SafeArea(
-        child: Column(
-          children: [
-            PairingNavBar.large(
-              title: l10n.settings,
-              onBack: () => Navigator.of(context).maybePop(),
-            ),
-            Expanded(
-              child: ListView(
-                padding: EdgeInsets.all(spacing.lg),
-                children: [
-                  // One card grouping appearance rows + the voice entry, matching
-                  // the prototype's single settings card.
-                  TpCard.outlined(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const AppearanceControls(),
-                        Divider(
-                          height: 1,
-                          thickness: 1,
-                          color: cs.outlineVariant,
-                        ),
-                        ListTile(
-                          key: AppKeys.mobileSettingsVoiceRow,
-                          leading: const Icon(Icons.mic_none),
-                          title: Text(l10n.voiceInputSettings),
-                          trailing: const Icon(Icons.chevron_right),
-                          onTap: () => Navigator.of(context).push(
-                            VoiceSettingsPage.route(
-                              context.read<VoiceInputCubit>(),
-                            ),
-                          ),
-                        ),
-                        Divider(
-                          height: 1,
-                          thickness: 1,
-                          color: cs.outlineVariant,
-                        ),
-                        ListTile(
-                          key: AppKeys.mobileSettingsDebugLogRow,
-                          leading: const Icon(Icons.bug_report_outlined),
-                          title: Text(l10n.debugLogTitle),
-                          trailing: const Icon(Icons.chevron_right),
-                          onTap: () =>
-                              Navigator.of(context).push(DebugLogPage.route()),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+      backgroundColor: embedded ? Colors.transparent : null,
+      body: embedded ? content : SafeArea(child: content),
     );
   }
 }

@@ -575,7 +575,7 @@
   "fileTreeCopyRelativePath": "复制相对路径",
   "fileTabReloadFromDisk": "从磁盘刷新",
   "editorShowBlameBarTitle": "Blame 栏",
-  "editorShowBlameBarDescription": "在编辑器上方显示 git blame 栏（对所有工作区生效）",
+  "editorShowBlameBarDescription": "在工作区底部状态栏显示当前行的 git blame（对所有工作区生效）",
   "editorReloadOnTabActivateTitle": "切回标签页时从磁盘刷新",
   "editorReloadOnTabActivateDescription": "切回某个文件标签页时，若文件在应用外被修改且没有未保存的修改，则自动从磁盘重新读取。有未保存修改的文件不受影响。",
   "blameNoHistory": "此行没有 blame 信息",
@@ -642,6 +642,27 @@
   "fileTabReloadDirtyTitle": "未保存的修改",
   "fileTabReloadDirtyMessage": "该文件有未保存的修改，从磁盘刷新会丢弃这些修改。",
   "fileTabReloadDiscard": "丢弃并刷新",
+  "workspaceStatusBarChanges": "{count} 个变更文件",
+  "@workspaceStatusBarChanges": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "workspaceStatusBarCaret": "行 {line}，列 {column}",
+  "@workspaceStatusBarCaret": {
+    "placeholders": {
+      "line": {
+        "type": "int"
+      },
+      "column": {
+        "type": "int"
+      }
+    }
+  },
+  "workspaceStatusBarUnsaved": "未保存",
+  "workspaceStatusBarBlameLoading": "正在读取 blame…",
   "fileTreeSearchScope": "搜索范围",
   "fileTreeSearchScopeExclude": "排除出搜索范围",
   "fileTreeSearchScopeInclude": "添加到搜索范围",
@@ -1386,6 +1407,15 @@
   "pairingHostDesktopOnly": "设备配对主机仅在桌面端可用。",
   "pairingEnableTitle": "允许手机通过局域网配对",
   "pairingEnableSubtitle": "同一网络下的手机扫码后可镜像并控制此桌面的终端会话。",
+  "pairingLocalAddressTitle": "此电脑的地址",
+  "pairingLocalAddressHint": "手机必须能通过 Wi-Fi 或 Tailscale 访问此地址。",
+  "pairingLocalAddressAll": "全部网卡",
+  "pairingLocalAddressEntry": "{ip}（{name}）",
+  "pairingLocalAddressCustom": "添加自定义地址…",
+  "pairingLocalAddressCustomTitle": "自定义地址",
+  "pairingLocalAddressCustomHint": "手机能访问的 IP 或主机名",
+  "pairingLocalAddressInvalid": "请输入有效的 IP 地址或主机名。",
+  "pairingLocalAddressRefresh": "刷新地址列表",
   "pairingScanToPair": "扫码配对",
   "pairingNewCode": "刷新配对码",
   "pairingGeneratingCode": "正在生成配对码…",
@@ -1394,7 +1424,7 @@
   "pairingPairedDevices": "已配对设备",
   "pairingNoDevicesYet": "暂无已配对设备。",
   "pairingRevoke": "撤销",
-  "pairingDesktops": "桌面",
+  "pairingDesktops": "台式机",
   "pairingScan": "扫码",
   "pairingRemove": "移除",
   "pairingNoPairedDesktops": "暂无已配对的桌面。",
@@ -1416,6 +1446,13 @@
   "pairingFailed": "配对失败。",
   "pairingReadyHint": "准备配对。请确保此手机与桌面处于同一网络，然后点击“连接”。",
   "pairingDesktopFallback": "桌面",
+  "mobileTabActivity": "动态",
+  "moreActions": "更多",
+  "pairingDisconnect": "断开连接",
+  "pairingPairDesktop": "配对桌面",
+  "pairingSearchWorkspaces": "搜索工作区",
+  "pairingOnlyOnline": "只看在线",
+  "pairingNoMatchingWorkspaces": "没有匹配的工作区。",
   "pairingRefresh": "刷新",
   "pairingNoWorkspaces": "此桌面上没有工作区。",
   "pairingWorkspaces": "工作区",

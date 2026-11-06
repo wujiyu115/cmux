@@ -609,7 +609,7 @@
   "fileTreeCopyRelativePath": "Copy relative path",
   "fileTabReloadFromDisk": "Refresh from disk",
   "editorShowBlameBarTitle": "Blame bar",
-  "editorShowBlameBarDescription": "Show the git blame bar above the editor (applies to all workspaces)",
+  "editorShowBlameBarDescription": "Show the caret line's git blame in the workspace status bar (applies to all workspaces)",
   "editorReloadOnTabActivateTitle": "Reload on tab activation",
   "editorReloadOnTabActivateDescription": "Switching back to a file tab re-reads it from disk when it changed outside the app and has no unsaved edits. Files with unsaved edits are left alone.",
   "blameNoHistory": "No blame available for this line",
@@ -676,6 +676,27 @@
   "fileTabReloadDirtyTitle": "Unsaved changes",
   "fileTabReloadDirtyMessage": "This file has unsaved changes. Refreshing from disk discards them.",
   "fileTabReloadDiscard": "Discard and refresh",
+  "workspaceStatusBarChanges": "{count} changed files",
+  "@workspaceStatusBarChanges": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "workspaceStatusBarCaret": "Ln {line}, Col {column}",
+  "@workspaceStatusBarCaret": {
+    "placeholders": {
+      "line": {
+        "type": "int"
+      },
+      "column": {
+        "type": "int"
+      }
+    }
+  },
+  "workspaceStatusBarUnsaved": "Unsaved",
+  "workspaceStatusBarBlameLoading": "Loading blame…",
   "fileTreeSearchScope": "Search scope",
   "fileTreeSearchScopeExclude": "Exclude from search scope",
   "fileTreeSearchScopeInclude": "Add to search scope",
@@ -1498,6 +1519,21 @@
   "pairingHostDesktopOnly": "Device pairing host is available on desktop only.",
   "pairingEnableTitle": "Allow phones to pair over LAN",
   "pairingEnableSubtitle": "Phones on the same network can mirror and control this desktop's terminal sessions after scanning a QR code.",
+  "pairingLocalAddressTitle": "This computer’s address",
+  "pairingLocalAddressHint": "Phones must be able to reach this address over Wi-Fi or Tailscale.",
+  "pairingLocalAddressAll": "All interfaces",
+  "pairingLocalAddressEntry": "{ip} ({name})",
+  "@pairingLocalAddressEntry": {
+    "placeholders": {
+      "ip": { "type": "String" },
+      "name": { "type": "String" }
+    }
+  },
+  "pairingLocalAddressCustom": "Add custom address…",
+  "pairingLocalAddressCustomTitle": "Custom address",
+  "pairingLocalAddressCustomHint": "An IP or hostname the phone can reach",
+  "pairingLocalAddressInvalid": "Enter a valid IP address or hostname.",
+  "pairingLocalAddressRefresh": "Refresh addresses",
   "pairingScanToPair": "Scan to pair",
   "pairingNewCode": "New code",
   "pairingGeneratingCode": "Generating pairing code…",
@@ -1528,6 +1564,13 @@
   "pairingFailed": "Pairing failed.",
   "pairingReadyHint": "Ready to pair. Make sure this phone and the desktop are on the same network, then tap Connect.",
   "pairingDesktopFallback": "Desktop",
+  "mobileTabActivity": "Activity",
+  "moreActions": "More",
+  "pairingDisconnect": "Disconnect",
+  "pairingPairDesktop": "Pair a desktop",
+  "pairingSearchWorkspaces": "Search workspaces",
+  "pairingOnlyOnline": "Only online",
+  "pairingNoMatchingWorkspaces": "No workspaces match.",
   "pairingRefresh": "Refresh",
   "pairingNoWorkspaces": "No workspaces on this desktop.",
   "pairingWorkspaces": "Workspaces",
