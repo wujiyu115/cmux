@@ -74,7 +74,8 @@ class WorkspaceTerminalHoldHandle {
   void beginPtyHold() => _state?._beginExternalHold();
 
   /// End the hold, flushing the final grid to the PTY when [flush] (drag end).
-  void endPtyHold({bool flush = true}) => _state?._endExternalHold(flush: flush);
+  void endPtyHold({bool flush = true}) =>
+      _state?._endExternalHold(flush: flush);
 
   /// Selects [entryId] as the active terminal tab (no-op if unbound / unknown).
   void selectEntry(String entryId) {
@@ -395,8 +396,8 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
   TerminalTheme _terminalTheme(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final platformDark = MediaQuery.platformBrightnessOf(context) ==
-        Brightness.dark;
+    final platformDark =
+        MediaQuery.platformBrightnessOf(context) == Brightness.dark;
     final mode = context.select<LayoutCubit, String>(
       (cubit) => cubit.state.preferences
           .resolveColorTheme(platformDark: platformDark)
@@ -440,8 +441,9 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
   void _syncTerminalViewRegistration() {
     final coordinator = _coordinator ??= TerminalLayoutCoordinator();
     final live = _paneKeys.mountedStates.toSet();
-    final gone =
-        _registeredHoldTargets.keys.where((s) => !live.contains(s)).toList();
+    final gone = _registeredHoldTargets.keys
+        .where((s) => !live.contains(s))
+        .toList();
     for (final state in gone) {
       final target = _registeredHoldTargets.remove(state);
       if (target != null) coordinator.unregister(target);
@@ -642,10 +644,8 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
   /// [WorkspaceTerminalPanel.showChrome] (the real hosts pass `false`).
   Widget _buildLayoutToolbar(TerminalSurface surface) {
     return TerminalLayoutToolbar(
-      onSplitRight: () =>
-          unawaited(_splitActiveSurface(SplitAxis.vertical)),
-      onSplitDown: () =>
-          unawaited(_splitActiveSurface(SplitAxis.horizontal)),
+      onSplitRight: () => unawaited(_splitActiveSurface(SplitAxis.vertical)),
+      onSplitDown: () => unawaited(_splitActiveSurface(SplitAxis.horizontal)),
       onApplyPreset: (preset) => unawaited(_applyLayoutPreset(preset)),
       onEqualize: _equalizeActiveSurface,
       onToggleZoom: () {
@@ -977,9 +977,9 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
         terminalBody = Center(
           child: Text(
             l10n.workspaceTerminalNoWorkingDirectory,
-            style: TpTextStyles.of(context).smColored(
-              terminalForeground.withValues(alpha: 0.65),
-            ),
+            style: TpTextStyles.of(
+              context,
+            ).smColored(terminalForeground.withValues(alpha: 0.65)),
           ),
         );
       case WorkspaceTerminalBodyKind.emptyLauncher:
@@ -989,25 +989,6 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
         );
       case WorkspaceTerminalBodyKind.activeSession:
         final activeEntry = active!;
-        // Chat is a per-pane view of the same session: the split tree is left
-        // untouched underneath, so switching back is instant and splits
-        // survive the round trip.
-        final chatTranscript = _chatTranscripts[activeEntry.id];
-        if (chatTranscript != null) {
-          terminalBody = ChatTranscriptPane(
-            transcript: chatTranscript.transcript,
-            canSend: activeEntry.session.transportReadyForIo,
-            foreground: terminalForeground,
-            background: terminalBackground,
-            onSend: (text) {
-              activeEntry.session.markUserTurnStarted();
-              activeEntry.session.input.writeToPty('$text\r');
-            },
-          );
-          break;
-        }
-        _paneKeys.prune(_group.entries.map((e) => e.id).toSet());
-        _chatTranscripts.prune(_group.entries.map((e) => e.id).toSet());
         final surface =
             _activeSurface ??
             _group.surfaceForPane(activeEntry.id) ??
@@ -1016,6 +997,34 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
           terminalBody = const SizedBox.shrink();
           break;
         }
+        // Chat is a per-pane view of the same session: the split tree is left
+        // untouched underneath, so switching back is instant and splits
+        // survive the round trip. The toolbar stays above the transcript —
+        // it holds the only control that switches back to the terminal.
+        final chatTranscript = _chatTranscripts[activeEntry.id];
+        if (chatTranscript != null) {
+          terminalBody = Column(
+            children: [
+              _buildLayoutToolbar(surface),
+              const TpSeparator(),
+              Expanded(
+                child: ChatTranscriptPane(
+                  transcript: chatTranscript.transcript,
+                  canSend: activeEntry.session.transportReadyForIo,
+                  foreground: terminalForeground,
+                  background: terminalBackground,
+                  onSend: (text) {
+                    activeEntry.session.markUserTurnStarted();
+                    activeEntry.session.input.writeToPty('$text\r');
+                  },
+                ),
+              ),
+            ],
+          );
+          break;
+        }
+        _paneKeys.prune(_group.entries.map((e) => e.id).toSet());
+        _chatTranscripts.prune(_group.entries.map((e) => e.id).toSet());
         final splitView = TerminalSplitView(
           surface: surface,
           paneKeys: _paneKeys,
@@ -1078,8 +1087,7 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
         );
     }
 
-    if (bodyKind == WorkspaceTerminalBodyKind.activeSession &&
-        cwd.isNotEmpty) {
+    if (bodyKind == WorkspaceTerminalBodyKind.activeSession && cwd.isNotEmpty) {
       _scheduleTerminalViewRegistration();
     }
 
