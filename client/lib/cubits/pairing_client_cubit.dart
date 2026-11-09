@@ -887,6 +887,26 @@ class PairingClientCubit extends Cubit<PairingClientState> {
   /// Changed files in the repository the mirrored pane sits in, or null when
   /// nothing is mirrored. Errors are logged and surface as null so the sheet can
   /// say "couldn't read" without a crash on a repo-less pane.
+  /// True once the host refused `chat.read` (an older desktop), so the mirror
+  /// stops asking and stays on the terminal.
+  bool _chatUnsupported = false;
+
+  /// Mode and rows of the pane being mirrored. Null when nothing is mirrored or
+  /// the host does not answer the call.
+  Future<PairingChatView?> chatView() async {
+    final client = _client;
+    final catalogId = state.activeCatalogId;
+    if (_chatUnsupported) return null;
+    if (client == null || catalogId == null || catalogId.isEmpty) return null;
+    try {
+      return await client.chatView(catalogId);
+    } on Object catch (e) {
+      _chatUnsupported = true;
+      _appendLog('chat.read failed: $e');
+      return null;
+    }
+  }
+
   Future<PairingGitChanges?> gitChanges() async {
     final sub = _activeSubscription;
     final client = _client;

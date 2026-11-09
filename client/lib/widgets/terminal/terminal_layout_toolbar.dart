@@ -20,6 +20,8 @@ class TerminalLayoutToolbar extends StatelessWidget {
     required this.onShowCommandLog,
     this.onShowAgentSessions,
     this.isZoomed = false,
+    this.chatMode = false,
+    this.onToggleChatMode,
     super.key,
   });
 
@@ -38,6 +40,14 @@ class TerminalLayoutToolbar extends StatelessWidget {
 
   /// Whether the active surface currently has a zoomed pane (drives the icon).
   final bool isZoomed;
+
+  /// True when the focused pane currently renders as chat, so the button
+  /// offers the way back to the terminal.
+  final bool chatMode;
+
+  /// Switches the focused pane between the terminal and its chat view. Null
+  /// hides the button (tests and harnesses without a session service).
+  final VoidCallback? onToggleChatMode;
 
   static const double kToolbarHeight = 32;
 
@@ -91,6 +101,16 @@ class TerminalLayoutToolbar extends StatelessWidget {
           ),
           if (onShowAgentSessions != null)
             _AgentSessionsMenuButton(onShow: onShowAgentSessions!),
+          if (onToggleChatMode != null) ...[
+            _divider(),
+            TpIconButton(
+              icon: chatMode ? Icons.terminal : Icons.forum_outlined,
+              compact: true,
+              size: TpIconButton.kCompactSize,
+              tooltip: chatMode ? l10n.chatModeToTerminal : l10n.chatModeToChat,
+              onTap: onToggleChatMode,
+            ),
+          ],
           const SizedBox(width: 4),
         ],
       ),

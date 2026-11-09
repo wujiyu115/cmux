@@ -85,6 +85,7 @@ class ClaudeStyleAgentCliSessionAdapter implements AgentCliSessionAdapter {
           sessionId: sessionIdOfFileName(head.path),
           title: claudeStyleTitle(head.bytes, tailBytes: head.tailBytes),
           updatedAt: head.mtime,
+          filePath: head.path,
         ),
     ];
   }
@@ -133,6 +134,7 @@ class CodexAgentCliSessionAdapter implements AgentCliSessionAdapter {
                 _sessionIdFromMeta(head.bytes) ??
                 sessionIdOfFileName(head.path),
             updatedAt: head.mtime,
+            filePath: head.path,
           ),
     ];
   }
@@ -201,6 +203,7 @@ class OpencodeAgentCliSessionAdapter implements AgentCliSessionAdapter {
             sessionId: json['id']! as String,
             title: shortTitle(json['title']),
             updatedAt: _updatedFromMs(json['time']),
+            filePath: head.path,
           ),
     ];
   }
@@ -327,6 +330,7 @@ AgentCliSessionRecord? ohMyPiSessionRecord(List<int> bytes, String filePath) {
     family: AgentCliFamily.ohMyPi,
     sessionId: sessionId,
     title: title,
+    filePath: filePath,
   );
 }
 

@@ -1782,5 +1782,16 @@
     }
   },
   "voiceInputTestFailed": "Connection failed",
-  "voiceInputCloudPrivacyNote": "Audio is sent directly to the cloud provider, not through the encrypted pairing channel."
+  "voiceInputCloudPrivacyNote": "Audio is sent directly to the cloud provider, not through the encrypted pairing channel.",
+  "chatPaneComposerHint": "Message the agent…",
+  "chatPaneSend": "Send",
+  "chatPaneThoughts": "Thinking",
+  "chatPaneCompacted": "Context compacted",
+  "chatPaneEmpty": "Nothing here yet. Send a message to start.",
+  "chatPaneUnavailableNoDirectory": "Open a terminal in a folder first.",
+  "chatPaneUnavailableNoSession": "No agent session recorded for this folder yet. Start one in the terminal.",
+  "chatPaneUnavailableUnsupported": "This agent stores its session in a format the chat view cannot read yet — use the terminal.",
+  "chatPaneUnavailableRead": "Could not read the session transcript.",
+  "chatModeToChat": "Show chat",
+  "chatModeToTerminal": "Show terminal"
 }

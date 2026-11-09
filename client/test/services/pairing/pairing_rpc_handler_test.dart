@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:teampilot/services/chat/chat_transcript_row.dart';
 import 'package:teampilot/services/pairing/pairing_frames.dart';
 import 'package:teampilot/services/pairing/pairing_rpc_handler.dart';
 import 'package:teampilot/services/pairing/pairing_workspace_index.dart';
@@ -76,6 +77,84 @@ void main() {
     expect(s['catalogId'], 'ws:p1');
     expect(s['cols'], 100);
     expect(s['rows'], 30);
+  });
+
+  test('session.list reports a pane in chat mode as chat', () {
+    final withChat = PairingRpcHandler(
+      catalog: catalog,
+      send: sent.add,
+      uploadOpener: noopUploadOpener,
+      batchWindow: const Duration(milliseconds: 1),
+      chatTranscript: (paneId) => paneId == 'p1'
+          ? const ChatTranscriptSnapshot(rows: [], family: 'claude')
+          : null,
+    );
+    addTearDown(withChat.dispose);
+
+    withChat.handle(
+      PairingCodec.decode(_json({'id': 1, 'method': 'session.list'})),
+    );
+    final sessions =
+        ((decodeLast() as JsonFrame).data['result'] as Map)['sessions'] as List;
+
+    expect((sessions.single as Map)['mode'], 'chat');
+  });
+
+  test('chat.read answers terminal mode for a pane showing the grid', () {
+    handler.handle(
+      PairingCodec.decode(
+        _json({'id': 2, 'method': 'chat.read', 'params': {'catalogId': 'ws:p1'}}),
+      ),
+    );
+
+    final result = (decodeLast() as JsonFrame).data['result'] as Map;
+    expect(result['mode'], 'terminal');
+    expect(result.containsKey('transcript'), isFalse);
+  });
+
+  test('chat.read carries the rows of a pane in chat mode', () {
+    final withChat = PairingRpcHandler(
+      catalog: catalog,
+      send: sent.add,
+      uploadOpener: noopUploadOpener,
+      batchWindow: const Duration(milliseconds: 1),
+      chatTranscript: (_) => const ChatTranscriptSnapshot(
+        rows: [
+          ChatTranscriptRow(
+            id: 'u1#text',
+            kind: ChatTranscriptRowKind.user,
+            text: 'hi',
+          ),
+        ],
+        family: 'claude',
+        sessionId: 's1',
+        busy: true,
+      ),
+    );
+    addTearDown(withChat.dispose);
+
+    withChat.handle(
+      PairingCodec.decode(
+        _json({'id': 3, 'method': 'chat.read', 'params': {'catalogId': 'ws:p1'}}),
+      ),
+    );
+
+    final result = (decodeLast() as JsonFrame).data['result'] as Map;
+    expect(result['mode'], 'chat');
+    final transcript = result['transcript'] as Map;
+    expect(transcript['busy'], isTrue);
+    expect((transcript['rows'] as List).single, containsPair('text', 'hi'));
+  });
+
+  test('chat.read rejects an unknown session', () {
+    handler.handle(
+      PairingCodec.decode(
+        _json({'id': 4, 'method': 'chat.read', 'params': {'catalogId': 'ws:gone'}}),
+      ),
+    );
+
+    final frame = decodeLast() as JsonFrame;
+    expect(frame.data['error'], isNotNull);
   });
 
   test('subscribe replies sub/cols/rows/seq and sends snapshot first', () async {

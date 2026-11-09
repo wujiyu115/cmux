@@ -1597,5 +1597,16 @@
   "voiceInputTestConnection": "测试连接",
   "voiceInputTestPassed": "连接成功，耗时 {ms} 毫秒",
   "voiceInputTestFailed": "连接失败",
-  "voiceInputCloudPrivacyNote": "音频将直接发送给云服务商，不经过端到端加密的配对通道。"
+  "voiceInputCloudPrivacyNote": "音频将直接发送给云服务商，不经过端到端加密的配对通道。",
+  "chatPaneComposerHint": "给智能体发消息…",
+  "chatPaneSend": "发送",
+  "chatPaneThoughts": "思考",
+  "chatPaneCompacted": "上下文已压缩",
+  "chatPaneEmpty": "还没有内容，发一条消息开始。",
+  "chatPaneUnavailableNoDirectory": "请先在文件夹里打开一个终端。",
+  "chatPaneUnavailableNoSession": "这个文件夹还没有智能体会话记录，请先在终端里启动一个。",
+  "chatPaneUnavailableUnsupported": "这个智能体的会话存储格式还无法生成聊天视图，请使用终端。",
+  "chatPaneUnavailableRead": "读取会话记录失败。",
+  "chatModeToChat": "切换到聊天",
+  "chatModeToTerminal": "切换到终端"
 }

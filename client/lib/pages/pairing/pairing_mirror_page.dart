@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -12,6 +13,8 @@ import '../../services/pairing/upload_source.dart';
 import '../../cubits/layout_cubit.dart';
 import '../../cubits/mobile_toolbar_cubit.dart';
 import '../../cubits/pairing_client_cubit.dart';
+import '../../services/chat/chat_transcript_row.dart';
+import '../home_workspace/workspace/chat/chat_transcript_pane.dart';
 import '../../cubits/voice_input_cubit.dart';
 import '../../repositories/mobile_toolbar_repository.dart';
 import '../../services/stt/transcript_insertion.dart';
@@ -63,6 +66,15 @@ class _PairingMirrorPageState extends State<PairingMirrorPage>
   /// read is a `git status` on the host, and between turns the answer does not
   /// change on its own.
   final _changeCount = ValueNotifier<int?>(null);
+
+  /// Whether the mirrored pane is a conversation on the desktop, and its rows.
+  /// Polled: the desktop can flip the pane at any moment, and one call answers
+  /// both "which mode" and "what is in it".
+  final _chatMode = ValueNotifier<bool>(false);
+  final _chatRows = ValueNotifier<ChatTranscriptSnapshot>(
+    const ChatTranscriptSnapshot(),
+  );
+  Timer? _chatPoll;
   StreamSubscription<void>? _changeHints;
 
   /// Turns the IME animation's per-frame insets into one PTY resize.
@@ -147,6 +159,19 @@ class _PairingMirrorPageState extends State<PairingMirrorPage>
 
     _changeHints = cubit.gitRefreshHints.listen((_) => _refreshChangeCount());
     unawaited(_refreshChangeCount());
+    _chatPoll = Timer.periodic(
+      const Duration(milliseconds: 1000),
+      (_) => unawaited(_refreshChatView()),
+    );
+    unawaited(_refreshChatView());
+  }
+
+  Future<void> _refreshChatView() async {
+    final view = await context.read<PairingClientCubit>().chatView();
+    if (!mounted || view == null) return;
+    _chatMode.value = view.isChat;
+    final transcript = view.transcript;
+    if (transcript != null) _chatRows.value = transcript;
   }
 
   Future<void> _refreshChangeCount() async {
@@ -175,8 +200,8 @@ class _PairingMirrorPageState extends State<PairingMirrorPage>
   }
 
   TerminalTheme _resolveTerminalTheme() {
-    final platformDark = MediaQuery.platformBrightnessOf(context) ==
-        Brightness.dark;
+    final platformDark =
+        MediaQuery.platformBrightnessOf(context) == Brightness.dark;
     return teampilotTerminalTheme(
       Theme.of(context).colorScheme,
       isDark: Theme.of(context).brightness == Brightness.dark,
@@ -304,6 +329,9 @@ class _PairingMirrorPageState extends State<PairingMirrorPage>
     // an already-disposed controller — so cancel before _composerText.dispose().
     _uploadPaths?.cancel();
     _changeHints?.cancel();
+    _chatPoll?.cancel();
+    _chatMode.dispose();
+    _chatRows.dispose();
     _changeCount.dispose();
     _voice.stopListening();
     _controller.dispose();
@@ -367,62 +395,91 @@ class _PairingMirrorPageState extends State<PairingMirrorPage>
                 ),
               ),
               Expanded(
-                child: MirrorTerminalStack(
-                  // The grid can only be a whole number of cells, so the resolver
-                  // hands the sub-cell remainder back as centered padding
-                  // (`viewport_resolver.dart`) — up to a cell of width split left
-                  // and right, and a row of height split top and bottom. That is
-                  // unavoidable; what made it *visible* is that the remainder is
-                  // cleared by the engine, not by Flutter, so it took the colour
-                  // from the engine's config rather than from anything painted
-                  // behind it. So the colour has to be set in two places, and
-                  // measuring showed both are needed: the engine's config (see
-                  // [didChangeDependencies]) covers the remainder inside its
-                  // surface, and this box covers the frame *outside* that surface —
-                  // 23 logical rows at the top and ~14 at each side, which was
-                  // still showing the Scaffold's black once the first half was
-                  // fixed. Same packed RGB feeds both, so they cannot disagree.
-                  terminal: ColoredBox(
-                    color: Color(0xFF000000 | terminalTheme.background),
-                    child: TerminalView(
-                      _engine,
-                      key: _terminalViewKey,
-                      controller: _controller,
-                      theme: terminalTheme,
-                      // Without this the view falls back to TerminalStyle.defaults(),
-                      // whose family is 'monospace' — a fontconfig generic that iOS
-                      // cannot resolve, so glyphs come from the proportional system
-                      // face while cells are sized from that same face's 'W'
-                      // advance. Narrow glyphs then float in oversized cells. The
-                      // desktop terminal has always passed this; the mirror did not.
-                      textStyle: appTerminalTextStyle(context),
-                      autofocus: true,
-                      // Zero padding so the grid fills the full phone width; the
-                      // resolver's sub-cell remainder is the only inset left.
-                      padding: EdgeInsets.zero,
-                      onPtyResize: cubit.sendResize,
-                    ),
-                  ),
-                  // A phone has no Ctrl+Shift+C and no right-click menu, so the
-                  // touch selection a long press starts needs its own exit: the
-                  // chip appears while a selection is live and copies it out.
-                  overlay: ListenableBuilder(
-                    listenable: _controller,
-                    builder: (context, _) => _controller.selectionActive
-                        ? MirrorSelectionBar(onCopy: _copySelection)
-                        : const SizedBox.shrink(),
-                  ),
+                // The desktop decides whether this pane is a terminal or a
+                // conversation; the phone follows. Both drive the same PTY, so
+                // flipping the mode on the desktop never interrupts the agent.
+                child: ValueListenableBuilder<bool>(
+                  valueListenable: _chatMode,
+                  builder: (context, isChat, _) {
+                    if (isChat) {
+                      return ChatTranscriptPane(
+                        transcript: _chatRows,
+                        canSend: true,
+                        background: Color(
+                          0xFF000000 | terminalTheme.background,
+                        ),
+                        foreground: Color(
+                          0xFF000000 | terminalTheme.foreground,
+                        ),
+                        onSend: (text) =>
+                            cubit.sendInput(utf8.encode('$text\r')),
+                      );
+                    }
+                    return MirrorTerminalStack(
+                      // The grid can only be a whole number of cells, so the resolver
+                      // hands the sub-cell remainder back as centered padding
+                      // (`viewport_resolver.dart`) — up to a cell of width split left
+                      // and right, and a row of height split top and bottom. That is
+                      // unavoidable; what made it *visible* is that the remainder is
+                      // cleared by the engine, not by Flutter, so it took the colour
+                      // from the engine's config rather than from anything painted
+                      // behind it. So the colour has to be set in two places, and
+                      // measuring showed both are needed: the engine's config (see
+                      // [didChangeDependencies]) covers the remainder inside its
+                      // surface, and this box covers the frame *outside* that surface —
+                      // 23 logical rows at the top and ~14 at each side, which was
+                      // still showing the Scaffold's black once the first half was
+                      // fixed. Same packed RGB feeds both, so they cannot disagree.
+                      terminal: ColoredBox(
+                        color: Color(0xFF000000 | terminalTheme.background),
+                        child: TerminalView(
+                          _engine,
+                          key: _terminalViewKey,
+                          controller: _controller,
+                          theme: terminalTheme,
+                          // Without this the view falls back to TerminalStyle.defaults(),
+                          // whose family is 'monospace' — a fontconfig generic that iOS
+                          // cannot resolve, so glyphs come from the proportional system
+                          // face while cells are sized from that same face's 'W'
+                          // advance. Narrow glyphs then float in oversized cells. The
+                          // desktop terminal has always passed this; the mirror did not.
+                          textStyle: appTerminalTextStyle(context),
+                          autofocus: true,
+                          // Zero padding so the grid fills the full phone width; the
+                          // resolver's sub-cell remainder is the only inset left.
+                          padding: EdgeInsets.zero,
+                          onPtyResize: cubit.sendResize,
+                        ),
+                      ),
+                      // A phone has no Ctrl+Shift+C and no right-click menu, so the
+                      // touch selection a long press starts needs its own exit: the
+                      // chip appears while a selection is live and copies it out.
+                      overlay: ListenableBuilder(
+                        listenable: _controller,
+                        builder: (context, _) => _controller.selectionActive
+                            ? MirrorSelectionBar(onCopy: _copySelection)
+                            : const SizedBox.shrink(),
+                      ),
+                    );
+                  },
                 ),
               ),
-              MultiBlocProvider(
-                providers: [
-                  BlocProvider.value(value: _toolbar),
-                  BlocProvider.value(value: _voice),
-                  BlocProvider.value(value: _upload),
-                ],
-                child: MobileBottomSlot(
-                  controller: _composerText,
-                  focusNode: _composerFocus,
+              // The chat view brings its own composer; the terminal toolbar's
+              // keys and media shortcuts only make sense over the grid.
+              ValueListenableBuilder<bool>(
+                valueListenable: _chatMode,
+                builder: (context, isChat, child) =>
+                    isChat ? const SizedBox.shrink() : child!,
+                child: MultiBlocProvider(
+                  providers: [
+                    BlocProvider.value(value: _toolbar),
+                    BlocProvider.value(value: _voice),
+                    BlocProvider.value(value: _upload),
+                  ],
+                  child: MobileBottomSlot(
+                    controller: _composerText,
+                    focusNode: _composerFocus,
+                  ),
                 ),
               ),
             ],

@@ -1,0 +1,387 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:shared_ui/shared_ui.dart';
+
+import '../../../../l10n/l10n_extensions.dart';
+import '../../../../services/chat/chat_transcript_row.dart';
+
+/// Chat view over a pane that keeps running its agent in the terminal.
+///
+/// Rows come from the CLI's own session store, so nothing here talks to the
+/// agent: the composer writes to the same PTY the terminal view writes to, and
+/// the transcript is re-read from disk. That is what makes the two views
+/// interchangeable mid-turn instead of two kinds of session.
+class ChatTranscriptPane extends StatefulWidget {
+  const ChatTranscriptPane({
+    required this.transcript,
+    required this.onSend,
+    required this.canSend,
+    this.background,
+    this.foreground,
+    this.composerFocusNode,
+    super.key,
+  });
+
+  /// Live rows plus the reason a pane has none.
+  final ValueListenable<ChatTranscriptSnapshot> transcript;
+
+  /// Sends one prompt to the pane's PTY (the caller appends the newline).
+  final ValueChanged<String> onSend;
+
+  /// False while the PTY cannot take input (connecting, exited).
+  final bool canSend;
+
+  final Color? background;
+  final Color? foreground;
+  final FocusNode? composerFocusNode;
+
+  @override
+  State<ChatTranscriptPane> createState() => _ChatTranscriptPaneState();
+}
+
+class _ChatTranscriptPaneState extends State<ChatTranscriptPane> {
+  final _scroll = ScrollController();
+  final _composer = TextEditingController();
+  final _expanded = <String>{};
+
+  @override
+  void initState() {
+    super.initState();
+    widget.transcript.addListener(_onTranscriptChanged);
+  }
+
+  @override
+  void didUpdateWidget(ChatTranscriptPane oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.transcript != widget.transcript) {
+      oldWidget.transcript.removeListener(_onTranscriptChanged);
+      widget.transcript.addListener(_onTranscriptChanged);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.transcript.removeListener(_onTranscriptChanged);
+    _scroll.dispose();
+    _composer.dispose();
+    super.dispose();
+  }
+
+  /// Follows new rows only when the reader is already at the bottom, so a
+  /// scroll-back is never yanked away by the next poll.
+  void _onTranscriptChanged() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scroll.hasClients) return;
+      final position = _scroll.position;
+      final atBottom = position.maxScrollExtent - position.pixels < 120;
+      if (!atBottom) return;
+      _scroll.jumpTo(position.maxScrollExtent);
+    });
+  }
+
+  void _send() {
+    final text = _composer.text.trim();
+    if (text.isEmpty || !widget.canSend) return;
+    _composer.clear();
+    widget.onSend(text);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final foreground =
+        widget.foreground ?? Theme.of(context).colorScheme.onSurface;
+    return ColoredBox(
+      color: widget.background ?? Colors.transparent,
+      child: ValueListenableBuilder<ChatTranscriptSnapshot>(
+        valueListenable: widget.transcript,
+        builder: (context, snapshot, _) {
+          return Column(
+            children: [
+              Expanded(child: _buildBody(context, snapshot, foreground)),
+              TpSeparator(color: foreground.withValues(alpha: 0.12)),
+              _buildComposer(context, foreground),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildBody(
+    BuildContext context,
+    ChatTranscriptSnapshot snapshot,
+    Color foreground,
+  ) {
+    final styles = TpTextStyles.of(context);
+    final l10n = context.l10n;
+    final unavailable = snapshot.unavailable;
+    if (snapshot.rows.isEmpty) {
+      final String message = switch (unavailable) {
+        null => l10n.chatPaneEmpty,
+        ChatTranscriptUnavailable.noDirectory =>
+          l10n.chatPaneUnavailableNoDirectory,
+        ChatTranscriptUnavailable.noSessionFile =>
+          l10n.chatPaneUnavailableNoSession,
+        ChatTranscriptUnavailable.unsupportedFamily =>
+          l10n.chatPaneUnavailableUnsupported,
+        ChatTranscriptUnavailable.readFailed => l10n.chatPaneUnavailableRead,
+      };
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Text(
+            message,
+            textAlign: TextAlign.center,
+            style: styles.smColored(foreground.withValues(alpha: 0.6)),
+          ),
+        ),
+      );
+    }
+    return ListView.builder(
+      controller: _scroll,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      itemCount: snapshot.rows.length,
+      itemBuilder: (context, index) {
+        final row = snapshot.rows[index];
+        return Padding(
+          key: ValueKey(row.id),
+          padding: const EdgeInsets.only(bottom: 10),
+          child: _buildRow(context, row, foreground),
+        );
+      },
+    );
+  }
+
+  Widget _buildRow(BuildContext context, ChatTranscriptRow row, Color fg) {
+    final styles = TpTextStyles.of(context);
+    final l10n = context.l10n;
+    switch (row.kind) {
+      case ChatTranscriptRowKind.user:
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: fg.withValues(alpha: 0.06),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(row.text, style: styles.smColored(fg)),
+        );
+      case ChatTranscriptRowKind.assistant:
+        return SelectableText(row.text, style: styles.smRelaxedColored(fg));
+      case ChatTranscriptRowKind.thought:
+        return _CollapsibleRow(
+          label: l10n.chatPaneThoughts,
+          body: row.text,
+          expanded: _expanded.contains(row.id),
+          foreground: fg,
+          onToggle: () => _toggle(row.id),
+          italic: true,
+        );
+      case ChatTranscriptRowKind.tool:
+        final header = [
+          row.toolName,
+          if (row.detail.isNotEmpty) row.detail,
+        ].join('  ');
+        return _ToolRow(
+          header: header,
+          body: row.text,
+          running: row.running,
+          expanded: _expanded.contains(row.id),
+          foreground: fg,
+          onToggle: () => _toggle(row.id),
+        );
+      case ChatTranscriptRowKind.notice:
+        return Center(
+          child: Text(
+            l10n.chatPaneCompacted,
+            style: styles.xsColored(fg.withValues(alpha: 0.45)),
+          ),
+        );
+    }
+  }
+
+  void _toggle(String id) {
+    setState(() {
+      if (!_expanded.remove(id)) _expanded.add(id);
+    });
+  }
+
+  Widget _buildComposer(BuildContext context, Color foreground) {
+    final l10n = context.l10n;
+    final styles = TpTextStyles.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _composer,
+              focusNode: widget.composerFocusNode,
+              enabled: widget.canSend,
+              minLines: 1,
+              maxLines: 6,
+              textInputAction: TextInputAction.send,
+              onSubmitted: (_) => _send(),
+              style: styles.smColored(foreground),
+              decoration: InputDecoration(
+                isDense: true,
+                hintText: l10n.chatPaneComposerHint,
+                hintStyle: styles.smColored(foreground.withValues(alpha: 0.4)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(
+                    color: foreground.withValues(alpha: 0.15),
+                  ),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          TpIconButton(
+            icon: Icons.arrow_upward,
+            tooltip: l10n.chatPaneSend,
+            enabled: widget.canSend,
+            onTap: _send,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CollapsibleRow extends StatelessWidget {
+  const _CollapsibleRow({
+    required this.label,
+    required this.body,
+    required this.expanded,
+    required this.foreground,
+    required this.onToggle,
+    this.italic = false,
+  });
+
+  final String label;
+  final String body;
+  final bool expanded;
+  final Color foreground;
+  final VoidCallback onToggle;
+  final bool italic;
+
+  @override
+  Widget build(BuildContext context) {
+    final styles = TpTextStyles.of(context);
+    final dim = foreground.withValues(alpha: 0.55);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: onToggle,
+          child: Row(
+            children: [
+              Icon(
+                expanded ? Icons.expand_more : Icons.chevron_right,
+                size: 16,
+                color: dim,
+              ),
+              Text(label, style: styles.xsColored(dim)),
+            ],
+          ),
+        ),
+        if (expanded)
+          Padding(
+            padding: const EdgeInsets.only(left: 16, top: 4),
+            child: Text(
+              body,
+              style: styles
+                  .smColored(dim)
+                  .copyWith(fontStyle: italic ? FontStyle.italic : null),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _ToolRow extends StatelessWidget {
+  const _ToolRow({
+    required this.header,
+    required this.body,
+    required this.running,
+    required this.expanded,
+    required this.foreground,
+    required this.onToggle,
+  });
+
+  final String header;
+  final String body;
+  final bool running;
+  final bool expanded;
+  final Color foreground;
+  final VoidCallback onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    final styles = TpTextStyles.of(context);
+    final dim = foreground.withValues(alpha: 0.7);
+    return InkWell(
+      onTap: body.isEmpty ? null : onToggle,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              SizedBox(
+                width: 16,
+                height: 16,
+                child: running
+                    ? CircularProgressIndicator(
+                        strokeWidth: 1.6,
+                        color: Theme.of(context).colorScheme.primary,
+                      )
+                    : Icon(
+                        body.isEmpty
+                            ? Icons.circle_outlined
+                            : expanded
+                            ? Icons.expand_more
+                            : Icons.chevron_right,
+                        size: 16,
+                        color: dim,
+                      ),
+              ),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  header,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: styles
+                      .xsColored(dim)
+                      .copyWith(fontFamily: 'monospace'),
+                ),
+              ),
+            ],
+          ),
+          if (expanded && body.isNotEmpty)
+            Container(
+              margin: const EdgeInsets.only(left: 20, top: 6),
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: foreground.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                body,
+                style: styles
+                    .xsColored(foreground.withValues(alpha: 0.8))
+                    .copyWith(fontFamily: 'monospace'),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}

@@ -3717,4 +3717,37 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get voiceInputCloudPrivacyNote => '音频将直接发送给云服务商，不经过端到端加密的配对通道。';
+
+  @override
+  String get chatPaneComposerHint => '给智能体发消息…';
+
+  @override
+  String get chatPaneSend => '发送';
+
+  @override
+  String get chatPaneThoughts => '思考';
+
+  @override
+  String get chatPaneCompacted => '上下文已压缩';
+
+  @override
+  String get chatPaneEmpty => '还没有内容，发一条消息开始。';
+
+  @override
+  String get chatPaneUnavailableNoDirectory => '请先在文件夹里打开一个终端。';
+
+  @override
+  String get chatPaneUnavailableNoSession => '这个文件夹还没有智能体会话记录，请先在终端里启动一个。';
+
+  @override
+  String get chatPaneUnavailableUnsupported => '这个智能体的会话存储格式还无法生成聊天视图，请使用终端。';
+
+  @override
+  String get chatPaneUnavailableRead => '读取会话记录失败。';
+
+  @override
+  String get chatModeToChat => '切换到聊天';
+
+  @override
+  String get chatModeToTerminal => '切换到终端';
 }

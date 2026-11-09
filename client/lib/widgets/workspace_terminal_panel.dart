@@ -19,6 +19,8 @@ import '../pages/command_history/command_history_dialog.dart';
 import '../pages/command_log/command_log_dialog.dart';
 import '../services/commands/command_bus.dart';
 import '../services/commands/content_find_command_registrar.dart';
+import '../services/chat/chat_transcript_registry.dart';
+import '../services/chat/chat_transcript_session.dart';
 import '../services/commands/terminal_split_command_registrar.dart';
 import '../services/cli/sessions/agent_cli_session_service.dart';
 import '../services/cli/sessions/agent_cli_sessions.dart';
@@ -44,6 +46,7 @@ import 'terminal/terminal_layout_toolbar.dart';
 import 'terminal/terminal_pane_keys.dart';
 import 'terminal/terminal_split_view.dart';
 import 'terminal_find_bar.dart';
+import '../pages/home_workspace/workspace/chat/chat_transcript_pane.dart';
 import 'workspace_terminal/workspace_terminal_body_kind.dart';
 import 'workspace_terminal/workspace_terminal_empty_pane.dart';
 import 'workspace_terminal/workspace_terminal_resume_menu.dart';
@@ -653,17 +656,18 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
       onShowAgentSessions: (position) =>
           unawaited(_showAgentSessionsMenu(position)),
       isZoomed: surface.zoomedPaneId != null,
+      chatMode: _chatModeFor(_group.activeEntry?.id),
+      onToggleChatMode: _group.activeEntry == null ? null : _toggleChatMode,
     );
   }
 
-  /// Opens the resumable agent-CLI sessions menu anchored at the toolbar
-  /// button, scoped to the focused pane's runtime target and directory.
-  Future<void> _showAgentSessionsMenu(Offset globalPosition) async {
-    final entry = _activeEntry;
-    if (entry == null) return;
+  /// Directory a pane's agent CLI keys its session store by, in that machine's
+  /// own path form. Shared by the resume menu and the chat transcript: both ask
+  /// the same question of the same store.
+  String _directoryForEntry(WorkspaceTerminalEntry entry) {
     final target = _connector.runtimeTargetFor(entry.spec);
     final osc7 = entry.session.engine.workingDir.value;
-    final directory = switch (target.kind) {
+    return switch (target.kind) {
       // Local panes parse OSC 7 through the host-native path semantics.
       RuntimeKind.local =>
         TerminalSessionLinkProviders.parseOsc7Cwd(osc7) ?? entry.cwd,
@@ -676,6 +680,15 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
             entry.cwd,
       RuntimeKind.ssh => posixDirectoryFromOsc7(osc7) ?? entry.cwd,
     };
+  }
+
+  /// Opens the resumable agent-CLI sessions menu anchored at the toolbar
+  /// button, scoped to the focused pane's runtime target and directory.
+  Future<void> _showAgentSessionsMenu(Offset globalPosition) async {
+    final entry = _activeEntry;
+    if (entry == null) return;
+    final target = _connector.runtimeTargetFor(entry.spec);
+    final directory = _directoryForEntry(entry);
     if (directory.trim().isEmpty) return;
     await showWorkspaceTerminalResumeMenu(
       context: context,
@@ -685,6 +698,38 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
       directory: directory,
       onRun: (command) => _writeToActivePane(command, submit: true),
     );
+  }
+
+  ChatTranscriptRegistry get _chatTranscripts => _registry.chatTranscripts;
+
+  bool _chatModeFor(String? paneId) =>
+      paneId != null && _chatTranscripts.isChatMode(paneId);
+
+  /// Switches the focused pane between the terminal and its chat view.
+  ///
+  /// Both views drive the same PTY: leaving chat does not touch the agent, and
+  /// entering it starts polling the CLI's own session store. A pane whose agent
+  /// has not written a session yet shows why instead of an empty transcript.
+  void _toggleChatMode() {
+    final entry = _activeEntry;
+    if (entry == null) return;
+    final registry = _chatTranscripts;
+    if (registry.isChatMode(entry.id)) {
+      registry.unregister(entry.id);
+    } else {
+      final service = context.read<AgentCliSessionService>();
+      final transcript = ChatTranscriptSession(
+        paneId: entry.id,
+        resolveContext: service.resolveContextFor,
+        target: () => _connector.runtimeTargetFor(entry.spec),
+        directory: () => _directoryForEntry(entry),
+        startedAt: DateTime.now(),
+        sessionService: service,
+      );
+      registry.register(entry.id, transcript);
+      transcript.start();
+    }
+    setState(() {});
   }
 
   /// Resolves the cwd a new split pane inherits from the currently focused
@@ -944,7 +989,25 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
         );
       case WorkspaceTerminalBodyKind.activeSession:
         final activeEntry = active!;
+        // Chat is a per-pane view of the same session: the split tree is left
+        // untouched underneath, so switching back is instant and splits
+        // survive the round trip.
+        final chatTranscript = _chatTranscripts[activeEntry.id];
+        if (chatTranscript != null) {
+          terminalBody = ChatTranscriptPane(
+            transcript: chatTranscript.transcript,
+            canSend: activeEntry.session.transportReadyForIo,
+            foreground: terminalForeground,
+            background: terminalBackground,
+            onSend: (text) {
+              activeEntry.session.markUserTurnStarted();
+              activeEntry.session.input.writeToPty('$text\r');
+            },
+          );
+          break;
+        }
         _paneKeys.prune(_group.entries.map((e) => e.id).toSet());
+        _chatTranscripts.prune(_group.entries.map((e) => e.id).toSet());
         final surface =
             _activeSurface ??
             _group.surfaceForPane(activeEntry.id) ??

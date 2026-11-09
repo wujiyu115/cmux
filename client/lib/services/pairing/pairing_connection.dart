@@ -42,6 +42,7 @@ class PairingConnection {
     PairingTargetIndexProvider? targetIndex,
     PairingGitChangesProvider? gitChanges,
     PairingGitDiffProvider? gitDiff,
+    PairingChatTranscriptProvider? chatTranscript,
     Stream<PairingAgentNotice>? agentNotices,
     void Function()? onClosed,
   }) : _transport = transport,
@@ -62,6 +63,7 @@ class PairingConnection {
        _targetIndex = targetIndex,
        _gitChanges = gitChanges,
        _gitDiff = gitDiff,
+       _chatTranscript = chatTranscript,
        _agentNotices = agentNotices,
        _onClosed = onClosed;
 
@@ -83,6 +85,7 @@ class PairingConnection {
   final PairingTargetIndexProvider? _targetIndex;
   final PairingGitChangesProvider? _gitChanges;
   final PairingGitDiffProvider? _gitDiff;
+  final PairingChatTranscriptProvider? _chatTranscript;
 
   /// Broadcast feed of desktop agent-attention edges. Shared by every
   /// connection, so each authenticated phone gets its own subscription — the
@@ -216,6 +219,7 @@ class PairingConnection {
       targetIndex: _targetIndex,
       gitChanges: _gitChanges,
       gitDiff: _gitDiff,
+      chatTranscript: _chatTranscript,
     );
     _catalogChanges = _catalog.changes.listen(
       (_) => _sendEncryptedJson({'method': 'session.changed'}),

@@ -7092,6 +7092,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Audio is sent directly to the cloud provider, not through the encrypted pairing channel.'**
   String get voiceInputCloudPrivacyNote;
+
+  /// No description provided for @chatPaneComposerHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Message the agent…'**
+  String get chatPaneComposerHint;
+
+  /// No description provided for @chatPaneSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get chatPaneSend;
+
+  /// No description provided for @chatPaneThoughts.
+  ///
+  /// In en, this message translates to:
+  /// **'Thinking'**
+  String get chatPaneThoughts;
+
+  /// No description provided for @chatPaneCompacted.
+  ///
+  /// In en, this message translates to:
+  /// **'Context compacted'**
+  String get chatPaneCompacted;
+
+  /// No description provided for @chatPaneEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing here yet. Send a message to start.'**
+  String get chatPaneEmpty;
+
+  /// No description provided for @chatPaneUnavailableNoDirectory.
+  ///
+  /// In en, this message translates to:
+  /// **'Open a terminal in a folder first.'**
+  String get chatPaneUnavailableNoDirectory;
+
+  /// No description provided for @chatPaneUnavailableNoSession.
+  ///
+  /// In en, this message translates to:
+  /// **'No agent session recorded for this folder yet. Start one in the terminal.'**
+  String get chatPaneUnavailableNoSession;
+
+  /// No description provided for @chatPaneUnavailableUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'This agent stores its session in a format the chat view cannot read yet — use the terminal.'**
+  String get chatPaneUnavailableUnsupported;
+
+  /// No description provided for @chatPaneUnavailableRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not read the session transcript.'**
+  String get chatPaneUnavailableRead;
+
+  /// No description provided for @chatModeToChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Show chat'**
+  String get chatModeToChat;
+
+  /// No description provided for @chatModeToTerminal.
+  ///
+  /// In en, this message translates to:
+  /// **'Show terminal'**
+  String get chatModeToTerminal;
 }
 
 class _AppLocalizationsDelegate

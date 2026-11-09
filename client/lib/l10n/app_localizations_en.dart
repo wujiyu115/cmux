@@ -3852,4 +3852,41 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get voiceInputCloudPrivacyNote =>
       'Audio is sent directly to the cloud provider, not through the encrypted pairing channel.';
+
+  @override
+  String get chatPaneComposerHint => 'Message the agent…';
+
+  @override
+  String get chatPaneSend => 'Send';
+
+  @override
+  String get chatPaneThoughts => 'Thinking';
+
+  @override
+  String get chatPaneCompacted => 'Context compacted';
+
+  @override
+  String get chatPaneEmpty => 'Nothing here yet. Send a message to start.';
+
+  @override
+  String get chatPaneUnavailableNoDirectory =>
+      'Open a terminal in a folder first.';
+
+  @override
+  String get chatPaneUnavailableNoSession =>
+      'No agent session recorded for this folder yet. Start one in the terminal.';
+
+  @override
+  String get chatPaneUnavailableUnsupported =>
+      'This agent stores its session in a format the chat view cannot read yet — use the terminal.';
+
+  @override
+  String get chatPaneUnavailableRead =>
+      'Could not read the session transcript.';
+
+  @override
+  String get chatModeToChat => 'Show chat';
+
+  @override
+  String get chatModeToTerminal => 'Show terminal';
 }

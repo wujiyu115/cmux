@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 import '../../models/terminal_split.dart';
 import '../../models/terminal_surface.dart';
 import '../../models/workspace_terminal_session_spec.dart';
+import '../chat/chat_transcript_registry.dart';
 import '../../pages/home_workspace/home_workspace_route.dart';
 import 'command_log_sink.dart';
 import 'shell_command_tracker.dart';
@@ -503,6 +504,11 @@ class WorkspaceTerminalRegistry {
 
   final Map<String, WorkspaceTerminalGroup> _groups = {};
   final TerminalNotificationBridgeFactory? _bridgeFactory;
+
+  /// Which panes currently render as chat, and the transcripts behind them.
+  /// Lives here (not on the group) because both the terminal panel and the
+  /// pairing host need the same answer for "what mode is this pane in".
+  final ChatTranscriptRegistry chatTranscripts = ChatTranscriptRegistry();
   final ShellCommandTrackerFactory? _trackerFactory;
   final _RegistryChanges _changes = _RegistryChanges();
 

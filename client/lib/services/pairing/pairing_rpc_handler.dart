@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import '../terminal/terminal_session.dart';
 import 'pairing_frames.dart';
+import '../chat/chat_transcript_row.dart';
 import 'pairing_git_view.dart';
 import 'pairing_upload_receiver.dart';
 import 'pairing_upload_target.dart';
@@ -38,6 +39,12 @@ class _Subscription {
   var gitFiles = const <String, bool>{};
 }
 
+/// Live chat transcript of one pane, or null when that pane shows the terminal.
+/// Keyed by pane id (`catalogId` without its `ws:` prefix) because the chat
+/// registry is per live pane, not per wire session.
+typedef PairingChatTranscriptProvider =
+    ChatTranscriptSnapshot? Function(String paneId);
+
 /// Per-connection JSON-RPC + terminal I/O dispatcher (runs *inside* the E2EE
 /// channel, after auth). Owns this connection's subscription book; [dispose]
 /// tears every listener down so a dropped socket leaks nothing.
@@ -65,6 +72,7 @@ class PairingRpcHandler {
     PairingTargetIndexProvider? targetIndex,
     PairingGitChangesProvider? gitChanges,
     PairingGitDiffProvider? gitDiff,
+    PairingChatTranscriptProvider? chatTranscript,
     Duration activateTimeout = const Duration(seconds: 8),
     Duration activatePollInterval = const Duration(milliseconds: 40),
     PairingUploadCaps uploadCaps = const PairingUploadCaps(),
@@ -86,6 +94,7 @@ class PairingRpcHandler {
        _targetIndex = targetIndex,
        _gitChanges = gitChanges,
        _gitDiff = gitDiff,
+       _chatTranscript = chatTranscript,
        _activateTimeout = activateTimeout,
        _activatePollInterval = activatePollInterval {
     // Built in the body, not the initializer list: the receiver's ack callback
@@ -114,6 +123,7 @@ class PairingRpcHandler {
   final PairingTargetIndexProvider? _targetIndex;
   final PairingGitChangesProvider? _gitChanges;
   final PairingGitDiffProvider? _gitDiff;
+  final PairingChatTranscriptProvider? _chatTranscript;
   final Duration _activateTimeout;
   final Duration _activatePollInterval;
   late final PairingUploadReceiver _uploads;
@@ -165,6 +175,8 @@ class PairingRpcHandler {
         _activate(id, params);
       case 'terminal.subscribe':
         _subscribe(id, params);
+      case 'chat.read':
+        _chatRead(id, params);
       case 'terminal.unsubscribe':
         _unsubscribe(params);
         _replyResult(id, const {'ok': true});
@@ -198,8 +210,37 @@ class PairingRpcHandler {
         'subtitle': entry.ref.subtitle,
         'cols': entry.session.viewWidth,
         'rows': entry.session.viewHeight,
+        // The desktop decides whether a pane is a terminal or a conversation;
+        // the phone only renders what it is told.
+        'mode': _chatTranscriptFor(entry.ref.paneId) == null
+            ? 'terminal'
+            : 'chat',
       },
   ];
+
+  ChatTranscriptSnapshot? _chatTranscriptFor(String paneId) =>
+      _chatTranscript?.call(paneId);
+
+  /// `chat.read` answers for one pane: the mode it is in plus, in chat mode, the
+  /// rows. Polled by the phone while it mirrors that pane, so a toggle on the
+  /// desktop flips the phone's view on the next poll.
+  void _chatRead(Object? id, Map<String, Object?> params) {
+    final catalogId = params['catalogId'];
+    if (catalogId is! String || catalogId.isEmpty) {
+      _replyError(id, 'chat.read requires catalogId');
+      return;
+    }
+    final entry = _catalog.resolve(catalogId);
+    if (entry == null) {
+      _replyError(id, 'chat.read: unknown session');
+      return;
+    }
+    final snapshot = _chatTranscriptFor(entry.ref.paneId);
+    _replyResult(id, {
+      'mode': snapshot == null ? 'terminal' : 'chat',
+      if (snapshot != null) 'transcript': snapshot.toJson(),
+    });
+  }
 
   /// Full workspace tree: every workspace from disk with its live terminal panes
   /// merged in from the [SessionCatalog]. Workspaces with nothing running are
@@ -254,15 +295,13 @@ class PairingRpcHandler {
     _replyResult(id, {
       'workspaces': out,
       'groups': [
-        for (final g in groups)
-          {'id': g.id, 'name': g.name, 'order': g.order},
+        for (final g in groups) {'id': g.id, 'name': g.name, 'order': g.order},
       ],
       // Absent-vs-empty is the whole compatibility story: a host without a
       // target index sends `[]`, the phone hides its machine selector, and
       // neither side sends a targetId. See [PairingTargetInfo].
       'targets': [
-        for (final t in targets)
-          {'id': t.id, 'label': t.label, 'kind': t.kind},
+        for (final t in targets) {'id': t.id, 'label': t.label, 'kind': t.kind},
       ],
     });
   }
@@ -317,8 +356,9 @@ class PairingRpcHandler {
       return;
     }
     final title = params['title'] is String ? params['title'] as String : null;
-    final groupId =
-        params['groupId'] is String ? params['groupId'] as String : null;
+    final groupId = params['groupId'] is String
+        ? params['groupId'] as String
+        : null;
     final targetId = params['targetId'] is String
         ? params['targetId'] as String
         : null;
@@ -545,10 +585,12 @@ class PairingRpcHandler {
     record.listener?.cancel();
     // Last phone off this terminal releases the desktop back to its own grid.
     record.session.detachMirror();
-    _send(PairingCodec.encodeJson({
-      'method': 'terminal.closed',
-      'params': {'sub': sub, 'reason': reason},
-    }));
+    _send(
+      PairingCodec.encodeJson({
+        'method': 'terminal.closed',
+        'params': {'sub': sub, 'reason': reason},
+      }),
+    );
   }
 
   /// The mirrored pane behind [sub]: the workspace that owns it and the
@@ -584,10 +626,7 @@ class PairingRpcHandler {
     }
     PairingGitChanges changes;
     try {
-      changes = await provider(
-        workspaceId: pane.workspaceId,
-        cwd: pane.cwd,
-      );
+      changes = await provider(workspaceId: pane.workspaceId, cwd: pane.cwd);
     } on Object catch (e) {
       _replyError(id, 'git.changes failed: $e');
       return;

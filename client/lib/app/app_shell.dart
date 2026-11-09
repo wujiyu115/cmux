@@ -903,6 +903,9 @@ Future<AppShell> buildAppShell({
     // close. The registry lives for the app's lifetime, so this listener is
     // intentionally never detached.
     workspaceTerminalRegistry.changes.addListener(sessionCatalog.notifyChanged);
+    workspaceTerminalRegistry.chatTranscripts.changes.listen(
+      (_) => sessionCatalog.notifyChanged(),
+    );
     // Stamp mirrorability where the catalog knowledge lives. A seat id for a
     // workspace pane IS its catalogId (`ws:<paneId>` on both sides), so this is
     // a pure lookup; chat-session seats and dead panes stay null and the phone
@@ -1222,6 +1225,10 @@ Future<AppShell> buildAppShell({
           targetIndex: pairingTargetIndex,
           gitChanges: pairingGitChanges,
           gitDiff: pairingGitDiff,
+          // A pane in chat mode is listed (and answered) as chat; the phone
+          // renders the transcript this returns instead of the mirror.
+          chatTranscript: (paneId) =>
+              workspaceTerminalRegistry.chatTranscripts[paneId]?.transcript.value,
           agentNotices: agentNoticeWire,
         );
     pairingHostCubit = PairingHostCubit(

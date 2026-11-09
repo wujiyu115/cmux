@@ -25,12 +25,18 @@ class AgentCliSessionRecord {
     required this.sessionId,
     this.title,
     this.updatedAt,
+    this.filePath,
   });
 
   final AgentCliFamily family;
   final String sessionId;
   final String? title;
   final DateTime? updatedAt;
+
+  /// Absolute path of the store file holding this session, on the runtime
+  /// target's own filesystem. Null when the adapter could not name it (e.g. an
+  /// opencode session whose messages live in a sibling directory).
+  final String? filePath;
 }
 
 /// Claude/Qoder project-directory rule: every non-alphanumeric char of the
