@@ -7117,6 +7117,12 @@ abstract class AppLocalizations {
   /// **'The prompt did not arrive: no agent is running in this terminal, or the chat view is following another window\'s session. The text is back in the box.'**
   String get chatPanePromptUndelivered;
 
+  /// No description provided for @chatPaneForeignSession.
+  ///
+  /// In en, this message translates to:
+  /// **'This session did not start in this pane, so a prompt may not reach it.'**
+  String get chatPaneForeignSession;
+
   /// No description provided for @chatPaneSend.
   ///
   /// In en, this message translates to:

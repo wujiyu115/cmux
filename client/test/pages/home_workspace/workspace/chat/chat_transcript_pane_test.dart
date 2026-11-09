@@ -163,6 +163,37 @@ void main() {
     expect(sent, isEmpty, reason: 'a prompt with nowhere to land is dropped');
   });
 
+  testWidgets('a session this pane did not start says so', (tester) async {
+    final transcript = ValueNotifier(
+      ChatTranscriptSnapshot(
+        rows: const [
+          ChatTranscriptRow(
+            id: 'u1#text',
+            kind: ChatTranscriptRowKind.user,
+            text: 'someone else',
+          ),
+        ],
+        borrowed: true,
+      ),
+    );
+    addTearDown(transcript.dispose);
+
+    await tester.pumpWidget(_host(transcript));
+
+    expect(
+      find.textContaining('did not start in this pane'),
+      findsOneWidget,
+      reason: 'the guess cannot tell a resumed session from another window',
+    );
+
+    transcript.value = ChatTranscriptSnapshot(
+      rows: transcript.value.rows,
+      borrowed: false,
+    );
+    await tester.pump();
+    expect(find.textContaining('did not start in this pane'), findsNothing);
+  });
+
   testWidgets('a prompt the store never shows is reported and handed back', (
     tester,
   ) async {

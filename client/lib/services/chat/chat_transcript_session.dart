@@ -70,6 +70,7 @@ class ChatTranscriptSession {
   String? _path;
   String? _sessionId;
   AgentCliFamily? _family;
+  bool _borrowed = false;
   bool _resolving = false;
 
   /// The prompt the user just typed, until the store shows it landing.
@@ -169,6 +170,7 @@ class ChatTranscriptSession {
           sessionId: _sessionId,
           family: _family?.name,
           busy: _isBusy(rows),
+          borrowed: _borrowed,
         ),
       );
     } on Object {
@@ -270,6 +272,8 @@ class ChatTranscriptSession {
       _path = candidate;
       _sessionId = record.sessionId;
       _family = record.family;
+      // A prompt that landed here settles the question the guess could not.
+      _borrowed = false;
       _parser = parser;
       _pendingPrompt = null;
       _pendingSince = null;
@@ -323,6 +327,7 @@ class ChatTranscriptSession {
       _path = chosen.filePath;
       _sessionId = chosen.sessionId;
       _family = chosen.family;
+      _borrowed = own == null;
       _parser = chatTranscriptParserFor(chosen.family);
     } on Object {
       // A backend that cannot scan (SSH without the agent installed, a WSL
@@ -336,6 +341,7 @@ class ChatTranscriptSession {
     _path = null;
     _sessionId = null;
     _family = null;
+    _borrowed = false;
     _parser = null;
   }
 

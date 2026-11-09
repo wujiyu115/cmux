@@ -141,7 +141,20 @@ class _ChatTranscriptPaneState extends State<ChatTranscriptPane> {
           return Column(
             children: [
               Expanded(child: _buildBody(context, snapshot, foreground)),
-              if (_undelivered) _buildDeliveryWarning(context, foreground),
+              // Another window's conversation is a real possibility here; say
+              // so before the user types into it.
+              if (snapshot.borrowed && !_undelivered)
+                _buildNotice(
+                  context,
+                  context.l10n.chatPaneForeignSession,
+                  Icons.info_outline,
+                ),
+              if (_undelivered)
+                _buildNotice(
+                  context,
+                  context.l10n.chatPanePromptUndelivered,
+                  Icons.error_outline,
+                ),
               TpSeparator(color: foreground.withValues(alpha: 0.12)),
               _buildComposer(context, foreground, snapshot),
             ],
@@ -250,25 +263,16 @@ class _ChatTranscriptPaneState extends State<ChatTranscriptPane> {
     });
   }
 
-  Widget _buildDeliveryWarning(BuildContext context, Color foreground) {
-    final l10n = context.l10n;
+  Widget _buildNotice(BuildContext context, String text, IconData icon) {
     final styles = TpTextStyles.of(context);
+    final color = Theme.of(context).colorScheme.error;
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
       child: Row(
         children: [
-          Icon(
-            Icons.error_outline,
-            size: 14,
-            color: Theme.of(context).colorScheme.error,
-          ),
+          Icon(icon, size: 14, color: color),
           const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              l10n.chatPanePromptUndelivered,
-              style: styles.xsColored(Theme.of(context).colorScheme.error),
-            ),
-          ),
+          Expanded(child: Text(text, style: styles.xsColored(color))),
         ],
       ),
     );

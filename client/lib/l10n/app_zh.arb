@@ -1602,6 +1602,7 @@
   "chatPaneComposerHint": "给智能体发消息…",
   "chatPaneComposerNeedsAgent": "先在终端里启动 agent，再回来发消息。",
   "chatPanePromptUndelivered": "消息没有送到：这个终端里没有正在运行的 agent（或者聊天视图盯的是另一个窗口的会话）。文本已还回输入框。",
+  "chatPaneForeignSession": "这个会话不是本窗格启动的，消息可能到不了它。",
   "chatPaneSend": "发送",
   "chatPaneThoughts": "思考",
   "chatPaneCompacted": "上下文已压缩",

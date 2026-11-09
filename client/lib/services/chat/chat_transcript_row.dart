@@ -148,6 +148,7 @@ class ChatTranscriptSnapshot {
     this.sessionId,
     this.family,
     this.busy = false,
+    this.borrowed = false,
   });
 
   final List<ChatTranscriptRow> rows;
@@ -162,6 +163,11 @@ class ChatTranscriptSnapshot {
   /// True while the newest turn has no closing boundary yet.
   final bool busy;
 
+  /// The session was not started by this pane's PTY — it was adopted only
+  /// because its file is still being written (a `--resume`d session looks the
+  /// same). Worth saying out loud: a prompt here may not reach this agent.
+  final bool borrowed;
+
   bool get isEmpty => rows.isEmpty;
 
   bool get isAvailable => unavailable == null;
@@ -172,6 +178,7 @@ class ChatTranscriptSnapshot {
     if (sessionId != null) 'sessionId': sessionId,
     if (family != null) 'family': family,
     if (busy) 'busy': true,
+    if (borrowed) 'borrowed': true,
   };
 
   @override
@@ -182,9 +189,16 @@ class ChatTranscriptSnapshot {
           other.sessionId == sessionId &&
           other.family == family &&
           other.busy == busy &&
+          other.borrowed == borrowed &&
           listEquals(other.rows, rows);
 
   @override
-  int get hashCode =>
-      Object.hash(unavailable, sessionId, family, busy, Object.hashAll(rows));
+  int get hashCode => Object.hash(
+    unavailable,
+    sessionId,
+    family,
+    busy,
+    borrowed,
+    Object.hashAll(rows),
+  );
 }

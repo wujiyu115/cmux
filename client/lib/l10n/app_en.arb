@@ -1787,6 +1787,7 @@
   "chatPaneComposerHint": "Message the agent…",
   "chatPaneComposerNeedsAgent": "Start the agent in the terminal first, then message it here.",
   "chatPanePromptUndelivered": "The prompt did not arrive: no agent is running in this terminal, or the chat view is following another window's session. The text is back in the box.",
+  "chatPaneForeignSession": "This session did not start in this pane, so a prompt may not reach it.",
   "chatPaneSend": "Send",
   "chatPaneThoughts": "Thinking",
   "chatPaneCompacted": "Context compacted",
