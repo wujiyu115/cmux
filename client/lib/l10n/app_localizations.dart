@@ -7099,6 +7099,12 @@ abstract class AppLocalizations {
   /// **'Message the agent…'**
   String get chatPaneComposerHint;
 
+  /// No description provided for @chatPaneComposerNeedsAgent.
+  ///
+  /// In en, this message translates to:
+  /// **'Start the agent in the terminal first, then message it here.'**
+  String get chatPaneComposerNeedsAgent;
+
   /// No description provided for @chatPaneSend.
   ///
   /// In en, this message translates to:

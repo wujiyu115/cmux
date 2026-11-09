@@ -1784,6 +1784,7 @@
   "voiceInputTestFailed": "Connection failed",
   "voiceInputCloudPrivacyNote": "Audio is sent directly to the cloud provider, not through the encrypted pairing channel.",
   "chatPaneComposerHint": "Message the agent…",
+  "chatPaneComposerNeedsAgent": "Start the agent in the terminal first, then message it here.",
   "chatPaneSend": "Send",
   "chatPaneThoughts": "Thinking",
   "chatPaneCompacted": "Context compacted",

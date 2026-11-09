@@ -81,9 +81,23 @@ class _ChatTranscriptPaneState extends State<ChatTranscriptPane> {
 
   void _send() {
     final text = _composer.text.trim();
-    if (text.isEmpty || !widget.canSend) return;
+    if (text.isEmpty || !_canType(widget.transcript.value)) return;
     _composer.clear();
     widget.onSend(text);
+  }
+
+  /// Composing needs a live PTY *and* a session store to read the answer back
+  /// from. Without one the prompt would land in a bare shell and vanish — no
+  /// bubble, no error — so the composer states why instead.
+  bool _canType(ChatTranscriptSnapshot snapshot) {
+    if (!widget.canSend) return false;
+    return switch (snapshot.unavailable) {
+      ChatTranscriptUnavailable.noDirectory ||
+      ChatTranscriptUnavailable.noSessionFile ||
+      ChatTranscriptUnavailable.unsupportedFamily => false,
+      // A failed read is a snapshot problem, not proof the agent is gone.
+      ChatTranscriptUnavailable.readFailed || null => true,
+    };
   }
 
   @override
@@ -99,7 +113,7 @@ class _ChatTranscriptPaneState extends State<ChatTranscriptPane> {
             children: [
               Expanded(child: _buildBody(context, snapshot, foreground)),
               TpSeparator(color: foreground.withValues(alpha: 0.12)),
-              _buildComposer(context, foreground),
+              _buildComposer(context, foreground, snapshot),
             ],
           );
         },
@@ -206,9 +220,14 @@ class _ChatTranscriptPaneState extends State<ChatTranscriptPane> {
     });
   }
 
-  Widget _buildComposer(BuildContext context, Color foreground) {
+  Widget _buildComposer(
+    BuildContext context,
+    Color foreground,
+    ChatTranscriptSnapshot snapshot,
+  ) {
     final l10n = context.l10n;
     final styles = TpTextStyles.of(context);
+    final enabled = _canType(snapshot);
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
       child: Row(
@@ -218,7 +237,7 @@ class _ChatTranscriptPaneState extends State<ChatTranscriptPane> {
             child: TextField(
               controller: _composer,
               focusNode: widget.composerFocusNode,
-              enabled: widget.canSend,
+              enabled: enabled,
               minLines: 1,
               maxLines: 6,
               textInputAction: TextInputAction.send,
@@ -226,7 +245,9 @@ class _ChatTranscriptPaneState extends State<ChatTranscriptPane> {
               style: styles.smColored(foreground),
               decoration: InputDecoration(
                 isDense: true,
-                hintText: l10n.chatPaneComposerHint,
+                hintText: enabled
+                    ? l10n.chatPaneComposerHint
+                    : l10n.chatPaneComposerNeedsAgent,
                 hintStyle: styles.smColored(foreground.withValues(alpha: 0.4)),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -245,7 +266,7 @@ class _ChatTranscriptPaneState extends State<ChatTranscriptPane> {
           TpIconButton(
             icon: Icons.arrow_upward,
             tooltip: l10n.chatPaneSend,
-            enabled: widget.canSend,
+            enabled: enabled,
             onTap: _send,
           ),
         ],

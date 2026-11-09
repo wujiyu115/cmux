@@ -3857,6 +3857,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chatPaneComposerHint => 'Message the agent…';
 
   @override
+  String get chatPaneComposerNeedsAgent =>
+      'Start the agent in the terminal first, then message it here.';
+
+  @override
   String get chatPaneSend => 'Send';
 
   @override

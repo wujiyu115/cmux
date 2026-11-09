@@ -1599,6 +1599,7 @@
   "voiceInputTestFailed": "连接失败",
   "voiceInputCloudPrivacyNote": "音频将直接发送给云服务商，不经过端到端加密的配对通道。",
   "chatPaneComposerHint": "给智能体发消息…",
+  "chatPaneComposerNeedsAgent": "先在终端里启动 agent，再回来发消息。",
   "chatPaneSend": "发送",
   "chatPaneThoughts": "思考",
   "chatPaneCompacted": "上下文已压缩",

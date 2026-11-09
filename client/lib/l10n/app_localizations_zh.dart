@@ -3722,6 +3722,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get chatPaneComposerHint => '给智能体发消息…';
 
   @override
+  String get chatPaneComposerNeedsAgent => '先在终端里启动 agent，再回来发消息。';
+
+  @override
   String get chatPaneSend => '发送';
 
   @override

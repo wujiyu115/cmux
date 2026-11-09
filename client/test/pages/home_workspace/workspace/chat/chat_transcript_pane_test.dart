@@ -137,6 +137,32 @@ void main() {
     }
   });
 
+  testWidgets('no agent session disables the composer and says why', (
+    tester,
+  ) async {
+    final sent = <String>[];
+    final transcript = ValueNotifier(
+      const ChatTranscriptSnapshot(
+        unavailable: ChatTranscriptUnavailable.noSessionFile,
+      ),
+    );
+    addTearDown(transcript.dispose);
+
+    await tester.pumpWidget(_host(transcript, onSend: sent.add));
+
+    final field = tester.widget<TextField>(find.byType(TextField));
+    expect(field.enabled, isFalse);
+    expect(
+      find.text('Start the agent in the terminal first, then message it here.'),
+      findsOneWidget,
+    );
+
+    await tester.enterText(find.byType(TextField), 'hello');
+    await tester.tap(find.byIcon(Icons.arrow_upward));
+    await tester.pump();
+    expect(sent, isEmpty, reason: 'a prompt with nowhere to land is dropped');
+  });
+
   testWidgets('new rows follow the reader only at the bottom', (tester) async {
     final rows = [
       for (var i = 0; i < 40; i++)
