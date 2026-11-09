@@ -61,6 +61,14 @@ class WorkspaceTerminalEntry {
 
   final String id;
   String cwd;
+
+  /// When this pane's PTY was launched.
+  ///
+  /// Chat mode anchors its "which session file belongs to this pane" window to
+  /// this rather than to the moment the user flipped to chat: the agent may have
+  /// been running for an hour, and re-anchoring on every toggle would lose the
+  /// transcript the second time the user switched views.
+  final DateTime startedAt = DateTime.now();
   WorkspaceTerminalSessionSpec spec;
   TerminalSession session;
 

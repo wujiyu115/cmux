@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:teampilot/cubits/pairing_client_cubit.dart';
 import 'package:teampilot/repositories/pairing_settings_repository.dart';
 import 'package:teampilot/services/pairing/agent_notice_message.dart';
+import 'package:teampilot/services/chat/chat_transcript_row.dart';
 import 'package:teampilot/services/pairing/pairing_client.dart';
 import 'package:teampilot/services/pairing/pairing_offer.dart';
 import 'package:teampilot/services/pairing/pairing_upload_sender.dart';
@@ -205,6 +206,19 @@ class _FakePairingClient extends PairingClient {
     final failure = closeTerminalError;
     if (failure != null) throw Exception(failure);
     closedTerminals.add(paneId);
+  }
+
+  /// What `chat.read` should answer, and how it should fail when it does.
+  PairingChatView chatViewResult = const PairingChatView.terminal();
+  Object? chatViewError;
+  int chatViewCalls = 0;
+
+  @override
+  Future<PairingChatView> chatView(String catalogId) async {
+    chatViewCalls++;
+    final error = chatViewError;
+    if (error != null) throw error;
+    return chatViewResult;
   }
 
   @override
@@ -582,6 +596,74 @@ void main() {
       expect(fake.sentInput.single.$1, 42);
       expect(fake.sentInput.single.$2, Uint8List.fromList([104, 105]));
       expect(fake.sentResize.single, (42, 120, 40));
+    });
+
+    test('chatView reports the mode and rows the host answers with', () async {
+      final fake = _FakePairingClient()
+        ..chatViewResult = const PairingChatView(
+          isChat: true,
+          transcript: ChatTranscriptSnapshot(rows: [], family: 'claude'),
+        );
+      final cubit = PairingClientCubit(
+        settings: InMemoryPairingSettingsRepository(),
+        clientFactory: () => fake,
+      );
+      addTearDown(cubit.close);
+
+      cubit.beginPairing(_makeOffer());
+      await cubit.confirmPairing();
+      await cubit.openSession('ws:p1');
+
+      final view = await cubit.chatView();
+      expect(view?.isChat, isTrue);
+      expect(view?.transcript?.family, 'claude');
+      expect(fake.chatViewCalls, 1);
+    });
+
+    test('a dropped socket does not latch chat mode off forever', () async {
+      final fake = _FakePairingClient()
+        ..chatViewError = Exception('Connection closed');
+      final cubit = PairingClientCubit(
+        settings: InMemoryPairingSettingsRepository(),
+        clientFactory: () => fake,
+      );
+      addTearDown(cubit.close);
+
+      cubit.beginPairing(_makeOffer());
+      await cubit.confirmPairing();
+      await cubit.openSession('ws:p1');
+
+      expect(await cubit.chatView(), isNull);
+
+      // The connection came back: the next poll must ask again, or a pane that
+      // flipped to chat after the blip would never be shown as chat.
+      fake
+        ..chatViewError = null
+        ..chatViewResult = const PairingChatView(
+          isChat: true,
+          transcript: ChatTranscriptSnapshot(rows: []),
+        );
+      expect((await cubit.chatView())?.isChat, isTrue);
+      expect(fake.chatViewCalls, 2);
+    });
+
+    test('an unknown-method answer latches, so an old host is asked once', () async {
+      final fake = _FakePairingClient()
+        ..chatViewError = Exception('unknown method: chat.read');
+      final cubit = PairingClientCubit(
+        settings: InMemoryPairingSettingsRepository(),
+        clientFactory: () => fake,
+      );
+      addTearDown(cubit.close);
+
+      cubit.beginPairing(_makeOffer());
+      await cubit.confirmPairing();
+      await cubit.openSession('ws:p1');
+
+      expect(await cubit.chatView(), isNull);
+      fake.chatViewError = null;
+      expect(await cubit.chatView(), isNull);
+      expect(fake.chatViewCalls, 1);
     });
 
     test('leaveMirror unsubscribes and returns to connected', () async {

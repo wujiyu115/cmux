@@ -723,7 +723,7 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
         resolveContext: service.resolveContextFor,
         target: () => _connector.runtimeTargetFor(entry.spec),
         directory: () => _directoryForEntry(entry),
-        startedAt: DateTime.now(),
+        startedAt: entry.startedAt,
         sessionService: service,
       );
       registry.register(entry.id, transcript);

@@ -121,6 +121,27 @@ WSL 后端的每个文件操作都是一次 `wsl.exe` 进程（`docs/wsl-fs-help
 - 配对协议：`session.list` 带 `mode`、`chat.read` 返回 `{mode, transcript}`；镜面页按模式二选一
 - 测试：parser 9 例、session 7 例、pane 6 例、rpc 4 例
 
+### 手机端验证（MuMu 平板模拟器，真机级）
+
+用 `tool/pair_host_probe.dart` 编译成 release 宿主（`flutter build windows --release -t tool/pair_host_probe.dart`），
+`TP_PROBE_ADDR=127.0.0.1` + `adb reverse tcp:47821 tcp:47821`，平板模拟器配对后：
+
+- `probe-chat` 在手机上渲染为对话（用户气泡 / 折叠「思考」/ 助手正文 / 折叠工具行 / 输入框），**没有**终端工具条；
+- `probe-alpha` 同时仍是终端 + 工具条 —— 模式逐 pane 生效，不是全局开关；
+- 手机输入「hello demo from mumu」→ 宿主把这一轮写进 JSONL → 手机轮询后出现该气泡与回复（同一条 PTY，agent 没被打断）；
+- 宿主切换该 pane 的模式（probe 用文件哨兵模拟桌面点按钮）→ 手机下一次轮询跟着切：终端 ↔ 对话来回都验证过，无需重连；
+- 平板尺寸（最短边 800dp）下左侧列表 + 右侧视图，选中行高亮；手机尺寸（411×914dp）下是单栏 push。
+
+过程中修掉两个真问题（都不是本次功能引入的）：
+
+1. **冷启动深链路由崩**：Android 把 VIEW intent 的 URI 当作 `defaultRouteName`，GoRouter 用它覆盖了 `initialLocation`，
+   `teampilot://pair?…` 落到「Page Not Found」。现在 `pairingDeepLinkDestination` 把 scheme 为 `teampilot` 的位置改道 `/home-v2`，
+   深链仍由 shell（`app_links`）处理。
+2. **重复切到 chat 会丢历史**：构造 `ChatTranscriptSession` 时用的是 `DateTime.now()`，切第二次就超出「文件写在 pane 之后」的窗口，
+   显示「没有会话记录」。改为锚定 pane 的 PTY 启动时间（`WorkspaceTerminalEntry.startedAt`）。
+3. 轮询失败不再永久停摆：只有宿主**明确回答** `unknown method`（旧桌面）才停；超时/断线继续重试，
+   否则一次掉线之后手机永远停在旧模式。
+
 待办：
 
 1. codex / omp / opencode 解析器

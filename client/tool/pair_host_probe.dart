@@ -19,28 +19,45 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_alacritty/flutter_alacritty.dart';
+import 'package:path/path.dart' as p;
+import 'package:teampilot/models/runtime_target.dart';
 import 'package:teampilot/repositories/pairing_key_store.dart';
+import 'package:teampilot/services/chat/chat_transcript_registry.dart';
+import 'package:teampilot/services/chat/chat_transcript_session.dart';
+import 'package:teampilot/services/cli/sessions/agent_cli_sessions.dart';
 import 'package:teampilot/services/pairing/device_registry.dart';
 import 'package:teampilot/services/pairing/lan_pairing_server.dart';
 import 'package:teampilot/services/pairing/pairing_crypto.dart';
 import 'package:teampilot/services/pairing/pairing_upload_target.dart';
 import 'package:teampilot/services/pairing/pairing_workspace_index.dart';
 import 'package:teampilot/services/pairing/session_catalog.dart';
+import 'package:teampilot/services/io/local_filesystem.dart';
+import 'package:teampilot/services/storage/app_storage.dart';
+import 'package:teampilot/services/storage/runtime_context.dart';
 import 'package:teampilot/services/terminal/terminal_session.dart';
 import 'package:teampilot/services/terminal/terminal_transport.dart';
 
 const _probeNames = ['alpha', 'beta'];
+const _chatPaneId = 'probe-pane-chat';
+const _chatCwd = r'D:\git\teampilot-probe';
 const _probeWorkspaceId = 'probe-workspace';
 const _probeCwd = r'D:\';
+final _probeHome =
+    '${Directory.systemTemp.path}${Platform.pathSeparator}tp_probe_home';
 const _banner =
     '\x1b[1;36mTeamPilot probe host\x1b[0m\r\n'
     'mirror target: scripted shell\r\n'
     '─────────────────────────────\r\n';
 
 class _ScriptedTransport implements TerminalTransport {
-  _ScriptedTransport(this.name);
+  _ScriptedTransport(this.name, {this.onLine});
 
   final String name;
+
+  /// Called with each submitted line, so the chat pane's scripted CLI can write
+  /// a matching turn into the session store the transcript reader polls.
+  final void Function(String line)? onLine;
+  final _typed = StringBuffer();
   final _out = StreamController<Uint8List>.broadcast();
   final _done = Completer<int>();
   Timer? _ticker;
@@ -72,6 +89,15 @@ class _ScriptedTransport implements TerminalTransport {
   void write(Uint8List data) {
     // Echo keystrokes so mirror input looks alive.
     _emit(utf8.decode(data, allowMalformed: true).replaceAll('\r', '\r\n'));
+    for (final unit in data) {
+      if (unit == 0x0d || unit == 0x0a) {
+        final line = _typed.toString().trim();
+        _typed.clear();
+        if (line.isNotEmpty) onLine?.call(line);
+      } else if (unit >= 0x20) {
+        _typed.writeCharCode(unit);
+      }
+    }
   }
 
   @override
@@ -83,6 +109,118 @@ class _ScriptedTransport implements TerminalTransport {
     if (!_done.isCompleted) _done.complete(0);
     unawaited(_out.close());
   }
+}
+
+/// A scripted stand-in for an agent CLI, written in the shape the shipped
+/// reader parses.
+///
+/// It writes a real Claude session file (`<home>/.claude/projects/<munged>/<id>.jsonl`)
+/// and answers each submitted line in it, so the probe exercises the whole path
+/// the app uses — store adapter, parser, poll, registry, RPC — instead of
+/// handing the phone a stubbed snapshot. The pane's "terminal" is inert: the
+/// writer below is the CLI.
+class _FakeAgentStore {
+  _FakeAgentStore({required this.home, required this.cwd});
+
+  final String home;
+  final String cwd;
+  var _turn = 0;
+
+  String get _path => p.join(
+    home,
+    '.claude',
+    'projects',
+    mungeDirectory(cwd),
+    '00000000-0000-4000-8000-000000000001.jsonl',
+  );
+
+  Future<void> seed() async {
+    await File(_path).parent.create(recursive: true);
+    // Truncate: a restarted host must not pile a second copy of the seed on the
+    // first, which reads as the same prompt answered twice.
+    await File(_path).writeAsString('');
+    await _append([
+      _record('user', {
+        'message': {'role': 'user', 'content': 'Why is this pane a chat?'},
+      }),
+      _record('assistant', {
+        'message': {
+          'id': 'msg_seed',
+          'content': [
+            {
+              'type': 'thinking',
+              'thinking':
+                  'Seeding one row of each kind makes every branch of the '
+                  'renderer show up on the first paint.',
+            },
+            {
+              'type': 'text',
+              'text':
+                  'Because this pane is registered in chat mode on the host. '
+                  'The rows come from a Claude-shaped session file — the same '
+                  'one the real app reads — so no agent protocol is involved.',
+            },
+            {
+              'type': 'tool_use',
+              'id': 'tool_1',
+              'name': 'Read',
+              'input': {'file_path': 'tool/pair_host_probe.dart'},
+            },
+          ],
+        },
+      }),
+      _record('user', {
+        'message': {
+          'role': 'user',
+          'content': [
+            {
+              'type': 'tool_result',
+              'tool_use_id': 'tool_1',
+              'content': 'void main() { }',
+            },
+          ],
+        },
+      }),
+    ]);
+  }
+
+  /// Writes the turn a real CLI would have written for [line].
+  Future<void> answer(String line) async {
+    _turn++;
+    await _append([
+      _record('user', {
+        'message': {'role': 'user', 'content': line},
+      }),
+      _record('assistant', {
+        'message': {
+          'id': 'msg_$_turn',
+          'content': [
+            {
+              'type': 'text',
+              'text':
+                  'Turn $_turn: your line reached the host and was appended to '
+                  'the session file. This bubble came back through the poll.',
+            },
+          ],
+        },
+      }),
+    ]);
+  }
+
+  Future<void> _append(List<Map<String, Object?>> records) =>
+      File(_path).writeAsString(
+        '${records.map(jsonEncode).join('\n')}\n',
+        mode: FileMode.append,
+        flush: true,
+      );
+
+  Map<String, Object?> _record(String type, Map<String, Object?> fields) => {
+    'type': type,
+    'uuid': '$type-${DateTime.now().microsecondsSinceEpoch}',
+    'sessionId': '00000000-0000-4000-8000-000000000001',
+    'timestamp': DateTime.now().toUtc().toIso8601String(),
+    ...fields,
+  };
 }
 
 Future<PairingUploadTarget> _noUpload({
@@ -144,6 +282,10 @@ Future<void> main() async {
   // "terminal" fails to launch and the mirror stays blank.
   await RustLib.init();
 
+  // Fixed at boot: the chat pane's "which session file is mine" window anchors
+  // to when the pane started, so toggling chat off and on again finds the same
+  // transcript instead of an empty one.
+  final probeStartedAt = DateTime.now();
   final catalog = SessionCatalog();
   final entries = <SessionCatalogEntry>[];
 
@@ -189,6 +331,93 @@ Future<void> main() async {
 
   catalog.addSource(() => entries);
 
+  // The chat pane: a real transcript file, read by the real reader. Nothing here
+  // knows how the phone draws it — the host only answers "this pane is chat".
+  final agentStore = _FakeAgentStore(home: _probeHome, cwd: _chatCwd);
+  await agentStore.seed();
+  final chatTransport = _ScriptedTransport(
+    'chat',
+    onLine: (line) => unawaited(agentStore.answer(line)),
+  );
+  final chatSession = TerminalSession(
+    executable: 'probe-agent',
+    validateLaunch: false,
+    parseExecutable: false,
+    transportStarter: (
+      executable, {
+      required List<String> arguments,
+      required String workingDirectory,
+      required int columns,
+      required int rows,
+      Map<String, String>? environment,
+    }) async {
+      Future<void>.delayed(
+        const Duration(milliseconds: 400),
+        chatTransport.start,
+      );
+      return chatTransport;
+    },
+  );
+  chatSession.connect(workingDirectory: _chatCwd);
+  entries.add(
+    SessionCatalogEntry(
+      PairedSessionRef(
+        catalogId: PairedSessionRef.paneCatalogId(_chatPaneId),
+        title: 'probe-chat',
+        subtitle: _chatCwd,
+        workspaceId: _probeWorkspaceId,
+        paneId: _chatPaneId,
+      ),
+      chatSession,
+    ),
+  );
+
+  final chatTranscripts = ChatTranscriptRegistry();
+  ChatTranscriptSession? liveChat;
+
+  // The desktop's chat toggle, scripted: the host owns the mode, the phone only
+  // mirrors it. Pointing this file at `off` flips the pane to the terminal on
+  // the next poll — the behaviour a real toggle on the desktop produces.
+  void setChatMode(bool chat) {
+    if (chat == (liveChat != null)) return;
+    if (chat) {
+      final session = ChatTranscriptSession(
+        paneId: _chatPaneId,
+        resolveContext: (_) async => RuntimeContext(
+          target: RuntimeTarget.local(),
+          filesystem: LocalFilesystem(),
+          home: _probeHome,
+          cwd: _chatCwd,
+          appDataRoot: p.join(_probeHome, 'appdata'),
+          paths: AppPaths(p.join(_probeHome, 'appdata')),
+        ),
+        target: RuntimeTarget.local,
+        directory: () => _chatCwd,
+        // Seeded just now, so the "written since the pane opened" window is met.
+        startedAt: probeStartedAt,
+      )..start();
+      liveChat = session;
+      chatTranscripts.register(_chatPaneId, session);
+    } else {
+      liveChat = null;
+      chatTranscripts.unregister(_chatPaneId);
+    }
+    // A host re-publishes its session list on a mode change; the phone's poll
+    // would pick it up anyway, but this is what a real toggle does.
+    catalog.notifyChanged();
+  }
+
+  setChatMode(true);
+  final chatModeFile = File(
+    '${Directory.systemTemp.path}/tp_probe_chat_mode.txt',
+  );
+  Timer.periodic(const Duration(seconds: 1), (_) async {
+    final want = !await chatModeFile.exists()
+        ? true
+        : (await chatModeFile.readAsString()).trim() != 'off';
+    setChatMode(want);
+  });
+
   final store = _FilePairingKeyStore(
     File('${Directory.systemTemp.path}/tp_probe_identity.json'),
   );
@@ -219,6 +448,7 @@ Future<void> main() async {
       PairingTargetInfo(id: 'local', label: 'Local', kind: 'local'),
     ],
     advertisedAddress: Platform.environment['TP_PROBE_ADDR']?.trim(),
+    chatTranscript: (paneId) => chatTranscripts[paneId]?.transcript.value,
   );
 
   await server.ensureStarted();
