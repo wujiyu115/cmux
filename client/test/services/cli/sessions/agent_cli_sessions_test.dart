@@ -239,38 +239,48 @@ void main() {
       expect(fs.statAndReadBytesCalls, 1);
     });
 
-    test('batched backend keeps the newest sessions beyond the read cap', () async {
-      final fs = _BatchingInMemoryFilesystem();
-      const dir = '/home/u/.claude/projects/-home-u-proj';
-      // Directory (insertion) order puts the newest file last — beyond the
-      // maxFileReads(6) truncation point. Truncating before the mtime sort
-      // would drop it entirely.
-      for (var i = 0; i < 8; i++) {
-        final sessionPath = '$dir/s$i.jsonl';
-        await fs.writeBytes(
-          sessionPath,
-          utf8.encode('{"type":"user","message":{"role":"user","content":"会话 $i"}}\n'),
-        );
-        fs.mtimes[sessionPath] = DateTime.utc(2026, 9, 1 + i);
-      }
-
-      final records =
-          await const ClaudeStyleAgentCliSessionAdapter(
-            family: AgentCliFamily.claude,
-            homeDotDir: '.claude',
-          ).listSessions(
-            AgentCliSessionQuery(
-              context: _context(fs),
-              directory: '/home/u/proj',
+    test(
+      'batched backend keeps the newest sessions beyond the read cap',
+      () async {
+        final fs = _BatchingInMemoryFilesystem();
+        const dir = '/home/u/.claude/projects/-home-u-proj';
+        // Directory (insertion) order puts the newest file last — beyond the
+        // maxFileReads(6) truncation point. Truncating before the mtime sort
+        // would drop it entirely.
+        for (var i = 0; i < 8; i++) {
+          final sessionPath = '$dir/s$i.jsonl';
+          await fs.writeBytes(
+            sessionPath,
+            utf8.encode(
+              '{"type":"user","message":{"role":"user","content":"会话 $i"}}\n',
             ),
           );
+          fs.mtimes[sessionPath] = DateTime.utc(2026, 9, 1 + i);
+        }
 
-      expect(records.map((r) => r.sessionId), [
-        's7', 's6', 's5', 's4', 's3', 's2',
-      ]);
-      // All eight candidates stat in the one batched round trip.
-      expect(fs.statAndReadBytesManyCalls, 1);
-    });
+        final records =
+            await const ClaudeStyleAgentCliSessionAdapter(
+              family: AgentCliFamily.claude,
+              homeDotDir: '.claude',
+            ).listSessions(
+              AgentCliSessionQuery(
+                context: _context(fs),
+                directory: '/home/u/proj',
+              ),
+            );
+
+        expect(records.map((r) => r.sessionId), [
+          's7',
+          's6',
+          's5',
+          's4',
+          's3',
+          's2',
+        ]);
+        // All eight candidates stat in the one batched round trip.
+        expect(fs.statAndReadBytesManyCalls, 1);
+      },
+    );
 
     test('title follows the latest custom-title appended near EOF', () async {
       final fs = _BatchingInMemoryFilesystem();
@@ -279,9 +289,13 @@ void main() {
       // user rename (custom-title) sits at EOF, far beyond the head window.
       final buffer = StringBuffer()
         ..write('{"type":"ai-title","aiTitle":"过期的自动标题"}\n')
-        ..write('{"type":"user","message":{"role":"user","content":"开头的问题"}}\n');
+        ..write(
+          '{"type":"user","message":{"role":"user","content":"开头的问题"}}\n',
+        );
       while (buffer.length < 64 * 1024) {
-        buffer.write('{"type":"user","message":{"role":"user","content":"后续对话"}}\n');
+        buffer.write(
+          '{"type":"user","message":{"role":"user","content":"后续对话"}}\n',
+        );
       }
       buffer.write('{"type":"custom-title","customTitle":"奥特曼联动交付"}\n');
       await fs.writeBytes('$dir/big.jsonl', utf8.encode(buffer.toString()));
@@ -305,9 +319,13 @@ void main() {
       const dir = '/home/u/.claude/projects/-home-u-proj';
       final buffer = StringBuffer()
         ..write('{"type":"ai-title","aiTitle":"过期的自动标题"}\n')
-        ..write('{"type":"user","message":{"role":"user","content":"开头的问题"}}\n');
+        ..write(
+          '{"type":"user","message":{"role":"user","content":"开头的问题"}}\n',
+        );
       while (buffer.length < 64 * 1024) {
-        buffer.write('{"type":"user","message":{"role":"user","content":"后续对话"}}\n');
+        buffer.write(
+          '{"type":"user","message":{"role":"user","content":"后续对话"}}\n',
+        );
       }
       buffer.write('{"type":"custom-title","customTitle":"奥特曼联动交付"}\n');
       await fs.writeBytes('$dir/big.jsonl', utf8.encode(buffer.toString()));
@@ -562,6 +580,88 @@ void main() {
         AgentCliSessionQuery(context: _context(fs), directory: '/home/u/proj'),
       );
       expect(records, isEmpty);
+    });
+  });
+
+  group('PiAgentCliSessionAdapter', () {
+    String piHead({
+      String? sessionId,
+      String? prompt,
+      String cwd = '/home/u/proj',
+    }) {
+      final buffer = StringBuffer()
+        ..write(
+          '{"type":"session","version":3,'
+          '"id":"${sessionId ?? '01a1c072-1d3c-73e6-b7c7-f72c319f58d1'}",'
+          '"timestamp":"2026-11-09T13:14:26.493Z","cwd":"$cwd"}\n',
+        )
+        ..write('{"type":"model_change","id":"m0","provider":"magpie"}\n');
+      if (prompt != null) {
+        buffer.write(
+          '{"type":"message","id":"c2","message":{"role":"user",'
+          '"content":[{"type":"text","text":"$prompt"}]}}\n',
+        );
+      }
+      return buffer.toString();
+    }
+
+    test('directory rule wraps the munged cwd in double dashes', () {
+      expect(
+        PiAgentCliSessionAdapter.piSessionDirName(r'D:\git\teampilot'),
+        '--D--git-teampilot--',
+      );
+      expect(
+        PiAgentCliSessionAdapter.piSessionDirName(r'D:\git\mo_token'),
+        '--D--git-mo_token--',
+      );
+      expect(
+        PiAgentCliSessionAdapter.piSessionDirName('/home/u/git/x'),
+        '--home-u-git-x--',
+      );
+    });
+
+    test('lists a session keyed by a Windows cwd', () async {
+      final fs = InMemoryFilesystem();
+      await fs.writeBytes(
+        '/home/u/.pi/agent/sessions/--D--git-teampilot--/'
+        '2026-11-09T13-14-26-493Z_01a1c072-1d3c-73e6-b7c7-f72c319f58d1.jsonl',
+        utf8.encode(
+          piHead(cwd: r'D:\git\teampilot', prompt: 'chat mode on windows'),
+        ),
+      );
+
+      final records = await const PiAgentCliSessionAdapter().listSessions(
+        AgentCliSessionQuery(
+          context: _context(fs),
+          directory: r'D:\git\teampilot',
+        ),
+      );
+
+      expect(records, hasLength(1));
+      expect(records.single.sessionId, '01a1c072-1d3c-73e6-b7c7-f72c319f58d1');
+      expect(records.single.family, AgentCliFamily.pi);
+      expect(records.single.title, 'chat mode on windows');
+    });
+
+    test('other projects and non-jsonl entries are ignored', () async {
+      final fs = InMemoryFilesystem();
+      await fs.writeBytes(
+        '/home/u/.pi/agent/sessions/--home-u-proj--/'
+        '2026-11-09T13-14-26-493Z_01a1c072-1d3c-73e6-b7c7-f72c319f58d1.jsonl',
+        utf8.encode(piHead()),
+      );
+      await fs.writeBytes(
+        '/home/u/.pi/agent/sessions/--home-u-other--/'
+        '2026-11-09T13-00-00-000Z_ffffffff-0000-0000-0000-000000000000.jsonl',
+        utf8.encode(piHead(prompt: '别的目录')),
+      );
+
+      final records = await const PiAgentCliSessionAdapter().listSessions(
+        AgentCliSessionQuery(context: _context(fs), directory: '/home/u/proj'),
+      );
+
+      expect(records, hasLength(1));
+      expect(records.single.title, isNull);
     });
   });
 

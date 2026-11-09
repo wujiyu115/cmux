@@ -23,6 +23,8 @@ ChatTranscriptParser? chatTranscriptParserFor(AgentCliFamily family) =>
     switch (family) {
       AgentCliFamily.claude || AgentCliFamily.qoder =>
         const ClaudeStyleChatTranscriptParser(AgentCliFamily.claude),
+      AgentCliFamily.pi ||
+      AgentCliFamily.ohMyPi => const PiChatTranscriptParser(),
       _ => null,
     };
 
@@ -257,10 +259,185 @@ class ClaudeStyleChatTranscriptParser implements ChatTranscriptParser {
   }
 }
 
+/// pi / oh-my-pi session JSONL (`~/.pi/agent/sessions/…/*.jsonl`).
+///
+/// Every entry is `{type, id, parentId, timestamp}`; conversation lives in
+/// `message` entries whose `message.role` is `user`, `assistant`, or
+/// `toolResult`. Assistant content is a block list of `text`, `thinking`, and
+/// `toolCall` (`{id, name, arguments}`); a `toolResult` carries the matching
+/// `toolCallId`, so tool output is attached to the call it answers.
+/// `session`, `model_change`, `thinking_level_change` are bookkeeping;
+/// `compaction` is shown as the same notice Claude's `compact_boundary` gets.
+class PiChatTranscriptParser implements ChatTranscriptParser {
+  const PiChatTranscriptParser();
+
+  static const int maxToolText = ClaudeStyleChatTranscriptParser.maxToolText;
+  static const int maxDetail = ClaudeStyleChatTranscriptParser.maxDetail;
+
+  @override
+  AgentCliFamily get family => AgentCliFamily.pi;
+
+  @override
+  List<ChatTranscriptRow> parse(List<int> bytes) {
+    final rows = <ChatTranscriptRow>[];
+    final openTools = <String, int>{};
+
+    for (final line in _jsonLines(bytes)) {
+      switch (line['type']) {
+        case 'message':
+          _appendMessage(line, rows, openTools);
+        case 'compaction':
+          rows.add(
+            ChatTranscriptRow(
+              id: 'compaction:${line['id'] ?? rows.length}',
+              kind: ChatTranscriptRowKind.notice,
+              text: 'compacted',
+              at: _timestamp(line['timestamp']),
+            ),
+          );
+      }
+    }
+
+    // A call with no result entry yet is still running.
+    for (final entry in openTools.entries) {
+      final index = entry.value;
+      if (index < 0 || index >= rows.length) continue;
+      rows[index] = rows[index].copyWith(running: true);
+    }
+    return rows;
+  }
+
+  void _appendMessage(
+    Map<String, Object?> line,
+    List<ChatTranscriptRow> rows,
+    Map<String, int> openTools,
+  ) {
+    final message = line['message'];
+    if (message is! Map<String, Object?>) return;
+    final baseId = _asString(line['id']);
+    final at = _timestamp(line['timestamp']);
+    final content = message['content'];
+
+    switch (_asString(message['role'])) {
+      case 'user':
+        if (content is String) {
+          if (content.trim().isEmpty) return;
+          rows.add(
+            ChatTranscriptRow(
+              id: '$baseId#text',
+              kind: ChatTranscriptRowKind.user,
+              text: content,
+              at: at,
+            ),
+          );
+          return;
+        }
+        if (content is! List) return;
+        var index = 0;
+        for (final block in content) {
+          if (block is! Map<String, Object?>) continue;
+          if (block['type'] != 'text') continue;
+          final text = _asString(block['text']);
+          if (text.trim().isEmpty) continue;
+          rows.add(
+            ChatTranscriptRow(
+              id: '$baseId#text$index',
+              kind: ChatTranscriptRowKind.user,
+              text: text,
+              at: at,
+            ),
+          );
+          index++;
+        }
+      case 'assistant':
+        if (content is String) {
+          if (content.trim().isEmpty) return;
+          rows.add(
+            ChatTranscriptRow(
+              id: '$baseId#text',
+              kind: ChatTranscriptRowKind.assistant,
+              text: content,
+              at: at,
+            ),
+          );
+          return;
+        }
+        if (content is! List) return;
+        // Consecutive text (or thinking) blocks of one message are one
+        // paragraph run; a tool call interrupts the run.
+        final runs = <String, List<String>>{};
+        var runIndex = 0;
+        String? runKind;
+        void flushRun() {
+          final kind = runKind;
+          if (kind == null) return;
+          final parts = runs.remove(kind) ?? const <String>[];
+          runKind = null;
+          final text = _joinBlocks(parts);
+          if (text.isEmpty) return;
+          rows.add(
+            ChatTranscriptRow(
+              id: '$baseId#$kind${runIndex - 1}',
+              kind: kind == 'thinking'
+                  ? ChatTranscriptRowKind.thought
+                  : ChatTranscriptRowKind.assistant,
+              text: text,
+              at: at,
+            ),
+          );
+        }
+
+        for (final block in content) {
+          if (block is! Map<String, Object?>) continue;
+          final type = _asString(block['type']);
+          if (type == 'text' || type == 'thinking') {
+            if (runKind != type) {
+              flushRun();
+              runKind = type;
+              runIndex++;
+              runs[type] = [];
+            }
+            runs[type]!.add(
+              _asString(type == 'text' ? block['text'] : block['thinking']),
+            );
+            continue;
+          }
+          if (type != 'toolCall') continue;
+          flushRun();
+          final toolId = _asString(block['id']);
+          openTools[toolId] = rows.length;
+          rows.add(
+            ChatTranscriptRow(
+              id: '$baseId#tool:${toolId.isEmpty ? runIndex : toolId}',
+              kind: ChatTranscriptRowKind.tool,
+              toolName: _asString(block['name']),
+              detail: _toolDetail(block['arguments']),
+              running: true,
+              at: at,
+            ),
+          );
+        }
+        flushRun();
+      case 'toolResult':
+        final toolId = _asString(message['toolCallId']);
+        final rowIndex = openTools.remove(toolId);
+        if (rowIndex == null) return;
+        final output = _toolResultText(content);
+        if (output.isEmpty) {
+          rows[rowIndex] = rows[rowIndex].copyWith(running: false);
+          return;
+        }
+        rows[rowIndex] = rows[rowIndex].copyWith(
+          text: _clip(output, maxToolText),
+          running: false,
+        );
+    }
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Field helpers
 // ---------------------------------------------------------------------------
-
 String _asString(Object? raw) => raw is String ? raw : '';
 
 DateTime? _timestamp(Object? raw) {

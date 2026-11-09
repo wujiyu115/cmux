@@ -236,6 +236,175 @@ void main() {
     expect(chatTranscriptParserFor(AgentCliFamily.codex), isNull);
     expect(chatTranscriptParserFor(AgentCliFamily.claude), isNotNull);
     expect(chatTranscriptParserFor(AgentCliFamily.qoder), isNotNull);
+    expect(chatTranscriptParserFor(AgentCliFamily.pi), isNotNull);
+    expect(chatTranscriptParserFor(AgentCliFamily.ohMyPi), isNotNull);
+  });
+
+  group('pi store', () {
+    const pi = PiChatTranscriptParser();
+
+    test('reads a turn as prompt, thought, answer, and tool rows', () {
+      final rows = pi.parse(
+        _jsonl([
+          {
+            'type': 'session',
+            'version': 3,
+            'id': '01a1c072-1d3c-73e6-b7c7-f72c319f58d1',
+            'timestamp': '2026-11-09T13:14:26.493Z',
+            'cwd': r'D:\git\teampilot',
+          },
+          {'type': 'model_change', 'id': 'm0', 'provider': 'magpie'},
+          {
+            'type': 'message',
+            'id': 'c1',
+            'timestamp': '2026-11-09T13:14:41.482Z',
+            'message': {
+              'role': 'system',
+              'content': 'You are a coding assistant',
+            },
+          },
+          {
+            'type': 'message',
+            'id': 'c2',
+            'timestamp': '2026-11-09T13:14:50.000Z',
+            'message': {
+              'role': 'user',
+              'content': [
+                {'type': 'text', 'text': 'run the tests'},
+              ],
+            },
+          },
+          {
+            'type': 'message',
+            'id': 'c3',
+            'timestamp': '2026-11-09T13:14:51.000Z',
+            'message': {
+              'role': 'assistant',
+              'content': [
+                {'type': 'thinking', 'thinking': 'they want the suite'},
+                {'type': 'text', 'text': 'Running them now.'},
+                {
+                  'type': 'toolCall',
+                  'id': 'call_1',
+                  'name': 'bash',
+                  'arguments': {'command': 'flutter test'},
+                },
+              ],
+            },
+          },
+          {
+            'type': 'message',
+            'id': 'c4',
+            'timestamp': '2026-11-09T13:14:53.000Z',
+            'message': {
+              'role': 'toolResult',
+              'toolCallId': 'call_1',
+              'toolName': 'bash',
+              'isError': false,
+              'content': [
+                {'type': 'text', 'text': 'All tests passed!'},
+              ],
+            },
+          },
+        ]),
+      );
+
+      expect(rows.map((r) => r.kind), [
+        ChatTranscriptRowKind.user,
+        ChatTranscriptRowKind.thought,
+        ChatTranscriptRowKind.assistant,
+        ChatTranscriptRowKind.tool,
+      ]);
+      expect(rows.first.text, 'run the tests');
+      expect(rows[1].text, 'they want the suite');
+      expect(rows[2].text, 'Running them now.');
+      expect(rows.last.toolName, 'bash');
+      expect(rows.last.detail, 'flutter test');
+      expect(rows.last.text, 'All tests passed!');
+      expect(rows.last.running, isFalse);
+      expect(rows.first.at, DateTime.utc(2026, 11, 9, 13, 14, 50));
+    });
+
+    test('a tool call with no result is still running', () {
+      final rows = pi.parse(
+        _jsonl([
+          {
+            'type': 'message',
+            'id': 'c1',
+            'message': {
+              'role': 'user',
+              'content': [
+                {'type': 'text', 'text': 'list files'},
+              ],
+            },
+          },
+          {
+            'type': 'message',
+            'id': 'c2',
+            'message': {
+              'role': 'assistant',
+              'content': [
+                {
+                  'type': 'toolCall',
+                  'id': 'call_9',
+                  'name': 'bash',
+                  'arguments': {'command': 'ls'},
+                },
+              ],
+            },
+          },
+        ]),
+      );
+
+      expect(rows.last.kind, ChatTranscriptRowKind.tool);
+      expect(rows.last.running, isTrue);
+    });
+
+    test('compaction shows as a notice, not as conversation', () {
+      final rows = pi.parse(
+        _jsonl([
+          {'type': 'compaction', 'id': 'k1', 'summary': 'earlier work'},
+        ]),
+      );
+
+      expect(rows.single.kind, ChatTranscriptRowKind.notice);
+      expect(rows.single.text, 'compacted');
+    });
+
+    test('very long tool output is clipped', () {
+      final rows = pi.parse(
+        _jsonl([
+          {
+            'type': 'message',
+            'id': 'c2',
+            'message': {
+              'role': 'assistant',
+              'content': [
+                {
+                  'type': 'toolCall',
+                  'id': 'call_1',
+                  'name': 'bash',
+                  'arguments': {'command': 'cat huge'},
+                },
+              ],
+            },
+          },
+          {
+            'type': 'message',
+            'id': 'c3',
+            'message': {
+              'role': 'toolResult',
+              'toolCallId': 'call_1',
+              'content': [
+                {'type': 'text', 'text': 'x' * 9000},
+              ],
+            },
+          },
+        ]),
+      );
+
+      expect(rows.single.text.length, lessThanOrEqualTo(4001));
+    });
   });
 
   test('rows round-trip through the wire form', () {

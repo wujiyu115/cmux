@@ -281,7 +281,13 @@ class OhMyPiAgentCliSessionAdapter implements AgentCliSessionAdapter {
     );
     return [
       for (final head in heads)
-        if (ohMyPiSessionRecord(head.bytes, head.path) case final record?)
+        if (piFamilySessionRecord(
+              head.bytes,
+              head.path,
+              family: AgentCliFamily.ohMyPi,
+              updatedAt: head.mtime,
+            )
+            case final record?)
           record,
     ];
   }
@@ -303,9 +309,97 @@ class OhMyPiAgentCliSessionAdapter implements AgentCliSessionAdapter {
   }
 }
 
+/// `~/.pi/agent/sessions/<safePath>/<timestamp>_<sessionId>.jsonl` — pi's own
+/// store (oh-my-pi forks it under `~/.omp`).
+///
+/// The directory rule is pi's, not the Claude one: strip a leading separator,
+/// turn `/`, `\` and `:` into `-`, and wrap the result in `--`. So
+/// `D:\git\teampilot` is `--D--git-teampilot--` and `/home/u/git/x` is
+/// `--home-u-git-x--`.
+class PiAgentCliSessionAdapter implements AgentCliSessionAdapter {
+  const PiAgentCliSessionAdapter();
+
+  @override
+  AgentCliFamily get family => AgentCliFamily.pi;
+
+  /// `session` and the first user prompt lead the file; tool traffic and long
+  /// turns come later.
+  static const int headBytes = 8192;
+
+  @override
+  Future<List<AgentCliSessionRecord>> listSessions(
+    AgentCliSessionQuery query,
+  ) async {
+    final io = AgentCliSessionIo(query.context.filesystem);
+    final path = query.context.filesystem.pathContext;
+    final munged = piSessionDirName(query.directory);
+    if (munged.isEmpty) return const [];
+
+    final sessionsRoot = path.join(
+      query.context.home,
+      '.pi',
+      'agent',
+      'sessions',
+    );
+    var projectDirName = munged;
+    var files = await io.listJsonlFiles(path.join(sessionsRoot, munged));
+    if (files.isEmpty) {
+      // Windows drive-letter casing, same rationale as the Claude store.
+      final siblings = await io.listDir(sessionsRoot);
+      final alt = siblings
+          .where(
+            (e) =>
+                e.isDirectory &&
+                e.name.toLowerCase() == munged.toLowerCase() &&
+                e.name != munged,
+          )
+          .firstOrNull;
+      if (alt != null) {
+        projectDirName = alt.name;
+        files = await io.listJsonlFiles(path.join(sessionsRoot, alt.name));
+      }
+    }
+    if (files.isEmpty) return const [];
+
+    final heads = await io.readHeads(
+      files.map((name) => path.join(sessionsRoot, projectDirName, name)),
+      headBytes: headBytes,
+    );
+    return [
+      for (final head in heads)
+        if (piFamilySessionRecord(
+              head.bytes,
+              head.path,
+              family: AgentCliFamily.pi,
+              updatedAt: head.mtime,
+            )
+            case final record?)
+          record,
+    ];
+  }
+
+  /// pi's own session-directory rule (see the class doc).
+  static String piSessionDirName(String directory) {
+    final trimmed = directory.trim();
+    if (trimmed.isEmpty) return '';
+    final stripped = trimmed.replaceFirst(RegExp(r'^[/\\]'), '');
+    return '--${stripped.replaceAll(RegExp(r'[/\\:]'), '-')}--';
+  }
+}
+
 /// One resumable record from an oh-my-pi session head: the `session` record's
 /// id (falling back to the filename's `<timestamp>_` suffix) plus the title.
-AgentCliSessionRecord? ohMyPiSessionRecord(List<int> bytes, String filePath) {
+AgentCliSessionRecord? ohMyPiSessionRecord(List<int> bytes, String filePath) =>
+    piFamilySessionRecord(bytes, filePath, family: AgentCliFamily.ohMyPi);
+
+/// Shared by both pi-store families: oh-my-pi is a fork of pi, so the file
+/// layout and record shapes are the same apart from the directory rule.
+AgentCliSessionRecord? piFamilySessionRecord(
+  List<int> bytes,
+  String filePath, {
+  required AgentCliFamily family,
+  DateTime? updatedAt,
+}) {
   final lines = _jsonLines(bytes);
   String? sessionId;
   String? title;
@@ -327,9 +421,10 @@ AgentCliSessionRecord? ohMyPiSessionRecord(List<int> bytes, String filePath) {
   sessionId ??= _ohMyPiSessionIdFromFileName(filePath);
   if (sessionId == null) return null;
   return AgentCliSessionRecord(
-    family: AgentCliFamily.ohMyPi,
+    family: family,
     sessionId: sessionId,
     title: title,
+    updatedAt: updatedAt,
     filePath: filePath,
   );
 }
@@ -542,16 +637,14 @@ class AgentCliSessionHead {
   final List<int> bytes;
   final List<int> tailBytes;
 
-  AgentCliSessionHead copyWith({
-    List<int>? bytes,
-    List<int>? tailBytes,
-  }) => AgentCliSessionHead(
-    path: path,
-    mtime: mtime,
-    size: size,
-    bytes: bytes ?? this.bytes,
-    tailBytes: tailBytes ?? this.tailBytes,
-  );
+  AgentCliSessionHead copyWith({List<int>? bytes, List<int>? tailBytes}) =>
+      AgentCliSessionHead(
+        path: path,
+        mtime: mtime,
+        size: size,
+        bytes: bytes ?? this.bytes,
+        tailBytes: tailBytes ?? this.tailBytes,
+      );
 }
 
 // ---------------------------------------------------------------------------

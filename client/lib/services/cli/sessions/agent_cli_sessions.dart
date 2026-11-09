@@ -5,7 +5,8 @@ enum AgentCliFamily {
   qoder,
   codex,
   opencode,
-  ohMyPi;
+  ohMyPi,
+  pi;
 
   /// Shell command that resumes [sessionId] in a pane running this family's
   /// CLI.
@@ -15,6 +16,8 @@ enum AgentCliFamily {
     AgentCliFamily.codex => 'codex resume $sessionId',
     AgentCliFamily.opencode => 'opencode --session $sessionId',
     AgentCliFamily.ohMyPi => 'omp --resume $sessionId',
+    // `--resume` is a bare picker in pi; an exact session is `--session-id`.
+    AgentCliFamily.pi => 'pi --session-id $sessionId',
   };
 }
 

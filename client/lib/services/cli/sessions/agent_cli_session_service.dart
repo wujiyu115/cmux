@@ -37,6 +37,7 @@ class AgentCliSessionService {
       homeDotDir: '.qoder',
     ),
     const OhMyPiAgentCliSessionAdapter(),
+    const PiAgentCliSessionAdapter(),
     const CodexAgentCliSessionAdapter(),
     const OpencodeAgentCliSessionAdapter(),
   ];

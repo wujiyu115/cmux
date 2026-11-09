@@ -1621,6 +1621,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentCliFamilyOhMyPi => 'Oh My Pi';
 
   @override
+  String get agentCliFamilyPi => 'Pi';
+
+  @override
   String get agentCliSessionsAllAgents => '全部 Agent';
 
   @override

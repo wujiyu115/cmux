@@ -1682,6 +1682,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get agentCliFamilyOhMyPi => 'Oh My Pi';
 
   @override
+  String get agentCliFamilyPi => 'Pi';
+
+  @override
   String get agentCliSessionsAllAgents => 'All agents';
 
   @override

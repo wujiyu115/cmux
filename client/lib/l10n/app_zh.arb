@@ -727,6 +727,7 @@
   "agentCliFamilyCodex": "Codex",
   "agentCliFamilyOpencode": "OpenCode",
   "agentCliFamilyOhMyPi": "Oh My Pi",
+  "agentCliFamilyPi": "Pi",
   "agentCliSessionsAllAgents": "全部 Agent",
   "commandLogTitle": "命令日志",
   "commandLogRefresh": "刷新",

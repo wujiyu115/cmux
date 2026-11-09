@@ -3157,6 +3157,12 @@ abstract class AppLocalizations {
   /// **'Oh My Pi'**
   String get agentCliFamilyOhMyPi;
 
+  /// No description provided for @agentCliFamilyPi.
+  ///
+  /// In en, this message translates to:
+  /// **'Pi'**
+  String get agentCliFamilyPi;
+
   /// No description provided for @agentCliSessionsAllAgents.
   ///
   /// In en, this message translates to:
