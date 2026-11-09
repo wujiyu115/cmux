@@ -18,29 +18,41 @@ void main() {
   group('AgentSelectionReferenceFormatter', () {
     test('multi-line selection renders a start-end range', () {
       expect(
-        const AgentSelectionReferenceFormatter()
-            .format(relPath: 'lib/src/foo.dart', startLine: 5, endLine: 10),
+        const AgentSelectionReferenceFormatter().format(
+          relPath: 'lib/src/foo.dart',
+          startLine: 5,
+          endLine: 10,
+        ),
         '@lib/src/foo.dart#L5-10',
       );
     });
 
     test('single line collapses to one number', () {
       expect(
-        const AgentSelectionReferenceFormatter()
-            .format(relPath: 'README.md', startLine: 3, endLine: 3),
+        const AgentSelectionReferenceFormatter().format(
+          relPath: 'README.md',
+          startLine: 3,
+          endLine: 3,
+        ),
         '@README.md#L3',
       );
     });
 
     test('clipboard format omits the @ sigil', () {
       expect(
-        const AgentSelectionReferenceFormatter()
-            .formatPathWithLines(relPath: 'lib/a.dart', startLine: 5, endLine: 10),
+        const AgentSelectionReferenceFormatter().formatPathWithLines(
+          relPath: 'lib/a.dart',
+          startLine: 5,
+          endLine: 10,
+        ),
         'lib/a.dart#L5-10',
       );
       expect(
-        const AgentSelectionReferenceFormatter()
-            .formatPathWithLines(relPath: 'lib/a.dart', startLine: 7, endLine: 7),
+        const AgentSelectionReferenceFormatter().formatPathWithLines(
+          relPath: 'lib/a.dart',
+          startLine: 7,
+          endLine: 7,
+        ),
         'lib/a.dart#L7',
       );
     });
@@ -109,21 +121,23 @@ void main() {
       expect(sink.pasted.single, '@lib/src/a.dart#L1 ');
     });
 
-    test('windows-style roots and file paths still produce slash rel paths',
-        () async {
-      final sink = _FakeSink();
-      final outcome = await const EditorAgentReferenceSender().send(
-        workspaceRoots: const [r'C:\repo'],
-        absolutePath: r'C:\repo\lib\a.dart',
-        startLine: 7,
-        endLine: 7,
-        sink: sink,
-        terminalNamespace: localPosixNamespace,
-      );
+    test(
+      'windows-style roots and file paths still produce slash rel paths',
+      () async {
+        final sink = _FakeSink();
+        final outcome = await const EditorAgentReferenceSender().send(
+          workspaceRoots: const [r'C:\repo'],
+          absolutePath: r'C:\repo\lib\a.dart',
+          startLine: 7,
+          endLine: 7,
+          sink: sink,
+          terminalNamespace: localPosixNamespace,
+        );
 
-      expect(outcome, AgentReferenceOutcome.delivered);
-      expect(sink.pasted.single, '@lib/a.dart#L7 ');
-    });
+        expect(outcome, AgentReferenceOutcome.delivered);
+        expect(sink.pasted.single, '@lib/a.dart#L7 ');
+      },
+    );
 
     test('rejects a file outside every workspace root', () async {
       final outcome = await const EditorAgentReferenceSender().send(

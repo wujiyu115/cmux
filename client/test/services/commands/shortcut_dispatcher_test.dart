@@ -57,7 +57,9 @@ void main() {
     CommandDefinition(
       id: testCommandId,
       category: CommandCategory.meta,
-      defaultChords: [KeyChord(key: 'k', mods: [KeyChordMod.mod])],
+      defaultChords: [
+        KeyChord(key: 'k', mods: [KeyChordMod.mod]),
+      ],
       when: ShortcutWhen.always,
       terminalPassthrough: true,
       titleL10nKey: 'x',
@@ -67,9 +69,8 @@ void main() {
   ShortcutDispatcher buildDispatcher(CommandBus bus) {
     return ShortcutDispatcher(
       bus: bus,
-      effectiveChords: (commandId) => testCatalog
-          .firstWhere((def) => def.id == commandId)
-          .defaultChords,
+      effectiveChords: (commandId) =>
+          testCatalog.firstWhere((def) => def.id == commandId).defaultChords,
       context: () => const ShortcutContext(),
       isMacOS: () => true,
       catalog: testCatalog,
@@ -147,7 +148,9 @@ void main() {
       CommandDefinition(
         id: altTabId,
         category: CommandCategory.tabs,
-        defaultChords: [KeyChord(key: 'digit1', mods: [KeyChordMod.alt])],
+        defaultChords: [
+          KeyChord(key: 'digit1', mods: [KeyChordMod.alt]),
+        ],
         when: ShortcutWhen.always,
         terminalPassthrough: true,
         titleL10nKey: 'x',
@@ -258,9 +261,8 @@ void main() {
       bus.register(searchId, () => called = true);
       final dispatcher = ShortcutDispatcher(
         bus: bus,
-        effectiveChords: (id) => searchCatalog
-            .firstWhere((def) => def.id == id)
-            .defaultChords,
+        effectiveChords: (id) =>
+            searchCatalog.firstWhere((def) => def.id == id).defaultChords,
         context: () => const ShortcutContext(hasWorkspace: true),
         isMacOS: () => false,
         catalog: searchCatalog,
@@ -288,9 +290,8 @@ void main() {
       bus.register(searchId, () => called = true);
       final dispatcher = ShortcutDispatcher(
         bus: bus,
-        effectiveChords: (id) => searchCatalog
-            .firstWhere((def) => def.id == id)
-            .defaultChords,
+        effectiveChords: (id) =>
+            searchCatalog.firstWhere((def) => def.id == id).defaultChords,
         context: () => const ShortcutContext(),
         isMacOS: () => false,
         catalog: searchCatalog,

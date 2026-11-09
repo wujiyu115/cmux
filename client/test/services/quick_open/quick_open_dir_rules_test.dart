@@ -39,9 +39,7 @@ void main() {
     });
 
     test('windows separators are tolerated', () {
-      final rules = QuickOpenDirRules(
-        WorkspaceIndexDirs(excluded: ['common']),
-      );
+      final rules = QuickOpenDirRules(WorkspaceIndexDirs(excluded: ['common']));
       expect(rules.allowsUser(r'common\noise\a.txt'), isFalse);
       expect(rules.allowsUser(r'lib\main.dart'), isTrue);
     });
@@ -66,10 +64,7 @@ void main() {
 
     test('deeper exclude wins back over an include', () {
       final rules = QuickOpenDirRules(
-        WorkspaceIndexDirs(
-          included: ['common'],
-          excluded: ['common/vendor'],
-        ),
+        WorkspaceIndexDirs(included: ['common'], excluded: ['common/vendor']),
       );
       expect(rules.allows('common/keep/a.dart'), isTrue);
       expect(rules.allows('common/vendor/b.js'), isFalse);
@@ -86,10 +81,10 @@ void main() {
   group('isOrphanInclude', () {
     test('flags includes under no exclude', () {
       final rules = QuickOpenDirRules(
-        WorkspaceIndexDirs(excluded: ['common'], included: [
-          'common/convertor',
-          'elsewhere/sub',
-        ]),
+        WorkspaceIndexDirs(
+          excluded: ['common'],
+          included: ['common/convertor', 'elsewhere/sub'],
+        ),
       );
       expect(rules.isOrphanInclude('common/convertor'), isFalse);
       expect(rules.isOrphanInclude('elsewhere/sub'), isTrue);

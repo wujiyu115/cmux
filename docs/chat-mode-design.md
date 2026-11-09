@@ -64,10 +64,23 @@
 `ChatTranscriptSession`（`lib/services/chat/chat_transcript_session.dart`）：
 
 1. 用 pane 的 cwd（OSC 7 优先，WSL 走 `windowsPathToWsl` 还原成 `/home/...`；见 `_directoryForEntry`）+ 该 pane 的 `RuntimeTarget`。
-2. 交给已有的 `AgentCliSessionService`（就是「恢复会话」菜单用的那个）扫该机器上 5 个 CLI 的会话库，取**最新且更新时间不早于 pane 启动时间**的那条。
-3. adapter 现在顺带返回 `filePath`（本次新增字段），所以拿到记录就能直接读文件，不用按家目录规则反推路径。
+2. 交给已有的 `AgentCliSessionService`（就是「恢复会话」菜单用的那个）扫该机器上 5 个 CLI 的会话库，按下面的规则挑一条。
+3. adapter 顺带返回 `filePath`（本次新增字段），所以拿到记录就能直接读文件，不用按家目录规则反推路径。
 
-`updatedAt >= paneStart - 2min` 这条过滤是防串台的：同一个目录里开两个 claude，谁都不该读对方的历史。resumed 会话保留原始创建时间但 mtime 是新的，所以按 mtime 判。
+挑哪一条，两级：
+
+| 级别 | 条件 | 说明 |
+|---|---|---|
+| own | `createdAt >= paneStart - 2min` | pane 自己的 PTY 启动的会话。`createdAt` 来自会话库本身：pi 家族在文件名里（`2026-11-09T13-14-26-493Z_<id>.jsonl`），Claude 系在第一条记录的 `timestamp` 上。 |
+| borrowed | 只有 `updatedAt >= paneStart - 2min` | `--resume` 恢复的会话保留原始创建时间，只能靠 mtime 认领。 |
+
+**为什么不能只看 mtime**：另一个窗口里的会话只要还在跑，mtime 就一直更新，于是「最新的那条」永远指向别人。曾经因此出现过「聊天视图显示了内容，但发消息毫无反应」——视图读的是另一个窗口的会话，消息写进了自己 pane 的 agent，两边对不上。
+
+**发送即校准**（`markPromptSent`）：发送后 20 秒内，如果当前文件里没出现这条 prompt，就去扫同目录最近 3 分钟内改动过的其它会话文件，谁的**最后一条 user 记录**等于这条 prompt，谁就是这个 pane 的真身，直接重绑并在同一次轮询里渲染出来。CLI 一收到输入就落盘，所以这是最可靠的判据——猜测只能在第一条消息之后自我纠正。
+
+**送不到就说话**：发送后 5 秒内会话文件没有出现这条 prompt，输入框上方显示错误、文本还回输入框（`chatPanePromptUndelivered`）。会话库是唯一证据，静默吞掉是最差的结果。
+
+自动重绑只覆盖桌面端面板：手机端的输入走终端字节流，宿主分不清「聊天模式里打的一句话」和「终端里敲的键」，所以手机上发送不会触发校准（读到的内容会随桌面端的校准一起对）。
 
 ### 3.3 为什么是轮询而不是 watch
 

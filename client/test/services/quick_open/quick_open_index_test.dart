@@ -58,8 +58,7 @@ class _PlainFilesystem implements Filesystem {
   Future<String?> readString(String path) async => files[path];
 
   @override
-  Future<List<int>?> readBytes(String path) async =>
-      files[path]?.codeUnits;
+  Future<List<int>?> readBytes(String path) async => files[path]?.codeUnits;
 
   @override
   Future<void> writeString(String path, String content) async =>
@@ -128,8 +127,7 @@ class _PlainFilesystem implements Filesystem {
     String root,
     String name, {
     int maxDepth = 4,
-  }) async =>
-      null;
+  }) async => null;
 
   @override
   Future<String> createTempDir({String? prefix, String? parent}) async =>
@@ -351,22 +349,25 @@ void main() {
   });
 
   group('prewarm', () {
-    test('cold root fills the cache once; repeat prewarms never re-list', () async {
-      var listings = 0;
-      final registry = QuickOpenIndexRegistry(
-        lister: (path) {
-          listings++;
-          return fs.listDirRecursive(path);
-        },
-      );
-      await registry.prewarm(fs, '/repo');
-      await registry.prewarm(fs, '/repo');
-      await registry.drainRefreshesForTest();
-      expect(listings, 1);
-      // The warmed entry is what the dialog's load serves.
-      final index = await registry.load(fs, '/repo');
-      expect(index.files.map((e) => e.name), contains('main.dart'));
-    });
+    test(
+      'cold root fills the cache once; repeat prewarms never re-list',
+      () async {
+        var listings = 0;
+        final registry = QuickOpenIndexRegistry(
+          lister: (path) {
+            listings++;
+            return fs.listDirRecursive(path);
+          },
+        );
+        await registry.prewarm(fs, '/repo');
+        await registry.prewarm(fs, '/repo');
+        await registry.drainRefreshesForTest();
+        expect(listings, 1);
+        // The warmed entry is what the dialog's load serves.
+        final index = await registry.load(fs, '/repo');
+        expect(index.files.map((e) => e.name), contains('main.dart'));
+      },
+    );
 
     test('warm entry: prewarm does not kick a revalidation', () async {
       var listings = 0;
@@ -611,22 +612,22 @@ void main() {
   });
 
   group('index dir rules', () {
-    test('recursive path: exclude drops a subtree, include carves it back', () async {
-      final registry = QuickOpenIndexRegistry();
-      final index = await registry.load(
-        fs,
-        '/repo',
-        dirs: WorkspaceIndexDirs(
-          excluded: ['lib'],
-          included: ['lib/src'],
-        ),
-      );
+    test(
+      'recursive path: exclude drops a subtree, include carves it back',
+      () async {
+        final registry = QuickOpenIndexRegistry();
+        final index = await registry.load(
+          fs,
+          '/repo',
+          dirs: WorkspaceIndexDirs(excluded: ['lib'], included: ['lib/src']),
+        );
 
-      final paths = index.files.map((e) => e.relativePath).toSet();
-      expect(paths, contains('lib/src/terminal_session.dart'));
-      expect(paths, isNot(contains('lib/main.dart')));
-      expect(paths, contains('README.md'));
-    });
+        final paths = index.files.map((e) => e.relativePath).toSet();
+        expect(paths, contains('lib/src/terminal_session.dart'));
+        expect(paths, isNot(contains('lib/main.dart')));
+        expect(paths, contains('README.md'));
+      },
+    );
 
     test('recursive path: include overrides the built-in ignores', () async {
       final registry = QuickOpenIndexRegistry();
@@ -656,10 +657,7 @@ void main() {
       final index = await registry.load(
         fs,
         '/repo',
-        dirs: WorkspaceIndexDirs(
-          excluded: ['lib'],
-          included: ['lib/src'],
-        ),
+        dirs: WorkspaceIndexDirs(excluded: ['lib'], included: ['lib/src']),
       );
 
       final paths = index.files.map((e) => e.relativePath).toSet();
@@ -701,24 +699,27 @@ void main() {
       expect(index.truncated, isFalse);
     });
 
-    test('different rules cache separately from the rule-free listing', () async {
-      final registry = QuickOpenIndexRegistry();
-      final excluded = await registry.load(
-        fs,
-        '/repo',
-        dirs: WorkspaceIndexDirs(excluded: ['lib']),
-      );
-      final unfiltered = await registry.load(fs, '/repo');
+    test(
+      'different rules cache separately from the rule-free listing',
+      () async {
+        final registry = QuickOpenIndexRegistry();
+        final excluded = await registry.load(
+          fs,
+          '/repo',
+          dirs: WorkspaceIndexDirs(excluded: ['lib']),
+        );
+        final unfiltered = await registry.load(fs, '/repo');
 
-      expect(
-        excluded.files.map((e) => e.relativePath),
-        isNot(contains('lib/main.dart')),
-      );
-      expect(
-        unfiltered.files.map((e) => e.relativePath),
-        contains('lib/main.dart'),
-      );
-    });
+        expect(
+          excluded.files.map((e) => e.relativePath),
+          isNot(contains('lib/main.dart')),
+        );
+        expect(
+          unfiltered.files.map((e) => e.relativePath),
+          contains('lib/main.dart'),
+        );
+      },
+    );
   });
 
   group('directory symlink support', () {
@@ -729,7 +730,10 @@ void main() {
     });
 
     test('recursive path indexes files under a linked directory', () async {
-      await fs.createSymlink(target: '/external/docs', linkPath: '/repo/linked');
+      await fs.createSymlink(
+        target: '/external/docs',
+        linkPath: '/repo/linked',
+      );
       final registry = QuickOpenIndexRegistry();
       final index = await registry.load(fs, '/repo');
 
@@ -748,26 +752,32 @@ void main() {
       expect(entry.name, 'guide.md');
     });
 
-    test('git path indexes linked contents and drops the dir-link row', () async {
-      await fs.createSymlink(target: '/external/docs', linkPath: '/repo/linked');
-      final runner = _FakeGitRunner(
-        result: const GitCommandResult(
-          // git reports the directory link itself as a tracked entry.
-          exitCode: 0,
-          stdout: 'README.md\x00linked\x00',
-          stderr: '',
-        ),
-      );
-      final registry = QuickOpenIndexRegistry(gitRunner: runner);
-      final index = await registry.load(fs, '/repo');
+    test(
+      'git path indexes linked contents and drops the dir-link row',
+      () async {
+        await fs.createSymlink(
+          target: '/external/docs',
+          linkPath: '/repo/linked',
+        );
+        final runner = _FakeGitRunner(
+          result: const GitCommandResult(
+            // git reports the directory link itself as a tracked entry.
+            exitCode: 0,
+            stdout: 'README.md\x00linked\x00',
+            stderr: '',
+          ),
+        );
+        final registry = QuickOpenIndexRegistry(gitRunner: runner);
+        final index = await registry.load(fs, '/repo');
 
-      final paths = index.files.map((e) => e.relativePath).toList();
-      expect(paths, contains('README.md'));
-      expect(paths, contains('linked/guide.md'));
-      expect(paths, contains('linked/notes.txt'));
-      // The unopenable link row itself is replaced by its contents.
-      expect(paths, isNot(contains('linked')));
-    });
+        final paths = index.files.map((e) => e.relativePath).toList();
+        expect(paths, contains('README.md'));
+        expect(paths, contains('linked/guide.md'));
+        expect(paths, contains('linked/notes.txt'));
+        // The unopenable link row itself is replaced by its contents.
+        expect(paths, isNot(contains('linked')));
+      },
+    );
 
     test('a symlink cycle terminates and still indexes the tree', () async {
       await fs.createSymlink(target: '/repo', linkPath: '/repo/loop');
@@ -782,7 +792,10 @@ void main() {
     test('ignore rules apply to linked paths', () async {
       fs.ensureDir('/external/pkg');
       fs.files['/external/pkg/index.js'] = 'x';
-      await fs.createSymlink(target: '/external/pkg', linkPath: '/repo/node_modules/link');
+      await fs.createSymlink(
+        target: '/external/pkg',
+        linkPath: '/repo/node_modules/link',
+      );
       final registry = QuickOpenIndexRegistry();
       final index = await registry.load(fs, '/repo');
 
@@ -795,7 +808,10 @@ void main() {
       for (var i = 0; i < 4; i++) {
         fs.files['/external/docs/extra$i.txt'] = 'x';
       }
-      await fs.createSymlink(target: '/external/docs', linkPath: '/repo/linked');
+      await fs.createSymlink(
+        target: '/external/docs',
+        linkPath: '/repo/linked',
+      );
       final registry = QuickOpenIndexRegistry();
       final index = await registry.load(fs, '/repo', maxFiles: 5);
       expect(index.files.length, 5);
@@ -803,7 +819,10 @@ void main() {
     });
 
     test('backends without the capability keep the legacy listing', () async {
-      await fs.createSymlink(target: '/external/docs', linkPath: '/repo/linked');
+      await fs.createSymlink(
+        target: '/external/docs',
+        linkPath: '/repo/linked',
+      );
       final plain = _PlainFilesystem();
       plain.files['/repo/README.md'] = 'x';
       final registry = QuickOpenIndexRegistry();

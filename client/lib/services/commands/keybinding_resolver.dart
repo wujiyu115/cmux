@@ -81,7 +81,8 @@ abstract final class KeybindingResolver {
         // belongs to whatever is taking typed input, terminal included.
         // `inTerminal` and `inCompose` are mutually exclusive (see
         // `_liveShortcutContext`), so the compose escape hatch is unaffected.
-        if (!chord.hasModifiers && (context.inTextInput || context.inTerminal)) {
+        if (!chord.hasModifiers &&
+            (context.inTextInput || context.inTerminal)) {
           final allowedBareComposeKey =
               def.when == ShortcutWhen.inCompose && context.inCompose;
           if (!allowedBareComposeKey) {

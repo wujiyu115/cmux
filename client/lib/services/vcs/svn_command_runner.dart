@@ -89,11 +89,7 @@ class LocalSvnCommandRunner implements SvnCommandRunner {
       );
     }
     final result = await _host.run(
-      HostRunRequest(
-        executable: svn,
-        arguments: args,
-        workingDirectory: dir,
-      ),
+      HostRunRequest(executable: svn, arguments: args, workingDirectory: dir),
     );
     return _resultFromHost(result);
   }
@@ -175,9 +171,7 @@ class RemoteSvnCommandRunner implements SvnCommandRunner {
       _availableByHost[_hostKey] ??= _probeAvailability();
 
   Future<bool> _probeAvailability() async {
-    final result = await _execShell(
-      'command -v svn || which svn 2>/dev/null',
-    );
+    final result = await _execShell('command -v svn || which svn 2>/dev/null');
     if (sshRunFailed(result)) return false;
     return utf8.decode(result.stdout, allowMalformed: true).trim().isNotEmpty;
   }

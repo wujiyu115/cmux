@@ -3,7 +3,6 @@ import '../../models/runtime_target.dart';
 /// Runs one command on the remote host and returns its stdout.
 typedef RemoteCommandRunner = Future<String> Function(String command);
 
-
 /// P3e §3: detect a freshly-connected SSH host's OS family so the rest of the
 /// remote stack can branch (relay selection, symlink→copy inheritance, login
 /// shell / path semantics). The result is cached on `RuntimeTarget.remoteOs`,

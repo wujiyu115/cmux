@@ -32,36 +32,18 @@ void main() {
   });
 
   test('schedule returns false when max attempts exceeded', () {
-    final queue = PtyAutomationRetryQueue(
-      retryIntervalMs: 0,
-      maxAttempts: 2,
-    );
+    final queue = PtyAutomationRetryQueue(retryIntervalMs: 0, maxAttempts: 2);
     const key = 'k';
     expect(
-      queue.schedule(
-        key: key,
-        sessionId: 's',
-        memberId: 'm',
-        text: 't',
-      ),
+      queue.schedule(key: key, sessionId: 's', memberId: 'm', text: 't'),
       isTrue,
     );
     expect(
-      queue.schedule(
-        key: key,
-        sessionId: 's',
-        memberId: 'm',
-        text: 't',
-      ),
+      queue.schedule(key: key, sessionId: 's', memberId: 'm', text: 't'),
       isTrue,
     );
     expect(
-      queue.schedule(
-        key: key,
-        sessionId: 's',
-        memberId: 'm',
-        text: 't',
-      ),
+      queue.schedule(key: key, sessionId: 's', memberId: 'm', text: 't'),
       isFalse,
     );
     expect(queue.isPending(key), isFalse);
@@ -69,12 +51,7 @@ void main() {
 
   test('clear removes pending entry', () {
     final queue = PtyAutomationRetryQueue(retryIntervalMs: 0, maxAttempts: 5);
-    queue.schedule(
-      key: 'k',
-      sessionId: 's',
-      memberId: 'm',
-      text: 't',
-    );
+    queue.schedule(key: 'k', sessionId: 's', memberId: 'm', text: 't');
     queue.clear('k');
     expect(queue.due(blocked: (_) => false), isEmpty);
   });

@@ -20,7 +20,8 @@ void registerSessionCommands(
   // chat-landing "new session tab" — terminals only now).
   bus.register(
     CommandIds.sessionNewTab,
-    () => launcher.openDefaultShellForWorkspace(chat.tabStore.activeWorkspaceId),
+    () =>
+        launcher.openDefaultShellForWorkspace(chat.tabStore.activeWorkspaceId),
   );
   bus.register(
     CommandIds.sessionCloseTab,

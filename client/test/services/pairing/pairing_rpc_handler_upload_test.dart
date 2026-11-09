@@ -205,19 +205,21 @@ void main() {
     expect(receiver.beginCalls, isEmpty);
   });
 
-  test('an UploadFrame is handed to receiver.chunk with transferId/index/bytes',
-      () {
-    handler.handle(
-      PairingCodec.decode(
-        PairingCodec.encodeUpload(5, 2, Uint8List.fromList([9, 8, 7])),
-      ),
-    );
+  test(
+    'an UploadFrame is handed to receiver.chunk with transferId/index/bytes',
+    () {
+      handler.handle(
+        PairingCodec.decode(
+          PairingCodec.encodeUpload(5, 2, Uint8List.fromList([9, 8, 7])),
+        ),
+      );
 
-    expect(receiver.chunkCalls, hasLength(1));
-    expect(receiver.chunkCalls.single[0], 5);
-    expect(receiver.chunkCalls.single[1], 2);
-    expect(receiver.chunkCalls.single[2], [9, 8, 7]);
-  });
+      expect(receiver.chunkCalls, hasLength(1));
+      expect(receiver.chunkCalls.single[0], 5);
+      expect(receiver.chunkCalls.single[1], 2);
+      expect(receiver.chunkCalls.single[2], [9, 8, 7]);
+    },
+  );
 
   group('ack wiring', () {
     // *When* to ack is the receiver's decision (a chunk that triggers a flush is
@@ -274,19 +276,25 @@ void main() {
         .whereType<JsonFrame>()
         .where((f) => f.data['method'] == 'upload.ack');
 
-    test('an accepted chunk emits an upload.ack with transferId and received',
-        () async {
-      final t = await beginOnReal();
-      real.handle(
-        PairingCodec.decode(
-          PairingCodec.encodeUpload(t.transferId, 0, Uint8List.fromList([1, 2])),
-        ),
-      );
+    test(
+      'an accepted chunk emits an upload.ack with transferId and received',
+      () async {
+        final t = await beginOnReal();
+        real.handle(
+          PairingCodec.decode(
+            PairingCodec.encodeUpload(
+              t.transferId,
+              0,
+              Uint8List.fromList([1, 2]),
+            ),
+          ),
+        );
 
-      final params = acks().single.data['params'] as Map;
-      expect(params['transferId'], t.transferId);
-      expect(params['received'], 2);
-    });
+        final params = acks().single.data['params'] as Map;
+        expect(params['transferId'], t.transferId);
+        expect(params['received'], 2);
+      },
+    );
 
     test('a rejected chunk emits no upload.ack', () async {
       final t = await beginOnReal();
@@ -384,7 +392,11 @@ void main() {
   test('upload.abort without a transferId replies ok and abandons nothing', () {
     handler.handle(
       PairingCodec.decode(
-        _json({'id': 4, 'method': 'upload.abort', 'params': <String, Object?>{}}),
+        _json({
+          'id': 4,
+          'method': 'upload.abort',
+          'params': <String, Object?>{},
+        }),
       ),
     );
 

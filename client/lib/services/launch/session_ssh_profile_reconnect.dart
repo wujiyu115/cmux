@@ -14,7 +14,8 @@ class SessionSshProfileReconnect {
   SessionSshProfileReconnect({
     required SessionLaunchHost host,
     required SessionShellConnector shellConnector,
-    required WorkspaceLaunchContext Function(AppSession session) launchContextFor,
+    required WorkspaceLaunchContext Function(AppSession session)
+    launchContextFor,
     required SessionLaunchWorkspaceIndex Function() workspaceIndex,
     required Iterable<ChatTab> Function() openTabs,
   }) : _host = host,
@@ -58,9 +59,7 @@ class SessionSshProfileReconnect {
     final shell =
         tab.resumeSession ??
         tab.memberShells[session.sessionId] ??
-        (tab.memberShells.length == 1
-            ? tab.memberShells.values.first
-            : null);
+        (tab.memberShells.length == 1 ? tab.memberShells.values.first : null);
     if (shell == null || shell.isDisposed || shell.isConnecting) return;
 
     shell.disconnect();

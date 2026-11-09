@@ -33,8 +33,7 @@ class WorkbenchEditorOpener {
 
   /// Preview opens only reuse the shared preview slot while the
   /// editor-preview-tabs preference is on; otherwise every open pins a tab.
-  bool _previewEffective(bool preview) =>
-      preview && _readEditorPreviewTabs();
+  bool _previewEffective(bool preview) => preview && _readEditorPreviewTabs();
 
   Future<void> openFile(
     String workspaceId,
@@ -94,10 +93,7 @@ class WorkbenchEditorOpener {
   Future<void> openChangesDiff({
     required String workspaceId,
     required String absolutePath,
-    required Future<String?> Function({
-      bool ignoreWhitespace,
-      bool fullContext,
-    })
+    required Future<String?> Function({bool ignoreWhitespace, bool fullContext})
     loadDiff,
     String? title,
     bool preview = true,

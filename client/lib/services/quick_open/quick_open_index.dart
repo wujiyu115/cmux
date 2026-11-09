@@ -256,18 +256,14 @@ class QuickOpenIndexRegistry {
 
     final ctx = fs.pathContext;
     final normalizedRoot = ctx.normalize(root);
-    final linkDirSet = {
-      for (final link in linkDirs) ctx.normalize(link),
-    };
+    final linkDirSet = {for (final link in linkDirs) ctx.normalize(link)};
     // Git reports a directory link itself as a file entry; opening it would
     // fail, so replace it with the link's indexed contents below.
     final files = [
       for (final entry in base.files)
         if (!linkDirSet.contains(ctx.normalize(entry.path))) entry,
     ];
-    final seen = {
-      for (final entry in base.files) entry.path,
-    };
+    final seen = {for (final entry in base.files) entry.path};
     var truncated = false;
 
     final linkedTrees = await Future.wait([

@@ -66,18 +66,19 @@ class WorkspaceSearchService {
             .toList(growable: false);
         final useRg = await ripgrepAvailable(slice.targetId, ctx);
         if (useRg) {
-          final run = RipgrepSearchEngine(
-            spawner: _spawnerFor(ctx),
-            executable: executable,
-          ).search(
-            query: query,
-            pattern: pattern,
-            targetId: slice.targetId,
-            pathContext: ctx.filesystem.pathContext,
-            roots: roots,
-            workingDirectory: roots.first,
-            primaryTargetId: primaryTargetId,
-          );
+          final run =
+              RipgrepSearchEngine(
+                spawner: _spawnerFor(ctx),
+                executable: executable,
+              ).search(
+                query: query,
+                pattern: pattern,
+                targetId: slice.targetId,
+                pathContext: ctx.filesystem.pathContext,
+                roots: roots,
+                workingDirectory: roots.first,
+                primaryTargetId: primaryTargetId,
+              );
           children.add(run);
           return run.results;
         }
@@ -172,7 +173,11 @@ class WorkspaceSearchService {
         return _localSpawner;
       case RuntimeKind.wsl:
         final distro = ctx.target.wslDistro;
-        return ({required executable, required arguments, required workingDirectory}) async {
+        return ({
+          required executable,
+          required arguments,
+          required workingDirectory,
+        }) async {
           final argv = HostWslArgv.processInvocation(
             distro: distro,
             workingDirectory: workingDirectory,
@@ -183,7 +188,11 @@ class WorkspaceSearchService {
           return _LocalProcessRunHandle(process);
         };
       case RuntimeKind.ssh:
-        return ({required executable, required arguments, required workingDirectory}) async {
+        return ({
+          required executable,
+          required arguments,
+          required workingDirectory,
+        }) async {
           final profiles = _sshProfiles;
           final factory = _sshClientFactory;
           final profileId = ctx.target.sshProfileId?.trim() ?? '';

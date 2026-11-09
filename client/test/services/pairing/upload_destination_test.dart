@@ -112,18 +112,21 @@ void main() {
       );
     });
 
-    test('joins with the fake pathContext, not a hardcoded separator', () async {
-      final fs = _FakeFilesystem(
-        pathContext: p.Context(style: p.Style.windows),
-      );
-      final path = await resolveUploadDestination(
-        filesystem: fs,
-        directory: r'C:\cwd',
-        filename: 'photo.jpg',
-      );
-      expect(path, r'C:\cwd\photo.jpg');
-      expect(path, contains(r'\'));
-      expect(path, isNot(contains('/')));
-    });
+    test(
+      'joins with the fake pathContext, not a hardcoded separator',
+      () async {
+        final fs = _FakeFilesystem(
+          pathContext: p.Context(style: p.Style.windows),
+        );
+        final path = await resolveUploadDestination(
+          filesystem: fs,
+          directory: r'C:\cwd',
+          filename: 'photo.jpg',
+        );
+        expect(path, r'C:\cwd\photo.jpg');
+        expect(path, contains(r'\'));
+        expect(path, isNot(contains('/')));
+      },
+    );
   });
 }

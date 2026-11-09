@@ -17,8 +17,8 @@ class KeyboardInsetPtyHold {
   KeyboardInsetPtyHold({
     required PtyResizeHoldTarget? Function() target,
     Duration settleDelay = const Duration(milliseconds: 120),
-  })  : _target = target,
-        _settleDelay = settleDelay;
+  }) : _target = target,
+       _settleDelay = settleDelay;
 
   final PtyResizeHoldTarget? Function() _target;
 

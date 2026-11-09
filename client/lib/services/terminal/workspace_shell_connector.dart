@@ -63,8 +63,7 @@ class WorkspaceShellConnector {
   /// Inverse of [seatIdFor]; null when [seatId] is not a workspace pane seat.
   /// Lets notification wiring map a seat back to its pane without hardcoding
   /// the prefix.
-  static String? paneIdOfSeat(String seatId) =>
-      seatId.startsWith(seatIdPrefix)
+  static String? paneIdOfSeat(String seatId) => seatId.startsWith(seatIdPrefix)
       ? seatId.substring(seatIdPrefix.length)
       : null;
 
@@ -167,10 +166,7 @@ class WorkspaceShellConnector {
     // attention row too, or a closed pane keeps a ghost seat until the 30-minute
     // stale prune. All three are idempotent.
     _agentAttentionCubit?.clearSeat(sessionId: seatId, memberId: seatId);
-    _agentStatusSeatLookup?.unregisterSeat(
-      sessionId: seatId,
-      memberId: seatId,
-    );
+    _agentStatusSeatLookup?.unregisterSeat(sessionId: seatId, memberId: seatId);
     _agentStatusGateway?.unregisterAgentStatusSession(seatId);
   }
 

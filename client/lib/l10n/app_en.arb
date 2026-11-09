@@ -1786,6 +1786,7 @@
   "voiceInputCloudPrivacyNote": "Audio is sent directly to the cloud provider, not through the encrypted pairing channel.",
   "chatPaneComposerHint": "Message the agent…",
   "chatPaneComposerNeedsAgent": "Start the agent in the terminal first, then message it here.",
+  "chatPanePromptUndelivered": "The prompt did not arrive: no agent is running in this terminal, or the chat view is following another window's session. The text is back in the box.",
   "chatPaneSend": "Send",
   "chatPaneThoughts": "Thinking",
   "chatPaneCompacted": "Context compacted",

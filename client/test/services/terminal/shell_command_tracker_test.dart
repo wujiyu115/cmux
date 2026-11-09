@@ -36,38 +36,41 @@ void main() {
     );
   });
 
-  test('A/B/C/D produces one finished row with context, exit code, duration', () {
-    final tracker = build();
-    expect(tracker.hasShellIntegration, isFalse);
+  test(
+    'A/B/C/D produces one finished row with context, exit code, duration',
+    () {
+      final tracker = build();
+      expect(tracker.hasShellIntegration, isFalse);
 
-    tracker.observePtyText(_osc133('A'));
-    expect(tracker.hasShellIntegration, isTrue);
-    tracker.observePtyText(_osc133('B;git status'));
-    tracker.observePtyText(_osc133('C'));
+      tracker.observePtyText(_osc133('A'));
+      expect(tracker.hasShellIntegration, isTrue);
+      tracker.observePtyText(_osc133('B;git status'));
+      tracker.observePtyText(_osc133('C'));
 
-    expect(started, hasLength(1));
-    expect(tracker.active?.command, 'git status');
-    expect(done, isEmpty);
+      expect(started, hasLength(1));
+      expect(tracker.active?.command, 'git status');
+      expect(done, isEmpty);
 
-    now = now.add(const Duration(milliseconds: 1500));
-    tracker.observePtyText(_osc133('D;0'));
+      now = now.add(const Duration(milliseconds: 1500));
+      tracker.observePtyText(_osc133('D;0'));
 
-    expect(tracker.active, isNull);
-    expect(done, hasLength(1));
-    final entry = done.single;
-    expect(entry.id, 'id-1');
-    expect(entry.command, 'git status');
-    expect(entry.exitCode, 0);
-    expect(entry.succeeded, isTrue);
-    expect(entry.duration, const Duration(milliseconds: 1500));
-    expect(entry.paneId, 'pane-1');
-    expect(entry.workspaceId, 'ws-1');
-    expect(entry.surfaceId, 'sf-1');
-    expect(entry.surfaceName, '终端 1');
-    expect(entry.paneName, 'pane one');
-    expect(entry.workspaceName, 'demo');
-    expect(entry.workingDirectory, '/repo');
-  });
+      expect(tracker.active, isNull);
+      expect(done, hasLength(1));
+      final entry = done.single;
+      expect(entry.id, 'id-1');
+      expect(entry.command, 'git status');
+      expect(entry.exitCode, 0);
+      expect(entry.succeeded, isTrue);
+      expect(entry.duration, const Duration(milliseconds: 1500));
+      expect(entry.paneId, 'pane-1');
+      expect(entry.workspaceId, 'ws-1');
+      expect(entry.surfaceId, 'sf-1');
+      expect(entry.surfaceName, '终端 1');
+      expect(entry.paneName, 'pane one');
+      expect(entry.workspaceName, 'demo');
+      expect(entry.workingDirectory, '/repo');
+    },
+  );
 
   test('non-zero exit code is kept, extra D params are ignored', () {
     final tracker = build();
@@ -78,14 +81,17 @@ void main() {
     expect(done.single.succeeded, isFalse);
   });
 
-  test('D without a status leaves exitCode null but still finishes the row', () {
-    final tracker = build();
-    tracker.observePtyText(_osc133('B;sleep 1'));
-    tracker.observePtyText(_osc133('C'));
-    tracker.observePtyText(_osc133('D'));
-    expect(done.single.exitCode, isNull);
-    expect(done.single.completedAt, isNotNull);
-  });
+  test(
+    'D without a status leaves exitCode null but still finishes the row',
+    () {
+      final tracker = build();
+      tracker.observePtyText(_osc133('B;sleep 1'));
+      tracker.observePtyText(_osc133('C'));
+      tracker.observePtyText(_osc133('D'));
+      expect(done.single.exitCode, isNull);
+      expect(done.single.completedAt, isNotNull);
+    },
+  );
 
   test('a new prompt closes a row that never reported a status', () {
     final tracker = build();

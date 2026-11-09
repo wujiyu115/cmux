@@ -46,10 +46,7 @@ class GitRepoStore {
   static SvnCubit Function(String root, RuntimeContext workContext)?
   _svnCubitFactoryOverride;
 
-  static SvnCubit _defaultSvnFactory(
-    String root,
-    RuntimeContext workContext,
-  ) {
+  static SvnCubit _defaultSvnFactory(String root, RuntimeContext workContext) {
     final service =
         SvnService.debugOverrideFactory?.call() ??
         SvnService.forContext(workContext);
@@ -65,7 +62,8 @@ class GitRepoStore {
       _svnCubits[key] = existing;
       return existing;
     }
-    final cubit = _svnCubitFactoryOverride?.call(
+    final cubit =
+        _svnCubitFactoryOverride?.call(
           workContext.filesystem.pathContext.normalize(root),
           workContext,
         ) ??

@@ -20,36 +20,39 @@ void main() {
       String? resolvedHome,
     }) {
       return WslFilesystem(
-        processRunner: (executable, arguments,
-            {stdoutEncoding, stderrEncoding}) async {
-          expect(executable, 'wsl.exe');
-          final script = arguments.whereType<String>().join(' ');
-          // resolveSymlink: readlink -f -- <path>
-          if (script.contains('readlink')) {
-            if (resolvedHome == null) {
-              return ProcessResult(0, 1, '', 'not a symlink');
-            }
-            return ProcessResult(0, 0, resolvedHome, '');
-          }
-          // stat: "%F|%s|%Y" per directory
-          if (script.contains('stat')) {
-            final target = arguments.last;
-            final out = statOutput[target];
-            if (out == null) return ProcessResult(0, 1, '', 'No such file');
-            return ProcessResult(0, 0, '$out\n', '');
-          }
-          // listDir: find -L <path> -mindepth 1 -maxdepth 1 -printf "%f\t%y\n"
-          final quoted =
-              RegExp(r'find -L (\S+) -mindepth 1').firstMatch(script);
-          if (quoted != null) {
-            final raw = quoted.group(1)!;
-            // shellSingleQuote wraps in single quotes.
-            final path = raw.startsWith("'") ? raw.substring(1, raw.length - 1) : raw;
-            final out = findOutput[path] ?? '';
-            return ProcessResult(0, 0, out, '');
-          }
-          return ProcessResult(0, 1, '', 'unexpected call');
-        },
+        processRunner:
+            (executable, arguments, {stdoutEncoding, stderrEncoding}) async {
+              expect(executable, 'wsl.exe');
+              final script = arguments.whereType<String>().join(' ');
+              // resolveSymlink: readlink -f -- <path>
+              if (script.contains('readlink')) {
+                if (resolvedHome == null) {
+                  return ProcessResult(0, 1, '', 'not a symlink');
+                }
+                return ProcessResult(0, 0, resolvedHome, '');
+              }
+              // stat: "%F|%s|%Y" per directory
+              if (script.contains('stat')) {
+                final target = arguments.last;
+                final out = statOutput[target];
+                if (out == null) return ProcessResult(0, 1, '', 'No such file');
+                return ProcessResult(0, 0, '$out\n', '');
+              }
+              // listDir: find -L <path> -mindepth 1 -maxdepth 1 -printf "%f\t%y\n"
+              final quoted = RegExp(
+                r'find -L (\S+) -mindepth 1',
+              ).firstMatch(script);
+              if (quoted != null) {
+                final raw = quoted.group(1)!;
+                // shellSingleQuote wraps in single quotes.
+                final path = raw.startsWith("'")
+                    ? raw.substring(1, raw.length - 1)
+                    : raw;
+                final out = findOutput[path] ?? '';
+                return ProcessResult(0, 0, out, '');
+              }
+              return ProcessResult(0, 1, '', 'unexpected call');
+            },
       );
     }
 
@@ -57,7 +60,8 @@ void main() {
       final fs = wslFs(
         statOutput: {'/home/ejoy': 'directory|4096|1700000000'},
         findOutput: {
-          '/home/ejoy': 'projects\td\n'
+          '/home/ejoy':
+              'projects\td\n'
               'Documents\td\n'
               'notes.md\tf\n'
               '.hidden\td\n'

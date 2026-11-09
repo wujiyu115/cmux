@@ -64,14 +64,20 @@ class SearchQuery extends Equatable {
       if (wholeWord && _hasWordBoundaries(raw)) {
         source = '\\b$source\\b';
       }
-      return (pattern: RegExp(source, caseSensitive: caseSensitive), patternError: null);
+      return (
+        pattern: RegExp(source, caseSensitive: caseSensitive),
+        patternError: null,
+      );
     }
     var source = raw;
     if (wholeWord && _hasWordBoundaries(raw)) {
       source = '\\b(?:$raw)\\b';
     }
     try {
-      return (pattern: RegExp(source, caseSensitive: caseSensitive), patternError: null);
+      return (
+        pattern: RegExp(source, caseSensitive: caseSensitive),
+        patternError: null,
+      );
     } on FormatException {
       return (pattern: null, patternError: raw);
     }

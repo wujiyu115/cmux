@@ -71,6 +71,16 @@ class ChatTranscriptSession {
   String? _sessionId;
   AgentCliFamily? _family;
   bool _resolving = false;
+
+  /// The prompt the user just typed, until the store shows it landing.
+  ///
+  /// Resolution can only guess before the first prompt: two panes in one
+  /// directory, or a session another window keeps writing, look identical to a
+  /// resumed session. Sending settles it — the CLI records the prompt in the
+  /// file its pane's agent is actually appending to, so a prompt that shows up
+  /// in a different file than the one being read is proof of the real owner.
+  String? _pendingPrompt;
+  DateTime? _pendingSince;
   bool _refreshing = false;
   bool _disposed = false;
 
@@ -79,6 +89,15 @@ class ChatTranscriptSession {
 
   /// Store file being read, once resolved.
   String? get resolvedPath => _path;
+
+  /// Announces a prompt that was just written to the pane's PTY, so the next
+  /// polls can follow it to the session file that receives it.
+  void markPromptSent(String text) {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return;
+    _pendingPrompt = trimmed;
+    _pendingSince = DateTime.now();
+  }
 
   /// Starts polling. Idempotent.
   void start() {
@@ -137,7 +156,13 @@ class ChatTranscriptSession {
       final bytes =
           await fs.readBytesRange(path, offset, size - offset) ?? const <int>[];
       if (_disposed) return;
-      final rows = _parser!.parse(bytes);
+      var rows = _parser!.parse(bytes);
+      if (!_pendingLanded(rows)) {
+        // The prompt went into some other file, so that file — not this one —
+        // is the pane's session. Render it now rather than one poll later.
+        rows = await _followPendingPrompt(context, path: path) ?? rows;
+        if (_disposed) return;
+      }
       _emit(
         ChatTranscriptSnapshot(
           rows: rows,
@@ -159,6 +184,108 @@ class ChatTranscriptSession {
     }
   }
 
+  /// True once [rows] carries the prompt that was just sent.
+  bool _pendingLanded(List<ChatTranscriptRow> rows) {
+    final prompt = _pendingPrompt;
+    if (prompt == null) return false;
+    for (final row in rows.reversed) {
+      if (row.kind != ChatTranscriptRowKind.user) continue;
+      if (_samePrompt(row.text, prompt)) {
+        _pendingPrompt = null;
+        _pendingSince = null;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// Rebinds to whichever session file the prompt actually landed in, and
+  /// returns the rows of that file so they can be shown on the same poll.
+  ///
+  /// Only files touched in the last few minutes are read, and only their
+  /// newest prompt matters, so this stays one small read per candidate on the
+  /// polls that follow a send.
+  Future<List<ChatTranscriptRow>?> _followPendingPrompt(
+    RuntimeContext context, {
+    required String path,
+  }) async {
+    final prompt = _pendingPrompt;
+    final since = _pendingSince;
+    if (prompt == null) return null;
+    if (since != null && DateTime.now().difference(since).inSeconds > 20) {
+      _pendingPrompt = null;
+      _pendingSince = null;
+      return null;
+    }
+    final directory = _directory().trim();
+    if (directory.isEmpty) return null;
+    final List<AgentCliSessionRecord> records;
+    try {
+      records = await _sessions.listSessions(
+        target: _target(),
+        directory: directory,
+      );
+    } on Object {
+      return null;
+    }
+    if (_disposed) return null;
+    final recent = DateTime.now().subtract(const Duration(minutes: 3));
+    for (final record in records) {
+      final candidate = record.filePath;
+      if (candidate == null || candidate == path) continue;
+      final parser = chatTranscriptParserFor(record.family);
+      if (parser == null) continue;
+      final updated = record.updatedAt;
+      if (updated != null && updated.isBefore(recent)) continue;
+      final int size;
+      try {
+        final stat = await context.filesystem.stat(candidate);
+        if (!stat.isFile) continue;
+        size = stat.size ?? 0;
+      } on Object {
+        continue;
+      }
+      if (size == 0) continue;
+      final offset = size > maxBytes ? size - maxBytes : 0;
+      final List<int> bytes;
+      try {
+        bytes =
+            await context.filesystem.readBytesRange(
+              candidate,
+              offset,
+              size - offset,
+            ) ??
+            const <int>[];
+      } on Object {
+        continue;
+      }
+      if (_disposed) return null;
+      final rows = parser.parse(bytes);
+      final landed = rows.any(
+        (row) =>
+            row.kind == ChatTranscriptRowKind.user &&
+            _samePrompt(row.text, prompt),
+      );
+      if (!landed) continue;
+      _path = candidate;
+      _sessionId = record.sessionId;
+      _family = record.family;
+      _parser = parser;
+      _pendingPrompt = null;
+      _pendingSince = null;
+      return rows;
+    }
+    return null;
+  }
+
+  /// Prompts are compared after collapsing whitespace: a CLI may trim, wrap, or
+  /// re-quote what it stored.
+  static bool _samePrompt(String stored, String sent) =>
+      _squeeze(stored) == _squeeze(sent);
+
+  static String _squeeze(String value) =>
+      value.replaceAll(RegExp(r'\s+'), ' ').trim();
+
   /// Newest session file bound to this pane's cwd that a parser understands.
   Future<void> _resolveFile() async {
     if (_resolving) return;
@@ -172,17 +299,26 @@ class ChatTranscriptSession {
       );
       if (_disposed) return;
       final floor = _startedAt.subtract(slack);
-      AgentCliSessionRecord? chosen;
+      AgentCliSessionRecord? own;
+      AgentCliSessionRecord? borrowed;
       for (final record in records) {
         if (record.filePath == null) continue;
         if (chatTranscriptParserFor(record.family) == null) continue;
+        // A pane can only own a session its PTY started. A session another
+        // window is still writing keeps a fresh mtime forever, so mtime alone
+        // would let one pane publish — and answer for — another's conversation.
+        final created = record.createdAt;
+        if (created != null && !created.isBefore(floor)) {
+          own = record;
+          break;
+        }
         final updated = record.updatedAt;
-        // Records arrive newest-first, so the first live one is the pane's own
-        // unless a second pane in the same directory raced it.
         if (updated != null && updated.isBefore(floor)) continue;
-        chosen = record;
-        break;
+        // Resumed sessions keep their original creation time, so a stale
+        // candidate stays as the fallback rather than being dropped.
+        borrowed ??= record;
       }
+      final chosen = own ?? borrowed;
       if (chosen == null) return;
       _path = chosen.filePath;
       _sessionId = chosen.sessionId;

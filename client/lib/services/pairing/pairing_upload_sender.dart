@@ -64,21 +64,23 @@ class PairingUploadSender {
     required Future<Map<String, Object?>> Function(
       String method,
       Map<String, Object?> params,
-    ) rpc,
+    )
+    rpc,
     required void Function(Uint8List frame) send,
     required Stream<PairingUploadAck> acks,
     int windowChunks = 16,
     Duration ackTimeout = const Duration(seconds: 30),
-  })  : _rpc = rpc,
-        _send = send,
-        _acks = acks,
-        _windowChunks = windowChunks,
-        _ackTimeout = ackTimeout;
+  }) : _rpc = rpc,
+       _send = send,
+       _acks = acks,
+       _windowChunks = windowChunks,
+       _ackTimeout = ackTimeout;
 
   final Future<Map<String, Object?>> Function(
     String method,
     Map<String, Object?> params,
-  ) _rpc;
+  )
+  _rpc;
   final void Function(Uint8List frame) _send;
   final Stream<PairingUploadAck> _acks;
   final int _windowChunks;

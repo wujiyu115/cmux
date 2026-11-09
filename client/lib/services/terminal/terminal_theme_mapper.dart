@@ -130,8 +130,15 @@ TerminalTheme teampilotTerminalTheme(
     return effective.toTerminalTheme();
   }
 
-  final base = _legacyTerminalTheme(cs, isDark: isDark, mode: mode, chrome: chrome);
-  return hasOverrides ? _applyOverridesToTerminalTheme(base, colorOverrides) : base;
+  final base = _legacyTerminalTheme(
+    cs,
+    isDark: isDark,
+    mode: mode,
+    chrome: chrome,
+  );
+  return hasOverrides
+      ? _applyOverridesToTerminalTheme(base, colorOverrides)
+      : base;
 }
 
 /// The legacy (non-catalog) adaptive / classicDark / highContrast theme bodies.

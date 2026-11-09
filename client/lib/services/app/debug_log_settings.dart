@@ -18,8 +18,6 @@ abstract final class DebugLogSettings {
   static bool read(SharedPreferences preferences) =>
       preferences.getBool(_key) ?? false;
 
-  static Future<void> write(
-    SharedPreferences preferences,
-    bool enabled,
-  ) => preferences.setBool(_key, enabled);
+  static Future<void> write(SharedPreferences preferences, bool enabled) =>
+      preferences.setBool(_key, enabled);
 }

@@ -100,11 +100,12 @@ class PairingCodec {
     int chunkIndex,
     Uint8List bytes,
   ) {
-    final header = (_Writer()
-          ..byte(_kUpload)
-          ..varint(transferId)
-          ..varint(chunkIndex))
-        .take();
+    final header =
+        (_Writer()
+              ..byte(_kUpload)
+              ..varint(transferId)
+              ..varint(chunkIndex))
+            .take();
     final out = Uint8List(header.length + bytes.length);
     out.setRange(0, header.length, header);
     out.setRange(header.length, out.length, bytes);

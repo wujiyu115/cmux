@@ -60,10 +60,14 @@ class SessionLaunchPipeline {
     return switch (operation) {
       OpenSessionOperation(:final request) => _runOpen(request),
       CreateSessionOperation(:final request) => _runCreate(request),
-      ConnectWorkspaceOperation(:final request, :final repo) =>
-        _runConnect(request, repo: repo),
-      RestartWorkspaceOperation(:final request, :final repo) =>
-        _runRestart(request, repo: repo),
+      ConnectWorkspaceOperation(:final request, :final repo) => _runConnect(
+        request,
+        repo: repo,
+      ),
+      RestartWorkspaceOperation(:final request, :final repo) => _runRestart(
+        request,
+        repo: repo,
+      ),
     };
   }
 

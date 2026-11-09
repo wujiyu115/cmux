@@ -36,7 +36,10 @@ List<WorktreeBranchOption> mergeWorktreeBranchOptions({
   required List<String> local,
   required List<String> remote,
 }) {
-  final localSet = local.map((b) => b.trim()).where((b) => b.isNotEmpty).toSet();
+  final localSet = local
+      .map((b) => b.trim())
+      .where((b) => b.isNotEmpty)
+      .toSet();
   final options = <WorktreeBranchOption>[
     for (final name in local)
       if (name.trim().isNotEmpty) WorktreeBranchOption.local(name.trim()),

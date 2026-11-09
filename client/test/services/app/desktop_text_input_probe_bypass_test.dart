@@ -15,20 +15,26 @@ void main() {
       messenger = DesktopTextInputProbeBypassMessenger(delegate);
     });
 
-    test('short-circuits Clipboard.hasStrings without hitting platform', () async {
-      const codec = JSONMethodCodec();
-      final call = codec.encodeMethodCall(
-        const MethodCall('Clipboard.hasStrings', 'text/plain'),
-      );
+    test(
+      'short-circuits Clipboard.hasStrings without hitting platform',
+      () async {
+        const codec = JSONMethodCodec();
+        final call = codec.encodeMethodCall(
+          const MethodCall('Clipboard.hasStrings', 'text/plain'),
+        );
 
-      final future = messenger.send('flutter/platform', call);
-      expect(future, isA<SynchronousFuture<ByteData?>>());
-      final reply = await future;
+        final future = messenger.send('flutter/platform', call);
+        expect(future, isA<SynchronousFuture<ByteData?>>());
+        final reply = await future;
 
-      expect(delegate.sent, isEmpty);
-      expect(codec.decodeEnvelope(reply!), <String, Object?>{'value': true});
-      expect(DesktopTextInputProbeBypassMessenger.bypassHitCount, greaterThan(0));
-    });
+        expect(delegate.sent, isEmpty);
+        expect(codec.decodeEnvelope(reply!), <String, Object?>{'value': true});
+        expect(
+          DesktopTextInputProbeBypassMessenger.bypassHitCount,
+          greaterThan(0),
+        );
+      },
+    );
 
     test('short-circuits LiveText.isLiveTextInputAvailable', () async {
       const codec = JSONMethodCodec();
@@ -59,9 +65,9 @@ void main() {
       final call = codec.encodeMethodCall(
         const MethodCall('Clipboard.getData', 'text/plain'),
       );
-      final expected = codec.encodeSuccessEnvelope(
-        <String, Object?>{'text': 'hi'},
-      );
+      final expected = codec.encodeSuccessEnvelope(<String, Object?>{
+        'text': 'hi',
+      });
       delegate.nextReply = expected;
 
       final reply = await messenger.send('flutter/platform', call);

@@ -79,9 +79,7 @@ class SshClientFactory {
 
   bool hasLiveStorageClient(String profileId) {
     final cached = _pool[profileId];
-    return cached != null &&
-        !cached.client.isClosed &&
-        cached.readyCompleted;
+    return cached != null && !cached.client.isClosed && cached.readyCompleted;
   }
 
   Stream<String> get storagePoolChanges => _poolChanges.stream;
@@ -171,11 +169,8 @@ class SshClientFactory {
         StateError('SSH transport closed'),
         StackTrace.empty,
       ),
-      onError: (Object error) => _handleProfileTransportClosed(
-        profileId,
-        error,
-        StackTrace.current,
-      ),
+      onError: (Object error) =>
+          _handleProfileTransportClosed(profileId, error, StackTrace.current),
     );
   }
 

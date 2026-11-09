@@ -105,7 +105,10 @@ class PairingActivationRequest {
 /// `terminal.subscribe` to. [fallback] is true when the requested pane was gone
 /// and the host opened a fresh terminal instead.
 class PairingActivationResult {
-  const PairingActivationResult({required this.catalogId, this.fallback = false});
+  const PairingActivationResult({
+    required this.catalogId,
+    this.fallback = false,
+  });
 
   final String catalogId;
   final bool fallback;
@@ -167,11 +170,9 @@ typedef PairingPaneCloser = Future<void> Function(String paneId);
 
 /// Enumerates the desktop's workspace groups so `workspace.list` can advertise
 /// them. Injected from bootstrap.
-typedef PairingGroupIndexProvider =
-    Future<List<PairingGroupInfo>> Function();
+typedef PairingGroupIndexProvider = Future<List<PairingGroupInfo>> Function();
 
 /// Enumerates the machines the desktop can bind a folder to, so `workspace.list`
 /// can advertise them. Injected from bootstrap. Must stay cheap — it is served on
 /// every `workspace.list`, including the ones pushed on `session.changed`.
-typedef PairingTargetIndexProvider =
-    Future<List<PairingTargetInfo>> Function();
+typedef PairingTargetIndexProvider = Future<List<PairingTargetInfo>> Function();

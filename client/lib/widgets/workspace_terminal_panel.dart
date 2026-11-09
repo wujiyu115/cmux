@@ -1014,6 +1014,10 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
                   foreground: terminalForeground,
                   background: terminalBackground,
                   onSend: (text) {
+                    // Tell the transcript reader what to look for: the store is
+                    // what proves the prompt reached an agent, and which
+                    // session the pane's own agent is really writing to.
+                    chatTranscript.markPromptSent(text);
                     activeEntry.session.markUserTurnStarted();
                     activeEntry.session.input.writeToPty('$text\r');
                   },

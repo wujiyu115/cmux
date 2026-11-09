@@ -66,7 +66,11 @@ TerminalSurface applyLayoutPreset(
   }
   if (paneIds.toSet().length != paneIds.length) {
     // Duplicates would break the exactly-once losslessness guarantee.
-    throw ArgumentError.value(paneIds, 'paneIds', 'must not contain duplicates');
+    throw ArgumentError.value(
+      paneIds,
+      'paneIds',
+      'must not contain duplicates',
+    );
   }
   final slots = presetSlotCount(preset);
   final root = paneIds.length <= slots
@@ -74,8 +78,9 @@ TerminalSurface applyLayoutPreset(
       : _buildOverflow(preset, paneIds, overflow);
 
   final idSet = paneIds.toSet();
-  final focus =
-      idSet.contains(surface.focusedPaneId) ? surface.focusedPaneId : paneIds.first;
+  final focus = idSet.contains(surface.focusedPaneId)
+      ? surface.focusedPaneId
+      : paneIds.first;
   final zoom = surface.zoomedPaneId;
   final keepZoom = zoom != null && idSet.contains(zoom);
   final names = <String, String>{

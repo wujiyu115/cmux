@@ -106,7 +106,10 @@ void main() {
       await Future<void>.delayed(Duration.zero);
 
       expect(calls, 1);
-      expect(layout.state.preferences.workspaceTerminalVisible, terminalVisible);
+      expect(
+        layout.state.preferences.workspaceTerminalVisible,
+        terminalVisible,
+      );
       expect(
         workbench.resolveMostRecentShell('ws'),
         WorkbenchTabId.shell('e1'),

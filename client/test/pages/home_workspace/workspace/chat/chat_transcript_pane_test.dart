@@ -163,6 +163,80 @@ void main() {
     expect(sent, isEmpty, reason: 'a prompt with nowhere to land is dropped');
   });
 
+  testWidgets('a prompt the store never shows is reported and handed back', (
+    tester,
+  ) async {
+    final sent = <String>[];
+    final transcript = ValueNotifier(
+      _snapshot([
+        const ChatTranscriptRow(
+          id: 'u1#text',
+          kind: ChatTranscriptRowKind.user,
+          text: 'first',
+        ),
+      ]),
+    );
+    addTearDown(transcript.dispose);
+
+    await tester.pumpWidget(_host(transcript, onSend: sent.add));
+    await tester.enterText(find.byType(TextField), 'never lands');
+    await tester.tap(find.byIcon(Icons.arrow_upward));
+    await tester.pump();
+
+    expect(sent, ['never lands']);
+    expect(find.byType(TextField), findsOneWidget);
+
+    await tester.pump(const Duration(seconds: 6));
+    await tester.pump();
+
+    expect(
+      find.textContaining('The prompt did not arrive'),
+      findsOneWidget,
+      reason:
+          'the CLI writes the user record on receipt; silence means it '
+          'never got there',
+    );
+    final field = tester.widget<TextField>(find.byType(TextField));
+    expect(field.controller?.text, 'never lands');
+  });
+
+  testWidgets('a prompt that shows up in the store stays quiet', (
+    tester,
+  ) async {
+    final transcript = ValueNotifier(
+      _snapshot([
+        const ChatTranscriptRow(
+          id: 'u1#text',
+          kind: ChatTranscriptRowKind.user,
+          text: 'first',
+        ),
+      ]),
+    );
+    addTearDown(transcript.dispose);
+
+    await tester.pumpWidget(
+      _host(
+        transcript,
+        onSend: (_) => transcript.value = ChatTranscriptSnapshot(
+          rows: [
+            ...transcript.value.rows,
+            const ChatTranscriptRow(
+              id: 'u2#text',
+              kind: ChatTranscriptRowKind.user,
+              text: 'landed',
+            ),
+          ],
+        ),
+      ),
+    );
+    await tester.enterText(find.byType(TextField), 'landed');
+    await tester.tap(find.byIcon(Icons.arrow_upward));
+    await tester.pump(const Duration(seconds: 6));
+    await tester.pump();
+
+    expect(find.textContaining('The prompt did not arrive'), findsNothing);
+  });
+
   testWidgets('new rows follow the reader only at the bottom', (tester) async {
     final rows = [
       for (var i = 0; i < 40; i++)

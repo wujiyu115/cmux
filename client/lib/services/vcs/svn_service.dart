@@ -135,10 +135,7 @@ class SvnService {
   /// repos; `X` rows still surface (externals directories themselves), and
   /// externals' own status is refreshed only when the user updates.
   Future<List<SvnFileChange>> status(String dir) async {
-    final out = await _run(dir, const [
-      'status',
-      '--ignore-externals',
-    ]);
+    final out = await _run(dir, const ['status', '--ignore-externals']);
     return parseSvnStatus(out);
   }
 
@@ -149,7 +146,10 @@ class SvnService {
   /// Per-line blame of [relativePath] at the wc content, mapped onto the
   /// shared [GitBlameEntry] model so the editor blame bar renders both
   /// VCSes identically.
-  Future<List<GitBlameEntry>?> blameFile(String dir, String relativePath) async {
+  Future<List<GitBlameEntry>?> blameFile(
+    String dir,
+    String relativePath,
+  ) async {
     if (!await isAvailable) return null;
     // `svn blame` exits non-zero for unversioned/binary paths — same
     // "no blame" contract as git's blameFile.
@@ -293,9 +293,9 @@ List<GitBlameEntry> parseSvnBlame(String stdout) {
     final author = m.group(2) ?? '';
     final dateStr = (m.group(3) ?? '').trim();
 
-    rangesByRev.putIfAbsent(revision, () => []).add(
-      GitBlameLineRange(start: lineNo, end: lineNo),
-    );
+    rangesByRev
+        .putIfAbsent(revision, () => [])
+        .add(GitBlameLineRange(start: lineNo, end: lineNo));
     propsByRev.putIfAbsent(revision, () => {})['author'] = author;
     if (dateStr.isNotEmpty) {
       propsByRev[revision]!['date'] = dateStr;
@@ -305,7 +305,8 @@ List<GitBlameEntry> parseSvnBlame(String stdout) {
 
   // Coalesce consecutive single-line ranges of the same revision into one.
   for (final rev in rangesByRev.keys) {
-    final ranges = rangesByRev[rev]!..sort((a, b) => a.start.compareTo(b.start));
+    final ranges = rangesByRev[rev]!
+      ..sort((a, b) => a.start.compareTo(b.start));
     final coalesced = <GitBlameLineRange>[];
     for (final range in ranges) {
       final last = coalesced.isEmpty ? null : coalesced.last;

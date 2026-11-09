@@ -279,37 +279,34 @@ void main() {
     expect(service.entryIdForSession('sess-new'), isNotNull);
   });
 
-  test(
-    'creates new entry when allowMultipleInstances is true without '
-    'overwriting prior session→entry bindings',
-    () async {
-      final first = await _open(
-        service: service,
-        group: group,
-        connector: connector,
-        connectCoordinator: connect,
-        ops: ops,
-        selectionKey: 'local|/ws|cfg-1',
-        allowMultipleInstances: true,
-        runSessionId: 'sess-a',
-      );
-      final second = await _open(
-        service: service,
-        group: group,
-        connector: connector,
-        connectCoordinator: connect,
-        ops: ops,
-        selectionKey: 'local|/ws|cfg-1',
-        allowMultipleInstances: true,
-        runSessionId: 'sess-b',
-      );
+  test('creates new entry when allowMultipleInstances is true without '
+      'overwriting prior session→entry bindings', () async {
+    final first = await _open(
+      service: service,
+      group: group,
+      connector: connector,
+      connectCoordinator: connect,
+      ops: ops,
+      selectionKey: 'local|/ws|cfg-1',
+      allowMultipleInstances: true,
+      runSessionId: 'sess-a',
+    );
+    final second = await _open(
+      service: service,
+      group: group,
+      connector: connector,
+      connectCoordinator: connect,
+      ops: ops,
+      selectionKey: 'local|/ws|cfg-1',
+      allowMultipleInstances: true,
+      runSessionId: 'sess-b',
+    );
 
-      expect(second.id, isNot(first.id));
-      expect(group.entries, hasLength(2));
-      expect(service.entryIdForSession('sess-a'), first.id);
-      expect(service.entryIdForSession('sess-b'), second.id);
-    },
-  );
+    expect(second.id, isNot(first.id));
+    expect(group.entries, hasLength(2));
+    expect(service.entryIdForSession('sess-a'), first.id);
+    expect(service.entryIdForSession('sess-b'), second.id);
+  });
 
   test(
     'preferEntryId reuses that entry even when allowMultipleInstances is true',

@@ -71,40 +71,43 @@ class _RecordingConnectCoordinator extends WorkspaceTerminalConnectCoordinator {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('openEntry adds entry and connects with given cwd + workspace target', () async {
-    final connector = _RecordingConnector();
-    final connect = _RecordingConnectCoordinator(connector);
-    final group = WorkspaceTerminalGroup();
-    const spec = WorkspaceTerminalWorkspaceTargetSpec('ssh:profile-1');
-    final ops = WorkspaceTerminalSessionOps();
+  test(
+    'openEntry adds entry and connects with given cwd + workspace target',
+    () async {
+      final connector = _RecordingConnector();
+      final connect = _RecordingConnectCoordinator(connector);
+      final group = WorkspaceTerminalGroup();
+      const spec = WorkspaceTerminalWorkspaceTargetSpec('ssh:profile-1');
+      final ops = WorkspaceTerminalSessionOps();
 
-    final entry = await ops.openEntry(
-      group: group,
-      connector: connector,
-      connectCoordinator: connect,
-      cwd: '/ws/proj',
-      spec: spec,
-      theme: _theme,
-      sshConnectFailedMessage: 'ssh failed',
-      select: true,
-      followWorkspace: true,
-    );
+      final entry = await ops.openEntry(
+        group: group,
+        connector: connector,
+        connectCoordinator: connect,
+        cwd: '/ws/proj',
+        spec: spec,
+        theme: _theme,
+        sshConnectFailedMessage: 'ssh failed',
+        select: true,
+        followWorkspace: true,
+      );
 
-    expect(connector.createdSpecs, [spec]);
-    expect(group.entries, [entry]);
-    expect(group.activeId, entry.id);
-    expect(entry.cwd, '/ws/proj');
-    expect(entry.spec, spec);
-    expect(entry.followWorkspace, isTrue);
-    expect(entry.titleLabel, 'recorded-label');
-    expect(connect.connectCalls, 1);
-    expect(connect.lastGroup, same(group));
-    expect(connect.lastEntry, same(entry));
-    expect(connect.lastTheme, _theme);
-    expect(connect.lastSshMessage, 'ssh failed');
+      expect(connector.createdSpecs, [spec]);
+      expect(group.entries, [entry]);
+      expect(group.activeId, entry.id);
+      expect(entry.cwd, '/ws/proj');
+      expect(entry.spec, spec);
+      expect(entry.followWorkspace, isTrue);
+      expect(entry.titleLabel, 'recorded-label');
+      expect(connect.connectCalls, 1);
+      expect(connect.lastGroup, same(group));
+      expect(connect.lastEntry, same(entry));
+      expect(connect.lastTheme, _theme);
+      expect(connect.lastSshMessage, 'ssh failed');
 
-    group.dispose();
-  });
+      group.dispose();
+    },
+  );
 
   test('openEntry uses explicit titleLabel when provided', () async {
     final connector = _RecordingConnector()..label = 'should-not-use';
@@ -173,31 +176,33 @@ void main() {
     group.dispose();
   });
 
-  test('openPaneInSurface returns null (and creates nothing) for unknown surface',
-      () async {
-    final connector = _RecordingConnector();
-    final connect = _RecordingConnectCoordinator(connector);
-    final group = WorkspaceTerminalGroup();
-    final ops = WorkspaceTerminalSessionOps();
+  test(
+    'openPaneInSurface returns null (and creates nothing) for unknown surface',
+    () async {
+      final connector = _RecordingConnector();
+      final connect = _RecordingConnectCoordinator(connector);
+      final group = WorkspaceTerminalGroup();
+      final ops = WorkspaceTerminalSessionOps();
 
-    final entry = await ops.openPaneInSurface(
-      group: group,
-      connector: connector,
-      connectCoordinator: connect,
-      surfaceId: 'does-not-exist',
-      cwd: '/ws',
-      spec: const WorkspaceTerminalLocalSpec('/bin/bash'),
-      theme: _theme,
-      sshConnectFailedMessage: 'ssh failed',
-    );
+      final entry = await ops.openPaneInSurface(
+        group: group,
+        connector: connector,
+        connectCoordinator: connect,
+        surfaceId: 'does-not-exist',
+        cwd: '/ws',
+        spec: const WorkspaceTerminalLocalSpec('/bin/bash'),
+        theme: _theme,
+        sshConnectFailedMessage: 'ssh failed',
+      );
 
-    expect(entry, isNull);
-    expect(connector.createdSpecs, isEmpty);
-    expect(connect.connectCalls, 0);
-    expect(group.entries, isEmpty);
+      expect(entry, isNull);
+      expect(connector.createdSpecs, isEmpty);
+      expect(connect.connectCalls, 0);
+      expect(group.entries, isEmpty);
 
-    group.dispose();
-  });
+      group.dispose();
+    },
+  );
 
   test('connectEntry delegates to connect coordinator', () async {
     final connector = _RecordingConnector();
@@ -206,7 +211,9 @@ void main() {
     final entry = group.addEntry(
       cwd: '/tmp',
       spec: const WorkspaceTerminalLocalSpec('/bin/bash'),
-      session: connector.createSession(const WorkspaceTerminalLocalSpec('/bin/bash')),
+      session: connector.createSession(
+        const WorkspaceTerminalLocalSpec('/bin/bash'),
+      ),
       select: true,
     );
     final ops = WorkspaceTerminalSessionOps();

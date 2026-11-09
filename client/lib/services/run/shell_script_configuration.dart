@@ -108,6 +108,7 @@ Map<String, String> _stringMap(Object? raw) {
   if (raw is! Map) return const {};
   return {
     for (final entry in raw.entries)
-      if (entry.key != null) entry.key.toString(): entry.value?.toString() ?? '',
+      if (entry.key != null)
+        entry.key.toString(): entry.value?.toString() ?? '',
   };
 }

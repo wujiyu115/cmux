@@ -17,7 +17,11 @@ class WorkspaceSearchStore {
   SearchCubit cubitFor(String workspaceId) {
     final key = _key(workspaceId);
     if (key.isEmpty) {
-      throw ArgumentError.value(workspaceId, 'workspaceId', 'must not be empty');
+      throw ArgumentError.value(
+        workspaceId,
+        'workspaceId',
+        'must not be empty',
+      );
     }
     return _cubits.putIfAbsent(key, _cubitFactory);
   }

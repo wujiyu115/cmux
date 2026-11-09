@@ -12,17 +12,20 @@ import 'package:teampilot/services/commands/keybinding_resolver.dart';
 void main() {
   test('v1 catalog contains required command ids', () {
     final ids = CommandCatalog.v1.map((c) => c.id).toSet();
-    expect(ids, containsAll([
-      CommandIds.workspaceNextTab,
-      CommandIds.quickOpen,
-      CommandIds.contentFind,
-      CommandIds.stripNextTab,
-      CommandIds.sessionCloseTab,
-      CommandIds.zoomIn,
-      CommandIds.composeSubmit,
-      CommandIds.showCheatsheet,
-      CommandIds.toggleSidebar,
-    ]));
+    expect(
+      ids,
+      containsAll([
+        CommandIds.workspaceNextTab,
+        CommandIds.quickOpen,
+        CommandIds.contentFind,
+        CommandIds.stripNextTab,
+        CommandIds.sessionCloseTab,
+        CommandIds.zoomIn,
+        CommandIds.composeSubmit,
+        CommandIds.showCheatsheet,
+        CommandIds.toggleSidebar,
+      ]),
+    );
   });
 
   test('quick open defaults to Mod+P plus double-tap Shift', () {
@@ -87,15 +90,9 @@ void main() {
       final def = CommandCatalog.v1.singleWhere(
         (c) => c.id == CommandIds.stripFocusTab(n),
       );
-      expect(
-        def.defaultChords,
-        [
-          KeyChord(
-            key: n == 10 ? 'digit0' : 'digit$n',
-            mods: [KeyChordMod.alt],
-          ),
-        ],
-      );
+      expect(def.defaultChords, [
+        KeyChord(key: n == 10 ? 'digit0' : 'digit$n', mods: [KeyChordMod.alt]),
+      ]);
       expect(def.when, ShortcutWhen.hasWorkspace);
       expect(def.terminalPassthrough, isTrue);
     }
@@ -161,14 +158,21 @@ void main() {
     expect(def.when, ShortcutWhen.always);
   });
 
-  test('every catalog title and category resolves to a non-empty l10n string', () {
-    final l10n = lookupAppLocalizations(const Locale('en'));
-    for (final def in CommandCatalog.v1) {
-      final title = titleForCommand(l10n, def.id);
-      expect(title, isNotEmpty, reason: def.id);
-      // titleForCommand returns the id unchanged only on catalog/ARB drift.
-      expect(title, isNot(def.id), reason: def.id);
-      expect(titleForCategory(l10n, def.category), isNotEmpty, reason: def.id);
-    }
-  });
+  test(
+    'every catalog title and category resolves to a non-empty l10n string',
+    () {
+      final l10n = lookupAppLocalizations(const Locale('en'));
+      for (final def in CommandCatalog.v1) {
+        final title = titleForCommand(l10n, def.id);
+        expect(title, isNotEmpty, reason: def.id);
+        // titleForCommand returns the id unchanged only on catalog/ARB drift.
+        expect(title, isNot(def.id), reason: def.id);
+        expect(
+          titleForCategory(l10n, def.category),
+          isNotEmpty,
+          reason: def.id,
+        );
+      }
+    },
+  );
 }

@@ -3864,6 +3864,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Start the agent in the terminal first, then message it here.';
 
   @override
+  String get chatPanePromptUndelivered =>
+      'The prompt did not arrive: no agent is running in this terminal, or the chat view is following another window\'s session. The text is back in the box.';
+
+  @override
   String get chatPaneSend => 'Send';
 
   @override

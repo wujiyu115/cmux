@@ -55,15 +55,13 @@ class AliyunTokenService {
     };
 
     final signature = aliyunSignature(params, accessKeySecret);
-    final uri = Uri.parse(_endpoint).replace(
-      queryParameters: {...params, 'Signature': signature},
-    );
+    final uri = Uri.parse(
+      _endpoint,
+    ).replace(queryParameters: {...params, 'Signature': signature});
 
     final response = await _client.get(uri);
     if (response.statusCode != 200) {
-      throw SttException(
-        'Alibaba CreateToken failed: ${response.statusCode}',
-      );
+      throw SttException('Alibaba CreateToken failed: ${response.statusCode}');
     }
 
     final Map<String, dynamic> body;
@@ -84,7 +82,10 @@ class AliyunTokenService {
     }
 
     _token = id;
-    _expiresAt = DateTime.fromMillisecondsSinceEpoch(expire * 1000, isUtc: true);
+    _expiresAt = DateTime.fromMillisecondsSinceEpoch(
+      expire * 1000,
+      isUtc: true,
+    );
     _cachedForKeyId = accessKeyId;
     return id;
   }

@@ -40,11 +40,7 @@ class _FakeSvnRunner implements SvnCommandRunner {
   @override
   Future<GitCommandResult> runInDirectory(String dir, List<String> args) async {
     calls.add((dir, args));
-    return GitCommandResult(
-      exitCode: exitCode,
-      stdout: stdout,
-      stderr: '',
-    );
+    return GitCommandResult(exitCode: exitCode, stdout: stdout, stderr: '');
   }
 }
 
@@ -65,10 +61,7 @@ void main() {
 
     test('badges match svn status letters', () {
       final rows = parseSvnStatus(_statusSample);
-      expect(
-        rows.map((r) => r.badge).join(),
-        'XXM?!DA',
-      );
+      expect(rows.map((r) => r.badge).join(), 'XXM?!DA');
     });
 
     test('empty and notice-only output parse to nothing', () {
@@ -124,9 +117,7 @@ void main() {
     });
 
     test('blameFile returns entries on success, null on failure', () async {
-      final ok = SvnService(
-        runner: _FakeSvnRunner(stdout: _blameSample),
-      );
+      final ok = SvnService(runner: _FakeSvnRunner(stdout: _blameSample));
       final entries = await ok.blameFile('/wc', 'lib/a.lua');
       expect(entries, hasLength(2));
 

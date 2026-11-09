@@ -12,7 +12,10 @@ import 'command_ids.dart';
 /// Returns a disposer that unregisters exactly the handler it registered
 /// (identity-guarded via [CommandBus.unregister], so a stale disposer never
 /// clobbers another pane's claim).
-VoidCallback claimEditorGotoLineCommand(CommandBus bus, VoidCallback openGotoLine) {
+VoidCallback claimEditorGotoLineCommand(
+  CommandBus bus,
+  VoidCallback openGotoLine,
+) {
   bus.register(CommandIds.editorGotoLine, openGotoLine);
   return () => bus.unregister(CommandIds.editorGotoLine, openGotoLine);
 }

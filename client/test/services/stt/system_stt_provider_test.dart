@@ -112,19 +112,21 @@ void main() {
     expect(recognizer.listening, isFalse);
   });
 
-  test('errors with VoicePermissionDeniedException when the mic is refused',
-      () async {
-    // Initialization succeeding while permission is refused is the iOS shape of
-    // a denied mic; it has to reach the user as the one failure they can fix,
-    // not as a generic recognition error.
-    final provider = SystemSttProvider(
-      FakeSpeechRecognizer(permitted: false),
-    );
-    await expectLater(
-      provider.start(),
-      emitsError(isA<VoicePermissionDeniedException>()),
-    );
-  });
+  test(
+    'errors with VoicePermissionDeniedException when the mic is refused',
+    () async {
+      // Initialization succeeding while permission is refused is the iOS shape of
+      // a denied mic; it has to reach the user as the one failure they can fix,
+      // not as a generic recognition error.
+      final provider = SystemSttProvider(
+        FakeSpeechRecognizer(permitted: false),
+      );
+      await expectLater(
+        provider.start(),
+        emitsError(isA<VoicePermissionDeniedException>()),
+      );
+    },
+  );
 
   test('errors with SttException when initialization fails', () async {
     final provider = SystemSttProvider(

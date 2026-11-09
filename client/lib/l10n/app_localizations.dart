@@ -7111,6 +7111,12 @@ abstract class AppLocalizations {
   /// **'Start the agent in the terminal first, then message it here.'**
   String get chatPaneComposerNeedsAgent;
 
+  /// No description provided for @chatPanePromptUndelivered.
+  ///
+  /// In en, this message translates to:
+  /// **'The prompt did not arrive: no agent is running in this terminal, or the chat view is following another window\'s session. The text is back in the box.'**
+  String get chatPanePromptUndelivered;
+
   /// No description provided for @chatPaneSend.
   ///
   /// In en, this message translates to:

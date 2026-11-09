@@ -48,15 +48,18 @@ String get _ptyTestExecutable {
 }
 
 void main() {
-  test('resolveTerminalThemeFromLayout light mode yields light COLORFGBG bg', () {
-    final theme = resolveTerminalThemeFromLayout(
-      preferences: const LayoutPreferences(themeMode: 'light'),
-      platformBrightness: Brightness.dark,
-    );
-    final env = <String, String>{};
-    PtyLaunchEnvironment.applyColorScheme(env, background: theme.background);
-    expect(env['COLORFGBG'], '0;15');
-  });
+  test(
+    'resolveTerminalThemeFromLayout light mode yields light COLORFGBG bg',
+    () {
+      final theme = resolveTerminalThemeFromLayout(
+        preferences: const LayoutPreferences(themeMode: 'light'),
+        platformBrightness: Brightness.dark,
+      );
+      final env = <String, String>{};
+      PtyLaunchEnvironment.applyColorScheme(env, background: theme.background);
+      expect(env['COLORFGBG'], '0;15');
+    },
+  );
 
   test('resolveTerminalThemeFromLayout dark mode yields dark COLORFGBG bg', () {
     final theme = resolveTerminalThemeFromLayout(

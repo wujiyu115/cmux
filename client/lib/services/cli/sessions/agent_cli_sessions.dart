@@ -27,6 +27,7 @@ class AgentCliSessionRecord {
     required this.family,
     required this.sessionId,
     this.title,
+    this.createdAt,
     this.updatedAt,
     this.filePath,
   });
@@ -34,6 +35,16 @@ class AgentCliSessionRecord {
   final AgentCliFamily family;
   final String sessionId;
   final String? title;
+
+  /// When the CLI created this session, when the store records it (the pi
+  /// families embed it in the filename, Claude-style stores stamp their first
+  /// record). Null when the store does not say.
+  ///
+  /// This is the mark that a session belongs to *this* pane: a pane can only
+  /// own a session started after its PTY. [updatedAt] cannot answer that — a
+  /// session another window is still writing keeps a fresh mtime forever.
+  final DateTime? createdAt;
+
   final DateTime? updatedAt;
 
   /// Absolute path of the store file holding this session, on the runtime

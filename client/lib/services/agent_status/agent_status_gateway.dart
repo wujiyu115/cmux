@@ -91,7 +91,10 @@ class AgentStatusGateway {
       // Claude / flashskyai Stop hooks re-prompt the model on HTTP errors and
       // burn scripted mock turns (or user-visible loops).
       if (request.method == 'POST' && request.uri.path == '/agent-status') {
-        await _handleAgentStatus(request, sessionId: _resolveSessionId(request));
+        await _handleAgentStatus(
+          request,
+          sessionId: _resolveSessionId(request),
+        );
         return;
       }
 
@@ -130,9 +133,7 @@ class AgentStatusGateway {
       return;
     }
 
-    appLogger.d(
-      '[agent-status] accepted: session=$sessionId member=$member',
-    );
+    appLogger.d('[agent-status] accepted: session=$sessionId member=$member');
     await handler.handle(request, sessionId: sessionId, memberId: member);
   }
 

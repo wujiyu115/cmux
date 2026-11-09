@@ -69,12 +69,15 @@ void main() {
       expect(result.transferId, greaterThan(0));
     });
 
-    test('opens the target with the pane workspaceId, cwd and filename', () async {
-      await beginPhoto(build());
-      expect(opener.opens.single.workspaceId, 'ws-1');
-      expect(opener.opens.single.cwd, '/home/dev/app');
-      expect(opener.opens.single.filename, 'photo.jpg');
-    });
+    test(
+      'opens the target with the pane workspaceId, cwd and filename',
+      () async {
+        await beginPhoto(build());
+        expect(opener.opens.single.workspaceId, 'ws-1');
+        expect(opener.opens.single.cwd, '/home/dev/app');
+        expect(opener.opens.single.filename, 'photo.jpg');
+      },
+    );
 
     test('hands out distinct transfer ids', () async {
       final receiver = build();
@@ -121,13 +124,12 @@ void main() {
       // A video budget an image can borrow would defeat the point of having two
       // numbers, so each extension must be held to its own cap.
       final receiver = tightCaps();
-      Future<UploadBeginResult> at(String filename, int size) =>
-          receiver.begin(
-            workspaceId: 'ws-1',
-            cwd: '/c',
-            filename: filename,
-            size: size,
-          );
+      Future<UploadBeginResult> at(String filename, int size) => receiver.begin(
+        workspaceId: 'ws-1',
+        cwd: '/c',
+        filename: filename,
+        size: size,
+      );
       expect((await at('a.png', 11)).code, 'too_large');
       expect((await at('a.mp4', 11)).isOk, isTrue);
       expect((await at('a.mp4', 20)).isOk, isTrue);
@@ -265,18 +267,20 @@ void main() {
   });
 
   group('chunk', () {
-    test('acks the running total without writing while under the threshold',
-        () async {
-      final receiver = build(chunkSize: 4);
-      final id = (await beginPhoto(receiver)).transferId;
-      receiver.chunk(id, 0, const [1, 2, 3, 4]);
-      receiver.chunk(id, 1, const [5, 6]);
-      await settle();
+    test(
+      'acks the running total without writing while under the threshold',
+      () async {
+        final receiver = build(chunkSize: 4);
+        final id = (await beginPhoto(receiver)).transferId;
+        receiver.chunk(id, 0, const [1, 2, 3, 4]);
+        receiver.chunk(id, 1, const [5, 6]);
+        await settle();
 
-      expect(acks.map((a) => a.received), [4, 6]);
-      expect(acks.every((a) => a.transferId == id), isTrue);
-      expect(target.appends, isEmpty, reason: 'buffered, not written');
-    });
+        expect(acks.map((a) => a.received), [4, 6]);
+        expect(acks.every((a) => a.transferId == id), isTrue);
+        expect(target.appends, isEmpty, reason: 'buffered, not written');
+      },
+    );
 
     test('flushes once the buffer reaches the threshold', () async {
       target.preferredFlushBytes = 8;
@@ -301,7 +305,9 @@ void main() {
       final id = (await beginPhoto(receiver, size: 8)).transferId;
       receiver.chunk(id, 0, const [1, 2, 3, 4]);
       await settle();
-      expect(acks.map((a) => a.received), [4], reason: 'sub-threshold: instant');
+      expect(acks.map((a) => a.received), [
+        4,
+      ], reason: 'sub-threshold: instant');
 
       receiver.chunk(id, 1, const [5, 6, 7, 8]);
       await settle();
@@ -338,18 +344,20 @@ void main() {
       expect((await receiver.commit(id)).code, 'unknown_transfer');
     });
 
-    test('abandons the transfer when the bytes exceed the declared size',
-        () async {
-      final receiver = build(chunkSize: 4);
-      final id = (await beginPhoto(receiver, size: 6)).transferId;
-      receiver.chunk(id, 0, const [1, 2, 3, 4]);
-      receiver.chunk(id, 1, const [5, 6, 7, 8]);
-      await settle();
+    test(
+      'abandons the transfer when the bytes exceed the declared size',
+      () async {
+        final receiver = build(chunkSize: 4);
+        final id = (await beginPhoto(receiver, size: 6)).transferId;
+        receiver.chunk(id, 0, const [1, 2, 3, 4]);
+        receiver.chunk(id, 1, const [5, 6, 7, 8]);
+        await settle();
 
-      expect(acks.map((a) => a.received), [4]);
-      expect(target.abortCount, 1);
-      expect((await receiver.commit(id)).code, 'unknown_transfer');
-    });
+        expect(acks.map((a) => a.received), [4]);
+        expect(target.abortCount, 1);
+        expect((await receiver.commit(id)).code, 'unknown_transfer');
+      },
+    );
 
     test('a failed flush stops acking, abandons on the next chunk, and fails '
         'the commit', () async {
@@ -428,15 +436,17 @@ void main() {
       expect(target.abortCount, 1);
     });
 
-    test('reports write_failed and aborts when the target commit throws',
-        () async {
-      final receiver = build(chunkSize: 4);
-      final id = (await beginPhoto(receiver, size: 2)).transferId;
-      receiver.chunk(id, 0, const [1, 2]);
-      target.commitError = StateError('disk full');
-      expect((await receiver.commit(id)).code, 'write_failed');
-      expect(target.abortCount, 1, reason: 'no part-file left behind');
-    });
+    test(
+      'reports write_failed and aborts when the target commit throws',
+      () async {
+        final receiver = build(chunkSize: 4);
+        final id = (await beginPhoto(receiver, size: 2)).transferId;
+        receiver.chunk(id, 0, const [1, 2]);
+        target.commitError = StateError('disk full');
+        expect((await receiver.commit(id)).code, 'write_failed');
+        expect(target.abortCount, 1, reason: 'no part-file left behind');
+      },
+    );
 
     test('drops the transfer after a successful commit', () async {
       final receiver = build(chunkSize: 4);

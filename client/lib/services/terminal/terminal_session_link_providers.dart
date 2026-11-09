@@ -11,10 +11,8 @@ import 'terminal_uri_opener.dart';
 
 /// OSC 7 link providers for a [TerminalSession]'s [TerminalView].
 final class TerminalSessionLinkProviders {
-  TerminalSessionLinkProviders({
-    required this.engine,
-    Filesystem? fs,
-  }) : _fs = fs ?? AppStorage.fs;
+  TerminalSessionLinkProviders({required this.engine, Filesystem? fs})
+    : _fs = fs ?? AppStorage.fs;
 
   final TerminalEngine engine;
   final Filesystem _fs;

@@ -131,10 +131,9 @@ class SessionTabSurfaceCoordinator {
       title: session.resolveDisplayTitle(request.emptyDisplayTitleFallback),
       subtitle: session.firstFolderPath,
     );
-    final tab =
-        ChatTab(info: info, workspaceId: session.workspaceId)
-          ..persistedSession = session
-          ..selectedMemberId = placeholderMemberId;
+    final tab = ChatTab(info: info, workspaceId: session.workspaceId)
+      ..persistedSession = session
+      ..selectedMemberId = placeholderMemberId;
     tab.bumpLaunchGeneration();
     final generation = tab.launchGeneration;
 

@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-
 class LaunchCommandBuilder {
   const LaunchCommandBuilder._();
 
@@ -122,5 +121,4 @@ class LaunchCommandBuilder {
         entry.key: normalizePathForCli(entry.value, useWslPaths: true),
     };
   }
-
 }

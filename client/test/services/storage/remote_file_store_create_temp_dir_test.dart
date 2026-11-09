@@ -20,8 +20,7 @@ const _profile = SshProfile(
 SshClientFactory _factory(_RecordingSshClient client) => SshClientFactory(
   credentialStore: InMemorySshCredentialStore(),
   knownHostRepository: InMemorySshKnownHostRepository(),
-  connector: (profile, {timeout = const Duration(seconds: 10)}) async =>
-      client,
+  connector: (profile, {timeout = const Duration(seconds: 10)}) async => client,
 );
 
 class _RecordingSshClient extends SSHClient {
@@ -46,10 +45,7 @@ class _RecordingSshClient extends SSHClient {
   }
 }
 
-SSHRunResult _result(
-  String stdout, {
-  int? exitCode,
-}) => SSHRunResult(
+SSHRunResult _result(String stdout, {int? exitCode}) => SSHRunResult(
   output: Uint8List(0),
   stdout: Uint8List.fromList(utf8.encode(stdout)),
   stderr: Uint8List(0),
@@ -113,20 +109,23 @@ void main() {
   // Regression: a relative template made mktemp create the directory in the
   // login shell's cwd and return a *relative* path, which the phone then
   // couldn't read back (e.g. `teampilot-upload-714Vzu/…`).
-  test('asks mktemp for an absolute /tmp template and returns its output', () async {
-    final client = _RecordingSshClient(
-      _result('/tmp/teampilot-upload-714Vzu\n'),
-    );
-    final store = RemoteFileStore(
-      profile: _profile,
-      clientFactory: _factory(client),
-    );
+  test(
+    'asks mktemp for an absolute /tmp template and returns its output',
+    () async {
+      final client = _RecordingSshClient(
+        _result('/tmp/teampilot-upload-714Vzu\n'),
+      );
+      final store = RemoteFileStore(
+        profile: _profile,
+        clientFactory: _factory(client),
+      );
 
-    final dir = await store.createTempDir(prefix: 'teampilot-upload-');
+      final dir = await store.createTempDir(prefix: 'teampilot-upload-');
 
-    expect(client.commands, ["mktemp -d -- '/tmp/teampilot-upload-XXXXXX'"]);
-    expect(dir, '/tmp/teampilot-upload-714Vzu');
-  });
+      expect(client.commands, ["mktemp -d -- '/tmp/teampilot-upload-XXXXXX'"]);
+      expect(dir, '/tmp/teampilot-upload-714Vzu');
+    },
+  );
 
   test('honors an explicit parent', () async {
     final client = _RecordingSshClient(_result('/var/cache/tmp-x1\n'));
@@ -141,9 +140,7 @@ void main() {
   });
 
   test('throws when mktemp fails', () async {
-    final client = _RecordingSshClient(
-      _result('', exitCode: 1),
-    );
+    final client = _RecordingSshClient(_result('', exitCode: 1));
     final store = RemoteFileStore(
       profile: _profile,
       clientFactory: _factory(client),

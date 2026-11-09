@@ -18,11 +18,7 @@ abstract final class ComposeImageAttachmentLayout {
   /// `<Documents>/TeamPilot/Attachments` using [documentsDir].
   static String attachmentsDir(String documentsDir) {
     final ctx = AppPaths.pathContextForDataRoot(documentsDir);
-    return ctx.join(
-      documentsDir,
-      teamPilotDirName,
-      attachmentsDirName,
-    );
+    return ctx.join(documentsDir, teamPilotDirName, attachmentsDirName);
   }
 }
 
@@ -67,8 +63,5 @@ Future<String?> importComposeImageBytes({
   final destPath = ctx.join(attachmentsDir, fileName);
   await filesystem.writeBytes(destPath, bytes);
 
-  return formatComposeFileReference(
-    destPath,
-    workspaceRoot: workspaceRoot,
-  );
+  return formatComposeFileReference(destPath, workspaceRoot: workspaceRoot);
 }

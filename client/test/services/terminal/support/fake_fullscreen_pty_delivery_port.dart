@@ -45,11 +45,7 @@ final class FakeFullscreenPtyDeliveryPort implements FullscreenPtyDeliveryPort {
     if (staged == null) return null;
     if (!staged!.contains(needle)) return null;
     final start = staged!.indexOf(needle);
-    return FullscreenPromptAnchor(
-      row: 0,
-      startCol: start,
-      needle: needle,
-    );
+    return FullscreenPromptAnchor(row: 0, startCol: start, needle: needle);
   }
 
   @override
@@ -101,9 +97,7 @@ final class FakeFullscreenPtyDeliveryPort implements FullscreenPtyDeliveryPort {
   Future<void> pasteText(String text) async {
     pasteCount++;
     if (visibleAfterPaste && pasteCount >= pastesBeforeVisible) {
-      staged = collapseAsClaudePaste
-          ? '❯ [Pasted text #3 +17 lines]'
-          : text;
+      staged = collapseAsClaudePaste ? '❯ [Pasted text #3 +17 lines]' : text;
     }
   }
 

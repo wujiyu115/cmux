@@ -594,8 +594,9 @@ void main() {
     test('resolves each target to its own settings file', () {
       // ohMyPi and pi resolve against their own agent dirs, not the app-data
       // root — their own groups above cover them.
-      final settingsTargets = AgentHookTarget.values
-          .where((t) => t != AgentHookTarget.ohMyPi && t != AgentHookTarget.pi);
+      final settingsTargets = AgentHookTarget.values.where(
+        (t) => t != AgentHookTarget.ohMyPi && t != AgentHookTarget.pi,
+      );
       final byTarget = <AgentHookTarget, AgentHookInstaller?>{};
       for (final target in settingsTargets) {
         byTarget[target] = AgentHookInstaller.forHost(

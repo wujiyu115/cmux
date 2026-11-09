@@ -8,7 +8,6 @@ import '../../models/runtime_target.dart';
 import '../io/local_filesystem.dart';
 import '../storage/runtime_context.dart';
 
-
 typedef StorageRootsResolver = Future<RuntimeContext> Function();
 
 class SessionLifecycleService {
@@ -36,7 +35,6 @@ class SessionLifecycleService {
   @visibleForTesting
   bool debugIsPersonalLaunch(Workspace workspace, AppSession session) =>
       _isPersonalLaunch(workspace, session);
-
 
   /// Test seam: resolve the work-plane context for [session] (and optionally a
   /// [memberId], exercising the per-member folder-target → forTarget path).
@@ -155,5 +153,4 @@ class SessionLifecycleService {
       paths: AppPaths(basePath),
     );
   }
-
 }

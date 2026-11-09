@@ -5,13 +5,14 @@ import 'package:teampilot/services/quick_open/top_scored.dart';
 
 /// Reference implementation: full sort with the same ordering, then take N.
 List<String> referenceTop(List<(int, String)> items, int n) {
-  final sorted = [...items]..sort((a, b) {
-    if (a.$1 != b.$1) return b.$1.compareTo(a.$1);
-    if (a.$2.length != b.$2.length) {
-      return a.$2.length.compareTo(b.$2.length);
-    }
-    return a.$2.compareTo(b.$2);
-  });
+  final sorted = [...items]
+    ..sort((a, b) {
+      if (a.$1 != b.$1) return b.$1.compareTo(a.$1);
+      if (a.$2.length != b.$2.length) {
+        return a.$2.length.compareTo(b.$2.length);
+      }
+      return a.$2.compareTo(b.$2);
+    });
   return [for (final (_, label) in sorted.take(n)) label];
 }
 
@@ -68,9 +69,7 @@ void main() {
     final rng = Random(42);
     for (var trial = 0; trial < 100; trial++) {
       final capacity = 1 + rng.nextInt(9);
-      final items = [
-        for (var i = 0; i < 200; i++) (rng.nextInt(25), 'f$i'),
-      ];
+      final items = [for (var i = 0; i < 200; i++) (rng.nextInt(25), 'f$i')];
       final top = TopScored<String>(capacity: capacity);
       for (final (score, label) in items) {
         if (!top.wouldAccept(score, label)) continue;

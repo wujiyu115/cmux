@@ -5,8 +5,7 @@ import 'package:path/path.dart' as p;
 import '../../utils/lock_pool.dart';
 import 'filesystem.dart';
 
-class LocalFilesystem
-    implements Filesystem, FsWatcher, FsSymlinkLister {
+class LocalFilesystem implements Filesystem, FsWatcher, FsSymlinkLister {
   LocalFilesystem({p.Context? pathContext})
     : pathContext = pathContext ?? p.context;
 
@@ -177,11 +176,7 @@ class LocalFilesystem
   }
 
   @override
-  Future<List<int>?> readBytesRange(
-    String path,
-    int offset,
-    int length,
-  ) async {
+  Future<List<int>?> readBytesRange(String path, int offset, int length) async {
     final file = File(path);
     if (!await file.exists()) return null;
     final raf = await file.open(mode: FileMode.read);
@@ -451,10 +446,7 @@ class LocalFilesystem
         if (entity is! Link) continue;
         // typeSync with followLinks resolves the target kind; dangling links
         // report notFound and are skipped.
-        if (FileSystemEntity.typeSync(
-              entity.path,
-              followLinks: true,
-            ) !=
+        if (FileSystemEntity.typeSync(entity.path, followLinks: true) !=
             FileSystemEntityType.directory) {
           continue;
         }
@@ -525,25 +517,27 @@ class LocalFilesystem
       );
     }
 
-    subscription = Directory(path).watch(recursive: true).listen(
-      (event) {
-        if (controller.isClosed) return;
-        controller.add(
-          FsChangeEvent(path: event.path, type: _mapFsChangeType(event)),
+    subscription = Directory(path)
+        .watch(recursive: true)
+        .listen(
+          (event) {
+            if (controller.isClosed) return;
+            controller.add(
+              FsChangeEvent(path: event.path, type: _mapFsChangeType(event)),
+            );
+          },
+          onError: (Object error, StackTrace stack) {
+            if (!controller.isClosed) {
+              controller.addError(error, stack);
+            }
+          },
+          onDone: () {
+            if (!controller.isClosed) {
+              unawaited(controller.close());
+            }
+          },
+          cancelOnError: false,
         );
-      },
-      onError: (Object error, StackTrace stack) {
-        if (!controller.isClosed) {
-          controller.addError(error, stack);
-        }
-      },
-      onDone: () {
-        if (!controller.isClosed) {
-          unawaited(controller.close());
-        }
-      },
-      cancelOnError: false,
-    );
 
     return FsTreeWatch(
       events: controller.stream,

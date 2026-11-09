@@ -62,14 +62,22 @@ void main() {
     });
 
     test('rewrites escape sequences with xterm modifier 3', () {
-      expect(
-        encodeToolbarKey([0x1b, 0x4f, 0x50], alt: true),
-        [0x1b, 0x5b, 0x31, 0x3b, 0x33, 0x50],
-      );
-      expect(
-        encodeToolbarKey([0x1b, 0x5b, 0x35, 0x7e], alt: true),
-        [0x1b, 0x5b, 0x35, 0x3b, 0x33, 0x7e],
-      );
+      expect(encodeToolbarKey([0x1b, 0x4f, 0x50], alt: true), [
+        0x1b,
+        0x5b,
+        0x31,
+        0x3b,
+        0x33,
+        0x50,
+      ]);
+      expect(encodeToolbarKey([0x1b, 0x5b, 0x35, 0x7e], alt: true), [
+        0x1b,
+        0x5b,
+        0x35,
+        0x3b,
+        0x33,
+        0x7e,
+      ]);
       expect(
         // F5 — two parameter digits, so an off-by-one slice would show up here.
         encodeToolbarKey([0x1b, 0x5b, 0x31, 0x35, 0x7e], alt: true),

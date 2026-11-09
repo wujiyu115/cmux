@@ -58,9 +58,7 @@ abstract final class AgentStatusLaunchEnv {
   /// dedup compares the name before the slash and keeps the host's flags. Our
   /// own keys are declared flagless — a URL and two opaque ids must not be
   /// path-translated.
-  static String buildWslEnvDeclaration({
-    Map<String, String>? hostEnvironment,
-  }) {
+  static String buildWslEnvDeclaration({Map<String, String>? hostEnvironment}) {
     final existing = (hostEnvironment ?? Platform.environment)['WSLENV'] ?? '';
     final entries = <String>[];
     final seen = <String>{};

@@ -34,14 +34,49 @@ class EditorSymbol extends Equatable {
 }
 
 const _braceExts = {
-  'dart', 'ts', 'tsx', 'js', 'jsx', 'java', 'kt', 'swift', 'scala',
-  'c', 'h', 'cpp', 'hpp', 'cc', 'cs', 'go', 'rs', 'php',
+  'dart',
+  'ts',
+  'tsx',
+  'js',
+  'jsx',
+  'java',
+  'kt',
+  'swift',
+  'scala',
+  'c',
+  'h',
+  'cpp',
+  'hpp',
+  'cc',
+  'cs',
+  'go',
+  'rs',
+  'php',
 };
 
 const _callableKeywordBlocklist = {
-  'if', 'else', 'for', 'while', 'switch', 'case', 'catch', 'finally',
-  'return', 'throw', 'match', 'when', 'synchronized', 'lock', 'do', 'try',
-  'loop', 'unsafe', 'using', 'with', 'await', 'yield',
+  'if',
+  'else',
+  'for',
+  'while',
+  'switch',
+  'case',
+  'catch',
+  'finally',
+  'return',
+  'throw',
+  'match',
+  'when',
+  'synchronized',
+  'lock',
+  'do',
+  'try',
+  'loop',
+  'unsafe',
+  'using',
+  'with',
+  'await',
+  'yield',
 };
 
 /// Heuristic symbol extraction for [content] of [path].
@@ -147,7 +182,8 @@ List<EditorSymbol> _braceLanguageSymbols(String content) {
       // Body indicators: arrow body, or a `{` block with no `;` terminator
       // between the parens and it (return types like `: void {`,
       // `-> Self {`, `*Server {`, `async {`, `{}` all qualify).
-      final hasBody = remainder.startsWith('=>') ||
+      final hasBody =
+          remainder.startsWith('=>') ||
           (remainder.contains('{') && !remainder.contains(';'));
       if (hasBody && !_callableKeywordBlocklist.contains(name)) {
         symbols.add(

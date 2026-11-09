@@ -43,8 +43,11 @@ class _FakeFilesystem implements Filesystem {
   Future<void> writeBytes(String path, List<int> bytes) async {}
 
   @override
-  Future<List<int>?> readBytesRange(String path, int offset, int length) async =>
-      [];
+  Future<List<int>?> readBytesRange(
+    String path,
+    int offset,
+    int length,
+  ) async => [];
 
   @override
   Future<void> appendBytes(String path, List<int> bytes) async {}
@@ -84,8 +87,7 @@ class _FakeFilesystem implements Filesystem {
     String root,
     String name, {
     int maxDepth = 4,
-  }) async =>
-      null;
+  }) async => null;
 
   @override
   Future<String> createTempDir({String? prefix, String? parent}) async =>

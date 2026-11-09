@@ -56,8 +56,10 @@ void main() {
         hostEnvironment: const {},
       );
       expect(env[agentStatusUrlEnvKey], endpoint);
-      expect(env[agentStatusSessionEnvKey]!.split(':').first.length,
-          greaterThan(1));
+      expect(
+        env[agentStatusSessionEnvKey]!.split(':').first.length,
+        greaterThan(1),
+      );
     });
   });
 
@@ -73,9 +75,7 @@ void main() {
 
     test('keeps host flags and does not duplicate an already-declared key', () {
       final value = AgentStatusLaunchEnv.buildWslEnvDeclaration(
-        hostEnvironment: const {
-          'WSLENV': '$agentStatusSessionEnvKey/p:KEEP',
-        },
+        hostEnvironment: const {'WSLENV': '$agentStatusSessionEnvKey/p:KEEP'},
       );
       final entries = value.split(':');
       // Host's flagged entry survives verbatim...

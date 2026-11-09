@@ -38,9 +38,7 @@ InMemoryFilesystem _deepSvnLayout() {
 }
 
 InMemoryFilesystem _windowsNestedLayout() {
-  final fs = InMemoryFilesystem(
-    pathContext: p.Context(style: p.Style.windows),
-  );
+  final fs = InMemoryFilesystem(pathContext: p.Context(style: p.Style.windows));
   void dir(String path) => fs.directories.add(path);
   dir(r'D:\proj');
   dir(r'D:\proj\.git');
@@ -80,10 +78,7 @@ void main() {
         ..add('/repo/.git')
         ..add('/repo/lib');
       final result = await VcsDetector().probe('/repo', fs);
-      expect(
-        result.areas,
-        [const VcsArea(kind: VcsKind.git, root: '/repo')],
-      );
+      expect(result.areas, [const VcsArea(kind: VcsKind.git, root: '/repo')]);
     });
 
     test('pure svn folder yields one svn area', () async {
@@ -92,33 +87,29 @@ void main() {
         ..add('/work/common_master/.svn')
         ..add('/work/common_master/convertor');
       final result = await VcsDetector().probe('/work/common_master', fs);
-      expect(
-        result.areas,
-        [const VcsArea(kind: VcsKind.svn, root: '/work/common_master')],
-      );
+      expect(result.areas, [
+        const VcsArea(kind: VcsKind.svn, root: '/work/common_master'),
+      ]);
     });
 
-    test('workspace folder inside a subdirectory still finds the repo', () async {
-      final fs = InMemoryFilesystem();
-      fs.directories
-        ..add('/repo/.git')
-        ..add('/repo/client/lib');
-      final result = await VcsDetector().probe('/repo/client/lib', fs);
-      expect(
-        result.areas,
-        [const VcsArea(kind: VcsKind.git, root: '/repo')],
-      );
-    });
+    test(
+      'workspace folder inside a subdirectory still finds the repo',
+      () async {
+        final fs = InMemoryFilesystem();
+        fs.directories
+          ..add('/repo/.git')
+          ..add('/repo/client/lib');
+        final result = await VcsDetector().probe('/repo/client/lib', fs);
+        expect(result.areas, [const VcsArea(kind: VcsKind.git, root: '/repo')]);
+      },
+    );
 
     test('git worktree .git file marker is accepted', () async {
       final fs = InMemoryFilesystem();
       fs.directories.add('/wt');
       fs.files['/wt/.git'] = 'gitdir: /repo/.git/worktrees/wt';
       final result = await VcsDetector().probe('/wt', fs);
-      expect(
-        result.areas,
-        [const VcsArea(kind: VcsKind.git, root: '/wt')],
-      );
+      expect(result.areas, [const VcsArea(kind: VcsKind.git, root: '/wt')]);
     });
 
     test('no VCS markers yields empty result', () async {
@@ -157,10 +148,7 @@ void main() {
       final fs = _windowsNestedLayout();
       final result = await VcsDetector().probe(r'D:\proj', fs);
       expect(result.areas, hasLength(2));
-      expect(
-        result.areaForPath(r'D:\proj\common\cfg.lua')?.kind,
-        VcsKind.svn,
-      );
+      expect(result.areaForPath(r'D:\proj\common\cfg.lua')?.kind, VcsKind.svn);
       expect(result.areaForPath(r'D:\proj\main.dart')?.kind, VcsKind.git);
     });
   });
@@ -180,9 +168,9 @@ void main() {
       );
       // External content still routes to the enclosing svn area.
       expect(
-        result.areaForPath(
-          '/work/2003VB12/common/convertor/SpriteData/x.png',
-        )?.root,
+        result
+            .areaForPath('/work/2003VB12/common/convertor/SpriteData/x.png')
+            ?.root,
         '/work/2003VB12/common',
       );
       expect(result.areaForPath('/outside/file.txt'), isNull);

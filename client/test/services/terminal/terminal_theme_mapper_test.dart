@@ -110,41 +110,51 @@ void main() {
     expect(dracula.ansi[1], 0xFF5555);
   });
 
-  test('teampilotTerminalTheme matches a catalog display name (case-insensitive)', () {
-    final byName = teampilotTerminalTheme(
-      const ColorScheme.dark(),
-      isDark: true,
-      mode: 'SOLARIZED DARK',
-    );
-    expect(byName.background, 0x002B36);
-  });
+  test(
+    'teampilotTerminalTheme matches a catalog display name (case-insensitive)',
+    () {
+      final byName = teampilotTerminalTheme(
+        const ColorScheme.dark(),
+        isDark: true,
+        mode: 'SOLARIZED DARK',
+      );
+      expect(byName.background, 0x002B36);
+    },
+  );
 
   test('teampilotTerminalTheme unknown mode still falls back to adaptive', () {
     const cs = ColorScheme.dark(primary: Color(0xFF336699));
-    final unknown = teampilotTerminalTheme(cs, isDark: true, mode: 'totally-bogus');
+    final unknown = teampilotTerminalTheme(
+      cs,
+      isDark: true,
+      mode: 'totally-bogus',
+    );
     final adaptive = teampilotTerminalTheme(cs, isDark: true, mode: 'adaptive');
     expect(unknown.background, adaptive.background);
     expect(unknown.foreground, adaptive.foreground);
     expect(unknown.hintStart.bg, 0x336699);
   });
 
-  test('legacy classicDark / highContrast modes are unchanged by catalog hook', () {
-    final classic = teampilotTerminalTheme(
-      const ColorScheme.dark(),
-      isDark: true,
-      mode: 'classicDark',
-    );
-    expect(classic.background, 0x0A0C10);
-    expect(classic.ansi[1], 0xD04A62);
+  test(
+    'legacy classicDark / highContrast modes are unchanged by catalog hook',
+    () {
+      final classic = teampilotTerminalTheme(
+        const ColorScheme.dark(),
+        isDark: true,
+        mode: 'classicDark',
+      );
+      expect(classic.background, 0x0A0C10);
+      expect(classic.ansi[1], 0xD04A62);
 
-    final highContrast = teampilotTerminalTheme(
-      const ColorScheme.dark(),
-      isDark: true,
-      mode: 'highContrast',
-    );
-    expect(highContrast.background, 0x000000);
-    expect(highContrast.foreground, 0xF5F7FA);
-  });
+      final highContrast = teampilotTerminalTheme(
+        const ColorScheme.dark(),
+        isDark: true,
+        mode: 'highContrast',
+      );
+      expect(highContrast.background, 0x000000);
+      expect(highContrast.foreground, 0xF5F7FA);
+    },
+  );
 
   group('user-imported themes', () {
     tearDown(UserTerminalThemeRegistry.instance.clear);

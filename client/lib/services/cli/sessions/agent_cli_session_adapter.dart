@@ -84,6 +84,7 @@ class ClaudeStyleAgentCliSessionAdapter implements AgentCliSessionAdapter {
           family: family,
           sessionId: sessionIdOfFileName(head.path),
           title: claudeStyleTitle(head.bytes, tailBytes: head.tailBytes),
+          createdAt: firstRecordTimestamp(head.bytes),
           updatedAt: head.mtime,
           filePath: head.path,
         ),
@@ -133,6 +134,7 @@ class CodexAgentCliSessionAdapter implements AgentCliSessionAdapter {
             sessionId:
                 _sessionIdFromMeta(head.bytes) ??
                 sessionIdOfFileName(head.path),
+            createdAt: firstRecordTimestamp(head.bytes),
             updatedAt: head.mtime,
             filePath: head.path,
           ),
@@ -400,6 +402,7 @@ AgentCliSessionRecord? piFamilySessionRecord(
   required AgentCliFamily family,
   DateTime? updatedAt,
 }) {
+  final createdAt = piSessionCreatedAt(filePath);
   final lines = _jsonLines(bytes);
   String? sessionId;
   String? title;
@@ -424,9 +427,39 @@ AgentCliSessionRecord? piFamilySessionRecord(
     family: family,
     sessionId: sessionId,
     title: title,
+    createdAt: createdAt,
     updatedAt: updatedAt,
     filePath: filePath,
   );
+}
+
+/// pi names its session files `<ISO-with-dashes>_<sessionId>.jsonl`, so the
+/// creation time is in the name: `2026-11-09T13-14-26-493Z`.
+DateTime? piSessionCreatedAt(String filePath) {
+  final base = sessionIdOfFileName(filePath);
+  final underscore = base.indexOf('_');
+  if (underscore <= 0) return null;
+  final stamp = base.substring(0, underscore).trim();
+  if (stamp.isEmpty) return null;
+  // Restore the ISO separators the filename form dropped.
+  final restored = stamp.replaceFirstMapped(
+    RegExp(r'^(\d{4}-\d{2}-\d{2})T(\d{2})-(\d{2})-(\d{2})-(\d{3})Z$'),
+    (m) => '${m[1]}T${m[2]}:${m[3]}:${m[4]}.${m[5]}Z',
+  );
+  return DateTime.tryParse(restored)?.toUtc();
+}
+
+/// First `timestamp` any record in [bytes] carries — the closest thing a
+/// Claude-style store has to a creation time.
+DateTime? firstRecordTimestamp(List<int> bytes) {
+  for (final line in _jsonLines(bytes)) {
+    final raw = line['timestamp'];
+    if (raw is String && raw.isNotEmpty) {
+      final at = DateTime.tryParse(raw);
+      if (at != null) return at.toUtc();
+    }
+  }
+  return null;
 }
 
 /// `<timestamp>_<sessionId>.jsonl` → the id part after the first underscore.

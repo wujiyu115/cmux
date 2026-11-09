@@ -16,10 +16,7 @@ void main() {
     test('Claude AskUserQuestion PreToolUse → waiting', () {
       final e = AgentStatusNormalizer.normalize(
         cli: CliTool.claude,
-        body: {
-          'hook_event_name': 'PreToolUse',
-          'tool_name': 'AskUserQuestion',
-        },
+        body: {'hook_event_name': 'PreToolUse', 'tool_name': 'AskUserQuestion'},
       );
       expect(e?.state, AgentSeatAttention.waiting);
     });

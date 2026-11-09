@@ -40,7 +40,9 @@ final class PtyAutomationRetryQueue {
   void clear(String key) => _pending.remove(key);
 
   /// Entries ready to run (due and not externally blocked).
-  List<PtyAutomationRetryTick> due({required bool Function(String key) blocked}) {
+  List<PtyAutomationRetryTick> due({
+    required bool Function(String key) blocked,
+  }) {
     final now = _nowMs();
     final ready = <PtyAutomationRetryTick>[];
     for (final entry in _pending.entries.toList()) {

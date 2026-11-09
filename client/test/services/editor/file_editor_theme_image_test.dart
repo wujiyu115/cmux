@@ -13,24 +13,26 @@ void main() {
     expect(isImagePreviewPath('/a/x.heic'), isFalse);
   });
 
-  test('workbench openable is text, image, or unknown; svg stays text-only',
-      () {
-    expect(isWorkbenchOpenableFilePath('/a/x.png'), isTrue);
-    expect(isWorkbenchOpenableFilePath('/a/x.dart'), isTrue);
-    expect(isWorkbenchOpenableFilePath('/a/x.svg'), isTrue);
-    // Unknown extensions are optimistic; content sniffing decides later.
-    expect(isWorkbenchOpenableFilePath('/a/hall.sproto'), isTrue);
-    expect(isWorkbenchOpenableFilePath('/a/abyss_war.td'), isTrue);
-    expect(isWorkbenchOpenableFilePath('/a/Dockerfile.dev'), isTrue);
-    expect(isEditorOpenableFilePath('/a/x.png'), isFalse);
-    expect(isEditorOpenableFilePath('/a/x.svg'), isTrue);
-    // sproto is a bundled text language; unknown extensions stay rejected.
-    expect(isEditorOpenableFilePath('/a/hall.sproto'), isTrue);
-    expect(isEditorOpenableFilePath('/a/x.unknownext'), isFalse);
-    expect(isWorkbenchOpenableFilePath('/a/x.pdf'), isFalse);
-    expect(isWorkbenchOpenableFilePath('/a/x.zip'), isFalse);
-    expect(isWorkbenchOpenableFilePath('/a/archive.tar.gz'), isFalse);
-  });
+  test(
+    'workbench openable is text, image, or unknown; svg stays text-only',
+    () {
+      expect(isWorkbenchOpenableFilePath('/a/x.png'), isTrue);
+      expect(isWorkbenchOpenableFilePath('/a/x.dart'), isTrue);
+      expect(isWorkbenchOpenableFilePath('/a/x.svg'), isTrue);
+      // Unknown extensions are optimistic; content sniffing decides later.
+      expect(isWorkbenchOpenableFilePath('/a/hall.sproto'), isTrue);
+      expect(isWorkbenchOpenableFilePath('/a/abyss_war.td'), isTrue);
+      expect(isWorkbenchOpenableFilePath('/a/Dockerfile.dev'), isTrue);
+      expect(isEditorOpenableFilePath('/a/x.png'), isFalse);
+      expect(isEditorOpenableFilePath('/a/x.svg'), isTrue);
+      // sproto is a bundled text language; unknown extensions stay rejected.
+      expect(isEditorOpenableFilePath('/a/hall.sproto'), isTrue);
+      expect(isEditorOpenableFilePath('/a/x.unknownext'), isFalse);
+      expect(isWorkbenchOpenableFilePath('/a/x.pdf'), isFalse);
+      expect(isWorkbenchOpenableFilePath('/a/x.zip'), isFalse);
+      expect(isWorkbenchOpenableFilePath('/a/archive.tar.gz'), isFalse);
+    },
+  );
 
   test('isKnownBinaryFilePath blocklist', () {
     expect(isKnownBinaryFilePath('/a/app.exe'), isTrue);

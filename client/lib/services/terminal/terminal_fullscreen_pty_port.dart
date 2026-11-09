@@ -10,7 +10,8 @@ final class TerminalFullscreenPtyPort implements FullscreenPtyDeliveryPort {
     required TerminalInputController input,
     required TerminalScreenProbeController probe,
     required bool Function() aborted,
-    FullscreenCrAckConfig crAckConfig = const FullscreenCrAckConfig.productionDefault(),
+    FullscreenCrAckConfig crAckConfig =
+        const FullscreenCrAckConfig.productionDefault(),
   }) : _input = input,
        _probe = probe,
        _aborted = aborted,

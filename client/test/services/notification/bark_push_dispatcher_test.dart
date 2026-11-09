@@ -127,10 +127,13 @@ void main() {
     });
 
     test('mobile-input-only pushes phone-originated turns', () async {
-      build(mobileInputOnly: true, lastInputWasRemote: (seatId) {
-        expect(seatId, 'ws:p1');
-        return true;
-      }).handle(notice());
+      build(
+        mobileInputOnly: true,
+        lastInputWasRemote: (seatId) {
+          expect(seatId, 'ws:p1');
+          return true;
+        },
+      ).handle(notice());
       await settle();
       expect(sent, hasLength(1));
     });
@@ -138,15 +141,19 @@ void main() {
     test('mobile-input-only drops desktop-typed turns', () async {
       // The user is at the desk — pushing their own keystroke back at the
       // phone would be noise.
-      build(mobileInputOnly: true, lastInputWasRemote: (_) => false)
-          .handle(notice());
+      build(
+        mobileInputOnly: true,
+        lastInputWasRemote: (_) => false,
+      ).handle(notice());
       await settle();
       expect(sent, isEmpty);
     });
 
     test('mobile-input-only off pushes desktop-typed turns too', () async {
-      build(mobileInputOnly: false, lastInputWasRemote: (_) => false)
-          .handle(notice());
+      build(
+        mobileInputOnly: false,
+        lastInputWasRemote: (_) => false,
+      ).handle(notice());
       await settle();
       expect(sent, hasLength(1));
     });
@@ -159,11 +166,15 @@ void main() {
         endMinute: 18 * 60,
       );
       // Friday 2026-10-30 12:00 — inside.
-      build(schedule: schedule, now: () => DateTime(2026, 10, 30, 12))
-          .handle(notice());
+      build(
+        schedule: schedule,
+        now: () => DateTime(2026, 10, 30, 12),
+      ).handle(notice());
       // Friday 20:00 — outside.
-      build(schedule: schedule, now: () => DateTime(2026, 10, 30, 20))
-          .handle(notice());
+      build(
+        schedule: schedule,
+        now: () => DateTime(2026, 10, 30, 20),
+      ).handle(notice());
       await settle();
 
       expect(sent, hasLength(1));
@@ -177,11 +188,15 @@ void main() {
         endMinute: 18 * 60,
       );
       // Suppressed: Friday 12:00 is inside the blocked window.
-      build(schedule: schedule, now: () => DateTime(2026, 10, 30, 12))
-          .handle(notice());
+      build(
+        schedule: schedule,
+        now: () => DateTime(2026, 10, 30, 12),
+      ).handle(notice());
       // Delivered: Saturday 12:00 is outside it.
-      build(schedule: schedule, now: () => DateTime(2026, 10, 31, 12))
-          .handle(notice());
+      build(
+        schedule: schedule,
+        now: () => DateTime(2026, 10, 31, 12),
+      ).handle(notice());
       await settle();
 
       expect(sent, hasLength(1));

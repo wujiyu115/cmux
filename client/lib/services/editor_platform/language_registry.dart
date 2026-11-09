@@ -4,7 +4,8 @@ import 'package:teampilot/services/editor_platform/language_pack.dart';
 /// `null` — callers must not substitute a different language's grammar as a
 /// stand-in.
 class LanguageRegistry {
-  LanguageRegistry(List<LanguagePack> packs) : _packs = List.unmodifiable(packs);
+  LanguageRegistry(List<LanguagePack> packs)
+    : _packs = List.unmodifiable(packs);
 
   /// Built-in packs shipped with the app.
   factory LanguageRegistry.builtins() {

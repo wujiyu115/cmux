@@ -89,10 +89,7 @@ class WorkbenchShellLauncher {
        _platformBrightness =
            platformBrightness ??
            (() =>
-               SchedulerBinding
-                   .instance
-                   .platformDispatcher
-                   .platformBrightness),
+               SchedulerBinding.instance.platformDispatcher.platformBrightness),
        _sshConnectFailedMessage =
            sshConnectFailedMessage ?? (() => 'SSH connect failed');
 
@@ -163,12 +160,7 @@ class WorkbenchShellLauncher {
       folders: folders,
       fallbackLocalShell: _fallbackLocalShell(),
     );
-    return openAndSelect(
-      workspaceId: id,
-      tabScopeId: id,
-      cwd: cwd,
-      spec: spec,
-    );
+    return openAndSelect(workspaceId: id, tabScopeId: id, cwd: cwd, spec: spec);
   }
 
   /// Opens [spec] via [WorkspaceTerminalSessionOps.openEntry], then ensures and

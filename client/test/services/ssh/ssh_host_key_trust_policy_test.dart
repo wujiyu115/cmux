@@ -77,24 +77,27 @@ void main() {
     },
   );
 
-  test('OpenSSH SHA256 fingerprints are stored as the identity string', () async {
-    final repository = InMemorySshKnownHostRepository();
-    final policy = SshHostKeyTrustPolicy(knownHostRepository: repository);
-    const identity = 'SHA256:nThbg6kXUpJWGl7E1IGOCspRomTxdCARLviKw6E5SY8';
-    final fingerprint = Uint8List.fromList(identity.codeUnits);
+  test(
+    'OpenSSH SHA256 fingerprints are stored as the identity string',
+    () async {
+      final repository = InMemorySshKnownHostRepository();
+      final policy = SshHostKeyTrustPolicy(knownHostRepository: repository);
+      const identity = 'SHA256:nThbg6kXUpJWGl7E1IGOCspRomTxdCARLviKw6E5SY8';
+      final fingerprint = Uint8List.fromList(identity.codeUnits);
 
-    final accepted = await policy.verify(
-      profile: profile,
-      keyType: 'ssh-ed25519',
-      fingerprint: fingerprint,
-    );
+      final accepted = await policy.verify(
+        profile: profile,
+        keyType: 'ssh-ed25519',
+        fingerprint: fingerprint,
+      );
 
-    expect(accepted, isTrue);
-    expect(
-      await repository.findFingerprint(profile.hostIdentifier, 'ssh-ed25519'),
-      identity,
-    );
-  });
+      expect(accepted, isTrue);
+      expect(
+        await repository.findFingerprint(profile.hostIdentifier, 'ssh-ed25519'),
+        identity,
+      );
+    },
+  );
 
   test('prompt can accept a mismatched host key and replace the pin', () async {
     final repository = InMemorySshKnownHostRepository();

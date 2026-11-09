@@ -46,12 +46,12 @@ class PairingHostDirBrowser {
     required Future<String> Function() defaultLocalRoot,
     Duration resolveTimeout = const Duration(seconds: 25),
     ListDrives listDrives = WindowsDriveRoots.list,
-  })  : _resolveTargetId = resolveTargetId,
-        _filesystemFor = filesystemFor,
-        _homeFor = homeFor,
-        _defaultLocalRoot = defaultLocalRoot,
-        _resolveTimeout = resolveTimeout,
-        _listDrives = listDrives;
+  }) : _resolveTargetId = resolveTargetId,
+       _filesystemFor = filesystemFor,
+       _homeFor = homeFor,
+       _defaultLocalRoot = defaultLocalRoot,
+       _resolveTimeout = resolveTimeout,
+       _listDrives = listDrives;
 
   final PairingTargetResolver _resolveTargetId;
   final PairingTargetFilesystem _filesystemFor;

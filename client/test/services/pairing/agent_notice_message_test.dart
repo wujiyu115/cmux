@@ -26,19 +26,22 @@ void main() {
     expect(decoded.isMirrorable, isTrue);
   });
 
-  test('PairingAgentNotice omits a null catalogId and stays non-mirrorable', () {
-    const notice = PairingAgentNotice(
-      kind: PairingAgentNoticeKind.done,
-      seatId: 'sess-1',
-    );
+  test(
+    'PairingAgentNotice omits a null catalogId and stays non-mirrorable',
+    () {
+      const notice = PairingAgentNotice(
+        kind: PairingAgentNoticeKind.done,
+        seatId: 'sess-1',
+      );
 
-    final json = notice.toJson();
-    expect(json.containsKey('catalogId'), isFalse);
+      final json = notice.toJson();
+      expect(json.containsKey('catalogId'), isFalse);
 
-    final decoded = PairingAgentNotice.tryFromJson(json)!;
-    expect(decoded.catalogId, isNull);
-    expect(decoded.isMirrorable, isFalse);
-  });
+      final decoded = PairingAgentNotice.tryFromJson(json)!;
+      expect(decoded.catalogId, isNull);
+      expect(decoded.isMirrorable, isFalse);
+    },
+  );
 
   test('PairingAgentNotice.tryFromJson rejects unknown or missing kind', () {
     // A newer desktop adding a kind must not crash an older phone.

@@ -3728,6 +3728,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get chatPaneComposerNeedsAgent => '先在终端里启动 agent，再回来发消息。';
 
   @override
+  String get chatPanePromptUndelivered =>
+      '消息没有送到：这个终端里没有正在运行的 agent（或者聊天视图盯的是另一个窗口的会话）。文本已还回输入框。';
+
+  @override
   String get chatPaneSend => '发送';
 
   @override

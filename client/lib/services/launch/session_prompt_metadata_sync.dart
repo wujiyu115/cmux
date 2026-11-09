@@ -30,7 +30,10 @@ class SessionPromptMetadataSync {
   ///
   /// Used by keyboard capture and compose-landing PTY inject (which bypasses
   /// [FirstUserLineCapture]).
-  Future<void> applyFirstPromptTitle(String sessionId, String firstPrompt) async {
+  Future<void> applyFirstPromptTitle(
+    String sessionId,
+    String firstPrompt,
+  ) async {
     if (sessionId.startsWith('local-')) return;
     final repo = _host.sessionRepository;
     if (repo == null) return;

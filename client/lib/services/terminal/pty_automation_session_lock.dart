@@ -15,5 +15,6 @@ final class PtyAutomationSessionLock {
   void release(String sessionId, String memberId) =>
       _busy.remove(key(sessionId, memberId));
 
-  static String key(String sessionId, String memberId) => '$sessionId:$memberId';
+  static String key(String sessionId, String memberId) =>
+      '$sessionId:$memberId';
 }

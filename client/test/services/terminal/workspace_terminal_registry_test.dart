@@ -48,17 +48,20 @@ void main() {
       reg.disposeAll();
     });
 
-    test('paneAttribution prefers pane name, then renamed tab, then spec label', () {
-      final g = WorkspaceTerminalGroup();
-      final e = _add(g)..titleLabel = 'Local';
-      final surfaceId = g.surfaces.single.id;
-      expect(g.paneAttribution(e.id), 'Local');
-      g.renameSurface(surfaceId, 'Build server');
-      expect(g.paneAttribution(e.id), 'Build server');
-      g.renamePane(e.id, 'Run pane');
-      expect(g.paneAttribution(e.id), 'Run pane');
-      g.dispose();
-    });
+    test(
+      'paneAttribution prefers pane name, then renamed tab, then spec label',
+      () {
+        final g = WorkspaceTerminalGroup();
+        final e = _add(g)..titleLabel = 'Local';
+        final surfaceId = g.surfaces.single.id;
+        expect(g.paneAttribution(e.id), 'Local');
+        g.renameSurface(surfaceId, 'Build server');
+        expect(g.paneAttribution(e.id), 'Build server');
+        g.renamePane(e.id, 'Run pane');
+        expect(g.paneAttribution(e.id), 'Run pane');
+        g.dispose();
+      },
+    );
 
     test('locateSurface resolves across groups without creating one', () {
       final reg = WorkspaceTerminalRegistry();

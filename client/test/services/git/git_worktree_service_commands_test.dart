@@ -163,7 +163,10 @@ class _OldGitFakeRunner {
     final cIdx = arguments.indexOf('-C');
     if (cIdx < 0) return ProcessResult(0, 0, '/usr/bin/git\n', '');
     final cmd = arguments.sublist(cIdx + 2);
-    if (cmd.contains('-z') && cmd.length >= 3 && cmd[0] == 'worktree' && cmd[1] == 'list') {
+    if (cmd.contains('-z') &&
+        cmd.length >= 3 &&
+        cmd[0] == 'worktree' &&
+        cmd[1] == 'list') {
       zAttempts++;
       return ProcessResult(0, 129, '', "error: unknown switch `z'");
     }

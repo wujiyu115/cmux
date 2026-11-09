@@ -128,6 +128,94 @@ void main() {
     expect(session.transcript.value.busy, isFalse);
   });
 
+  test('a session this pane could not have started is not adopted', () async {
+    // Another window keeps writing a session that began before this pane
+    // existed; the pane's own session began after it. Picking the fresh mtime
+    // would publish — and let the composer answer for — the wrong conversation.
+    const foreign = '$_projectDir/00000000-0000-0000-0000-000000000000.jsonl';
+    const own = '$_projectDir/99999999-9999-9999-9999-999999999999.jsonl';
+    final foreignRecord = jsonEncode({
+      'type': 'user',
+      'timestamp': '2026-11-09T06:00:00.000Z',
+      'message': {'role': 'user', 'content': 'someone else'},
+    });
+    final ownRecord = jsonEncode({
+      'type': 'user',
+      'timestamp': '2026-11-09T09:30:00.000Z',
+      'message': {'role': 'user', 'content': 'mine'},
+    });
+    await fs.writeBytes(foreign, utf8.encode('$foreignRecord\n'));
+    await fs.writeBytes(own, utf8.encode('$ownRecord\n'));
+
+    final session = newSession();
+    addTearDown(session.dispose);
+    await session.refreshNow();
+
+    expect(session.resolvedPath, own);
+    expect(session.transcript.value.rows.single.text, 'mine');
+  });
+
+  test(
+    'a resumed session, created before the pane, is still adopted',
+    () async {
+      // `--resume` keeps the original creation time, so the pane owns nothing
+      // new; the fallback must still bind it or resume would lose its chat.
+      final old = jsonEncode({
+        'type': 'user',
+        'timestamp': '2026-11-09T06:00:00.000Z',
+        'message': {'role': 'user', 'content': 'resumed'},
+      });
+      await fs.writeBytes(_sessionPath, utf8.encode('$old\n'));
+
+      final session = newSession();
+      addTearDown(session.dispose);
+      await session.refreshNow();
+
+      expect(session.resolvedPath, _sessionPath);
+      expect(session.transcript.value.rows.single.text, 'resumed');
+    },
+  );
+
+  test(
+    'a sent prompt follows itself to the session that received it',
+    () async {
+      // The guess bound this pane to another window's session; the pane's own
+      // agent writes to a second file. Sending is the evidence that settles it.
+      const foreign = '$_projectDir/00000000-0000-0000-0000-000000000000.jsonl';
+      const own = '$_projectDir/99999999-9999-9999-9999-999999999999.jsonl';
+      await fs.writeBytes(foreign, utf8.encode('${_userPrompt('theirs')}\n'));
+
+      final session = newSession();
+      addTearDown(session.dispose);
+      await session.refreshNow();
+      expect(session.resolvedPath, foreign);
+
+      session.markPromptSent('mine now');
+      await fs.writeBytes(own, utf8.encode('${_userPrompt('mine now')}\n'));
+      await session.refreshNow();
+
+      expect(session.resolvedPath, own);
+      expect(session.transcript.value.rows.single.text, 'mine now');
+    },
+  );
+
+  test('a prompt that lands where it is expected keeps the binding', () async {
+    await fs.writeBytes(_sessionPath, utf8.encode('${_userPrompt('one')}\n'));
+    final session = newSession();
+    addTearDown(session.dispose);
+    await session.refreshNow();
+
+    session.markPromptSent('two');
+    await fs.writeBytes(
+      _sessionPath,
+      utf8.encode('${_userPrompt('one')}\n${_userPrompt('two')}\n'),
+    );
+    await session.refreshNow();
+
+    expect(session.resolvedPath, _sessionPath);
+    expect(session.transcript.value.rows, hasLength(2));
+  });
+
   test('a store with no session for the pane cwd reports it', () async {
     final session = newSession();
     addTearDown(session.dispose);

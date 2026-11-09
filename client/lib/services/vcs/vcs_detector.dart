@@ -97,7 +97,8 @@ class VcsDetector {
       normalized,
       '.git',
       fs,
-      accept: (s) => s.kind == FsEntityKind.directory || s.kind == FsEntityKind.file,
+      accept: (s) =>
+          s.kind == FsEntityKind.directory || s.kind == FsEntityKind.file,
     );
     if (gitRoot != null) {
       areas.add(VcsArea(kind: VcsKind.git, root: gitRoot));

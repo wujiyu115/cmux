@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_ui/shared_ui.dart';
@@ -44,6 +46,11 @@ class _ChatTranscriptPaneState extends State<ChatTranscriptPane> {
   final _composer = TextEditingController();
   final _expanded = <String>{};
 
+  /// A prompt that never showed up in the store — the pane's agent may not be
+  /// running, or it may be a different session than the one being read.
+  bool _undelivered = false;
+  Timer? _deliveryCheck;
+
   @override
   void initState() {
     super.initState();
@@ -61,6 +68,7 @@ class _ChatTranscriptPaneState extends State<ChatTranscriptPane> {
 
   @override
   void dispose() {
+    _deliveryCheck?.cancel();
     widget.transcript.removeListener(_onTranscriptChanged);
     _scroll.dispose();
     _composer.dispose();
@@ -82,9 +90,30 @@ class _ChatTranscriptPaneState extends State<ChatTranscriptPane> {
   void _send() {
     final text = _composer.text.trim();
     if (text.isEmpty || !_canType(widget.transcript.value)) return;
+    final promptsBefore = _promptCount();
     _composer.clear();
+    setState(() => _undelivered = false);
     widget.onSend(text);
+    _checkDelivery(text, promptsBefore);
   }
+
+  /// The store is the only proof a prompt reached the agent: the CLI writes the
+  /// user record as it receives it. If nothing new shows up, say so and hand the
+  /// text back instead of letting it disappear.
+  void _checkDelivery(String text, int promptsBefore) {
+    _deliveryCheck?.cancel();
+    _deliveryCheck = Timer(const Duration(seconds: 5), () {
+      if (!mounted || _promptCount() > promptsBefore) return;
+      setState(() {
+        _undelivered = true;
+        if (_composer.text.isEmpty) _composer.text = text;
+      });
+    });
+  }
+
+  int _promptCount() => widget.transcript.value.rows
+      .where((row) => row.kind == ChatTranscriptRowKind.user)
+      .length;
 
   /// Composing needs a live PTY *and* a session store to read the answer back
   /// from. Without one the prompt would land in a bare shell and vanish — no
@@ -112,6 +141,7 @@ class _ChatTranscriptPaneState extends State<ChatTranscriptPane> {
           return Column(
             children: [
               Expanded(child: _buildBody(context, snapshot, foreground)),
+              if (_undelivered) _buildDeliveryWarning(context, foreground),
               TpSeparator(color: foreground.withValues(alpha: 0.12)),
               _buildComposer(context, foreground, snapshot),
             ],
@@ -218,6 +248,30 @@ class _ChatTranscriptPaneState extends State<ChatTranscriptPane> {
     setState(() {
       if (!_expanded.remove(id)) _expanded.add(id);
     });
+  }
+
+  Widget _buildDeliveryWarning(BuildContext context, Color foreground) {
+    final l10n = context.l10n;
+    final styles = TpTextStyles.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+      child: Row(
+        children: [
+          Icon(
+            Icons.error_outline,
+            size: 14,
+            color: Theme.of(context).colorScheme.error,
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              l10n.chatPanePromptUndelivered,
+              style: styles.xsColored(Theme.of(context).colorScheme.error),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildComposer(

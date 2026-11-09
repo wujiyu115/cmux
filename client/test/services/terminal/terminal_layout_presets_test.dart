@@ -245,10 +245,7 @@ void main() {
 
     test('drops pane names for ids no longer present', () {
       final result = applyLayoutPreset(
-        surfaceOf(
-          ['a', 'b', 'c'],
-          names: {'a': 'Alpha', 'c': 'Gamma'},
-        ),
+        surfaceOf(['a', 'b', 'c'], names: {'a': 'Alpha', 'c': 'Gamma'}),
         TerminalLayoutPreset.columns2,
         paneIds: ['a', 'b'],
       );

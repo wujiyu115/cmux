@@ -60,15 +60,10 @@ void main() {
     final sessionIds = <String>[];
 
     Future<void> openSession() async {
-      final session = await repo.createSession(
-        workspaceId,
-      );
+      final session = await repo.createSession(workspaceId);
       sessionIds.add(session.sessionId);
       await chat.requestOpenSession(
-        SessionOpenRequest(
-          session: session,
-          repo: repo,
-        ),
+        SessionOpenRequest(session: session, repo: repo),
       );
       await drainPendingAsyncWork();
       await postFrame.flush();
@@ -164,18 +159,19 @@ void main() {
       expect(workbench.activeTabId(workspaceId), active);
     });
 
-    test('closeTab(activeTabIndex) is the session-close-tab command equivalent',
-        () async {
-      await openSession();
-      await openSession();
-      expect(chat.state.tabs, hasLength(2));
-      final closing = chat.state.activeSessionId;
-      chat.closeTab(chat.state.activeTabIndex);
-      await drainPendingAsyncWork();
-      await postFrame.flush();
-      expect(chat.state.tabs, hasLength(1));
-      expect(chat.state.activeSessionId, isNot(closing));
-    });
-
+    test(
+      'closeTab(activeTabIndex) is the session-close-tab command equivalent',
+      () async {
+        await openSession();
+        await openSession();
+        expect(chat.state.tabs, hasLength(2));
+        final closing = chat.state.activeSessionId;
+        chat.closeTab(chat.state.activeTabIndex);
+        await drainPendingAsyncWork();
+        await postFrame.flush();
+        expect(chat.state.tabs, hasLength(1));
+        expect(chat.state.activeSessionId, isNot(closing));
+      },
+    );
   });
 }

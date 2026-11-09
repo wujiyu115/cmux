@@ -136,8 +136,7 @@ VolcFrame parseVolcFrame(List<int> bytes) {
   }
 
   final Uint8List body = data.sublist(12, 12 + length);
-  final List<int> payload =
-      compression == 0x01 ? gzip.decode(body) : body;
+  final List<int> payload = compression == 0x01 ? gzip.decode(body) : body;
 
   return VolcFrame(
     messageType: messageType,
@@ -220,10 +219,16 @@ VolcFrame decodeVolcServerFrame(List<int> bytes) {
         'offset $offset but only ${data.length} present',
       );
     }
-    final int errorCode =
-        ByteData.sublistView(data, offset, offset + 4).getInt32(0);
-    final int msgLen =
-        ByteData.sublistView(data, offset + 4, offset + 8).getUint32(0);
+    final int errorCode = ByteData.sublistView(
+      data,
+      offset,
+      offset + 4,
+    ).getInt32(0);
+    final int msgLen = ByteData.sublistView(
+      data,
+      offset + 4,
+      offset + 8,
+    ).getUint32(0);
     offset += 8;
     if (data.length < offset + msgLen) {
       throw FormatException(
@@ -234,8 +239,9 @@ VolcFrame decodeVolcServerFrame(List<int> bytes) {
     }
     // Error messages are plain UTF-8 — never gzip-decoded, even when the
     // compression nibble is set. Malformed UTF-8 throws FormatException.
-    final String errorMessage =
-        utf8.decode(data.sublist(offset, offset + msgLen));
+    final String errorMessage = utf8.decode(
+      data.sublist(offset, offset + msgLen),
+    );
     return VolcFrame(
       messageType: messageType,
       flags: flags,
@@ -254,8 +260,11 @@ VolcFrame decodeVolcServerFrame(List<int> bytes) {
       'offset $offset but only ${data.length} present',
     );
   }
-  final int payloadLen =
-      ByteData.sublistView(data, offset, offset + 4).getUint32(0);
+  final int payloadLen = ByteData.sublistView(
+    data,
+    offset,
+    offset + 4,
+  ).getUint32(0);
   offset += 4;
   if (data.length < offset + payloadLen) {
     throw FormatException(

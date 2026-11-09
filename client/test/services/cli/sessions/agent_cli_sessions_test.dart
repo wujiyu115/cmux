@@ -663,6 +663,54 @@ void main() {
       expect(records, hasLength(1));
       expect(records.single.title, isNull);
     });
+
+    test('the filename carries the session creation time', () async {
+      // pi and omp both name files `<ISO>_<sessionId>.jsonl`, with the colons
+      // flattened to dashes. That mark is how a pane tells its own session
+      // from one another window is still writing.
+      expect(
+        piSessionCreatedAt(
+          '/home/u/.pi/agent/sessions/--home-u-proj--/'
+          '2026-11-09T13-14-26-493Z_01a1c072-1d3c-73e6-b7c7-f72c319f58d1.jsonl',
+        ),
+        DateTime.utc(2026, 11, 9, 13, 14, 26, 493),
+      );
+      expect(
+        piSessionCreatedAt('/home/u/.pi/sessions/x/whatever.jsonl'),
+        isNull,
+      );
+    });
+  });
+
+  group('ClaudeStyleAgentCliSessionAdapter creation time', () {
+    test('the first timestamped record dates the session', () async {
+      final fs = InMemoryFilesystem();
+      await fs.writeBytes(
+        '/home/u/.claude/projects/-home-u-proj/'
+        '11111111-2222-3333-4444-555555555555.jsonl',
+        utf8.encode(
+          '{"type":"summary","summary":"x"}\n'
+          '{"type":"user","timestamp":"2026-11-09T13:14:26.493Z",'
+          '"message":{"role":"user","content":"hi"}}\n',
+        ),
+      );
+
+      final records =
+          await const ClaudeStyleAgentCliSessionAdapter(
+            family: AgentCliFamily.claude,
+            homeDotDir: '.claude',
+          ).listSessions(
+            AgentCliSessionQuery(
+              context: _context(fs),
+              directory: '/home/u/proj',
+            ),
+          );
+
+      expect(
+        records.single.createdAt,
+        DateTime.utc(2026, 11, 9, 13, 14, 26, 493),
+      );
+    });
   });
 
   group('AgentCliSessionService', () {

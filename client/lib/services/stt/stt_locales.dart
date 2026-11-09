@@ -40,10 +40,9 @@ const _aliyun = <SpeechLocale>[
 /// Language names stay in their own language rather than going through l10n: a
 /// picker that renders every entry in the current UI locale is harder to scan
 /// than one where each row reads as the language it selects.
-List<SpeechLocale> sttLocalesFor(SttProviderType type) => List.unmodifiable(
-  switch (type) {
-    SttProviderType.system => _systemFallback,
-    SttProviderType.volcengine => _volcengine,
-    SttProviderType.aliyun => _aliyun,
-  },
-);
+List<SpeechLocale> sttLocalesFor(SttProviderType type) =>
+    List.unmodifiable(switch (type) {
+      SttProviderType.system => _systemFallback,
+      SttProviderType.volcengine => _volcengine,
+      SttProviderType.aliyun => _aliyun,
+    });

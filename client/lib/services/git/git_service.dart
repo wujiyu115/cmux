@@ -362,7 +362,10 @@ class GitService {
   ///
   /// Uses the raw runner (not [_run]) because non-zero exit here means "no
   /// blame available", not an error to surface.
-  Future<List<GitBlameEntry>?> blameFile(String dir, String relativePath) async {
+  Future<List<GitBlameEntry>?> blameFile(
+    String dir,
+    String relativePath,
+  ) async {
     if (!await isAvailable) return null;
     final result = await _runner.runInDirectory(dir, [
       '-c',

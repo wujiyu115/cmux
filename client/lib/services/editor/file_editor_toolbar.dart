@@ -193,9 +193,9 @@ class FileEditorContextMenuController implements SelectionToolbarController {
     // Flip the workbench center pane to the session terminal so the staged
     // mention is visible where the user will type their question.
     context.read<WorkbenchCubit>().ensureTab(
-          workspaceId,
-          WorkbenchTabId.session(tab!.info.id),
-        );
+      workspaceId,
+      WorkbenchTabId.session(tab!.info.id),
+    );
   }
 
   /// Copies the selection's (or caret's) line range as `path#L5-10` — the
@@ -254,7 +254,6 @@ class FileEditorContextMenuController implements SelectionToolbarController {
     };
     AppToast.show(context, message: message);
   }
-
 
   Future<void> _showMenu(
     BuildContext context,
