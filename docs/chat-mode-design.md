@@ -91,9 +91,18 @@ WSL 后端的每个文件操作都是一次 `wsl.exe` 进程（`docs/wsl-fs-help
 | family | 状态 |
 |---|---|
 | claude / qoder（同一 JSONL schema） | ✅ `ClaudeStyleChatTranscriptParser` |
+| pi / oh-my-pi（同一 JSONL schema，`message` 记录） | ✅ `PiChatTranscriptParser` |
 | codex | ⏳ 待做（`event_msg` / `response_item`） |
-| omp | ⏳ 待做（`message` 记录） |
 | opencode | ⏳ 待做（storage 是多个小 json，不是单文件 jsonl） |
+
+pi 家族两个 store 的差别只在目录规则（记录格式完全相同，omp 是 pi 的 fork）：
+
+| CLI | 目录 | 规则 |
+|---|---|---|
+| pi | `~/.pi/agent/sessions/<safePath>/<ISO>_<sessionId>.jsonl` | `--` + `cwd` 去掉开头分隔符、`/ \ :` 全换成 `-` + `--`（`D:\git\x` → `--D--git-x--`） |
+| omp | `~/.omp/agent/sessions/<munged>/…` | 先剥 `$HOME` 前缀再 `mungeDirectory`（`/home/u/git/x` → `-git-x`） |
+
+pi 的 `message` 行按 `role` 分四类：`user`（content 是 `text` block 列表）、`assistant`（`text` / `thinking` / `toolCall`）、`toolResult`（用 `toolCallId` 把输出接回对应的 `toolCall` 行）、`system`（跳过）。`compaction` 行渲染成和 Claude `compact_boundary` 一样的 notice。
 
 没有解析器的 family → 面板显示「这个格式还读不了，请用终端」，不是空白。
 
@@ -144,6 +153,6 @@ WSL 后端的每个文件操作都是一次 `wsl.exe` 进程（`docs/wsl-fs-help
 
 待办：
 
-1. codex / omp / opencode 解析器
+1. codex / opencode 解析器（pi 与 oh-my-pi 已完成）
 3. `busy` 期间输入框的「停止」按钮（现在只能靠终端里 Ctrl+C）
 4. 未做：审批卡片、model/slash command 面板——按 §2 的取舍留在终端
