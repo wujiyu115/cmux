@@ -6295,6 +6295,18 @@ abstract class AppLocalizations {
   /// **'No workspaces on this desktop.'**
   String get pairingNoWorkspaces;
 
+  /// No description provided for @pairingNoTerminalSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'No terminal open'**
+  String get pairingNoTerminalSelected;
+
+  /// No description provided for @pairingSelectTerminalHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a terminal from the list to mirror it here.'**
+  String get pairingSelectTerminalHint;
+
   /// No description provided for @pairingWorkspaces.
   ///
   /// In en, this message translates to:

@@ -87,6 +87,14 @@ class AppKeys {
   static const pairingConfirmCancelButton = Key('pairing-confirm-cancel');
   static const pairingConnectionLog = Key('pairing-connection-log');
   static const pairingSessionListPage = Key('pairing-session-list-page');
+
+  /// Tablet (iPad) two-pane shell: workspace sidebar + mirror pane.
+  static const pairingTabletShell = Key('pairing-tablet-shell');
+
+  /// Empty right pane of [pairingTabletShell] — nothing mirrored yet.
+  static const pairingNoMirrorPlaceholder = Key(
+    'pairing-no-mirror-placeholder',
+  );
   static const pairingMirrorPage = Key('pairing-mirror-page');
   static const pairingMirrorCopyButton = Key('pairing-mirror-copy-button');
   static const pairingMirrorChangesButton = Key(
@@ -102,7 +110,13 @@ class AppKeys {
   static const pairingNetworkStrip = Key('pairing-network-strip');
   static const pairingDeleteSheet = Key('pairing-delete-sheet');
   static const pairingDeleteConfirmButton = Key('pairing-delete-confirm');
+
+  /// Settings destination in both mobile navs — [MobileBottomNav] on a phone,
+  /// [MobileNavRail] on a tablet.
   static const mobileSettingsButton = Key('mobile-settings-button');
+
+  /// Top-level destination rail on a tablet (iPad / Android large screen).
+  static const mobileNavRail = Key('mobile-nav-rail');
   static const mobileAddDesktopButton = Key('mobile-add-desktop');
   static const pairingWorkspaceSearchField = Key(
     'pairing-workspace-search-field',

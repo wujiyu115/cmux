@@ -13,6 +13,7 @@ import 'pairing_block_button.dart';
 import 'pairing_host_glyph.dart';
 import 'pairing_nav_bar.dart';
 import 'pairing_stage_steps.dart';
+import 'pairing_tablet_layout.dart';
 
 /// Pairing confirmation: the host being paired, a determinate step rail fed by
 /// real [PairingStage] events, and the connection log for LAN diagnosis. The
@@ -47,33 +48,38 @@ class PairingConfirmPage extends StatelessWidget {
                     onBack: cubit.cancel,
                   ),
                   Expanded(
-                    child: ListView(
-                      padding: EdgeInsets.fromLTRB(
-                        spacing.lg,
-                        spacing.lg,
-                        spacing.lg,
-                        spacing.lg,
+                    // Tablet (iPad / Android): the confirm screen is one narrow column of steps and
+                    // a log; stretched to 1366pt the log lines and the step rail
+                    // drift apart. No-op on a phone.
+                    child: PairingTabletReadableContent(
+                      child: ListView(
+                        padding: EdgeInsets.fromLTRB(
+                          spacing.lg,
+                          spacing.lg,
+                          spacing.lg,
+                          spacing.lg,
+                        ),
+                        children: [
+                          _HostCard(state: state),
+                          SizedBox(height: spacing.xl),
+                          Text(
+                            l10n.pairingStepProgressTitle,
+                            style: TpTextStyles.of(context).xsColored(
+                              Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          SizedBox(height: spacing.md),
+                          TpStepRail(
+                            key: AppKeys.pairingStepRail,
+                            items: buildPairingStageItems(
+                              l10n: l10n,
+                              statuses: state.stageStatuses,
+                            ),
+                          ),
+                          SizedBox(height: spacing.md),
+                          const ConnectionLogView(),
+                        ],
                       ),
-                      children: [
-                        _HostCard(state: state),
-                        SizedBox(height: spacing.xl),
-                        Text(
-                          l10n.pairingStepProgressTitle,
-                          style: TpTextStyles.of(context).xsColored(
-                            Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                        SizedBox(height: spacing.md),
-                        TpStepRail(
-                          key: AppKeys.pairingStepRail,
-                          items: buildPairingStageItems(
-                            l10n: l10n,
-                            statuses: state.stageStatuses,
-                          ),
-                        ),
-                        SizedBox(height: spacing.md),
-                        const ConnectionLogView(),
-                      ],
                     ),
                   ),
                   _Footer(
@@ -192,61 +198,65 @@ class _Footer extends StatelessWidget {
       ),
       child: SafeArea(
         top: false,
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            spacing.lg,
-            spacing.md,
-            spacing.lg,
-            spacing.md,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (isError)
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.error_outline, size: 18, color: cs.error),
-                    SizedBox(width: spacing.sm),
-                    Expanded(
-                      child: Text(
-                        error ?? l10n.pairingFailed,
-                        style: styles.smColored(cs.error),
+        // The bar's surface stays full-bleed; only the button column is capped so
+        // it lines up with the readable column above it on a tablet.
+        child: PairingTabletReadableContent(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              spacing.lg,
+              spacing.md,
+              spacing.lg,
+              spacing.md,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (isError)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.error_outline, size: 18, color: cs.error),
+                      SizedBox(width: spacing.sm),
+                      Expanded(
+                        child: Text(
+                          error ?? l10n.pairingFailed,
+                          style: styles.smColored(cs.error),
+                        ),
                       ),
-                    ),
-                  ],
-                )
-              // While connecting the button already says so — repeating it here
-              // would just be the same sentence twice.
-              else if (!connecting)
-                Text(l10n.pairingReadyHint, style: styles.mutedSm),
-              if (!connecting) SizedBox(height: spacing.md),
-              PairingBlockButton(
-                key: AppKeys.pairingConnectButton,
-                onPressed: connecting ? null : onConnect,
-                child: connecting
-                    ? Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                          SizedBox(width: spacing.sm),
-                          Text(l10n.pairingConnecting),
-                        ],
-                      )
-                    : Text(isError ? l10n.pairingRetry : l10n.pairingConnect),
-              ),
-              SizedBox(height: spacing.xs),
-              PairingBlockButton(
-                key: AppKeys.pairingConfirmCancelButton,
-                variant: PairingButtonVariant.quiet,
-                onPressed: onCancel,
-                child: Text(l10n.cancel),
-              ),
-            ],
+                    ],
+                  )
+                // While connecting the button already says so — repeating it here
+                // would just be the same sentence twice.
+                else if (!connecting)
+                  Text(l10n.pairingReadyHint, style: styles.mutedSm),
+                if (!connecting) SizedBox(height: spacing.md),
+                PairingBlockButton(
+                  key: AppKeys.pairingConnectButton,
+                  onPressed: connecting ? null : onConnect,
+                  child: connecting
+                      ? Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                            SizedBox(width: spacing.sm),
+                            Text(l10n.pairingConnecting),
+                          ],
+                        )
+                      : Text(isError ? l10n.pairingRetry : l10n.pairingConnect),
+                ),
+                SizedBox(height: spacing.xs),
+                PairingBlockButton(
+                  key: AppKeys.pairingConfirmCancelButton,
+                  variant: PairingButtonVariant.quiet,
+                  onPressed: onCancel,
+                  child: Text(l10n.cancel),
+                ),
+              ],
+            ),
           ),
         ),
       ),

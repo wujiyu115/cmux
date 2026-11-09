@@ -7,6 +7,7 @@ import '../../theme/app_fonts.dart';
 import '../../theme/app_typography_scale.dart';
 import '../../utils/ui/app_keys.dart';
 import 'pairing_block_button.dart';
+import 'pairing_tablet_layout.dart';
 
 /// Manual pairing-code entry, as a bottom sheet rather than a dialog: the field
 /// is a long mono payload and the keyboard covers half the screen, so anchoring
@@ -17,6 +18,9 @@ Future<PairingOffer?> showPairingManualEntrySheet(BuildContext context) {
   return showModalBottomSheet<PairingOffer>(
     context: context,
     isScrollControlled: true,
+    constraints: BoxConstraints(
+      maxWidth: PairingTabletLayout.sheetMaxWidthFor(context),
+    ),
     builder: (_) => const _PairingManualEntrySheet(),
   );
 }
@@ -85,7 +89,10 @@ class _PairingManualEntrySheetState extends State<_PairingManualEntrySheet> {
                 autofocus: true,
                 minHeight: 92,
                 resizable: false,
-                style: appMonoTextStyle(context, fontSize: typography.bodyLarge),
+                style: appMonoTextStyle(
+                  context,
+                  fontSize: typography.bodyLarge,
+                ),
                 decoration: InputDecoration(hintText: l10n.pairingCodeHint),
                 onChanged: (_) {
                   if (_error != null) setState(() => _error = null);

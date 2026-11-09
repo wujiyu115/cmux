@@ -1573,6 +1573,8 @@
   "pairingNoMatchingWorkspaces": "No workspaces match.",
   "pairingRefresh": "Refresh",
   "pairingNoWorkspaces": "No workspaces on this desktop.",
+  "pairingNoTerminalSelected": "No terminal open",
+  "pairingSelectTerminalHint": "Pick a terminal from the list to mirror it here.",
   "pairingWorkspaces": "Workspaces",
   "pairingLiveBadge": "Live",
   "pairingOfflineBadge": "Offline",

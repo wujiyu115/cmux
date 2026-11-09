@@ -3293,6 +3293,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pairingNoWorkspaces => '此桌面上没有工作区。';
 
   @override
+  String get pairingNoTerminalSelected => '没有打开终端';
+
+  @override
+  String get pairingSelectTerminalHint => '在左侧列表里选择一个终端，在这里镜像。';
+
+  @override
   String get pairingWorkspaces => '工作区';
 
   @override

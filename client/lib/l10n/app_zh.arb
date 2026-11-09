@@ -1455,6 +1455,8 @@
   "pairingNoMatchingWorkspaces": "没有匹配的工作区。",
   "pairingRefresh": "刷新",
   "pairingNoWorkspaces": "此桌面上没有工作区。",
+  "pairingNoTerminalSelected": "没有打开终端",
+  "pairingSelectTerminalHint": "在左侧列表里选择一个终端，在这里镜像。",
   "pairingWorkspaces": "工作区",
   "pairingLiveBadge": "在线",
   "pairingOfflineBadge": "离线",

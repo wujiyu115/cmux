@@ -10,6 +10,7 @@ import 'mobile_chrome.dart';
 import 'pairing_delete_sheet.dart';
 import 'pairing_new_group_sheet.dart';
 import 'pairing_new_workspace_sheet.dart';
+import 'pairing_tablet_layout.dart';
 import 'pairing_workspace_group.dart';
 
 /// A paired desktop's workspace tree, in the reference's detail-screen shape:
@@ -20,7 +21,15 @@ import 'pairing_workspace_group.dart';
 /// Every workspace is listed (including dormant ones); tapping a workspace
 /// unfolds its terminals, tapping a terminal opens its live mirror.
 class PairingSessionListPage extends StatefulWidget {
-  const PairingSessionListPage({super.key});
+  const PairingSessionListPage({super.key, this.embedded = false});
+
+  /// Rendered as [PairingTabletShell]'s sidebar rather than as the whole screen.
+  ///
+  /// Only the page title scales down: the prototype's 30pt title is sized for a
+  /// 393pt column and, in a 336pt sidebar, crowds the workspace rows it heads.
+  /// Everything else — bottom bar, search, long-press actions — is the same
+  /// phone furniture and keeps the phone measurements.
+  final bool embedded;
 
   @override
   State<PairingSessionListPage> createState() => _PairingSessionListPageState();
@@ -67,7 +76,7 @@ class _PairingSessionListPageState extends State<PairingSessionListPage> {
                         Text(
                           state.activeHostName ?? l10n.pairingDesktopFallback,
                           style: TextStyle(
-                            fontSize: 30,
+                            fontSize: widget.embedded ? 22 : 30,
                             fontWeight: FontWeight.w700,
                             letterSpacing: -0.6,
                             color: Theme.of(context).colorScheme.onSurface,
@@ -126,6 +135,11 @@ class _PairingSessionListPageState extends State<PairingSessionListPage> {
     final l10n = context.l10n;
     showModalBottomSheet<void>(
       context: context,
+      // Tablet: a one-row sheet spanning 1366pt reads as a toolbar, so cap and
+      // let BottomSheet centre it. A phone passes its own width (a no-op).
+      constraints: BoxConstraints(
+        maxWidth: PairingTabletLayout.sheetMaxWidthFor(context),
+      ),
       builder: (sheetContext) => SafeArea(
         top: false,
         child: Column(
@@ -165,6 +179,9 @@ class _PairingSessionListPageState extends State<PairingSessionListPage> {
     final targets = state.targets;
     showModalBottomSheet<void>(
       context: context,
+      constraints: BoxConstraints(
+        maxWidth: PairingTabletLayout.sheetMaxWidthFor(context),
+      ),
       builder: (sheetContext) => SafeArea(
         top: false,
         child: Column(
@@ -256,6 +273,10 @@ class _PairingSessionListPageState extends State<PairingSessionListPage> {
     return PairingWorkspaceGroup(
       workspace: ws,
       activatingKey: state.activatingKey,
+      // Which terminal the right pane is showing. On a phone the list is gone
+      // while mirroring, so this only matters in the tablet sidebar — where it
+      // is the only cue that a row is "open" rather than just tapped.
+      selectedCatalogId: state.activeCatalogId,
       onOpenNode: cubit.activateAndOpen,
       // Long-press is the destructive affordance: tap keeps its meaning, so
       // nothing accidental can delete a workspace.
@@ -319,13 +340,24 @@ class _ConnectionStatus extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 7),
-            Text(
-              context.l10n.pairingConnectedBadge,
-              style: TextStyle(fontSize: 13.5, color: cs.onSurfaceVariant),
+            // Flexible, not bare: the sidebar is narrow on a tablet (220–336) and
+            // the badge plus the LAN label are one unbreakable line, so a long
+            // locale would otherwise overflow the row instead of ellipsising.
+            Flexible(
+              child: Text(
+                context.l10n.pairingConnectedBadge,
+                style: TextStyle(fontSize: 13.5, color: cs.onSurfaceVariant),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
-            Text(
-              ' · ${context.l10n.pairingLanLabel}',
-              style: TextStyle(fontSize: 13.5, color: cs.onSurfaceVariant),
+            Flexible(
+              child: Text(
+                ' · ${context.l10n.pairingLanLabel}',
+                style: TextStyle(fontSize: 13.5, color: cs.onSurfaceVariant),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ],
         ),

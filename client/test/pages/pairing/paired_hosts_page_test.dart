@@ -171,6 +171,12 @@ void main() {
   testWidgets('the bottom bar swaps the feed for settings and back', (
     tester,
   ) async {
+    // Pinned to a phone: at the widget-test default 800×600 the page is past the
+    // 600pt tablet breakpoint and renders the rail instead, which the
+    // mobile_nav_rail_test covers.
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(393, 852);
+    addTearDown(tester.view.reset);
     final layout = LayoutCubit();
     addTearDown(layout.close);
     final voice = VoiceInputCubit(

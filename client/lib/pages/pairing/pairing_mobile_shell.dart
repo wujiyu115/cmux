@@ -21,6 +21,8 @@ import 'pairing_confirm_page.dart';
 import 'pairing_mirror_page.dart';
 import 'pairing_scan_page.dart';
 import 'pairing_session_list_page.dart';
+import 'pairing_tablet_layout.dart';
+import 'pairing_tablet_shell.dart';
 
 /// Mobile app root: a slim, self-contained shell that swaps between the pairing
 /// screens by [PairingClientPhase]. Replaces the desktop workspace shell on
@@ -41,7 +43,8 @@ class _PairingMobileShellState extends State<PairingMobileShell>
     with WidgetsBindingObserver {
   final AppLinks _appLinks = AppLinks();
   StreamSubscription<Uri>? _linkSub;
-  final IosBackgroundGraceService _backgroundGrace = IosBackgroundGraceService();
+  final IosBackgroundGraceService _backgroundGrace =
+      IosBackgroundGraceService();
 
   @override
   void initState() {
@@ -109,10 +112,8 @@ class _PairingMobileShellState extends State<PairingMobileShell>
     final cubit = context.read<PairingClientCubit>();
     await Navigator.of(context).push<void>(
       MaterialPageRoute(
-        builder: (_) => BlocProvider.value(
-          value: cubit,
-          child: const PairingScanPage(),
-        ),
+        builder: (_) =>
+            BlocProvider.value(value: cubit, child: const PairingScanPage()),
       ),
     );
   }
@@ -139,7 +140,10 @@ class _PairingMobileShellState extends State<PairingMobileShell>
               a.phase != b.phase ||
               a.activeCatalogId != b.activeCatalogId ||
               a.connectGeneration != b.connectGeneration,
-          builder: _buildPhase,
+          builder: (context, state) => PairingBackLadder(
+            state: state,
+            child: _buildPhase(context, state),
+          ),
         ),
       ),
     );
@@ -151,7 +155,8 @@ class _PairingMobileShellState extends State<PairingMobileShell>
     final l10n = context.l10n;
     final message = switch (notice) {
       PairingNotice.activateFailed => l10n.pairingActivateFailed,
-      PairingNotice.fallbackOpenedTerminal => l10n.pairingFallbackOpenedTerminal,
+      PairingNotice.fallbackOpenedTerminal =>
+        l10n.pairingFallbackOpenedTerminal,
       PairingNotice.connectionLost => l10n.pairingConnectionLost,
       PairingNotice.reconnected => l10n.pairingReconnected,
     };
@@ -165,25 +170,101 @@ class _PairingMobileShellState extends State<PairingMobileShell>
     context.read<PairingClientCubit>().clearNotice();
   }
 
+  /// The breakpoint the shell last rendered, **pinned for the lifetime of an
+  /// open mirror** (see [_useTwoPane]).
+  bool? _twoPane;
+
+  /// Whether to render the two-pane tablet shell, decided from the window size
+  /// but pinned while a mirror is open.
+  ///
+  /// Crossing the breakpoint with a mirror live (a split-screen divider dragged
+  /// across 600pt on either platform) moves [PairingMirrorPage] to a different place in the tree, which
+  /// rebuilds it with a fresh [TerminalEngine]. The engine has no scrollback of
+  /// its own: it is fed the host's snapshot on `terminal.subscribe`, and the
+  /// subscription's broadcast stream does not replay that snapshot to a second
+  /// listener — so a re-parented mirror comes up blank until the program next
+  /// writes. Pinning the layout until the mirror is closed keeps the engine, the
+  /// scrollback and the composer draft alive; the next open uses the new size.
+  bool _useTwoPane(PairingClientState state) {
+    final tablet = PairingTabletLayout.isTablet(context);
+    if (state.phase != PairingClientPhase.mirroring) return _twoPane = tablet;
+    return _twoPane ??= tablet;
+  }
+
   Widget _buildPhase(BuildContext context, PairingClientState state) {
-    switch (state.phase) {
-          case PairingClientPhase.idle:
-            return PairedHostsPage(onScan: () => _openScanner(context));
-          case PairingClientPhase.confirmAwaiting:
-          case PairingClientPhase.confirmConnecting:
-          case PairingClientPhase.error:
-            return const PairingConfirmPage();
-          case PairingClientPhase.connected:
-            return const PairingSessionListPage();
-          case PairingClientPhase.mirroring:
-            // Key on the session so a new mirror gets a fresh engine, and on the
-            // connection generation so a reconnect rebinds to the *new*
-            // subscription — the catalogId alone is unchanged across a drop.
-            return PairingMirrorPage(
-              key: ValueKey(
-                'mirror-${state.activeCatalogId}-${state.connectGeneration}',
-              ),
-            );
+    // Tablet (iPad / Android large screen): the list survives opening a terminal, so `connected` and
+    // `mirroring` are the same two-pane shell with a different right pane. The
+    // `MediaQuery` read here is what makes a rotated / resized iPad reflow
+    // instead of leaving the phone stack stretched to 1366pt.
+    final twoPane =
+        state.phase == PairingClientPhase.connected ||
+        state.phase == PairingClientPhase.mirroring;
+    if (twoPane && _useTwoPane(state)) {
+      return PairingTabletShell(state: state);
     }
+    switch (state.phase) {
+      case PairingClientPhase.idle:
+        return PairedHostsPage(onScan: () => _openScanner(context));
+      case PairingClientPhase.confirmAwaiting:
+      case PairingClientPhase.confirmConnecting:
+      case PairingClientPhase.error:
+        return const PairingConfirmPage();
+      case PairingClientPhase.connected:
+        return const PairingSessionListPage();
+      case PairingClientPhase.mirroring:
+        // Key on the session so a new mirror gets a fresh engine, and on the
+        // connection generation so a reconnect rebinds to the *new*
+        // subscription — the catalogId alone is unchanged across a drop.
+        return PairingMirrorPage(
+          key: ValueKey(
+            'mirror-${state.activeCatalogId}-${state.connectGeneration}',
+          ),
+        );
+    }
+  }
+}
+
+/// Android hardware back for the connected half of the pairing flow.
+///
+/// The ladder the on-screen arrows already walk is mirror -> session list ->
+/// hosts. Two of those three steps are claimed by a pane's own [PopScope]
+/// ([PairingMirrorPage] closes the mirror, [PairingConfirmPage] cancels the
+/// pending offer); the session list has no [PopScope] of its own, so before this
+/// wrapper the back gesture fell through to the router and backgrounded the app
+/// while the screen's own back arrow left the desktop. That mismatch is what
+/// this widget removes — the hardware gesture now walks the same ladder, one
+/// step per press.
+///
+/// Every phase still leaves [PopScope.canPop] at the pane's value: a pane that
+/// says `canPop: false` wins the route's disposition regardless of this widget,
+/// so a mirror-backed pane is never popped by a parent claiming the pop first.
+class PairingBackLadder extends StatelessWidget {
+  const PairingBackLadder({
+    super.key,
+    required this.state,
+    required this.child,
+  });
+
+  final PairingClientState state;
+  final Widget child;
+
+  /// The phase nothing else handles: connected, nothing mirrored. `idle` (the
+  /// paired-hosts root) intentionally keeps popping, which is how Android exits
+  /// the app from its home surface.
+  bool get _claimsBack => state.phase == PairingClientPhase.connected;
+
+  @override
+  Widget build(BuildContext context) {
+    return PopScope(
+      canPop: !_claimsBack,
+      onPopInvokedWithResult: (didPop, _) {
+        // A pane deeper in the tree already claimed this press (mirror /
+        // confirm): it has reacted, so reacting again would drop two levels at
+        // once.
+        if (didPop || !_claimsBack) return;
+        unawaited(context.read<PairingClientCubit>().cancel());
+      },
+      child: child,
+    );
   }
 }

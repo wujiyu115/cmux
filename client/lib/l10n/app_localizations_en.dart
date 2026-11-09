@@ -3410,6 +3410,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pairingNoWorkspaces => 'No workspaces on this desktop.';
 
   @override
+  String get pairingNoTerminalSelected => 'No terminal open';
+
+  @override
+  String get pairingSelectTerminalHint =>
+      'Pick a terminal from the list to mirror it here.';
+
+  @override
   String get pairingWorkspaces => 'Workspaces';
 
   @override

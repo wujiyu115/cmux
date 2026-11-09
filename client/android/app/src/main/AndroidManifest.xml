@@ -10,10 +10,16 @@
             <action android:name="android.speech.RecognitionService"/>
         </intent>
     </queries>
+    <!-- resizeableActivity: split-screen, freeform windows, foldables and
+         ChromeOS. The pairing client switches to its two-pane tablet layout at a
+         600pt shortest side (lib/pages/pairing/pairing_tablet_layout.dart), and a
+         resizable window is what lets that layout follow the user instead of the
+         activity being letterboxed to a phone shape. -->
     <application
         android:label="teampilot"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:resizeableActivity="true">
         <activity
             android:name=".MainActivity"
             android:exported="true"

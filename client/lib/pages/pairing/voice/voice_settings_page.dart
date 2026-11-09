@@ -8,6 +8,7 @@ import '../../../services/stt/stt_locales.dart';
 import '../../../services/stt/stt_provider.dart';
 import '../../../utils/ui/app_keys.dart';
 import '../pairing_nav_bar.dart';
+import '../pairing_tablet_layout.dart';
 import 'voice_credentials_section.dart';
 
 /// Voice-input settings for the mobile pairing client: which recognition
@@ -25,10 +26,8 @@ class VoiceSettingsPage extends StatelessWidget {
   /// Route helper so callers cannot forget to re-provide the cubit across the
   /// route boundary.
   static Route<void> route(VoiceInputCubit cubit) => MaterialPageRoute(
-    builder: (_) => BlocProvider.value(
-      value: cubit,
-      child: const VoiceSettingsPage(),
-    ),
+    builder: (_) =>
+        BlocProvider.value(value: cubit, child: const VoiceSettingsPage()),
   );
 
   @override
@@ -85,7 +84,9 @@ class VoiceSettingsPage extends StatelessWidget {
                       SizedBox(height: spacing.md),
                       Padding(
                         padding: EdgeInsets.symmetric(horizontal: spacing.lg),
-                        child: TpCard.outlined(child: _LanguageRow(state: state)),
+                        child: TpCard.outlined(
+                          child: _LanguageRow(state: state),
+                        ),
                       ),
                       if (state.provider != SttProviderType.system) ...[
                         SizedBox(height: spacing.md),
@@ -121,7 +122,12 @@ class _SectionHeader extends StatelessWidget {
     final styles = TpTextStyles.of(context);
     final spacing = context.tpSpacing;
     return Padding(
-      padding: EdgeInsets.fromLTRB(spacing.lg, spacing.lg, spacing.lg, spacing.sm),
+      padding: EdgeInsets.fromLTRB(
+        spacing.lg,
+        spacing.lg,
+        spacing.lg,
+        spacing.sm,
+      ),
       child: Text(title, style: styles.mdMedium),
     );
   }
@@ -165,6 +171,11 @@ class _LanguageRow extends StatelessWidget {
     final locales = sttLocalesFor(state.provider);
     showModalBottomSheet<void>(
       context: context,
+      // iPad: the language list is one short row per option; uncapped it spans
+      // the whole 1366pt screen. A phone passes its own width (a no-op).
+      constraints: BoxConstraints(
+        maxWidth: PairingTabletLayout.sheetMaxWidthFor(context),
+      ),
       builder: (sheetContext) => SafeArea(
         child: ListView(
           shrinkWrap: true,

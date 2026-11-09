@@ -22,10 +22,15 @@ class PairingWorkspaceGroup extends StatefulWidget {
     required this.onOpenNode,
     required this.onDeleteWorkspace,
     required this.onDeleteNode,
+    this.selectedCatalogId,
   });
 
   final PairingWorkspaceNode workspace;
   final String? activatingKey;
+
+  /// Catalog id of the terminal the tablet sidebar's right pane is mirroring, if
+  /// it belongs to this workspace. Only ever set in the two-pane layout.
+  final String? selectedCatalogId;
   final ValueChanged<PairingSessionNode> onOpenNode;
 
   /// Long-press on the workspace header — opens the delete-workspace sheet.
@@ -46,6 +51,21 @@ class _PairingWorkspaceGroupState extends State<PairingWorkspaceGroup> {
   /// terminal rows, and the workspace the reader came for was scrolled off.
   bool _expanded = false;
 
+  /// A mirror opened from *outside* the tree — a forwarded agent notice, a
+  /// reconnect that resumed a pane — must not leave its row hidden in a
+  /// collapsed workspace: the sidebar is the only place that says what the right
+  /// pane is showing. Expanding on a selection change (rather than deriving
+  /// `expanded` from the selection) keeps a manual collapse while mirroring.
+  @override
+  void didUpdateWidget(PairingWorkspaceGroup oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final selected = widget.selectedCatalogId;
+    if (selected == null || selected == oldWidget.selectedCatalogId) return;
+    if (widget.workspace.panes.any((pane) => pane.catalogId == selected)) {
+      _expanded = true;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final workspace = widget.workspace;
@@ -65,6 +85,7 @@ class _PairingWorkspaceGroupState extends State<PairingWorkspaceGroup> {
           _Body(
             workspace: workspace,
             activatingKey: widget.activatingKey,
+            selectedCatalogId: widget.selectedCatalogId,
             onOpenNode: widget.onOpenNode,
             onDeleteNode: widget.onDeleteNode,
           ),
@@ -166,10 +187,12 @@ class _Body extends StatelessWidget {
     required this.activatingKey,
     required this.onOpenNode,
     required this.onDeleteNode,
+    required this.selectedCatalogId,
   });
 
   final PairingWorkspaceNode workspace;
   final String? activatingKey;
+  final String? selectedCatalogId;
   final ValueChanged<PairingSessionNode> onOpenNode;
   final ValueChanged<PairingSessionNode> onDeleteNode;
 
@@ -184,6 +207,9 @@ class _Body extends StatelessWidget {
           PairingNodeRow(
             node: pane,
             busy: activatingKey == pane.nodeKey,
+            selected:
+                selectedCatalogId != null &&
+                selectedCatalogId == pane.catalogId,
             onTap: () => onOpenNode(pane),
             onLongPress: () => onDeleteNode(pane),
           ),

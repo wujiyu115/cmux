@@ -47,6 +47,8 @@ Color mobileGlyphTileColor(BuildContext context) {
 /// Bottom destination bar: icon over label, active item in [ColorScheme.onSurface],
 /// inactive in a muted variant. Sits on the page colour with a hairline on top,
 /// matching the reference rather than Material's tinted NavigationBar.
+///
+/// Phones only — a tablet uses [MobileNavRail] instead.
 class MobileBottomNav extends StatelessWidget {
   const MobileBottomNav({
     super.key,
@@ -93,6 +95,152 @@ class MobileBottomNav extends StatelessWidget {
   }
 }
 
+/// Tablet destination rail: the same two destinations as [MobileBottomNav], laid
+/// out vertically on the leading edge.
+///
+/// A two-item bar pinned to the bottom of a 1024pt-wide page reads as a phone
+/// stretched sideways; Material's [NavigationRail] shape and iPadOS' sidebar tab
+/// shape agree on the rail, so one widget serves both. Reuses
+/// [AppKeys.mobileSettingsButton] — only one of the two navs is ever mounted, so
+/// the key stays unique.
+class MobileNavRail extends StatelessWidget {
+  const MobileNavRail({
+    super.key,
+    required this.current,
+    required this.onSelected,
+  });
+
+  /// Icon (24) and label ("Settings", 11.5pt) share a 72pt pill; 8pt gutters
+  /// either side keep the glyphs off the page hairline.
+  static const double width = 88;
+
+  final MobileTab current;
+  final ValueChanged<MobileTab> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      key: AppKeys.mobileNavRail,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        border: Border(right: BorderSide(color: mobileHairlineColor(context))),
+      ),
+      child: SizedBox(
+        width: width,
+        child: Column(
+          children: [
+            const SizedBox(height: 8),
+            _RailItem(
+              tab: MobileTab.activity,
+              icon: Icons.dynamic_feed_outlined,
+              label: context.l10n.mobileTabActivity,
+              selected: current == MobileTab.activity,
+              onTap: onSelected,
+            ),
+            const SizedBox(height: 4),
+            _RailItem(
+              key: AppKeys.mobileSettingsButton,
+              tab: MobileTab.settings,
+              icon: Icons.settings_outlined,
+              label: context.l10n.settings,
+              selected: current == MobileTab.settings,
+              onTap: onSelected,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Icon + label, shared by the bar and the rail so the two cannot drift in type
+/// size, glyph size or selected weight.
+class _NavLabel extends StatelessWidget {
+  const _NavLabel({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.selected,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 24, color: color),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11.5,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+            color: color,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
+    );
+  }
+}
+
+class _RailItem extends StatelessWidget {
+  const _RailItem({
+    super.key,
+    required this.tab,
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final MobileTab tab;
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final ValueChanged<MobileTab> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final color = selected ? cs.onSurface : cs.onSurfaceVariant;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      child: Material(
+        // Selected state has to be a surface here, not just the label colour: a
+        // vertical rail has no active-indicator slot to fall back on.
+        color: selected
+            ? cs.onSurface.withValues(alpha: 0.08)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(14),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () => onTap(tab),
+          child: SizedBox(
+            width: 72,
+            height: 62,
+            child: Center(
+              child: _NavLabel(
+                icon: icon,
+                label: label,
+                color: color,
+                selected: selected,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _Item extends StatelessWidget {
   const _Item({
     super.key,
@@ -116,22 +264,13 @@ class _Item extends StatelessWidget {
     return Expanded(
       child: InkWell(
         onTap: () => onTap(tab),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 24, color: color),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11.5,
-                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                color: color,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
+        child: Center(
+          child: _NavLabel(
+            icon: icon,
+            label: label,
+            color: color,
+            selected: selected,
+          ),
         ),
       ),
     );

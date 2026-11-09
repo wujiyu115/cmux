@@ -11,11 +11,18 @@ import 'mobile_chrome.dart';
 import 'mobile_settings_page.dart';
 import 'paired_host_row.dart';
 import 'pairing_network_strip.dart';
+import 'pairing_tablet_layout.dart';
+import 'pairing_tablet_layout.dart';
 
 /// Mobile home: the desktops this phone has paired with, laid out as the
 /// Orca-style activity feed — a large page title, one section, and a rounded
 /// card per section whose last row is the add action. Settings is the second
-/// bottom-bar destination rather than a header glyph.
+/// destination in the nav rather than a header glyph.
+///
+/// Tablet (iPad / Android large screen): the nav moves from the bottom bar to a
+/// leading rail and the feed caps itself at a readable width — six inches of
+/// empty row is not a layout, and a two-item bar under a 1024pt page reads as a
+/// phone stretched sideways.
 ///
 /// The add affordance exists twice on purpose: the floating "+" is the
 /// thumb-reachable action, and the in-card row is discoverable while reading the
@@ -51,7 +58,25 @@ class _PairedHostsPageState extends State<PairedHostsPage> {
             : const MobileSettingsPage(embedded: true);
         return Scaffold(
           key: AppKeys.pairedHostsPage,
-          body: SafeArea(bottom: false, child: body),
+          // Tablet (iPad / Android): the destinations move to a leading rail and
+          // the feed is capped and centred rather than crossing 1366pt. On a
+          // phone this is the bottom bar and the full window, unchanged.
+          body: SafeArea(
+            bottom: false,
+            child: PairingTabletLayout.isTablet(context)
+                ? Row(
+                    children: [
+                      MobileNavRail(
+                        current: _tab,
+                        onSelected: (tab) => setState(() => _tab = tab),
+                      ),
+                      Expanded(
+                        child: PairingTabletReadableContent(child: body),
+                      ),
+                    ],
+                  )
+                : PairingTabletReadableContent(child: body),
+          ),
           floatingActionButton: _tab == MobileTab.activity
               ? FloatingActionButton(
                   key: AppKeys.mobileAddDesktopButton,
@@ -64,10 +89,12 @@ class _PairedHostsPageState extends State<PairedHostsPage> {
                   child: const Icon(Icons.add, size: 28),
                 )
               : null,
-          bottomNavigationBar: MobileBottomNav(
-            current: _tab,
-            onSelected: (tab) => setState(() => _tab = tab),
-          ),
+          bottomNavigationBar: PairingTabletLayout.isTablet(context)
+              ? null
+              : MobileBottomNav(
+                  current: _tab,
+                  onSelected: (tab) => setState(() => _tab = tab),
+                ),
         );
       },
     );

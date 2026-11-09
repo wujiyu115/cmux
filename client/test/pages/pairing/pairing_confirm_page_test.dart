@@ -5,6 +5,7 @@ import 'package:teampilot/cubits/pairing_client_cubit.dart';
 import 'package:teampilot/l10n/app_localizations.dart';
 import 'package:teampilot/pages/pairing/pairing_block_button.dart';
 import 'package:teampilot/pages/pairing/pairing_confirm_page.dart';
+import 'package:teampilot/pages/pairing/pairing_tablet_layout.dart';
 import 'package:teampilot/repositories/pairing_settings_repository.dart';
 import 'package:teampilot/services/pairing/pairing_client.dart';
 import 'package:teampilot/utils/ui/app_keys.dart';
@@ -54,8 +55,9 @@ void main() {
     expect(find.byType(CircularProgressIndicator), findsNothing);
   });
 
-  testWidgets('the step rail renders one step per pairing stage',
-      (tester) async {
+  testWidgets('the step rail renders one step per pairing stage', (
+    tester,
+  ) async {
     cubit.set(
       const PairingClientState(phase: PairingClientPhase.confirmAwaiting),
     );
@@ -68,8 +70,9 @@ void main() {
     expect(find.text('Sync workspaces'), findsOneWidget);
   });
 
-  testWidgets('a done stage is checked and the failed one is crossed out',
-      (tester) async {
+  testWidgets('a done stage is checked and the failed one is crossed out', (
+    tester,
+  ) async {
     cubit.set(
       const PairingClientState(
         phase: PairingClientPhase.error,
@@ -140,8 +143,9 @@ void main() {
     expect(find.text('3 lines'), findsOneWidget);
   });
 
-  testWidgets('the embedded connection log renders logged lines',
-      (tester) async {
+  testWidgets('the embedded connection log renders logged lines', (
+    tester,
+  ) async {
     cubit.set(
       const PairingClientState(
         phase: PairingClientPhase.confirmConnecting,
@@ -164,5 +168,37 @@ void main() {
     await tester.pump();
 
     expect(cubit.state.phase, PairingClientPhase.idle);
+  });
+
+  testWidgets('tablet caps the bottom bar buttons to the readable column', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1024, 768);
+    addTearDown(tester.view.reset);
+    cubit.set(
+      const PairingClientState(phase: PairingClientPhase.confirmAwaiting),
+    );
+    await pump(tester);
+
+    final button = tester.getSize(find.byKey(AppKeys.pairingConnectButton));
+    // lg padding on either side of the 720pt readable column.
+    expect(button.width, lessThan(PairingTabletLayout.readableContentMaxWidth));
+    // Centred, not left-aligned against the capped column.
+    final center = tester.getCenter(find.byKey(AppKeys.pairingConnectButton));
+    expect(center.dx, closeTo(512, 1));
+  });
+
+  testWidgets('phone keeps the full-bleed bottom bar', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(393, 852);
+    addTearDown(tester.view.reset);
+    cubit.set(
+      const PairingClientState(phase: PairingClientPhase.confirmAwaiting),
+    );
+    await pump(tester);
+
+    final button = tester.getSize(find.byKey(AppKeys.pairingConnectButton));
+    expect(button.width, greaterThan(340));
   });
 }

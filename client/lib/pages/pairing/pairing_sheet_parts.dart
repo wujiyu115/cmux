@@ -4,6 +4,7 @@ import 'package:shared_ui/shared_ui.dart';
 
 import '../../l10n/l10n_extensions.dart';
 import '../../theme/app_fonts.dart';
+import 'pairing_tablet_layout.dart';
 
 /// The mobile prototype's bottom-sheet furniture, shared by the create sheets so
 /// the two cannot drift apart: grab handle, title row, field label / help, the
@@ -34,6 +35,10 @@ Future<T?> showPairingSheet<T>({
     ),
     constraints: BoxConstraints(
       maxHeight: MediaQuery.sizeOf(context).height * 0.78,
+      // Tablet (iPad / Android): the prototype sheet is 393pt of content; uncapped it turns
+      // into a one-row toolbar across the bottom of a 1366pt screen, so cap it
+      // and let [showModalBottomSheet] centre it. A phone passes its own width.
+      maxWidth: PairingTabletLayout.sheetMaxWidthFor(context),
     ),
     builder: builder,
   );
@@ -168,10 +173,7 @@ class PairingFieldLabel extends StatelessWidget {
           ),
           if (marker != null) ...[
             const SizedBox(width: 6),
-            Text(
-              marker!,
-              style: TextStyle(fontSize: 13, color: muted),
-            ),
+            Text(marker!, style: TextStyle(fontSize: 13, color: muted)),
           ],
           const Spacer(),
           if (counterUsed != null && counterMax != null)
@@ -425,8 +427,7 @@ Future<T?> showPairingOptionSheet<T>({
                     _OptionRow<T>(
                       option: option,
                       selected: option.value == current,
-                      onTap: () =>
-                          Navigator.of(sheetContext).pop(option.value),
+                      onTap: () => Navigator.of(sheetContext).pop(option.value),
                       accent: cs.primary,
                     ),
                 ],
