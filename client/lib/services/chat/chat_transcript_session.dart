@@ -316,10 +316,11 @@ class ChatTranscriptSession {
           own = record;
           break;
         }
+        // Borrowed means "this file moved after the pane existed": a resumed
+        // session appends its startup records, while another window's session
+        // was already running when the pane launched and proves nothing here.
         final updated = record.updatedAt;
-        if (updated != null && updated.isBefore(floor)) continue;
-        // Resumed sessions keep their original creation time, so a stale
-        // candidate stays as the fallback rather than being dropped.
+        if (updated != null && updated.isBefore(_startedAt)) continue;
         borrowed ??= record;
       }
       final chosen = own ?? borrowed;

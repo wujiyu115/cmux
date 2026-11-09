@@ -72,7 +72,7 @@
 | 级别 | 条件 | 说明 |
 |---|---|---|
 | own | `createdAt >= paneStart - 2min` | pane 自己的 PTY 启动的会话。`createdAt` 来自会话库本身：pi 家族在文件名里（`2026-11-09T13-14-26-493Z_<id>.jsonl`），Claude 系在第一条记录的 `timestamp` 上。 |
-| borrowed | 只有 `updatedAt >= paneStart - 2min` | `--resume` 恢复的会话保留原始创建时间，只能靠 mtime 认领。 |
+| borrowed | 只剩 `updatedAt >= paneStart`（不带 2 分钟宽容） | `--resume` 恢复的会话保留原始创建时间，只能靠「恢复时会写启动记录」的 mtime 认领；别的窗口里已经在跑的会话在 pane 启动之前就动过了，认领不了。 |
 
 **为什么不能只看 mtime**：另一个窗口里的会话只要还在跑，mtime 就一直更新，于是「最新的那条」永远指向别人。曾经因此出现过「聊天视图显示了内容，但发消息毫无反应」——视图读的是另一个窗口的会话，消息写进了自己 pane 的 agent，两边对不上。
 
