@@ -64,7 +64,10 @@ function helper(): void {}
       final symbols = extractEditorSymbols('/repo/user.ts', content);
 
       final names = symbols.map((s) => s.name).toList();
-      expect(names, containsAll(['User', 'UserService', 'load', 'format', 'helper']));
+      expect(
+        names,
+        containsAll(['User', 'UserService', 'load', 'format', 'helper']),
+      );
     });
 
     test('python: class and def with async and indentation', () {

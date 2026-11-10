@@ -36,6 +36,7 @@ import '../cubits/workspace_tools_cubit.dart';
 import '../cubits/session_preferences_cubit.dart';
 import '../cubits/ssh_connection_cubit.dart';
 import '../cubits/ssh_profile_cubit.dart';
+import '../models/pane_mode.dart';
 import '../models/runtime_target.dart';
 import '../models/ssh_profile.dart';
 import '../models/workspace_folder.dart';
@@ -855,6 +856,11 @@ Future<AppShell> buildAppShell({
     connector: workspaceShellConnector,
     layout: layoutCubit,
     sessionOps: workspaceTerminalSessionOps,
+    // New windows start in whatever mode the session settings say, including
+    // the workspace shell tab itself.
+    newPaneMode: () => sessionPreferencesCubit.state.preferences.newPaneMode,
+    chatAgentCommand: () =>
+        sessionPreferencesCubit.state.preferences.chatAgentCommand,
   );
   workbenchShellLauncher = resolvedShellLauncher;
   registerSessionCommands(
@@ -903,6 +909,9 @@ Future<AppShell> buildAppShell({
     // close. The registry lives for the app's lifetime, so this listener is
     // intentionally never detached.
     workspaceTerminalRegistry.changes.addListener(sessionCatalog.notifyChanged);
+    workspaceTerminalRegistry.chatTranscripts.changes.listen(
+      (_) => sessionCatalog.notifyChanged(),
+    );
     // Stamp mirrorability where the catalog knowledge lives. A seat id for a
     // workspace pane IS its catalogId (`ws:<paneId>` on both sides), so this is
     // a pure lookup; chat-session seats and dead panes stay null and the phone
@@ -1203,27 +1212,37 @@ Future<AppShell> buildAppShell({
       return repo.git.diffAgainstHead(repo.root, path, untracked: untracked);
     }
 
-    LanPairingServer serverFactory(String? advertisedAddress) =>
-        LanPairingServer(
-          advertisedAddress: advertisedAddress,
-          hostStaticKey: hostStaticKey,
-          registry: deviceRegistry,
-          catalog: sessionCatalog,
-          hostName: Platform.localHostname,
-          uploadOpener: pairingUploadOpener,
-          workspaceIndex: pairingWorkspaceIndex,
-          activator: pairingActivate,
-          dirBrowser: pairingDirBrowser.browse,
-          workspaceCreator: pairingCreateWorkspace,
-          groupCreator: pairingCreateGroup,
-          workspaceDeleter: pairingDeleteWorkspace,
-          paneCloser: pairingClosePane,
-          groupIndex: pairingGroupIndex,
-          targetIndex: pairingTargetIndex,
-          gitChanges: pairingGitChanges,
-          gitDiff: pairingGitDiff,
-          agentNotices: agentNoticeWire,
-        );
+    LanPairingServer serverFactory(
+      String? advertisedAddress,
+    ) => LanPairingServer(
+      advertisedAddress: advertisedAddress,
+      hostStaticKey: hostStaticKey,
+      registry: deviceRegistry,
+      catalog: sessionCatalog,
+      hostName: Platform.localHostname,
+      uploadOpener: pairingUploadOpener,
+      workspaceIndex: pairingWorkspaceIndex,
+      activator: pairingActivate,
+      dirBrowser: pairingDirBrowser.browse,
+      workspaceCreator: pairingCreateWorkspace,
+      groupCreator: pairingCreateGroup,
+      workspaceDeleter: pairingDeleteWorkspace,
+      paneCloser: pairingClosePane,
+      groupIndex: pairingGroupIndex,
+      targetIndex: pairingTargetIndex,
+      gitChanges: pairingGitChanges,
+      gitDiff: pairingGitDiff,
+      // A pane in chat mode is listed (and answered) as chat; the phone
+      // renders the transcript this returns instead of the mirror.
+      chatTranscript: (paneId) =>
+          workspaceTerminalRegistry.chatTranscripts[paneId]?.transcript.value,
+      // The pane's mode, not the transcript registry's: a chat pane exists
+      // as a chat pane from creation, whether or not it has painted yet.
+      paneMode: (paneId) =>
+          workspaceTerminalRegistry.locatePane(paneId)?.$2.mode ??
+          PaneMode.terminal,
+      agentNotices: agentNoticeWire,
+    );
     pairingHostCubit = PairingHostCubit(
       settings: pairingSettings,
       registry: deviceRegistry,

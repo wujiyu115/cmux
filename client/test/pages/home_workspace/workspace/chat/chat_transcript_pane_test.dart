@@ -1,0 +1,423 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:teampilot/l10n/app_localizations.dart';
+import 'package:teampilot/pages/home_workspace/workspace/chat/chat_transcript_pane.dart';
+import 'package:teampilot/services/chat/chat_transcript_row.dart';
+import 'package:shared_ui/shared_ui.dart';
+import 'package:teampilot/theme/app_typography_scale.dart';
+
+Widget _host(
+  ValueListenable<ChatTranscriptSnapshot> transcript, {
+  ValueChanged<String>? onSend,
+  bool canSend = true,
+  bool agentStarting = false,
+}) => MaterialApp(
+  localizationsDelegates: AppLocalizations.localizationsDelegates,
+  supportedLocales: AppLocalizations.supportedLocales,
+  locale: const Locale('en'),
+  home: Scaffold(
+    body: ChatTranscriptPane(
+      transcript: transcript,
+      canSend: canSend,
+      agentStarting: agentStarting,
+      onSend: onSend ?? (_) {},
+    ),
+  ),
+);
+
+Widget _hostWithType(
+  ValueListenable<ChatTranscriptSnapshot> transcript, {
+  required double monoFontSize,
+}) => MaterialApp(
+  localizationsDelegates: AppLocalizations.localizationsDelegates,
+  supportedLocales: AppLocalizations.supportedLocales,
+  locale: const Locale('en'),
+  theme: ThemeData(
+    extensions: [
+      AppTypographyTheme.fromScale(
+        AppTypographyScale.fromPx(uiFontSize: 14, monoFontSize: monoFontSize),
+      ),
+      const TpFontTheme(
+        monoFontFamily: 'JetBrainsMono-Regular',
+        monoFontFamilyFallback: ['monospace'],
+      ),
+    ],
+  ),
+  home: Scaffold(
+    body: ChatTranscriptPane(
+      transcript: transcript,
+      canSend: true,
+      onSend: (_) {},
+    ),
+  ),
+);
+
+ChatTranscriptSnapshot _snapshot(List<ChatTranscriptRow> rows) =>
+    ChatTranscriptSnapshot(rows: rows, family: 'claude', sessionId: 's1');
+
+void main() {
+  testWidgets('renders prompt, answer, and tool rows', (tester) async {
+    final transcript = ValueNotifier(
+      _snapshot([
+        const ChatTranscriptRow(
+          id: 'u1#text',
+          kind: ChatTranscriptRowKind.user,
+          text: 'run the tests',
+        ),
+        const ChatTranscriptRow(
+          id: 'm1#text',
+          kind: ChatTranscriptRowKind.assistant,
+          text: 'Running them now.',
+        ),
+        const ChatTranscriptRow(
+          id: 'm1#tool:t1',
+          kind: ChatTranscriptRowKind.tool,
+          toolName: 'Bash',
+          detail: 'flutter test',
+        ),
+      ]),
+    );
+    addTearDown(transcript.dispose);
+
+    await tester.pumpWidget(_host(transcript));
+
+    expect(find.text('run the tests'), findsOneWidget);
+    expect(find.text('Running them now.'), findsOneWidget);
+    expect(find.text('Bash  flutter test'), findsOneWidget);
+  });
+
+  testWidgets('a tool row expands to its output', (tester) async {
+    final transcript = ValueNotifier(
+      _snapshot([
+        const ChatTranscriptRow(
+          id: 'm1#tool:t1',
+          kind: ChatTranscriptRowKind.tool,
+          toolName: 'Bash',
+          detail: 'flutter test',
+          text: 'All tests passed!',
+        ),
+      ]),
+    );
+    addTearDown(transcript.dispose);
+
+    await tester.pumpWidget(_host(transcript));
+    expect(find.text('All tests passed!'), findsNothing);
+
+    await tester.tap(find.text('Bash  flutter test'));
+    await tester.pump();
+
+    expect(find.text('All tests passed!'), findsOneWidget);
+  });
+
+  testWidgets('the composer sends the prompt and clears itself', (
+    tester,
+  ) async {
+    final sent = <String>[];
+    final transcript = ValueNotifier(_snapshot(const []));
+    addTearDown(transcript.dispose);
+
+    await tester.pumpWidget(_host(transcript, onSend: sent.add));
+
+    await tester.enterText(find.byType(TextField), '  hello agent  ');
+    await tester.testTextInput.receiveAction(TextInputAction.send);
+    await tester.pump();
+
+    expect(sent, ['hello agent']);
+    expect(
+      tester.widget<TextField>(find.byType(TextField)).controller?.text,
+      '',
+    );
+  });
+
+  testWidgets('a disabled composer drops the prompt instead of sending', (
+    tester,
+  ) async {
+    final sent = <String>[];
+    final transcript = ValueNotifier(_snapshot(const []));
+    addTearDown(transcript.dispose);
+
+    await tester.pumpWidget(
+      _host(transcript, onSend: sent.add, canSend: false),
+    );
+    await tester.enterText(find.byType(TextField), 'hello');
+    await tester.testTextInput.receiveAction(TextInputAction.send);
+    await tester.pump();
+
+    expect(sent, isEmpty);
+  });
+
+  testWidgets('each unavailable state explains itself', (tester) async {
+    final cases = {
+      ChatTranscriptUnavailable.noDirectory:
+          'Open a terminal in a folder first.',
+      ChatTranscriptUnavailable.noSessionFile:
+          'No agent session recorded for this folder yet. Start one in the '
+          'terminal.',
+      ChatTranscriptUnavailable.readFailed:
+          'Could not read the session '
+          'transcript.',
+    };
+    for (final entry in cases.entries) {
+      final transcript = ValueNotifier(
+        ChatTranscriptSnapshot(unavailable: entry.key),
+      );
+      await tester.pumpWidget(_host(transcript));
+      expect(find.text(entry.value), findsOneWidget);
+      transcript.dispose();
+    }
+  });
+
+  testWidgets('no agent session disables the composer and says why', (
+    tester,
+  ) async {
+    final sent = <String>[];
+    final transcript = ValueNotifier(
+      const ChatTranscriptSnapshot(
+        unavailable: ChatTranscriptUnavailable.noSessionFile,
+      ),
+    );
+    addTearDown(transcript.dispose);
+
+    await tester.pumpWidget(_host(transcript, onSend: sent.add));
+
+    final field = tester.widget<TextField>(find.byType(TextField));
+    expect(field.enabled, isFalse);
+    expect(
+      find.text('Start the agent in the terminal first, then message it here.'),
+      findsOneWidget,
+    );
+
+    await tester.enterText(find.byType(TextField), 'hello');
+    await tester.tap(find.byIcon(Icons.arrow_upward));
+    await tester.pump();
+    expect(sent, isEmpty, reason: 'a prompt with nowhere to land is dropped');
+  });
+
+  testWidgets('the conversation reads at the terminal font size', (
+    tester,
+  ) async {
+    // 等宽字号 (LayoutPreferences.monoFontSize) resizes the grid; a chat pane
+    // replaces that grid in the same box, so it has to follow.
+    final transcript = ValueNotifier(
+      _snapshot([
+        const ChatTranscriptRow(
+          id: 'u1#text',
+          kind: ChatTranscriptRowKind.user,
+          text: 'run the tests',
+        ),
+        const ChatTranscriptRow(
+          id: 'm1#tool:t1',
+          kind: ChatTranscriptRowKind.tool,
+          toolName: 'Bash',
+          detail: 'flutter test',
+          text: 'All tests passed!',
+        ),
+      ]),
+    );
+    addTearDown(transcript.dispose);
+
+    await tester.pumpWidget(_hostWithType(transcript, monoFontSize: 10));
+
+    final prompt = tester.widget<Text>(find.text('run the tests'));
+    expect(prompt.style?.fontSize, 10);
+    final header = tester.widget<Text>(find.text('Bash  flutter test'));
+    expect(header.style?.fontSize, closeTo(8.6, 0.01));
+    // The configured mono face, not a 'monospace' generic (unresolvable on iOS).
+    expect(header.style?.fontFamily, 'JetBrainsMono-Regular');
+  });
+
+  testWidgets('a bigger mono setting means bigger conversation text', (
+    tester,
+  ) async {
+    final transcript = ValueNotifier(
+      _snapshot([
+        const ChatTranscriptRow(
+          id: 'u1#text',
+          kind: ChatTranscriptRowKind.user,
+          text: 'run the tests',
+        ),
+      ]),
+    );
+    addTearDown(transcript.dispose);
+
+    await tester.pumpWidget(_hostWithType(transcript, monoFontSize: 18));
+
+    expect(tester.widget<Text>(find.text('run the tests')).style?.fontSize, 18);
+  });
+
+  testWidgets('a pane that started its own agent can message it right away', (
+    tester,
+  ) async {
+    // The agent is up but has not written a session file yet: the prompt still
+    // has somewhere to land, so the composer must not sit there disabled.
+    final sent = <String>[];
+    final transcript = ValueNotifier(
+      const ChatTranscriptSnapshot(
+        unavailable: ChatTranscriptUnavailable.noSessionFile,
+      ),
+    );
+    addTearDown(transcript.dispose);
+
+    await tester.pumpWidget(
+      _host(transcript, onSend: sent.add, agentStarting: true),
+    );
+
+    expect(
+      find.text('The agent is starting. Its first message will appear here.'),
+      findsOneWidget,
+    );
+    final field = tester.widget<TextField>(find.byType(TextField));
+    expect(field.enabled, isTrue);
+
+    await tester.enterText(find.byType(TextField), 'hello');
+    await tester.tap(find.byIcon(Icons.arrow_upward));
+    await tester.pump();
+    expect(sent, ['hello']);
+  });
+
+  testWidgets('a session this pane did not start says so', (tester) async {
+    final transcript = ValueNotifier(
+      ChatTranscriptSnapshot(
+        rows: const [
+          ChatTranscriptRow(
+            id: 'u1#text',
+            kind: ChatTranscriptRowKind.user,
+            text: 'someone else',
+          ),
+        ],
+        borrowed: true,
+      ),
+    );
+    addTearDown(transcript.dispose);
+
+    await tester.pumpWidget(_host(transcript));
+
+    expect(
+      find.textContaining('did not start in this pane'),
+      findsOneWidget,
+      reason: 'the guess cannot tell a resumed session from another window',
+    );
+
+    transcript.value = ChatTranscriptSnapshot(
+      rows: transcript.value.rows,
+      borrowed: false,
+    );
+    await tester.pump();
+    expect(find.textContaining('did not start in this pane'), findsNothing);
+  });
+
+  testWidgets('a prompt the store never shows is reported and handed back', (
+    tester,
+  ) async {
+    final sent = <String>[];
+    final transcript = ValueNotifier(
+      _snapshot([
+        const ChatTranscriptRow(
+          id: 'u1#text',
+          kind: ChatTranscriptRowKind.user,
+          text: 'first',
+        ),
+      ]),
+    );
+    addTearDown(transcript.dispose);
+
+    await tester.pumpWidget(_host(transcript, onSend: sent.add));
+    await tester.enterText(find.byType(TextField), 'never lands');
+    await tester.tap(find.byIcon(Icons.arrow_upward));
+    await tester.pump();
+
+    expect(sent, ['never lands']);
+    expect(find.byType(TextField), findsOneWidget);
+
+    await tester.pump(const Duration(seconds: 6));
+    await tester.pump();
+
+    expect(
+      find.textContaining('The prompt did not arrive'),
+      findsOneWidget,
+      reason:
+          'the CLI writes the user record on receipt; silence means it '
+          'never got there',
+    );
+    final field = tester.widget<TextField>(find.byType(TextField));
+    expect(field.controller?.text, 'never lands');
+  });
+
+  testWidgets('a prompt that shows up in the store stays quiet', (
+    tester,
+  ) async {
+    final transcript = ValueNotifier(
+      _snapshot([
+        const ChatTranscriptRow(
+          id: 'u1#text',
+          kind: ChatTranscriptRowKind.user,
+          text: 'first',
+        ),
+      ]),
+    );
+    addTearDown(transcript.dispose);
+
+    await tester.pumpWidget(
+      _host(
+        transcript,
+        onSend: (_) => transcript.value = ChatTranscriptSnapshot(
+          rows: [
+            ...transcript.value.rows,
+            const ChatTranscriptRow(
+              id: 'u2#text',
+              kind: ChatTranscriptRowKind.user,
+              text: 'landed',
+            ),
+          ],
+        ),
+      ),
+    );
+    await tester.enterText(find.byType(TextField), 'landed');
+    await tester.tap(find.byIcon(Icons.arrow_upward));
+    await tester.pump(const Duration(seconds: 6));
+    await tester.pump();
+
+    expect(find.textContaining('The prompt did not arrive'), findsNothing);
+  });
+
+  testWidgets('new rows follow the reader only at the bottom', (tester) async {
+    final rows = [
+      for (var i = 0; i < 40; i++)
+        ChatTranscriptRow(
+          id: 'm$i#text',
+          kind: ChatTranscriptRowKind.assistant,
+          text: 'answer $i',
+        ),
+    ];
+    final transcript = ValueNotifier(_snapshot(rows));
+    addTearDown(transcript.dispose);
+
+    await tester.pumpWidget(_host(transcript));
+    await tester.pump();
+
+    // Scrolled away from the bottom: a new row must not yank the view.
+    await tester.drag(find.byType(ListView), const Offset(0, 400));
+    await tester.pumpAndSettle();
+    final offsetBefore = tester
+        .widget<ListView>(find.byType(ListView))
+        .controller!
+        .offset;
+
+    transcript.value = _snapshot([
+      ...rows,
+      const ChatTranscriptRow(
+        id: 'm99#text',
+        kind: ChatTranscriptRowKind.assistant,
+        text: 'answer 99',
+      ),
+    ]);
+    await tester.pumpAndSettle();
+
+    final offsetAfter = tester
+        .widget<ListView>(find.byType(ListView))
+        .controller!
+        .offset;
+    expect(offsetAfter, offsetBefore);
+  });
+}

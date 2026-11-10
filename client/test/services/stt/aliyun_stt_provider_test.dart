@@ -38,17 +38,15 @@ void main() {
         return socket;
       },
       tokenService: AliyunTokenService(
-        client: MockClient(
-          (_) async {
-            tokenCalls++;
-            return http.Response(
-              jsonEncode({
-                'Token': {'Id': 'the-token', 'ExpireTime': 4102444800},
-              }),
-              tokenStatus,
-            );
-          },
-        ),
+        client: MockClient((_) async {
+          tokenCalls++;
+          return http.Response(
+            jsonEncode({
+              'Token': {'Id': 'the-token', 'ExpireTime': 4102444800},
+            }),
+            tokenStatus,
+          );
+        }),
         nonceFactory: () => 'nonce',
         now: () => DateTime.utc(2026, 8, 2, 12),
       ),
@@ -68,8 +66,7 @@ void main() {
       .toList();
 
   /// The binary payloads the provider wrote.
-  List<Object> binarySent() =>
-      socket.sent.where((s) => s is! String).toList();
+  List<Object> binarySent() => socket.sent.where((s) => s is! String).toList();
 
   /// A server event.
   String event(String name, {Map<String, dynamic>? payload}) => jsonEncode({
@@ -195,18 +192,24 @@ void main() {
     await expectLater(done, completes);
   });
 
-  test('errors with VoicePermissionDeniedException before minting a token',
-      () async {
-    // Minting a token is a signed API call. Doing it for a session the user
-    // cannot speak into spends quota for nothing.
-    final provider = build(permitted: false);
-    await expectLater(
-      provider.start(),
-      emitsError(isA<VoicePermissionDeniedException>()),
-    );
-    expect(audio.started, isFalse);
-    expect(tokenCalls, isZero, reason: 'no signed token call before mic check');
-  });
+  test(
+    'errors with VoicePermissionDeniedException before minting a token',
+    () async {
+      // Minting a token is a signed API call. Doing it for a session the user
+      // cannot speak into spends quota for nothing.
+      final provider = build(permitted: false);
+      await expectLater(
+        provider.start(),
+        emitsError(isA<VoicePermissionDeniedException>()),
+      );
+      expect(audio.started, isFalse);
+      expect(
+        tokenCalls,
+        isZero,
+        reason: 'no signed token call before mic check',
+      );
+    },
+  );
 
   test('errors with SttException when the token call fails', () async {
     final provider = build(tokenStatus: 403);
@@ -309,14 +312,16 @@ void main() {
     expect(socket.closed, isTrue);
   });
 
-  test('testConnection throws TimeoutException when the server never replies',
-      () async {
-    // Zero timeout so the test does not spend the production 10 real seconds.
-    final provider = build(testConnectionTimeout: Duration.zero);
-    await expectLater(
-      provider.testConnection(),
-      throwsA(isA<TimeoutException>()),
-    );
-    expect(socket.closed, isTrue);
-  });
+  test(
+    'testConnection throws TimeoutException when the server never replies',
+    () async {
+      // Zero timeout so the test does not spend the production 10 real seconds.
+      final provider = build(testConnectionTimeout: Duration.zero);
+      await expectLater(
+        provider.testConnection(),
+        throwsA(isA<TimeoutException>()),
+      );
+      expect(socket.closed, isTrue);
+    },
+  );
 }

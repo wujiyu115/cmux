@@ -30,10 +30,7 @@ void main() {
     final pending = opener.openFile('ws', '/repo/a.txt');
     await Future<void>.delayed(Duration.zero);
 
-    expect(
-      workbench.activeTabId('ws'),
-      WorkbenchTabId.file('/repo/a.txt'),
-    );
+    expect(workbench.activeTabId('ws'), WorkbenchTabId.file('/repo/a.txt'));
     expect(editor.state.bucket('ws').openFilePaths, isEmpty);
 
     gate.complete();
@@ -87,9 +84,7 @@ void main() {
     await opener.openFile('ws', '/repo/b.txt');
 
     final bucket = workbench.state.bucket('ws');
-    expect(bucket.tabOrder, [
-      WorkbenchTabId.file('/repo/b.txt'),
-    ]);
+    expect(bucket.tabOrder, [WorkbenchTabId.file('/repo/b.txt')]);
     expect(editor.state.bucket('ws').openFilePaths, ['/repo/b.txt']);
   });
 

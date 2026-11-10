@@ -484,9 +484,9 @@ void main() {
         );
         await layout.ensureAppToolLayout('opencode');
         final app = layout.appToolRoot('opencode');
-        await File(p.join(app, 'package.json')).writeAsString(
-          '{"dependencies":{"@opencode-ai/plugin":"1.0.0"}}',
-        );
+        await File(
+          p.join(app, 'package.json'),
+        ).writeAsString('{"dependencies":{"@opencode-ai/plugin":"1.0.0"}}');
         await Directory(
           p.join(app, 'node_modules', '@opencode-ai', 'plugin'),
         ).create(recursive: true);
@@ -510,19 +510,14 @@ void main() {
         final linkedPkg = _posixPath.join(sessionDir, 'package.json');
         expect(_inheritedPathExists(linkedNm), isTrue);
         expect(
-          await Directory(
-            p.join(linkedNm, '@opencode-ai', 'plugin'),
-          ).exists(),
+          await Directory(p.join(linkedNm, '@opencode-ai', 'plugin')).exists(),
           isTrue,
         );
         expect(
           await File(linkedPkg).readAsString(),
           contains('@opencode-ai/plugin'),
         );
-        expect(
-          Directory(p.join(linkedNm, 'old')).existsSync(),
-          isFalse,
-        );
+        expect(Directory(p.join(linkedNm, 'old')).existsSync(), isFalse);
       },
     );
 
@@ -535,9 +530,9 @@ void main() {
         );
         await layout.ensureAppToolLayout('opencode');
         final app = layout.appToolRoot('opencode');
-        await File(p.join(app, 'package.json')).writeAsString(
-          '{"dependencies":{"@opencode-ai/plugin":"1.18.5"}}',
-        );
+        await File(
+          p.join(app, 'package.json'),
+        ).writeAsString('{"dependencies":{"@opencode-ai/plugin":"1.18.5"}}');
         await File(p.join(app, 'package-lock.json')).writeAsString(
           '{"packages":{"":{"dependencies":{"@opencode-ai/plugin":"1.18.5"}}}}',
         );
@@ -576,9 +571,9 @@ void main() {
         await layout.ensureAppToolLayout('opencode');
         final app = layout.appToolRoot('opencode');
         final pkgSource = p.join(app, 'package.json');
-        await File(pkgSource).writeAsString(
-          '{"dependencies":{"@opencode-ai/plugin":"1.18.5"}}',
-        );
+        await File(
+          pkgSource,
+        ).writeAsString('{"dependencies":{"@opencode-ai/plugin":"1.18.5"}}');
         await File(p.join(app, 'package-lock.json')).writeAsString(
           '{"packages":{"":{"dependencies":{"@opencode-ai/plugin":"1.18.5"}}}}',
         );
@@ -619,9 +614,9 @@ void main() {
         );
         await layout.ensureAppToolLayout('opencode');
         final app = layout.appToolRoot('opencode');
-        await File(p.join(app, 'package.json')).writeAsString(
-          '{"dependencies":{"@opencode-ai/plugin":"1.0.0"}}',
-        );
+        await File(
+          p.join(app, 'package.json'),
+        ).writeAsString('{"dependencies":{"@opencode-ai/plugin":"1.0.0"}}');
         await Directory(
           p.join(app, 'node_modules', '@opencode-ai', 'plugin'),
         ).create(recursive: true);
@@ -644,9 +639,7 @@ void main() {
         final linkedPkg = _posixPath.join(sessionDir, 'package.json');
         expect(_inheritedPathExists(linkedNm), isTrue);
         expect(
-          await Directory(
-            p.join(linkedNm, '@opencode-ai', 'plugin'),
-          ).exists(),
+          await Directory(p.join(linkedNm, '@opencode-ai', 'plugin')).exists(),
           isTrue,
         );
         expect(
@@ -665,26 +658,17 @@ void main() {
         );
         await layout.ensureAppToolLayout('opencode');
         final app = layout.appToolRoot('opencode');
-        await File(p.join(app, 'package.json')).writeAsString(
-          '{"dependencies":{"@opencode-ai/plugin":"1.0.0"}}',
-        );
+        await File(
+          p.join(app, 'package.json'),
+        ).writeAsString('{"dependencies":{"@opencode-ai/plugin":"1.0.0"}}');
         await Directory(
           p.join(app, 'node_modules', '@opencode-ai', 'plugin'),
         ).create(recursive: true);
 
         await Future.wait([
-          layout.ensureSessionInheritsOpencodePluginDeps(
-            workspaceId,
-            'sess-a',
-          ),
-          layout.ensureSessionInheritsOpencodePluginDeps(
-            workspaceId,
-            'sess-b',
-          ),
-          layout.ensureSessionInheritsOpencodePluginDeps(
-            workspaceId,
-            'sess-c',
-          ),
+          layout.ensureSessionInheritsOpencodePluginDeps(workspaceId, 'sess-a'),
+          layout.ensureSessionInheritsOpencodePluginDeps(workspaceId, 'sess-b'),
+          layout.ensureSessionInheritsOpencodePluginDeps(workspaceId, 'sess-c'),
         ]);
 
         for (final sessionId in ['sess-a', 'sess-b', 'sess-c']) {

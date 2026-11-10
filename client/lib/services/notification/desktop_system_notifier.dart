@@ -122,7 +122,8 @@ class DesktopSystemNotifier {
 
   static Future<bool> _defaultIsAppFocused() async {
     if (Platform.isAndroid || Platform.isIOS) {
-      return WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
+      return WidgetsBinding.instance.lifecycleState ==
+          AppLifecycleState.resumed;
     }
     return windowManager.isFocused();
   }
@@ -258,6 +259,8 @@ class DesktopSystemNotifier {
       notificationDetails: details,
       payload: payload,
     );
-    appLogger.d('[system-notifier] showed id=$id title=$title payload=$payload');
+    appLogger.d(
+      '[system-notifier] showed id=$id title=$title payload=$payload',
+    );
   }
 }

@@ -184,10 +184,7 @@ void main() {
           id: 'local-run',
           name: 'Local',
           type: 'shellScript',
-          extras: {
-            'execute': 'scriptText',
-            'scriptText': 'echo',
-          },
+          extras: {'execute': 'scriptText', 'scriptText': 'echo'},
         ),
       );
       await store.upsertConfiguration(
@@ -196,10 +193,7 @@ void main() {
           id: 'ssh-run',
           name: 'SSH',
           type: 'shellScript',
-          extras: {
-            'execute': 'scriptText',
-            'scriptText': 'echo',
-          },
+          extras: {'execute': 'scriptText', 'scriptText': 'echo'},
         ),
       );
 
@@ -211,7 +205,10 @@ void main() {
         await sshFs.readString('/remote/.teampilot/launch.json'),
         isNotNull,
       );
-      expect(await localFs.readString('/remote/.teampilot/launch.json'), isNull);
+      expect(
+        await localFs.readString('/remote/.teampilot/launch.json'),
+        isNull,
+      );
       expect(await sshFs.readString('/local/.teampilot/launch.json'), isNull);
 
       final listed = await store.listConfigurations(

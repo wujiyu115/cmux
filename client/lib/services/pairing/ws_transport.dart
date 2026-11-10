@@ -34,7 +34,8 @@ class WsTransport {
 
   void send(Uint8List bytes) => _socket.add(bytes);
 
-  Future<void> close([int? code, String? reason]) => _socket.close(code, reason);
+  Future<void> close([int? code, String? reason]) =>
+      _socket.close(code, reason);
 
   int? get closeCode => _socket.closeCode;
 }

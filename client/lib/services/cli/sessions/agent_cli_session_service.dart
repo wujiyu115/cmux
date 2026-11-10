@@ -37,6 +37,7 @@ class AgentCliSessionService {
       homeDotDir: '.qoder',
     ),
     const OhMyPiAgentCliSessionAdapter(),
+    const PiAgentCliSessionAdapter(),
     const CodexAgentCliSessionAdapter(),
     const OpencodeAgentCliSessionAdapter(),
   ];
@@ -68,6 +69,12 @@ class AgentCliSessionService {
     records.sort(_newestFirst);
     return records;
   }
+
+  /// The runtime context [target] resolves to — the same filesystem the
+  /// adapters scan. Callers that must read a store file (rather than just list
+  /// it) use this instead of resolving a second context.
+  Future<RuntimeContext> resolveContextFor(RuntimeTarget target) =>
+      _resolveContext(target);
 
   /// Shell command that resumes [record] in a pane.
   String resumeCommandFor(AgentCliSessionRecord record) =>

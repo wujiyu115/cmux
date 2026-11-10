@@ -51,7 +51,11 @@ String _matchEvent(String path, int lineNo, String text) => jsonEncode({
     'line_number': lineNo,
     'absolute_offset': 0,
     'submatches': [
-      {'match': {'text': 'foo'}, 'start': 0, 'end': 3},
+      {
+        'match': {'text': 'foo'},
+        'start': 0,
+        'end': 3,
+      },
     ],
   },
 });
@@ -65,11 +69,16 @@ void main() {
 
   setUp(() {
     engine = RipgrepSearchEngine(
-      spawner: ({required executable, required arguments, required workingDirectory}) async {
-        lastArguments = arguments;
-        lastWorkingDirectory = workingDirectory;
-        return handle;
-      },
+      spawner:
+          ({
+            required executable,
+            required arguments,
+            required workingDirectory,
+          }) async {
+            lastArguments = arguments;
+            lastWorkingDirectory = workingDirectory;
+            return handle;
+          },
     );
   });
 
@@ -106,26 +115,27 @@ void main() {
     expect(results.engine, SearchEngineKind.ripgrep);
   });
 
-  test('non-primary root gets basename prefix; other target prefixed', () async {
-    handle = _FakeHandle([
-      _matchEvent('/other/src/x.dart', 1, 'foo\n'),
-    ]);
-    handle.finish(0);
+  test(
+    'non-primary root gets basename prefix; other target prefixed',
+    () async {
+      handle = _FakeHandle([_matchEvent('/other/src/x.dart', 1, 'foo\n')]);
+      handle.finish(0);
 
-    const query = SearchQuery(text: 'foo');
-    final run = engine.search(
-      query: query,
-      pattern: query.compilePattern().pattern!,
-      targetId: 'ssh:1',
-      pathContext: pContext,
-      roots: ['/main', '/other'],
-      workingDirectory: '/main',
-      primaryTargetId: 'local',
-    );
-    final results = await run.results;
+      const query = SearchQuery(text: 'foo');
+      final run = engine.search(
+        query: query,
+        pattern: query.compilePattern().pattern!,
+        targetId: 'ssh:1',
+        pathContext: pContext,
+        roots: ['/main', '/other'],
+        workingDirectory: '/main',
+        primaryTargetId: 'local',
+      );
+      final results = await run.results;
 
-    expect(results.files.single.displayPath, 'ssh:1:other/src/x.dart');
-  });
+      expect(results.files.single.displayPath, 'ssh:1:other/src/x.dart');
+    },
+  );
 
   test('argument mapping: fixed/word/case/globs/roots', () async {
     handle = _FakeHandle([]);
@@ -166,10 +176,9 @@ void main() {
   test('kill marks results truncated and completes', () async {
     // Hold the stream open so the kill lands mid-scan, not after completion.
     final hold = Completer<void>();
-    handle = _FakeHandle(
-      [_matchEvent('/repo/lib/a.dart', 1, 'foo\n')],
-      hold: hold,
-    );
+    handle = _FakeHandle([
+      _matchEvent('/repo/lib/a.dart', 1, 'foo\n'),
+    ], hold: hold);
 
     const query = SearchQuery(text: 'foo');
     final run = engine.search(

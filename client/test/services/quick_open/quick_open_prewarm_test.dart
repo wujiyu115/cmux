@@ -58,12 +58,18 @@ void main() {
   group('resolveQuickOpenPlane', () {
     test('unions target folders and scope roots, drops others and nested', () {
       final localFs = InMemoryFilesystem();
-      final state = _state(targetId: 'local', fs: localFs, roots: ['/repo/lib']);
-      final workspace = _workspace(folders: [
-        WorkspaceFolder(path: '/repo'),
-        WorkspaceFolder(path: '/other', targetId: 'wsl:Ubuntu'),
-        WorkspaceFolder(path: '  '),
-      ]);
+      final state = _state(
+        targetId: 'local',
+        fs: localFs,
+        roots: ['/repo/lib'],
+      );
+      final workspace = _workspace(
+        folders: [
+          WorkspaceFolder(path: '/repo'),
+          WorkspaceFolder(path: '/other', targetId: 'wsl:Ubuntu'),
+          WorkspaceFolder(path: '  '),
+        ],
+      );
 
       final plane = resolveQuickOpenPlane(
         workspace: workspace,
@@ -92,9 +98,9 @@ void main() {
         ],
         resolving: true,
       );
-      final workspace = _workspace(folders: [
-        WorkspaceFolder(path: '/repo', targetId: 'wsl:Ubuntu'),
-      ]);
+      final workspace = _workspace(
+        folders: [WorkspaceFolder(path: '/repo', targetId: 'wsl:Ubuntu')],
+      );
 
       final plane = resolveQuickOpenPlane(
         workspace: workspace,
@@ -107,17 +113,20 @@ void main() {
       expect(plane.indexRoots, ['/repo']);
     });
 
-    test('no folders and no tools falls back to the local AppStorage plane', () {
-      final plane = resolveQuickOpenPlane(
-        workspace: _workspace(),
-        scopeState: const WorkspaceToolsScopeState(),
-      );
+    test(
+      'no folders and no tools falls back to the local AppStorage plane',
+      () {
+        final plane = resolveQuickOpenPlane(
+          workspace: _workspace(),
+          scopeState: const WorkspaceToolsScopeState(),
+        );
 
-      expect(plane.activeTargetId, 'local');
-      expect(plane.targetContext, isNull);
-      expect(plane.filesystem, same(AppStorage.fs));
-      expect(plane.indexRoots, isEmpty);
-    });
+        expect(plane.activeTargetId, 'local');
+        expect(plane.targetContext, isNull);
+        expect(plane.filesystem, same(AppStorage.fs));
+        expect(plane.indexRoots, isEmpty);
+      },
+    );
 
     test('empty roots fall back to the workspace first folder path', () {
       final wslFs = InMemoryFilesystem();
@@ -165,7 +174,10 @@ void main() {
         resolving: false,
       );
       final workspace = _workspace(
-        folders: [WorkspaceFolder(path: repo), WorkspaceFolder(path: wt)],
+        folders: [
+          WorkspaceFolder(path: repo),
+          WorkspaceFolder(path: wt),
+        ],
         indexDirRules: WorkspaceIndexDirs(excluded: ['lib']),
       );
 
@@ -243,10 +255,12 @@ void main() {
         roots: [repo, wt],
         resolving: false,
       );
-      final workspace = _workspace(folders: [
-        WorkspaceFolder(path: repo),
-        WorkspaceFolder(path: wt),
-      ]);
+      final workspace = _workspace(
+        folders: [
+          WorkspaceFolder(path: repo),
+          WorkspaceFolder(path: wt),
+        ],
+      );
 
       await prewarmQuickOpenIndex(
         workspace: workspace,

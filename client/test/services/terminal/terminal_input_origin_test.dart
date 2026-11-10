@@ -38,14 +38,17 @@ void main() {
     final remote = <Uint8List>[];
     final session = TerminalSession(
       executable: Platform.resolvedExecutable,
-      transportStarter: (executable,
-          {required arguments,
-          required workingDirectory,
-          required columns,
-          required rows,
-          environment}) {
-        return Future.value(_FakeTransport());
-      },
+      transportStarter:
+          (
+            executable, {
+            required arguments,
+            required workingDirectory,
+            required columns,
+            required rows,
+            environment,
+          }) {
+            return Future.value(_FakeTransport());
+          },
     );
     return (session: session, local: local, remote: remote);
   }

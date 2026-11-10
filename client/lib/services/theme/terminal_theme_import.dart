@@ -35,7 +35,11 @@ enum TerminalThemeFormat {
 /// `cursor`, `selection`, `searchHit`, `searchHitCurrent`, `searchHitFg`, and
 /// any of `ansi8`..`ansi15`. They are emitted in that canonical order.
 class TerminalThemeImportResult {
-  const TerminalThemeImportResult({this.theme, this.warnings = const [], this.error});
+  const TerminalThemeImportResult({
+    this.theme,
+    this.warnings = const [],
+    this.error,
+  });
 
   const TerminalThemeImportResult.failure(String this.error)
     : theme = null,
@@ -267,8 +271,7 @@ int _slotRank(String slot) {
 
 int _channel(Color c, int shift) => (c.toARGB32() >> shift) & 0xFF;
 
-Color _rgb(int r, int g, int b) =>
-    Color(0xFF000000 | (r << 16) | (g << 8) | b);
+Color _rgb(int r, int g, int b) => Color(0xFF000000 | (r << 16) | (g << 8) | b);
 
 /// Linear blend of [a] and [b] per RGB channel; [t]=0 is [a], [t]=1 is [b].
 Color _blend(Color a, Color b, double t) {

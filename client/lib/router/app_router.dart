@@ -10,6 +10,7 @@ import '../pages/onboarding/onboarding_gate.dart';
 import '../pages/pairing/pairing_mobile_shell.dart';
 import '../pages/startup_gate.dart';
 import '../services/app/platform_utils.dart';
+import '../services/pairing/pairing_offer.dart';
 import '../widgets/android_ssh_profile_selector.dart';
 import 'android_shell_chrome.dart';
 import '../models/layout_preferences.dart';
@@ -68,9 +69,28 @@ void reapplyWorkspaceEntryFromPreferences(
   );
 }
 
+/// Where a `teampilot://` link should land *in the router*, or null when the
+/// location is an ordinary route.
+///
+/// The link's payload is consumed at the shell level; the router only needs to
+/// avoid showing "no routes for location" for it. Both URI spellings reach us —
+/// Android may normalize `teampilot://pair?code=…` to `teampilot://pair/?code=…` —
+/// which is why this keys on the scheme alone.
+String? pairingDeepLinkDestination(Uri uri) =>
+    uri.scheme == PairingOffer.scheme ? '/home-v2' : null;
+
 final appRouter = GoRouter(
   refreshListenable: _workspaceEntryNotifier,
   initialLocation: _workspaceEntryNotifier.value,
+  // Android hands a VIEW intent's URI to the engine as the platform's *initial
+  // route*, and `GoRouter` adopts it over [initialLocation]. A `teampilot://pair`
+  // link would then land on the "no routes for location" page — covering the
+  // pairing screen the link exists to open, because the link itself is handled
+  // at the shell level (`app_links`, in [PairingMobileShell]). Sending it home
+  // keeps the router out of the way; the pairing phase takes it from there.
+  redirect: (context, state) => state.uri.scheme == PairingOffer.scheme
+      ? '/home-v2'
+      : null,
   routes: [
     // App-wide gates run once above both workspace shells so first-run setup
     // and SSH startup checks apply regardless of entry mode.

@@ -8,10 +8,7 @@ import 'search_glob.dart';
 import 'search_query.dart';
 import 'search_result_models.dart';
 import 'ripgrep_search_engine.dart'
-    show
-        SearchRunHandle,
-        buildSearchMatch,
-        searchDisplayPathFor;
+    show SearchRunHandle, buildSearchMatch, searchDisplayPathFor;
 
 /// Built-in scanner used when ripgrep is unavailable on a plane: enumerates
 /// candidates via the (gitignore-aware) quick-open index, reads files in
@@ -61,17 +58,18 @@ class BuiltinSearchEngine {
       }
 
       final FsBatchOps? batchFs = fs is FsBatchOps ? fs as FsBatchOps : null;
-      for (var i = 0;
-          i < candidates.length && !cancelled && !state.reachedTotalCap;
-          i += _batchSize) {
+      for (
+        var i = 0;
+        i < candidates.length && !cancelled && !state.reachedTotalCap;
+        i += _batchSize
+      ) {
         final batch = candidates.skip(i).take(_batchSize).toList();
         Map<String, FsStatAndBytes?>? stats;
         if (batchFs != null) {
           try {
-            stats = await batchFs.statAndReadBytesMany(
-              [for (final c in batch) c.entry.path],
-              maxBytesPerFile: kSearchMaxFileBytes,
-            );
+            stats = await batchFs.statAndReadBytesMany([
+              for (final c in batch) c.entry.path,
+            ], maxBytesPerFile: kSearchMaxFileBytes);
           } on Object {
             stats = null; // Fall through to per-file reads below.
           }
@@ -96,7 +94,11 @@ class BuiltinSearchEngine {
         }
         // No batch ops (or the batch round trip failed) — per-file reads
         // with bounded parallelism.
-        for (var j = 0; j < batch.length && !state.stopped; j += _readParallelism) {
+        for (
+          var j = 0;
+          j < batch.length && !state.stopped;
+          j += _readParallelism
+        ) {
           final group = batch.skip(j).take(_readParallelism).toList();
           final reads = await Future.wait(
             group.map((candidate) async {

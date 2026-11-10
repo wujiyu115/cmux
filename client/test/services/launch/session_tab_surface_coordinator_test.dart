@@ -64,37 +64,28 @@ void main() {
       );
     });
 
-    test(
-      'connectImmediately defaults to Terminal workbench view',
-      () {
-        final status = coordinator.surfaceExistingTab(
-          request: SessionOpenRequest(
-            session: session,
-            connectImmediately: true,
-          ),
-          existingIdx: 0,
-        );
+    test('connectImmediately defaults to Terminal workbench view', () {
+      final status = coordinator.surfaceExistingTab(
+        request: SessionOpenRequest(session: session, connectImmediately: true),
+        existingIdx: 0,
+      );
 
-        expect(status, SessionOpenStatus.opened);
-      },
-    );
+      expect(status, SessionOpenStatus.opened);
+    });
 
-    test(
-      'Chat continue connect preserves Chat when preserveWorkbenchView',
-      () {
-        final status = coordinator.surfaceExistingTab(
-          request: SessionOpenRequest(
-            session: session,
-            connectImmediately: true,
-            preserveWorkbenchView: true,
-          ),
-          existingIdx: 0,
-        );
+    test('Chat continue connect preserves Chat when preserveWorkbenchView', () {
+      final status = coordinator.surfaceExistingTab(
+        request: SessionOpenRequest(
+          session: session,
+          connectImmediately: true,
+          preserveWorkbenchView: true,
+        ),
+        existingIdx: 0,
+      );
 
-        expect(status, SessionOpenStatus.opened);
-        expect(host.beginConnectIds, ['sess-1']);
-      },
-    );
+      expect(status, SessionOpenStatus.opened);
+      expect(host.beginConnectIds, ['sess-1']);
+    });
   });
 
   group('SessionTabSurfaceCoordinator.surfaceNewTab', () {
@@ -145,43 +136,37 @@ void main() {
       );
     });
 
-    test(
-      'connectImmediately defaults to Terminal workbench view',
-      () {
-        final status = coordinator.surfaceNewTab(
-          request: SessionOpenRequest(
-            session: session,
-            workspace: workspace,
-            connectImmediately: true,
-          ),
+    test('connectImmediately defaults to Terminal workbench view', () {
+      final status = coordinator.surfaceNewTab(
+        request: SessionOpenRequest(
           session: session,
-        );
+          workspace: workspace,
+          connectImmediately: true,
+        ),
+        session: session,
+      );
 
-        expect(status, SessionOpenStatus.opened);
-        final tab = tabStore.openTabBySessionId('sess-new');
-        expect(tab, isNotNull);
-      },
-    );
+      expect(status, SessionOpenStatus.opened);
+      final tab = tabStore.openTabBySessionId('sess-new');
+      expect(tab, isNotNull);
+    });
 
-    test(
-      'preserveWorkbenchView keeps Chat on new-tab create',
-      () {
-        final status = coordinator.surfaceNewTab(
-          request: SessionOpenRequest(
-            session: session,
-            workspace: workspace,
-            connectImmediately: true,
-            preserveWorkbenchView: true,
-          ),
+    test('preserveWorkbenchView keeps Chat on new-tab create', () {
+      final status = coordinator.surfaceNewTab(
+        request: SessionOpenRequest(
           session: session,
-        );
+          workspace: workspace,
+          connectImmediately: true,
+          preserveWorkbenchView: true,
+        ),
+        session: session,
+      );
 
-        expect(status, SessionOpenStatus.opened);
-        final tab = tabStore.openTabBySessionId('sess-new');
-        expect(tab, isNotNull);
-        expect(host.beginConnectIds, ['sess-new']);
-      },
-    );
+      expect(status, SessionOpenStatus.opened);
+      final tab = tabStore.openTabBySessionId('sess-new');
+      expect(tab, isNotNull);
+      expect(host.beginConnectIds, ['sess-new']);
+    });
   });
 }
 

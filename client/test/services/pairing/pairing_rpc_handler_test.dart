@@ -3,7 +3,9 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:teampilot/services/chat/chat_transcript_row.dart';
 import 'package:teampilot/services/pairing/pairing_frames.dart';
+import 'package:teampilot/models/pane_mode.dart';
 import 'package:teampilot/services/pairing/pairing_rpc_handler.dart';
 import 'package:teampilot/services/pairing/pairing_workspace_index.dart';
 import 'package:teampilot/services/pairing/recent_pty_buffer.dart';
@@ -68,7 +70,9 @@ void main() {
   PairingFrame decodeLast() => PairingCodec.decode(sent.last);
 
   test('session.list reports catalog entries with live cols/rows', () {
-    handler.handle(PairingCodec.decode(_json({'id': 1, 'method': 'session.list'})));
+    handler.handle(
+      PairingCodec.decode(_json({'id': 1, 'method': 'session.list'})),
+    );
     final frame = decodeLast() as JsonFrame;
     final sessions = (frame.data['result'] as Map)['sessions'] as List;
     expect(sessions, hasLength(1));
@@ -76,6 +80,101 @@ void main() {
     expect(s['catalogId'], 'ws:p1');
     expect(s['cols'], 100);
     expect(s['rows'], 30);
+    expect(s['mode'], 'terminal');
+  });
+
+  test('session.list reports a pane in chat mode as chat', () {
+    final withChat = PairingRpcHandler(
+      catalog: catalog,
+      send: sent.add,
+      uploadOpener: noopUploadOpener,
+      batchWindow: const Duration(milliseconds: 1),
+      // The mode is a property of the pane, not of whether a transcript has
+      // been read yet.
+      paneMode: (paneId) => paneId == 'p1' ? PaneMode.chat : PaneMode.terminal,
+      chatTranscript: (paneId) => paneId == 'p1'
+          ? const ChatTranscriptSnapshot(rows: [], family: 'claude')
+          : null,
+    );
+    addTearDown(withChat.dispose);
+
+    withChat.handle(
+      PairingCodec.decode(_json({'id': 1, 'method': 'session.list'})),
+    );
+    final sessions =
+        ((decodeLast() as JsonFrame).data['result'] as Map)['sessions'] as List;
+
+    expect((sessions.single as Map)['mode'], 'chat');
+  });
+
+  test('chat.read answers terminal mode for a pane showing the grid', () {
+    handler.handle(
+      PairingCodec.decode(
+        _json({
+          'id': 2,
+          'method': 'chat.read',
+          'params': {'catalogId': 'ws:p1'},
+        }),
+      ),
+    );
+
+    final result = (decodeLast() as JsonFrame).data['result'] as Map;
+    expect(result['mode'], 'terminal');
+    expect(result.containsKey('transcript'), isFalse);
+  });
+
+  test('chat.read carries the rows of a pane in chat mode', () {
+    final withChat = PairingRpcHandler(
+      catalog: catalog,
+      send: sent.add,
+      uploadOpener: noopUploadOpener,
+      batchWindow: const Duration(milliseconds: 1),
+      paneMode: (_) => PaneMode.chat,
+      chatTranscript: (_) => const ChatTranscriptSnapshot(
+        rows: [
+          ChatTranscriptRow(
+            id: 'u1#text',
+            kind: ChatTranscriptRowKind.user,
+            text: 'hi',
+          ),
+        ],
+        family: 'claude',
+        sessionId: 's1',
+        busy: true,
+      ),
+    );
+    addTearDown(withChat.dispose);
+
+    withChat.handle(
+      PairingCodec.decode(
+        _json({
+          'id': 3,
+          'method': 'chat.read',
+          'params': {'catalogId': 'ws:p1'},
+        }),
+      ),
+    );
+
+    final result = (decodeLast() as JsonFrame).data['result'] as Map;
+    expect(result['mode'], 'chat');
+    final transcript = result['transcript'] as Map;
+    expect(transcript['busy'], isTrue);
+    expect((transcript['rows'] as List).single, containsPair('text', 'hi'));
+  });
+
+  test('chat.read rejects an unknown session', () {
+    handler.handle(
+      PairingCodec.decode(
+        _json({
+          'id': 4,
+          'method': 'chat.read',
+          'params': {'catalogId': 'ws:gone'},
+        }),
+      ),
+    );
+
+    final frame = decodeLast() as JsonFrame;
+    expect(frame.data['error'], isNotNull);
   });
 
   test('subscribe replies sub/cols/rows/seq and sends snapshot first', () async {
@@ -83,11 +182,13 @@ void main() {
     when(() => session.recentBuffer).thenReturn(buffer);
 
     handler.handle(
-      PairingCodec.decode(_json({
-        'id': 7,
-        'method': 'terminal.subscribe',
-        'params': {'catalogId': 'ws:p1'},
-      })),
+      PairingCodec.decode(
+        _json({
+          'id': 7,
+          'method': 'terminal.subscribe',
+          'params': {'catalogId': 'ws:p1'},
+        }),
+      ),
     );
 
     // Two frames: the RPC result, then the snapshot binary frame.
@@ -106,12 +207,7 @@ void main() {
     // it booted with — see [terminalModeResync].
     expect(
       snap.bytes,
-      Uint8List.fromList([
-        ...terminalModeResync(cursorVisible: true),
-        1,
-        2,
-        3,
-      ]),
+      Uint8List.fromList([...terminalModeResync(cursorVisible: true), 1, 2, 3]),
     );
   });
 
@@ -123,11 +219,13 @@ void main() {
     final buffer = RecentPtyBuffer()..append(Uint8List.fromList([1]));
     when(() => session.recentBuffer).thenReturn(buffer);
     handler.handle(
-      PairingCodec.decode(_json({
-        'id': 1,
-        'method': 'terminal.subscribe',
-        'params': {'catalogId': 'ws:p1'},
-      })),
+      PairingCodec.decode(
+        _json({
+          'id': 1,
+          'method': 'terminal.subscribe',
+          'params': {'catalogId': 'ws:p1'},
+        }),
+      ),
     );
 
     final snap = PairingCodec.decode(sent[1]) as SnapshotFrame;
@@ -143,11 +241,13 @@ void main() {
     when(() => session.cursorVisible).thenReturn(false);
     when(() => session.recentBuffer).thenReturn(RecentPtyBuffer());
     handler.handle(
-      PairingCodec.decode(_json({
-        'id': 1,
-        'method': 'terminal.subscribe',
-        'params': {'catalogId': 'ws:p1'},
-      })),
+      PairingCodec.decode(
+        _json({
+          'id': 1,
+          'method': 'terminal.subscribe',
+          'params': {'catalogId': 'ws:p1'},
+        }),
+      ),
     );
 
     final snap = PairingCodec.decode(sent[1]) as SnapshotFrame;
@@ -159,11 +259,13 @@ void main() {
     final buffer = RecentPtyBuffer();
     when(() => session.recentBuffer).thenReturn(buffer);
     handler.handle(
-      PairingCodec.decode(_json({
-        'id': 1,
-        'method': 'terminal.subscribe',
-        'params': {'catalogId': 'ws:p1'},
-      })),
+      PairingCodec.decode(
+        _json({
+          'id': 1,
+          'method': 'terminal.subscribe',
+          'params': {'catalogId': 'ws:p1'},
+        }),
+      ),
     );
     sent.clear();
 
@@ -179,11 +281,13 @@ void main() {
 
   test('subscribe to an unknown catalogId replies error', () {
     handler.handle(
-      PairingCodec.decode(_json({
-        'id': 3,
-        'method': 'terminal.subscribe',
-        'params': {'catalogId': 'nope'},
-      })),
+      PairingCodec.decode(
+        _json({
+          'id': 3,
+          'method': 'terminal.subscribe',
+          'params': {'catalogId': 'nope'},
+        }),
+      ),
     );
     final frame = decodeLast() as JsonFrame;
     expect(frame.data['error'], contains('no such session'));
@@ -193,35 +297,43 @@ void main() {
     // Subscribe first so the sub exists.
     when(() => session.recentBuffer).thenReturn(RecentPtyBuffer());
     handler.handle(
-      PairingCodec.decode(_json({
-        'id': 1,
-        'method': 'terminal.subscribe',
-        'params': {'catalogId': 'ws:p1'},
-      })),
+      PairingCodec.decode(
+        _json({
+          'id': 1,
+          'method': 'terminal.subscribe',
+          'params': {'catalogId': 'ws:p1'},
+        }),
+      ),
     );
     handler.handle(
-      PairingCodec.decode(PairingCodec.encodeInput(1, Uint8List.fromList([65, 66]))),
+      PairingCodec.decode(
+        PairingCodec.encodeInput(1, Uint8List.fromList([65, 66])),
+      ),
     );
-    final captured = verify(() => session.writeRemoteInput(captureAny()))
-        .captured
-        .single as Uint8List;
+    final captured =
+        verify(() => session.writeRemoteInput(captureAny())).captured.single
+            as Uint8List;
     expect(captured, Uint8List.fromList([65, 66]));
   });
 
   test('resize forwards cols/rows to the session', () {
     when(() => session.recentBuffer).thenReturn(RecentPtyBuffer());
     handler.handle(
-      PairingCodec.decode(_json({
-        'id': 1,
-        'method': 'terminal.subscribe',
-        'params': {'catalogId': 'ws:p1'},
-      })),
+      PairingCodec.decode(
+        _json({
+          'id': 1,
+          'method': 'terminal.subscribe',
+          'params': {'catalogId': 'ws:p1'},
+        }),
+      ),
     );
     handler.handle(
-      PairingCodec.decode(_json({
-        'method': 'terminal.resize',
-        'params': {'sub': 1, 'cols': 120, 'rows': 40},
-      })),
+      PairingCodec.decode(
+        _json({
+          'method': 'terminal.resize',
+          'params': {'sub': 1, 'cols': 120, 'rows': 40},
+        }),
+      ),
     );
     verify(() => session.onTerminalPtyResize(120, 40)).called(1);
   });
@@ -229,18 +341,22 @@ void main() {
   test('unsubscribe sends terminal.closed and cancels the listener', () {
     when(() => session.recentBuffer).thenReturn(RecentPtyBuffer());
     handler.handle(
-      PairingCodec.decode(_json({
-        'id': 1,
-        'method': 'terminal.subscribe',
-        'params': {'catalogId': 'ws:p1'},
-      })),
+      PairingCodec.decode(
+        _json({
+          'id': 1,
+          'method': 'terminal.subscribe',
+          'params': {'catalogId': 'ws:p1'},
+        }),
+      ),
     );
     sent.clear();
     handler.handle(
-      PairingCodec.decode(_json({
-        'method': 'terminal.unsubscribe',
-        'params': {'sub': 1},
-      })),
+      PairingCodec.decode(
+        _json({
+          'method': 'terminal.unsubscribe',
+          'params': {'sub': 1},
+        }),
+      ),
     );
     final closed = sent
         .map(PairingCodec.decode)
@@ -252,11 +368,13 @@ void main() {
   test('subscribe attaches the desktop mirror takeover once', () {
     when(() => session.recentBuffer).thenReturn(RecentPtyBuffer());
     handler.handle(
-      PairingCodec.decode(_json({
-        'id': 1,
-        'method': 'terminal.subscribe',
-        'params': {'catalogId': 'ws:p1'},
-      })),
+      PairingCodec.decode(
+        _json({
+          'id': 1,
+          'method': 'terminal.subscribe',
+          'params': {'catalogId': 'ws:p1'},
+        }),
+      ),
     );
     verify(() => session.attachMirror()).called(1);
     verifyNever(() => session.detachMirror());
@@ -265,17 +383,21 @@ void main() {
   test('unsubscribe detaches the mirror takeover', () {
     when(() => session.recentBuffer).thenReturn(RecentPtyBuffer());
     handler.handle(
-      PairingCodec.decode(_json({
-        'id': 1,
-        'method': 'terminal.subscribe',
-        'params': {'catalogId': 'ws:p1'},
-      })),
+      PairingCodec.decode(
+        _json({
+          'id': 1,
+          'method': 'terminal.subscribe',
+          'params': {'catalogId': 'ws:p1'},
+        }),
+      ),
     );
     handler.handle(
-      PairingCodec.decode(_json({
-        'method': 'terminal.unsubscribe',
-        'params': {'sub': 1},
-      })),
+      PairingCodec.decode(
+        _json({
+          'method': 'terminal.unsubscribe',
+          'params': {'sub': 1},
+        }),
+      ),
     );
     verify(() => session.detachMirror()).called(1);
   });
@@ -283,11 +405,13 @@ void main() {
   test('dispose detaches every live mirror (dropped-link path)', () {
     when(() => session.recentBuffer).thenReturn(RecentPtyBuffer());
     handler.handle(
-      PairingCodec.decode(_json({
-        'id': 1,
-        'method': 'terminal.subscribe',
-        'params': {'catalogId': 'ws:p1'},
-      })),
+      PairingCodec.decode(
+        _json({
+          'id': 1,
+          'method': 'terminal.subscribe',
+          'params': {'catalogId': 'ws:p1'},
+        }),
+      ),
     );
     handler.dispose();
     // Never got an unsubscribe — the desktop still has to be released.
@@ -384,11 +508,13 @@ void main() {
   group('session.activate', () {
     test('unsupported when no activator is injected', () async {
       handler.handle(
-        PairingCodec.decode(_json({
-          'id': 1,
-          'method': 'session.activate',
-          'params': {'workspaceId': 'wsA', 'paneId': 'p1'},
-        })),
+        PairingCodec.decode(
+          _json({
+            'id': 1,
+            'method': 'session.activate',
+            'params': {'workspaceId': 'wsA', 'paneId': 'p1'},
+          }),
+        ),
       );
       await Future<void>.delayed(Duration.zero);
       final frame = decodeLast() as JsonFrame;
@@ -412,11 +538,13 @@ void main() {
       );
 
       handler.handle(
-        PairingCodec.decode(_json({
-          'id': 4,
-          'method': 'session.activate',
-          'params': {'workspaceId': 'wsA', 'paneId': 'p1'},
-        })),
+        PairingCodec.decode(
+          _json({
+            'id': 4,
+            'method': 'session.activate',
+            'params': {'workspaceId': 'wsA', 'paneId': 'p1'},
+          }),
+        ),
       );
       await Future<void>.delayed(const Duration(milliseconds: 30));
 
@@ -440,11 +568,13 @@ void main() {
       );
 
       handler.handle(
-        PairingCodec.decode(_json({
-          'id': 5,
-          'method': 'session.activate',
-          'params': {'workspaceId': 'wsA', 'paneId': 'p1'},
-        })),
+        PairingCodec.decode(
+          _json({
+            'id': 5,
+            'method': 'session.activate',
+            'params': {'workspaceId': 'wsA', 'paneId': 'p1'},
+          }),
+        ),
       );
       await Future<void>.delayed(const Duration(milliseconds: 60));
 
@@ -460,11 +590,7 @@ void main() {
         send: sent.add,
         uploadOpener: noopUploadOpener,
         workspaceIndex: () async => const [
-          PairingWorkspaceInfo(
-            workspaceId: 'wsA',
-            title: 'A',
-            groupId: 'g1',
-          ),
+          PairingWorkspaceInfo(workspaceId: 'wsA', title: 'A', groupId: 'g1'),
         ],
         groupIndex: () async => const [
           PairingGroupInfo(id: 'g1', name: 'Group One', order: 0),
@@ -591,7 +717,10 @@ void main() {
         PairingCodec.decode(_json({'id': 1, 'method': 'fs.browse'})),
       );
       await Future<void>.delayed(Duration.zero);
-      expect((decodeLast() as JsonFrame).data['error'], contains('unsupported'));
+      expect(
+        (decodeLast() as JsonFrame).data['error'],
+        contains('unsupported'),
+      );
     });
 
     test('passes the path through and returns the listing', () async {
@@ -610,11 +739,13 @@ void main() {
         },
       );
       handler.handle(
-        PairingCodec.decode(_json({
-          'id': 2,
-          'method': 'fs.browse',
-          'params': {'path': '/home/me'},
-        })),
+        PairingCodec.decode(
+          _json({
+            'id': 2,
+            'method': 'fs.browse',
+            'params': {'path': '/home/me'},
+          }),
+        ),
       );
       await Future<void>.delayed(Duration.zero);
 
@@ -640,11 +771,13 @@ void main() {
         ),
       );
       handler.handle(
-        PairingCodec.decode(_json({
-          'id': 3,
-          'method': 'fs.browse',
-          'params': {'path': r'C:\Users\me'},
-        })),
+        PairingCodec.decode(
+          _json({
+            'id': 3,
+            'method': 'fs.browse',
+            'params': {'path': r'C:\Users\me'},
+          }),
+        ),
       );
       await Future<void>.delayed(Duration.zero);
 
@@ -664,11 +797,13 @@ void main() {
         ),
       );
       handler.handle(
-        PairingCodec.decode(_json({
-          'id': 4,
-          'method': 'fs.browse',
-          'params': {'path': '/home/me'},
-        })),
+        PairingCodec.decode(
+          _json({
+            'id': 4,
+            'method': 'fs.browse',
+            'params': {'path': '/home/me'},
+          }),
+        ),
       );
       await Future<void>.delayed(Duration.zero);
 
@@ -684,11 +819,7 @@ void main() {
         uploadOpener: noopUploadOpener,
         dirBrowser: (path, {targetId}) async {
           seen = path;
-          return const PairingDirListing(
-            path: '/root',
-            parent: null,
-            dirs: [],
-          );
+          return const PairingDirListing(path: '/root', parent: null, dirs: []);
         },
       );
       handler.handle(
@@ -717,11 +848,13 @@ void main() {
         },
       );
       handler.handle(
-        PairingCodec.decode(_json({
-          'id': 4,
-          'method': 'fs.browse',
-          'params': {'path': '/home/me', 'targetId': 'wsl:Ubuntu'},
-        })),
+        PairingCodec.decode(
+          _json({
+            'id': 4,
+            'method': 'fs.browse',
+            'params': {'path': '/home/me', 'targetId': 'wsl:Ubuntu'},
+          }),
+        ),
       );
       await Future<void>.delayed(Duration.zero);
       expect(seenTarget, 'wsl:Ubuntu');
@@ -741,11 +874,13 @@ void main() {
         },
       );
       handler.handle(
-        PairingCodec.decode(_json({
-          'id': 5,
-          'method': 'fs.browse',
-          'params': {'path': '/x'},
-        })),
+        PairingCodec.decode(
+          _json({
+            'id': 5,
+            'method': 'fs.browse',
+            'params': {'path': '/x'},
+          }),
+        ),
       );
       await Future<void>.delayed(Duration.zero);
       expect(seenTarget, isNull);
@@ -763,11 +898,13 @@ void main() {
         },
       );
       handler.handle(
-        PairingCodec.decode(_json({
-          'id': 6,
-          'method': 'fs.browse',
-          'params': {'targetId': 42},
-        })),
+        PairingCodec.decode(
+          _json({
+            'id': 6,
+            'method': 'fs.browse',
+            'params': {'targetId': 42},
+          }),
+        ),
       );
       await Future<void>.delayed(Duration.zero);
       expect(seenTarget, isNull);
@@ -777,14 +914,19 @@ void main() {
   group('workspace.create', () {
     test('unsupported when no creator is injected', () async {
       handler.handle(
-        PairingCodec.decode(_json({
-          'id': 1,
-          'method': 'workspace.create',
-          'params': {'folderPath': '/x'},
-        })),
+        PairingCodec.decode(
+          _json({
+            'id': 1,
+            'method': 'workspace.create',
+            'params': {'folderPath': '/x'},
+          }),
+        ),
       );
       await Future<void>.delayed(Duration.zero);
-      expect((decodeLast() as JsonFrame).data['error'], contains('unsupported'));
+      expect(
+        (decodeLast() as JsonFrame).data['error'],
+        contains('unsupported'),
+      );
     });
 
     test('requires a non-empty folderPath', () async {
@@ -796,11 +938,13 @@ void main() {
             ({required folderPath, title, groupId, targetId}) async => 'w',
       );
       handler.handle(
-        PairingCodec.decode(_json({
-          'id': 1,
-          'method': 'workspace.create',
-          'params': {'folderPath': ''},
-        })),
+        PairingCodec.decode(
+          _json({
+            'id': 1,
+            'method': 'workspace.create',
+            'params': {'folderPath': ''},
+          }),
+        ),
       );
       await Future<void>.delayed(Duration.zero);
       expect(
@@ -809,42 +953,48 @@ void main() {
       );
     });
 
-    test('forwards folderPath/title/groupId/targetId and returns the id', () async {
-      String? gotFolder, gotTitle, gotGroup;
-      Object? gotTarget = 'unset';
-      handler = PairingRpcHandler(
-        catalog: catalog,
-        send: sent.add,
-        uploadOpener: noopUploadOpener,
-        workspaceCreator: ({required folderPath, title, groupId, targetId}) async {
-          gotFolder = folderPath;
-          gotTitle = title;
-          gotGroup = groupId;
-          gotTarget = targetId;
-          return 'ws-new';
-        },
-      );
-      handler.handle(
-        PairingCodec.decode(_json({
-          'id': 2,
-          'method': 'workspace.create',
-          'params': {
-            'folderPath': '/repo/app',
-            'title': 'App',
-            'groupId': 'g1',
-            'targetId': 'wsl:Ubuntu',
-          },
-        })),
-      );
-      await Future<void>.delayed(Duration.zero);
+    test(
+      'forwards folderPath/title/groupId/targetId and returns the id',
+      () async {
+        String? gotFolder, gotTitle, gotGroup;
+        Object? gotTarget = 'unset';
+        handler = PairingRpcHandler(
+          catalog: catalog,
+          send: sent.add,
+          uploadOpener: noopUploadOpener,
+          workspaceCreator:
+              ({required folderPath, title, groupId, targetId}) async {
+                gotFolder = folderPath;
+                gotTitle = title;
+                gotGroup = groupId;
+                gotTarget = targetId;
+                return 'ws-new';
+              },
+        );
+        handler.handle(
+          PairingCodec.decode(
+            _json({
+              'id': 2,
+              'method': 'workspace.create',
+              'params': {
+                'folderPath': '/repo/app',
+                'title': 'App',
+                'groupId': 'g1',
+                'targetId': 'wsl:Ubuntu',
+              },
+            }),
+          ),
+        );
+        await Future<void>.delayed(Duration.zero);
 
-      expect(gotFolder, '/repo/app');
-      expect(gotTitle, 'App');
-      expect(gotGroup, 'g1');
-      expect(gotTarget, 'wsl:Ubuntu');
-      final result = (decodeLast() as JsonFrame).data['result'] as Map;
-      expect(result['workspaceId'], 'ws-new');
-    });
+        expect(gotFolder, '/repo/app');
+        expect(gotTitle, 'App');
+        expect(gotGroup, 'g1');
+        expect(gotTarget, 'wsl:Ubuntu');
+        final result = (decodeLast() as JsonFrame).data['result'] as Map;
+        expect(result['workspaceId'], 'ws-new');
+      },
+    );
 
     test('an absent machine reaches the creator as null', () async {
       Object? gotTarget = 'unset';
@@ -852,17 +1002,20 @@ void main() {
         catalog: catalog,
         send: sent.add,
         uploadOpener: noopUploadOpener,
-        workspaceCreator: ({required folderPath, title, groupId, targetId}) async {
-          gotTarget = targetId;
-          return 'ws-new';
-        },
+        workspaceCreator:
+            ({required folderPath, title, groupId, targetId}) async {
+              gotTarget = targetId;
+              return 'ws-new';
+            },
       );
       handler.handle(
-        PairingCodec.decode(_json({
-          'id': 3,
-          'method': 'workspace.create',
-          'params': {'folderPath': '/repo/app'},
-        })),
+        PairingCodec.decode(
+          _json({
+            'id': 3,
+            'method': 'workspace.create',
+            'params': {'folderPath': '/repo/app'},
+          }),
+        ),
       );
       await Future<void>.delayed(Duration.zero);
       expect(gotTarget, isNull);
@@ -872,14 +1025,19 @@ void main() {
   group('group.create', () {
     test('unsupported when no creator is injected', () async {
       handler.handle(
-        PairingCodec.decode(_json({
-          'id': 1,
-          'method': 'group.create',
-          'params': {'name': 'X'},
-        })),
+        PairingCodec.decode(
+          _json({
+            'id': 1,
+            'method': 'group.create',
+            'params': {'name': 'X'},
+          }),
+        ),
       );
       await Future<void>.delayed(Duration.zero);
-      expect((decodeLast() as JsonFrame).data['error'], contains('unsupported'));
+      expect(
+        (decodeLast() as JsonFrame).data['error'],
+        contains('unsupported'),
+      );
     });
 
     test('requires a non-blank name', () async {
@@ -890,11 +1048,13 @@ void main() {
         groupCreator: (name) async => 'g',
       );
       handler.handle(
-        PairingCodec.decode(_json({
-          'id': 1,
-          'method': 'group.create',
-          'params': {'name': '   '},
-        })),
+        PairingCodec.decode(
+          _json({
+            'id': 1,
+            'method': 'group.create',
+            'params': {'name': '   '},
+          }),
+        ),
       );
       await Future<void>.delayed(Duration.zero);
       expect(
@@ -915,11 +1075,13 @@ void main() {
         },
       );
       handler.handle(
-        PairingCodec.decode(_json({
-          'id': 2,
-          'method': 'group.create',
-          'params': {'name': '  Frontend  '},
-        })),
+        PairingCodec.decode(
+          _json({
+            'id': 2,
+            'method': 'group.create',
+            'params': {'name': '  Frontend  '},
+          }),
+        ),
       );
       await Future<void>.delayed(Duration.zero);
 
@@ -932,14 +1094,19 @@ void main() {
   group('workspace.delete', () {
     test('unsupported when no deleter is injected', () async {
       handler.handle(
-        PairingCodec.decode(_json({
-          'id': 1,
-          'method': 'workspace.delete',
-          'params': {'workspaceId': 'wsA'},
-        })),
+        PairingCodec.decode(
+          _json({
+            'id': 1,
+            'method': 'workspace.delete',
+            'params': {'workspaceId': 'wsA'},
+          }),
+        ),
       );
       await Future<void>.delayed(Duration.zero);
-      expect((decodeLast() as JsonFrame).data['error'], contains('unsupported'));
+      expect(
+        (decodeLast() as JsonFrame).data['error'],
+        contains('unsupported'),
+      );
     });
 
     test('requires a non-empty workspaceId', () async {
@@ -950,11 +1117,13 @@ void main() {
         workspaceDeleter: (_) async {},
       );
       handler.handle(
-        PairingCodec.decode(_json({
-          'id': 1,
-          'method': 'workspace.delete',
-          'params': {'workspaceId': ''},
-        })),
+        PairingCodec.decode(
+          _json({
+            'id': 1,
+            'method': 'workspace.delete',
+            'params': {'workspaceId': ''},
+          }),
+        ),
       );
       await Future<void>.delayed(Duration.zero);
       expect(
@@ -974,11 +1143,13 @@ void main() {
         },
       );
       handler.handle(
-        PairingCodec.decode(_json({
-          'id': 2,
-          'method': 'workspace.delete',
-          'params': {'workspaceId': 'wsA'},
-        })),
+        PairingCodec.decode(
+          _json({
+            'id': 2,
+            'method': 'workspace.delete',
+            'params': {'workspaceId': 'wsA'},
+          }),
+        ),
       );
       await Future<void>.delayed(Duration.zero);
 
@@ -997,11 +1168,13 @@ void main() {
         },
       );
       handler.handle(
-        PairingCodec.decode(_json({
-          'id': 3,
-          'method': 'workspace.delete',
-          'params': {'workspaceId': 'wsA'},
-        })),
+        PairingCodec.decode(
+          _json({
+            'id': 3,
+            'method': 'workspace.delete',
+            'params': {'workspaceId': 'wsA'},
+          }),
+        ),
       );
       await Future<void>.delayed(Duration.zero);
       expect(
@@ -1014,14 +1187,19 @@ void main() {
   group('terminal.close', () {
     test('unsupported when no closer is injected', () async {
       handler.handle(
-        PairingCodec.decode(_json({
-          'id': 1,
-          'method': 'terminal.close',
-          'params': {'paneId': 'p1'},
-        })),
+        PairingCodec.decode(
+          _json({
+            'id': 1,
+            'method': 'terminal.close',
+            'params': {'paneId': 'p1'},
+          }),
+        ),
       );
       await Future<void>.delayed(Duration.zero);
-      expect((decodeLast() as JsonFrame).data['error'], contains('unsupported'));
+      expect(
+        (decodeLast() as JsonFrame).data['error'],
+        contains('unsupported'),
+      );
     });
 
     test('requires a non-empty paneId', () async {
@@ -1032,11 +1210,13 @@ void main() {
         paneCloser: (_) async {},
       );
       handler.handle(
-        PairingCodec.decode(_json({
-          'id': 1,
-          'method': 'terminal.close',
-          'params': {'paneId': ''},
-        })),
+        PairingCodec.decode(
+          _json({
+            'id': 1,
+            'method': 'terminal.close',
+            'params': {'paneId': ''},
+          }),
+        ),
       );
       await Future<void>.delayed(Duration.zero);
       expect(
@@ -1056,11 +1236,13 @@ void main() {
         },
       );
       handler.handle(
-        PairingCodec.decode(_json({
-          'id': 2,
-          'method': 'terminal.close',
-          'params': {'paneId': 'p1'},
-        })),
+        PairingCodec.decode(
+          _json({
+            'id': 2,
+            'method': 'terminal.close',
+            'params': {'paneId': 'p1'},
+          }),
+        ),
       );
       await Future<void>.delayed(Duration.zero);
 
@@ -1079,11 +1261,13 @@ void main() {
         },
       );
       handler.handle(
-        PairingCodec.decode(_json({
-          'id': 3,
-          'method': 'terminal.close',
-          'params': {'paneId': 'p1'},
-        })),
+        PairingCodec.decode(
+          _json({
+            'id': 3,
+            'method': 'terminal.close',
+            'params': {'paneId': 'p1'},
+          }),
+        ),
       );
       await Future<void>.delayed(Duration.zero);
       expect(

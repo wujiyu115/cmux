@@ -46,7 +46,9 @@ void main() {
     group('extractPairingCodeFromUrl', () {
       test('pulls the code query param from a teampilot link', () {
         expect(
-          PairingOffer.extractPairingCodeFromUrl('teampilot://pair?code=abc123'),
+          PairingOffer.extractPairingCodeFromUrl(
+            'teampilot://pair?code=abc123',
+          ),
           'abc123',
         );
       });

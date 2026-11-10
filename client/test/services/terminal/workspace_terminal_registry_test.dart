@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:teampilot/models/pane_mode.dart';
 import 'package:teampilot/models/terminal_split.dart';
 import 'package:teampilot/models/workspace_terminal_session_spec.dart';
 import 'package:teampilot/services/terminal/terminal_session.dart';
@@ -21,6 +22,23 @@ WorkspaceTerminalEntry _add(WorkspaceTerminalGroup g, {bool select = true}) {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  test('a pane keeps the mode it was created in', () {
+    final registry = WorkspaceTerminalRegistry();
+    final group = registry.groupFor('A');
+    final chat = group.addEntry(
+      cwd: '/tmp',
+      spec: const WorkspaceTerminalLocalSpec('/bin/bash'),
+      session: _testSession(),
+      select: true,
+      mode: PaneMode.chat,
+    );
+    final shell = _add(group);
+
+    expect(group.entryById(chat.id)?.mode, PaneMode.chat);
+    expect(shell.mode, PaneMode.terminal, reason: 'the default is a shell');
+    registry.disposeAll();
+  });
 
   group('WorkspaceTerminalRegistry', () {
     test('groupFor lazily creates and reuses a group per workspace', () {
@@ -48,17 +66,20 @@ void main() {
       reg.disposeAll();
     });
 
-    test('paneAttribution prefers pane name, then renamed tab, then spec label', () {
-      final g = WorkspaceTerminalGroup();
-      final e = _add(g)..titleLabel = 'Local';
-      final surfaceId = g.surfaces.single.id;
-      expect(g.paneAttribution(e.id), 'Local');
-      g.renameSurface(surfaceId, 'Build server');
-      expect(g.paneAttribution(e.id), 'Build server');
-      g.renamePane(e.id, 'Run pane');
-      expect(g.paneAttribution(e.id), 'Run pane');
-      g.dispose();
-    });
+    test(
+      'paneAttribution prefers pane name, then renamed tab, then spec label',
+      () {
+        final g = WorkspaceTerminalGroup();
+        final e = _add(g)..titleLabel = 'Local';
+        final surfaceId = g.surfaces.single.id;
+        expect(g.paneAttribution(e.id), 'Local');
+        g.renameSurface(surfaceId, 'Build server');
+        expect(g.paneAttribution(e.id), 'Build server');
+        g.renamePane(e.id, 'Run pane');
+        expect(g.paneAttribution(e.id), 'Run pane');
+        g.dispose();
+      },
+    );
 
     test('locateSurface resolves across groups without creating one', () {
       final reg = WorkspaceTerminalRegistry();

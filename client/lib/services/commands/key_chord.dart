@@ -223,8 +223,7 @@ String chordKeyForLogicalKey(LogicalKeyboardKey logicalKey) {
     LogicalKeyboardKey.f5 => 'f5',
     LogicalKeyboardKey.shift ||
     LogicalKeyboardKey.shiftLeft ||
-    LogicalKeyboardKey.shiftRight =>
-      'shift',
+    LogicalKeyboardKey.shiftRight => 'shift',
     _ => throw ArgumentError('Unsupported logical key: $logicalKey'),
   };
 }

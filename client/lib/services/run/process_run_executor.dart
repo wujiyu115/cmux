@@ -101,10 +101,7 @@ class SshProcessRunHandle implements ProcessRunHandle {
 }
 
 class ProcessRunResult {
-  const ProcessRunResult({
-    required this.exitCode,
-    required this.stop,
-  });
+  const ProcessRunResult({required this.exitCode, required this.stop});
 
   final Future<int> exitCode;
   final Future<void> Function() stop;
@@ -113,11 +110,9 @@ class ProcessRunResult {
 /// Spawns built-in `process` launch configs on the resolved local / WSL / SSH
 /// target (mirrors [WorkspaceShellConnector] transport selection).
 class ProcessRunExecutor {
-  ProcessRunExecutor({
-    ProcessSpawner? spawner,
-    SshProcessSpawner? sshSpawner,
-  }) : _spawner = spawner ?? _defaultSpawner,
-       _sshSpawner = sshSpawner;
+  ProcessRunExecutor({ProcessSpawner? spawner, SshProcessSpawner? sshSpawner})
+    : _spawner = spawner ?? _defaultSpawner,
+      _sshSpawner = sshSpawner;
 
   final ProcessSpawner _spawner;
   final SshProcessSpawner? _sshSpawner;

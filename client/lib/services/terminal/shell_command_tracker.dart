@@ -150,7 +150,8 @@ class ShellCommandTracker {
         _closeActive(exitCode: null, completedAt: _clock().toUtc());
         _pendingCommand = null;
       case 'B':
-        _pendingCommand = CommandSecretRedactor.sanitize(params) ?? _pendingCommand;
+        _pendingCommand =
+            CommandSecretRedactor.sanitize(params) ?? _pendingCommand;
       case 'C':
         final command =
             _pendingCommand ??
@@ -164,7 +165,10 @@ class ShellCommandTracker {
         _closeActive(exitCode: null, completedAt: _clock().toUtc());
         _start(command);
       case 'D':
-        _closeActive(exitCode: _parseExitCode(params), completedAt: _clock().toUtc());
+        _closeActive(
+          exitCode: _parseExitCode(params),
+          completedAt: _clock().toUtc(),
+        );
         _pendingCommand = null;
       default:
         // `L` (fresh-line) and vendor extensions carry no command state.

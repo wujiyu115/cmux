@@ -10,10 +10,7 @@ abstract final class CommandCatalog {
       id: CommandIds.workspaceNextTab,
       category: CommandCategory.navigation,
       defaultChords: [
-        KeyChord(
-          key: 'arrowRight',
-          mods: [KeyChordMod.mod, KeyChordMod.alt],
-        ),
+        KeyChord(key: 'arrowRight', mods: [KeyChordMod.mod, KeyChordMod.alt]),
       ],
       when: ShortcutWhen.hasOpenWorkspaceTabs,
       terminalPassthrough: true,
@@ -23,10 +20,7 @@ abstract final class CommandCatalog {
       id: CommandIds.workspacePrevTab,
       category: CommandCategory.navigation,
       defaultChords: [
-        KeyChord(
-          key: 'arrowLeft',
-          mods: [KeyChordMod.mod, KeyChordMod.alt],
-        ),
+        KeyChord(key: 'arrowLeft', mods: [KeyChordMod.mod, KeyChordMod.alt]),
       ],
       when: ShortcutWhen.hasOpenWorkspaceTabs,
       terminalPassthrough: true,
@@ -36,10 +30,7 @@ abstract final class CommandCatalog {
       id: CommandIds.workspaceCloseTab,
       category: CommandCategory.navigation,
       defaultChords: [
-        KeyChord(
-          key: 'w',
-          mods: [KeyChordMod.mod, KeyChordMod.shift],
-        ),
+        KeyChord(key: 'w', mods: [KeyChordMod.mod, KeyChordMod.shift]),
       ],
       when: ShortcutWhen.hasWorkspace,
       terminalPassthrough: true,
@@ -49,10 +40,7 @@ abstract final class CommandCatalog {
       id: CommandIds.workspaceReopenClosed,
       category: CommandCategory.navigation,
       defaultChords: [
-        KeyChord(
-          key: 't',
-          mods: [KeyChordMod.mod, KeyChordMod.shift],
-        ),
+        KeyChord(key: 't', mods: [KeyChordMod.mod, KeyChordMod.shift]),
       ],
       when: ShortcutWhen.always,
       terminalPassthrough: true,
@@ -133,10 +121,7 @@ abstract final class CommandCatalog {
       id: CommandIds.stripPrevTab,
       category: CommandCategory.tabs,
       defaultChords: [
-        KeyChord(
-          key: 'tab',
-          mods: [KeyChordMod.ctrl, KeyChordMod.shift],
-        ),
+        KeyChord(key: 'tab', mods: [KeyChordMod.ctrl, KeyChordMod.shift]),
       ],
       when: ShortcutWhen.hasWorkspace,
       terminalPassthrough: true,
@@ -204,10 +189,7 @@ abstract final class CommandCatalog {
       id: CommandIds.toggleSecondarySidebar,
       category: CommandCategory.view,
       defaultChords: [
-        KeyChord(
-          key: 'b',
-          mods: [KeyChordMod.mod, KeyChordMod.alt],
-        ),
+        KeyChord(key: 'b', mods: [KeyChordMod.mod, KeyChordMod.alt]),
       ],
       when: ShortcutWhen.hasWorkspace,
       terminalPassthrough: true,
@@ -252,9 +234,7 @@ abstract final class CommandCatalog {
     CommandDefinition(
       id: CommandIds.composeSubmit,
       category: CommandCategory.compose,
-      defaultChords: [
-        KeyChord(key: 'enter'),
-      ],
+      defaultChords: [KeyChord(key: 'enter')],
       when: ShortcutWhen.inCompose,
       terminalPassthrough: false,
       titleL10nKey: 'shortcutsComposeSubmit',
@@ -274,9 +254,7 @@ abstract final class CommandCatalog {
     CommandDefinition(
       id: CommandIds.runRunSelected,
       category: CommandCategory.run,
-      defaultChords: [
-        KeyChord(key: 'f5'),
-      ],
+      defaultChords: [KeyChord(key: 'f5')],
       when: ShortcutWhen.hasWorkspace,
       terminalPassthrough: true,
       titleL10nKey: 'shortcutsRunSelected',
@@ -295,10 +273,7 @@ abstract final class CommandCatalog {
       id: CommandIds.runRestart,
       category: CommandCategory.run,
       defaultChords: [
-        KeyChord(
-          key: 'f5',
-          mods: [KeyChordMod.mod, KeyChordMod.shift],
-        ),
+        KeyChord(key: 'f5', mods: [KeyChordMod.mod, KeyChordMod.shift]),
       ],
       when: ShortcutWhen.hasWorkspace,
       terminalPassthrough: true,
@@ -354,10 +329,7 @@ abstract final class CommandCatalog {
       id: CommandIds.terminalPaneFocusNext,
       category: CommandCategory.terminal,
       defaultChords: [
-        KeyChord(
-          key: 'bracketRight',
-          mods: [KeyChordMod.mod, KeyChordMod.alt],
-        ),
+        KeyChord(key: 'bracketRight', mods: [KeyChordMod.mod, KeyChordMod.alt]),
       ],
       when: ShortcutWhen.hasWorkspace,
       terminalPassthrough: true,
@@ -367,10 +339,7 @@ abstract final class CommandCatalog {
       id: CommandIds.terminalPaneFocusPrev,
       category: CommandCategory.terminal,
       defaultChords: [
-        KeyChord(
-          key: 'bracketLeft',
-          mods: [KeyChordMod.mod, KeyChordMod.alt],
-        ),
+        KeyChord(key: 'bracketLeft', mods: [KeyChordMod.mod, KeyChordMod.alt]),
       ],
       when: ShortcutWhen.hasWorkspace,
       terminalPassthrough: true,
@@ -380,10 +349,7 @@ abstract final class CommandCatalog {
       id: CommandIds.terminalPaneFocusLeft,
       category: CommandCategory.terminal,
       defaultChords: [
-        KeyChord(
-          key: 'arrowLeft',
-          mods: [KeyChordMod.alt, KeyChordMod.shift],
-        ),
+        KeyChord(key: 'arrowLeft', mods: [KeyChordMod.alt, KeyChordMod.shift]),
       ],
       when: ShortcutWhen.hasWorkspace,
       terminalPassthrough: true,
@@ -393,10 +359,7 @@ abstract final class CommandCatalog {
       id: CommandIds.terminalPaneFocusRight,
       category: CommandCategory.terminal,
       defaultChords: [
-        KeyChord(
-          key: 'arrowRight',
-          mods: [KeyChordMod.alt, KeyChordMod.shift],
-        ),
+        KeyChord(key: 'arrowRight', mods: [KeyChordMod.alt, KeyChordMod.shift]),
       ],
       when: ShortcutWhen.hasWorkspace,
       terminalPassthrough: true,
@@ -406,10 +369,7 @@ abstract final class CommandCatalog {
       id: CommandIds.terminalPaneFocusUp,
       category: CommandCategory.terminal,
       defaultChords: [
-        KeyChord(
-          key: 'arrowUp',
-          mods: [KeyChordMod.alt, KeyChordMod.shift],
-        ),
+        KeyChord(key: 'arrowUp', mods: [KeyChordMod.alt, KeyChordMod.shift]),
       ],
       when: ShortcutWhen.hasWorkspace,
       terminalPassthrough: true,
@@ -419,10 +379,7 @@ abstract final class CommandCatalog {
       id: CommandIds.terminalPaneFocusDown,
       category: CommandCategory.terminal,
       defaultChords: [
-        KeyChord(
-          key: 'arrowDown',
-          mods: [KeyChordMod.alt, KeyChordMod.shift],
-        ),
+        KeyChord(key: 'arrowDown', mods: [KeyChordMod.alt, KeyChordMod.shift]),
       ],
       when: ShortcutWhen.hasWorkspace,
       terminalPassthrough: true,

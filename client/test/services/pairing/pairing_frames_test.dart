@@ -15,7 +15,11 @@ void main() {
       expect(frame[0], 0x05, reason: 'upload kind');
       expect(frame[1], 7, reason: 'transferId as a single-byte varint');
       expect(frame[2], 3, reason: 'chunkIndex as a single-byte varint');
-      expect(frame.sublist(3), const [1, 2, 3], reason: 'payload is not framed');
+      expect(frame.sublist(3), const [
+        1,
+        2,
+        3,
+      ], reason: 'payload is not framed');
     });
 
     test('encodes multi-byte varints', () {
@@ -72,7 +76,9 @@ void main() {
       expect((json as JsonFrame).data['method'], 'ping');
 
       final bytes = Uint8List.fromList(utf8.encode('ls -la'));
-      final output = PairingCodec.decode(PairingCodec.encodeOutput(1, 2, bytes));
+      final output = PairingCodec.decode(
+        PairingCodec.encodeOutput(1, 2, bytes),
+      );
       expect((output as OutputFrame).sub, 1);
       expect(output.seq, 2);
       expect(output.bytes, bytes);

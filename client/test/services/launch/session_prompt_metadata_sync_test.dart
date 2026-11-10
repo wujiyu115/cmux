@@ -14,21 +14,20 @@ void main() {
     sync = SessionPromptMetadataSync(host: host, state: () => host.state);
   });
 
-  test('applyFirstPromptTitle renames empty display from landing prompt', () async {
-    host.state = ChatState(
-      sessions: [
-        AppSession(
-          sessionId: 'sess-1',
-          workspaceId: 'ws-1',
-          createdAt: 1,
-        ),
-      ],
-    );
+  test(
+    'applyFirstPromptTitle renames empty display from landing prompt',
+    () async {
+      host.state = ChatState(
+        sessions: [
+          AppSession(sessionId: 'sess-1', workspaceId: 'ws-1', createdAt: 1),
+        ],
+      );
 
-    await sync.applyFirstPromptTitle('sess-1', '  fix the landing title  ');
+      await sync.applyFirstPromptTitle('sess-1', '  fix the landing title  ');
 
-    expect(host.renames, [('sess-1', 'fix the landing title')]);
-  });
+      expect(host.renames, [('sess-1', 'fix the landing title')]);
+    },
+  );
 
   test('applyFirstPromptTitle skips when display already set', () async {
     host.state = ChatState(
@@ -50,11 +49,7 @@ void main() {
   test('applyFirstPromptTitle skips blank prompts', () async {
     host.state = ChatState(
       sessions: [
-        AppSession(
-          sessionId: 'sess-1',
-          workspaceId: 'ws-1',
-          createdAt: 1,
-        ),
+        AppSession(sessionId: 'sess-1', workspaceId: 'ws-1', createdAt: 1),
       ],
     );
 

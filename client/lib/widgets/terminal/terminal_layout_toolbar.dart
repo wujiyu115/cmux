@@ -20,6 +20,9 @@ class TerminalLayoutToolbar extends StatelessWidget {
     required this.onShowCommandLog,
     this.onShowAgentSessions,
     this.isZoomed = false,
+    this.chatPane = false,
+    this.terminalView = false,
+    this.onTogglePaneView,
     super.key,
   });
 
@@ -38,6 +41,18 @@ class TerminalLayoutToolbar extends StatelessWidget {
 
   /// Whether the active surface currently has a zoomed pane (drives the icon).
   final bool isZoomed;
+
+  /// True when the focused pane *is* a chat pane. A chat pane still runs its
+  /// agent in a PTY, so the terminal stays one click away as an escape hatch
+  /// (permission prompts, a stuck CLI, running something by hand).
+  final bool chatPane;
+
+  /// True when this chat pane is temporarily showing its terminal instead of
+  /// the conversation.
+  final bool terminalView;
+
+  /// Flips the escape hatch. Null hides it (plain terminal panes never get it).
+  final VoidCallback? onTogglePaneView;
 
   static const double kToolbarHeight = 32;
 
@@ -91,6 +106,18 @@ class TerminalLayoutToolbar extends StatelessWidget {
           ),
           if (onShowAgentSessions != null)
             _AgentSessionsMenuButton(onShow: onShowAgentSessions!),
+          if (chatPane && onTogglePaneView != null) ...[
+            _divider(),
+            TpIconButton(
+              icon: terminalView ? Icons.forum_outlined : Icons.terminal,
+              compact: true,
+              size: TpIconButton.kCompactSize,
+              tooltip: terminalView
+                  ? l10n.chatModeToChat
+                  : l10n.chatModeToTerminal,
+              onTap: onTogglePaneView,
+            ),
+          ],
           const SizedBox(width: 4),
         ],
       ),
@@ -98,9 +125,9 @@ class TerminalLayoutToolbar extends StatelessWidget {
   }
 
   Widget _divider() => const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-        child: TpSeparator(axis: Axis.vertical),
-      );
+    padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+    child: TpSeparator(axis: Axis.vertical),
+  );
 }
 
 /// Agent-CLI sessions button: hands its anchor position (bottom-left of the

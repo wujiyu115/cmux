@@ -42,15 +42,17 @@ PairingHostDirBrowser _browser(
 
 void main() {
   group('PairingHostDirBrowser', () {
-    test('a local browse with no path starts at the default workspace root',
-        () async {
-      final fs = InMemoryFilesystem();
-      await fs.ensureDir('/docs/TeamPilot/proj');
-      final listing = await _browser(fs).browse(null);
+    test(
+      'a local browse with no path starts at the default workspace root',
+      () async {
+        final fs = InMemoryFilesystem();
+        await fs.ensureDir('/docs/TeamPilot/proj');
+        final listing = await _browser(fs).browse(null);
 
-      expect(listing.path, '/docs/TeamPilot');
-      expect(listing.dirs, ['proj']);
-    });
+        expect(listing.path, '/docs/TeamPilot');
+        expect(listing.dirs, ['proj']);
+      },
+    );
 
     test('an empty targetId is the default plane, same as none', () async {
       final fs = InMemoryFilesystem();
@@ -110,38 +112,45 @@ void main() {
       expect(listing.path, '/docs/TeamPilot');
     });
 
-    test('an unknown machine is rejected before any filesystem is touched',
-        () async {
-      // Without this the picker behind filesystemFor silently falls back to the
-      // local machine, and the phone would be shown Windows while believing it
-      // is looking at a distro.
-      final fs = InMemoryFilesystem();
-      final calls = <String>[];
-      await expectLater(
-        _browser(fs, filesystemCalls: calls).browse(null, targetId: 'wsl:Gone'),
-        throwsA(isA<ArgumentError>()),
-      );
-      expect(calls, isEmpty);
-    });
+    test(
+      'an unknown machine is rejected before any filesystem is touched',
+      () async {
+        // Without this the picker behind filesystemFor silently falls back to the
+        // local machine, and the phone would be shown Windows while believing it
+        // is looking at a distro.
+        final fs = InMemoryFilesystem();
+        final calls = <String>[];
+        await expectLater(
+          _browser(
+            fs,
+            filesystemCalls: calls,
+          ).browse(null, targetId: 'wsl:Gone'),
+          throwsA(isA<ArgumentError>()),
+        );
+        expect(calls, isEmpty);
+      },
+    );
 
-    test('a hanging machine resolve gives up instead of waiting forever',
-        () async {
-      // A cold SSH target connects, reads the remote home, then opens SFTP; a
-      // blackholed host stalls all three. The host bound must fire so the phone
-      // gets a named reason rather than its own generic timeout.
-      final browser = PairingHostDirBrowser(
-        resolveTargetId: (raw) async => raw ?? '',
-        filesystemFor: (_) => Future.any([]),
-        homeFor: (_) async => null,
-        defaultLocalRoot: () async => '/docs',
-        resolveTimeout: const Duration(milliseconds: 20),
-      );
+    test(
+      'a hanging machine resolve gives up instead of waiting forever',
+      () async {
+        // A cold SSH target connects, reads the remote home, then opens SFTP; a
+        // blackholed host stalls all three. The host bound must fire so the phone
+        // gets a named reason rather than its own generic timeout.
+        final browser = PairingHostDirBrowser(
+          resolveTargetId: (raw) async => raw ?? '',
+          filesystemFor: (_) => Future.any([]),
+          homeFor: (_) async => null,
+          defaultLocalRoot: () async => '/docs',
+          resolveTimeout: const Duration(milliseconds: 20),
+        );
 
-      await expectLater(
-        browser.browse(null, targetId: 'ssh:box'),
-        throwsA(isA<Exception>()),
-      );
-    });
+        await expectLater(
+          browser.browse(null, targetId: 'ssh:box'),
+          throwsA(isA<Exception>()),
+        );
+      },
+    );
 
     test('a local browse carries the machine drive roots', () async {
       // The whole point of the field: a Windows browse starts inside one volume

@@ -98,51 +98,57 @@ void main() {
     expect(createCount, 2);
   });
 
-  test('hasLiveStorageClient is false until clientForStorage succeeds', () async {
-    final factory = SshClientFactory(
-      credentialStore: InMemorySshCredentialStore(),
-      knownHostRepository: InMemorySshKnownHostRepository(),
-      connector: (profile, {timeout = const Duration(seconds: 10)}) async {
-        return _InstantAuthClient();
-      },
-    );
+  test(
+    'hasLiveStorageClient is false until clientForStorage succeeds',
+    () async {
+      final factory = SshClientFactory(
+        credentialStore: InMemorySshCredentialStore(),
+        knownHostRepository: InMemorySshKnownHostRepository(),
+        connector: (profile, {timeout = const Duration(seconds: 10)}) async {
+          return _InstantAuthClient();
+        },
+      );
 
-    const profile = SshProfile(
-      id: 'p1',
-      name: 'dev',
-      host: 'example.com',
-      username: 'alice',
-    );
+      const profile = SshProfile(
+        id: 'p1',
+        name: 'dev',
+        host: 'example.com',
+        username: 'alice',
+      );
 
-    expect(factory.hasLiveStorageClient(profile.id), isFalse);
-    await factory.clientForStorage(profile);
-    expect(factory.hasLiveStorageClient(profile.id), isTrue);
-  });
+      expect(factory.hasLiveStorageClient(profile.id), isFalse);
+      await factory.clientForStorage(profile);
+      expect(factory.hasLiveStorageClient(profile.id), isTrue);
+    },
+  );
 
-  test('hasLiveStorageClient stays false while authentication is pending', () async {
-    final authGate = Completer<void>();
-    final factory = SshClientFactory(
-      credentialStore: InMemorySshCredentialStore(),
-      knownHostRepository: InMemorySshKnownHostRepository(),
-      connector: (profile, {timeout = const Duration(seconds: 10)}) async {
-        return _DelayedAuthClient(authGate.future);
-      },
-    );
+  test(
+    'hasLiveStorageClient stays false while authentication is pending',
+    () async {
+      final authGate = Completer<void>();
+      final factory = SshClientFactory(
+        credentialStore: InMemorySshCredentialStore(),
+        knownHostRepository: InMemorySshKnownHostRepository(),
+        connector: (profile, {timeout = const Duration(seconds: 10)}) async {
+          return _DelayedAuthClient(authGate.future);
+        },
+      );
 
-    const profile = SshProfile(
-      id: 'p1',
-      name: 'dev',
-      host: 'example.com',
-      username: 'alice',
-    );
+      const profile = SshProfile(
+        id: 'p1',
+        name: 'dev',
+        host: 'example.com',
+        username: 'alice',
+      );
 
-    expect(factory.hasLiveStorageClient(profile.id), isFalse);
-    final pending = factory.clientForStorage(profile);
-    expect(factory.hasLiveStorageClient(profile.id), isFalse);
-    authGate.complete();
-    await pending;
-    expect(factory.hasLiveStorageClient(profile.id), isTrue);
-  });
+      expect(factory.hasLiveStorageClient(profile.id), isFalse);
+      final pending = factory.clientForStorage(profile);
+      expect(factory.hasLiveStorageClient(profile.id), isFalse);
+      authGate.complete();
+      await pending;
+      expect(factory.hasLiveStorageClient(profile.id), isTrue);
+    },
+  );
 
   test('storagePoolChanges emits on open and disconnectProfile', () async {
     final factory = SshClientFactory(
@@ -199,35 +205,38 @@ void main() {
     },
   );
 
-  test('storagePoolChanges emits when transport closes pooled client', () async {
-    final factory = SshClientFactory(
-      credentialStore: InMemorySshCredentialStore(),
-      knownHostRepository: InMemorySshKnownHostRepository(),
-      connector: (profile, {timeout = const Duration(seconds: 10)}) async {
-        return _InstantAuthClient();
-      },
-    );
+  test(
+    'storagePoolChanges emits when transport closes pooled client',
+    () async {
+      final factory = SshClientFactory(
+        credentialStore: InMemorySshCredentialStore(),
+        knownHostRepository: InMemorySshKnownHostRepository(),
+        connector: (profile, {timeout = const Duration(seconds: 10)}) async {
+          return _InstantAuthClient();
+        },
+      );
 
-    const profile = SshProfile(
-      id: 'p1',
-      name: 'dev',
-      host: 'example.com',
-      username: 'alice',
-    );
+      const profile = SshProfile(
+        id: 'p1',
+        name: 'dev',
+        host: 'example.com',
+        username: 'alice',
+      );
 
-    final client = await factory.clientForStorage(profile);
-    expect(factory.hasLiveStorageClient(profile.id), isTrue);
+      final client = await factory.clientForStorage(profile);
+      expect(factory.hasLiveStorageClient(profile.id), isTrue);
 
-    final events = <String>[];
-    final sub = factory.storagePoolChanges.listen(events.add);
-    client.close();
-    await client.done;
-    await Future<void>.delayed(Duration.zero);
+      final events = <String>[];
+      final sub = factory.storagePoolChanges.listen(events.add);
+      client.close();
+      await client.done;
+      await Future<void>.delayed(Duration.zero);
 
-    expect(events, [profile.id]);
-    expect(factory.hasLiveStorageClient(profile.id), isFalse);
-    await sub.cancel();
-  });
+      expect(events, [profile.id]);
+      expect(factory.hasLiveStorageClient(profile.id), isFalse);
+      await sub.cancel();
+    },
+  );
 }
 
 class _InstantAuthClient extends SSHClient {

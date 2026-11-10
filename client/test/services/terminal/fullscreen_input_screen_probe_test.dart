@@ -4,10 +4,7 @@ import 'package:teampilot/services/terminal/fullscreen_input_screen_probe.dart';
 
 void main() {
   test('locateNeedle finds bottommost row match', () {
-    final grid = _FakeGrid.fromRows([
-      'agent output above',
-      '> 和你的队员打个招呼吧    ',
-    ]);
+    final grid = _FakeGrid.fromRows(['agent output above', '> 和你的队员打个招呼吧    ']);
     final anchor = locateFullscreenPromptNeedle(grid, '和你的队员打个招呼吧');
     expect(anchor, isNotNull);
     expect(anchor!.row, 1);
@@ -15,11 +12,7 @@ void main() {
   });
 
   test('locateNeedle matches CJK with wide-char spacer columns', () {
-    final grid = _FakeGrid.wideCjkRow(
-      row: 1,
-      prefix: '> ',
-      text: '和你的队员打个招呼吧',
-    );
+    final grid = _FakeGrid.wideCjkRow(row: 1, prefix: '> ', text: '和你的队员打个招呼吧');
     final anchor = locateFullscreenPromptNeedle(grid, '和你的队员打个招呼吧');
     expect(anchor, isNotNull);
     expect(anchor!.row, 1);
@@ -28,15 +21,13 @@ void main() {
   });
 
   test('isAtAnchor true while staged, false after input cleared', () {
-    final grid = _FakeGrid.fromRows([
-      'history',
-      '> 和你的队员打个招呼吧    ',
-    ]);
+    final grid = _FakeGrid.fromRows(['history', '> 和你的队员打个招呼吧    ']);
     final anchor = locateFullscreenPromptNeedle(grid, '和你的队员打个招呼吧')!;
     expect(isFullscreenPromptAtAnchor(grid, anchor), isTrue);
 
-    grid.rowsData[1] =
-        '>                         '.padRight(grid.columns).codeUnits;
+    grid.rowsData[1] = '>                         '
+        .padRight(grid.columns)
+        .codeUnits;
     grid.flagsData[1] = List.filled(grid.columns, 0);
     expect(isFullscreenPromptAtAnchor(grid, anchor), isFalse);
   });
@@ -124,56 +115,56 @@ void main() {
     lines[6] = '› active composer';
     final grid = _FakeGrid.fromRows(lines);
 
-    expect(
-      bottomComposerChromeRow(grid, '\u203a', scanRows: 8),
-      6,
-    );
+    expect(bottomComposerChromeRow(grid, '\u203a', scanRows: 8), 6);
   });
 
-  test('isSubmitted true for composerMovesDown when prefix row appears below', () {
-    final grid = _FakeGrid.fromRows([
-      'codex output above',
-      '› codex-probe-12345',
-      'Working…',
-      '› ',
-    ]);
-    final anchor = locateFullscreenPromptNeedle(grid, 'codex-probe-12345')!;
-    expect(isFullscreenPromptAtAnchor(grid, anchor), isTrue);
-    expect(
-      isFullscreenPromptSubmitted(
-        grid,
-        anchor,
-        strategy: FullscreenCrAckStrategy.composerMovesDown,
-        composerPrefix: '\u203a',
-        scanRows: 24,
-      ),
-      isTrue,
-    );
-  });
+  test(
+    'isSubmitted true for composerMovesDown when prefix row appears below',
+    () {
+      final grid = _FakeGrid.fromRows([
+        'codex output above',
+        '› codex-probe-12345',
+        'Working…',
+        '› ',
+      ]);
+      final anchor = locateFullscreenPromptNeedle(grid, 'codex-probe-12345')!;
+      expect(isFullscreenPromptAtAnchor(grid, anchor), isTrue);
+      expect(
+        isFullscreenPromptSubmitted(
+          grid,
+          anchor,
+          strategy: FullscreenCrAckStrategy.composerMovesDown,
+          composerPrefix: '\u203a',
+          scanRows: 24,
+        ),
+        isTrue,
+      );
+    },
+  );
 
-  test('isSubmitted false for composerMovesDown when no new composer below', () {
-    final grid = _FakeGrid.fromRows([
-      'codex output above',
-      '› codex-probe-12345',
-    ]);
-    final anchor = locateFullscreenPromptNeedle(grid, 'codex-probe-12345')!;
-    expect(
-      isFullscreenPromptSubmitted(
-        grid,
-        anchor,
-        strategy: FullscreenCrAckStrategy.composerMovesDown,
-        composerPrefix: '\u203a',
-        scanRows: 24,
-      ),
-      isFalse,
-    );
-  });
+  test(
+    'isSubmitted false for composerMovesDown when no new composer below',
+    () {
+      final grid = _FakeGrid.fromRows([
+        'codex output above',
+        '› codex-probe-12345',
+      ]);
+      final anchor = locateFullscreenPromptNeedle(grid, 'codex-probe-12345')!;
+      expect(
+        isFullscreenPromptSubmitted(
+          grid,
+          anchor,
+          strategy: FullscreenCrAckStrategy.composerMovesDown,
+          composerPrefix: '\u203a',
+          scanRows: 24,
+        ),
+        isFalse,
+      );
+    },
+  );
 
   test('isComposerChromeEmpty true for prefix-only cursor row', () {
-    final grid = _FakeGrid.fromRows([
-      'A',
-      '→ ',
-    ]);
+    final grid = _FakeGrid.fromRows(['A', '→ ']);
     expect(
       isComposerChromeEmpty(grid, composerPrefix: '→', scanRows: 8),
       isTrue,
@@ -206,8 +197,7 @@ void main() {
 
   test('locateNeedle finds soft-wrapped CJK tail across two rows', () {
     // Logical paste (no prefix in needle). Composer prefix only on first row.
-    const line0 =
-        '❯ 帮我估算一下这个需求的时间：分类分级系统接入银行统一身份认证体系，实现登录双因素认证（优先手机令牌方式），同时评估';
+    const line0 = '❯ 帮我估算一下这个需求的时间：分类分级系统接入银行统一身份认证体系，实现登录双因素认证（优先手机令牌方式），同时评估';
     const line1 = '是否支持 LDAP/AD 域认证作为标准登录方式，详细信息参考附件';
     const full =
         '帮我估算一下这个需求的时间：分类分级系统接入银行统一身份认证体系，实现登录双因素认证（优先手机令牌方式），同时评估是否支持 LDAP/AD 域认证作为标准登录方式，详细信息参考附件';
@@ -222,7 +212,11 @@ void main() {
     );
 
     final anchor = locateFullscreenPromptNeedle(grid, needle, scanRows: 8);
-    expect(anchor, isNotNull, reason: 'needle spans soft wrap; single-row match misses');
+    expect(
+      anchor,
+      isNotNull,
+      reason: 'needle spans soft wrap; single-row match misses',
+    );
     expect(anchor!.row, 0);
     expect(isFullscreenPromptAtAnchor(grid, anchor), isTrue);
   });
@@ -240,10 +234,7 @@ void main() {
   });
 
   test('locateNeedle finds ASCII soft-wrapped needle across two rows', () {
-    final grid = _FakeGrid.fromRows([
-      '❯ hello_WORLD_PART',
-      '_CONTINUES_HERE',
-    ]);
+    final grid = _FakeGrid.fromRows(['❯ hello_WORLD_PART', '_CONTINUES_HERE']);
     final anchor = locateFullscreenPromptNeedle(
       grid,
       'WORLD_PART_CONTINUES_HERE',
@@ -252,31 +243,31 @@ void main() {
     expect(anchor!.row, 0);
   });
 
-  test('locateNeedle finds soft-wrapped needle when continuation is indented', () {
-    // Claude Code wraps long composer lines and indents the continuation past
-    // the prompt prefix. describeProbeWindow trims leading spaces, so the miss
-    // log looks contiguous while col=0 matching fails on spaces.
-    final grid = _FakeGrid.fromRows([
-      '❯ 这个仓库怎么样https://github.com/hhoao/flutter',
-      '  _alacritty',
-    ]);
-    const needle = 'tps://github.com/hhoao/flutter_alacritty';
-    final anchor = locateFullscreenPromptNeedle(grid, needle, scanRows: 8);
-    expect(
-      anchor,
-      isNotNull,
-      reason: 'indented soft-wrap continuation must still match',
-    );
-    expect(isFullscreenPromptAtAnchor(grid, anchor!), isTrue);
-  });
+  test(
+    'locateNeedle finds soft-wrapped needle when continuation is indented',
+    () {
+      // Claude Code wraps long composer lines and indents the continuation past
+      // the prompt prefix. describeProbeWindow trims leading spaces, so the miss
+      // log looks contiguous while col=0 matching fails on spaces.
+      final grid = _FakeGrid.fromRows([
+        '❯ 这个仓库怎么样https://github.com/hhoao/flutter',
+        '  _alacritty',
+      ]);
+      const needle = 'tps://github.com/hhoao/flutter_alacritty';
+      final anchor = locateFullscreenPromptNeedle(grid, needle, scanRows: 8);
+      expect(
+        anchor,
+        isNotNull,
+        reason: 'indented soft-wrap continuation must still match',
+      );
+      expect(isFullscreenPromptAtAnchor(grid, anchor!), isTrue);
+    },
+  );
 
   test('locateNeedle collapses needle spaces across indented soft wrap', () {
     // Wrap lands on the word-break space; continuation indent has MORE spaces
     // than the single space in the needle.
-    final grid = _FakeGrid.fromRows([
-      '❯ say hello',
-      '     world_TAIL',
-    ]);
+    final grid = _FakeGrid.fromRows(['❯ say hello', '     world_TAIL']);
     final anchor = locateFullscreenPromptNeedle(
       grid,
       'hello world_TAIL',
@@ -291,10 +282,7 @@ void main() {
   });
 
   test('locateNeedle collapses multiple needle spaces after soft wrap', () {
-    final grid = _FakeGrid.fromRows([
-      '❯ say hello',
-      '     world_TAIL',
-    ]);
+    final grid = _FakeGrid.fromRows(['❯ say hello', '     world_TAIL']);
     final anchor = locateFullscreenPromptNeedle(
       grid,
       'hello   world_TAIL',
@@ -305,10 +293,7 @@ void main() {
   });
 
   test('isAtAnchor false after clearing soft-wrapped staged cells', () {
-    final grid = _FakeGrid.fromRows([
-      '❯ hello_WORLD_PART',
-      '_CONTINUES_HERE',
-    ]);
+    final grid = _FakeGrid.fromRows(['❯ hello_WORLD_PART', '_CONTINUES_HERE']);
     final anchor = locateFullscreenPromptNeedle(
       grid,
       'WORLD_PART_CONTINUES_HERE',

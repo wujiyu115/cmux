@@ -20,20 +20,17 @@ void main() {
       (empty: true, needle: false),
       (empty: false, needle: false),
     ]) {
-      test(
-        'composerMovesDown does not skip empty=${case_.empty} '
-        'needle=${case_.needle}',
-        () {
-          expect(
-            shouldSkipReinjectAfterCrStuck(
-              strategy: FullscreenCrAckStrategy.composerMovesDown,
-              composerChromeEmpty: case_.empty,
-              needleStillVisible: case_.needle,
-            ),
-            isFalse,
-          );
-        },
-      );
+      test('composerMovesDown does not skip empty=${case_.empty} '
+          'needle=${case_.needle}', () {
+        expect(
+          shouldSkipReinjectAfterCrStuck(
+            strategy: FullscreenCrAckStrategy.composerMovesDown,
+            composerChromeEmpty: case_.empty,
+            needleStillVisible: case_.needle,
+          ),
+          isFalse,
+        );
+      });
     }
 
     for (final strategy in [

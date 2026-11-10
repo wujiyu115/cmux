@@ -5,7 +5,6 @@ import 'package:teampilot/models/workspace_folder.dart';
 import 'package:teampilot/models/workspace_launch_context.dart';
 import 'package:teampilot/services/session/session_lifecycle_service.dart';
 
-
 WorkspaceLaunchContext _ctx(
   AppSession session, {
   List<WorkspaceFolder>? workspaceFolders,
@@ -31,19 +30,22 @@ void main() {
     expect(lifecycle.launchWorkTarget(_ctx(session)).id, 'ssh:p1');
   });
 
-  test('personal session workDirs on mixed workspace filters add-dirs by target', () {
-    final session = AppSession(
-      sessionId: 's-personal',
-      workspaceId: 'w1',
-      folders: const [
-        WorkspaceFolder(path: '/local', targetId: 'local'),
-        WorkspaceFolder(path: '/local-extra', targetId: 'local'),
-        WorkspaceFolder(path: '/remote', targetId: 'ssh:p1'),
-      ],
-      createdAt: 1,
-    );
-    final dirs = session.workDirsForMember(null, folders: session.folders);
-    expect(dirs.workingDirectory, '/local');
-    expect(dirs.addDirs, ['/local-extra']);
-  });
+  test(
+    'personal session workDirs on mixed workspace filters add-dirs by target',
+    () {
+      final session = AppSession(
+        sessionId: 's-personal',
+        workspaceId: 'w1',
+        folders: const [
+          WorkspaceFolder(path: '/local', targetId: 'local'),
+          WorkspaceFolder(path: '/local-extra', targetId: 'local'),
+          WorkspaceFolder(path: '/remote', targetId: 'ssh:p1'),
+        ],
+        createdAt: 1,
+      );
+      final dirs = session.workDirsForMember(null, folders: session.folders);
+      expect(dirs.workingDirectory, '/local');
+      expect(dirs.addDirs, ['/local-extra']);
+    },
+  );
 }

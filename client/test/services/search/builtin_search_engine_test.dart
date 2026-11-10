@@ -49,9 +49,7 @@ void main() {
   test('case sensitivity toggle', () async {
     await fs.writeString('/repo/a.txt', 'Foo foo\n');
 
-    final insensitive = await run(
-      const SearchQuery(text: 'foo'),
-    ).results;
+    final insensitive = await run(const SearchQuery(text: 'foo')).results;
     expect(insensitive.files.single.matches.single.spans, hasLength(2));
 
     final sensitive = await run(
@@ -88,7 +86,6 @@ void main() {
     await fs.writeString('/repo/test/a.dart', 'foo\n');
     await fs.writeString('/repo/lib/b.md', 'foo\n');
 
-
     final included = await run(
       const SearchQuery(text: 'foo', includeGlobs: '*.dart'),
     ).results;
@@ -98,7 +95,11 @@ void main() {
     ]);
 
     final excluded = await run(
-      const SearchQuery(text: 'foo', includeGlobs: '*.dart', excludeGlobs: 'test/'),
+      const SearchQuery(
+        text: 'foo',
+        includeGlobs: '*.dart',
+        excludeGlobs: 'test/',
+      ),
     ).results;
     expect(excluded.files.map((f) => f.displayPath), ['lib/a.dart']);
   });

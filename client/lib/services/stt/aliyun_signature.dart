@@ -32,7 +32,9 @@ String aliyunPercentEncode(String input) {
 String aliyunStringToSign(Map<String, String> params) {
   final keys = params.keys.where((k) => k != 'Signature').toList()..sort();
   final canonical = keys
-      .map((k) => '${aliyunPercentEncode(k)}=${aliyunPercentEncode(params[k]!)}')
+      .map(
+        (k) => '${aliyunPercentEncode(k)}=${aliyunPercentEncode(params[k]!)}',
+      )
       .join('&');
   return 'GET&${aliyunPercentEncode('/')}&${aliyunPercentEncode(canonical)}';
 }

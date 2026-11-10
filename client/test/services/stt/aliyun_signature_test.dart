@@ -65,9 +65,10 @@ void main() {
       // is secret + '&' (not the bare secret), that it is SHA-1 (not SHA-256),
       // and that the digest is base64 (not hex).
       final expected = base64Encode(
-        Hmac(sha1, utf8.encode('$secret&'))
-            .convert(utf8.encode(aliyunStringToSign(params)))
-            .bytes,
+        Hmac(
+          sha1,
+          utf8.encode('$secret&'),
+        ).convert(utf8.encode(aliyunStringToSign(params))).bytes,
       );
       expect(aliyunSignature(params, secret), expected);
     });

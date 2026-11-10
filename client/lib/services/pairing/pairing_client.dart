@@ -10,6 +10,7 @@ import 'agent_notice_message.dart';
 import 'e2ee_channel.dart';
 import 'pairing_crypto.dart';
 import 'pairing_frames.dart';
+import '../chat/chat_transcript_row.dart';
 import 'pairing_git_view.dart';
 import 'pairing_ports.dart';
 import 'pairing_upload_sender.dart';
@@ -48,6 +49,17 @@ class PairingAuthResult {
 }
 
 /// One mirrorable terminal as advertised by the host's `session.list`.
+/// What the desktop says about one pane's view mode, plus its rows when the
+/// pane is showing a conversation.
+class PairingChatView {
+  const PairingChatView({required this.isChat, this.transcript});
+
+  const PairingChatView.terminal() : isChat = false, transcript = null;
+
+  final bool isChat;
+  final ChatTranscriptSnapshot? transcript;
+}
+
 class PairingSessionSummary {
   const PairingSessionSummary({
     required this.catalogId,
@@ -731,11 +743,10 @@ class PairingClient {
     required String workspaceId,
     String? paneId,
   }) async {
-    final result = await _rpc(
-      'session.activate',
-      {'workspaceId': workspaceId, if (paneId != null) 'paneId': paneId},
-      const Duration(seconds: 20),
-    );
+    final result = await _rpc('session.activate', {
+      'workspaceId': workspaceId,
+      if (paneId != null) 'paneId': paneId,
+    }, const Duration(seconds: 20));
     final catalogId = result['catalogId'] as String?;
     if (catalogId == null || catalogId.isEmpty) {
       throw Exception('activate returned no catalogId');
@@ -763,14 +774,10 @@ class PairingClient {
   /// list anything — the SSH connect alone is allowed 10s. This is a single
   /// user-initiated browse, so waiting beats a spurious timeout.
   Future<PairingDirListing> browseDir({String? path, String? targetId}) async {
-    final result = await _rpc(
-      'fs.browse',
-      {
-        if (path != null) 'path': path,
-        if (targetId != null && targetId.isNotEmpty) 'targetId': targetId,
-      },
-      const Duration(seconds: 30),
-    );
+    final result = await _rpc('fs.browse', {
+      if (path != null) 'path': path,
+      if (targetId != null && targetId.isNotEmpty) 'targetId': targetId,
+    }, const Duration(seconds: 30));
     final rawDirs = result['dirs'];
     final rawRoots = result['roots'];
     return PairingDirListing(
@@ -800,12 +807,62 @@ class PairingClient {
   ///
   /// The budget is above [_rpc]'s default because `git status` on an SSH target
   /// is a remote process launch, and on a large repo it is not instant.
-  Future<PairingGitChanges> gitChanges(int sub) async {
-    final result = await _rpc(
-      'git.changes',
-      {'sub': sub},
-      const Duration(seconds: 20),
+  /// The mode one pane is in, plus its chat rows when it is a conversation.
+  ///
+  /// Polled by the mirror rather than pushed: the desktop can flip a pane
+  /// between terminal and chat at any moment, and one cheap call answers both
+  /// "which mode" and "what rows" without the phone having to track either.
+  Future<PairingChatView> chatView(String catalogId) async {
+    final result = await _rpc('chat.read', {
+      'catalogId': catalogId,
+    }, const Duration(seconds: 15));
+    final raw = result['transcript'];
+    return PairingChatView(
+      isChat: result['mode'] == 'chat',
+      transcript: raw is Map
+          ? _chatSnapshotFromJson(raw.cast<String, Object?>())
+          : null,
     );
+  }
+
+  /// Defensive parse: a row the phone cannot understand is dropped instead of
+  /// failing the whole transcript.
+  static ChatTranscriptSnapshot _chatSnapshotFromJson(
+    Map<String, Object?> json,
+  ) {
+    final rawRows = json['rows'];
+    final rows = <ChatTranscriptRow>[
+      if (rawRows is List)
+        for (final row in rawRows)
+          if (row is Map)
+            if (_chatRowFrom(row) case final parsed?) parsed,
+    ];
+    final unavailable = json['unavailable'];
+    return ChatTranscriptSnapshot(
+      rows: rows,
+      unavailable: unavailable is String
+          ? ChatTranscriptUnavailable.values
+                .where((value) => value.name == unavailable)
+                .firstOrNull
+          : null,
+      sessionId: json['sessionId'] as String?,
+      family: json['family'] as String?,
+      busy: json['busy'] == true,
+    );
+  }
+
+  static ChatTranscriptRow? _chatRowFrom(Map<Object?, Object?> row) {
+    try {
+      return ChatTranscriptRow.fromJson(row.cast<String, Object?>());
+    } on Object {
+      return null;
+    }
+  }
+
+  Future<PairingGitChanges> gitChanges(int sub) async {
+    final result = await _rpc('git.changes', {
+      'sub': sub,
+    }, const Duration(seconds: 20));
     return PairingGitChanges.fromJson(result);
   }
 
@@ -814,11 +871,10 @@ class PairingClient {
   /// [path] must be one the host advertised in the matching [gitChanges] call —
   /// the host refuses anything else, so callers must not synthesize paths.
   Future<String> gitDiff({required int sub, required String path}) async {
-    final result = await _rpc(
-      'git.diff',
-      {'sub': sub, 'path': path},
-      const Duration(seconds: 20),
-    );
+    final result = await _rpc('git.diff', {
+      'sub': sub,
+      'path': path,
+    }, const Duration(seconds: 20));
     return result['diff'] is String ? result['diff'] as String : '';
   }
 

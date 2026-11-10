@@ -166,6 +166,7 @@ String _familyLabel(AppLocalizations l10n, AgentCliFamily family) =>
       AgentCliFamily.codex => l10n.agentCliFamilyCodex,
       AgentCliFamily.opencode => l10n.agentCliFamilyOpencode,
       AgentCliFamily.ohMyPi => l10n.agentCliFamilyOhMyPi,
+      AgentCliFamily.pi => l10n.agentCliFamilyPi,
     };
 
 IconData _familyIcon(AgentCliFamily family) => switch (family) {
@@ -174,6 +175,7 @@ IconData _familyIcon(AgentCliFamily family) => switch (family) {
   AgentCliFamily.codex => Icons.memory,
   AgentCliFamily.opencode => Icons.code_rounded,
   AgentCliFamily.ohMyPi => Icons.functions,
+  AgentCliFamily.pi => Icons.terminal,
 };
 
 String _sessionLabel(AgentCliSessionRecord session) {

@@ -105,8 +105,11 @@ class VolcengineSttProvider implements SttProvider {
       _socketSub = socket.messages.listen(
         _onSocketData,
         onError: (Object e, StackTrace st) {
-          AppLogger.instance.w('Volcengine socket error', error: e,
-              stackTrace: st);
+          AppLogger.instance.w(
+            'Volcengine socket error',
+            error: e,
+            stackTrace: st,
+          );
           if (!_ready.isCompleted) _ready.complete(false);
           if (!results.isClosed) {
             results.addError(SttException('socket error: $e'));
@@ -159,8 +162,11 @@ class VolcengineSttProvider implements SttProvider {
     try {
       frame = decodeVolcServerFrame(data);
     } on FormatException catch (e, st) {
-      AppLogger.instance.w('Volcengine: dropping malformed server frame',
-          error: e, stackTrace: st);
+      AppLogger.instance.w(
+        'Volcengine: dropping malformed server frame',
+        error: e,
+        stackTrace: st,
+      );
       return;
     }
     _handleServerFrame(frame);
@@ -196,7 +202,8 @@ class VolcengineSttProvider implements SttProvider {
 
     final utterances = result['utterances'];
     final isLast = (frame.flags & 0x02) != 0;
-    final isFinal = isLast ||
+    final isFinal =
+        isLast ||
         (utterances is List &&
             utterances.isNotEmpty &&
             utterances.last is Map &&
@@ -228,10 +235,7 @@ class VolcengineSttProvider implements SttProvider {
     // audio already sent — closing immediately drops that trailing result. But
     // bail the instant the socket closes so a server that has already hung up
     // never makes us sit out the whole window.
-    await Future.any([
-      _socketDone.future,
-      Future<void>.delayed(serverGrace),
-    ]);
+    await Future.any([_socketDone.future, Future<void>.delayed(serverGrace)]);
 
     await _audioSub?.cancel();
     _audioSub = null;
@@ -326,18 +330,18 @@ class VolcengineSttProvider implements SttProvider {
 /// The Volcengine session configuration payload. `enable_punc` / `enable_itn`
 /// stay `true` by product decision. Language defaults to `zh-CN`.
 Map<String, dynamic> _buildConfig(String? localeId) => {
-      'audio': {
-        'format': 'pcm',
-        'rate': 16000,
-        'bits': 16,
-        'channel': 1,
-        'language': localeId ?? 'zh-CN',
-      },
-      'request': {
-        'model_name': 'bigmodel',
-        'enable_itn': true,
-        'enable_punc': true,
-        'result_type': 'full',
-        'show_utterances': true,
-      },
-    };
+  'audio': {
+    'format': 'pcm',
+    'rate': 16000,
+    'bits': 16,
+    'channel': 1,
+    'language': localeId ?? 'zh-CN',
+  },
+  'request': {
+    'model_name': 'bigmodel',
+    'enable_itn': true,
+    'enable_punc': true,
+    'result_type': 'full',
+    'show_utterances': true,
+  },
+};

@@ -17,9 +17,8 @@ import '../terminal/workspace_terminal_run_service.dart';
 /// Mirrors [WorkspaceToolsScopeRegistry]: create on first use, close on tab
 /// close / app shutdown.
 class WorkspaceRunRegistry {
-  WorkspaceRunRegistry({
-    required WorkspaceRunPlatformFactory platformFactory,
-  }) : _platformFactory = platformFactory;
+  WorkspaceRunRegistry({required WorkspaceRunPlatformFactory platformFactory})
+    : _platformFactory = platformFactory;
 
   final WorkspaceRunPlatformFactory _platformFactory;
   final Map<String, RunCubit> _cubits = <String, RunCubit>{};
@@ -236,10 +235,7 @@ class _DeferredRunPlatform implements RunPlatformApi, RunPlatformDeferred {
   Future<void> deleteConfiguration({
     required WorkspaceFolder folder,
     required String id,
-  }) async => (await _awaitInner()).deleteConfiguration(
-    folder: folder,
-    id: id,
-  );
+  }) async => (await _awaitInner()).deleteConfiguration(folder: folder, id: id);
 
   @override
   String launchJsonPath(WorkspaceFolder folder) {
@@ -274,8 +270,7 @@ class _DeferredRunPlatform implements RunPlatformApi, RunPlatformDeferred {
       _inner?.configurationSchema(type);
 
   @override
-  List<String> kindsFor(String type) =>
-      _inner?.kindsFor(type) ?? const ['run'];
+  List<String> kindsFor(String type) => _inner?.kindsFor(type) ?? const ['run'];
 
   @override
   List<LaunchTypeContribution> get launchTypes =>

@@ -50,30 +50,35 @@ void main() {
   Uint8List payload(int length) =>
       Uint8List.fromList(List.generate(length, (i) => i % 256));
 
-  test('begins, chunks in order, then commits and returns the host path',
-      () async {
-    final path = await build(windowChunks: 100).upload(
-      sub: 3,
-      filename: 'photo.jpg',
-      source: MemoryUploadSource(payload(10)),
-    );
+  test(
+    'begins, chunks in order, then commits and returns the host path',
+    () async {
+      final path = await build(windowChunks: 100).upload(
+        sub: 3,
+        filename: 'photo.jpg',
+        source: MemoryUploadSource(payload(10)),
+      );
 
-    expect(path, '/home/dev/app/photo.jpg');
-    expect(calls.first.method, 'upload.begin');
-    expect(calls.first.params, {'sub': 3, 'filename': 'photo.jpg', 'size': 10});
-    expect(calls.last.method, 'upload.commit');
-    expect(calls.last.params, {'transferId': 7});
+      expect(path, '/home/dev/app/photo.jpg');
+      expect(calls.first.method, 'upload.begin');
+      expect(calls.first.params, {
+        'sub': 3,
+        'filename': 'photo.jpg',
+        'size': 10,
+      });
+      expect(calls.last.method, 'upload.commit');
+      expect(calls.last.params, {'transferId': 7});
 
-    final frames = uploads();
-    expect(frames, hasLength(3), reason: '10 bytes at a chunk size of 4');
-    expect(frames.map((f) => f.chunkIndex), [0, 1, 2]);
-    expect(frames.every((f) => f.transferId == 7), isTrue);
-    expect(frames[0].bytes, hasLength(4));
-    expect(frames[2].bytes, hasLength(2), reason: 'the tail is short');
-  });
+      final frames = uploads();
+      expect(frames, hasLength(3), reason: '10 bytes at a chunk size of 4');
+      expect(frames.map((f) => f.chunkIndex), [0, 1, 2]);
+      expect(frames.every((f) => f.transferId == 7), isTrue);
+      expect(frames[0].bytes, hasLength(4));
+      expect(frames[2].bytes, hasLength(2), reason: 'the tail is short');
+    },
+  );
 
-  test('slices by the chunk size the host chose, not a hardcoded one',
-      () async {
+  test('slices by the chunk size the host chose, not a hardcoded one', () async {
     // The host dictates chunk size so it can be retuned without shipping a new
     // phone build.
     beginReply = {'ok': true, 'transferId': 1, 'chunkSize': 3};
@@ -88,7 +93,11 @@ void main() {
     // The point of the window: without it, 25 MB of chunks go into an unbounded
     // socket buffer at once. windowChunks 2 x chunkSize 4 = 8 bytes in flight.
     final sender = build(windowChunks: 2);
-    final done = sender.upload(sub: 1, filename: 'a.png', source: MemoryUploadSource(payload(20)));
+    final done = sender.upload(
+      sub: 1,
+      filename: 'a.png',
+      source: MemoryUploadSource(payload(20)),
+    );
 
     await Future<void>.delayed(Duration.zero);
     expect(uploads(), hasLength(2), reason: 'window full, must wait');
@@ -104,7 +113,11 @@ void main() {
 
   test('ignores acks belonging to a different transfer', () async {
     final sender = build(windowChunks: 2);
-    final done = sender.upload(sub: 1, filename: 'a.png', source: MemoryUploadSource(payload(20)));
+    final done = sender.upload(
+      sub: 1,
+      filename: 'a.png',
+      source: MemoryUploadSource(payload(20)),
+    );
     await Future<void>.delayed(Duration.zero);
 
     acks.add(const PairingUploadAck(transferId: 999, received: 20));
@@ -115,26 +128,38 @@ void main() {
     await done;
   });
 
-  test('throws with the host code and sends nothing when begin is refused',
-      () async {
-    // A rejected begin must not put a single byte on the wire.
-    beginReply = {'ok': false, 'code': 'too_large'};
-    await expectLater(
-      build().upload(sub: 1, filename: 'huge.png', source: MemoryUploadSource(payload(20))),
-      throwsA(
-        isA<PairingUploadException>().having((e) => e.code, 'code', 'too_large'),
-      ),
-    );
-    expect(sentFrames, isEmpty);
-    expect(calls.map((c) => c.method), ['upload.begin']);
-  });
+  test(
+    'throws with the host code and sends nothing when begin is refused',
+    () async {
+      // A rejected begin must not put a single byte on the wire.
+      beginReply = {'ok': false, 'code': 'too_large'};
+      await expectLater(
+        build().upload(
+          sub: 1,
+          filename: 'huge.png',
+          source: MemoryUploadSource(payload(20)),
+        ),
+        throwsA(
+          isA<PairingUploadException>().having(
+            (e) => e.code,
+            'code',
+            'too_large',
+          ),
+        ),
+      );
+      expect(sentFrames, isEmpty);
+      expect(calls.map((c) => c.method), ['upload.begin']);
+    },
+  );
 
   test('throws when commit reports a failure', () async {
     commitReply = {'ok': false, 'code': 'write_failed'};
     await expectLater(
-      build(
-        windowChunks: 100,
-      ).upload(sub: 1, filename: 'a.png', source: MemoryUploadSource(payload(4))),
+      build(windowChunks: 100).upload(
+        sub: 1,
+        filename: 'a.png',
+        source: MemoryUploadSource(payload(4)),
+      ),
       throwsA(
         isA<PairingUploadException>().having(
           (e) => e.code,
@@ -148,7 +173,11 @@ void main() {
   test('propagates an rpc failure and never commits', () async {
     rpcError = TimeoutException('RPC upload.begin timed out');
     await expectLater(
-      build().upload(sub: 1, filename: 'a.png', source: MemoryUploadSource(payload(4))),
+      build().upload(
+        sub: 1,
+        filename: 'a.png',
+        source: MemoryUploadSource(payload(4)),
+      ),
       throwsA(isA<TimeoutException>()),
     );
     expect(calls.map((c) => c.method), ['upload.begin']);
@@ -160,7 +189,11 @@ void main() {
       ackTimeout: const Duration(milliseconds: 20),
     );
     await expectLater(
-      sender.upload(sub: 1, filename: 'a.png', source: MemoryUploadSource(payload(20))),
+      sender.upload(
+        sub: 1,
+        filename: 'a.png',
+        source: MemoryUploadSource(payload(20)),
+      ),
       throwsA(isA<TimeoutException>()),
     );
   });
@@ -222,45 +255,49 @@ void main() {
   });
 
   group('cancel', () {
-    test('cancelling during begin sends no chunk and aborts the transfer',
-        () async {
-      // The host has already created a part-file by the time begin replies, so
-      // this has to reach it even though nothing was ever sent.
-      final sender = build(windowChunks: 100);
-      sender.cancel();
+    test(
+      'cancelling during begin sends no chunk and aborts the transfer',
+      () async {
+        // The host has already created a part-file by the time begin replies, so
+        // this has to reach it even though nothing was ever sent.
+        final sender = build(windowChunks: 100);
+        sender.cancel();
 
-      await expectLater(
-        sender.upload(
+        await expectLater(
+          sender.upload(
+            sub: 1,
+            filename: 'clip.mp4',
+            source: MemoryUploadSource(payload(10)),
+          ),
+          throwsA(isA<PairingUploadCancelled>()),
+        );
+        expect(sentFrames, isEmpty);
+        expect(calls.map((c) => c.method), ['upload.begin', 'upload.abort']);
+        expect(calls.last.params['transferId'], 7);
+      },
+    );
+
+    test(
+      'cancelling while blocked on the ack window releases the wait',
+      () async {
+        // Without waking the ack wait, cancel would not take effect until the
+        // 30-second timeout — on a slow link that is the whole point of the button.
+        final sender = build(windowChunks: 2);
+        final done = sender.upload(
           sub: 1,
           filename: 'clip.mp4',
-          source: MemoryUploadSource(payload(10)),
-        ),
-        throwsA(isA<PairingUploadCancelled>()),
-      );
-      expect(sentFrames, isEmpty);
-      expect(calls.map((c) => c.method), ['upload.begin', 'upload.abort']);
-      expect(calls.last.params['transferId'], 7);
-    });
+          source: MemoryUploadSource(payload(20)),
+        );
+        await pumpEventQueue();
+        expect(uploads(), hasLength(2), reason: 'window full, no acks yet');
 
-    test('cancelling while blocked on the ack window releases the wait',
-        () async {
-      // Without waking the ack wait, cancel would not take effect until the
-      // 30-second timeout — on a slow link that is the whole point of the button.
-      final sender = build(windowChunks: 2);
-      final done = sender.upload(
-        sub: 1,
-        filename: 'clip.mp4',
-        source: MemoryUploadSource(payload(20)),
-      );
-      await pumpEventQueue();
-      expect(uploads(), hasLength(2), reason: 'window full, no acks yet');
+        sender.cancel();
 
-      sender.cancel();
-
-      await expectLater(done, throwsA(isA<PairingUploadCancelled>()));
-      expect(uploads(), hasLength(2), reason: 'nothing more went out');
-      expect(calls.map((c) => c.method), ['upload.begin', 'upload.abort']);
-    });
+        await expectLater(done, throwsA(isA<PairingUploadCancelled>()));
+        expect(uploads(), hasLength(2), reason: 'nothing more went out');
+        expect(calls.map((c) => c.method), ['upload.begin', 'upload.abort']);
+      },
+    );
 
     test('cancelling mid-stream stops at a chunk boundary', () async {
       final sender = build(windowChunks: 100);
@@ -271,7 +308,11 @@ void main() {
       );
 
       await expectLater(done, throwsA(isA<PairingUploadCancelled>()));
-      expect(uploads(), hasLength(1), reason: 'the chunk in hand still went out');
+      expect(
+        uploads(),
+        hasLength(1),
+        reason: 'the chunk in hand still went out',
+      );
       expect(calls.map((c) => c.method), ['upload.begin', 'upload.abort']);
     });
 
@@ -289,19 +330,21 @@ void main() {
       expect(calls.map((c) => c.method), ['upload.begin', 'upload.commit']);
     });
 
-    test('cancel is idempotent and harmless after the upload finished',
-        () async {
-      final sender = build(windowChunks: 100);
-      await sender.upload(
-        sub: 1,
-        filename: 'a.png',
-        source: MemoryUploadSource(payload(4)),
-      );
-      sender.cancel();
-      sender.cancel();
-      expect(sender.isCancelled, isTrue);
-      expect(calls.map((c) => c.method), ['upload.begin', 'upload.commit']);
-    });
+    test(
+      'cancel is idempotent and harmless after the upload finished',
+      () async {
+        final sender = build(windowChunks: 100);
+        await sender.upload(
+          sub: 1,
+          filename: 'a.png',
+          source: MemoryUploadSource(payload(4)),
+        );
+        sender.cancel();
+        sender.cancel();
+        expect(sender.isCancelled, isTrue);
+        expect(calls.map((c) => c.method), ['upload.begin', 'upload.commit']);
+      },
+    );
   });
 
   test('stops listening to acks once the upload settles', () async {

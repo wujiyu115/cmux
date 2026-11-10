@@ -7,9 +7,11 @@ import 'package:flutter_alacritty/flutter_alacritty.dart';
 import 'package:flutter_alacritty/input/term_mode.dart' show anyMouse;
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../cubits/session_preferences_cubit.dart';
 import '../cubits/command_log_cubit.dart';
 import '../cubits/layout_cubit.dart';
 import '../l10n/l10n_extensions.dart';
+import '../models/pane_mode.dart';
 import '../models/runtime_target.dart';
 import '../models/terminal_split.dart';
 import '../models/terminal_surface.dart';
@@ -19,6 +21,8 @@ import '../pages/command_history/command_history_dialog.dart';
 import '../pages/command_log/command_log_dialog.dart';
 import '../services/commands/command_bus.dart';
 import '../services/commands/content_find_command_registrar.dart';
+import '../services/chat/chat_transcript_registry.dart';
+import '../services/chat/chat_transcript_session.dart';
 import '../services/commands/terminal_split_command_registrar.dart';
 import '../services/cli/sessions/agent_cli_session_service.dart';
 import '../services/cli/sessions/agent_cli_sessions.dart';
@@ -44,6 +48,7 @@ import 'terminal/terminal_layout_toolbar.dart';
 import 'terminal/terminal_pane_keys.dart';
 import 'terminal/terminal_split_view.dart';
 import 'terminal_find_bar.dart';
+import '../pages/home_workspace/workspace/chat/chat_transcript_pane.dart';
 import 'workspace_terminal/workspace_terminal_body_kind.dart';
 import 'workspace_terminal/workspace_terminal_empty_pane.dart';
 import 'workspace_terminal/workspace_terminal_resume_menu.dart';
@@ -71,7 +76,8 @@ class WorkspaceTerminalHoldHandle {
   void beginPtyHold() => _state?._beginExternalHold();
 
   /// End the hold, flushing the final grid to the PTY when [flush] (drag end).
-  void endPtyHold({bool flush = true}) => _state?._endExternalHold(flush: flush);
+  void endPtyHold({bool flush = true}) =>
+      _state?._endExternalHold(flush: flush);
 
   /// Selects [entryId] as the active terminal tab (no-op if unbound / unknown).
   void selectEntry(String entryId) {
@@ -324,6 +330,19 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
     if (mounted) setState(() {});
   }
 
+  /// The mode every new pane starts in, from the session settings.
+  ///
+  /// Read per creation rather than cached: the user can flip the setting in
+  /// another window and the next pane honours it without a restart.
+  PaneMode get _newPaneMode =>
+      context.read<SessionPreferencesCubit>().state.preferences.newPaneMode;
+
+  String get _chatAgentCommand => context
+      .read<SessionPreferencesCubit>()
+      .state
+      .preferences
+      .chatAgentCommand;
+
   Future<void> _addEntry({
     required String cwd,
     required WorkspaceTerminalSessionSpec spec,
@@ -340,6 +359,8 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
       sshConnectFailedMessage: context.l10n.workspaceTerminalSshConnectFailed,
       select: select,
       followWorkspace: followWorkspace,
+      mode: _newPaneMode,
+      chatAgentCommand: _chatAgentCommand,
       onStateChanged: () {
         if (mounted) setState(() {});
       },
@@ -392,8 +413,8 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
   TerminalTheme _terminalTheme(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final platformDark = MediaQuery.platformBrightnessOf(context) ==
-        Brightness.dark;
+    final platformDark =
+        MediaQuery.platformBrightnessOf(context) == Brightness.dark;
     final mode = context.select<LayoutCubit, String>(
       (cubit) => cubit.state.preferences
           .resolveColorTheme(platformDark: platformDark)
@@ -437,8 +458,9 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
   void _syncTerminalViewRegistration() {
     final coordinator = _coordinator ??= TerminalLayoutCoordinator();
     final live = _paneKeys.mountedStates.toSet();
-    final gone =
-        _registeredHoldTargets.keys.where((s) => !live.contains(s)).toList();
+    final gone = _registeredHoldTargets.keys
+        .where((s) => !live.contains(s))
+        .toList();
     for (final state in gone) {
       final target = _registeredHoldTargets.remove(state);
       if (target != null) coordinator.unregister(target);
@@ -639,10 +661,8 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
   /// [WorkspaceTerminalPanel.showChrome] (the real hosts pass `false`).
   Widget _buildLayoutToolbar(TerminalSurface surface) {
     return TerminalLayoutToolbar(
-      onSplitRight: () =>
-          unawaited(_splitActiveSurface(SplitAxis.vertical)),
-      onSplitDown: () =>
-          unawaited(_splitActiveSurface(SplitAxis.horizontal)),
+      onSplitRight: () => unawaited(_splitActiveSurface(SplitAxis.vertical)),
+      onSplitDown: () => unawaited(_splitActiveSurface(SplitAxis.horizontal)),
       onApplyPreset: (preset) => unawaited(_applyLayoutPreset(preset)),
       onEqualize: _equalizeActiveSurface,
       onToggleZoom: () {
@@ -653,17 +673,49 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
       onShowAgentSessions: (position) =>
           unawaited(_showAgentSessionsMenu(position)),
       isZoomed: surface.zoomedPaneId != null,
+      chatPane: _group.activeEntry?.mode == PaneMode.chat,
+      terminalView: _showsTerminal(_group.activeEntry?.id),
+      onTogglePaneView: _group.activeEntry == null ? null : _togglePaneView,
     );
   }
 
-  /// Opens the resumable agent-CLI sessions menu anchored at the toolbar
-  /// button, scoped to the focused pane's runtime target and directory.
-  Future<void> _showAgentSessionsMenu(Offset globalPosition) async {
-    final entry = _activeEntry;
-    if (entry == null) return;
+  /// The conversation a chat pane shows: the same PTY, read through the CLI's
+  /// own session store, with the composer writing back into that PTY.
+  Widget _buildChatPane(
+    WorkspaceTerminalEntry entry, {
+    required Color foreground,
+    required Color background,
+  }) {
+    final transcript = _transcriptFor(entry);
+    return ColoredBox(
+      color: background,
+      child: ChatTranscriptPane(
+        transcript: transcript.transcript,
+        canSend: entry.session.transportReadyForIo,
+        agentStarting:
+            chatAgentLaunchLine(mode: entry.mode, command: _chatAgentCommand) !=
+            null,
+        foreground: foreground,
+        background: background,
+        onSend: (text) {
+          // Tell the transcript reader what to look for: the store is what
+          // proves the prompt reached an agent, and which session the pane's
+          // own agent is really writing to.
+          transcript.markPromptSent(text);
+          entry.session.markUserTurnStarted();
+          entry.session.input.writeToPty('$text\r');
+        },
+      ),
+    );
+  }
+
+  /// Directory a pane's agent CLI keys its session store by, in that machine's
+  /// own path form. Shared by the resume menu and the chat transcript: both ask
+  /// the same question of the same store.
+  String _directoryForEntry(WorkspaceTerminalEntry entry) {
     final target = _connector.runtimeTargetFor(entry.spec);
     final osc7 = entry.session.engine.workingDir.value;
-    final directory = switch (target.kind) {
+    return switch (target.kind) {
       // Local panes parse OSC 7 through the host-native path semantics.
       RuntimeKind.local =>
         TerminalSessionLinkProviders.parseOsc7Cwd(osc7) ?? entry.cwd,
@@ -676,6 +728,15 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
             entry.cwd,
       RuntimeKind.ssh => posixDirectoryFromOsc7(osc7) ?? entry.cwd,
     };
+  }
+
+  /// Opens the resumable agent-CLI sessions menu anchored at the toolbar
+  /// button, scoped to the focused pane's runtime target and directory.
+  Future<void> _showAgentSessionsMenu(Offset globalPosition) async {
+    final entry = _activeEntry;
+    if (entry == null) return;
+    final target = _connector.runtimeTargetFor(entry.spec);
+    final directory = _directoryForEntry(entry);
     if (directory.trim().isEmpty) return;
     await showWorkspaceTerminalResumeMenu(
       context: context,
@@ -685,6 +746,49 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
       directory: directory,
       onRun: (command) => _writeToActivePane(command, submit: true),
     );
+  }
+
+  ChatTranscriptRegistry get _chatTranscripts => _registry.chatTranscripts;
+
+  /// Chat panes whose escape hatch is open — the pane keeps its mode and its
+  /// agent, only the view changes.
+  final Set<String> _terminalView = {};
+
+  bool _showsTerminal(String? paneId) =>
+      paneId != null &&
+      _group.entryById(paneId)?.mode == PaneMode.chat &&
+      _terminalView.contains(paneId);
+
+  /// Opens or closes the escape hatch on the focused pane. Only chat panes have
+  /// one; a terminal pane is already showing its terminal.
+  void _togglePaneView() {
+    final entry = _activeEntry;
+    if (entry == null || entry.mode != PaneMode.chat) return;
+    setState(() {
+      if (!_terminalView.remove(entry.id)) _terminalView.add(entry.id);
+    });
+  }
+
+  /// The live transcript behind a chat pane, registering it on first paint.
+  ///
+  /// A chat pane starts its agent itself (see
+  /// `WorkspaceTerminalSessionOps.startChatAgent`), so there is nothing to
+  /// switch here: the reader only follows whatever that agent writes.
+  ChatTranscriptSession _transcriptFor(WorkspaceTerminalEntry entry) {
+    final existing = _chatTranscripts[entry.id];
+    if (existing != null) return existing;
+    final service = context.read<AgentCliSessionService>();
+    final transcript = ChatTranscriptSession(
+      paneId: entry.id,
+      resolveContext: service.resolveContextFor,
+      target: () => _connector.runtimeTargetFor(entry.spec),
+      directory: () => _directoryForEntry(entry),
+      startedAt: entry.startedAt,
+      sessionService: service,
+    );
+    _chatTranscripts.register(entry.id, transcript);
+    transcript.start();
+    return transcript;
   }
 
   /// Resolves the cwd a new split pane inherits from the currently focused
@@ -715,6 +819,8 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
       spec: _defaultSpec(cwd),
       theme: _terminalTheme(context),
       sshConnectFailedMessage: context.l10n.workspaceTerminalSshConnectFailed,
+      mode: _newPaneMode,
+      chatAgentCommand: _chatAgentCommand,
       onStateChanged: () {
         if (mounted) setState(() {});
       },
@@ -932,9 +1038,9 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
         terminalBody = Center(
           child: Text(
             l10n.workspaceTerminalNoWorkingDirectory,
-            style: TpTextStyles.of(context).smColored(
-              terminalForeground.withValues(alpha: 0.65),
-            ),
+            style: TpTextStyles.of(
+              context,
+            ).smColored(terminalForeground.withValues(alpha: 0.65)),
           ),
         );
       case WorkspaceTerminalBodyKind.emptyLauncher:
@@ -944,7 +1050,6 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
         );
       case WorkspaceTerminalBodyKind.activeSession:
         final activeEntry = active!;
-        _paneKeys.prune(_group.entries.map((e) => e.id).toSet());
         final surface =
             _activeSurface ??
             _group.surfaceForPane(activeEntry.id) ??
@@ -953,6 +1058,8 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
           terminalBody = const SizedBox.shrink();
           break;
         }
+        _paneKeys.prune(_group.entries.map((e) => e.id).toSet());
+        _chatTranscripts.prune(_group.entries.map((e) => e.id).toSet());
         final splitView = TerminalSplitView(
           surface: surface,
           paneKeys: _paneKeys,
@@ -961,6 +1068,16 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
           paneBuilder: (paneContext, paneId, key, isFocused) {
             final entry = _group.entryById(paneId);
             if (entry == null) return const SizedBox.shrink();
+            // Chat panes are chat for their whole life, and a split can mix
+            // the two: the decision belongs to the pane, not to the surface.
+            if (entry.mode == PaneMode.chat &&
+                !_terminalView.contains(paneId)) {
+              return _buildChatPane(
+                entry,
+                foreground: terminalForeground,
+                background: terminalBackground,
+              );
+            }
             return WorkspaceTerminalView(
               entry: entry,
               theme: theme,
@@ -1015,8 +1132,7 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
         );
     }
 
-    if (bodyKind == WorkspaceTerminalBodyKind.activeSession &&
-        cwd.isNotEmpty) {
+    if (bodyKind == WorkspaceTerminalBodyKind.activeSession && cwd.isNotEmpty) {
       _scheduleTerminalViewRegistration();
     }
 

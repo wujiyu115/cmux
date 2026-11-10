@@ -23,9 +23,7 @@ const uploadWireChunkSize = 256 * 1024;
 /// Result of [PairingUploadReceiver.begin].
 class UploadBeginResult {
   const UploadBeginResult.ok(this.transferId, this.chunkSize) : code = null;
-  const UploadBeginResult.error(this.code)
-    : transferId = 0,
-      chunkSize = 0;
+  const UploadBeginResult.error(this.code) : transferId = 0, chunkSize = 0;
 
   final int transferId;
   final int chunkSize;

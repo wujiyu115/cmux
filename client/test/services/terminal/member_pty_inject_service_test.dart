@@ -20,10 +20,7 @@ void main() {
     );
 
     var ticked = 0;
-    inject.tickRetries(
-      shouldSkip: (_) => true,
-      onTick: (_) => ticked++,
-    );
+    inject.tickRetries(shouldSkip: (_) => true, onTick: (_) => ticked++);
 
     expect(ticked, 0);
     expect(queue.isPending(key), isFalse);

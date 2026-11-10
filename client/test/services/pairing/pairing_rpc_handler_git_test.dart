@@ -138,11 +138,9 @@ void main() {
     String method,
     Map<String, Object?> params,
   ) async {
-    handler.handle(PairingCodec.decode(_json({
-      'id': 9,
-      'method': method,
-      'params': params,
-    })));
+    handler.handle(
+      PairingCodec.decode(_json({'id': 9, 'method': method, 'params': params})),
+    );
     // The handlers are async; one microtask drain is enough because the injected
     // providers complete synchronously.
     await Future<void>.delayed(Duration.zero);
@@ -203,53 +201,63 @@ void main() {
     expect(reply['error'], contains('path not in changes'));
   });
 
-  test('git.diff before any git.changes has nothing to authorize against',
-      () async {
-    final handler = build();
-    addTearDown(handler.dispose);
-    final sub = subscribe(handler);
+  test(
+    'git.diff before any git.changes has nothing to authorize against',
+    () async {
+      final handler = build();
+      addTearDown(handler.dispose);
+      final sub = subscribe(handler);
 
-    final reply = await call(handler, 'git.diff', {
-      'sub': sub,
-      'path': 'lib/main.dart',
-    });
+      final reply = await call(handler, 'git.diff', {
+        'sub': sub,
+        'path': 'lib/main.dart',
+      });
 
-    expect(diffCalls, isEmpty);
-    expect(reply['error'], contains('path not in changes'));
-  });
+      expect(diffCalls, isEmpty);
+      expect(reply['error'], contains('path not in changes'));
+    },
+  );
 
-  test('leaving the mirror drops the authorized paths with the subscription',
-      () async {
-    final handler = build();
-    addTearDown(handler.dispose);
-    final sub = subscribe(handler);
-    await call(handler, 'git.changes', {'sub': sub});
+  test(
+    'leaving the mirror drops the authorized paths with the subscription',
+    () async {
+      final handler = build();
+      addTearDown(handler.dispose);
+      final sub = subscribe(handler);
+      await call(handler, 'git.changes', {'sub': sub});
 
-    handler.handle(PairingCodec.decode(_json({
-      'id': 5,
-      'method': 'terminal.unsubscribe',
-      'params': {'sub': sub},
-    })));
-    final reply = await call(handler, 'git.diff', {
-      'sub': sub,
-      'path': 'lib/main.dart',
-    });
+      handler.handle(
+        PairingCodec.decode(
+          _json({
+            'id': 5,
+            'method': 'terminal.unsubscribe',
+            'params': {'sub': sub},
+          }),
+        ),
+      );
+      final reply = await call(handler, 'git.diff', {
+        'sub': sub,
+        'path': 'lib/main.dart',
+      });
 
-    expect(diffCalls, isEmpty);
-    expect(reply['error'], contains('no such subscription'));
-  });
+      expect(diffCalls, isEmpty);
+      expect(reply['error'], contains('no such subscription'));
+    },
+  );
 
-  test('git.changes on an unknown sub fails without calling the provider',
-      () async {
-    final handler = build();
-    addTearDown(handler.dispose);
-    subscribe(handler);
+  test(
+    'git.changes on an unknown sub fails without calling the provider',
+    () async {
+      final handler = build();
+      addTearDown(handler.dispose);
+      subscribe(handler);
 
-    final reply = await call(handler, 'git.changes', {'sub': 999});
+      final reply = await call(handler, 'git.changes', {'sub': 999});
 
-    expect(changesCalls, isEmpty);
-    expect(reply['error'], contains('no such subscription'));
-  });
+      expect(changesCalls, isEmpty);
+      expect(reply['error'], contains('no such subscription'));
+    },
+  );
 
   test('a provider throw becomes one named error frame', () async {
     changesError = StateError('git executable not found on PATH');
@@ -263,19 +271,21 @@ void main() {
     expect(reply['error'], contains('not found on PATH'));
   });
 
-  test('a host without the providers reports the method as unsupported',
-      () async {
-    final handler = build(wired: false);
-    addTearDown(handler.dispose);
-    final sub = subscribe(handler);
+  test(
+    'a host without the providers reports the method as unsupported',
+    () async {
+      final handler = build(wired: false);
+      addTearDown(handler.dispose);
+      final sub = subscribe(handler);
 
-    final changesReply = await call(handler, 'git.changes', {'sub': sub});
-    final diffReply = await call(handler, 'git.diff', {
-      'sub': sub,
-      'path': 'lib/main.dart',
-    });
+      final changesReply = await call(handler, 'git.changes', {'sub': sub});
+      final diffReply = await call(handler, 'git.diff', {
+        'sub': sub,
+        'path': 'lib/main.dart',
+      });
 
-    expect(changesReply['error'], 'git.changes unsupported');
-    expect(diffReply['error'], 'git.diff unsupported');
-  });
+      expect(changesReply['error'], 'git.changes unsupported');
+      expect(diffReply['error'], 'git.diff unsupported');
+    },
+  );
 }

@@ -84,10 +84,7 @@ void main() {
   /// (never gzipped). [buildVolcFrame] cannot produce this — it gzips the body
   /// and lays out sequence+length instead of code+length — so we build it by
   /// hand to exercise the real inbound decoder.
-  Uint8List serverErrorFrame({
-    required int code,
-    required String message,
-  }) {
+  Uint8List serverErrorFrame({required int code, required String message}) {
     final msg = utf8.encode(message);
     final frame = Uint8List(12 + msg.length);
     frame[0] = 0x11; // header size 1 => 4 bytes.
@@ -213,18 +210,24 @@ void main() {
     await provider.stop();
   });
 
-  test('errors with VoicePermissionDeniedException and never connects',
-      () async {
-    // Opening a paid cloud session the user cannot speak into wastes a
-    // handshake and leaks the fact that they tried; refuse before connecting.
-    final provider = build(permitted: false);
-    await expectLater(
-      provider.start(),
-      emitsError(isA<VoicePermissionDeniedException>()),
-    );
-    expect(audio.started, isFalse);
-    expect(connected, isFalse, reason: 'must refuse before opening the socket');
-  });
+  test(
+    'errors with VoicePermissionDeniedException and never connects',
+    () async {
+      // Opening a paid cloud session the user cannot speak into wastes a
+      // handshake and leaks the fact that they tried; refuse before connecting.
+      final provider = build(permitted: false);
+      await expectLater(
+        provider.start(),
+        emitsError(isA<VoicePermissionDeniedException>()),
+      );
+      expect(audio.started, isFalse);
+      expect(
+        connected,
+        isFalse,
+        reason: 'must refuse before opening the socket',
+      );
+    },
+  );
 
   test('ready resolves true once the config frame is out', () async {
     final provider = build();
@@ -259,23 +262,25 @@ void main() {
     await expectLater(provider.stop(), completes);
   });
 
-  test('testConnection returns elapsed ms and closes the socket on success',
-      () async {
-    final provider = build();
-    final probe = provider.testConnection();
-    await Future<void>.delayed(Duration.zero);
+  test(
+    'testConnection returns elapsed ms and closes the socket on success',
+    () async {
+      final provider = build();
+      final probe = provider.testConnection();
+      await Future<void>.delayed(Duration.zero);
 
-    // A result frame (0x09) is the server's "handshake worked" reply.
-    socket.deliver(resultFrame(text: 'ok', definite: true));
+      // A result frame (0x09) is the server's "handshake worked" reply.
+      socket.deliver(resultFrame(text: 'ok', definite: true));
 
-    final elapsed = await probe;
-    // The probe replied well within the injected timeout; a hang would trip the
-    // 10s window instead. Asserting below it can actually fail, unlike a
-    // non-negative-int check that holds by construction.
-    expect(elapsed, lessThan(const Duration(seconds: 10).inMilliseconds));
-    expect(connected, isTrue);
-    expect(socket.closed, isTrue, reason: 'probe must not leak the session');
-  });
+      final elapsed = await probe;
+      // The probe replied well within the injected timeout; a hang would trip the
+      // 10s window instead. Asserting below it can actually fail, unlike a
+      // non-negative-int check that holds by construction.
+      expect(elapsed, lessThan(const Duration(seconds: 10).inMilliseconds));
+      expect(connected, isTrue);
+      expect(socket.closed, isTrue, reason: 'probe must not leak the session');
+    },
+  );
 
   test('testConnection throws SttException on a server error frame', () async {
     final provider = build();
@@ -288,15 +293,17 @@ void main() {
     expect(socket.closed, isTrue);
   });
 
-  test('testConnection throws when the server never replies (timeout)',
-      () async {
-    // Zero timeout so the test does not spend the production 10 real seconds.
-    final provider = build(testConnectionTimeout: Duration.zero);
-    // Deliver nothing; the timeout must fire and the finally block must close.
-    await expectLater(
-      provider.testConnection(),
-      throwsA(isA<TimeoutException>()),
-    );
-    expect(socket.closed, isTrue);
-  });
+  test(
+    'testConnection throws when the server never replies (timeout)',
+    () async {
+      // Zero timeout so the test does not spend the production 10 real seconds.
+      final provider = build(testConnectionTimeout: Duration.zero);
+      // Deliver nothing; the timeout must fire and the finally block must close.
+      await expectLater(
+        provider.testConnection(),
+        throwsA(isA<TimeoutException>()),
+      );
+      expect(socket.closed, isTrue);
+    },
+  );
 }

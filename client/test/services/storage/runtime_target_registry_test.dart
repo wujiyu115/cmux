@@ -52,22 +52,21 @@ void main() {
   );
 
   test('listTargets enumerates one target per installed wsl distro', () async {
-    final reg = build(
-      isWindows: true,
-      wslDistros: ['Ubuntu-24.04', 'Debian'],
-    );
+    final reg = build(isWindows: true, wslDistros: ['Ubuntu-24.04', 'Debian']);
     final ids = (await reg.listTargets()).map((t) => t.id).toList();
     expect(ids, containsAll(['wsl:Ubuntu-24.04', 'wsl:Debian']));
   });
 
-  test('listTargets merges selected distro with enumerated list once', () async {
-    final reg = build(isWindows: true, wslDistros: ['Ubuntu-24.04']);
-    final ids = (await reg.listTargets(wslDistro: 'Ubuntu-24.04'))
-        .map((t) => t.id)
-        .where((id) => id == 'wsl:Ubuntu-24.04')
-        .toList();
-    expect(ids, ['wsl:Ubuntu-24.04']); // no duplicate
-  });
+  test(
+    'listTargets merges selected distro with enumerated list once',
+    () async {
+      final reg = build(isWindows: true, wslDistros: ['Ubuntu-24.04']);
+      final ids = (await reg.listTargets(
+        wslDistro: 'Ubuntu-24.04',
+      )).map((t) => t.id).where((id) => id == 'wsl:Ubuntu-24.04').toList();
+      expect(ids, ['wsl:Ubuntu-24.04']); // no duplicate
+    },
+  );
 
   test('listTargets omits wsl targets off Windows', () async {
     final reg = build(wslDistros: ['Ubuntu']);

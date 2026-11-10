@@ -40,11 +40,7 @@ class RunTargetResolver {
     Map<String, String> env = const {},
   }) {
     final runtimeTarget = _runtimeTargetFromId(owner.targetId);
-    final expandedCwd = _expandedCwd(
-      owner: owner,
-      cwd: cwd,
-      env: env,
-    );
+    final expandedCwd = _expandedCwd(owner: owner, cwd: cwd, env: env);
     final useWslPaths = runtimeTarget.kind == RuntimeKind.wsl;
 
     return RunTargetPlan(
@@ -71,7 +67,9 @@ class RunTargetResolver {
     );
   }
 
-  RuntimeTarget _runtimeTargetFromId(String id) => switch (runtimeKindOfId(id)) {
+  RuntimeTarget _runtimeTargetFromId(String id) => switch (runtimeKindOfId(
+    id,
+  )) {
     RuntimeKind.ssh => RuntimeTarget.ssh(sshProfileIdOfId(id) ?? '', label: ''),
     RuntimeKind.wsl => RuntimeTarget.wsl(wslDistroOfId(id) ?? ''),
     RuntimeKind.local => RuntimeTarget.local(),

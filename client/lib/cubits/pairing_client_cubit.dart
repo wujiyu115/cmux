@@ -887,6 +887,37 @@ class PairingClientCubit extends Cubit<PairingClientState> {
   /// Changed files in the repository the mirrored pane sits in, or null when
   /// nothing is mirrored. Errors are logged and surface as null so the sheet can
   /// say "couldn't read" without a crash on a repo-less pane.
+  /// True once the host answered that it has no `chat.read` (an older desktop),
+  /// so the mirror stops asking and stays on the terminal.
+  bool _chatUnsupported = false;
+  bool _chatFailureLogged = false;
+
+  /// Mode and rows of the pane being mirrored. Null when nothing is mirrored, the
+  /// host predates `chat.read`, or the call could not complete — the caller keeps
+  /// its current view and the next poll tries again.
+  Future<PairingChatView?> chatView() async {
+    final client = _client;
+    final catalogId = state.activeCatalogId;
+    if (_chatUnsupported) return null;
+    if (client == null || catalogId == null || catalogId.isEmpty) return null;
+    try {
+      return await client.chatView(catalogId);
+    } on Object catch (e) {
+      // Only an *answer* that the method is unknown means this host will never
+      // serve chat. A timeout or a socket that died mid-reconnect looks the
+      // same from here, and latching on those would leave the pane stuck on a
+      // stale mode after every dropped connection.
+      if ('$e'.contains('unknown method')) {
+        _chatUnsupported = true;
+        _appendLog('chat.read unsupported: $e');
+      } else if (!_chatFailureLogged) {
+        _chatFailureLogged = true;
+        _appendLog('chat.read failed: $e');
+      }
+      return null;
+    }
+  }
+
   Future<PairingGitChanges?> gitChanges() async {
     final sub = _activeSubscription;
     final client = _client;

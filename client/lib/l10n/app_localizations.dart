@@ -3157,6 +3157,12 @@ abstract class AppLocalizations {
   /// **'Oh My Pi'**
   String get agentCliFamilyOhMyPi;
 
+  /// No description provided for @agentCliFamilyPi.
+  ///
+  /// In en, this message translates to:
+  /// **'Pi'**
+  String get agentCliFamilyPi;
+
   /// No description provided for @agentCliSessionsAllAgents.
   ///
   /// In en, this message translates to:
@@ -3384,6 +3390,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Close'**
   String get commandHistoryClose;
+
+  /// No description provided for @newPaneModeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Default mode for new windows'**
+  String get newPaneModeTitle;
+
+  /// No description provided for @newPaneModeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'What a new terminal window or split starts as. Terminal is a plain shell; chat runs an agent CLI and shows the session it writes as a conversation. Open windows are unaffected.'**
+  String get newPaneModeDescription;
+
+  /// No description provided for @newPaneModeTerminal.
+  ///
+  /// In en, this message translates to:
+  /// **'Terminal'**
+  String get newPaneModeTerminal;
+
+  /// No description provided for @newPaneModeChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat'**
+  String get newPaneModeChat;
+
+  /// No description provided for @chatAgentCommandTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat command'**
+  String get chatAgentCommandTitle;
+
+  /// No description provided for @chatAgentCommandDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Typed into a chat window once it is up, run by that window\'s own shell, e.g. claude, claude --permission-mode acceptEdits, or bash -lc pi. Leave empty for a plain shell.'**
+  String get chatAgentCommandDescription;
 
   /// No description provided for @terminalScrollbackLinesTitle.
   ///
@@ -7092,6 +7134,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Audio is sent directly to the cloud provider, not through the encrypted pairing channel.'**
   String get voiceInputCloudPrivacyNote;
+
+  /// No description provided for @chatPaneAgentStarting.
+  ///
+  /// In en, this message translates to:
+  /// **'The agent is starting. Its first message will appear here.'**
+  String get chatPaneAgentStarting;
+
+  /// No description provided for @chatPaneComposerHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Message the agent…'**
+  String get chatPaneComposerHint;
+
+  /// No description provided for @chatPaneComposerNeedsAgent.
+  ///
+  /// In en, this message translates to:
+  /// **'Start the agent in the terminal first, then message it here.'**
+  String get chatPaneComposerNeedsAgent;
+
+  /// No description provided for @chatPanePromptUndelivered.
+  ///
+  /// In en, this message translates to:
+  /// **'The prompt did not arrive: no agent is running in this terminal, or the chat view is following another window\'s session. The text is back in the box.'**
+  String get chatPanePromptUndelivered;
+
+  /// No description provided for @chatPaneForeignSession.
+  ///
+  /// In en, this message translates to:
+  /// **'This session did not start in this pane, so a prompt may not reach it.'**
+  String get chatPaneForeignSession;
+
+  /// No description provided for @chatPaneSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get chatPaneSend;
+
+  /// No description provided for @chatPaneThoughts.
+  ///
+  /// In en, this message translates to:
+  /// **'Thinking'**
+  String get chatPaneThoughts;
+
+  /// No description provided for @chatPaneCompacted.
+  ///
+  /// In en, this message translates to:
+  /// **'Context compacted'**
+  String get chatPaneCompacted;
+
+  /// No description provided for @chatPaneEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing here yet. Send a message to start.'**
+  String get chatPaneEmpty;
+
+  /// No description provided for @chatPaneUnavailableNoDirectory.
+  ///
+  /// In en, this message translates to:
+  /// **'Open a terminal in a folder first.'**
+  String get chatPaneUnavailableNoDirectory;
+
+  /// No description provided for @chatPaneUnavailableNoSession.
+  ///
+  /// In en, this message translates to:
+  /// **'No agent session recorded for this folder yet. Start one in the terminal.'**
+  String get chatPaneUnavailableNoSession;
+
+  /// No description provided for @chatPaneUnavailableUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'This agent stores its session in a format the chat view cannot read yet — use the terminal.'**
+  String get chatPaneUnavailableUnsupported;
+
+  /// No description provided for @chatPaneUnavailableRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not read the session transcript.'**
+  String get chatPaneUnavailableRead;
+
+  /// No description provided for @chatModeToChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to the chat'**
+  String get chatModeToChat;
+
+  /// No description provided for @chatModeToTerminal.
+  ///
+  /// In en, this message translates to:
+  /// **'Show the terminal'**
+  String get chatModeToTerminal;
 }
 
 class _AppLocalizationsDelegate

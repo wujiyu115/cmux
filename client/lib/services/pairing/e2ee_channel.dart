@@ -19,10 +19,7 @@ class E2eeChannel {
     required PrivateKey myEphemeralPrivate,
     required PublicKey theirEphemeralPublic,
   }) => E2eeChannel._(
-    Box(
-      myPrivateKey: myEphemeralPrivate,
-      theirPublicKey: theirEphemeralPublic,
-    ),
+    Box(myPrivateKey: myEphemeralPrivate, theirPublicKey: theirEphemeralPublic),
   );
 
   final Box _box;

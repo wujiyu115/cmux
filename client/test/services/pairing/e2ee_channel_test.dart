@@ -56,10 +56,7 @@ void main() {
     });
 
     test('a frame shorter than the nonce throws FormatException', () {
-      expect(
-        () => bob.decrypt(Uint8List(4)),
-        throwsA(isA<FormatException>()),
-      );
+      expect(() => bob.decrypt(Uint8List(4)), throwsA(isA<FormatException>()));
     });
   });
 }

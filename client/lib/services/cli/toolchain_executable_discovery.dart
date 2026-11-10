@@ -26,10 +26,9 @@ class ToolchainExecutableDiscovery {
       located[SessionPreferences.toolchainGit] = gitPath;
     }
 
-    final node = await CliToolLocator('node').locate(
-      runner: _processRunner,
-      includeShellFallback: true,
-    );
+    final node = await CliToolLocator(
+      'node',
+    ).locate(runner: _processRunner, includeShellFallback: true);
     final nodePath = node?.trim() ?? '';
     if (nodePath.isNotEmpty) {
       located[SessionPreferences.toolchainNode] = nodePath;

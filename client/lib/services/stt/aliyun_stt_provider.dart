@@ -116,7 +116,8 @@ class AliyunSttProvider implements SttProvider {
         onError: (Object e, StackTrace st) {
           AppLogger.instance.w('Aliyun socket error', error: e, stackTrace: st);
           if (!_ready.isCompleted) _ready.complete(false);
-          if (!results.isClosed) results.addError(SttException('socket error: $e'));
+          if (!results.isClosed)
+            results.addError(SttException('socket error: $e'));
         },
         onDone: () {
           if (!_socketDone.isCompleted) _socketDone.complete();
@@ -124,14 +125,20 @@ class AliyunSttProvider implements SttProvider {
         },
       );
 
-      socket.send(_message('StartTranscription', _taskId!, payload: {
-        'format': 'pcm',
-        'sample_rate': 16000,
-        'enable_intermediate_result': true,
-        'enable_punctuation_prediction': true,
-        'enable_inverse_text_normalization': true,
-        'max_sentence_silence': 800,
-      }));
+      socket.send(
+        _message(
+          'StartTranscription',
+          _taskId!,
+          payload: {
+            'format': 'pcm',
+            'sample_rate': 16000,
+            'enable_intermediate_result': true,
+            'enable_punctuation_prediction': true,
+            'enable_inverse_text_normalization': true,
+            'max_sentence_silence': 800,
+          },
+        ),
+      );
 
       final pcm = await audio.start();
       _audioSub = pcm.listen((chunk) {
@@ -145,7 +152,9 @@ class AliyunSttProvider implements SttProvider {
       AppLogger.instance.w('Aliyun start failed', error: e, stackTrace: st);
       if (!_ready.isCompleted) _ready.complete(false);
       if (!results.isClosed) {
-        results.addError(e is SttException ? e : SttException('failed to start session: $e'));
+        results.addError(
+          e is SttException ? e : SttException('failed to start session: $e'),
+        );
         await results.close();
       }
     }
@@ -201,10 +210,7 @@ class AliyunSttProvider implements SttProvider {
     // from audio already sent — closing at once drops that trailing result. But
     // bail the instant the socket closes so a server that has already hung up
     // never makes us sit out the whole window.
-    await Future.any([
-      _socketDone.future,
-      Future<void>.delayed(serverGrace),
-    ]);
+    await Future.any([_socketDone.future, Future<void>.delayed(serverGrace)]);
 
     await _audioSub?.cancel();
     _audioSub = null;
@@ -245,10 +251,13 @@ class AliyunSttProvider implements SttProvider {
       },
     );
 
-    socket.send(_message('StartTranscription', taskId, payload: {
-      'format': 'pcm',
-      'sample_rate': 16000,
-    }));
+    socket.send(
+      _message(
+        'StartTranscription',
+        taskId,
+        payload: {'format': 'pcm', 'sample_rate': 16000},
+      ),
+    );
 
     try {
       await completer.future.timeout(testConnectionTimeout);
@@ -277,17 +286,20 @@ class AliyunSttProvider implements SttProvider {
     queryParameters: {'token': token},
   );
 
-  String _message(String name, String taskId, {Map<String, dynamic>? payload}) =>
-      jsonEncode({
-        'header': {
-          'appkey': appKey,
-          'message_id': idFactory(),
-          'task_id': taskId,
-          'namespace': _namespace,
-          'name': name,
-        },
-        if (payload != null) 'payload': payload,
-      });
+  String _message(
+    String name,
+    String taskId, {
+    Map<String, dynamic>? payload,
+  }) => jsonEncode({
+    'header': {
+      'appkey': appKey,
+      'message_id': idFactory(),
+      'task_id': taskId,
+      'namespace': _namespace,
+      'name': name,
+    },
+    if (payload != null) 'payload': payload,
+  });
 
   Map<String, dynamic>? _tryDecode(String data) {
     try {

@@ -22,8 +22,9 @@ class AgentStatusNormalizer {
     required Map<String, Object?> body,
   }) {
     return switch (cli) {
-      CliTool.claude || CliTool.flashskyai || CliTool.codex =>
-        _normalizeClaudeFamily(body),
+      CliTool.claude ||
+      CliTool.flashskyai ||
+      CliTool.codex => _normalizeClaudeFamily(body),
       CliTool.opencode => _normalizeOpenCode(body),
       CliTool.cursor => null,
     };
@@ -72,17 +73,12 @@ class AgentStatusNormalizer {
     return switch (eventName) {
       'PermissionRequest' => build(AgentSeatAttention.waiting),
       'PreToolUse' when askUser => build(AgentSeatAttention.waiting),
-      'PreToolUse' || 'PostToolUse' || 'PostToolUseFailure' => build(
-        AgentSeatAttention.working,
-      ),
-      'UserPromptSubmit' => build(
-        AgentSeatAttention.working,
-        explicit: true,
-      ),
-      'Stop' || 'StopFailure' => build(
-        AgentSeatAttention.done,
-        interrupted: isInterrupt,
-      ),
+      'PreToolUse' ||
+      'PostToolUse' ||
+      'PostToolUseFailure' => build(AgentSeatAttention.working),
+      'UserPromptSubmit' => build(AgentSeatAttention.working, explicit: true),
+      'Stop' ||
+      'StopFailure' => build(AgentSeatAttention.done, interrupted: isInterrupt),
       _ => null,
     };
   }
@@ -117,6 +113,8 @@ class AgentStatusNormalizer {
 /// `ask_user_question`, `askUserQuestion`) — same rule as Orca.
 bool isAskUserQuestionTool(String? toolName) {
   if (toolName == null || toolName.isEmpty) return false;
-  final compact = toolName.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '').toLowerCase();
+  final compact = toolName
+      .replaceAll(RegExp(r'[^a-zA-Z0-9]'), '')
+      .toLowerCase();
   return compact == 'askuserquestion';
 }

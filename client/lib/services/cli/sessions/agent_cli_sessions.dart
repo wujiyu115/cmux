@@ -5,7 +5,8 @@ enum AgentCliFamily {
   qoder,
   codex,
   opencode,
-  ohMyPi;
+  ohMyPi,
+  pi;
 
   /// Shell command that resumes [sessionId] in a pane running this family's
   /// CLI.
@@ -15,6 +16,8 @@ enum AgentCliFamily {
     AgentCliFamily.codex => 'codex resume $sessionId',
     AgentCliFamily.opencode => 'opencode --session $sessionId',
     AgentCliFamily.ohMyPi => 'omp --resume $sessionId',
+    // `--resume` is a bare picker in pi; an exact session is `--session-id`.
+    AgentCliFamily.pi => 'pi --session-id $sessionId',
   };
 }
 
@@ -24,13 +27,30 @@ class AgentCliSessionRecord {
     required this.family,
     required this.sessionId,
     this.title,
+    this.createdAt,
     this.updatedAt,
+    this.filePath,
   });
 
   final AgentCliFamily family;
   final String sessionId;
   final String? title;
+
+  /// When the CLI created this session, when the store records it (the pi
+  /// families embed it in the filename, Claude-style stores stamp their first
+  /// record). Null when the store does not say.
+  ///
+  /// This is the mark that a session belongs to *this* pane: a pane can only
+  /// own a session started after its PTY. [updatedAt] cannot answer that — a
+  /// session another window is still writing keeps a fresh mtime forever.
+  final DateTime? createdAt;
+
   final DateTime? updatedAt;
+
+  /// Absolute path of the store file holding this session, on the runtime
+  /// target's own filesystem. Null when the adapter could not name it (e.g. an
+  /// opencode session whose messages live in a sibling directory).
+  final String? filePath;
 }
 
 /// Claude/Qoder project-directory rule: every non-alphanumeric char of the

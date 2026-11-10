@@ -13,8 +13,7 @@ import 'package:equatable/equatable.dart';
 /// Brace expansion (`{a,b}`) is not supported in v1 — braces are matched
 /// literally.
 class SearchGlobSet extends Equatable {
-  SearchGlobSet(String rawPatterns)
-    : _regexes = _compileAll(rawPatterns);
+  SearchGlobSet(String rawPatterns) : _regexes = _compileAll(rawPatterns);
 
   const SearchGlobSet.empty() : _regexes = const <RegExp>[];
 

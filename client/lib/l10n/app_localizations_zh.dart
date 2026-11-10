@@ -1621,6 +1621,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentCliFamilyOhMyPi => 'Oh My Pi';
 
   @override
+  String get agentCliFamilyPi => 'Pi';
+
+  @override
   String get agentCliSessionsAllAgents => '全部 Agent';
 
   @override
@@ -1741,6 +1744,26 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get commandHistoryClose => '关闭';
+
+  @override
+  String get newPaneModeTitle => '新窗口默认模式';
+
+  @override
+  String get newPaneModeDescription =>
+      '新建终端窗口或分屏时使用的模式。终端 = 普通 shell；聊天 = 一边跑 agent CLI，一边把它的会话显示成对话。已经打开的窗口不受影响。';
+
+  @override
+  String get newPaneModeTerminal => '终端';
+
+  @override
+  String get newPaneModeChat => '聊天';
+
+  @override
+  String get chatAgentCommandTitle => '聊天模式的启动命令';
+
+  @override
+  String get chatAgentCommandDescription =>
+      '聊天窗口建好后自动敲进终端的命令，跑在该窗口自己的 shell 里，例如 claude、claude --permission-mode acceptEdits、bash -lc pi。留空则只开一个普通 shell。';
 
   @override
   String get terminalScrollbackLinesTitle => '终端滚动缓冲行数';
@@ -3717,4 +3740,50 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get voiceInputCloudPrivacyNote => '音频将直接发送给云服务商，不经过端到端加密的配对通道。';
+
+  @override
+  String get chatPaneAgentStarting => '智能体已启动，等它写下第一句话…';
+
+  @override
+  String get chatPaneComposerHint => '给智能体发消息…';
+
+  @override
+  String get chatPaneComposerNeedsAgent => '先在终端里启动 agent，再回来发消息。';
+
+  @override
+  String get chatPanePromptUndelivered =>
+      '消息没有送到：这个终端里没有正在运行的 agent（或者聊天视图盯的是另一个窗口的会话）。文本已还回输入框。';
+
+  @override
+  String get chatPaneForeignSession => '这个会话不是本窗格启动的，消息可能到不了它。';
+
+  @override
+  String get chatPaneSend => '发送';
+
+  @override
+  String get chatPaneThoughts => '思考';
+
+  @override
+  String get chatPaneCompacted => '上下文已压缩';
+
+  @override
+  String get chatPaneEmpty => '还没有内容，发一条消息开始。';
+
+  @override
+  String get chatPaneUnavailableNoDirectory => '请先在文件夹里打开一个终端。';
+
+  @override
+  String get chatPaneUnavailableNoSession => '这个文件夹还没有智能体会话记录，请先在终端里启动一个。';
+
+  @override
+  String get chatPaneUnavailableUnsupported => '这个智能体的会话存储格式还无法生成聊天视图，请使用终端。';
+
+  @override
+  String get chatPaneUnavailableRead => '读取会话记录失败。';
+
+  @override
+  String get chatModeToChat => '回到对话';
+
+  @override
+  String get chatModeToTerminal => '查看终端';
 }

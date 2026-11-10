@@ -6,10 +6,7 @@ import 'package:teampilot/services/agent_status/remote/remote_status_binding.dar
 void main() {
   group('RemoteStatusBinding.agentStatusUrl', () {
     test('ends with /agent-status on the tunnel port', () {
-      const binding = RemoteStatusBinding(
-        token: 'tok',
-        tunnelPort: 47214,
-      );
+      const binding = RemoteStatusBinding(token: 'tok', tunnelPort: 47214);
       expect(binding.agentStatusUrl, 'http://127.0.0.1:47214/agent-status');
       expect(binding.agentStatusUrl, endsWith('/agent-status'));
     });

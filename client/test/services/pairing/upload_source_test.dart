@@ -4,7 +4,8 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:teampilot/services/pairing/upload_source.dart';
 
-Uint8List payload(int n) => Uint8List.fromList(List.generate(n, (i) => i & 0xff));
+Uint8List payload(int n) =>
+    Uint8List.fromList(List.generate(n, (i) => i & 0xff));
 
 /// Pulls [source] dry in [chunk]-sized bites and returns what came back.
 Future<List<Uint8List>> drain(UploadSource source, int chunk) async {
@@ -93,21 +94,23 @@ void main() {
       await expectLater(source.close(), completes);
     });
 
-    test('a file that shrank after open reads short of its declared length',
-        () async {
-      // The sender relies on this: a short read ends the loop with
-      // `sent < total`, and the host's `received != declaredSize` check turns
-      // that into `write_failed` rather than a truncated file on disk.
-      final file = await write(10);
-      final source = await FileUploadSource.open(file.path);
-      addTearDown(source.close);
-      expect(source.length, 10);
+    test(
+      'a file that shrank after open reads short of its declared length',
+      () async {
+        // The sender relies on this: a short read ends the loop with
+        // `sent < total`, and the host's `received != declaredSize` check turns
+        // that into `write_failed` rather than a truncated file on disk.
+        final file = await write(10);
+        final source = await FileUploadSource.open(file.path);
+        addTearDown(source.close);
+        expect(source.length, 10);
 
-      await file.writeAsBytes(payload(3));
-      final chunks = await drain(source, 4);
+        await file.writeAsBytes(payload(3));
+        final chunks = await drain(source, 4);
 
-      expect(chunks.expand((c) => c).length, lessThan(source.length));
-    });
+        expect(chunks.expand((c) => c).length, lessThan(source.length));
+      },
+    );
 
     test('close twice is harmless', () async {
       final file = await write(4);

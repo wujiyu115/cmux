@@ -106,11 +106,8 @@ final class MemberPtyInjectService {
       text: text,
       aborted: aborted,
       crAckConfig: crAckConfig,
-      run: (port) => _automation.retry(
-        port: port,
-        text: text,
-        pasteSettle: pasteSettle,
-      ),
+      run: (port) =>
+          _automation.retry(port: port, text: text, pasteSettle: pasteSettle),
     );
   }
 
@@ -161,7 +158,13 @@ final class MemberPtyInjectService {
         '[team-bus] pty-automation deferred ack-in-progress '
         'member=$memberId session=$sessionId',
       );
-      _scheduleRetry(key, sessionId, memberId, text, FullscreenPtyDeliveryOutcome.crStuck);
+      _scheduleRetry(
+        key,
+        sessionId,
+        memberId,
+        text,
+        FullscreenPtyDeliveryOutcome.crStuck,
+      );
       return FullscreenPtyDeliveryOutcome.crStuck;
     }
     var abortObserved = false;

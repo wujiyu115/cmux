@@ -109,21 +109,23 @@ void main() {
       }
     }
 
-    test('listSymlinkedDirs reports directory links by absolute path',
-        () async {
-      final docs = p.join(root.path, 'external', 'docs');
-      await fs.ensureDir(docs);
-      await fs.writeString(p.join(docs, 'guide.md'), 'x');
-      await fs.ensureDir(p.join(root.path, 'repo'));
-      await createLink(
-        target: docs,
-        linkPath: p.join(root.path, 'repo', 'linked'),
-      );
+    test(
+      'listSymlinkedDirs reports directory links by absolute path',
+      () async {
+        final docs = p.join(root.path, 'external', 'docs');
+        await fs.ensureDir(docs);
+        await fs.writeString(p.join(docs, 'guide.md'), 'x');
+        await fs.ensureDir(p.join(root.path, 'repo'));
+        await createLink(
+          target: docs,
+          linkPath: p.join(root.path, 'repo', 'linked'),
+        );
 
-      final links = await fs.listSymlinkedDirs(root.path);
+        final links = await fs.listSymlinkedDirs(root.path);
 
-      expect(links, [p.join(root.path, 'repo', 'linked')]);
-    });
+        expect(links, [p.join(root.path, 'repo', 'linked')]);
+      },
+    );
 
     test('listSymlinkedDirs skips file links and dangling links', () async {
       await fs.ensureDir(p.join(root.path, 'repo'));
@@ -140,27 +142,29 @@ void main() {
       expect(await fs.listSymlinkedDirs(root.path), isEmpty);
     });
 
-    test('listDirRecursiveFollowLinks lists the linked tree under the link',
-        () async {
-      final docs = p.join(root.path, 'external', 'docs');
-      await fs.ensureDir(p.join(docs, 'sub'));
-      await fs.writeString(p.join(docs, 'guide.md'), 'x');
-      await fs.writeString(p.join(docs, 'sub', 'deep.dart'), 'x');
-      await fs.ensureDir(p.join(root.path, 'repo'));
-      await createLink(
-        target: docs,
-        linkPath: p.join(root.path, 'repo', 'linked'),
-      );
+    test(
+      'listDirRecursiveFollowLinks lists the linked tree under the link',
+      () async {
+        final docs = p.join(root.path, 'external', 'docs');
+        await fs.ensureDir(p.join(docs, 'sub'));
+        await fs.writeString(p.join(docs, 'guide.md'), 'x');
+        await fs.writeString(p.join(docs, 'sub', 'deep.dart'), 'x');
+        await fs.ensureDir(p.join(root.path, 'repo'));
+        await createLink(
+          target: docs,
+          linkPath: p.join(root.path, 'repo', 'linked'),
+        );
 
-      final entries = await fs.listDirRecursiveFollowLinks(
-        p.join(root.path, 'repo', 'linked'),
-      );
+        final entries = await fs.listDirRecursiveFollowLinks(
+          p.join(root.path, 'repo', 'linked'),
+        );
 
-      final byName = {for (final e in entries) e.name: e};
-      expect(byName['guide.md']!.isDirectory, isFalse);
-      expect(byName[p.join('sub', 'deep.dart')]!.isDirectory, isFalse);
-      expect(byName['sub']!.isDirectory, isTrue);
-    });
+        final byName = {for (final e in entries) e.name: e};
+        expect(byName['guide.md']!.isDirectory, isFalse);
+        expect(byName[p.join('sub', 'deep.dart')]!.isDirectory, isFalse);
+        expect(byName['sub']!.isDirectory, isTrue);
+      },
+    );
 
     test('listDirRecursiveFollowLinks terminates on a link cycle', () async {
       final repo = p.join(root.path, 'repo');

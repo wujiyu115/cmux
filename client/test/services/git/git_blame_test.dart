@@ -77,7 +77,10 @@ void main() {
       expect(entries, hasLength(3));
       // Sorted by first range start: uncommitted(1), Ada(3), Grace(6).
       expect(entries[0].isUncommitted, isTrue);
-      expect(entries[0].ranges.single, const GitBlameLineRange(start: 1, end: 1));
+      expect(
+        entries[0].ranges.single,
+        const GitBlameLineRange(start: 1, end: 1),
+      );
 
       final ada = entries[1];
       expect(ada.hash, '5c1b1e4f3c3d3c9e2a1b0c4d5e6f7a8b9c0d1e2f');
@@ -92,10 +95,7 @@ void main() {
 
       final grace = entries[2];
       expect(grace.authorName, 'Grace Hopper');
-      expect(
-        grace.ranges.single,
-        const GitBlameLineRange(start: 6, end: 9),
-      );
+      expect(grace.ranges.single, const GitBlameLineRange(start: 6, end: 9));
       expect(grace.subject, 'Initial import');
     });
 

@@ -78,71 +78,78 @@ void main() {
     expect(sink.pasted, isEmpty);
   });
 
-  test('clipboard image bytes are persisted to a scratch file and injected',
-      () async {
-    final tmp = await Directory.systemTemp.createTemp('tp-paste-test');
-    addTearDown(() => tmp.delete(recursive: true));
-    final sink = _FakeSink();
-    final paste = TerminalClipboardImagePaste(
-      reader: _FakeReader(bytes: pngPayload()),
-      scratchDir: tmp,
-      now: () => DateTime.fromMicrosecondsSinceEpoch(42),
-    );
+  test(
+    'clipboard image bytes are persisted to a scratch file and injected',
+    () async {
+      final tmp = await Directory.systemTemp.createTemp('tp-paste-test');
+      addTearDown(() => tmp.delete(recursive: true));
+      final sink = _FakeSink();
+      final paste = TerminalClipboardImagePaste(
+        reader: _FakeReader(bytes: pngPayload()),
+        scratchDir: tmp,
+        now: () => DateTime.fromMicrosecondsSinceEpoch(42),
+      );
 
-    final ok = await paste.tryPasteImage(
-      sink: sink,
-      target: hostTarget,
-      behavior: rawBehavior,
-    );
+      final ok = await paste.tryPasteImage(
+        sink: sink,
+        target: hostTarget,
+        behavior: rawBehavior,
+      );
 
-    expect(ok, isTrue);
-    expect(sink.appended.single, contains('paste-42.png'));
-    expect(File('${tmp.path}/paste-42.png').existsSync(), isTrue);
-  });
+      expect(ok, isTrue);
+      expect(sink.appended.single, contains('paste-42.png'));
+      expect(File('${tmp.path}/paste-42.png').existsSync(), isTrue);
+    },
+  );
 
-  test('pasted image bytes project into a WSL /mnt path for a WSL target',
-      () async {
-    final tmp = await Directory.systemTemp.createTemp('tp-paste-test');
-    addTearDown(() => tmp.delete(recursive: true));
-    final sink = _FakeSink();
-    final paste = TerminalClipboardImagePaste(
-      reader: _FakeReader(bytes: pngPayload()),
-      scratchDir: tmp,
-      now: () => DateTime.fromMicrosecondsSinceEpoch(42),
-    );
+  test(
+    'pasted image bytes project into a WSL /mnt path for a WSL target',
+    () async {
+      final tmp = await Directory.systemTemp.createTemp('tp-paste-test');
+      addTearDown(() => tmp.delete(recursive: true));
+      final sink = _FakeSink();
+      final paste = TerminalClipboardImagePaste(
+        reader: _FakeReader(bytes: pngPayload()),
+        scratchDir: tmp,
+        now: () => DateTime.fromMicrosecondsSinceEpoch(42),
+      );
 
-    final ok = await paste.tryPasteImage(
-      sink: sink,
-      target: const RuntimeTarget.wsl(),
-      behavior: rawBehavior,
-    );
+      final ok = await paste.tryPasteImage(
+        sink: sink,
+        target: const RuntimeTarget.wsl(),
+        behavior: rawBehavior,
+      );
 
-    expect(ok, isTrue);
-    expect(sink.appended.single, contains('/mnt/'));
-    expect(sink.appended.single, contains('paste-42.png'));
-  }, skip: onWindows ? false : 'Windows host namespace only');
+      expect(ok, isTrue);
+      expect(sink.appended.single, contains('/mnt/'));
+      expect(sink.appended.single, contains('paste-42.png'));
+    },
+    skip: onWindows ? false : 'Windows host namespace only',
+  );
 
-  test('SSH target rejects the local scratch file so text fallback runs',
-      () async {
-    final tmp = await Directory.systemTemp.createTemp('tp-paste-test');
-    addTearDown(() => tmp.delete(recursive: true));
-    final sink = _FakeSink();
-    final paste = TerminalClipboardImagePaste(
-      reader: _FakeReader(bytes: pngPayload()),
-      scratchDir: tmp,
-      now: () => DateTime.fromMicrosecondsSinceEpoch(42),
-    );
+  test(
+    'SSH target rejects the local scratch file so text fallback runs',
+    () async {
+      final tmp = await Directory.systemTemp.createTemp('tp-paste-test');
+      addTearDown(() => tmp.delete(recursive: true));
+      final sink = _FakeSink();
+      final paste = TerminalClipboardImagePaste(
+        reader: _FakeReader(bytes: pngPayload()),
+        scratchDir: tmp,
+        now: () => DateTime.fromMicrosecondsSinceEpoch(42),
+      );
 
-    final ok = await paste.tryPasteImage(
-      sink: sink,
-      target: const RuntimeTarget.ssh(),
-      behavior: rawBehavior,
-    );
+      final ok = await paste.tryPasteImage(
+        sink: sink,
+        target: const RuntimeTarget.ssh(),
+        behavior: rawBehavior,
+      );
 
-    expect(ok, isFalse);
-    expect(sink.appended, isEmpty);
-    expect(sink.pasted, isEmpty);
-  });
+      expect(ok, isFalse);
+      expect(sink.appended, isEmpty);
+      expect(sink.pasted, isEmpty);
+    },
+  );
 
   test('empty clipboard delivers nothing and reports no image', () async {
     final sink = _FakeSink();

@@ -19,23 +19,21 @@ final class TerminalScreenProbeController {
     String needle, {
     int scanRows = 8,
     String? composerPrefix,
-  }) =>
-      probe.locateFullscreenPromptNeedle(
-        _screenGrid,
-        needle,
-        scanRows: scanRows,
-        composerPrefix: composerPrefix,
-      );
+  }) => probe.locateFullscreenPromptNeedle(
+    _screenGrid,
+    needle,
+    scanRows: scanRows,
+    composerPrefix: composerPrefix,
+  );
 
   probe.FullscreenPromptAnchor? locateClaudeCollapsedPasteNeedle({
     int scanRows = 8,
     String? composerPrefix,
-  }) =>
-      probe.locateClaudeCollapsedPasteNeedle(
-        _screenGrid,
-        scanRows: scanRows,
-        composerPrefix: composerPrefix,
-      );
+  }) => probe.locateClaudeCollapsedPasteNeedle(
+    _screenGrid,
+    scanRows: scanRows,
+    composerPrefix: composerPrefix,
+  );
 
   bool isFullscreenPromptAtAnchor(probe.FullscreenPromptAnchor anchor) =>
       probe.isFullscreenPromptAtAnchor(_screenGrid, anchor);
@@ -45,24 +43,22 @@ final class TerminalScreenProbeController {
     required FullscreenCrAckStrategy strategy,
     String? composerPrefix,
     int scanRows = 24,
-  }) =>
-      probe.isFullscreenPromptSubmitted(
-        _screenGrid,
-        anchor,
-        strategy: strategy,
-        composerPrefix: composerPrefix,
-        scanRows: scanRows,
-      );
+  }) => probe.isFullscreenPromptSubmitted(
+    _screenGrid,
+    anchor,
+    strategy: strategy,
+    composerPrefix: composerPrefix,
+    scanRows: scanRows,
+  );
 
   bool isComposerChromeEmpty({
     required String composerPrefix,
     int scanRows = 24,
-  }) =>
-      probe.isComposerChromeEmpty(
-        _screenGrid,
-        composerPrefix: composerPrefix,
-        scanRows: scanRows,
-      );
+  }) => probe.isComposerChromeEmpty(
+    _screenGrid,
+    composerPrefix: composerPrefix,
+    scanRows: scanRows,
+  );
 
   String describeProbeWindow({int scanRows = 8}) =>
       probe.describeProbeWindow(_screenGrid, scanRows: scanRows);

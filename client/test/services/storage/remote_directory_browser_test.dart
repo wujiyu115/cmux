@@ -157,22 +157,22 @@ void main() {
     // that is a windows-style context (backslashes, drive roots). The picker
     // dialog must navigate drive letters without mangling.
     _FakeFilesystem windowsFs() => _FakeFilesystem(
-          home: r'C:\Users\alice',
-          pathContext: p.Context(style: p.Style.windows),
-          entries: {
-            r'C:\': const [
-              FsDirEntry(name: 'Users', isDirectory: true),
-              FsDirEntry(name: 'Windows', isDirectory: true),
-            ],
-            r'C:\Users': const [
-              FsDirEntry(name: 'alice', isDirectory: true),
-              FsDirEntry(name: 'Public', isDirectory: true),
-            ],
-            r'C:\Users\alice': const [
-              FsDirEntry(name: 'Documents', isDirectory: true),
-            ],
-          },
-        );
+      home: r'C:\Users\alice',
+      pathContext: p.Context(style: p.Style.windows),
+      entries: {
+        r'C:\': const [
+          FsDirEntry(name: 'Users', isDirectory: true),
+          FsDirEntry(name: 'Windows', isDirectory: true),
+        ],
+        r'C:\Users': const [
+          FsDirEntry(name: 'alice', isDirectory: true),
+          FsDirEntry(name: 'Public', isDirectory: true),
+        ],
+        r'C:\Users\alice': const [
+          FsDirEntry(name: 'Documents', isDirectory: true),
+        ],
+      },
+    );
 
     test('resolveInitial normalizes backslash paths', () async {
       final browser = RemoteDirectoryBrowser(windowsFs());
@@ -182,18 +182,20 @@ void main() {
       );
     });
 
-    test('list computes the windows parent and drive-root parent is null',
-        () async {
-      final browser = RemoteDirectoryBrowser(windowsFs());
+    test(
+      'list computes the windows parent and drive-root parent is null',
+      () async {
+        final browser = RemoteDirectoryBrowser(windowsFs());
 
-      final users = await browser.list(r'C:\Users');
-      expect(users.path, r'C:\Users');
-      expect(users.parent, r'C:\');
+        final users = await browser.list(r'C:\Users');
+        expect(users.path, r'C:\Users');
+        expect(users.parent, r'C:\');
 
-      final root = await browser.list(r'C:\');
-      expect(root.parent, isNull);
-      expect(root.directories, ['Users', 'Windows']);
-    });
+        final root = await browser.list(r'C:\');
+        expect(root.parent, isNull);
+        expect(root.directories, ['Users', 'Windows']);
+      },
+    );
 
     test('child joins with backslash semantics', () {
       final browser = RemoteDirectoryBrowser(windowsFs());

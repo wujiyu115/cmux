@@ -8,8 +8,9 @@ import '../../utils/logging/logger.dart';
 ///
 /// DIP: depends on a narrow write delegate, not [TerminalSession] itself.
 final class TerminalFullscreenInputChannel {
-  TerminalFullscreenInputChannel({required void Function(String text) writeToPty})
-    : _writeToPty = writeToPty;
+  TerminalFullscreenInputChannel({
+    required void Function(String text) writeToPty,
+  }) : _writeToPty = writeToPty;
 
   final void Function(String text) _writeToPty;
 

@@ -63,9 +63,14 @@ void main() {
     test('is created once per filesystem', () async {
       // One `mktemp -d` per machine per app run, not one per upload: on WSL and
       // SFTP that call is a subprocess / a remote round trip.
-      expect(await uploadStagingDirectory(fs), await uploadStagingDirectory(fs));
-      expect(fs.directories.where((d) => d.contains('teampilot-upload-')),
-          hasLength(1));
+      expect(
+        await uploadStagingDirectory(fs),
+        await uploadStagingDirectory(fs),
+      );
+      expect(
+        fs.directories.where((d) => d.contains('teampilot-upload-')),
+        hasLength(1),
+      );
     });
 
     test('two concurrent first calls share one directory', () async {
@@ -76,8 +81,10 @@ void main() {
       ]);
 
       expect(both.first, both.last);
-      expect(fs.directories.where((d) => d.contains('teampilot-upload-')),
-          hasLength(1));
+      expect(
+        fs.directories.where((d) => d.contains('teampilot-upload-')),
+        hasLength(1),
+      );
     });
 
     test('different filesystems get their own directory', () async {
@@ -106,12 +113,14 @@ void main() {
       );
     });
 
-    test('two concurrent opens of the same name get separate part-files',
-        () async {
-      final a = await open();
-      final b = await open();
-      expect(a.partPath, isNot(b.partPath));
-    });
+    test(
+      'two concurrent opens of the same name get separate part-files',
+      () async {
+        final a = await open();
+        final b = await open();
+        expect(a.partPath, isNot(b.partPath));
+      },
+    );
 
     test('advertises a flush size', () async {
       // An InMemoryFilesystem is not a LocalFilesystem, so it lands on the
@@ -163,13 +172,15 @@ void main() {
       expect(await (await open()).commit(), '/home/dev/app/photo-2.jpg');
     });
 
-    test('joins with the filesystem pathContext, not a hardcoded separator',
-        () async {
-      // The destination may be a WSL distro or a remote POSIX host reached from
-      // Windows, so all path arithmetic goes through the backend's own context.
-      final target = await open(directory: '/srv/data');
-      expect(await target.commit(), '/srv/data/photo.jpg');
-    });
+    test(
+      'joins with the filesystem pathContext, not a hardcoded separator',
+      () async {
+        // The destination may be a WSL distro or a remote POSIX host reached from
+        // Windows, so all path arithmetic goes through the backend's own context.
+        final target = await open(directory: '/srv/data');
+        expect(await target.commit(), '/srv/data/photo.jpg');
+      },
+    );
   });
 
   group('abort', () {

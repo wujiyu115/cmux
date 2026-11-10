@@ -172,9 +172,7 @@ class RunPlatform implements RunPlatformApi {
   }
 
   @override
-  Stream<List<LaunchOption>> optionsChangedFor(
-    OwnedLaunchConfiguration owned,
-  ) {
+  Stream<List<LaunchOption>> optionsChangedFor(OwnedLaunchConfiguration owned) {
     final type = owned.configuration.type;
     final targetId = owned.owner.targetId;
     return adapterClient.optionsChanged
@@ -292,11 +290,9 @@ class RunPlatform implements RunPlatformApi {
     List<WorkspaceFolder> folders, {
     List<OwnedLaunchConfiguration> existing = const [],
   }) {
-    return LaunchDiscover(io: store.io).discover(
-      folders: folders,
-      registry: registry,
-      existing: existing,
-    );
+    return LaunchDiscover(
+      io: store.io,
+    ).discover(folders: folders, registry: registry, existing: existing);
   }
 
   @override
@@ -305,11 +301,7 @@ class RunPlatform implements RunPlatformApi {
 
   @override
   String? unavailableReason(String type, {required String targetId}) {
-    return launchTypeUnavailableCode(
-      registry,
-      type: type,
-      targetId: targetId,
-    );
+    return launchTypeUnavailableCode(registry, type: type, targetId: targetId);
   }
 
   @override
@@ -332,7 +324,8 @@ class RunPlatform implements RunPlatformApi {
   }
 
   @override
-  List<LaunchTypeContribution> get launchTypes => registry.contributions.toList();
+  List<LaunchTypeContribution> get launchTypes =>
+      registry.contributions.toList();
 }
 
 /// Minimal JSON Schema `required` / property-type checks for launch configs.

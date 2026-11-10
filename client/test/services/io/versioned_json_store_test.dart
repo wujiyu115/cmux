@@ -121,7 +121,10 @@ void main() {
     File(store.path).writeAsStringSync('garbage');
 
     final result = await store.read();
-    expect(result.quarantinePath, p.join(tempDir.path, 'doc.corrupt-123456.json'));
+    expect(
+      result.quarantinePath,
+      p.join(tempDir.path, 'doc.corrupt-123456.json'),
+    );
   });
 
   test('migrates an old file up to the current version', () async {
@@ -153,10 +156,7 @@ void main() {
       }),
     );
     // currentVersion 3 but only a migration for step 2 registered.
-    final store = makeStore(
-      currentVersion: 3,
-      migrations: {2: (data) => data},
-    );
+    final store = makeStore(currentVersion: 3, migrations: {2: (data) => data});
     final result = await store.read();
     expect(result.status, VersionedReadStatus.quarantined);
     expect(File(store.path).existsSync(), isFalse);

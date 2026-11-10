@@ -17,27 +17,27 @@ void main() {
     test('existing shell tabs are not re-ensured', () {
       expect(
         shellIdsToEnsure(
-          tabOrder: [
-            WorkbenchTabId.shell('e1'),
-            WorkbenchTabId.session('s1'),
-          ],
+          tabOrder: [WorkbenchTabId.shell('e1'), WorkbenchTabId.session('s1')],
           registryEntryIds: ['e1', 'e2'],
         ),
         ['e2'],
       );
     });
 
-    test('activateToolWindow false shell still ensured (no select semantics)', () {
-      // Pure ensure list is independent of activate flags; selection is a
-      // separate apply step. Registry entries always appear here.
-      expect(
-        shellIdsToEnsure(
-          tabOrder: const [],
-          registryEntryIds: ['quiet-shell'],
-        ),
-        ['quiet-shell'],
-      );
-    });
+    test(
+      'activateToolWindow false shell still ensured (no select semantics)',
+      () {
+        // Pure ensure list is independent of activate flags; selection is a
+        // separate apply step. Registry entries always appear here.
+        expect(
+          shellIdsToEnsure(
+            tabOrder: const [],
+            registryEntryIds: ['quiet-shell'],
+          ),
+          ['quiet-shell'],
+        );
+      },
+    );
   });
 
   group('shellTabsToRemove', () {

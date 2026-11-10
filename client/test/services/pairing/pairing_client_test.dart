@@ -185,7 +185,9 @@ void main() {
         // resume probe has to recognize.
         bool? alive;
         unawaited(client.ping().then((v) => alive = v));
-        async.elapse(PairingClient.pingTimeout - const Duration(milliseconds: 1));
+        async.elapse(
+          PairingClient.pingTimeout - const Duration(milliseconds: 1),
+        );
         expect(alive, isNull);
         async.elapse(const Duration(milliseconds: 1));
         async.flushMicrotasks();
@@ -195,31 +197,33 @@ void main() {
   });
 
   group('PairingClient disconnect signal', () {
-    test('a socket that dies before auth is reported by connect, not as a drop',
-        () async {
-      // Mid-handshake failures are `connect` throwing; a listener must not also
-      // see them as "an established connection was lost" and start retrying.
-      final client = PairingClient(
-        connector: (_) => Future.error(StateError('connection refused')),
-        portProbe: (_, _) async => false,
-      );
-      addTearDown(client.close);
-      final drops = <void>[];
-      final sub = client.disconnected.listen(drops.add);
-      addTearDown(sub.cancel);
+    test(
+      'a socket that dies before auth is reported by connect, not as a drop',
+      () async {
+        // Mid-handshake failures are `connect` throwing; a listener must not also
+        // see them as "an established connection was lost" and start retrying.
+        final client = PairingClient(
+          connector: (_) => Future.error(StateError('connection refused')),
+          portProbe: (_, _) async => false,
+        );
+        addTearDown(client.close);
+        final drops = <void>[];
+        final sub = client.disconnected.listen(drops.add);
+        addTearDown(sub.cancel);
 
-      await expectLater(
-        client.connect(
-          wsUrls: const ['ws://192.168.1.5:5555/pair/ws'],
-          token: 't',
-          hostPublicKeyB64: 'k',
-        ),
-        throwsA(isA<Exception>()),
-      );
-      await Future<void>.delayed(Duration.zero);
+        await expectLater(
+          client.connect(
+            wsUrls: const ['ws://192.168.1.5:5555/pair/ws'],
+            token: 't',
+            hostPublicKeyB64: 'k',
+          ),
+          throwsA(isA<Exception>()),
+        );
+        await Future<void>.delayed(Duration.zero);
 
-      expect(drops, isEmpty);
-    });
+        expect(drops, isEmpty);
+      },
+    );
   });
 
   group('PairingClient agent.notice push', () {

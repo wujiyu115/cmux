@@ -2,9 +2,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_alacritty/flutter_alacritty.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../models/pane_mode.dart';
 import '../../models/terminal_split.dart';
 import '../../models/terminal_surface.dart';
 import '../../models/workspace_terminal_session_spec.dart';
+import '../chat/chat_transcript_registry.dart';
 import '../../pages/home_workspace/home_workspace_route.dart';
 import 'command_log_sink.dart';
 import 'shell_command_tracker.dart';
@@ -56,10 +58,24 @@ class WorkspaceTerminalEntry {
     required this.spec,
     required this.session,
     this.followWorkspace = false,
+    this.mode = PaneMode.terminal,
   }) : controller = TerminalController();
 
   final String id;
   String cwd;
+
+  /// When this pane's PTY was launched.
+  ///
+  /// Chat mode anchors its "which session file belongs to this pane" window to
+  /// this rather than to the moment the user flipped to chat: the agent may have
+  /// been running for an hour, and re-anchoring on every toggle would lose the
+  /// transcript the second time the user switched views.
+  final DateTime startedAt = DateTime.now();
+
+  /// What this pane is: a shell or a conversation. Fixed at creation — a chat
+  /// pane starts its agent, so there is nothing to flip afterwards.
+  final PaneMode mode;
+
   WorkspaceTerminalSessionSpec spec;
   TerminalSession session;
 
@@ -226,6 +242,7 @@ class WorkspaceTerminalGroup extends ChangeNotifier {
     required bool select,
     String titleLabel = '',
     bool followWorkspace = false,
+    PaneMode mode = PaneMode.terminal,
   }) {
     final entry = _newEntry(
       cwd: cwd,
@@ -233,6 +250,7 @@ class WorkspaceTerminalGroup extends ChangeNotifier {
       session: session,
       titleLabel: titleLabel,
       followWorkspace: followWorkspace,
+      mode: mode,
     );
     _entries.add(entry);
     final surface = TerminalSurface.single(
@@ -258,6 +276,7 @@ class WorkspaceTerminalGroup extends ChangeNotifier {
     String? anchorPaneId,
     String titleLabel = '',
     bool followWorkspace = false,
+    PaneMode mode = PaneMode.terminal,
   }) {
     final surface = surfaceById(surfaceId);
     if (surface == null) {
@@ -269,6 +288,7 @@ class WorkspaceTerminalGroup extends ChangeNotifier {
       session: session,
       titleLabel: titleLabel,
       followWorkspace: followWorkspace,
+      mode: mode,
     );
     _entries.add(entry);
     final anchor = anchorPaneId ?? surface.focusedPaneId;
@@ -406,6 +426,7 @@ class WorkspaceTerminalGroup extends ChangeNotifier {
     required TerminalSession session,
     required String titleLabel,
     required bool followWorkspace,
+    PaneMode mode = PaneMode.terminal,
   }) {
     final entry = WorkspaceTerminalEntry(
       id: _uuid.v4(),
@@ -413,6 +434,7 @@ class WorkspaceTerminalGroup extends ChangeNotifier {
       spec: spec,
       session: session,
       followWorkspace: followWorkspace,
+      mode: mode,
     )..titleLabel = titleLabel;
     final factory = _bridgeFactory;
     if (factory != null) {
@@ -503,6 +525,11 @@ class WorkspaceTerminalRegistry {
 
   final Map<String, WorkspaceTerminalGroup> _groups = {};
   final TerminalNotificationBridgeFactory? _bridgeFactory;
+
+  /// Which panes currently render as chat, and the transcripts behind them.
+  /// Lives here (not on the group) because both the terminal panel and the
+  /// pairing host need the same answer for "what mode is this pane in".
+  final ChatTranscriptRegistry chatTranscripts = ChatTranscriptRegistry();
   final ShellCommandTrackerFactory? _trackerFactory;
   final _RegistryChanges _changes = _RegistryChanges();
 
@@ -551,8 +578,7 @@ class WorkspaceTerminalRegistry {
   /// The group for [workspaceId] without creating one, or null when this
   /// workspace tracks no terminals. Read-only consumers (status badges) must
   /// prefer this over the side-effecting [groupFor].
-  WorkspaceTerminalGroup? groupOf(String workspaceId) =>
-      _groups[workspaceId];
+  WorkspaceTerminalGroup? groupOf(String workspaceId) => _groups[workspaceId];
 
   WorkspaceTerminalGroup groupFor(String workspaceId) =>
       _groups.putIfAbsent(workspaceId, () {

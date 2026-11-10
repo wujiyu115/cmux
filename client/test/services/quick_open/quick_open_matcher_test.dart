@@ -44,10 +44,7 @@ void main() {
     expect(match.target, QuickOpenMatchTarget.relativePath);
     // One-to-one normalization keeps indexes valid on the original string:
     // `lib` + `\` + `main`.
-    expect(
-      match.indexes,
-      List<int>.generate('lib/main'.length, (i) => i),
-    );
+    expect(match.indexes, List<int>.generate('lib/main'.length, (i) => i));
   });
 
   test('returns null for an empty query or no match', () {

@@ -203,12 +203,10 @@ void main() {
       workspaceId: 'ws-1',
       terminalRunDeps: depsResolver,
       emitUiIntent: intents.add,
-      registerTerminalSession: ({
-        required String entryId,
-        required String sessionId,
-      }) {
-        bound.add((entryId: entryId, sessionId: sessionId));
-      },
+      registerTerminalSession:
+          ({required String entryId, required String sessionId}) {
+            bound.add((entryId: entryId, sessionId: sessionId));
+          },
       processExecutor: ProcessRunExecutor(
         spawner:
             ({
@@ -243,7 +241,10 @@ void main() {
     expect(runService.openCalls.single['selectionKey'], 'local|/proj|cfg');
     expect(runService.openCalls.single['title'], 'Run me');
     expect(runService.openCalls.single['cwd'], '/proj');
-    expect(runService.openCalls.single['sshConnectFailedMessage'], 'ssh failed');
+    expect(
+      runService.openCalls.single['sshConnectFailedMessage'],
+      'ssh failed',
+    );
     expect(runService.waitForReadyCalls, 1);
     expect(runService.injectCalls, 1);
     expect(runService.lastInjectLine, "cd '/proj' && '/bin/bash' -c 'echo hi'");
@@ -267,45 +268,48 @@ void main() {
     expect(runService.interruptCalls, 1);
   });
 
-  test('terminal branch forwards preferTerminalEntryId to openForRun', () async {
-    final launcher = RunShellScriptLauncher(
-      workspaceId: 'ws-1',
-      terminalRunDeps: depsResolver,
-      processExecutor: ProcessRunExecutor(
-        spawner:
-            ({
-              required executable,
-              required arguments,
-              required workingDirectory,
-              environment,
-              runInShell = false,
-              includeParentEnvironment = true,
-            }) async {
-              fail('ProcessRunExecutor must not be called in terminal mode');
-            },
-      ),
-    );
+  test(
+    'terminal branch forwards preferTerminalEntryId to openForRun',
+    () async {
+      final launcher = RunShellScriptLauncher(
+        workspaceId: 'ws-1',
+        terminalRunDeps: depsResolver,
+        processExecutor: ProcessRunExecutor(
+          spawner:
+              ({
+                required executable,
+                required arguments,
+                required workingDirectory,
+                environment,
+                runInShell = false,
+                includeParentEnvironment = true,
+              }) async {
+                fail('ProcessRunExecutor must not be called in terminal mode');
+              },
+        ),
+      );
 
-    await launcher.launch(
-      sessionId: 'sess-prefer',
-      owned: _owned(
-        extras: {
-          'execute': 'scriptText',
-          'scriptText': 'echo hi',
-          'interpreterPath': '/bin/bash',
-          'cwd': '/proj',
-          'executeInTerminal': true,
-          'allowMultipleInstances': true,
-        },
-      ),
-      onOutput: (_) {},
-      preferTerminalEntryId: 'entry-prefer',
-    );
+      await launcher.launch(
+        sessionId: 'sess-prefer',
+        owned: _owned(
+          extras: {
+            'execute': 'scriptText',
+            'scriptText': 'echo hi',
+            'interpreterPath': '/bin/bash',
+            'cwd': '/proj',
+            'executeInTerminal': true,
+            'allowMultipleInstances': true,
+          },
+        ),
+        onOutput: (_) {},
+        preferTerminalEntryId: 'entry-prefer',
+      );
 
-    expect(runService.openCalls, hasLength(1));
-    expect(runService.openCalls.single['preferEntryId'], 'entry-prefer');
-    expect(runService.openCalls.single['allowMultipleInstances'], true);
-  });
+      expect(runService.openCalls, hasLength(1));
+      expect(runService.openCalls.single['preferEntryId'], 'entry-prefer');
+      expect(runService.openCalls.single['allowMultipleInstances'], true);
+    },
+  );
 
   test('non-terminal branch delegates to ProcessRunExecutor', () async {
     final spawned = <Map<String, Object?>>[];

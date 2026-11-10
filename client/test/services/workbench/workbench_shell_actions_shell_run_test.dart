@@ -48,10 +48,7 @@ void main() {
         isFalse,
       );
       expect(
-        shouldRemoveRunWorkbenchTab(
-          sessionFound: true,
-          dismissSucceeded: true,
-        ),
+        shouldRemoveRunWorkbenchTab(sessionFound: true, dismissSucceeded: true),
         isTrue,
       );
     });

@@ -155,11 +155,7 @@ int _composerLocateStartRow(
 }) {
   final prefix = composerPrefix?.trim();
   if (prefix == null || prefix.isEmpty) return windowStart;
-  final composerRow = bottomComposerChromeRow(
-    grid,
-    prefix,
-    scanRows: scanRows,
-  );
+  final composerRow = bottomComposerChromeRow(grid, prefix, scanRows: scanRows);
   if (composerRow == null) return windowStart;
   return (composerRow - composerAboveSlack).clamp(windowStart, grid.rows - 1);
 }

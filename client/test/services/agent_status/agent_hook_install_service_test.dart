@@ -30,8 +30,10 @@ void main() {
     expect(fs.files['/home/u/.codex/hooks.json'], isNotNull);
     // A distro is POSIX — no Windows cmd forwarder there.
     expect(
-      fs.files.containsKey('/home/u/.local/share/com.hhoa.teampilot/'
-          'agent-hooks/codex-hook.cmd'),
+      fs.files.containsKey(
+        '/home/u/.local/share/com.hhoa.teampilot/'
+        'agent-hooks/codex-hook.cmd',
+      ),
       isFalse,
     );
   });
@@ -155,18 +157,20 @@ void main() {
     expect(resolves, 0);
   });
 
-  test('installHost writes the forwarder under the host app-data root',
-      () async {
-    final fs = InMemoryFilesystem();
-    await AgentHookInstallService(
-      hostAppDataRoot: '/host/app',
-      hostFilesystem: fs,
-    ).installHost();
+  test(
+    'installHost writes the forwarder under the host app-data root',
+    () async {
+      final fs = InMemoryFilesystem();
+      await AgentHookInstallService(
+        hostAppDataRoot: '/host/app',
+        hostFilesystem: fs,
+      ).installHost();
 
-    // Host body talks to the gateway with plain curl — it runs on the same
-    // machine as the listener.
-    final script = fs.files['/host/app/agent-hooks/claude-hook.sh'];
-    expect(script, isNotNull);
-    expect(script, isNot(contains('curl.exe')));
-  });
+      // Host body talks to the gateway with plain curl — it runs on the same
+      // machine as the listener.
+      final script = fs.files['/host/app/agent-hooks/claude-hook.sh'];
+      expect(script, isNotNull);
+      expect(script, isNot(contains('curl.exe')));
+    },
+  );
 }

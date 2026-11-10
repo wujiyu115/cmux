@@ -109,10 +109,22 @@ void main() {
 
       // All 16 ANSI parsed exactly (0..7 normal, 8..15 bright).
       const expectedAnsi = <int>[
-        0xFF282A2E, 0xFFA54242, 0xFF8C9440, 0xFFDE935F,
-        0xFF5F819D, 0xFF85678F, 0xFF5E8D87, 0xFF707880,
-        0xFF373B41, 0xFFCC6666, 0xFFB5BD68, 0xFFF0C674,
-        0xFF81A2BE, 0xFFB294BB, 0xFF8ABEB7, 0xFFC5C8C6,
+        0xFF282A2E,
+        0xFFA54242,
+        0xFF8C9440,
+        0xFFDE935F,
+        0xFF5F819D,
+        0xFF85678F,
+        0xFF5E8D87,
+        0xFF707880,
+        0xFF373B41,
+        0xFFCC6666,
+        0xFFB5BD68,
+        0xFFF0C674,
+        0xFF81A2BE,
+        0xFFB294BB,
+        0xFF8ABEB7,
+        0xFFC5C8C6,
       ];
       expect(theme.ansi.map((c) => c.toARGB32()).toList(), expectedAnsi);
     });
@@ -193,8 +205,10 @@ white   = "#c0c0c0"
         final bright = theme.ansi[i].toARGB32();
         final normal = theme.ansi[i - 8].toARGB32();
         for (final shift in <int>[16, 8, 0]) {
-          expect((bright >> shift) & 0xFF,
-              greaterThanOrEqualTo((normal >> shift) & 0xFF));
+          expect(
+            (bright >> shift) & 0xFF,
+            greaterThanOrEqualTo((normal >> shift) & 0xFF),
+          );
         }
       }
     });

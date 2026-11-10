@@ -226,7 +226,8 @@ class WslFilesystem implements Filesystem, FsBatchOps, FsSymlinkLister {
     int? tailBytesPerFile,
   }) async {
     if (paths.isEmpty) return const {};
-    final tail = maxBytesPerFile != null &&
+    final tail =
+        maxBytesPerFile != null &&
             tailBytesPerFile != null &&
             tailBytesPerFile > 0
         ? tailBytesPerFile
@@ -357,9 +358,7 @@ class WslFilesystem implements Filesystem, FsBatchOps, FsSymlinkLister {
     // isolate if spawned here.
     final (exitCode, stderr) = await Isolate.run(() async {
       final process = await Process.start('wsl.exe', wslArgs);
-      final stderrFuture = process.stderr
-          .transform(const Utf8Decoder())
-          .join();
+      final stderrFuture = process.stderr.transform(const Utf8Decoder()).join();
       unawaited(process.stdout.drain());
       const chunkSize = 64 * 1024;
       for (var offset = 0; offset < payload.length; offset += chunkSize) {

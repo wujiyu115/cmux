@@ -82,9 +82,8 @@ abstract final class WorkspaceTerminalLaunchCatalog {
   /// Candidates for a workspace "default terminal" setting (图 12c / 图 09):
   /// a "global default" sentinel, every discovered local shell, and each WSL
   /// distro. [globalDefaultLabel] localizes the sentinel row.
-  static Future<List<WorkspaceDefaultTerminalOption>> buildDefaultTerminalOptions({
-    required String globalDefaultLabel,
-  }) async {
+  static Future<List<WorkspaceDefaultTerminalOption>>
+  buildDefaultTerminalOptions({required String globalDefaultLabel}) async {
     final options = <WorkspaceDefaultTerminalOption>[
       WorkspaceDefaultTerminalOption(label: globalDefaultLabel),
     ];
@@ -98,7 +97,10 @@ abstract final class WorkspaceTerminalLaunchCatalog {
     }
     for (final distro in await WslDistroLookup.list()) {
       options.add(
-        WorkspaceDefaultTerminalOption(label: 'WSL · $distro', value: 'wsl:$distro'),
+        WorkspaceDefaultTerminalOption(
+          label: 'WSL · $distro',
+          value: 'wsl:$distro',
+        ),
       );
     }
     return options;
@@ -150,8 +152,9 @@ abstract final class WorkspaceTerminalLaunchCatalog {
       );
     }
 
-    final remoteTargets = workspaceTargetIds(folders)
-        .where((id) => id != WorkspaceFolder.localTargetId);
+    final remoteTargets = workspaceTargetIds(
+      folders,
+    ).where((id) => id != WorkspaceFolder.localTargetId);
     for (final targetId in remoteTargets) {
       final spec = WorkspaceTerminalWorkspaceTargetSpec(targetId);
       // A WSL folder target overlaps the enumerated distro above; addSession

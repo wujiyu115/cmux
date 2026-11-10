@@ -12,7 +12,6 @@ import 'mobile_settings_page.dart';
 import 'paired_host_row.dart';
 import 'pairing_network_strip.dart';
 import 'pairing_tablet_layout.dart';
-import 'pairing_tablet_layout.dart';
 
 /// Mobile home: the desktops this phone has paired with, laid out as the
 /// Orca-style activity feed — a large page title, one section, and a rounded

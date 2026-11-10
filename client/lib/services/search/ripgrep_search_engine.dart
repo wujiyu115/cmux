@@ -125,10 +125,14 @@ class RipgrepSearchEngine {
     if (query.wholeWord) args.add('-w');
     if (!query.useRegex) args.add('-F');
     for (final glob in _splitPatterns(query.includeGlobs)) {
-      args..add('-g')..add(_rgGlob(glob));
+      args
+        ..add('-g')
+        ..add(_rgGlob(glob));
     }
     for (final glob in _splitPatterns(query.excludeGlobs)) {
-      args..add('-g')..add('!${_rgGlob(glob)}');
+      args
+        ..add('-g')
+        ..add('!${_rgGlob(glob)}');
     }
     // The pattern goes before `--`; roots (appended by [search]) stay path-only.
     args
@@ -216,7 +220,6 @@ String searchDisplayPathFor(
   return absolutePath;
 }
 
-
 /// Accumulates parsed rg events into [SearchResults].
 class _RipgrepCollector {
   _RipgrepCollector({
@@ -293,7 +296,10 @@ class _RipgrepCollector {
       _fileOrder.add(path);
     }
     if (file.matches.length >= kSearchMaxMatchesPerFile) return;
-    file = file.withMatches([...file.matches, buildSearchMatch(lineNo, line, spans)]);
+    file = file.withMatches([
+      ...file.matches,
+      buildSearchMatch(lineNo, line, spans),
+    ]);
     _files[path] = file;
     total++;
     if (total >= kSearchMaxMatchesTotal) truncated = true;

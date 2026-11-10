@@ -20,9 +20,11 @@ final class TerminalInputController implements TerminalTextSink {
        _defaultFullscreenSettleDelay = defaultFullscreenSettleDelay,
        _fullscreen =
            fullscreen ??
-           TerminalFullscreenInputChannel(writeToPty: (text) {
-             launch.writeToPty(Uint8List.fromList(utf8.encode(text)));
-           });
+           TerminalFullscreenInputChannel(
+             writeToPty: (text) {
+               launch.writeToPty(Uint8List.fromList(utf8.encode(text)));
+             },
+           );
 
   final TerminalLaunchController _launch;
   final void Function() _onTurnStart;

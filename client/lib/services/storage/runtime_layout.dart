@@ -364,10 +364,7 @@ class RuntimeLayout {
     if ((await _fs.stat(target)).exists) {
       await _fs.removeRecursive(target);
     }
-    final linked = await _fs.createSymlink(
-      target: source,
-      linkPath: target,
-    );
+    final linked = await _fs.createSymlink(target: source, linkPath: target);
     if (!linked) {
       await _fs.copyFile(source, target);
     }

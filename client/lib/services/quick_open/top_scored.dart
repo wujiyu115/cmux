@@ -47,9 +47,7 @@ class TopScored<T> {
 
   /// The kept candidates, best first.
   List<T> toSortedList() {
-    final nodes = [
-      for (var i = 0; i < _size; i++) _heap[i]!,
-    ];
+    final nodes = [for (var i = 0; i < _size; i++) _heap[i]!];
     nodes.sort(
       (a, b) => _compareBestFirst(a.score, a.sortLabel, b.score, b.sortLabel),
     );

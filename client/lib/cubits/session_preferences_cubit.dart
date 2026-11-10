@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../models/pane_mode.dart';
 import '../models/session_preferences.dart';
 import '../services/cli/cli_tool_locator.dart';
 import '../models/cli_tool.dart';
@@ -216,6 +217,24 @@ class SessionPreferencesCubit extends Cubit<SessionPreferencesState> {
     return _save(state.preferences.copyWith(notifyWhileWatching: value));
   }
 
+  /// Mode a newly created pane starts in. Already-open panes keep theirs: the
+  /// mode is a launch option, not a global view switch.
+  Future<void> setNewPaneMode(PaneMode mode) {
+    return _save(state.preferences.copyWith(newPaneMode: mode));
+  }
+
+  /// Command a chat pane runs on creation (empty falls back to the default).
+  Future<void> setChatAgentCommand(String command) {
+    final trimmed = command.trim();
+    return _save(
+      state.preferences.copyWith(
+        chatAgentCommand: trimmed.isEmpty
+            ? SessionPreferences.defaultChatAgentCommand
+            : trimmed,
+      ),
+    );
+  }
+
   /// Returns the actual executable string to invoke for [cli]:
   ///   1. user-configured path (if non-empty after trim)
   ///   2. path discovered at startup (if non-null and non-empty)
@@ -249,9 +268,7 @@ class SessionPreferencesCubit extends Cubit<SessionPreferencesState> {
   bool hasKnownToolchainExecutable(String toolId, String fallback) {
     if (toolchainPath(toolId).trim().isNotEmpty) return true;
     if (discoveredToolchainPath(toolId).trim().isNotEmpty) return true;
-    return _looksLikeAbsolutePath(
-      resolveToolchainExecutable(toolId, fallback),
-    );
+    return _looksLikeAbsolutePath(resolveToolchainExecutable(toolId, fallback));
   }
 
   static bool _looksLikeAbsolutePath(String value) {

@@ -58,9 +58,7 @@ class WorkspaceRunPlatformFactory {
     void Function(RunUiIntent intent)? emitUiIntent,
   }) async {
     final registry = LaunchTypeRegistry.withBuiltIns();
-    final adapterClient = LaunchAdapterClient(
-      extensionPathResolver: (_) => '',
-    );
+    final adapterClient = LaunchAdapterClient(extensionPathResolver: (_) => '');
     final store = LaunchConfigStore(
       io: TargetAwareLaunchConfigIo(resolveFilesystem: _filesystemForTarget),
     );
@@ -72,15 +70,13 @@ class WorkspaceRunPlatformFactory {
         terminalRunDeps: terminalRunDeps,
         processExecutor: executor,
         emitUiIntent: emitUiIntent,
-        registerTerminalSession: ({
-          required String entryId,
-          required String sessionId,
-        }) {
-          sessionManagerRef?.registerTerminalSession(
-            entryId: entryId,
-            sessionId: sessionId,
-          );
-        },
+        registerTerminalSession:
+            ({required String entryId, required String sessionId}) {
+              sessionManagerRef?.registerTerminalSession(
+                entryId: entryId,
+                sessionId: sessionId,
+              );
+            },
       ),
       launchAdapterClient: adapterClient,
       resolveLaunchType: registry.get,
@@ -129,5 +125,4 @@ class WorkspaceRunPlatformFactory {
     final session = await client.execute(shellCommand);
     return SshProcessRunHandle(session);
   }
-
 }

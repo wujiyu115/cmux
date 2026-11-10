@@ -557,7 +557,8 @@ exit /b 0
 /// process launch, which stalls for seconds under load and tripped pi's 30s
 /// handler timeout). detached+unref orphans curl so the request still lands
 /// after the CLI exits — same bridge as the Orca status forwarder.
-const _tsModuleCore = r'''// TeamPilot agent-status forwarder (managed — do not edit).
+const _tsModuleCore =
+    r'''// TeamPilot agent-status forwarder (managed — do not edit).
 const url = process.env.TEAMPILOT_AGENT_STATUS_URL;
 const seatSession = process.env.TEAMPILOT_SESSION;
 const seatMember = process.env.TEAMPILOT_MEMBER;

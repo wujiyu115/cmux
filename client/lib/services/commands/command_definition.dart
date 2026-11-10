@@ -1,6 +1,15 @@
 import 'package:teampilot/services/commands/key_chord.dart';
 
-enum CommandCategory { navigation, tabs, view, zoom, compose, run, meta, terminal }
+enum CommandCategory {
+  navigation,
+  tabs,
+  view,
+  zoom,
+  compose,
+  run,
+  meta,
+  terminal,
+}
 
 enum ShortcutWhen {
   always,

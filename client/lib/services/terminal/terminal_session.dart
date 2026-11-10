@@ -72,8 +72,8 @@ class TerminalSession {
                  scrollbackLines: scrollbackLines,
                ),
        ),
-       activityTracker = launchController?.activityTracker ??
-           TerminalActivityTracker(),
+       activityTracker =
+           launchController?.activityTracker ?? TerminalActivityTracker(),
        _inputPipeline = inputPipeline ?? TerminalUserInputPipeline(),
        _linkProvidersHolder = linkProviders {
     _terminalTheme = terminalTheme;
@@ -221,7 +221,8 @@ class TerminalSession {
       : TerminalInputController.fullScreenSubmitDelay;
 
   List<TerminalLinkProvider> get linkProviders =>
-      (_linkProviders ??= _linkProvidersHolder ??
+      (_linkProviders ??=
+              _linkProvidersHolder ??
               TerminalSessionLinkProviders(engine: engine))
           .build(_launchCwd);
 

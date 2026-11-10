@@ -1,3 +1,5 @@
+import 'pane_mode.dart';
+
 class SessionPreferences {
   SessionPreferences({
     Map<String, String> cliExecutablePaths = const {},
@@ -11,12 +13,17 @@ class SessionPreferences {
     this.notifyOnSessionIdle = true,
     this.notifyOnPtyIdle = false,
     this.notifyWhileWatching = true,
+    this.newPaneMode = PaneMode.terminal,
+    this.chatAgentCommand = defaultChatAgentCommand,
   }) : cliExecutablePaths = Map.unmodifiable(
          _normalizeCliExecutablePaths(cliExecutablePaths),
        ),
        toolchainPaths = Map.unmodifiable(
          _normalizeCliExecutablePaths(toolchainPaths),
        );
+
+  /// Command a chat pane runs on creation when the user has not chosen one.
+  static const defaultChatAgentCommand = 'claude';
 
   /// Well-known keys for [toolchainPaths].
   static const toolchainGit = 'git';
@@ -42,6 +49,11 @@ class SessionPreferences {
       notifyOnSessionIdle: json['notifyOnSessionIdle'] as bool? ?? true,
       notifyOnPtyIdle: json['notifyOnPtyIdle'] as bool? ?? false,
       notifyWhileWatching: json['notifyWhileWatching'] as bool? ?? true,
+      newPaneMode: PaneMode.parse(json['newPaneMode']),
+      chatAgentCommand: _commandOr(
+        json['chatAgentCommand'],
+        defaultChatAgentCommand,
+      ),
     );
   }
 
@@ -101,6 +113,19 @@ class SessionPreferences {
   /// is suppressed as "don't nag about what you are already watching".
   final bool notifyWhileWatching;
 
+  /// Mode a newly created pane starts in: a shell or a conversation.
+  final PaneMode newPaneMode;
+
+  /// Command typed into a pane that starts in [PaneMode.chat], e.g. `claude`,
+  /// `pi`, or `claude --permission-mode acceptEdits`.
+  ///
+  /// This is the one place the app starts an agent for the user, and it is
+  /// deliberately just a line typed into the pane's own shell: the CLI stays
+  /// interruptible from the terminal view, and nothing about its protocol is
+  /// wired into the app. Empty means "start a plain shell and let the user run
+  /// the agent", i.e. a chat pane with nothing to read yet.
+  final String chatAgentCommand;
+
   String cliExecutablePathFor(String toolId) =>
       cliExecutablePaths[toolId]?.trim() ?? '';
 
@@ -116,6 +141,8 @@ class SessionPreferences {
     bool? notifyOnSessionIdle,
     bool? notifyOnPtyIdle,
     bool? notifyWhileWatching,
+    PaneMode? newPaneMode,
+    String? chatAgentCommand,
   }) {
     return SessionPreferences(
       cliExecutablePaths: cliExecutablePaths ?? this.cliExecutablePaths,
@@ -135,6 +162,8 @@ class SessionPreferences {
       notifyOnSessionIdle: notifyOnSessionIdle ?? this.notifyOnSessionIdle,
       notifyOnPtyIdle: notifyOnPtyIdle ?? this.notifyOnPtyIdle,
       notifyWhileWatching: notifyWhileWatching ?? this.notifyWhileWatching,
+      newPaneMode: newPaneMode ?? this.newPaneMode,
+      chatAgentCommand: chatAgentCommand ?? this.chatAgentCommand,
     );
   }
 
@@ -151,6 +180,8 @@ class SessionPreferences {
       'notifyOnSessionIdle': notifyOnSessionIdle,
       'notifyOnPtyIdle': notifyOnPtyIdle,
       'notifyWhileWatching': notifyWhileWatching,
+      'newPaneMode': newPaneMode.wire,
+      'chatAgentCommand': chatAgentCommand,
     };
   }
 
@@ -162,6 +193,12 @@ class SessionPreferences {
             MapEntry(key is String ? key : '', value is String ? value : ''),
       ),
     );
+  }
+
+  static String _commandOr(Object? value, String fallback) {
+    if (value is! String) return fallback;
+    final trimmed = value.trim();
+    return trimmed.isEmpty ? fallback : trimmed;
   }
 
   static Map<String, String> _normalizeCliExecutablePaths(

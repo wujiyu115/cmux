@@ -20,19 +20,29 @@ void main() {
     engine.feed(Uint8List.fromList('prompt> '.codeUnits));
     await flushTerminalEngine(engine);
 
-    expect(engine.grid.cursorVisible, isTrue,
-        reason: 'the plain prompt shows the hardware cursor');
+    expect(
+      engine.grid.cursorVisible,
+      isTrue,
+      reason: 'the plain prompt shows the hardware cursor',
+    );
 
     engine.feed(Uint8List.fromList('\x1b[?25l'.codeUnits));
     await flushTerminalEngine(engine);
-    expect(engine.grid.cursorVisible, isFalse,
-        reason: 'CSI ?25l hides the cursor — what a full-screen program '
-            'sends once at startup');
+    expect(
+      engine.grid.cursorVisible,
+      isFalse,
+      reason:
+          'CSI ?25l hides the cursor — what a full-screen program '
+          'sends once at startup',
+    );
 
     engine.feed(Uint8List.fromList('\x1b[?25h'.codeUnits));
     await flushTerminalEngine(engine);
-    expect(engine.grid.cursorVisible, isTrue,
-        reason: 'CSI ?25h shows it again');
+    expect(
+      engine.grid.cursorVisible,
+      isTrue,
+      reason: 'CSI ?25h shows it again',
+    );
 
     engine.dispose();
   });
@@ -46,7 +56,9 @@ void main() {
     engine.initializeEmpty(5, 40);
     engine.feed(Uint8List.fromList('\x1b[?25lframe one\n'.codeUnits));
     await flushTerminalEngine(engine);
-    engine.feed(Uint8List.fromList('\x1b[2Jframe two\nframe three\n'.codeUnits));
+    engine.feed(
+      Uint8List.fromList('\x1b[2Jframe two\nframe three\n'.codeUnits),
+    );
     await flushTerminalEngine(engine);
 
     expect(engine.grid.cursorVisible, isFalse);

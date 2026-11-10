@@ -29,9 +29,7 @@ class WorkbenchBodyKeepAlivePlan {
 
   bool runOffstage(String sessionId) {
     final a = active;
-    return a == null ||
-        a.kind != WorkbenchTabKind.run ||
-        a.id != sessionId;
+    return a == null || a.kind != WorkbenchTabKind.run || a.id != sessionId;
   }
 }
 
@@ -49,8 +47,7 @@ WorkbenchBodyKeepAlivePlan resolveWorkbenchBodyKeepAlive({
   final liveRuns = liveRunSessionIds.toSet();
   final runSessionIds = [
     for (final tab in tabOrder)
-      if (tab.kind == WorkbenchTabKind.run && liveRuns.contains(tab.id))
-        tab.id,
+      if (tab.kind == WorkbenchTabKind.run && liveRuns.contains(tab.id)) tab.id,
   ];
 
   String? shellActiveSurfaceId;

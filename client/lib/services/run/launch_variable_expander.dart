@@ -95,11 +95,7 @@ class LaunchVariableExpander {
     for (final key in _shellScriptExtraKeys) {
       final value = out[key];
       if (value is! String) continue;
-      out[key] = expand(
-        value,
-        workspaceFolder: workspaceFolder,
-        env: env,
-      );
+      out[key] = expand(value, workspaceFolder: workspaceFolder, env: env);
     }
     return out;
   }

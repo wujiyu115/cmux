@@ -1682,6 +1682,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get agentCliFamilyOhMyPi => 'Oh My Pi';
 
   @override
+  String get agentCliFamilyPi => 'Pi';
+
+  @override
   String get agentCliSessionsAllAgents => 'All agents';
 
   @override
@@ -1804,6 +1807,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get commandHistoryClose => 'Close';
+
+  @override
+  String get newPaneModeTitle => 'Default mode for new windows';
+
+  @override
+  String get newPaneModeDescription =>
+      'What a new terminal window or split starts as. Terminal is a plain shell; chat runs an agent CLI and shows the session it writes as a conversation. Open windows are unaffected.';
+
+  @override
+  String get newPaneModeTerminal => 'Terminal';
+
+  @override
+  String get newPaneModeChat => 'Chat';
+
+  @override
+  String get chatAgentCommandTitle => 'Chat command';
+
+  @override
+  String get chatAgentCommandDescription =>
+      'Typed into a chat window once it is up, run by that window\'s own shell, e.g. claude, claude --permission-mode acceptEdits, or bash -lc pi. Leave empty for a plain shell.';
 
   @override
   String get terminalScrollbackLinesTitle => 'Terminal scrollback lines';
@@ -3852,4 +3875,57 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get voiceInputCloudPrivacyNote =>
       'Audio is sent directly to the cloud provider, not through the encrypted pairing channel.';
+
+  @override
+  String get chatPaneAgentStarting =>
+      'The agent is starting. Its first message will appear here.';
+
+  @override
+  String get chatPaneComposerHint => 'Message the agent…';
+
+  @override
+  String get chatPaneComposerNeedsAgent =>
+      'Start the agent in the terminal first, then message it here.';
+
+  @override
+  String get chatPanePromptUndelivered =>
+      'The prompt did not arrive: no agent is running in this terminal, or the chat view is following another window\'s session. The text is back in the box.';
+
+  @override
+  String get chatPaneForeignSession =>
+      'This session did not start in this pane, so a prompt may not reach it.';
+
+  @override
+  String get chatPaneSend => 'Send';
+
+  @override
+  String get chatPaneThoughts => 'Thinking';
+
+  @override
+  String get chatPaneCompacted => 'Context compacted';
+
+  @override
+  String get chatPaneEmpty => 'Nothing here yet. Send a message to start.';
+
+  @override
+  String get chatPaneUnavailableNoDirectory =>
+      'Open a terminal in a folder first.';
+
+  @override
+  String get chatPaneUnavailableNoSession =>
+      'No agent session recorded for this folder yet. Start one in the terminal.';
+
+  @override
+  String get chatPaneUnavailableUnsupported =>
+      'This agent stores its session in a format the chat view cannot read yet — use the terminal.';
+
+  @override
+  String get chatPaneUnavailableRead =>
+      'Could not read the session transcript.';
+
+  @override
+  String get chatModeToChat => 'Back to the chat';
+
+  @override
+  String get chatModeToTerminal => 'Show the terminal';
 }
