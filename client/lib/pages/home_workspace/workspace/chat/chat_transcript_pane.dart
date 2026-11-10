@@ -6,6 +6,7 @@ import 'package:shared_ui/shared_ui.dart';
 
 import '../../../../l10n/l10n_extensions.dart';
 import '../../../../services/chat/chat_transcript_row.dart';
+import 'chat_transcript_type.dart';
 
 /// Chat view over a pane that keeps running its agent in the terminal.
 ///
@@ -178,7 +179,7 @@ class _ChatTranscriptPaneState extends State<ChatTranscriptPane> {
     ChatTranscriptSnapshot snapshot,
     Color foreground,
   ) {
-    final styles = TpTextStyles.of(context);
+    final type = ChatTranscriptType.of(context);
     final l10n = context.l10n;
     final unavailable = snapshot.unavailable;
     if (snapshot.rows.isEmpty) {
@@ -200,7 +201,7 @@ class _ChatTranscriptPaneState extends State<ChatTranscriptPane> {
           child: Text(
             message,
             textAlign: TextAlign.center,
-            style: styles.smColored(foreground.withValues(alpha: 0.6)),
+            style: type.bodyIn(foreground.withValues(alpha: 0.6)),
           ),
         ),
       );
@@ -221,7 +222,7 @@ class _ChatTranscriptPaneState extends State<ChatTranscriptPane> {
   }
 
   Widget _buildRow(BuildContext context, ChatTranscriptRow row, Color fg) {
-    final styles = TpTextStyles.of(context);
+    final type = ChatTranscriptType.of(context);
     final l10n = context.l10n;
     switch (row.kind) {
       case ChatTranscriptRowKind.user:
@@ -232,10 +233,10 @@ class _ChatTranscriptPaneState extends State<ChatTranscriptPane> {
             color: fg.withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Text(row.text, style: styles.smColored(fg)),
+          child: Text(row.text, style: type.bodyIn(fg)),
         );
       case ChatTranscriptRowKind.assistant:
-        return SelectableText(row.text, style: styles.smRelaxedColored(fg));
+        return SelectableText(row.text, style: type.bodyIn(fg));
       case ChatTranscriptRowKind.thought:
         return _CollapsibleRow(
           label: l10n.chatPaneThoughts,
@@ -262,7 +263,7 @@ class _ChatTranscriptPaneState extends State<ChatTranscriptPane> {
         return Center(
           child: Text(
             l10n.chatPaneCompacted,
-            style: styles.xsColored(fg.withValues(alpha: 0.45)),
+            style: type.metaIn(fg.withValues(alpha: 0.45)),
           ),
         );
     }
@@ -275,7 +276,7 @@ class _ChatTranscriptPaneState extends State<ChatTranscriptPane> {
   }
 
   Widget _buildNotice(BuildContext context, String text, IconData icon) {
-    final styles = TpTextStyles.of(context);
+    final type = ChatTranscriptType.of(context);
     final color = Theme.of(context).colorScheme.error;
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
@@ -283,7 +284,7 @@ class _ChatTranscriptPaneState extends State<ChatTranscriptPane> {
         children: [
           Icon(icon, size: 14, color: color),
           const SizedBox(width: 6),
-          Expanded(child: Text(text, style: styles.xsColored(color))),
+          Expanded(child: Text(text, style: type.metaIn(color))),
         ],
       ),
     );
@@ -295,7 +296,7 @@ class _ChatTranscriptPaneState extends State<ChatTranscriptPane> {
     ChatTranscriptSnapshot snapshot,
   ) {
     final l10n = context.l10n;
-    final styles = TpTextStyles.of(context);
+    final type = ChatTranscriptType.of(context);
     final enabled = _canType(snapshot);
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
@@ -311,13 +312,13 @@ class _ChatTranscriptPaneState extends State<ChatTranscriptPane> {
               maxLines: 6,
               textInputAction: TextInputAction.send,
               onSubmitted: (_) => _send(),
-              style: styles.smColored(foreground),
+              style: type.bodyIn(foreground),
               decoration: InputDecoration(
                 isDense: true,
                 hintText: enabled
                     ? l10n.chatPaneComposerHint
                     : l10n.chatPaneComposerNeedsAgent,
-                hintStyle: styles.smColored(foreground.withValues(alpha: 0.4)),
+                hintStyle: type.bodyIn(foreground.withValues(alpha: 0.4)),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide(
@@ -363,7 +364,7 @@ class _CollapsibleRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final styles = TpTextStyles.of(context);
+    final type = ChatTranscriptType.of(context);
     final dim = foreground.withValues(alpha: 0.55);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -377,7 +378,7 @@ class _CollapsibleRow extends StatelessWidget {
                 size: 16,
                 color: dim,
               ),
-              Text(label, style: styles.xsColored(dim)),
+              Text(label, style: type.metaIn(dim)),
             ],
           ),
         ),
@@ -386,8 +387,8 @@ class _CollapsibleRow extends StatelessWidget {
             padding: const EdgeInsets.only(left: 16, top: 4),
             child: Text(
               body,
-              style: styles
-                  .smColored(dim)
+              style: type
+                  .bodyIn(dim)
                   .copyWith(fontStyle: italic ? FontStyle.italic : null),
             ),
           ),
@@ -415,7 +416,7 @@ class _ToolRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final styles = TpTextStyles.of(context);
+    final type = ChatTranscriptType.of(context);
     final dim = foreground.withValues(alpha: 0.7);
     return InkWell(
       onTap: body.isEmpty ? null : onToggle,
@@ -448,9 +449,7 @@ class _ToolRow extends StatelessWidget {
                   header,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: styles
-                      .xsColored(dim)
-                      .copyWith(fontFamily: 'monospace'),
+                  style: type.metaIn(dim),
                 ),
               ),
             ],
@@ -465,9 +464,7 @@ class _ToolRow extends StatelessWidget {
               ),
               child: Text(
                 body,
-                style: styles
-                    .xsColored(foreground.withValues(alpha: 0.8))
-                    .copyWith(fontFamily: 'monospace'),
+                style: type.toolIn(foreground.withValues(alpha: 0.8)),
               ),
             ),
         ],

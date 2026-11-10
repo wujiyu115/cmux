@@ -4,6 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:teampilot/l10n/app_localizations.dart';
 import 'package:teampilot/pages/home_workspace/workspace/chat/chat_transcript_pane.dart';
 import 'package:teampilot/services/chat/chat_transcript_row.dart';
+import 'package:shared_ui/shared_ui.dart';
+import 'package:teampilot/theme/app_typography_scale.dart';
 
 Widget _host(
   ValueListenable<ChatTranscriptSnapshot> transcript, {
@@ -20,6 +22,33 @@ Widget _host(
       canSend: canSend,
       agentStarting: agentStarting,
       onSend: onSend ?? (_) {},
+    ),
+  ),
+);
+
+Widget _hostWithType(
+  ValueListenable<ChatTranscriptSnapshot> transcript, {
+  required double monoFontSize,
+}) => MaterialApp(
+  localizationsDelegates: AppLocalizations.localizationsDelegates,
+  supportedLocales: AppLocalizations.supportedLocales,
+  locale: const Locale('en'),
+  theme: ThemeData(
+    extensions: [
+      AppTypographyTheme.fromScale(
+        AppTypographyScale.fromPx(uiFontSize: 14, monoFontSize: monoFontSize),
+      ),
+      const TpFontTheme(
+        monoFontFamily: 'JetBrainsMono-Regular',
+        monoFontFamilyFallback: ['monospace'],
+      ),
+    ],
+  ),
+  home: Scaffold(
+    body: ChatTranscriptPane(
+      transcript: transcript,
+      canSend: true,
+      onSend: (_) {},
     ),
   ),
 );
@@ -165,6 +194,58 @@ void main() {
     expect(sent, isEmpty, reason: 'a prompt with nowhere to land is dropped');
   });
 
+  testWidgets('the conversation reads at the terminal font size', (
+    tester,
+  ) async {
+    // 等宽字号 (LayoutPreferences.monoFontSize) resizes the grid; a chat pane
+    // replaces that grid in the same box, so it has to follow.
+    final transcript = ValueNotifier(
+      _snapshot([
+        const ChatTranscriptRow(
+          id: 'u1#text',
+          kind: ChatTranscriptRowKind.user,
+          text: 'run the tests',
+        ),
+        const ChatTranscriptRow(
+          id: 'm1#tool:t1',
+          kind: ChatTranscriptRowKind.tool,
+          toolName: 'Bash',
+          detail: 'flutter test',
+          text: 'All tests passed!',
+        ),
+      ]),
+    );
+    addTearDown(transcript.dispose);
+
+    await tester.pumpWidget(_hostWithType(transcript, monoFontSize: 10));
+
+    final prompt = tester.widget<Text>(find.text('run the tests'));
+    expect(prompt.style?.fontSize, 10);
+    final header = tester.widget<Text>(find.text('Bash  flutter test'));
+    expect(header.style?.fontSize, closeTo(8.6, 0.01));
+    // The configured mono face, not a 'monospace' generic (unresolvable on iOS).
+    expect(header.style?.fontFamily, 'JetBrainsMono-Regular');
+  });
+
+  testWidgets('a bigger mono setting means bigger conversation text', (
+    tester,
+  ) async {
+    final transcript = ValueNotifier(
+      _snapshot([
+        const ChatTranscriptRow(
+          id: 'u1#text',
+          kind: ChatTranscriptRowKind.user,
+          text: 'run the tests',
+        ),
+      ]),
+    );
+    addTearDown(transcript.dispose);
+
+    await tester.pumpWidget(_hostWithType(transcript, monoFontSize: 18));
+
+    expect(tester.widget<Text>(find.text('run the tests')).style?.fontSize, 18);
+  });
+
   testWidgets('a pane that started its own agent can message it right away', (
     tester,
   ) async {
@@ -183,9 +264,7 @@ void main() {
     );
 
     expect(
-      find.text(
-        'The agent is starting. Its first message will appear here.',
-      ),
+      find.text('The agent is starting. Its first message will appear here.'),
       findsOneWidget,
     );
     final field = tester.widget<TextField>(find.byType(TextField));

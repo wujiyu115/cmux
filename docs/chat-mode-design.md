@@ -92,7 +92,16 @@ TeamPilot 抄的是同一条语义，只是作用在 pane 上：`设置 → 会�
 
 自动重绑只覆盖桌面端面板：手机端的输入走终端字节流，宿主分不清「聊天模式里打的一句话」和「终端里敲的键」，所以手机上发送不会触发校准（读到的内容会随桌面端的校准一起对）。
 
-### 3.3 命令跑在 pane 自己的 shell 里
+### 3.3 字体与主题跟着终端走
+
+聊天视图占的是终端网格那个盒子，所以它必须用终端的排版，而不是界面排版：
+
+- **字号**：`AppTypographyTheme.terminal`（= 设置 → 外观 → 等宽字号 / `LayoutPreferences.monoFontSize`）。`ChatTranscriptType` 用它算出三个角色：正文、次级（标签/通知/思考，0.86×）、工具输出（1.35 行高）。之前用 `TpTextStyles`（界面字号 13），于是「等宽字号 10」的终端旁边摆着 13px 的对话。
+- **字体**：字体来自 `TpFontTheme.monoFontFamily`（bundled JetBrains Mono + CJK fallback）。工具行原来硬写 `fontFamily: 'monospace'`，手机上会落到 fontconfig 的通用族，iOS 直接解析不到（和镜像终端踩过的是同一个坑）。
+- **颜色**：前景/背景取终端主题（`TerminalTheme.foreground/background`），桌面由面板传，手机由 `pairing_mirror_page` 用同一份 `_resolveTerminalTheme()` 传，所以换终端主题换配色，两边一致。
+- 端上不需要额外分支：`context.appTypography` / `context.tpFonts` 在桌面、手机、平板上都是同一套 theme extension；手机上「字号」就是本机设置（镜像终端本来也用它）。
+
+### 3.4 命令跑在 pane 自己的 shell 里
 
 `chatAgentCommand` 是被敲进**这条 PTY 的 shell**，不是托管子进程，所以它必须是一条那个 shell 认得的命令：
 
@@ -103,13 +112,13 @@ TeamPilot 抄的是同一条语义，只是作用在 pane 上：`设置 → 会�
 失败不会静默：agent 什么都没写出来时，聊天视图显示「智能体已启动，等它写下第一句话…」，输入框照常可用（prompt 会进到 shell 里），
 点工具条的终端图标就能看到 shell 的真实报错。
 
-### 3.4 为什么是轮询而不是 watch
+### 3.5 为什么是轮询而不是 watch
 
 WSL 后端的每个文件操作都是一次 `wsl.exe` 进程（`docs/wsl-fs-helper-design.md` 的老问题）。`FsWatcher` 只有本地/部分后端支持，WSL 上事件驱动反而更贵。所以：固定 800ms 轮询 `stat`，size/mtime 没变就什么都不做；变了才整文件重读 + 重解析。
 
 整文件重读而非增量追加，是因为 CLI 会**改写**前面的记录（title、cost、流式 assistant 块），追加式解析会漂。实际会话文件几百 KB，重解析只要几毫秒。
 
-### 3.5 行模型
+### 3.6 行模型
 
 `ChatTranscriptRow{ id, kind, text, toolName, detail, running, at }`，`kind ∈ {user, assistant, thought, tool, notice}`。
 
@@ -118,7 +127,7 @@ WSL 后端的每个文件操作都是一次 `wsl.exe` 进程（`docs/wsl-fs-help
 - `thinking` 块折叠成「思考」；`isSidechain`（子 agent 的对话）、`attachment`、`hook` 摘要、`cost-state` 等噪声一律跳过。
 - 工具输出截到 4000 字符：它要发给手机，不能让一次 `cat` 把整条链路撑爆。
 
-### 3.6 解析器现状
+### 3.7 解析器现状
 
 `chatTranscriptParserFor(family)`：
 
