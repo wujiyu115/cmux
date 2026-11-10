@@ -22,6 +22,7 @@ import 'package:flutter_alacritty/flutter_alacritty.dart';
 import 'package:path/path.dart' as p;
 import 'package:teampilot/models/runtime_target.dart';
 import 'package:teampilot/repositories/pairing_key_store.dart';
+import 'package:teampilot/models/pane_mode.dart';
 import 'package:teampilot/services/chat/chat_transcript_registry.dart';
 import 'package:teampilot/services/chat/chat_transcript_session.dart';
 import 'package:teampilot/services/cli/sessions/agent_cli_sessions.dart';
@@ -343,20 +344,21 @@ Future<void> main() async {
     executable: 'probe-agent',
     validateLaunch: false,
     parseExecutable: false,
-    transportStarter: (
-      executable, {
-      required List<String> arguments,
-      required String workingDirectory,
-      required int columns,
-      required int rows,
-      Map<String, String>? environment,
-    }) async {
-      Future<void>.delayed(
-        const Duration(milliseconds: 400),
-        chatTransport.start,
-      );
-      return chatTransport;
-    },
+    transportStarter:
+        (
+          executable, {
+          required List<String> arguments,
+          required String workingDirectory,
+          required int columns,
+          required int rows,
+          Map<String, String>? environment,
+        }) async {
+          Future<void>.delayed(
+            const Duration(milliseconds: 400),
+            chatTransport.start,
+          );
+          return chatTransport;
+        },
   );
   chatSession.connect(workingDirectory: _chatCwd);
   entries.add(
@@ -373,50 +375,26 @@ Future<void> main() async {
   );
 
   final chatTranscripts = ChatTranscriptRegistry();
-  ChatTranscriptSession? liveChat;
-
-  // The desktop's chat toggle, scripted: the host owns the mode, the phone only
-  // mirrors it. Pointing this file at `off` flips the pane to the terminal on
-  // the next poll — the behaviour a real toggle on the desktop produces.
-  void setChatMode(bool chat) {
-    if (chat == (liveChat != null)) return;
-    if (chat) {
-      final session = ChatTranscriptSession(
-        paneId: _chatPaneId,
-        resolveContext: (_) async => RuntimeContext(
-          target: RuntimeTarget.local(),
-          filesystem: LocalFilesystem(),
-          home: _probeHome,
-          cwd: _chatCwd,
-          appDataRoot: p.join(_probeHome, 'appdata'),
-          paths: AppPaths(p.join(_probeHome, 'appdata')),
-        ),
-        target: RuntimeTarget.local,
-        directory: () => _chatCwd,
-        // Seeded just now, so the "written since the pane opened" window is met.
-        startedAt: probeStartedAt,
-      )..start();
-      liveChat = session;
-      chatTranscripts.register(_chatPaneId, session);
-    } else {
-      liveChat = null;
-      chatTranscripts.unregister(_chatPaneId);
-    }
-    // A host re-publishes its session list on a mode change; the phone's poll
-    // would pick it up anyway, but this is what a real toggle does.
-    catalog.notifyChanged();
-  }
-
-  setChatMode(true);
-  final chatModeFile = File(
-    '${Directory.systemTemp.path}/tp_probe_chat_mode.txt',
+  // Registered once, like a real chat pane's reader: `paneMode` above is what
+  // tells the phone this pane is a conversation, and it never changes.
+  chatTranscripts.register(
+    _chatPaneId,
+    ChatTranscriptSession(
+      paneId: _chatPaneId,
+      resolveContext: (_) async => RuntimeContext(
+        target: RuntimeTarget.local(),
+        filesystem: LocalFilesystem(),
+        home: _probeHome,
+        cwd: _chatCwd,
+        appDataRoot: p.join(_probeHome, 'appdata'),
+        paths: AppPaths(p.join(_probeHome, 'appdata')),
+      ),
+      target: RuntimeTarget.local,
+      directory: () => _chatCwd,
+      // Seeded just now, so the "written since the pane opened" window is met.
+      startedAt: probeStartedAt,
+    )..start(),
   );
-  Timer.periodic(const Duration(seconds: 1), (_) async {
-    final want = !await chatModeFile.exists()
-        ? true
-        : (await chatModeFile.readAsString()).trim() != 'off';
-    setChatMode(want);
-  });
 
   final store = _FilePairingKeyStore(
     File('${Directory.systemTemp.path}/tp_probe_identity.json'),
@@ -449,6 +427,10 @@ Future<void> main() async {
     ],
     advertisedAddress: Platform.environment['TP_PROBE_ADDR']?.trim(),
     chatTranscript: (paneId) => chatTranscripts[paneId]?.transcript.value,
+    // The probe's chat pane was created as a chat pane, like a real one now is:
+    // the mode is a property of the pane, not something the host flips at will.
+    paneMode: (paneId) =>
+        paneId == _chatPaneId ? PaneMode.chat : PaneMode.terminal,
   );
 
   await server.ensureStarted();
