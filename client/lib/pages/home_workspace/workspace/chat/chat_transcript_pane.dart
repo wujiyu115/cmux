@@ -18,6 +18,7 @@ class ChatTranscriptPane extends StatefulWidget {
     required this.transcript,
     required this.onSend,
     required this.canSend,
+    this.agentStarting = false,
     this.background,
     this.foreground,
     this.composerFocusNode,
@@ -32,6 +33,11 @@ class ChatTranscriptPane extends StatefulWidget {
 
   /// False while the PTY cannot take input (connecting, exited).
   final bool canSend;
+
+  /// True while this pane's agent has been started but has not written a
+  /// session yet (the first few seconds, or before its first message). The
+  /// prompt still has somewhere to land, so the composer stays usable.
+  final bool agentStarting;
 
   final Color? background;
   final Color? foreground;
@@ -120,6 +126,9 @@ class _ChatTranscriptPaneState extends State<ChatTranscriptPane> {
   /// bubble, no error — so the composer states why instead.
   bool _canType(ChatTranscriptSnapshot snapshot) {
     if (!widget.canSend) return false;
+    // A chat pane started its own agent: the session file may simply not
+    // exist yet, but the PTY is right there and will take the prompt.
+    if (widget.agentStarting) return true;
     return switch (snapshot.unavailable) {
       ChatTranscriptUnavailable.noDirectory ||
       ChatTranscriptUnavailable.noSessionFile ||
@@ -177,6 +186,8 @@ class _ChatTranscriptPaneState extends State<ChatTranscriptPane> {
         null => l10n.chatPaneEmpty,
         ChatTranscriptUnavailable.noDirectory =>
           l10n.chatPaneUnavailableNoDirectory,
+        ChatTranscriptUnavailable.noSessionFile when widget.agentStarting =>
+          l10n.chatPaneAgentStarting,
         ChatTranscriptUnavailable.noSessionFile =>
           l10n.chatPaneUnavailableNoSession,
         ChatTranscriptUnavailable.unsupportedFamily =>

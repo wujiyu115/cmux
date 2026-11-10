@@ -9,6 +9,7 @@ Widget _host(
   ValueListenable<ChatTranscriptSnapshot> transcript, {
   ValueChanged<String>? onSend,
   bool canSend = true,
+  bool agentStarting = false,
 }) => MaterialApp(
   localizationsDelegates: AppLocalizations.localizationsDelegates,
   supportedLocales: AppLocalizations.supportedLocales,
@@ -17,6 +18,7 @@ Widget _host(
     body: ChatTranscriptPane(
       transcript: transcript,
       canSend: canSend,
+      agentStarting: agentStarting,
       onSend: onSend ?? (_) {},
     ),
   ),
@@ -161,6 +163,38 @@ void main() {
     await tester.tap(find.byIcon(Icons.arrow_upward));
     await tester.pump();
     expect(sent, isEmpty, reason: 'a prompt with nowhere to land is dropped');
+  });
+
+  testWidgets('a pane that started its own agent can message it right away', (
+    tester,
+  ) async {
+    // The agent is up but has not written a session file yet: the prompt still
+    // has somewhere to land, so the composer must not sit there disabled.
+    final sent = <String>[];
+    final transcript = ValueNotifier(
+      const ChatTranscriptSnapshot(
+        unavailable: ChatTranscriptUnavailable.noSessionFile,
+      ),
+    );
+    addTearDown(transcript.dispose);
+
+    await tester.pumpWidget(
+      _host(transcript, onSend: sent.add, agentStarting: true),
+    );
+
+    expect(
+      find.text(
+        'The agent is starting. Its first message will appear here.',
+      ),
+      findsOneWidget,
+    );
+    final field = tester.widget<TextField>(find.byType(TextField));
+    expect(field.enabled, isTrue);
+
+    await tester.enterText(find.byType(TextField), 'hello');
+    await tester.tap(find.byIcon(Icons.arrow_upward));
+    await tester.pump();
+    expect(sent, ['hello']);
   });
 
   testWidgets('a session this pane did not start says so', (tester) async {

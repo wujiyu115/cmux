@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:teampilot/services/chat/chat_transcript_row.dart';
 import 'package:teampilot/services/pairing/pairing_frames.dart';
+import 'package:teampilot/models/pane_mode.dart';
 import 'package:teampilot/services/pairing/pairing_rpc_handler.dart';
 import 'package:teampilot/services/pairing/pairing_workspace_index.dart';
 import 'package:teampilot/services/pairing/recent_pty_buffer.dart';
@@ -79,6 +80,7 @@ void main() {
     expect(s['catalogId'], 'ws:p1');
     expect(s['cols'], 100);
     expect(s['rows'], 30);
+    expect(s['mode'], 'terminal');
   });
 
   test('session.list reports a pane in chat mode as chat', () {
@@ -87,6 +89,9 @@ void main() {
       send: sent.add,
       uploadOpener: noopUploadOpener,
       batchWindow: const Duration(milliseconds: 1),
+      // The mode is a property of the pane, not of whether a transcript has
+      // been read yet.
+      paneMode: (paneId) => paneId == 'p1' ? PaneMode.chat : PaneMode.terminal,
       chatTranscript: (paneId) => paneId == 'p1'
           ? const ChatTranscriptSnapshot(rows: [], family: 'claude')
           : null,
@@ -124,6 +129,7 @@ void main() {
       send: sent.add,
       uploadOpener: noopUploadOpener,
       batchWindow: const Duration(milliseconds: 1),
+      paneMode: (_) => PaneMode.chat,
       chatTranscript: (_) => const ChatTranscriptSnapshot(
         rows: [
           ChatTranscriptRow(

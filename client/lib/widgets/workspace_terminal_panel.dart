@@ -7,9 +7,11 @@ import 'package:flutter_alacritty/flutter_alacritty.dart';
 import 'package:flutter_alacritty/input/term_mode.dart' show anyMouse;
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../cubits/session_preferences_cubit.dart';
 import '../cubits/command_log_cubit.dart';
 import '../cubits/layout_cubit.dart';
 import '../l10n/l10n_extensions.dart';
+import '../models/pane_mode.dart';
 import '../models/runtime_target.dart';
 import '../models/terminal_split.dart';
 import '../models/terminal_surface.dart';
@@ -328,6 +330,19 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
     if (mounted) setState(() {});
   }
 
+  /// The mode every new pane starts in, from the session settings.
+  ///
+  /// Read per creation rather than cached: the user can flip the setting in
+  /// another window and the next pane honours it without a restart.
+  PaneMode get _newPaneMode =>
+      context.read<SessionPreferencesCubit>().state.preferences.newPaneMode;
+
+  String get _chatAgentCommand => context
+      .read<SessionPreferencesCubit>()
+      .state
+      .preferences
+      .chatAgentCommand;
+
   Future<void> _addEntry({
     required String cwd,
     required WorkspaceTerminalSessionSpec spec,
@@ -344,6 +359,8 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
       sshConnectFailedMessage: context.l10n.workspaceTerminalSshConnectFailed,
       select: select,
       followWorkspace: followWorkspace,
+      mode: _newPaneMode,
+      chatAgentCommand: _chatAgentCommand,
       onStateChanged: () {
         if (mounted) setState(() {});
       },
@@ -656,8 +673,39 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
       onShowAgentSessions: (position) =>
           unawaited(_showAgentSessionsMenu(position)),
       isZoomed: surface.zoomedPaneId != null,
-      chatMode: _chatModeFor(_group.activeEntry?.id),
-      onToggleChatMode: _group.activeEntry == null ? null : _toggleChatMode,
+      chatPane: _group.activeEntry?.mode == PaneMode.chat,
+      terminalView: _showsTerminal(_group.activeEntry?.id),
+      onTogglePaneView: _group.activeEntry == null ? null : _togglePaneView,
+    );
+  }
+
+  /// The conversation a chat pane shows: the same PTY, read through the CLI's
+  /// own session store, with the composer writing back into that PTY.
+  Widget _buildChatPane(
+    WorkspaceTerminalEntry entry, {
+    required Color foreground,
+    required Color background,
+  }) {
+    final transcript = _transcriptFor(entry);
+    return ColoredBox(
+      color: background,
+      child: ChatTranscriptPane(
+        transcript: transcript.transcript,
+        canSend: entry.session.transportReadyForIo,
+        agentStarting:
+            chatAgentLaunchLine(mode: entry.mode, command: _chatAgentCommand) !=
+            null,
+        foreground: foreground,
+        background: background,
+        onSend: (text) {
+          // Tell the transcript reader what to look for: the store is what
+          // proves the prompt reached an agent, and which session the pane's
+          // own agent is really writing to.
+          transcript.markPromptSent(text);
+          entry.session.markUserTurnStarted();
+          entry.session.input.writeToPty('$text\r');
+        },
+      ),
     );
   }
 
@@ -702,34 +750,45 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
 
   ChatTranscriptRegistry get _chatTranscripts => _registry.chatTranscripts;
 
-  bool _chatModeFor(String? paneId) =>
-      paneId != null && _chatTranscripts.isChatMode(paneId);
+  /// Chat panes whose escape hatch is open — the pane keeps its mode and its
+  /// agent, only the view changes.
+  final Set<String> _terminalView = {};
 
-  /// Switches the focused pane between the terminal and its chat view.
-  ///
-  /// Both views drive the same PTY: leaving chat does not touch the agent, and
-  /// entering it starts polling the CLI's own session store. A pane whose agent
-  /// has not written a session yet shows why instead of an empty transcript.
-  void _toggleChatMode() {
+  bool _showsTerminal(String? paneId) =>
+      paneId != null &&
+      _group.entryById(paneId)?.mode == PaneMode.chat &&
+      _terminalView.contains(paneId);
+
+  /// Opens or closes the escape hatch on the focused pane. Only chat panes have
+  /// one; a terminal pane is already showing its terminal.
+  void _togglePaneView() {
     final entry = _activeEntry;
-    if (entry == null) return;
-    final registry = _chatTranscripts;
-    if (registry.isChatMode(entry.id)) {
-      registry.unregister(entry.id);
-    } else {
-      final service = context.read<AgentCliSessionService>();
-      final transcript = ChatTranscriptSession(
-        paneId: entry.id,
-        resolveContext: service.resolveContextFor,
-        target: () => _connector.runtimeTargetFor(entry.spec),
-        directory: () => _directoryForEntry(entry),
-        startedAt: entry.startedAt,
-        sessionService: service,
-      );
-      registry.register(entry.id, transcript);
-      transcript.start();
-    }
-    setState(() {});
+    if (entry == null || entry.mode != PaneMode.chat) return;
+    setState(() {
+      if (!_terminalView.remove(entry.id)) _terminalView.add(entry.id);
+    });
+  }
+
+  /// The live transcript behind a chat pane, registering it on first paint.
+  ///
+  /// A chat pane starts its agent itself (see
+  /// `WorkspaceTerminalSessionOps.startChatAgent`), so there is nothing to
+  /// switch here: the reader only follows whatever that agent writes.
+  ChatTranscriptSession _transcriptFor(WorkspaceTerminalEntry entry) {
+    final existing = _chatTranscripts[entry.id];
+    if (existing != null) return existing;
+    final service = context.read<AgentCliSessionService>();
+    final transcript = ChatTranscriptSession(
+      paneId: entry.id,
+      resolveContext: service.resolveContextFor,
+      target: () => _connector.runtimeTargetFor(entry.spec),
+      directory: () => _directoryForEntry(entry),
+      startedAt: entry.startedAt,
+      sessionService: service,
+    );
+    _chatTranscripts.register(entry.id, transcript);
+    transcript.start();
+    return transcript;
   }
 
   /// Resolves the cwd a new split pane inherits from the currently focused
@@ -760,6 +819,8 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
       spec: _defaultSpec(cwd),
       theme: _terminalTheme(context),
       sshConnectFailedMessage: context.l10n.workspaceTerminalSshConnectFailed,
+      mode: _newPaneMode,
+      chatAgentCommand: _chatAgentCommand,
       onStateChanged: () {
         if (mounted) setState(() {});
       },
@@ -997,36 +1058,6 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
           terminalBody = const SizedBox.shrink();
           break;
         }
-        // Chat is a per-pane view of the same session: the split tree is left
-        // untouched underneath, so switching back is instant and splits
-        // survive the round trip. The toolbar stays above the transcript —
-        // it holds the only control that switches back to the terminal.
-        final chatTranscript = _chatTranscripts[activeEntry.id];
-        if (chatTranscript != null) {
-          terminalBody = Column(
-            children: [
-              _buildLayoutToolbar(surface),
-              const TpSeparator(),
-              Expanded(
-                child: ChatTranscriptPane(
-                  transcript: chatTranscript.transcript,
-                  canSend: activeEntry.session.transportReadyForIo,
-                  foreground: terminalForeground,
-                  background: terminalBackground,
-                  onSend: (text) {
-                    // Tell the transcript reader what to look for: the store is
-                    // what proves the prompt reached an agent, and which
-                    // session the pane's own agent is really writing to.
-                    chatTranscript.markPromptSent(text);
-                    activeEntry.session.markUserTurnStarted();
-                    activeEntry.session.input.writeToPty('$text\r');
-                  },
-                ),
-              ),
-            ],
-          );
-          break;
-        }
         _paneKeys.prune(_group.entries.map((e) => e.id).toSet());
         _chatTranscripts.prune(_group.entries.map((e) => e.id).toSet());
         final splitView = TerminalSplitView(
@@ -1037,6 +1068,16 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
           paneBuilder: (paneContext, paneId, key, isFocused) {
             final entry = _group.entryById(paneId);
             if (entry == null) return const SizedBox.shrink();
+            // Chat panes are chat for their whole life, and a split can mix
+            // the two: the decision belongs to the pane, not to the surface.
+            if (entry.mode == PaneMode.chat &&
+                !_terminalView.contains(paneId)) {
+              return _buildChatPane(
+                entry,
+                foreground: terminalForeground,
+                background: terminalBackground,
+              );
+            }
             return WorkspaceTerminalView(
               entry: entry,
               theme: theme,

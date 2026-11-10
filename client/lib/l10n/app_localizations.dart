@@ -3391,6 +3391,42 @@ abstract class AppLocalizations {
   /// **'Close'**
   String get commandHistoryClose;
 
+  /// No description provided for @newPaneModeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Default mode for new windows'**
+  String get newPaneModeTitle;
+
+  /// No description provided for @newPaneModeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'What a new terminal window or split starts as. Terminal is a plain shell; chat runs an agent CLI and shows the session it writes as a conversation. Open windows are unaffected.'**
+  String get newPaneModeDescription;
+
+  /// No description provided for @newPaneModeTerminal.
+  ///
+  /// In en, this message translates to:
+  /// **'Terminal'**
+  String get newPaneModeTerminal;
+
+  /// No description provided for @newPaneModeChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat'**
+  String get newPaneModeChat;
+
+  /// No description provided for @chatAgentCommandTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat command'**
+  String get chatAgentCommandTitle;
+
+  /// No description provided for @chatAgentCommandDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Typed into a chat window once it is up, run by that window\'s own shell, e.g. claude, claude --permission-mode acceptEdits, or bash -lc pi. Leave empty for a plain shell.'**
+  String get chatAgentCommandDescription;
+
   /// No description provided for @terminalScrollbackLinesTitle.
   ///
   /// In en, this message translates to:
@@ -7099,6 +7135,12 @@ abstract class AppLocalizations {
   /// **'Audio is sent directly to the cloud provider, not through the encrypted pairing channel.'**
   String get voiceInputCloudPrivacyNote;
 
+  /// No description provided for @chatPaneAgentStarting.
+  ///
+  /// In en, this message translates to:
+  /// **'The agent is starting. Its first message will appear here.'**
+  String get chatPaneAgentStarting;
+
   /// No description provided for @chatPaneComposerHint.
   ///
   /// In en, this message translates to:
@@ -7174,13 +7216,13 @@ abstract class AppLocalizations {
   /// No description provided for @chatModeToChat.
   ///
   /// In en, this message translates to:
-  /// **'Show chat'**
+  /// **'Back to the chat'**
   String get chatModeToChat;
 
   /// No description provided for @chatModeToTerminal.
   ///
   /// In en, this message translates to:
-  /// **'Show terminal'**
+  /// **'Show the terminal'**
   String get chatModeToTerminal;
 }
 

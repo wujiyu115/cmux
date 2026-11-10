@@ -32,7 +32,9 @@
 
 ### 1.3 和设置的关系
 
-`Settings → Agents` 每个 agent 一行 `Chat | CLI`，决定**新会话**用哪种形态；已存在的会话保持原形态（「changing an agent's Chat or CLI choice does not convert existing sessions」）。你截图里那句「Chat UI 已开启 / 新智能体默认以聊天模式启动」就是这条。
+Orca 里 `Settings → Agents` 每个 agent 一行 `Chat | CLI`，决定**新会话**用哪种形态；已存在的会话保持原形态（「changing an agent's Chat or CLI choice does not convert existing sessions」）。你截图里那句「Chat UI 已开启 / 新智能体默认以聊天模式启动」就是这条。
+
+TeamPilot 抄的是同一条语义，只是作用在 pane 上：`设置 → 会话 → 新窗口默认模式` + `聊天模式的启动命令`，新窗口/分屏按它创建，已开着的窗口不受影响（§3.1）。
 
 ---
 
@@ -40,8 +42,8 @@
 
 理由很硬：
 
-1. **本仓不编排 agent**。`AGENTS.md`：app 开的是普通交互 shell，CLI 由用户自己敲。结构化 chat 要求 app 拥有 agent 进程的生命周期与协议，等于换一个产品（`docs/feature-comparison-orca.md` 的结论也是这句）。
-2. **1.2 天然满足「终端 ↔ 聊天就地切换」**，而 1.1 就地切不了。
+1. **本仓不编排 agent**。结构化 chat 要求 app 拥有 agent 进程的生命周期与协议，等于换一个产品（`docs/feature-comparison-orca.md` 的结论也是这句）。1.2 只读文件：app 不托管进程、不讲协议。唯一的例外是聊天窗口创建时把设置里的命令**敲进 pane 自己的 shell**（§3.1），进程仍然属于那个 shell。
+2. **1.2 保留终端作为同一个 pane 的第二视图**（逃生口），而 1.1 换掉终端就没有了。
 3. **WSL/Windows 零分叉**：1.2 只读文件，读写都走 `RuntimeContext.filesystem`——local 是 `LocalFilesystem`、WSL 是 `WslFilesystem`（每 op 一个 `wsl.exe` 进程）、SSH 是 `SftpFilesystem`。同一份代码三种机器，不需要为 distro 或盘符写分支。
 4. **手机端只多一层渲染**：行模型可以序列化，桌面与手机画同一份 `ChatTranscriptSnapshot`。
 
@@ -51,13 +53,21 @@
 
 ## 3. 设计
 
-### 3.1 模式挂在「活着的 pane」上
+### 3.1 模式是创建时的选项（历史：曾经是视图开关）
 
-`ChatTranscriptRegistry`（`lib/services/chat/chat_transcript_registry.dart`）记录 `paneId → ChatTranscriptSession`：
+模式在 **pane 创建时**决定，之后不再改变（`PaneMode`）：
 
-- 在 registry 里 = 这个 pane 正在画 chat；不在 = 画终端。
-- 不落盘。理由：mode 是**视图选择**，不是启动参数——重建 pane 后由用户再选一次即可；写进 `session.json` 反而要处理「恢复的 pane 里 agent 是不是同一个会话」这种无解问题。
-- registry 挂在 `WorkspaceTerminalRegistry` 上，因为**终端面板和配对宿主都要回答同一个问题**（「这个 pane 什么模式」），而两者本来就共享它。
+| 模式 | 是什么 | 创建时做什么 |
+|---|---|---|
+| `terminal` | 普通交互 shell | 什么也不敲 |
+| `chat` | 同一条 PTY，但视图读 agent 自己写的会话库，渲染成对话 | PTY 起来后，把设置里的命令（`claude` / `pi` / …）敲进去 |
+
+- 设置来源：`SessionPreferences.newPaneMode` + `SessionPreferences.chatAgentCommand`（设置 → 会话）。新窗口（工作区 shell 标签、新建终端、分屏）都按它创建。
+- 唯一的「启动 agent」点：`WorkspaceTerminalSessionOps.startChatAgent` → `chatAgentLaunchLine`（纯函数，可单测）。就是往 shell 里写一行，没有协议、没有托管子进程；CLI 仍然可被 Ctrl+C、可被用户在终端里接管。
+- 逃生口：聊天 pane 的工具条保留一个按钮，只切换**视图**（看终端 / 回到对话），不动模式也不动 agent。终端 pane 没有这个按钮。
+- 不落盘：`notification`/`working directory` 那套 pane 事实本来就不持久化，模式跟着 pane 的生命周期走；重开工作区就是新建 pane，重新按设置来。
+- `ChatTranscriptRegistry` 现在只放**读会话的读者**（`paneId → ChatTranscriptSession`），不再回答「什么模式」。模式在 `WorkspaceTerminalEntry.mode`，配对协议 `session.list` / `chat.read` 的 `mode` 都从它来。
+- 历史：早期版本是「一个 pane 两个视图 + 工具条按钮切换」，手机端靠 1 秒轮询问「现在是什么模式」。那样既要在运行时猜归属，又让模式变成随时会变的东西；改成创建时定模式后，两件事一起消失。
 
 ### 3.2 会话文件怎么定位
 
@@ -82,13 +92,24 @@
 
 自动重绑只覆盖桌面端面板：手机端的输入走终端字节流，宿主分不清「聊天模式里打的一句话」和「终端里敲的键」，所以手机上发送不会触发校准（读到的内容会随桌面端的校准一起对）。
 
-### 3.3 为什么是轮询而不是 watch
+### 3.3 命令跑在 pane 自己的 shell 里
+
+`chatAgentCommand` 是被敲进**这条 PTY 的 shell**，不是托管子进程，所以它必须是一条那个 shell 认得的命令：
+
+- Windows 本地 pane 的 shell 是 `cmd.exe`：`claude` 是 `.exe`，能用；`pi`（`~/.bun/bin/pi` 是 bash 脚本）不行，
+  要写成 `bash -lc pi` 或该 CLI 的绝对路径。
+- WSL / SSH pane 是 POSIX shell：`pi` / `claude` 按各自 PATH 解析。
+
+失败不会静默：agent 什么都没写出来时，聊天视图显示「智能体已启动，等它写下第一句话…」，输入框照常可用（prompt 会进到 shell 里），
+点工具条的终端图标就能看到 shell 的真实报错。
+
+### 3.4 为什么是轮询而不是 watch
 
 WSL 后端的每个文件操作都是一次 `wsl.exe` 进程（`docs/wsl-fs-helper-design.md` 的老问题）。`FsWatcher` 只有本地/部分后端支持，WSL 上事件驱动反而更贵。所以：固定 800ms 轮询 `stat`，size/mtime 没变就什么都不做；变了才整文件重读 + 重解析。
 
 整文件重读而非增量追加，是因为 CLI 会**改写**前面的记录（title、cost、流式 assistant 块），追加式解析会漂。实际会话文件几百 KB，重解析只要几毫秒。
 
-### 3.4 行模型
+### 3.5 行模型
 
 `ChatTranscriptRow{ id, kind, text, toolName, detail, running, at }`，`kind ∈ {user, assistant, thought, tool, notice}`。
 
@@ -97,7 +118,7 @@ WSL 后端的每个文件操作都是一次 `wsl.exe` 进程（`docs/wsl-fs-help
 - `thinking` 块折叠成「思考」；`isSidechain`（子 agent 的对话）、`attachment`、`hook` 摘要、`cost-state` 等噪声一律跳过。
 - 工具输出截到 4000 字符：它要发给手机，不能让一次 `cat` 把整条链路撑爆。
 
-### 3.5 解析器现状
+### 3.6 解析器现状
 
 `chatTranscriptParserFor(family)`：
 
@@ -126,7 +147,7 @@ pi 的 `message` 行按 `role` 分四类：`user`（content 是 `text` block 列
 - 面板工具栏多一个按钮（`Icons.forum_outlined` ↔ `Icons.terminal`），切换**当前 pane**。切走时 split tree 原样留着，切回来立刻恢复。
 - chat 视图：行列表 + 底部输入框。输入框把文本写进**同一个 PTY**（`session.input.writeToPty('$text\r')`），并调 `markUserTurnStarted()`，所以空闲通知、命令日志等既有机制照旧。
 - 滚动只在「本来就在底部」时跟随新行，往回翻不会被下一次轮询打断。
-- 手机端：`session.list` 的每条带 `mode`；镜面页每秒 `chat.read` 一次（一次往返同时回答「什么模式」和「有什么内容」），chat 模式就复用同一个 `ChatTranscriptPane`，输入框写进同一个 PTY。桌面在镜像期间切换模式，手机会在下次轮询跟着切——不需要重连，因为 agent 没被打断。
+- 手机端：`session.list` 的每条带 `mode`（来源是 `WorkspaceTerminalEntry.mode`，不是「有没有会话内容」）；镜面页每秒 `chat.read` 一次，拿内容和 `mode`，chat 模式复用同一个 `ChatTranscriptPane`，输入框写进同一个 PTY。模式不会在镜像期间变（pane 建好就定了），所以这一秒一次的往返只是刷内容，不是在猜模式。
 
 ---
 
@@ -139,7 +160,7 @@ pi 的 `message` 行按 `role` 分四类：`user`（content 是 `text` block 列
 - `services/chat/chat_transcript_session.dart` — 定位 + 轮询 + 解析 + `busy`
 - `services/chat/chat_transcript_registry.dart` — pane 模式
 - `pages/home_workspace/workspace/chat/chat_transcript_pane.dart` — 对话视图 + 输入框
-- 面板工具栏切换按钮；`AgentCliSessionRecord.filePath`
+- `PaneMode` + 设置项（`newPaneMode` / `chatAgentCommand`）+ `WorkspaceTerminalSessionOps.startChatAgent`；`AgentCliSessionRecord.filePath`
 - 配对协议：`session.list` 带 `mode`、`chat.read` 返回 `{mode, transcript}`；镜面页按模式二选一
 - 测试：parser 9 例、session 7 例、pane 6 例、rpc 4 例
 
@@ -151,7 +172,7 @@ pi 的 `message` 行按 `role` 分四类：`user`（content 是 `text` block 列
 - `probe-chat` 在手机上渲染为对话（用户气泡 / 折叠「思考」/ 助手正文 / 折叠工具行 / 输入框），**没有**终端工具条；
 - `probe-alpha` 同时仍是终端 + 工具条 —— 模式逐 pane 生效，不是全局开关；
 - 手机输入「hello demo from mumu」→ 宿主把这一轮写进 JSONL → 手机轮询后出现该气泡与回复（同一条 PTY，agent 没被打断）；
-- 宿主切换该 pane 的模式（probe 用文件哨兵模拟桌面点按钮）→ 手机下一次轮询跟着切：终端 ↔ 对话来回都验证过，无需重连；
+- 同一宿主同时有 chat pane 与 terminal pane → 手机按 pane 分别渲染，互不影响（模式来自 `session.list`，不是「有没有内容」）；
 - 平板尺寸（最短边 800dp）下左侧列表 + 右侧视图，选中行高亮；手机尺寸（411×914dp）下是单栏 push。
 
 过程中修掉两个真问题（都不是本次功能引入的）：

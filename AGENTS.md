@@ -4,7 +4,18 @@ Guidance for Claude Code and other AI assistants working in this repository.
 
 **TeamPilot** is a Flutter desktop client (`client/`, package `teampilot`, data ID `com.hhoa.teampilot`) that manages **workspaces** and embeds **interactive terminal sessions** inside them. It is a workspace-oriented terminal multiplexer with a built-in IDE (file tree, editor, Git, worktrees) and Claude **agent-status notifications**. The home UI is an Apifox-style workspace shell.
 
-The app opens **plain interactive shells** — a local PTY on desktop, or SSH (always on Android, optional on desktop). It does **not** launch or orchestrate AI-agent CLIs itself; you run whatever CLI you like inside a shell tab.
+Every pane runs a **real shell** — a local PTY on desktop, or SSH (always on Android, optional on desktop) — so whatever you type is a program the shell owns.
+
+A pane is created in one of two **modes** (`PaneMode`), fixed for its lifetime:
+
+| Mode | What it is | Creation |
+|------|------------|----------|
+| `terminal` | An interactive shell. | nothing is typed into it |
+| `chat` | The same shell, but the pane shows the agent CLI's own session as a conversation instead of the raw screen. | the configured command (`claude`, `pi`, …) is typed into the pane once its PTY is up — `WorkspaceTerminalSessionOps.startChatAgent` |
+
+Session settings (`newPaneMode`, `chatAgentCommand`) decide which mode a **new window** gets; there is no runtime toggle. A chat pane keeps a one-click escape hatch to its terminal (permission prompts, a stuck CLI) that only changes the view, never the mode.
+
+Chat mode is read-only on the CLI side: the app reads the session store the CLI writes (`services/cli/sessions/`) and renders it; the composer just writes a line into the same PTY. No CLI protocol is wired in.
 
 | Docs | Purpose |
 |------|---------|
@@ -15,6 +26,7 @@ The app opens **plain interactive shells** — a local PTY on desktop, or SSH (a
 | [docs/PERFORMANCE.md](docs/PERFORMANCE.md) | Progressive paint / UX jank optimization (`TpDeferred*`) |
 | [docs/PERFORMANCE_ANALYSIS.md](docs/PERFORMANCE_ANALYSIS.md) | DevTools performance JSON offline analysis (`tool/analyze_performance_json.dart`) |
 | [docs/workspace-storage-layout.md](docs/workspace-storage-layout.md) | On-disk layout under `<teampilotRoot>` |
+| [docs/chat-mode-design.md](docs/chat-mode-design.md) | Chat panes: mode as a launch option, transcript pipeline |
 
 All app code lives under `client/lib/` (cubits, pages, repositories, services, models). Vendored deps: `client/packages/` (git submodules: xterm, flutter_pty_new, dartssh2, re-editor, flutter_alacritty, **shared_ui**). Cross-route UI primitives live in **`shared_ui`** as the **Tp** design system (`TpButton`, `TpInput`, `TpTheme`, …); see [client/packages/shared_ui/README.md](client/packages/shared_ui/README.md).
 
@@ -111,6 +123,7 @@ The one surviving AI-adjacent feature. Shared agent hooks (installed by `AgentHo
 | PTY + terminal | `client/lib/services/terminal/terminal_session.dart`, `terminal_transport_factory.dart` |
 | Launch args / WSL paths | `client/lib/services/session/launch_command_builder.dart` |
 | Agent-status notifications | `client/lib/services/agent_status/`, `client/lib/services/notification/`, `client/lib/cubits/agent_attention_cubit.dart` |
+| Chat panes (mode, transcript, composer) | `client/lib/models/pane_mode.dart`, `client/lib/services/chat/`, `client/lib/pages/home_workspace/workspace/chat/`, `client/lib/services/cli/sessions/` |
 | CLI locate / validate | `client/lib/services/cli/` (`cli_tool_locator.dart`, `cli_executable_validator.dart`), `client/lib/models/cli_tool.dart` |
 | File tree / editor / Git | `client/lib/cubits/file_tree_cubit.dart`, `editor_cubit.dart`, `git_cubit.dart`; `client/lib/services/git/`, `services/file_tree/`, `services/editor/` |
 | Worktrees | `client/lib/services/workspace/workspace_worktree_registry.dart`, `client/lib/cubits/worktree_cubit.dart` |

@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:teampilot/models/pane_mode.dart';
 import 'package:teampilot/models/terminal_split.dart';
 import 'package:teampilot/models/workspace_terminal_session_spec.dart';
 import 'package:teampilot/services/terminal/terminal_session.dart';
@@ -21,6 +22,23 @@ WorkspaceTerminalEntry _add(WorkspaceTerminalGroup g, {bool select = true}) {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  test('a pane keeps the mode it was created in', () {
+    final registry = WorkspaceTerminalRegistry();
+    final group = registry.groupFor('A');
+    final chat = group.addEntry(
+      cwd: '/tmp',
+      spec: const WorkspaceTerminalLocalSpec('/bin/bash'),
+      session: _testSession(),
+      select: true,
+      mode: PaneMode.chat,
+    );
+    final shell = _add(group);
+
+    expect(group.entryById(chat.id)?.mode, PaneMode.chat);
+    expect(shell.mode, PaneMode.terminal, reason: 'the default is a shell');
+    registry.disposeAll();
+  });
 
   group('WorkspaceTerminalRegistry', () {
     test('groupFor lazily creates and reuses a group per workspace', () {

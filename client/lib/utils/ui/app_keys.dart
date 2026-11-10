@@ -31,6 +31,9 @@ class AppKeys {
     'simple-mode-default-full-access-switch',
   );
   static const notifyOnPtyIdleSwitch = Key('notify-on-pty-idle-switch');
+  static const newPaneModeRow = Key('new-pane-mode-row');
+  static const chatAgentCommandRow = Key('chat-agent-command-row');
+  static const chatAgentCommandField = Key('chat-agent-command-field');
   static const barkPushModeDropdown = Key('bark-push-mode-dropdown');
   static const barkPushMobileInputOnlySwitch = Key(
     'bark-push-mobile-input-only-switch',

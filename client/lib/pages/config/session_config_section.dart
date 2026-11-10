@@ -4,6 +4,7 @@ import 'package:shared_ui/shared_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../models/pane_mode.dart';
 import '../../models/session_preferences.dart';
 import '../../cubits/session_preferences_cubit.dart';
 import '../../l10n/l10n_extensions.dart';
@@ -217,6 +218,40 @@ class _SessionControlsState extends State<_SessionControls> {
                       ),
                     ],
                     TpPreferenceRow(
+                      key: AppKeys.newPaneModeRow,
+                      title: l10n.newPaneModeTitle,
+                      subtitle: l10n.newPaneModeDescription,
+                      trailing: TpSegmentedControl(
+                        // ToggleSwitch latches its initial index, and the
+                        // stored value arrives after the first build.
+                        key: ValueKey(snapshot.newPaneMode),
+                        totalSwitches: 2,
+                        initialLabelIndex: snapshot.newPaneMode == PaneMode.chat
+                            ? 1
+                            : 0,
+                        labels: [
+                          l10n.newPaneModeTerminal,
+                          l10n.newPaneModeChat,
+                        ],
+                        onToggle: (index) => unawaited(
+                          cubit.setNewPaneMode(
+                            index == 1 ? PaneMode.chat : PaneMode.terminal,
+                          ),
+                        ),
+                      ),
+                      showDividerBelow: true,
+                    ),
+                    TpPreferenceRow(
+                      key: AppKeys.chatAgentCommandRow,
+                      title: l10n.chatAgentCommandTitle,
+                      subtitle: l10n.chatAgentCommandDescription,
+                      trailing: _ChatAgentCommandField(
+                        value: snapshot.chatAgentCommand,
+                        onCommit: cubit.setChatAgentCommand,
+                      ),
+                      showDividerBelow: snapshot.newPaneMode == PaneMode.chat,
+                    ),
+                    TpPreferenceRow(
                       title: l10n.terminalScrollbackLinesTitle,
                       subtitle: l10n.terminalScrollbackLinesDescription,
                       trailing: SizedBox(
@@ -322,6 +357,79 @@ class _SessionControlsState extends State<_SessionControls> {
   }
 }
 
+/// Saves on submit and on losing focus, so a typed command is never lost by
+/// clicking somewhere else.
+class _ChatAgentCommandField extends StatefulWidget {
+  const _ChatAgentCommandField({required this.value, required this.onCommit});
+
+  final String value;
+  final Future<void> Function(String) onCommit;
+
+  @override
+  State<_ChatAgentCommandField> createState() => _ChatAgentCommandFieldState();
+}
+
+class _ChatAgentCommandFieldState extends State<_ChatAgentCommandField> {
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.value,
+  );
+  final _focus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _focus.addListener(_onFocusChange);
+  }
+
+  @override
+  void didUpdateWidget(_ChatAgentCommandField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Follow the stored value only when the user is not editing it.
+    if (!_focus.hasFocus &&
+        widget.value != oldWidget.value &&
+        widget.value != _controller.text) {
+      _controller.text = widget.value;
+    }
+  }
+
+  @override
+  void dispose() {
+    _focus
+      ..removeListener(_onFocusChange)
+      ..dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onFocusChange() {
+    if (!_focus.hasFocus) _commit();
+  }
+
+  void _commit() {
+    if (_controller.text == widget.value) return;
+    unawaited(widget.onCommit(_controller.text));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 220,
+      child: TextField(
+        key: AppKeys.chatAgentCommandField,
+        controller: _controller,
+        focusNode: _focus,
+        textInputAction: TextInputAction.done,
+        onSubmitted: (_) => _commit(),
+        decoration: const InputDecoration(
+          hintText: 'claude',
+          hintMaxLines: 1,
+          floatingLabelBehavior: FloatingLabelBehavior.never,
+        ),
+      ),
+    );
+  }
+}
+
 class _SessionControlsSnapshot {
   const _SessionControlsSnapshot({
     required this.defaultSshWorkingDirectory,
@@ -333,6 +441,8 @@ class _SessionControlsSnapshot {
     required this.notifyOnSessionIdle,
     required this.notifyOnPtyIdle,
     required this.notifyWhileWatching,
+    required this.newPaneMode,
+    required this.chatAgentCommand,
   });
 
   final String defaultSshWorkingDirectory;
@@ -344,6 +454,8 @@ class _SessionControlsSnapshot {
   final bool notifyOnSessionIdle;
   final bool notifyOnPtyIdle;
   final bool notifyWhileWatching;
+  final PaneMode newPaneMode;
+  final String chatAgentCommand;
 
   static _SessionControlsSnapshot from(SessionPreferences preferences) {
     return _SessionControlsSnapshot(
@@ -357,6 +469,8 @@ class _SessionControlsSnapshot {
       notifyOnSessionIdle: preferences.notifyOnSessionIdle,
       notifyOnPtyIdle: preferences.notifyOnPtyIdle,
       notifyWhileWatching: preferences.notifyWhileWatching,
+      newPaneMode: preferences.newPaneMode,
+      chatAgentCommand: preferences.chatAgentCommand,
     );
   }
 
@@ -372,7 +486,9 @@ class _SessionControlsSnapshot {
         other.simpleModeDefaultFullAccess == simpleModeDefaultFullAccess &&
         other.notifyOnSessionIdle == notifyOnSessionIdle &&
         other.notifyOnPtyIdle == notifyOnPtyIdle &&
-        other.notifyWhileWatching == notifyWhileWatching;
+        other.notifyWhileWatching == notifyWhileWatching &&
+        other.newPaneMode == newPaneMode &&
+        other.chatAgentCommand == chatAgentCommand;
   }
 
   @override
@@ -386,5 +502,7 @@ class _SessionControlsSnapshot {
     notifyOnSessionIdle,
     notifyOnPtyIdle,
     notifyWhileWatching,
+    newPaneMode,
+    chatAgentCommand,
   );
 }

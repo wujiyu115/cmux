@@ -6,6 +6,7 @@ import '../../cubits/chat_cubit.dart';
 import '../../cubits/layout_cubit.dart';
 import '../../cubits/workbench/workbench_cubit.dart';
 import '../../cubits/workbench/workbench_tab.dart';
+import '../../models/pane_mode.dart';
 import '../../models/workspace_folder.dart';
 import '../../models/workspace_terminal_session_spec.dart';
 import '../host/host_interactive_shell.dart';
@@ -78,6 +79,8 @@ class WorkbenchShellLauncher {
     String Function()? fallbackLocalShell,
     Brightness Function()? platformBrightness,
     String Function()? sshConnectFailedMessage,
+    PaneMode Function()? newPaneMode,
+    String Function()? chatAgentCommand,
   }) : _workbench = workbench,
        _chat = chat,
        _registry = registry,
@@ -91,13 +94,20 @@ class WorkbenchShellLauncher {
            (() =>
                SchedulerBinding.instance.platformDispatcher.platformBrightness),
        _sshConnectFailedMessage =
-           sshConnectFailedMessage ?? (() => 'SSH connect failed');
+           sshConnectFailedMessage ?? (() => 'SSH connect failed'),
+       _newPaneMode = newPaneMode ?? (() => PaneMode.terminal),
+       _chatAgentCommand = chatAgentCommand ?? (() => '');
 
   final WorkbenchCubit _workbench;
   final ChatCubit _chat;
   final WorkspaceTerminalRegistry _registry;
   final WorkspaceShellConnector _connector;
   final LayoutCubit _layout;
+
+  /// Mode a freshly created workspace shell starts in, and the command a chat
+  /// pane runs. Injected so this service never reaches into a cubit's context.
+  final PaneMode Function() _newPaneMode;
+  final String Function() _chatAgentCommand;
   final WorkspaceTerminalSessionOps _sessionOps;
   final String Function() _fallbackLocalShell;
   final Brightness Function() _platformBrightness;
@@ -198,6 +208,8 @@ class WorkbenchShellLauncher {
           sshConnectFailedMessage ?? _sshConnectFailedMessage(),
       select: true,
       followWorkspace: followWorkspace,
+      mode: _newPaneMode(),
+      chatAgentCommand: _chatAgentCommand(),
       onStateChanged: onStateChanged,
       mounted: mounted,
     );

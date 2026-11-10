@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import '../../models/pane_mode.dart';
 import '../terminal/terminal_session.dart';
 import 'pairing_frames.dart';
 import '../chat/chat_transcript_row.dart';
@@ -45,6 +46,11 @@ class _Subscription {
 typedef PairingChatTranscriptProvider =
     ChatTranscriptSnapshot? Function(String paneId);
 
+/// Mode a live pane was created in. The pane owns this, not the transcript:
+/// a chat pane and a terminal pane are different things now, and the phone has
+/// to render the one the desktop actually made.
+typedef PairingPaneModeProvider = PaneMode Function(String paneId);
+
 /// Per-connection JSON-RPC + terminal I/O dispatcher (runs *inside* the E2EE
 /// channel, after auth). Owns this connection's subscription book; [dispose]
 /// tears every listener down so a dropped socket leaks nothing.
@@ -73,6 +79,7 @@ class PairingRpcHandler {
     PairingGitChangesProvider? gitChanges,
     PairingGitDiffProvider? gitDiff,
     PairingChatTranscriptProvider? chatTranscript,
+    PairingPaneModeProvider? paneMode,
     Duration activateTimeout = const Duration(seconds: 8),
     Duration activatePollInterval = const Duration(milliseconds: 40),
     PairingUploadCaps uploadCaps = const PairingUploadCaps(),
@@ -95,6 +102,7 @@ class PairingRpcHandler {
        _gitChanges = gitChanges,
        _gitDiff = gitDiff,
        _chatTranscript = chatTranscript,
+       _paneMode = paneMode,
        _activateTimeout = activateTimeout,
        _activatePollInterval = activatePollInterval {
     // Built in the body, not the initializer list: the receiver's ack callback
@@ -124,6 +132,7 @@ class PairingRpcHandler {
   final PairingGitChangesProvider? _gitChanges;
   final PairingGitDiffProvider? _gitDiff;
   final PairingChatTranscriptProvider? _chatTranscript;
+  final PairingPaneModeProvider? _paneMode;
   final Duration _activateTimeout;
   final Duration _activatePollInterval;
   late final PairingUploadReceiver _uploads;
@@ -212,18 +221,19 @@ class PairingRpcHandler {
         'rows': entry.session.viewHeight,
         // The desktop decides whether a pane is a terminal or a conversation;
         // the phone only renders what it is told.
-        'mode': _chatTranscriptFor(entry.ref.paneId) == null
-            ? 'terminal'
-            : 'chat',
+        'mode': _modeFor(entry.ref.paneId).wire,
       },
   ];
 
   ChatTranscriptSnapshot? _chatTranscriptFor(String paneId) =>
       _chatTranscript?.call(paneId);
 
-  /// `chat.read` answers for one pane: the mode it is in plus, in chat mode, the
-  /// rows. Polled by the phone while it mirrors that pane, so a toggle on the
-  /// desktop flips the phone's view on the next poll.
+  PaneMode _modeFor(String paneId) =>
+      _paneMode?.call(paneId) ?? PaneMode.terminal;
+
+  /// `chat.read` answers for one pane: the mode it was created in plus, in chat
+  /// mode, the rows. The phone polls it for *content*; the mode is a property of
+  /// the pane and only changes when the pane does.
   void _chatRead(Object? id, Map<String, Object?> params) {
     final catalogId = params['catalogId'];
     if (catalogId is! String || catalogId.isEmpty) {
@@ -237,7 +247,7 @@ class PairingRpcHandler {
     }
     final snapshot = _chatTranscriptFor(entry.ref.paneId);
     _replyResult(id, {
-      'mode': snapshot == null ? 'terminal' : 'chat',
+      'mode': _modeFor(entry.ref.paneId).wire,
       if (snapshot != null) 'transcript': snapshot.toJson(),
     });
   }
