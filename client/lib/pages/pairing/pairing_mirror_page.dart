@@ -405,6 +405,13 @@ class _PairingMirrorPageState extends State<PairingMirrorPage>
                       return ChatTranscriptPane(
                         transcript: _chatRows,
                         canSend: true,
+                        // The host built this pane as a conversation, so its
+                        // agent is running even while the store still has no
+                        // file for it (`pi` writes one at the first prompt).
+                        // Without this the phone would read "no session file"
+                        // as "no agent" and lock the composer on a pane that is
+                        // perfectly able to take a prompt.
+                        agentStarting: true,
                         background: Color(
                           0xFF000000 | terminalTheme.background,
                         ),
