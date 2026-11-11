@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 import '../../../../l10n/l10n_extensions.dart';
@@ -309,30 +310,49 @@ class _ChatTranscriptPaneState extends State<ChatTranscriptPane> {
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Expanded(
-            child: TextField(
-              controller: _composer,
-              focusNode: widget.composerFocusNode,
-              enabled: enabled,
-              minLines: 1,
-              maxLines: 6,
-              textInputAction: TextInputAction.send,
-              onSubmitted: (_) => _send(),
-              style: type.bodyIn(foreground),
-              decoration: InputDecoration(
-                isDense: true,
-                hintText: enabled
-                    ? l10n.chatPaneComposerHint
-                    : l10n.chatPaneComposerNeedsAgent,
-                hintStyle: type.bodyIn(foreground.withValues(alpha: 0.4)),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(
-                    color: foreground.withValues(alpha: 0.15),
+            // Enter sends, Shift+Enter breaks the line. The field is multiline
+            // (`maxLines: 6`), so on its own it treats every Enter as a newline
+            // — the soft keyboard's send action is then the only way out, and a
+            // hardware keyboard (desktop, emulator, adb) has no such key.
+            child: Shortcuts(
+              shortcuts: const {
+                SingleActivator(LogicalKeyboardKey.enter): _SendIntent(),
+              },
+              child: Actions(
+                actions: {
+                  _SendIntent: CallbackAction<_SendIntent>(
+                    onInvoke: (_) {
+                      _send();
+                      return null;
+                    },
                   ),
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
+                },
+                child: TextField(
+                  controller: _composer,
+                  focusNode: widget.composerFocusNode,
+                  enabled: enabled,
+                  minLines: 1,
+                  maxLines: 6,
+                  textInputAction: TextInputAction.send,
+                  onSubmitted: (_) => _send(),
+                  style: type.bodyIn(foreground),
+                  decoration: InputDecoration(
+                    isDense: true,
+                    hintText: enabled
+                        ? l10n.chatPaneComposerHint
+                        : l10n.chatPaneComposerNeedsAgent,
+                    hintStyle: type.bodyIn(foreground.withValues(alpha: 0.4)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(
+                        color: foreground.withValues(alpha: 0.15),
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -476,4 +496,10 @@ class _ToolRow extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Enter in the composer: submit. Declared so the multiline field's own
+/// newline handling does not swallow the key first.
+class _SendIntent extends Intent {
+  const _SendIntent();
 }

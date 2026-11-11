@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:teampilot/l10n/app_localizations.dart';
 import 'package:teampilot/pages/home_workspace/workspace/chat/chat_transcript_pane.dart';
@@ -127,6 +128,38 @@ void main() {
     expect(
       tester.widget<TextField>(find.byType(TextField)).controller?.text,
       '',
+    );
+  });
+
+  testWidgets('a hardware Enter sends, Shift+Enter keeps the newline', (
+    tester,
+  ) async {
+    // The field is multiline, so its own key handling turns Enter into a line
+    // break. On a desktop keyboard or through adb there is no soft-keyboard
+    // send action to fall back on, so Enter has to submit.
+    final sent = <String>[];
+    final transcript = ValueNotifier(_snapshot(const []));
+    addTearDown(transcript.dispose);
+
+    await tester.pumpWidget(_host(transcript, onSend: sent.add));
+    await tester.tap(find.byType(TextField));
+    await tester.enterText(find.byType(TextField), 'line one');
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pump();
+
+    expect(sent, ['line one']);
+
+    await tester.enterText(find.byType(TextField), 'line two');
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.pump();
+
+    expect(sent, ['line one']);
+    expect(
+      tester.widget<TextField>(find.byType(TextField)).controller?.text,
+      contains('line two'),
     );
   });
 
