@@ -3755,6 +3755,10 @@ class AppLocalizationsZh extends AppLocalizations {
       '消息没有送到：这个终端里没有正在运行的 agent（或者聊天视图盯的是另一个窗口的会话）。文本已还回输入框。';
 
   @override
+  String get chatPanePromptUndeliveredAgent =>
+      '消息没有送到：agent 没把它记成一条会话。切到「查看终端」看看它是不是在等确认或报错。文本已还回输入框。';
+
+  @override
   String get chatPaneForeignSession => '这个会话不是本窗格启动的，消息可能到不了它。';
 
   @override

@@ -162,7 +162,12 @@ class _ChatTranscriptPaneState extends State<ChatTranscriptPane> {
               if (_undelivered)
                 _buildNotice(
                   context,
-                  context.l10n.chatPanePromptUndelivered,
+                  // A pane that launched its own agent is not looking at another
+                  // window's session; more likely its agent is stuck on a
+                  // prompt or an error the conversation view cannot show.
+                  widget.agentStarting
+                      ? context.l10n.chatPanePromptUndeliveredAgent
+                      : context.l10n.chatPanePromptUndelivered,
                   Icons.error_outline,
                 ),
               TpSeparator(color: foreground.withValues(alpha: 0.12)),

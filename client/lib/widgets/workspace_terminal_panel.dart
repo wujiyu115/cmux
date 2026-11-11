@@ -784,6 +784,13 @@ class _WorkspaceTerminalPanelState extends State<WorkspaceTerminalPanel>
       target: () => _connector.runtimeTargetFor(entry.spec),
       directory: () => _directoryForEntry(entry),
       startedAt: entry.startedAt,
+      // This pane typed its own agent command into its shell, so the only
+      // session it can be showing is the one that agent goes on to create.
+      // Before that file exists the view waits; borrowing another window's
+      // conversation here would both mislabel it and send prompts elsewhere.
+      expectOwnSession:
+          chatAgentLaunchLine(mode: entry.mode, command: _chatAgentCommand) !=
+          null,
       sessionService: service,
     );
     _chatTranscripts.register(entry.id, transcript);

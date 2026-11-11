@@ -270,6 +270,36 @@ void main() {
     );
   });
 
+  test('a pane that started its own agent never borrows a session', () async {
+    // The CLI in a freshly launched chat pane writes no session file until the
+    // first prompt (`pi` and `oh-my-pi` behave this way), while another window
+    // keeps an older session file moving. Borrowing here would show — and let
+    // the composer answer for — a conversation this pane never started.
+    await fs.writeBytes(
+      _sessionPath,
+      utf8.encode('${_userPrompt('elsewhere')}\n'),
+    );
+    final session = ChatTranscriptSession(
+      paneId: 'pane-1',
+      resolveContext: (_) async => context,
+      target: () => context.target,
+      directory: () => _cwd,
+      startedAt: DateTime.utc(2026, 11, 9, 9),
+      expectOwnSession: true,
+      sessionService: _FreshForeignRecordService(context),
+    );
+    addTearDown(session.dispose);
+
+    await session.refreshNow();
+
+    expect(session.resolvedPath, isNull);
+    expect(
+      session.transcript.value.unavailable,
+      ChatTranscriptUnavailable.noSessionFile,
+    );
+    expect(session.transcript.value.borrowed, isFalse);
+  });
+
   test('a read failure keeps the rows already rendered', () async {
     await fs.writeBytes(_sessionPath, utf8.encode('${_userPrompt('one')}\n'));
     final session = newSession();
@@ -302,6 +332,27 @@ class _StaleRecordService extends AgentCliSessionService {
       family: AgentCliFamily.claude,
       sessionId: 'stale',
       updatedAt: DateTime.utc(2026, 1, 1),
+      filePath: _sessionPath,
+    ),
+  ];
+}
+
+/// Returns one record another window is still writing: created long ago, moved
+/// just now — exactly what a borrow would latch onto.
+class _FreshForeignRecordService extends AgentCliSessionService {
+  _FreshForeignRecordService(RuntimeContext context)
+    : super(resolveContext: (_) async => context);
+
+  @override
+  Future<List<AgentCliSessionRecord>> listSessions({
+    required RuntimeTarget target,
+    required String directory,
+  }) async => [
+    AgentCliSessionRecord(
+      family: AgentCliFamily.claude,
+      sessionId: 'foreign',
+      createdAt: DateTime.utc(2026, 11, 9, 6),
+      updatedAt: DateTime.now(),
       filePath: _sessionPath,
     ),
   ];

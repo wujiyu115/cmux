@@ -28,6 +28,7 @@ class ChatTranscriptSession {
     required RuntimeTarget Function() target,
     required String Function() directory,
     required DateTime startedAt,
+    this.expectOwnSession = false,
     AgentCliSessionService? sessionService,
     this.pollInterval = const Duration(milliseconds: 800),
     this.maxBytes = 4 << 20,
@@ -52,6 +53,16 @@ class ChatTranscriptSession {
   /// still count as this pane's. Resumed sessions keep their original creation
   /// time but get a fresh mtime.
   final Duration slack;
+
+  /// Set for a pane that started its own agent (see
+  /// `WorkspaceTerminalSessionOps.startChatAgent`).
+  ///
+  /// Such a pane can only own a session it created, so it must never fall back
+  /// to borrowing one. Some CLIs (`pi`, `oh-my-pi`) write no session file until
+  /// the first prompt, so right after launch there is deliberately nothing to
+  /// read; without this the pane would publish — and let the composer type
+  /// into — some other window's live conversation while its own agent boots.
+  final bool expectOwnSession;
 
   final Future<RuntimeContext> Function(RuntimeTarget target) _resolveContext;
   final RuntimeTarget Function() _target;
@@ -319,6 +330,9 @@ class ChatTranscriptSession {
         // Borrowed means "this file moved after the pane existed": a resumed
         // session appends its startup records, while another window's session
         // was already running when the pane launched and proves nothing here.
+        // A pane whose own agent is starting has nothing to borrow: its file
+        // simply does not exist yet.
+        if (expectOwnSession) continue;
         final updated = record.updatedAt;
         if (updated != null && updated.isBefore(_startedAt)) continue;
         borrowed ??= record;
