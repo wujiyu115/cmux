@@ -1766,6 +1766,40 @@ class AppLocalizationsZh extends AppLocalizations {
       '聊天窗口建好后自动敲进终端的命令，跑在该窗口自己的 shell 里，例如 claude、claude --permission-mode acceptEdits、bash -lc pi。留空则只开一个普通 shell。';
 
   @override
+  String get hostSettingsSectionTitle => '桌面端设置';
+
+  @override
+  String hostSettingsRowSubtitle(String url) {
+    return '$url · 新窗口默认模式与启动命令';
+  }
+
+  @override
+  String get hostSettingsConnecting => '正在连接桌面…';
+
+  @override
+  String get hostSettingsUnreachable => '连不上这台桌面。确认它在同一网络、并且开着设备配对。';
+
+  @override
+  String get hostPaneDefaultsTitle => '桌面窗口默认值';
+
+  @override
+  String get hostPaneDefaultsModeDescription => '桌面端新建窗口或分屏时使用的模式。只影响之后新开的窗口。';
+
+  @override
+  String get hostPaneDefaultsCommandDescription =>
+      '聊天窗口建好后敲进它自己 shell 的命令，例如 claude、bash -lc pi。';
+
+  @override
+  String get hostPaneDefaultsFootnote =>
+      '这些值存在桌面上，桌面端自己的设置页会同步显示同样的内容。已经打开的窗口不受影响。';
+
+  @override
+  String get hostPaneDefaultsSaved => '已保存到桌面';
+
+  @override
+  String get hostPaneDefaultsFailed => '保存失败，已回读桌面当前的值';
+
+  @override
   String get terminalScrollbackLinesTitle => '终端滚动缓冲行数';
 
   @override

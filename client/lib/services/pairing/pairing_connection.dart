@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
-import '../../models/pane_mode.dart';
 import '../../utils/logging/logger.dart';
 import 'agent_notice_message.dart';
 import 'device_registry.dart';
@@ -45,6 +44,8 @@ class PairingConnection {
     PairingGitDiffProvider? gitDiff,
     PairingChatTranscriptProvider? chatTranscript,
     PairingPaneModeProvider? paneMode,
+    PairingPaneDefaultsReader? paneDefaults,
+    PairingPaneDefaultsApplier? applyPaneDefaults,
     Stream<PairingAgentNotice>? agentNotices,
     void Function()? onClosed,
   }) : _transport = transport,
@@ -67,6 +68,8 @@ class PairingConnection {
        _gitDiff = gitDiff,
        _chatTranscript = chatTranscript,
        _paneMode = paneMode,
+       _paneDefaults = paneDefaults,
+       _applyPaneDefaults = applyPaneDefaults,
        _agentNotices = agentNotices,
        _onClosed = onClosed;
 
@@ -90,6 +93,8 @@ class PairingConnection {
   final PairingGitDiffProvider? _gitDiff;
   final PairingChatTranscriptProvider? _chatTranscript;
   final PairingPaneModeProvider? _paneMode;
+  final PairingPaneDefaultsReader? _paneDefaults;
+  final PairingPaneDefaultsApplier? _applyPaneDefaults;
 
   /// Broadcast feed of desktop agent-attention edges. Shared by every
   /// connection, so each authenticated phone gets its own subscription — the
@@ -225,6 +230,8 @@ class PairingConnection {
       gitDiff: _gitDiff,
       chatTranscript: _chatTranscript,
       paneMode: _paneMode,
+      paneDefaults: _paneDefaults,
+      applyPaneDefaults: _applyPaneDefaults,
     );
     _catalogChanges = _catalog.changes.listen(
       (_) => _sendEncryptedJson({'method': 'session.changed'}),

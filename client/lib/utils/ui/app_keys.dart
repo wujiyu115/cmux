@@ -168,6 +168,14 @@ class AppKeys {
   /// Row on the mobile settings page that opens the diagnostic log viewer.
   static const mobileSettingsDebugLogRow = Key('mobile-settings-debug-log');
 
+  /// Row that opens one paired desktop's pane defaults (host-side settings).
+  static Key mobileSettingsHostRow(String desktopId) =>
+      Key('mobile-settings-host-$desktopId');
+
+  /// Page editing what that desktop makes of a new window.
+  static const hostPaneDefaultsPage = Key('host-pane-defaults-page');
+  static const hostPaneDefaultsCommandField = Key('host-pane-defaults-command');
+
   static const debugLogPage = Key('debug-log-page');
   static const debugLogEnableSwitch = Key('debug-log-enable-switch');
   static const debugLogCopyButton = Key('debug-log-copy-button');

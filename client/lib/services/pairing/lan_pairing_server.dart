@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import '../../models/pane_mode.dart';
 import '../../utils/logging/logger.dart';
 import 'agent_notice_message.dart';
 import 'device_registry.dart';
@@ -46,6 +45,8 @@ class LanPairingServer {
     PairingGitDiffProvider? gitDiff,
     PairingChatTranscriptProvider? chatTranscript,
     PairingPaneModeProvider? paneMode,
+    PairingPaneDefaultsReader? paneDefaults,
+    PairingPaneDefaultsApplier? applyPaneDefaults,
     Stream<PairingAgentNotice>? agentNotices,
     PairingOfferWindow? offerWindow,
     this.advertisedAddress,
@@ -70,6 +71,8 @@ class LanPairingServer {
        _gitDiff = gitDiff,
        _chatTranscript = chatTranscript,
        _paneMode = paneMode,
+       _paneDefaults = paneDefaults,
+       _applyPaneDefaults = applyPaneDefaults,
        offerWindow = offerWindow ?? PairingOfferWindow();
 
   /// Ports [ensureStarted] tries in order. `[0]` means "any", which tests use to
@@ -103,6 +106,8 @@ class LanPairingServer {
   final PairingGitDiffProvider? _gitDiff;
   final PairingChatTranscriptProvider? _chatTranscript;
   final PairingPaneModeProvider? _paneMode;
+  final PairingPaneDefaultsReader? _paneDefaults;
+  final PairingPaneDefaultsApplier? _applyPaneDefaults;
 
   /// Broadcast feed of agent-attention edges, handed to every connection so each
   /// authenticated phone can pop its own local notification.
@@ -216,6 +221,8 @@ class LanPairingServer {
       gitDiff: _gitDiff,
       chatTranscript: _chatTranscript,
       paneMode: _paneMode,
+      paneDefaults: _paneDefaults,
+      applyPaneDefaults: _applyPaneDefaults,
       agentNotices: _agentNotices,
       onClosed: () => _connections.remove(connection),
     );

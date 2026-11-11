@@ -3427,6 +3427,66 @@ abstract class AppLocalizations {
   /// **'Typed into a chat window once it is up, run by that window\'s own shell, e.g. claude, claude --permission-mode acceptEdits, or bash -lc pi. Leave empty for a plain shell.'**
   String get chatAgentCommandDescription;
 
+  /// No description provided for @hostSettingsSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Desktop settings'**
+  String get hostSettingsSectionTitle;
+
+  /// No description provided for @hostSettingsRowSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{url} · new-window mode and chat command'**
+  String hostSettingsRowSubtitle(String url);
+
+  /// No description provided for @hostSettingsConnecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting to the desktop…'**
+  String get hostSettingsConnecting;
+
+  /// No description provided for @hostSettingsUnreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot reach this desktop. Check that it is on the same network and pairing is enabled.'**
+  String get hostSettingsUnreachable;
+
+  /// No description provided for @hostPaneDefaultsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Desktop window defaults'**
+  String get hostPaneDefaultsTitle;
+
+  /// No description provided for @hostPaneDefaultsModeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'What the desktop makes of a new window or split. Only affects windows opened afterwards.'**
+  String get hostPaneDefaultsModeDescription;
+
+  /// No description provided for @hostPaneDefaultsCommandDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Typed into a chat window once it is up, run by its own shell, e.g. claude or bash -lc pi.'**
+  String get hostPaneDefaultsCommandDescription;
+
+  /// No description provided for @hostPaneDefaultsFootnote.
+  ///
+  /// In en, this message translates to:
+  /// **'These live on the desktop, and its own settings screen shows the same values. Open windows are unaffected.'**
+  String get hostPaneDefaultsFootnote;
+
+  /// No description provided for @hostPaneDefaultsSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved to the desktop'**
+  String get hostPaneDefaultsSaved;
+
+  /// No description provided for @hostPaneDefaultsFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save; reloaded the desktop\'s current values'**
+  String get hostPaneDefaultsFailed;
+
   /// No description provided for @terminalScrollbackLinesTitle.
   ///
   /// In en, this message translates to:

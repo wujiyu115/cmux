@@ -1829,6 +1829,43 @@ class AppLocalizationsEn extends AppLocalizations {
       'Typed into a chat window once it is up, run by that window\'s own shell, e.g. claude, claude --permission-mode acceptEdits, or bash -lc pi. Leave empty for a plain shell.';
 
   @override
+  String get hostSettingsSectionTitle => 'Desktop settings';
+
+  @override
+  String hostSettingsRowSubtitle(String url) {
+    return '$url · new-window mode and chat command';
+  }
+
+  @override
+  String get hostSettingsConnecting => 'Connecting to the desktop…';
+
+  @override
+  String get hostSettingsUnreachable =>
+      'Cannot reach this desktop. Check that it is on the same network and pairing is enabled.';
+
+  @override
+  String get hostPaneDefaultsTitle => 'Desktop window defaults';
+
+  @override
+  String get hostPaneDefaultsModeDescription =>
+      'What the desktop makes of a new window or split. Only affects windows opened afterwards.';
+
+  @override
+  String get hostPaneDefaultsCommandDescription =>
+      'Typed into a chat window once it is up, run by its own shell, e.g. claude or bash -lc pi.';
+
+  @override
+  String get hostPaneDefaultsFootnote =>
+      'These live on the desktop, and its own settings screen shows the same values. Open windows are unaffected.';
+
+  @override
+  String get hostPaneDefaultsSaved => 'Saved to the desktop';
+
+  @override
+  String get hostPaneDefaultsFailed =>
+      'Could not save; reloaded the desktop\'s current values';
+
+  @override
   String get terminalScrollbackLinesTitle => 'Terminal scrollback lines';
 
   @override

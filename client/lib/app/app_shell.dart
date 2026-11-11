@@ -1241,6 +1241,24 @@ Future<AppShell> buildAppShell({
       paneMode: (paneId) =>
           workspaceTerminalRegistry.locatePane(paneId)?.$2.mode ??
           PaneMode.terminal,
+      // Read through the cubit, not a cached copy: the phone's edit lands in the
+      // same preferences the desktop's own settings screen writes.
+      paneDefaults: () => {
+        'mode': sessionPreferencesCubit.state.preferences.newPaneMode.wire,
+        'chatAgentCommand':
+            sessionPreferencesCubit.state.preferences.chatAgentCommand,
+      },
+      applyPaneDefaults: ({required mode, required chatAgentCommand}) async {
+        await sessionPreferencesCubit.setNewPaneMode(mode);
+        if (chatAgentCommand != null) {
+          await sessionPreferencesCubit.setChatAgentCommand(chatAgentCommand);
+        }
+        return {
+          'mode': sessionPreferencesCubit.state.preferences.newPaneMode.wire,
+          'chatAgentCommand':
+              sessionPreferencesCubit.state.preferences.chatAgentCommand,
+        };
+      },
       agentNotices: agentNoticeWire,
     );
     pairingHostCubit = PairingHostCubit(

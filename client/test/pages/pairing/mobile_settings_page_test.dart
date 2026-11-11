@@ -6,6 +6,7 @@ import 'package:teampilot/cubits/layout_cubit.dart';
 import 'package:teampilot/cubits/voice_input_cubit.dart';
 import 'package:teampilot/l10n/app_localizations.dart';
 import 'package:teampilot/pages/pairing/mobile_settings_page.dart';
+import 'package:teampilot/repositories/pairing_settings_repository.dart';
 import 'package:teampilot/repositories/voice_input_repository.dart';
 import 'package:teampilot/theme/app_typography_scale.dart';
 import 'package:teampilot/utils/ui/app_keys.dart';
@@ -52,8 +53,9 @@ Future<BuildContext> _pumpEntry(WidgetTester tester, LayoutCubit layout) async {
 }
 
 void main() {
-  testWidgets('the page exposes the appearance controls and pops back',
-      (tester) async {
+  testWidgets('the page exposes the appearance controls and pops back', (
+    tester,
+  ) async {
     final layout = LayoutCubit();
     addTearDown(layout.close);
     final voice = VoiceInputCubit(
@@ -99,5 +101,38 @@ void main() {
     await tester.tap(find.byKey(AppKeys.mobileSettingsVoiceRow));
     await tester.pumpAndSettle();
     expect(find.byKey(AppKeys.voiceSettingsPage), findsOneWidget);
+  });
+
+  testWidgets('a paired desktop gets a row into its own window defaults', (
+    tester,
+  ) async {
+    // These values live on the desktop, so the phone can only reach them per
+    // host; without a paired desktop the section is not shown at all.
+    final layout = LayoutCubit();
+    addTearDown(layout.close);
+    final voice = VoiceInputCubit(
+      repository: InMemoryVoiceInputRepository(),
+      providerFactory: (_, _) => FakeSttProvider(),
+    );
+    addTearDown(voice.close);
+    await voice.load();
+
+    const desktop = PairedDesktop(
+      id: 'desk-1',
+      name: 'Studio PC',
+      wsUrls: ['ws://127.0.0.1:47821/pair/ws'],
+      hostPublicKeyB64: 'pk',
+      deviceToken: 'token',
+    );
+    await tester.pumpWidget(
+      _wrap(
+        layout,
+        child: MobileSettingsPage(embedded: true, desktops: const [desktop]),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Desktop settings'), findsOneWidget);
+    expect(find.byKey(AppKeys.mobileSettingsHostRow('desk-1')), findsOneWidget);
   });
 }

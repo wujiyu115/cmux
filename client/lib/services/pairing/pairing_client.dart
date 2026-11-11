@@ -6,6 +6,7 @@ import 'dart:typed_data';
 import 'package:meta/meta.dart';
 
 import '../../utils/logging/logger.dart';
+import '../../models/pane_mode.dart';
 import 'agent_notice_message.dart';
 import 'e2ee_channel.dart';
 import 'pairing_crypto.dart';
@@ -58,6 +59,28 @@ class PairingChatView {
 
   final bool isChat;
   final ChatTranscriptSnapshot? transcript;
+}
+
+/// Host-side defaults for the panes the desktop creates next: what a new pane
+/// is (a shell or a conversation) and the command a conversation pane runs.
+class PairingPaneDefaults {
+  const PairingPaneDefaults({
+    required this.mode,
+    required this.chatAgentCommand,
+  });
+
+  /// Tolerant of a host that predates the field: an unknown or missing mode is
+  /// a plain terminal, which is what such a host would create anyway.
+  factory PairingPaneDefaults.fromWire(Map<String, Object?> json) =>
+      PairingPaneDefaults(
+        mode: PaneMode.parse(json['mode']),
+        chatAgentCommand: json['chatAgentCommand'] is String
+            ? json['chatAgentCommand'] as String
+            : '',
+      );
+
+  final PaneMode mode;
+  final String chatAgentCommand;
 }
 
 class PairingSessionSummary {
@@ -823,6 +846,32 @@ class PairingClient {
           ? _chatSnapshotFromJson(raw.cast<String, Object?>())
           : null,
     );
+  }
+
+  /// What the desktop makes of a *new* pane, and the command a conversation
+  /// pane runs there. Host-side settings, so the phone can only read or change
+  /// them over a connection.
+  Future<PairingPaneDefaults> paneDefaults() async {
+    final result = await _rpc(
+      'settings.paneDefaults.get',
+      const {},
+      const Duration(seconds: 10),
+    );
+    return PairingPaneDefaults.fromWire(result);
+  }
+
+  /// Writes the desktop's pane defaults and returns what it kept — the host
+  /// normalises (an empty command falls back to its default), so the phone shows
+  /// the answer rather than the request.
+  Future<PairingPaneDefaults> setPaneDefaults({
+    required String mode,
+    String? chatAgentCommand,
+  }) async {
+    final result = await _rpc('settings.paneDefaults.set', {
+      'mode': mode,
+      if (chatAgentCommand != null) 'chatAgentCommand': chatAgentCommand,
+    }, const Duration(seconds: 10));
+    return PairingPaneDefaults.fromWire(result);
   }
 
   /// Defensive parse: a row the phone cannot understand is dropped instead of

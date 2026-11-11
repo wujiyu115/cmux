@@ -54,7 +54,10 @@ class _PairedHostsPageState extends State<PairedHostsPage> {
                 localIp: state.localIp,
                 onScan: widget.onScan,
               )
-            : const MobileSettingsPage(embedded: true);
+            : MobileSettingsPage(
+                embedded: true,
+                desktops: state.pairedDesktops,
+              );
         return Scaffold(
           key: AppKeys.pairedHostsPage,
           // Tablet (iPad / Android): the destinations move to a leading rail and

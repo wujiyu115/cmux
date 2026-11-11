@@ -51,6 +51,22 @@ typedef PairingChatTranscriptProvider =
 /// to render the one the desktop actually made.
 typedef PairingPaneModeProvider = PaneMode Function(String paneId);
 
+/// Host-wide defaults for panes a paired phone may read, and change.
+///
+/// These live on the desktop — they decide what the *desktop* creates next —
+/// so a phone can only see or set them through the connection. Reading is a
+/// plain map so the wire stays additive: an older phone ignores keys it does
+/// not know, and a newer one can tell an unknown key from an absent one.
+typedef PairingPaneDefaultsReader = Map<String, Object?> Function();
+
+/// Applies [patch] (`mode`, `chatAgentCommand`) and returns the stored values,
+/// so the caller renders what the host kept rather than what it sent.
+typedef PairingPaneDefaultsApplier =
+    Future<Map<String, Object?>> Function({
+      required PaneMode mode,
+      required String? chatAgentCommand,
+    });
+
 /// Per-connection JSON-RPC + terminal I/O dispatcher (runs *inside* the E2EE
 /// channel, after auth). Owns this connection's subscription book; [dispose]
 /// tears every listener down so a dropped socket leaks nothing.
@@ -80,6 +96,8 @@ class PairingRpcHandler {
     PairingGitDiffProvider? gitDiff,
     PairingChatTranscriptProvider? chatTranscript,
     PairingPaneModeProvider? paneMode,
+    PairingPaneDefaultsReader? paneDefaults,
+    PairingPaneDefaultsApplier? applyPaneDefaults,
     Duration activateTimeout = const Duration(seconds: 8),
     Duration activatePollInterval = const Duration(milliseconds: 40),
     PairingUploadCaps uploadCaps = const PairingUploadCaps(),
@@ -103,6 +121,8 @@ class PairingRpcHandler {
        _gitDiff = gitDiff,
        _chatTranscript = chatTranscript,
        _paneMode = paneMode,
+       _paneDefaults = paneDefaults,
+       _applyPaneDefaults = applyPaneDefaults,
        _activateTimeout = activateTimeout,
        _activatePollInterval = activatePollInterval {
     // Built in the body, not the initializer list: the receiver's ack callback
@@ -133,6 +153,8 @@ class PairingRpcHandler {
   final PairingGitDiffProvider? _gitDiff;
   final PairingChatTranscriptProvider? _chatTranscript;
   final PairingPaneModeProvider? _paneMode;
+  final PairingPaneDefaultsReader? _paneDefaults;
+  final PairingPaneDefaultsApplier? _applyPaneDefaults;
   final Duration _activateTimeout;
   final Duration _activatePollInterval;
   late final PairingUploadReceiver _uploads;
@@ -206,6 +228,11 @@ class PairingRpcHandler {
         _uploadAbort(id, params);
       case 'ping':
         _replyResult(id, const {'pong': true});
+      case 'settings.paneDefaults.get':
+        _paneDefaultsGet(id);
+      case 'settings.paneDefaults.set':
+        // Applying is persisted on the host, so it never completes inline.
+        unawaited(_paneDefaultsSet(id, params));
       default:
         _replyError(id, 'unknown method: $method');
     }
@@ -230,6 +257,43 @@ class PairingRpcHandler {
 
   PaneMode _modeFor(String paneId) =>
       _paneMode?.call(paneId) ?? PaneMode.terminal;
+
+  /// What a pane the desktop creates next will be, and the command a
+  /// conversation pane runs. Read by the phone's settings screen.
+  void _paneDefaultsGet(Object? id) {
+    final reader = _paneDefaults;
+    if (reader == null) {
+      _replyError(id, 'unknown method: settings.paneDefaults.get');
+      return;
+    }
+    _replyResult(id, reader());
+  }
+
+  /// Sets the defaults for panes the *desktop* creates from now on. Existing
+  /// panes keep the mode they were created in — the phone can change what is
+  /// next, never what is already on screen.
+  Future<void> _paneDefaultsSet(Object? id, Map<String, Object?> params) async {
+    final apply = _applyPaneDefaults;
+    if (apply == null) {
+      _replyError(id, 'unknown method: settings.paneDefaults.set');
+      return;
+    }
+    final mode = params['mode'];
+    if (mode is! String) {
+      _replyError(id, 'settings.paneDefaults.set requires mode');
+      return;
+    }
+    final command = params['chatAgentCommand'];
+    try {
+      final applied = await apply(
+        mode: PaneMode.parse(mode),
+        chatAgentCommand: command is String ? command : null,
+      );
+      _replyResult(id, applied);
+    } on Object catch (error) {
+      _replyError(id, 'settings.paneDefaults.set failed: $error');
+    }
+  }
 
   /// `chat.read` answers for one pane: the mode it was created in plus, in chat
   /// mode, the rows. The phone polls it for *content*; the mode is a property of

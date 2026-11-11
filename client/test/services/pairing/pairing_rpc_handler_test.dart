@@ -1276,4 +1276,102 @@ void main() {
       );
     });
   });
+
+  group('settings.paneDefaults', () {
+    PairingRpcHandler handlerWith({
+      PairingPaneDefaultsReader? read,
+      PairingPaneDefaultsApplier? apply,
+    }) {
+      final h = PairingRpcHandler(
+        catalog: catalog,
+        send: sent.add,
+        uploadOpener: noopUploadOpener,
+        paneDefaults: read,
+        applyPaneDefaults: apply,
+      );
+      addTearDown(h.dispose);
+      return h;
+    }
+
+    test('get answers the host defaults, mode as a wire string', () {
+      final h = handlerWith(
+        read: () => {'mode': 'chat', 'chatAgentCommand': 'bash -lc pi'},
+      );
+      h.handle(
+        PairingCodec.decode(
+          _json({'id': 1, 'method': 'settings.paneDefaults.get'}),
+        ),
+      );
+      final result = (decodeLast() as JsonFrame).data['result'] as Map;
+      expect(result['mode'], 'chat');
+      expect(result['chatAgentCommand'], 'bash -lc pi');
+    });
+
+    test('set applies the patch and answers what the host kept', () async {
+      PaneMode? appliedMode;
+      String? appliedCommand;
+      final h = handlerWith(
+        apply: ({required mode, required chatAgentCommand}) async {
+          appliedMode = mode;
+          appliedCommand = chatAgentCommand;
+          // The host normalises an empty command to its default.
+          return {'mode': mode.wire, 'chatAgentCommand': 'claude'};
+        },
+      );
+      h.handle(
+        PairingCodec.decode(
+          _json({
+            'id': 2,
+            'method': 'settings.paneDefaults.set',
+            'params': {'mode': 'chat', 'chatAgentCommand': ''},
+          }),
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(appliedMode, PaneMode.chat);
+      expect(appliedCommand, '');
+      final result = (decodeLast() as JsonFrame).data['result'] as Map;
+      expect(result['chatAgentCommand'], 'claude');
+    });
+
+    test(
+      'an unknown mode falls back to terminal instead of throwing',
+      () async {
+        PaneMode? appliedMode;
+        final h = handlerWith(
+          apply: ({required mode, required chatAgentCommand}) async {
+            appliedMode = mode;
+            return {
+              'mode': mode.wire,
+              'chatAgentCommand': chatAgentCommand ?? '',
+            };
+          },
+        );
+        h.handle(
+          PairingCodec.decode(
+            _json({
+              'id': 3,
+              'method': 'settings.paneDefaults.set',
+              'params': {'mode': 'nonsense'},
+            }),
+          ),
+        );
+        await Future<void>.delayed(Duration.zero);
+        expect(appliedMode, PaneMode.terminal);
+      },
+    );
+
+    test('without providers both methods answer unknown method', () {
+      final h = handlerWith();
+      h.handle(
+        PairingCodec.decode(
+          _json({'id': 4, 'method': 'settings.paneDefaults.get'}),
+        ),
+      );
+      expect(
+        (decodeLast() as JsonFrame).data['error'],
+        contains('unknown method'),
+      );
+    });
+  });
 }
